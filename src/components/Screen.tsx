@@ -3,21 +3,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { STEPS, useStore } from '../store'
 import { Button } from './ui'
 
-export function Screen({
-  title,
-  lead,
-  children,
-  wide = false,
-  nextLabel,
-  className = '',
-}: {
-  title: ReactNode
-  lead?: ReactNode
-  children: ReactNode
-  wide?: boolean
-  nextLabel?: string
-  className?: string
-}) {
+export function Screen({ title, lead, children, wide = false, nextLabel, nextDisabled = false, className = '' }: { title: ReactNode; lead?: ReactNode; children: ReactNode; wide?: boolean; nextLabel?: string; nextDisabled?: boolean; className?: string }) {
   const step = useStore((s) => s.step)
   const next = useStore((s) => s.next)
   const prev = useStore((s) => s.prev)
@@ -28,7 +14,7 @@ export function Screen({
       <div className="mb-7 flex items-end justify-between gap-6">
         <div className="max-w-[760px]">
           <div className="meta mb-2 num">
-            Шаг {idx + 1} из {STEPS.length} · {STEPS[idx].question}
+            Шаг {idx + 1} из {STEPS.length} · {STEPS[idx]?.question}
           </div>
           <h1 className="h1">{title}</h1>
           {lead && <p className="mt-3 text-[15.5px] leading-relaxed text-ink-2">{lead}</p>}
@@ -36,15 +22,11 @@ export function Screen({
       </div>
       {children}
       <div className="mt-12 flex items-center justify-between hairline pt-6">
-        {idx > 0 ? (
-          <Button variant="ghost" icon={<ArrowLeft size={15} />} onClick={prev}>
-            {STEPS[idx - 1].label}
-          </Button>
-        ) : (
-          <span />
-        )}
+        <Button variant="ghost" icon={<ArrowLeft size={15} />} onClick={prev}>
+          {idx > 0 ? STEPS[idx - 1].label : 'Проекты'}
+        </Button>
         {nextStep && (
-          <Button variant="primary" size="lg" onClick={next}>
+          <Button variant="primary" size="lg" onClick={next} disabled={nextDisabled}>
             {nextLabel ?? `Далее: ${nextStep.label.toLowerCase()}`}
             <ArrowRight size={16} />
           </Button>

@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend-data:/srv/data
+    environment:
+      ROBOSCOPE_IMPORT_PROVIDER: rules
+      ROBOSCOPE_EXPLANATION_PROVIDER: rules
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run build && npx vite preview --host 0.0.0.0 --port 5173"
+    environment:
+      API_URL: http://backend:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/app
+    depends_on:
+      - backend
+volumes:
+  backend-data:

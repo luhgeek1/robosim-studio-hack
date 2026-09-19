@@ -24,7 +24,7 @@ export const CORRIDOR_BOTTOM = 15.5
 export const RECEIVE_POINTS = [-22.5, -22.5, -22.5, -22.5].map((x, i) => [x, -9 + i * 6] as [number, number])
 export const PICK_POINTS = [12.5, 12.5, 12.5, 12.5].map((x, i) => [x, -9 + i * 6] as [number, number])
 export const SHIP_POINTS = [24, 24, 24, 24].map((x, i) => [x, -9 + i * 6] as [number, number])
-export const DOCK_POINTS = [[-27, 16.5], [-27, 14], [-27, 11.5], [-27, 9]] as [number, number][]
+export const DOCK_POINTS = [[-27, 16.5], [-27, 14], [-27, 11.5], [-27, 9], [-29, 16.5], [-29, 14], [-29, 11.5], [-29, 9]] as [number, number][]
 
 /** Queue grid on the receiving dock (pallets waiting). */
 export const QUEUE_ORIGIN: [number, number] = [-28.5, -14.5]

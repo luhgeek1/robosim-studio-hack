@@ -98,7 +98,7 @@ function RobotAgent({ index }: { index: number }) {
 export function Robots() {
   return (
     <group>
-      {[0, 1, 2, 3].map((i) => (
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
         <RobotAgent key={i} index={i} />
       ))}
     </group>

@@ -3,7 +3,7 @@ import { Grid, Html, Line, OrbitControls, RoundedBox } from '@react-three/drei'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useStore } from '../store'
-import { zoneStatus, zoneStatusLabel } from '../data/robots'
+import { zoneStatus, zoneStatusLabel } from '../data/zones'
 import { AISLES, CORRIDOR_BOTTOM, CORRIDOR_TOP, FLOOR, QUEUE_COLS, QUEUE_ORIGIN, QUEUE_PITCH, RACK_ROWS, RACK_X0, RACK_X1, ZONES } from './layout'
 import { Robots } from './Robots'
 
