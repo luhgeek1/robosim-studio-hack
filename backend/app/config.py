@@ -9,8 +9,8 @@ REPO_DIR = BASE_DIR.parent
 class Settings(BaseSettings):
     app_name: str = "RoboScope API"
     database_url: str = f"sqlite:///{BASE_DIR / 'roboscope.db'}"
-    catalog_csv: Path = REPO_DIR / "catalog_export_v4.csv"
-    dataset_xlsx: Path = REPO_DIR / "Датасеты_хакатон.xlsx"
+    catalog_csv: Path = REPO_DIR / "case" / "dataset" / "catalog_export_v4.csv"
+    dataset_xlsx: Path = REPO_DIR / "case" / "dataset" / "Датасеты_хакатон.xlsx"
     sample_dir: Path = BASE_DIR / "sample_data"
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4173"]
     simulation_seed: int = 42

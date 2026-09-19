@@ -8,3 +8,10 @@ backend/roboscope.db
 backend/.env
 __pycache__
 .pytest_cache
+
+# Old project used as a stack reference: separate git repo with secrets (keys, .env) — never commit
+template/
+
+# Raw Telegram export: other participants' names, materials password, personal invite link.
+# Important facts from it are distilled in docs/CASE_BRIEF.md
+case/chat/

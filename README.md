@@ -6,7 +6,7 @@
 
 Frontend (этот каталог) + backend на FastAPI/SimPy (`backend/`). Все расчёты — подбор, количество,
 экономика, симуляция — выполняет бэкенд; ML/LLM-часть — заготовка (`backend/app/ml/README.md`).
-Подробный статус: `IMPLEMENTED.md`.
+Статус и контекст проекта: `AGENTS.md`, `docs/STATUS.md`.
 
 ## Запуск
 
