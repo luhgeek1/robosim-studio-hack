@@ -781,6 +781,7 @@ processes:
   sla: {kind: lead_time, target_value: 45, unit: мин}
   labor_groups: [ground_staff]
   labor_allocation: {ground_staff: 0.2}
+  labor_release: labor_release_share_transport
   labor_allocation_note: 'Датасет не делит персонал перрона по операциям, но в примечании к строке «Среднее количество операций
     наземного обслуживания на 1 рейс» перечисляет пять видов работ: буксировка, питание, заправка, уборка, разгрузка и погрузка.
     Допущение команды: виды работ равны по трудоёмкости, на багаж (разгрузка и погрузка) приходится 1 из 5, то есть 20 % персонала
@@ -834,6 +835,7 @@ processes:
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [terminal_staff]
   labor_allocation: {terminal_staff: 0.67}
+  labor_release: labor_release_share_transport
   labor_allocation_note: 'Датасет не делит персонал терминала по функциям, но перечисляет три роли: «Уборщики, курьеры, грузчики
     терминала». Допущение команды: роли равны по численности, поэтому треть относим к уборке, две трети (курьеры и грузчики)
     — к перевозке грузов и мусора.'
@@ -860,6 +862,7 @@ processes:
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [terminal_staff]
   labor_allocation: {terminal_staff: 0.33}
+  labor_release: labor_release_share_cleaning
   labor_allocation_note: 'Датасет не делит персонал терминала по функциям, но перечисляет три роли: «Уборщики, курьеры, грузчики
     терминала». Допущение команды: роли равны по численности, поэтому треть относим к уборке, две трети (курьеры и грузчики)
     — к перевозке грузов и мусора.'
@@ -975,3 +978,23 @@ demo_projects:
 - {key: airport_demo_01, name: 'Аэропорт 8,5 млн пассажиров в год, 2 терминала (данные организатора)', description: 'Демо-объект
     с листа «Аэропорт» датасета организатора: 280 рейсов и 35 000 мест багажа в сутки, терминалы 85 000 м², перрон 100 000
     м², 500 сотрудников перрона и терминала.'}
+site_costs:
+- key: capex_integration
+  kind: capex
+  name: Интеграция с AODB/FIDS и СКУД
+  formula: wms_integration_rub
+  solution_types: [tow_tractor, amr_transport, autonomous_truck, sorting_robot, delivery_robot, service_robot]
+  note: Датасет аэропорта — FIDS/AODB есть, СКУД OSDP; тягачи и доставщики получают задания и проходят режимные зоны.
+- key: capex_wifi
+  kind: capex
+  name: Модернизация Wi-Fi под роботов
+  formula: wifi_upgrade_rub
+  solution_types: [amr_transport, fmr_forklift, tow_tractor, autonomous_truck, goods_to_person, sorting_robot, inventory_robot, cleaning_robot, delivery_robot, service_robot]
+- key: capex_training
+  kind: capex
+  name: Обучение персонала
+  formula: training_rub
+- key: opex_connectivity
+  kind: opex
+  name: Связь и удалённый доступ вендора
+  formula: connectivity_rub_per_year

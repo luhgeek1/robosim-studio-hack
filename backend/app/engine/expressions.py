@@ -22,7 +22,9 @@ _COMPARE: dict[type[ast.cmpop], Callable[[float, float], bool]] = {
 }
 # Unit conversions are exact arithmetic, not coefficients, so they may live in code.
 _UNIT_FUNCTIONS: dict[str, float] = {"m_to_mm": 1000.0, "mm_to_m": 0.001, "t_to_kg": 1000.0, "kg_to_t": 0.001}
-_FUNCTIONS = frozenset({"min", "max", "coalesce", *_UNIT_FUNCTIONS})
+# Gain g: the same work needs 1 / (1 + g) of the people, so g / (1 + g) of them are released.
+_TRANSFORMS: dict[str, Callable[[float], float]] = {"gain_to_release": lambda gain: gain / (1 + gain)}
+_FUNCTIONS = frozenset({"min", "max", "coalesce", *_UNIT_FUNCTIONS, *_TRANSFORMS})
 
 
 class ExpressionError(ValueError):
@@ -151,4 +153,8 @@ def _call(name: str, args: list[ast.expr], values: Mapping[str, float | None]) -
         if len(numbers) != 1:
             raise ExpressionError(f"{name}() takes exactly one argument")
         return numbers[0] * _UNIT_FUNCTIONS[name]
+    if name in _TRANSFORMS:
+        if len(numbers) != 1:
+            raise ExpressionError(f"{name}() takes exactly one argument")
+        return _TRANSFORMS[name](numbers[0])
     return min(numbers) if name == "min" else max(numbers)

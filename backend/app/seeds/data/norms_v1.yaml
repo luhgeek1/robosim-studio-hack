@@ -378,6 +378,28 @@ norms:
     affects: [labor_savings, effect, payback, npv, irr, roi]
     editable_by_user: true
     object_types: [warehouse, airport, hospital]
+  - key: labor_release_share_inventory
+    name: Доля высвобождаемого персонала — инвентаризация
+    value: 0.9
+    unit: доля
+    category: labor
+    range: {min: 0.75, max: 1.0}
+    source: fcbas_methodology
+    rationale: "ФЦ БАС («Инвентаризация складов», с. 6, 9): 2 человека и 160 ч на полную инвентаризацию заменяются роботом за 16 ч; оператор удалённо разбирает только отчёты о расхождениях. Оставляем 10% времени на разбор расхождений и перепроверку спорных ячеек."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: labor_release_share_sorting
+    name: Доля высвобождаемого персонала — сортировка
+    value: 0.7
+    unit: доля
+    category: labor
+    range: {min: 0.5, max: 0.85}
+    source: fcbas_methodology
+    rationale: "ФЦ БАС («Манипуляторы на складах», с. 9): на сортировке лёгких товаров 4 человека дают 300 ед./ч, робот — 900 ед./ч. Люди остаются на подаче коробов на вход, снятии мешков и нестандартных отправлениях — допущение команды 30% ставок."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: true
+    object_types: [warehouse]
   - key: elevator_cycle_time_s
     name: Время лифтового цикла робота
     value: 120
@@ -620,6 +642,17 @@ norms:
     affects: [capex, payback, npv, roi, tco]
     editable_by_user: true
     object_types: [warehouse, airport, hospital]
+  - key: g2p_station_rub
+    name: Станция отбора «товар к человеку»
+    value: 800000
+    unit: ₽ за станцию
+    category: capex
+    range: {min: 400000, max: 1500000}
+    source: team
+    rationale: "Вендоры G2P не публикуют цену станции отдельно от проекта. Состав: стол оператора с ограждением и световой завесой, сканер, монитор, модуль pick-to-light на ячейки заказов. Ориентир — система Pick-by-Light в каталоге организатора 1,0 млн ₽; станция без собственного ПО дешевле, берём 0,8 млн."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse]
   - key: charging_station_rub
     name: Зарядная станция
     value: 300000
@@ -838,6 +871,28 @@ norms:
     source: ronavi_pricing
     rationale: "Ronavi: «плата за действие» с минимальным контрактом около 30 месяцев (зарядка, ТО, поддержка включены); аренда — от 2 месяцев. Нужен для сравнения RaaS и покупки на горизонте и для условий выкупа."
     affects: [opex, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: implementation_months
+    name: Срок внедрения до запуска
+    value: 3
+    unit: мес
+    category: finance
+    range: {min: 2, max: 6}
+    source: team
+    rationale: "Поставка, картирование, интеграция с учётной системой, ПНР и приёмочные испытания. Ronavi запускает пилот из 2 роботов за 2 месяца (research/catalog_specs), парк из десятков роботов с интеграцией WMS — дольше. CAPEX оплачивается в начале, эффекта в эти месяцы нет."
+    affects: [npv, irr, roi, payback]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: ramp_up_months
+    name: Разгон до полного эффекта после запуска
+    value: 3
+    unit: мес
+    category: finance
+    range: {min: 0, max: 6}
+    source: team
+    rationale: "После запуска персонал высвобождается постепенно: доводка маршрутов, обучение, перевод людей на другие участки. Эффект растёт линейно до 100% за этот срок, а OPEX роботов идёт полностью с первого месяца работы — консервативно."
+    affects: [npv, irr, roi]
     editable_by_user: true
     object_types: [warehouse, airport, hospital]
   - key: lease_rate

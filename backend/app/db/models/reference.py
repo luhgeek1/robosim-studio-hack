@@ -39,6 +39,7 @@ class ObjectType(Base):
     layout_templates: Mapped[list[str]] = mapped_column(ARRAY(sa.String(64)), default=list)
     checks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
     demo_projects: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
+    site_costs: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
     order: Mapped[int] = mapped_column(sa.Integer, default=0)
 
 
@@ -93,6 +94,8 @@ class ProcessDef(UuidPkMixin, Base):
     route_length: Mapped[str | None] = mapped_column(sa.Text)
     unit_weight: Mapped[str | None] = mapped_column(sa.Text)
     requirements: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
+    labor_release: Mapped[str | None] = mapped_column(sa.Text)
+    labor_release_by_type: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict, server_default="{}")
     order: Mapped[int] = mapped_column(sa.Integer, default=0)
 
 

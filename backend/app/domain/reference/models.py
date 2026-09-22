@@ -88,6 +88,11 @@ class ProcessDef:
     route_length: str | None = None
     unit_weight: str | None = None
     requirements: list["Requirement"] = field(default_factory=list)
+    labor_release: str | None = None
+    labor_release_by_type: dict[str, str] = field(default_factory=dict)
+
+    def release_formula(self, solution_type: str) -> str | None:
+        return self.labor_release_by_type.get(solution_type, self.labor_release)
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +126,19 @@ class LaborGroupDef:
 
 
 @dataclass(frozen=True, slots=True)
+class SiteCostDef:
+    """Object-level CAPEX or OPEX line; the formula is an expression over params and norms."""
+
+    key: str
+    kind: str
+    name: str
+    formula: str
+    solution_types: list[str]
+    in_raas: bool
+    note: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class DemoProjectRef:
     key: str
     name: str
@@ -140,6 +158,7 @@ class ObjectTypeDetail:
     layout_templates: list[str]
     demo_projects: list[DemoProjectRef] = field(default_factory=list)
     checks: list[CrossCheck] = field(default_factory=list)
+    site_costs: list[SiteCostDef] = field(default_factory=list)
 
     @property
     def parameters(self) -> list[ParameterDef]:

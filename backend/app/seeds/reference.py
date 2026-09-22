@@ -156,6 +156,18 @@ def _formula_problems(object_type: ObjectTypeSeed, norm_keys: set[str]) -> list[
             problems.append(f"{process.key}: labor_allocation keys differ from labor_groups")
         for group, share in process.labor_allocation.items():
             allocated[group] = allocated.get(group, 0.0) + share
+        releases = {"*": process.labor_release} if process.labor_release else {}
+        for where, formula in {**releases, **process.labor_release_by_type}.items():
+            problems += _expression_problems(f"{process.key}.labor_release[{where}]", formula, names)
+        problems += [
+            f"{process.key}: labor_release_by_type for foreign solution type {t}"
+            for t in process.labor_release_by_type
+            if t not in process.solution_types
+        ]
+        if process.labor_allocation and not process.labor_release:
+            problems.append(f"{process.key}: has labor but no labor_release")
+    for cost in object_type.site_costs:
+        problems += _expression_problems(f"site cost {cost.key}", cost.formula, names)
     problems += [
         f"labor {g}: allocated {v:.2f} > 1" for g, v in allocated.items() if v > _MAX_ALLOCATION + 1e-9
     ]
@@ -186,6 +198,12 @@ def _validate(object_type: ObjectTypeSeed, solution_types: set[str], norm_keys: 
             for s in process.solution_types
             if s not in solution_types
         ]
+    problems += [
+        f"site cost {cost.key}: unknown solution type {s}"
+        for cost in object_type.site_costs
+        for s in cost.solution_types
+        if s not in solution_types
+    ]
     problems += _formula_problems(object_type, norm_keys)
     if problems:
         raise SeedDataError(f"{object_type.key}: " + "; ".join(problems))
@@ -216,6 +234,7 @@ async def seed_object_types(uow: UnitOfWork, settings: Settings) -> int:
                     "layout_templates": object_type.layout_templates,
                     "checks": [c.model_dump() for c in object_type.checks],
                     "demo_projects": [d.model_dump() for d in object_type.demo_projects],
+                    "site_costs": [c.model_dump() for c in object_type.site_costs],
                     "order": order,
                 }
             ],

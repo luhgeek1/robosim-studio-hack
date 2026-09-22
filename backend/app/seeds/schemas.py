@@ -107,6 +107,8 @@ class ProcessSeed(SeedModel):
     route_length: str | None = None
     unit_weight: str | None = None
     requirements: list[RequirementSeed] = []
+    labor_release: str | None = None
+    labor_release_by_type: dict[str, str] = {}
 
 
 class CheckSeed(SeedModel):
@@ -116,6 +118,16 @@ class CheckSeed(SeedModel):
     params: list[str]
     message: str
     how_to_fix: str | None = None
+
+
+class SiteCostSeed(SeedModel):
+    key: str
+    kind: Literal["capex", "opex"]
+    name: str
+    formula: str
+    solution_types: list[str] = []
+    in_raas: bool = True
+    note: str | None = None
 
 
 class DemoProjectSeed(SeedModel):
@@ -138,6 +150,7 @@ class ObjectTypeSeed(SeedModel):
     processes: list[ProcessSeed] = []
     checks: list[CheckSeed] = []
     demo_projects: list[DemoProjectSeed] = []
+    site_costs: list[SiteCostSeed] = []
 
 
 class SourceSeed(SeedModel):

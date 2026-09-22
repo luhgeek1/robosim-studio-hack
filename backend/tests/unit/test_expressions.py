@@ -56,3 +56,10 @@ def test_unit_functions() -> None:
     )
     with pytest.raises(ExpressionError):
         parse("m_to_mm(a, b)").evaluate({"a": 1.0, "b": 2.0})
+
+
+def test_gain_to_release() -> None:
+    # +20 % productivity → the same work needs 1 / 1.2 people → 1/6 of them are released
+    expression = parse("gain_to_release(pick_assist_productivity_gain_share)")
+    assert expression.names == frozenset({"pick_assist_productivity_gain_share"})
+    assert expression.evaluate({"pick_assist_productivity_gain_share": 0.2}) == pytest.approx(1 / 6)

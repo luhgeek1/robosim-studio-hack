@@ -22,6 +22,7 @@ from app.domain.reference import (
     ParameterGroup,
     ProcessDef as ProcessDefInfo,
     Requirement,
+    SiteCostDef,
     SizingModel,
     SolutionTypeInfo,
     SpecGroup,
@@ -81,6 +82,8 @@ def _process(process: ProcessDef) -> ProcessDefInfo:
         route_length=process.route_length,
         unit_weight=process.unit_weight,
         requirements=[Requirement(**item) for item in process.requirements],
+        labor_release=process.labor_release,
+        labor_release_by_type=process.labor_release_by_type,
     )
 
 
@@ -111,6 +114,7 @@ def _object_type(
         layout_templates=item.layout_templates,
         demo_projects=[DemoProjectRef(**d) for d in item.demo_projects],
         checks=[CrossCheck(**c) for c in item.checks],
+        site_costs=[SiteCostDef(**c) for c in item.site_costs],
     )
 
 
