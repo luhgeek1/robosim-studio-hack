@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: RoboScope API
+  version: 0.1.0
+  license: {name: MIT, identifier: MIT}
+  summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
+  description: |
+    Контракт между фронтендом и бэкендом. Источник истины по API: бэкенд обязан ему соответствовать,
+    фронтенд разрабатывается по нему с mock-сервером (см. README.md рядом).
+
+    **Конвенции**
+    - Префикс `/api/v1` входит в путь (без `servers`), чтобы mock, vite-proxy и vercel rewrite совпадали.
+    - Авторизация: `Authorization: Bearer <access>`. Для `X-Client: web` refresh-токен живёт в httpOnly-cookie,
+      обновление требует `X-CSRF-Token`. Гостевые эндпоинты помечены `security: []`.
+    - Ошибки: всегда `Problem` с `error_code` из закрытого списка.
+    - Деньги — в рублях (`amount_rub`), не в миллионах. Время — ISO 8601 UTC.
+    - Любое значение, влияющее на расчёт, несёт `provenance` (статус и источник).
+    - Долгие операции (симуляция, Монте-Карло, отчёты, обогащение) возвращают 202 + `Job`/`SimulationRun`;
+      прогресс — SSE `GET /api/v1/jobs/{job_id}/stream` или опрос.
+    - Пагинация: `page` (с 1) и `page_size`; ответ содержит `items`, `total`, `page`, `page_size`.
+    - Версии входов (`VersionStamp`) сохраняются с каждым расчётом — расчёт воспроизводим (ТЗ 3.1.5).
+
+tags:
+  - {name: system, description: "Здоровье, версии, фоновые задачи"}
+  - {name: auth, description: "Регистрация, вход, профиль, ключи API"}
+  - {name: reference, description: "Справочники — типы объектов, параметры, процессы, нормативы"}
+  - {name: catalog, description: "Каталог решений — поиск, карточки, сравнение"}
+  - {name: projects, description: "Проекты пользователя"}
+  - {name: params, description: "Параметры объекта, импорт, валидация, процессы"}
+  - {name: layout, description: "Планировка объекта для 2D-карты и симуляции"}
+  - {name: matching, description: "Подбор решений по процессам"}
+  - {name: scenarios, description: "Сценарии роботизации"}
+  - {name: calculations, description: "Экономика, трасса расчёта, сравнение, чувствительность, Монте-Карло"}
+  - {name: simulation, description: "Имитация работы роботов и данные для 2D-плеера"}
+  - {name: reports, description: "Отчёты PDF / Excel / DOCX"}
+  - {name: assist, description: "Ассистент (LLM) — импорт, объяснения, проверка допущений"}
+  - {name: demo, description: "Демо для гостя без авторизации"}
+  - {name: support, description: "Меры господдержки"}
+  - {name: rfq, description: "Запрос коммерческого предложения вендорам"}
+  - {name: admin, description: "Администрирование каталога, нормативов, пользователей"}
+  - {name: integrations, description: "Импорт из внешних систем по ключу API"}
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ---- система и auth ----
+  /api/v1/health: {$ref: './paths/auth.yaml#/health'}
+  /api/v1/ready: {$ref: './paths/auth.yaml#/ready'}
+  /api/v1/version: {$ref: './paths/auth.yaml#/version'}
+  /api/v1/jobs/{job_id}: {$ref: './paths/auth.yaml#/jobs'}
+  /api/v1/jobs/{job_id}/stream: {$ref: './paths/auth.yaml#/jobStream'}
+  /api/v1/auth/register: {$ref: './paths/auth.yaml#/register'}
+  /api/v1/auth/login: {$ref: './paths/auth.yaml#/login'}
+  /api/v1/auth/refresh: {$ref: './paths/auth.yaml#/refresh'}
+  /api/v1/auth/logout: {$ref: './paths/auth.yaml#/logout'}
+  /api/v1/me: {$ref: './paths/auth.yaml#/me'}
+  /api/v1/me/api-keys: {$ref: './paths/auth.yaml#/apiKeys'}
+  /api/v1/me/api-keys/{key_id}: {$ref: './paths/auth.yaml#/apiKey'}
+
+  # ---- справочники ----
+  /api/v1/object-types: {$ref: './paths/reference.yaml#/objectTypes'}
+  /api/v1/object-types/{object_type}: {$ref: './paths/reference.yaml#/objectType'}
+  /api/v1/object-types/{object_type}/template.xlsx: {$ref: './paths/reference.yaml#/objectTypeTemplate'}
+  /api/v1/solution-types: {$ref: './paths/reference.yaml#/solutionTypes'}
+  /api/v1/industries: {$ref: './paths/reference.yaml#/industries'}
+  /api/v1/norms: {$ref: './paths/reference.yaml#/norms'}
+  /api/v1/norm-sets: {$ref: './paths/reference.yaml#/normSets'}
+
+  # ---- каталог ----
+  /api/v1/catalog/products: {$ref: './paths/reference.yaml#/products'}
+  /api/v1/catalog/facets: {$ref: './paths/reference.yaml#/productFacets'}
+  /api/v1/catalog/spec-keys: {$ref: './paths/reference.yaml#/productSpecKeys'}
+  /api/v1/catalog/products/{product_id}: {$ref: './paths/reference.yaml#/product'}
+  /api/v1/catalog/compare: {$ref: './paths/reference.yaml#/productCompare'}
+
+  # ---- проекты и параметры ----
+  /api/v1/projects: {$ref: './paths/projects.yaml#/projects'}
+  /api/v1/projects/{project_id}: {$ref: './paths/projects.yaml#/project'}
+  /api/v1/projects/{project_id}/copy: {$ref: './paths/projects.yaml#/projectCopy'}
+  /api/v1/projects/{project_id}/export.json: {$ref: './paths/projects.yaml#/projectExport'}
+  /api/v1/projects/{project_id}/audit: {$ref: './paths/projects.yaml#/projectAudit'}
+  /api/v1/projects/{project_id}/params: {$ref: './paths/projects.yaml#/projectParams'}
+  /api/v1/projects/{project_id}/params/{key}: {$ref: './paths/projects.yaml#/projectParam'}
+  /api/v1/projects/{project_id}/params/{key}/history: {$ref: './paths/projects.yaml#/projectParamHistory'}
+  /api/v1/projects/{project_id}/import: {$ref: './paths/projects.yaml#/projectImport'}
+  /api/v1/projects/{project_id}/import/text: {$ref: './paths/projects.yaml#/projectImportText'}
+  /api/v1/projects/{project_id}/import/{import_id}/apply: {$ref: './paths/projects.yaml#/projectImportApply'}
+  /api/v1/projects/{project_id}/validation: {$ref: './paths/projects.yaml#/projectValidation'}
+  /api/v1/projects/{project_id}/data-quality: {$ref: './paths/projects.yaml#/projectDataQuality'}
+  /api/v1/projects/{project_id}/processes: {$ref: './paths/projects.yaml#/projectProcesses'}
+  /api/v1/projects/{project_id}/layout: {$ref: './paths/projects.yaml#/projectLayout'}
+  /api/v1/projects/{project_id}/layout/generate: {$ref: './paths/projects.yaml#/projectLayoutGenerate'}
+  /api/v1/projects/{project_id}/layout/background: {$ref: './paths/projects.yaml#/projectLayoutBackground'}
+
+  # ---- подбор, сценарии, расчёты ----
+  /api/v1/projects/{project_id}/matching: {$ref: './paths/analysis.yaml#/projectMatching'}
+  /api/v1/projects/{project_id}/matching/manual: {$ref: './paths/analysis.yaml#/projectMatchingManual'}
+  /api/v1/projects/{project_id}/scenarios: {$ref: './paths/analysis.yaml#/projectScenarios'}
+  /api/v1/projects/{project_id}/comparison: {$ref: './paths/analysis.yaml#/projectComparison'}
+  /api/v1/scenarios/{scenario_id}: {$ref: './paths/analysis.yaml#/scenario'}
+  /api/v1/scenarios/{scenario_id}/copy: {$ref: './paths/analysis.yaml#/scenarioCopy'}
+  /api/v1/scenarios/{scenario_id}/calculate: {$ref: './paths/analysis.yaml#/scenarioCalculate'}
+  /api/v1/scenarios/{scenario_id}/sensitivity: {$ref: './paths/analysis.yaml#/scenarioSensitivity'}
+  /api/v1/scenarios/{scenario_id}/monte-carlo: {$ref: './paths/analysis.yaml#/scenarioMonteCarlo'}
+  /api/v1/scenarios/{scenario_id}/monte-carlo/{job_id}: {$ref: './paths/analysis.yaml#/scenarioMonteCarloResult'}
+  /api/v1/scenarios/{scenario_id}/survey-priorities: {$ref: './paths/analysis.yaml#/scenarioSurveyPriorities'}
+  /api/v1/calculations/{calculation_id}: {$ref: './paths/analysis.yaml#/calculation'}
+  /api/v1/calculations/{calculation_id}/trace: {$ref: './paths/analysis.yaml#/calculationTrace'}
+  /api/v1/calculations/{calculation_id}/rerun: {$ref: './paths/analysis.yaml#/calculationRerun'}
+  /api/v1/calculations/{calculation_id}/narrative: {$ref: './paths/analysis.yaml#/calculationNarrative'}
+
+  # ---- имитация ----
+  /api/v1/scenarios/{scenario_id}/simulations: {$ref: './paths/simulation.yaml#/scenarioSimulations'}
+  /api/v1/scenarios/{scenario_id}/fleet-sweep: {$ref: './paths/simulation.yaml#/scenarioFleetSweep'}
+  /api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}: {$ref: './paths/simulation.yaml#/scenarioFleetSweepResult'}
+  /api/v1/simulations/{simulation_id}: {$ref: './paths/simulation.yaml#/simulation'}
+  /api/v1/simulations/{simulation_id}/timeline: {$ref: './paths/simulation.yaml#/simulationTimeline'}
+  /api/v1/simulations/{simulation_id}/replay: {$ref: './paths/simulation.yaml#/simulationReplay'}
+  /api/v1/simulations/{simulation_id}/heatmap: {$ref: './paths/simulation.yaml#/simulationHeatmap'}
+  /api/v1/simulations/{simulation_id}/stream: {$ref: './paths/simulation.yaml#/simulationStream'}
+  /api/v1/simulations/{simulation_id}/visuals: {$ref: './paths/simulation.yaml#/simulationVisuals'}
+
+  # ---- отчёты, ассистент, демо, поддержка, RFQ ----
+  /api/v1/projects/{project_id}/reports: {$ref: './paths/platform.yaml#/projectReports'}
+  /api/v1/reports/{report_id}: {$ref: './paths/platform.yaml#/report'}
+  /api/v1/reports/{report_id}/download: {$ref: './paths/platform.yaml#/reportDownload'}
+  /api/v1/assist/status: {$ref: './paths/platform.yaml#/assistStatus'}
+  /api/v1/projects/{project_id}/assist/explain: {$ref: './paths/platform.yaml#/assistExplain'}
+  /api/v1/scenarios/{scenario_id}/assist/review-assumptions: {$ref: './paths/platform.yaml#/assistReviewAssumptions'}
+  /api/v1/demo/projects: {$ref: './paths/platform.yaml#/demoProjects'}
+  /api/v1/demo/projects/{demo_key}: {$ref: './paths/platform.yaml#/demoProject'}
+  /api/v1/demo/projects/{demo_key}/what-if: {$ref: './paths/platform.yaml#/demoWhatIf'}
+  /api/v1/demo/projects/{demo_key}/replay: {$ref: './paths/platform.yaml#/demoReplay'}
+  /api/v1/support-measures: {$ref: './paths/platform.yaml#/supportMeasures'}
+  /api/v1/projects/{project_id}/rfq: {$ref: './paths/platform.yaml#/projectRfq'}
+
+  # ---- админка и интеграции ----
+  /api/v1/admin/catalog/products: {$ref: './paths/platform.yaml#/adminProducts'}
+  /api/v1/admin/catalog/products/{product_id}: {$ref: './paths/platform.yaml#/adminProduct'}
+  /api/v1/admin/catalog/products/{product_id}/specs: {$ref: './paths/platform.yaml#/adminProductSpecs'}
+  /api/v1/admin/catalog/products/{product_id}/enrich: {$ref: './paths/platform.yaml#/adminProductEnrich'}
+  /api/v1/admin/catalog/import: {$ref: './paths/platform.yaml#/adminCatalogImport'}
+  /api/v1/admin/catalog/enrichment-jobs: {$ref: './paths/platform.yaml#/adminEnrichmentJobs'}
+  /api/v1/admin/catalog/enrichment-jobs/{job_id}/review: {$ref: './paths/platform.yaml#/adminEnrichmentJobReview'}
+  /api/v1/admin/catalog/enrichment-schedule: {$ref: './paths/platform.yaml#/adminEnrichmentSchedule'}
+  /api/v1/admin/norm-sets: {$ref: './paths/platform.yaml#/adminNormSets'}
+  /api/v1/admin/users: {$ref: './paths/platform.yaml#/adminUsers'}
+  /api/v1/admin/users/{user_id}: {$ref: './paths/platform.yaml#/adminUser'}
+  /api/v1/admin/analytics/overview: {$ref: './paths/platform.yaml#/adminAnalytics'}
+  /api/v1/integrations/projects: {$ref: './paths/platform.yaml#/integrationProjects'}
+  /api/v1/integrations/catalog/products: {$ref: './paths/platform.yaml#/integrationCatalogUpsert'}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access-токен из /auth/login или /auth/refresh
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Ключ интеграции из /me/api-keys (только эндпоинты /integrations/*)
+  schemas:
+    Problem: {$ref: './components/common.yaml#/Problem'}
+    ErrorCode: {$ref: './components/common.yaml#/ErrorCode'}
+    PValue: {$ref: './components/common.yaml#/PValue'}
+    Provenance: {$ref: './components/common.yaml#/Provenance'}
+    ProvenanceStatus: {$ref: './components/common.yaml#/ProvenanceStatus'}
+    Source: {$ref: './components/common.yaml#/Source'}
+    Money: {$ref: './components/common.yaml#/Money'}
+    Job: {$ref: './components/common.yaml#/Job'}
+    VersionStamp: {$ref: './components/common.yaml#/VersionStamp'}
+    ObjectType: {$ref: './components/reference.yaml#/ObjectType'}
+    ParameterDef: {$ref: './components/reference.yaml#/ParameterDef'}
+    ProcessDef: {$ref: './components/reference.yaml#/ProcessDef'}
+    Norm: {$ref: './components/reference.yaml#/Norm'}
+    Product: {$ref: './components/catalog.yaml#/Product'}
+    ProductDetail: {$ref: './components/catalog.yaml#/ProductDetail'}
+    Spec: {$ref: './components/catalog.yaml#/Spec'}
+    Project: {$ref: './components/projects.yaml#/Project'}
+    ProjectParam: {$ref: './components/projects.yaml#/ProjectParam'}
+    ProcessDemand: {$ref: './components/projects.yaml#/ProcessDemand'}
+    Layout: {$ref: './components/projects.yaml#/Layout'}
+    MatchingResult: {$ref: './components/analysis.yaml#/MatchingResult'}
+    Candidate: {$ref: './components/analysis.yaml#/Candidate'}
+    Scenario: {$ref: './components/analysis.yaml#/Scenario'}
+    CalculationRun: {$ref: './components/analysis.yaml#/CalculationRun'}
+    CalculationTrace: {$ref: './components/analysis.yaml#/CalculationTrace'}
+    Metrics: {$ref: './components/analysis.yaml#/Metrics'}
+    ComparisonTable: {$ref: './components/analysis.yaml#/ComparisonTable'}
+    SensitivityResult: {$ref: './components/analysis.yaml#/SensitivityResult'}
+    MonteCarloResult: {$ref: './components/analysis.yaml#/MonteCarloResult'}
+    SimulationRun: {$ref: './components/simulation.yaml#/SimulationRun'}
+    SimulationSummary: {$ref: './components/simulation.yaml#/SimulationSummary'}
+    SimulationReplay: {$ref: './components/simulation.yaml#/SimulationReplay'}
+    SimEvent: {$ref: './components/simulation.yaml#/SimEvent'}
+    Report: {$ref: './components/platform.yaml#/Report'}
+    User: {$ref: './components/platform.yaml#/User'}

@@ -1,87 +1,99 @@
 # Контракты: доменная модель и API
 
-> **Статус: ЧЕРНОВИК.** Модель выведена из ТЗ (3.1–3.8) и данных. Финальная версия — после решения Q-001 (основа кода).
-> Когда API появится в коде, источником истины станет OpenAPI из FastAPI, а здесь останутся модель и договорённости.
+> Источник истины по API — `docs/api/openapi.yaml` (+ `paths/`, `components/`; склейка `openapi.bundled.yaml`).
+> Этот файл — карта и договорённости, которые не выразить в YAML. Как запускать линт, mock и генерацию типов —
+> `docs/api/README.md`. Любое изменение контракта фиксируется внизу в «Изменениях».
 
 ## Принципы
 
-1. **Происхождение у каждого значения.** Любая характеристика продукта, параметр объекта или норматив хранится как
-   `value + unit + source_id + as_of + status`. `status`: `confirmed` (подтверждено источником) / `default` (норматив
-   по умолчанию) / `assumption` (допущение команды с обоснованием) / `user` (ввёл пользователь) / `missing`.
-2. **Воспроизводимость.** Каждый расчёт сохраняет снимок входов и версии: `catalog_version`, `norms_version`,
-   `model_version`, `inputs_hash`. Проект можно переоткрыть и получить тот же результат (ТЗ 3.1.5).
-3. **Ручная правка — это событие.** Переопределение автозначения пишется в журнал: кто, когда, было → стало (ТЗ 3.5.4).
-4. **Расширяемость через справочники, а не код.** Новый тип объекта = новые записи в `object_types`, `parameter_defs`,
-   `processes` + шаблон планировки. Ядро не меняется (ТЗ 2, 4.2.6).
+1. **Происхождение у каждого значения.** Параметры объекта, ТТХ продуктов и нормативы несут `provenance`:
+   `status` (`user` / `imported` / `llm_suggested` / `default` / `assumption` / `derived` / `confirmed` / `vendor_claim` / `missing`),
+   `source` (вид, название, URL, дата), `confidence`, `raw_value`. Фронт показывает статус бейджем везде, где есть число.
+2. **Воспроизводимость.** Расчёт и симуляция хранят `VersionStamp` (версии проекта, каталога, нормативов, движка, планировки,
+   хэш входов). `POST /calculations/{id}/rerun` считает на актуальных версиях и отдаёт дифф с причинами.
+3. **Ручная правка — событие.** Изменение параметра, переопределение норматива, ручное добавление продукта пишутся
+   в журнал (`/projects/{id}/audit`, `/params/{key}/history`) и меняют версию проекта → расчёты становятся `stale`.
+4. **Симуляция определяет N.** `ScenarioItem.count_result` показывает `analytic`, `simulated`, `reserve`, `final`
+   и `source`; при `use_simulation=true` (по умолчанию) экономика берёт `final` из последней успешной симуляции.
+5. **Расширяемость через справочники.** Новый тип объекта = `ObjectType` + `ParameterDef` + `ProcessDef` +
+   шаблон планировки + сиды. Код ядра не меняется.
+6. **Гость видит каталог и демо**, всё остальное — с токеном; админ и вендор — по permissions.
 
-## Сущности
+## Доменная модель
 
 ```
-Справочники и каталог
-  Industry            отрасль (9 из каталога ФЦ БАС)
-  ObjectType          склад | аэропорт | медучреждение | …  (industry_id)
-  Process             процесс объекта: перемещение паллет, отбор, уборка, доставка питания…  (object_type_id)
-  SolutionType        AMR | FMR | штабелёр | тягач | уборщик | система хранения | …
-  ProcessSolution     какие типы решений применимы к процессу (M:N) + правила подбора
-  Product             продукт каталога (id из CSV, производитель, название, статус, УГТ, регион, страна)
-  ProductOffer        предложение продукта в отрасли: сценарий, кейсы, цена с НДС (дубли CSV = разные offers)
-  ProductSpec         ТТХ: product_id, key, value, unit, source_id, as_of, status  (6 групп ТЗ 3.3)
-  Source              url | файл | «организатор» | «допущение команды», title, retrieved_at, kind
-  Badge               «Есть в 719», «Протестировано ФЦ БАС», …
+Справочники        ObjectType ─┬─ ParameterGroup ─ ParameterDef (ключ, единица, диапазон, default: PValue)
+                               └─ ProcessDef (спрос, SLA, группы персонала, SolutionType[])
+                   SolutionType (модель расчёта: transport_cycle | goods_to_person | area_coverage | …)
+                   NormSet (версия) ─ Norm (значение, единица, источник, обоснование, affects[])
 
-Нормативы
-  ParameterDef        object_type_id, key, group, unit, type, required, min, max, default, source_id, hint, example
-  Norm                ключевой коэффициент модели: key, value, unit, source_id, rationale, affects[]
-  NormSet             версия набора нормативов (админ публикует новую → старые расчёты сохраняют свою)
+Каталог            Manufacturer ─ Product ─┬─ ProductOffer (отрасль, сценарий, цена с НДС; дубли CSV = offers)
+                                           ├─ Spec (6 групп ТЗ, provenance, is_key_constraint)
+                                           ├─ ProductCase (внедрения)
+                                           └─ Badge (719, tested_fcbas, specs_confirmed, …)
+                   EnrichmentJob ─ EnrichmentProposal (LLM предложил → админ принял)
 
-Пользователи и проекты
-  User, Role          guest | user | admin  (vendor — опционально)
-  Project             owner_id, object_type_id, name, created_at, updated_at, version
-  ProjectParam        project_id, key, value, unit, status, source_id, raw_value (из файла), changed_by, changed_at
-  Scenario            project_id, kind: baseline | purchase | raas | lease, name, overrides{}
-  ScenarioItem        scenario_id, process_id, product_offer_id, count, count_source: analytic | simulated | manual
-  CalculationRun      scenario_id, inputs_hash, catalog_version, norms_version, model_version, results{}, created_at
-  SimulationRun       scenario_id, config{}, seed, status: queued | running | done | failed, kpis{}, events_ref
-  AuditEvent          кто, когда, сущность, было → стало
+Проект             Project ─┬─ ProjectParam (value, provenance, validation, history)
+                            ├─ Layout (zones, racks, nodes, edges, stats) — версия
+                            ├─ MatchingResult ─ ProcessMatching ─ Candidate (status, reasons, score_breakdown)
+                            └─ Scenario (kind, items[ScenarioItem], financing, horizon, overrides)
+                                  ├─ CalculationRun (sizing, capex, opex, effect, cashflow, metrics, interpretation, risks, trace)
+                                  ├─ SimulationRun (config, summary, timeline, replay events, heatmap)
+                                  ├─ SensitivityResult / MonteCarloResult / SurveyPriorities
+                                  └─ Report (pdf | xlsx | docx)
+Платформа          User (role) ─ ApiKey;  Job (фоновая задача);  AuditEvent;  Rfq;  SupportMeasure
 ```
 
-## API (контур)
+## Статусы, которые видит пользователь
 
-Префикс `/api/v1`. Авторизация — JWT; гость — без токена, только чтение каталога и демо-проекта.
+| Сущность | Статусы | Как показывать |
+|---|---|---|
+| Кандидат подбора | `fit` / `check` / `excluded` / `manual` | «Подходит» / «Требует проверки» / «Не подходит» / «Добавлено вручную» + причины |
+| Расчёт | `fresh` / `stale` | «Актуален» / «Параметры изменились — пересчитать» |
+| Задача | `queued` / `running` / `done` / `failed` / `cancelled` | прогресс-бар со `stage`, SSE |
+| Происхождение | см. `ProvenanceStatus` | бейдж: «Вы ввели», «Из файла», «Предложил ассистент», «По умолчанию (источник)», «Допущение», «Подтверждено», «Заявка вендора», «Нет данных» |
+| Вердикт | `attractive` / `reasonable` / `questionable` / `not_recommended` / `insufficient_data` | цвет + заголовок + диапазон окупаемости |
 
-| Группа | Эндпоинты |
-|---|---|
-| auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `GET /me` |
-| справочники | `GET /object-types`, `GET /object-types/{id}/parameters` (схема формы), `GET /object-types/{id}/processes` |
-| каталог | `GET /products?filters&sort&q`, `GET /products/{id}`, `POST /products/compare`, admin: `POST/PATCH/DELETE /products`, `POST /catalog/import` (CSV), `POST /catalog/enrich` |
-| нормативы | `GET /norms?version`, admin: `POST /norm-sets` (новая версия) |
-| проекты | `GET/POST /projects`, `GET/PATCH/DELETE /projects/{id}`, `POST /projects/{id}/copy`, `GET /templates/{object_type}.xlsx`, `POST /projects/{id}/import`, `PATCH /projects/{id}/params`, `GET /projects/{id}/validation` |
-| подбор | `GET /projects/{id}/matching` → по процессам: продукты со статусом, причинами, недостающими данными, вкладами в скоринг |
-| сценарии | `GET/POST /projects/{id}/scenarios`, `PATCH /scenarios/{id}`, `POST /scenarios/{id}/calculate` → `CalculationRun` |
-| риски | `POST /scenarios/{id}/sensitivity` (торнадо), `POST /scenarios/{id}/monte-carlo` |
-| имитация | `POST /scenarios/{id}/simulations` → `{run_id}`, `GET /simulations/{run_id}` (статус + KPI), `GET /simulations/{run_id}/events` (журнал для воспроизведения) |
-| отчёт | `GET /projects/{id}/report.pdf`, `GET /projects/{id}/report.xlsx` |
+## Как устроен путь пользователя в терминах API
 
-## Контракт симуляции → фронт (черновик)
+1. `POST /projects` (blank / demo / copy) → `GET /object-types/{key}` (схема формы) → `PUT /projects/{id}/params`
+   или `POST …/import` → `POST …/import/{id}/apply` → `GET …/validation`, `GET …/data-quality`.
+2. `GET …/processes` — «где деньги» → `GET …/matching` (+ `POST …/matching` с весами, `POST …/matching/manual`).
+3. `POST …/layout/generate` (или `PUT …/layout` из редактора).
+4. `POST /projects/{id}/scenarios` (`from_recommendation: true` — заполнить лучшими) → копии для `raas` / `lease`.
+5. `POST /scenarios/{id}/simulations` → SSE → `GET /simulations/{id}` (summary, `vs_analytic`, `bottleneck`)
+   → `POST /scenarios/{id}/fleet-sweep` для кривой N.
+6. `POST /scenarios/{id}/calculate` → `GET /calculations/{id}/trace` → `GET /projects/{id}/comparison`.
+7. `POST /scenarios/{id}/sensitivity`, `POST …/monte-carlo`, `GET …/survey-priorities`.
+8. `POST /projects/{id}/reports` (pdf / xlsx / docx) → `GET /reports/{id}/download`.
+   Опционально: `POST …/assist/explain`, `GET /calculations/{id}/narrative`, `GET /support-measures`, `POST …/rfq`.
 
-Бэкенд считает, фронт только воспроизводит. Журнал событий компактный, фронт интерполирует движение между узлами.
+## Контракт симуляции → 2D-плеер
 
-```json
-{
-  "layout": {"width_m": 125, "height_m": 80,
-             "zones": [{"id": "dock_in", "kind": "receiving", "polygon": [[0,0],[20,0],[20,15],[0,15]]}],
-             "nodes": [{"id": "n1", "x": 10, "y": 7}], "edges": [{"from": "n1", "to": "n2", "length_m": 12.5, "capacity": 1}],
-             "chargers": ["n40"]},
-  "robots": [{"id": "R1", "model": "Ronavi H1500"}],
-  "events": [
-    {"t": 12.4, "robot": "R1", "type": "move",   "path": ["n1", "n2", "n7"], "eta": 31.0},
-    {"t": 31.0, "robot": "R1", "type": "load",   "task": "T15", "dur": 20},
-    {"t": 95.2, "robot": "R3", "type": "wait",   "edge": "n7-n8", "reason": "aisle_busy"},
-    {"t": 3600, "robot": "R2", "type": "charge", "charger": "n40", "dur": 1080},
-    {"t": 7210, "robot": "R4", "type": "fail",   "dur": 1800}
-  ],
-  "kpis_timeline": [{"t": 3600, "done": 131, "demand": 136, "queue": 4, "sla": 0.97, "util": 0.81}],
-  "summary": {"throughput_per_h": 131, "sla": 0.96, "utilization": 0.79, "charging_share": 0.11,
-              "congestion_top": [{"edge": "n7-n8", "wait_s": 812}]}
-}
-```
+- `SimulationReplay` = планировка (`Layout`) + роботы (`id`, процесс, модель, габарит, скорость) + окно событий
+  `[from_s, to_s)` + `tasks_snapshot` на начало окна. Плеер держит буфер на следующее окно (`next_from_s`).
+- Событие `move`: `path` — узлы, `eta` — момент прибытия; плеер интерполирует положение по рёбрам с постоянной
+  скоростью между `t` и `eta`. Остальные типы (`load`, `unload`, `wait`, `charge`, `fail`, `idle`) — состояние в узле
+  на `dur` секунд; `wait` несёт `edge` и `reason` для подсветки затора.
+- KPI для панели — из `SimulationTimeline` (шаг 5 мин) и `summary`; тепловая карта — `SimulationHeatmap`.
+- Управление плеером (старт / пауза / скорость / перемотка) — на фронте; «перезапустить с другим N» —
+  новый `POST …/simulations` с `fleet_override`.
+- Снимок для отчёта — фронт рендерит PNG и грузит в `POST /simulations/{id}/visuals`.
+
+## Что бэкенд гарантирует по времени
+
+- `calculate` синхронный, ≤ 10 с (цель < 2 с). `sensitivity` и аналитический `monte-carlo` — синхронные.
+- `simulations`, `fleet-sweep`, `reports`, `enrich`, `monte-carlo` (surrogate / des) — 202 + задача, прогресс по SSE.
+- Ответы списков — не более `page_size` ≤ 200 элементов.
+
+## Что ещё не решено в контракте
+
+- Формат `hourly_profile` для аэропорта (двухпиковый) и больницы (три кормления) — пока массив из 24 долей, хватит.
+- Нужен ли отдельный `PATCH /scenarios/{id}/items/{item_id}` — пока состав меняется целиком через `PATCH /scenarios/{id}`.
+- Роль `vendor`: эндпоинты предложений правок карточек не описаны (Q-009).
+
+## Изменения
+
+| Дата | Версия | Что |
+|---|---|---|
+| 2026-09-22 | 0.1.0 | Первая полная версия: 107 операций, 190 схем. План максимум: каталог, проекты, планировка, подбор, сценарии, расчёт с трассой, сравнение, чувствительность, Монте-Карло, приоритеты обследования, симуляция с реплеем, отчёты, ассистент, демо гостя, меры поддержки, RFQ, админка, интеграции |

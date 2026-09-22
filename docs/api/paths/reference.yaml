@@ -1,0 +1,193 @@
+# Справочники (доступны гостю) и каталог.
+
+objectTypes:
+  get:
+    tags: [reference]
+    operationId: listObjectTypes
+    summary: Типы объектов с группами параметров и процессами
+    security: []
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/reference.yaml#/ObjectType'}}}}
+
+objectType:
+  get:
+    tags: [reference]
+    operationId: getObjectType
+    summary: Тип объекта — схема формы параметров
+    security: []
+    parameters: [{name: object_type, in: path, required: true, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/reference.yaml#/ObjectType'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+objectTypeTemplate:
+  get:
+    tags: [reference]
+    operationId: downloadImportTemplate
+    summary: Excel-шаблон для загрузки параметров (ТЗ 3.2.3)
+    security: []
+    parameters: [{name: object_type, in: path, required: true, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}]
+    responses:
+      '200':
+        description: Файл xlsx с листом параметров, единицами, подсказками и примером
+        content: {application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {schema: {type: string, format: binary}}}
+
+solutionTypes:
+  get:
+    tags: [reference]
+    operationId: listSolutionTypes
+    summary: Типы роботизированных решений
+    security: []
+    parameters:
+      - {name: object_type, in: query, required: false, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+      - {name: process_key, in: query, required: false, schema: {type: string}}
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/reference.yaml#/SolutionType'}}}}
+
+industries:
+  get:
+    tags: [reference]
+    operationId: listIndustries
+    summary: Отрасли каталога
+    security: []
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/reference.yaml#/Industry'}}}}
+
+norms:
+  get:
+    tags: [reference]
+    operationId: listNorms
+    summary: Реестр нормативов расчётной модели с источниками
+    description: Показывается пользователю на экране «Методика» и в отчёте. Каждый норматив имеет источник и обоснование.
+    security: []
+    parameters:
+      - {name: version, in: query, required: false, schema: {type: string}, description: "Версия набора; по умолчанию текущая"}
+      - {name: category, in: query, required: false, schema: {$ref: '../components/reference.yaml#/NormCategory'}}
+      - {name: object_type, in: query, required: false, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version, items]
+              properties:
+                version: {type: string}
+                items: {type: array, items: {$ref: '../components/reference.yaml#/Norm'}}
+
+normSets:
+  get:
+    tags: [reference]
+    operationId: listNormSets
+    summary: Версии наборов нормативов
+    security: []
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/reference.yaml#/NormSet'}}}}
+
+# ---------------- Каталог ----------------
+
+products:
+  get:
+    tags: [catalog]
+    operationId: listProducts
+    summary: Каталог продуктов с фильтрами, поиском и сортировкой (ТЗ 3.3.7)
+    security: []
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/Page'}
+      - {$ref: '../components/common.yaml#/parameters/PageSize'}
+      - {name: q, in: query, schema: {type: string}, description: "Полнотекстовый или семантический поиск"}
+      - {name: object_type, in: query, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+      - {name: process_key, in: query, schema: {type: string}}
+      - {name: solution_type, in: query, schema: {type: array, items: {type: string}}, style: form, explode: false}
+      - {name: industry, in: query, schema: {type: string}}
+      - {name: manufacturer_id, in: query, schema: {type: string, format: uuid}}
+      - {name: status, in: query, schema: {type: array, items: {$ref: '../components/catalog.yaml#/ProductStatus'}}, style: form, explode: false}
+      - {name: badge, in: query, schema: {type: array, items: {$ref: '../components/catalog.yaml#/Badge'}}, style: form, explode: false}
+      - {name: price_min_rub, in: query, schema: {type: number}}
+      - {name: price_max_rub, in: query, schema: {type: number}}
+      - {name: payload_min_kg, in: query, schema: {type: number}}
+      - {name: min_completeness, in: query, schema: {type: number, minimum: 0, maximum: 1}}
+      - {name: sort, in: query, schema: {type: string, enum: [relevance, name, price_asc, price_desc, completeness, trl, updated], default: relevance}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductList'}}}}
+
+productFacets:
+  get:
+    tags: [catalog]
+    operationId: getCatalogFacets
+    summary: Значения фильтров с количествами
+    security: []
+    parameters:
+      - {name: object_type, in: query, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+      - {name: process_key, in: query, schema: {type: string}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/CatalogFacets'}}}}
+
+product:
+  get:
+    tags: [catalog]
+    operationId: getProduct
+    summary: Карточка продукта — предложения, ТТХ с источниками, кейсы
+    security: []
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProductId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductDetail'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+productCompare:
+  post:
+    tags: [catalog]
+    operationId: compareProducts
+    summary: Сравнение 2–5 продуктов по группам характеристик
+    security: []
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/catalog.yaml#/CompareRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/CompareResult'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+productSpecKeys:
+  get:
+    tags: [catalog]
+    operationId: listSpecKeys
+    summary: Словарь характеристик (ключ, название, группа, единица, участие в жёстких проверках)
+    security: []
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [key, name, group]
+                    properties:
+                      key: {type: string}
+                      name: {type: string}
+                      group: {$ref: '../components/catalog.yaml#/SpecGroup'}
+                      unit: {type: [string, "null"]}
+                      is_key_constraint: {type: boolean}
+                      solution_types: {type: array, items: {type: string}}

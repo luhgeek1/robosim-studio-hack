@@ -1,0 +1,284 @@
+# Проекты: CRUD, параметры, импорт, валидация, качество данных, процессы, планировка, история.
+
+projects:
+  get:
+    tags: [projects]
+    operationId: listProjects
+    summary: Проекты пользователя
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/Page'}
+      - {$ref: '../components/common.yaml#/parameters/PageSize'}
+      - {name: q, in: query, schema: {type: string}}
+      - {name: object_type, in: query, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+      - {name: status, in: query, schema: {$ref: '../components/projects.yaml#/ProjectStatus'}}
+      - {name: sort, in: query, schema: {type: string, enum: [updated_desc, created_desc, name], default: updated_desc}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectList'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+  post:
+    tags: [projects]
+    operationId: createProject
+    summary: Создать проект (пустой, из демо-данных или копией)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectCreate'}}}
+    responses:
+      '201': {description: "Создан", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Project'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+project:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+  get:
+    tags: [projects]
+    operationId: getProject
+    summary: Проект
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Project'}}}}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+  patch:
+    tags: [projects]
+    operationId: updateProject
+    summary: Переименовать, заметки, теги, статус
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectUpdate'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Project'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+  delete:
+    tags: [projects]
+    operationId: deleteProject
+    summary: Удалить проект вместе с файлами, расчётами и отчётами (ТЗ 4.4.6)
+    responses:
+      '204': {description: "Удалён"}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+projectCopy:
+  post:
+    tags: [projects]
+    operationId: copyProject
+    summary: Копировать проект со сценариями (ТЗ 3.1.3)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: false
+      content: {application/json: {schema: {type: object, properties: {name: {type: string}}}}}
+    responses:
+      '201': {description: "Копия", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Project'}}}}
+
+projectExport:
+  get:
+    tags: [projects]
+    operationId: exportProjectJson
+    summary: Полный снимок проекта (параметры, сценарии, расчёты) в JSON
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {type: object, additionalProperties: true}}}}
+
+# ---------------- Параметры ----------------
+
+projectParams:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+  get:
+    tags: [params]
+    operationId: listProjectParams
+    summary: Параметры объекта с происхождением и валидацией
+    parameters:
+      - {name: group, in: query, schema: {type: string}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectParams'}}}}
+  put:
+    tags: [params]
+    operationId: upsertProjectParams
+    summary: Массовое сохранение из формы
+    description: Все присланные значения получают статус `user`. Версия проекта растёт, расчёты помечаются stale.
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/ParamsBulkUpsert'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectParams'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+projectParam:
+  parameters:
+    - {$ref: '../components/common.yaml#/parameters/ProjectId'}
+    - {name: key, in: path, required: true, schema: {type: string}}
+  patch:
+    tags: [params]
+    operationId: updateProjectParam
+    summary: Изменить один параметр (инлайн-правка)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/ParamUpsert'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectParam'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+  delete:
+    tags: [params]
+    operationId: resetProjectParam
+    summary: Сбросить к значению по умолчанию
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectParam'}}}}
+
+projectParamHistory:
+  get:
+    tags: [params]
+    operationId: getProjectParamHistory
+    summary: История правок параметра (ТЗ 3.5.4)
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ProjectId'}
+      - {name: key, in: path, required: true, schema: {type: string}}
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/projects.yaml#/ParamHistoryItem'}}}}
+
+projectImport:
+  post:
+    tags: [params]
+    operationId: importProjectParamsFile
+    summary: Загрузить параметры из файла (xlsx по шаблону, произвольный xlsx/csv, json)
+    description: Возвращает результат сопоставления; ничего не применяется до `applyImport`.
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [file]
+            properties:
+              file: {type: string, format: binary}
+              use_assistant: {type: boolean, default: false, description: "Разрешить LLM-сопоставление для нешаблонных файлов"}
+    responses:
+      '200': {description: "Результат разбора", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ImportResult'}}}}
+      '413': {description: "Файл больше 20 МБ", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '415': {description: "Неподдерживаемый формат", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+projectImportText:
+  post:
+    tags: [params, assist]
+    operationId: importProjectParamsText
+    summary: Умный импорт из свободного текста (ассистент)
+    description: Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM — 503 LLM_UNAVAILABLE.
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/SmartImportRequest'}}}
+    responses:
+      '200': {description: "Результат разбора", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ImportResult'}}}}
+      '503': {description: "Ассистент недоступен", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+projectImportApply:
+  post:
+    tags: [params]
+    operationId: applyImport
+    summary: Применить выбранные значения импорта к проекту
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ProjectId'}
+      - {name: import_id, in: path, required: true, schema: {type: string, format: uuid}}
+    requestBody:
+      required: false
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/ImportApply'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectParams'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+projectValidation:
+  get:
+    tags: [params]
+    operationId: getProjectValidation
+    summary: Проверка заполненности, форматов и диапазонов (ТЗ 3.2.4)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ValidationReport'}}}}
+
+projectDataQuality:
+  get:
+    tags: [params]
+    operationId: getProjectDataQuality
+    summary: Панель доверия — происхождение параметров и их влияние
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/DataQualityReport'}}}}
+
+projectProcesses:
+  get:
+    tags: [params]
+    operationId: getProjectProcesses
+    summary: Процессы объекта — спрос, пик, текущая стоимость («где деньги»)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProcessDemandList'}}}}
+      '409': {description: "Не хватает обязательных параметров", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+# ---------------- Планировка ----------------
+
+projectLayout:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+  get:
+    tags: [layout]
+    operationId: getLayout
+    summary: Планировка объекта (зоны, стеллажи, узлы, рёбра)
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Layout'}}}}
+      '404': {description: "Планировка ещё не сгенерирована", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+  put:
+    tags: [layout]
+    operationId: updateLayout
+    summary: Сохранить правки редактора
+    description: Версия планировки растёт; расчёты и симуляции помечаются stale. Бэкенд пересчитывает stats.
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/LayoutUpdate'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Layout'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+projectLayoutGenerate:
+  post:
+    tags: [layout]
+    operationId: generateLayout
+    summary: Сгенерировать планировку из параметров объекта
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: false
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/LayoutGenerateRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Layout'}}}}
+      '409': {description: "Не хватает параметров", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+projectLayoutBackground:
+  post:
+    tags: [layout]
+    operationId: uploadLayoutBackground
+    summary: Загрузить план объекта как подложку (png/jpg/pdf)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [file]
+            properties:
+              file: {type: string, format: binary}
+              scale_m_per_px: {type: number}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Layout'}}}}
+      '415': {description: "Неподдерживаемый формат", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+projectAudit:
+  get:
+    tags: [projects]
+    operationId: listProjectAudit
+    summary: Журнал изменений проекта
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ProjectId'}
+      - {$ref: '../components/common.yaml#/parameters/Page'}
+      - {$ref: '../components/common.yaml#/parameters/PageSize'}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/AuditList'}}}}

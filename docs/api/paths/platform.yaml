@@ -1,0 +1,373 @@
+# Отчёты, ассистент, демо для гостя, меры поддержки, RFQ, админка, аналитика, интеграции.
+
+# ---------------- Отчёты ----------------
+
+projectReports:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+  get:
+    tags: [reports]
+    operationId: listReports
+    summary: Сформированные отчёты проекта
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/ReportList'}}}}
+  post:
+    tags: [reports]
+    operationId: createReport
+    summary: Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/ReportRequest'}}}
+    responses:
+      '202': {description: "Принято", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Report'}}}}
+      '409': {description: "Нет расчётов для отчёта", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+report:
+  get:
+    tags: [reports]
+    operationId: getReport
+    summary: Отчёт и ссылка на файл
+    parameters: [{name: report_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Report'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+reportDownload:
+  get:
+    tags: [reports]
+    operationId: downloadReport
+    summary: Скачать файл отчёта
+    parameters: [{name: report_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    responses:
+      '200':
+        description: Файл
+        content:
+          application/pdf: {schema: {type: string, format: binary}}
+          application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {schema: {type: string, format: binary}}
+          application/vnd.openxmlformats-officedocument.wordprocessingml.document: {schema: {type: string, format: binary}}
+      '409': {description: "Ещё формируется", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+# ---------------- Ассистент ----------------
+
+assistStatus:
+  get:
+    tags: [assist]
+    operationId: getAssistStatus
+    summary: Доступность ассистента и провайдер
+    security: []
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/AssistStatus'}}}}
+
+assistExplain:
+  post:
+    tags: [assist]
+    operationId: explain
+    summary: Вопрос по расчёту или имитации — ответ с цитатами из трассы
+    description: LLM отвечает только по данным расчёта (трасса, симуляция, нормативы); без LLM — шаблонные ответы на типовые вопросы.
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/ExplainRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/ExplainResponse'}}}}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
+
+assistReviewAssumptions:
+  post:
+    tags: [assist]
+    operationId: reviewAssumptions
+    summary: Проверить допущения сценария на правдоподобие относительно бенчмарков
+    parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/AssumptionReview'}}}}
+
+# ---------------- Демо для гостя ----------------
+
+demoProjects:
+  get:
+    tags: [demo]
+    operationId: listDemoProjects
+    summary: Демо-проекты на данных организатора (без авторизации)
+    security: []
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/platform.yaml#/DemoProject'}}}}
+
+demoProject:
+  get:
+    tags: [demo]
+    operationId: getDemoProject
+    summary: Предрассчитанный демо-проект целиком
+    security: []
+    parameters: [{name: demo_key, in: path, required: true, schema: {type: string}}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoSnapshot'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+demoWhatIf:
+  post:
+    tags: [demo]
+    operationId: demoWhatIf
+    summary: Ограниченный what-if для гостя (без сохранения, с лимитом запросов)
+    security: []
+    parameters: [{name: demo_key, in: path, required: true, schema: {type: string}}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoWhatIfRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoWhatIfResult'}}}}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
+
+demoReplay:
+  get:
+    tags: [demo]
+    operationId: getDemoReplay
+    summary: Журнал событий демо-имитации для плеера (без авторизации)
+    security: []
+    parameters:
+      - {name: demo_key, in: path, required: true, schema: {type: string}}
+      - {name: from_s, in: query, schema: {type: number, default: 0}}
+      - {name: to_s, in: query, schema: {type: number}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationReplay'}}}}
+
+# ---------------- Меры господдержки и RFQ ----------------
+
+supportMeasures:
+  get:
+    tags: [support]
+    operationId: listSupportMeasures
+    summary: Применимые меры господдержки для объекта и сценария
+    parameters:
+      - {name: project_id, in: query, schema: {type: string, format: uuid}}
+      - {name: scenario_id, in: query, schema: {type: string, format: uuid}}
+      - {name: okved, in: query, schema: {type: string}, example: "52.10"}
+      - {name: region, in: query, schema: {type: string}, example: "Москва"}
+      - {name: localization_pct, in: query, schema: {type: number}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/SupportMeasureList'}}}}
+
+projectRfq:
+  post:
+    tags: [rfq]
+    operationId: createRfq
+    summary: Сформировать запрос коммерческого предложения вендорам по сценарию
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/RfqRequest'}}}
+    responses:
+      '201': {description: "Сформирован", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Rfq'}}}}
+
+# ---------------- Админка: каталог ----------------
+
+adminProducts:
+  post:
+    tags: [admin]
+    operationId: adminCreateProduct
+    summary: Добавить продукт вручную (ТЗ 3.3.5)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductWrite'}}}
+    responses:
+      '201': {description: "Создан", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductDetail'}}}}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+
+adminProduct:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProductId'}]
+  patch:
+    tags: [admin]
+    operationId: adminUpdateProduct
+    summary: Редактировать продукт
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductWrite'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductDetail'}}}}
+  delete:
+    tags: [admin]
+    operationId: adminDeleteProduct
+    summary: Скрыть продукт (мягкое удаление — расчёты, где он использован, сохраняются)
+    responses:
+      '204': {description: "Скрыт"}
+
+adminProductSpecs:
+  put:
+    tags: [admin]
+    operationId: adminUpsertProductSpecs
+    summary: Задать характеристики с источниками
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProductId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/catalog.yaml#/SpecsBulkWrite'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductDetail'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+adminCatalogImport:
+  post:
+    tags: [admin]
+    operationId: adminImportCatalog
+    summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2)
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [file]
+            properties:
+              file: {type: string, format: binary}
+              notes: {type: string}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/CatalogImportResult'}}}}
+      '415': {description: "Неподдерживаемый формат", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+adminProductEnrich:
+  post:
+    tags: [admin]
+    operationId: adminEnrichProduct
+    summary: Запустить обогащение ТТХ из открытых источников (ассистент, фоновая задача)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProductId'}]
+    requestBody:
+      required: false
+      content: {application/json: {schema: {$ref: '../components/catalog.yaml#/EnrichmentRequest'}}}
+    responses:
+      '202': {description: "Принято", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/EnrichmentJob'}}}}
+      '503': {description: "Ассистент недоступен", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+adminEnrichmentJobs:
+  get:
+    tags: [admin]
+    operationId: adminListEnrichmentJobs
+    summary: Очередь обогащения на модерацию
+    parameters:
+      - {name: review_status, in: query, schema: {type: string, enum: [pending, reviewed]}}
+      - {$ref: '../components/common.yaml#/parameters/Page'}
+      - {$ref: '../components/common.yaml#/parameters/PageSize'}
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items, page, page_size, total]
+              properties:
+                items: {type: array, items: {$ref: '../components/catalog.yaml#/EnrichmentJob'}}
+                page: {type: integer}
+                page_size: {type: integer}
+                total: {type: integer}
+
+adminEnrichmentJobReview:
+  post:
+    tags: [admin]
+    operationId: adminReviewEnrichment
+    summary: Принять или отклонить предложенные значения
+    parameters: [{$ref: '../components/common.yaml#/parameters/JobId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/catalog.yaml#/EnrichmentReview'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/ProductDetail'}}}}
+
+adminEnrichmentSchedule:
+  put:
+    tags: [admin]
+    operationId: adminSetEnrichmentSchedule
+    summary: Плановое автообновление каталога (бонус ТЗ 3.3.6)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [enabled]
+            properties:
+              enabled: {type: boolean}
+              cron: {type: string, example: "0 3 * * 1", description: "Раз в неделю по понедельникам"}
+              scope: {type: string, enum: [missing_only, all], default: missing_only}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {type: object, properties: {enabled: {type: boolean}, cron: {type: string}, next_run_at: {type: [string, "null"], format: date-time}}}}}}
+
+# ---------------- Админка: нормативы, пользователи, аналитика ----------------
+
+adminNormSets:
+  post:
+    tags: [admin]
+    operationId: adminPublishNormSet
+    summary: Опубликовать новую версию нормативов (старые расчёты сохраняют свою)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/reference.yaml#/NormSetCreate'}}}
+    responses:
+      '201': {description: "Опубликована", content: {application/json: {schema: {$ref: '../components/reference.yaml#/NormSet'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+adminUsers:
+  get:
+    tags: [admin]
+    operationId: adminListUsers
+    summary: Пользователи
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/Page'}
+      - {$ref: '../components/common.yaml#/parameters/PageSize'}
+      - {name: q, in: query, schema: {type: string}}
+      - {name: role, in: query, schema: {$ref: '../components/platform.yaml#/Role'}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/UserList'}}}}
+
+adminUser:
+  patch:
+    tags: [admin]
+    operationId: adminUpdateUser
+    summary: Роль, активность, привязка вендора
+    parameters: [{name: user_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/AdminUserUpdate'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/User'}}}}
+
+adminAnalytics:
+  get:
+    tags: [admin]
+    operationId: adminAnalyticsOverview
+    summary: Аналитика спроса для ФЦ БАС
+    parameters:
+      - {name: from, in: query, schema: {type: string, format: date}}
+      - {name: to, in: query, schema: {type: string, format: date}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/AnalyticsOverview'}}}}
+
+# ---------------- Интеграции (ключ API) ----------------
+
+integrationProjects:
+  post:
+    tags: [integrations]
+    operationId: integrationCreateProject
+    summary: Создать проект из внешней системы (WMS, ERP, 1С) по ключу API (ТЗ 3.8.2)
+    security: [{apiKeyAuth: []}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/IntegrationProjectCreate'}}}
+    responses:
+      '201': {description: "Создан", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Project'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+integrationCatalogUpsert:
+  post:
+    tags: [integrations]
+    operationId: integrationUpsertProducts
+    summary: Обновить продукты каталога из внешнего источника по ключу API (для вендоров и ФЦ БАС)
+    security: [{apiKeyAuth: []}]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/catalog.yaml#/ProductWrite'}}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/CatalogImportResult'}}}}

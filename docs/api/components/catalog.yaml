@@ -1,0 +1,295 @@
+# Каталог роботизированных решений: продукты, предложения, ТТХ с происхождением, сравнение, обогащение.
+
+ProductStatus:
+  type: string
+  description: Стадия из каталога организатора.
+  enum: [operation, piloting, rnd]
+
+Badge:
+  type: string
+  description: |
+    in_registry_719 — есть в реестре промпродукции (ПП 719); tested_fcbas — протестировано ФЦ БАС;
+    specs_confirmed — все ключевые ТТХ подтверждены первичными источниками; domestic — отечественный производитель;
+    has_cases — есть реализованные внедрения.
+  enum: [in_registry_719, tested_fcbas, specs_confirmed, domestic, has_cases]
+
+SpecGroup:
+  type: string
+  description: Шесть групп характеристик по ТЗ 3.3.
+  enum: [identification, technical, infrastructure, economics, applicability, data_quality]
+
+Manufacturer:
+  type: object
+  required: [id, name]
+  properties:
+    id: {type: string, format: uuid}
+    name: {type: string, example: "Ронави Роботикс"}
+    country: {type: string, example: "RU"}
+    region: {type: [string, "null"], example: "Москва"}
+    website: {type: [string, "null"], format: uri}
+
+ProductOffer:
+  type: object
+  description: |
+    Предложение продукта в отрасли. Дубли строк каталога организатора — это разные предложения одного продукта
+    (разная отрасль, сценарий, иногда цена); по Q&A их нельзя объединять.
+  required: [id, industry, scenario, price]
+  properties:
+    id: {type: string, format: uuid}
+    industry: {type: string, example: "Торговля и услуги"}
+    scenario: {type: string, example: "Внутрискладская логистика"}
+    price: {$ref: './common.yaml#/Money'}
+    price_note: {type: string, example: "Цена изделия с НДС; без доставки, ПНР и интеграции (Доп. 6)"}
+    cases_text: {type: [string, "null"]}
+    source: {$ref: './common.yaml#/Source'}
+
+Spec:
+  type: object
+  description: Одна характеристика продукта с единицей, группой и происхождением (ТЗ 3.3.4).
+  required: [key, name, group, value, provenance]
+  properties:
+    key: {type: string, example: "payload_kg"}
+    name: {type: string, example: "Грузоподъёмность"}
+    group: {$ref: '#/SpecGroup'}
+    value:
+      oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]
+    unit: {type: [string, "null"], example: "кг"}
+    provenance: {$ref: './common.yaml#/Provenance'}
+    is_key_constraint: {type: boolean, description: "Участвует в жёстких проверках подбора"}
+
+ProductCase:
+  type: object
+  properties:
+    customer: {type: string, example: "Восток-Сервис"}
+    count: {type: [integer, "null"], example: 48}
+    description: {type: string}
+    year: {type: [integer, "null"]}
+    source: {oneOf: [{$ref: './common.yaml#/Source'}, {type: "null"}]}
+
+Product:
+  type: object
+  description: Карточка продукта в списке.
+  required: [id, name, manufacturer, solution_type, status, price_from, completeness, badges]
+  properties:
+    id: {type: string, format: uuid}
+    name: {type: string, example: "Ronavi H1500"}
+    manufacturer: {$ref: '#/Manufacturer'}
+    solution_type: {type: string, example: "amr_transport"}
+    solution_type_name: {type: string, example: "AMR — транспортный"}
+    subtype: {type: [string, "null"], example: "Мобильный робот"}
+    status: {$ref: '#/ProductStatus'}
+    trl: {type: [integer, "null"], minimum: 1, maximum: 9, description: "УГТ"}
+    market_potential: {type: [number, "null"], minimum: 1, maximum: 5}
+    price_from: {$ref: './common.yaml#/Money'}
+    offers_count: {type: integer}
+    badges: {type: array, items: {$ref: '#/Badge'}}
+    completeness: {type: number, minimum: 0, maximum: 1, description: "Доля заполненных обязательных ТТХ"}
+    image_url: {type: [string, "null"], format: uri}
+    object_types: {type: array, items: {$ref: './reference.yaml#/ObjectTypeKey'}}
+    processes: {type: array, items: {type: string}}
+    short_description: {type: [string, "null"]}
+    updated_at: {type: string, format: date-time}
+
+ProductDetail:
+  allOf:
+    - $ref: '#/Product'
+    - type: object
+      required: [offers, specs, cases, sources]
+      properties:
+        description: {type: [string, "null"]}
+        offers: {type: array, items: {$ref: '#/ProductOffer'}}
+        specs:
+          type: array
+          description: Все характеристики, сгруппированы по group на фронте.
+          items: {$ref: '#/Spec'}
+        cases: {type: array, items: {$ref: '#/ProductCase'}}
+        sources: {type: array, items: {$ref: './common.yaml#/Source'}}
+        integration_notes: {type: [string, "null"], example: "Интеграция с WMS по REST API вендора; QR-разметка пола"}
+        missing_key_specs:
+          type: array
+          description: Ключевые ТТХ без данных — влияют на статус «требует проверки».
+          items: {type: string}
+        similar_products:
+          type: array
+          items: {$ref: '#/Product'}
+
+ProductList:
+  type: object
+  required: [items, page, page_size, total]
+  properties:
+    items: {type: array, items: {$ref: '#/Product'}}
+    page: {type: integer}
+    page_size: {type: integer}
+    total: {type: integer}
+
+CatalogFacets:
+  type: object
+  description: Значения фильтров с количествами — для панели фильтров каталога.
+  properties:
+    solution_types: {type: array, items: {$ref: '#/Facet'}}
+    manufacturers: {type: array, items: {$ref: '#/Facet'}}
+    statuses: {type: array, items: {$ref: '#/Facet'}}
+    industries: {type: array, items: {$ref: '#/Facet'}}
+    badges: {type: array, items: {$ref: '#/Facet'}}
+    object_types: {type: array, items: {$ref: '#/Facet'}}
+    price_range:
+      type: object
+      properties: {min_rub: {type: number}, max_rub: {type: number}}
+
+Facet:
+  type: object
+  required: [key, name, count]
+  properties:
+    key: {type: string}
+    name: {type: string}
+    count: {type: integer}
+
+CompareRequest:
+  type: object
+  required: [product_ids]
+  properties:
+    product_ids: {type: array, minItems: 2, maxItems: 5, items: {type: string, format: uuid}}
+    object_type: {oneOf: [{$ref: './reference.yaml#/ObjectTypeKey'}, {type: "null"}]}
+    process_key: {type: [string, "null"], description: "Если задан — в таблицу добавляются оценки для процесса"}
+    project_id: {type: [string, "null"], format: uuid, description: "Если задан — проверки совместимости с объектом"}
+
+CompareResult:
+  type: object
+  required: [products, rows]
+  properties:
+    products: {type: array, items: {$ref: '#/Product'}}
+    rows:
+      type: array
+      items:
+        type: object
+        required: [spec_key, name, group, values]
+        properties:
+          spec_key: {type: string}
+          name: {type: string}
+          group: {$ref: '#/SpecGroup'}
+          unit: {type: [string, "null"]}
+          better: {type: string, enum: [higher, lower, none]}
+          values:
+            type: object
+            description: product_id → Spec
+            additionalProperties: {$ref: '#/Spec'}
+          best_product_id: {type: [string, "null"], format: uuid}
+    compatibility:
+      type: object
+      description: product_id → результат жёстких проверок относительно проекта (если передан project_id).
+      additionalProperties: {$ref: './analysis.yaml#/CandidateStatus'}
+
+# ---- Админ и обогащение ----
+
+ProductWrite:
+  type: object
+  required: [name, manufacturer_name, solution_type, status]
+  properties:
+    name: {type: string}
+    manufacturer_name: {type: string}
+    manufacturer_country: {type: string, default: "RU"}
+    manufacturer_region: {type: [string, "null"]}
+    solution_type: {type: string}
+    subtype: {type: [string, "null"]}
+    status: {$ref: '#/ProductStatus'}
+    trl: {type: [integer, "null"]}
+    market_potential: {type: [number, "null"]}
+    description: {type: [string, "null"]}
+    image_url: {type: [string, "null"]}
+    object_types: {type: array, items: {$ref: './reference.yaml#/ObjectTypeKey'}}
+    processes: {type: array, items: {type: string}}
+    badges: {type: array, items: {$ref: '#/Badge'}}
+    offers:
+      type: array
+      items:
+        type: object
+        required: [industry, scenario, price]
+        properties:
+          industry: {type: string}
+          scenario: {type: string}
+          price: {$ref: './common.yaml#/Money'}
+          cases_text: {type: [string, "null"]}
+          source: {$ref: './reference.yaml#/SourceWrite'}
+
+SpecWrite:
+  type: object
+  required: [key, value, source]
+  properties:
+    key: {type: string}
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}]}
+    unit: {type: [string, "null"]}
+    status: {type: string, enum: [confirmed, vendor_claim, assumption], default: confirmed}
+    source: {$ref: './reference.yaml#/SourceWrite'}
+    note: {type: [string, "null"]}
+
+SpecsBulkWrite:
+  type: object
+  required: [specs]
+  properties:
+    specs: {type: array, items: {$ref: '#/SpecWrite'}}
+
+CatalogImportResult:
+  type: object
+  required: [catalog_version, created, updated, offers_created, skipped, errors]
+  properties:
+    catalog_version: {type: string}
+    created: {type: integer}
+    updated: {type: integer}
+    offers_created: {type: integer, description: "Строки-дубли сохранены как отдельные предложения"}
+    skipped: {type: integer}
+    errors:
+      type: array
+      items:
+        type: object
+        properties: {row: {type: integer}, message: {type: string}}
+
+EnrichmentProposal:
+  type: object
+  required: [spec_key, name, proposed_value, source_url, confidence]
+  properties:
+    spec_key: {type: string}
+    name: {type: string}
+    proposed_value: {oneOf: [{type: number}, {type: string}, {type: boolean}]}
+    unit: {type: [string, "null"]}
+    current_value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    source_url: {type: string, format: uri}
+    snippet: {type: string, description: "Фрагмент страницы, из которого извлечено значение"}
+    confidence: {type: number, minimum: 0, maximum: 1}
+
+EnrichmentJob:
+  type: object
+  description: Заявка на обогащение ТТХ продукта из открытых источников. Результат — предложения, которые админ принимает или отклоняет.
+  required: [id, product_id, status, created_at, proposals]
+  properties:
+    id: {type: string, format: uuid}
+    product_id: {type: string, format: uuid}
+    product_name: {type: string}
+    status: {$ref: './common.yaml#/JobStatus'}
+    review_status: {type: string, enum: [pending, reviewed], default: pending}
+    urls_checked: {type: array, items: {type: string, format: uri}}
+    proposals: {type: array, items: {$ref: '#/EnrichmentProposal'}}
+    provider: {type: string, example: "gemini"}
+    created_at: {type: string, format: date-time}
+    finished_at: {type: [string, "null"], format: date-time}
+
+EnrichmentReview:
+  type: object
+  properties:
+    accept: {type: array, items: {type: string}, description: "spec_key, принимаемые как есть (статус confirmed или vendor_claim)"}
+    reject: {type: array, items: {type: string}}
+    edits:
+      type: array
+      items:
+        type: object
+        required: [spec_key, value]
+        properties:
+          spec_key: {type: string}
+          value: {oneOf: [{type: number}, {type: string}, {type: boolean}]}
+          unit: {type: [string, "null"]}
+    accepted_status: {type: string, enum: [confirmed, vendor_claim], default: vendor_claim}
+
+EnrichmentRequest:
+  type: object
+  properties:
+    urls: {type: array, items: {type: string, format: uri}, description: "Если пусто — ищем сайт производителя сами"}
+    spec_keys: {type: array, items: {type: string}, description: "Если пусто — все недостающие ключевые ТТХ"}

@@ -1,0 +1,6 @@
+# Настройки линтера контракта. Запуск: npx @redocly/cli lint docs/api/openapi.yaml
+extends: [recommended]
+rules:
+  no-empty-servers: off          # префикс /api/v1 намеренно в путях, servers не используем (см. README)
+  operation-4xx-response: off    # 401/403 описаны глобально в docs/CONTRACTS.md, не дублируем в каждом пути
+  info-license: off

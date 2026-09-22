@@ -11,18 +11,37 @@
 
 ## Текущая фаза
 
-Формируем продуктовое видение и принимаем ключевые решения (стек, основа кода, глубина симуляции).
-В репозитории есть прототип v0 (Vite/React + FastAPI/SimPy). Он **не является утверждённым направлением**: решение
-«сохраняем / переписываем» записывается в `docs/DECISIONS.md`. Актуальное состояние — `docs/STATUS.md`.
+Разработка (с 22.09). Каркас бэкенда готов (`backend/`: auth, RBAC, Problem, миграции, воркер, тесты, контрактный тест),
+дальше — сиды, расчётное ядро, симуляция по порядку из `docs/STATUS.md`. Решения — `docs/DECISIONS.md` (D-003…D-013).
+Прототип v0 не развиваем: его доменную логику переносим из `legacy/backend-v0/` с переработкой.
+
+## Обязательный ритуал каждой сессии
+
+Это относится к любому ассистенту и любому человеку, начинающему работу в репозитории, даже для «маленькой правки».
+
+**В начале сессии, до первого изменения кода:**
+1. Прочитать `docs/STATUS.md` и `docs/DECISIONS.md` целиком (они короткие).
+2. Прочитать раздел `docs/PRODUCT.md`, относящийся к задаче, и `docs/ENGINEERING.md`, если трогаешь код.
+3. Если задача касается API или модели данных — открыть `docs/CONTRACTS.md` и нужный файл в `docs/api/`.
+4. Если задача касается чисел (нормативы, формулы, ТТХ) — `docs/DATA.md`; каждое число обязано иметь источник.
+
+**В конце сессии:**
+1. Обновить `docs/STATUS.md` (сделано / дальше / долг) — коротко, без истории.
+2. Если принято решение — запись в `docs/DECISIONS.md`. Если изменён контракт — `docs/api/*` + «Изменения» в `docs/CONTRACTS.md`.
+3. Не оставлять расхождений между кодом и документами: либо чинишь код, либо правишь документ и говоришь об этом.
+
+Если документы противоречат друг другу: `DECISIONS.md` > `CONTRACTS.md`/`docs/api` > `PRODUCT.md` > остальное;
+ТЗ (`docs/CASE_BRIEF.md`, `case/task/`) главнее всех.
 
 ## Что читать и в каком порядке
 
 1. `docs/STATUS.md` — где мы сейчас, что дальше, риски (читать всегда).
 2. `docs/DECISIONS.md` — принятые решения и открытые вопросы (читать всегда).
 3. `docs/CASE_BRIEF.md` — выжимка ТЗ, дополнений и Q&A: требования, критерии, сроки.
-4. По задаче: `docs/PRODUCT.md` (видение, фичи, демо), `docs/DATA.md` (датасеты и ловушки),
-   `docs/MARKET.md` (рынок, конкуренты, бенчмарки цен), `docs/CONTRACTS.md` (доменная модель и API).
-5. Первоисточники — только когда нужна точная формулировка: `case/`.
+4. По задаче: `docs/PRODUCT.md` (видение, фичи, демо), `docs/CONTRACTS.md` + `docs/api/` (доменная модель и API),
+   `docs/ENGINEERING.md` (стандарт кода и архитектуры), `docs/DATA.md` (датасеты и ловушки),
+   `docs/MARKET.md` (рынок, конкуренты, бенчмарки), `docs/RESEARCH.md` (ML, исследования, промпты).
+5. Первоисточники — только когда нужна точная формулировка: `case/`. Результаты исследований — `research/`.
 
 ## Карта репозитория
 
@@ -37,9 +56,12 @@ case/                  материалы кейса — ТОЛЬКО ЧТЕНИ
   org/                 организационные инструкции ЛЦТ
   notes/               наши ранние исследования и брейнсторм с ChatGPT (НЕ официальное)
   chat/                сырой экспорт Telegram (в .gitignore: ПДн, пароль, инвайт)
-backend/               прототип v0: FastAPI + SQLAlchemy(SQLite) + SimPy
-src/                   прототип v0: Vite + React 19 + three.js
-template/              старый проект команды как референс стека (в .gitignore, свои секреты — не коммитить)
+  api/                 OpenAPI-контракт — источник истины по API (см. docs/CONTRACTS.md)
+research/              результаты исследований: сценарии ФЦ БАС, ТТХ роботов с источниками (входные данные, не истина)
+backend/               новый бэкенд: FastAPI + Postgres + Alembic + Redis/arq, uv; структура — docs/ENGINEERING.md §3
+frontend/              прототип v0: Vite + React 19 + three.js — фронтендер заменит каркасом из template/frontend
+legacy/backend-v0/     бэкенд прототипа v0 — только донор логики при переносе; удалить до сдачи (весь v0 — тег v0-prototype)
+template/              старый проект команды, основа нового каркаса (в .gitignore, свои секреты — не коммитить)
 ```
 
 ## Правила работы
@@ -72,16 +94,15 @@ template/              старый проект команды как рефе�
 Держи файлы сфокусированными: `STATUS.md` — до ~80 строк, историю не копить (она в git).
 Не дублируй содержимое между файлами — ставь ссылку.
 
-## Запуск прототипа v0
+## Запуск
 
 ```bash
-# backend (Python 3.11+)
-cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/uvicorn app.main:app --reload --port 8000   # Swagger: http://localhost:8000/docs
-.venv/bin/pytest -q                                   # 14 тестов
-
-# frontend (из корня)
-npm install && npm run dev                            # http://localhost:5173, /api → :8000
-
-docker compose up                                     # оба сервиса
+make up            # весь стек в docker: db, redis, миграции, API :8000 (/api/docs), воркер
+make infra         # только Postgres + Redis — для локальной разработки и тестов
+cd backend && uv sync && uv run uvicorn app.main:create_app --factory --reload --port 8000
+make check         # ruff + mypy + pytest (unit, integration на реальных Postgres/Redis, контракт) + линт контракта
+make migration m="add catalog"   # новая миграция (autogenerate + ручная проверка, downgrade обязателен)
 ```
+
+Демо-учётки (пароль `Demo12345!`, задаётся `RS_DEMO_PASSWORD`): `admin@roboscope.demo`, `user@roboscope.demo`,
+`vendor@roboscope.demo`. Прототип v0 фронта: `cd frontend && npm install && npm run dev` (с новым API не работает).

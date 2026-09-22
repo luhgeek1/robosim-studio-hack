@@ -1,0 +1,330 @@
+# Имитация: запрос, прогон, сводка KPI, таймлайн, журнал событий для 2D-плеера, тепловая карта.
+# Принцип: бэкенд считает, фронт воспроизводит. Журнал компактный — движение между узлами фронт интерполирует сам.
+
+SimulationMode:
+  type: string
+  description: normal — обычный день; peak — день с пиковым коэффициентом; custom — параметры заданы явно.
+  enum: [normal, peak, custom]
+
+DispatchPolicy:
+  type: string
+  enum: [nearest_idle, fifo, zone_affinity]
+
+RobotFailure:
+  type: object
+  required: [at_hour, duration_hours]
+  properties:
+    robot_index: {type: [integer, "null"], description: "Какой робот флота (0..N-1); null — случайный"}
+    at_hour: {type: number, example: 14}
+    duration_hours: {type: number, example: 2}
+
+SimulationRequest:
+  type: object
+  required: [mode]
+  properties:
+    mode: {$ref: '#/SimulationMode'}
+    duration_hours: {type: number, minimum: 1, maximum: 168, default: 24}
+    seed: {type: [integer, "null"], description: "Фиксированный seed = воспроизводимый прогон"}
+    volume_multiplier: {type: number, default: 1.0, example: 1.2, description: "Стресс-тест «+20 % объёма»"}
+    fleet_override:
+      type: array
+      description: Проверить другое количество роботов, не меняя сценарий (what-if в плеере).
+      items:
+        type: object
+        required: [process_key, count]
+        properties:
+          process_key: {type: string}
+          count: {type: integer, minimum: 0}
+          stations: {type: [integer, "null"]}
+    failures: {type: array, items: {$ref: '#/RobotFailure'}}
+    dispatch_policy: {$ref: '#/DispatchPolicy'}
+    record_events: {type: boolean, default: true, description: "false — только KPI, быстрее (для перебора N)"}
+    compare_baseline: {type: boolean, default: true, description: "Прогнать тем же движком ручной процесс для «SLA как сейчас»"}
+
+StateShare:
+  type: object
+  description: Доли времени по состояниям (сумма = 1).
+  properties:
+    moving: {type: number}
+    loading: {type: number}
+    unloading: {type: number}
+    charging: {type: number}
+    waiting: {type: number, description: "Ожидание в заторе, у станции или зарядки"}
+    idle: {type: number}
+    failed: {type: number}
+
+Bottleneck:
+  type: object
+  description: "Диагностика узкого места: что ограничивает результат и что с этим делать."
+  required: [resource_kind, explanation]
+  properties:
+    resource_kind: {type: string, enum: [fleet, aisle, dock, pick_station, charger, elevator, none]}
+    resource_id: {type: [string, "null"], example: "e17-18"}
+    resource_name: {type: [string, "null"], example: "Проход между стеллажами 3 и 4"}
+    utilization: {type: [number, "null"]}
+    explanation: {type: string, example: "Добавление роботов не поможет: станции отбора загружены на 96 %"}
+    suggestion: {type: [string, "null"], example: "Добавить 1 станцию отбора или сместить волну отгрузки на 1 час"}
+
+SimulationSummary:
+  type: object
+  required: [duration_hours, demand_total, completed, throughput_per_hour, sla, utilization, queue, vs_analytic]
+  properties:
+    duration_hours: {type: number}
+    demand_total: {type: integer}
+    completed: {type: integer}
+    completed_by_humans: {type: integer, description: "Задачи, ушедшие людям после превышения норматива ожидания"}
+    throughput_per_hour: {type: number}
+    sla:
+      type: object
+      required: [target_pct, achieved_pct]
+      properties:
+        kind: {type: string, enum: [lead_time, on_time_share]}
+        target_value: {type: number, example: 20}
+        target_unit: {type: string, example: "мин"}
+        target_pct: {type: number, example: 95}
+        achieved_pct: {type: number, example: 96.8}
+        late_count: {type: integer}
+        avg_lead_time_min: {type: number}
+        p95_lead_time_min: {type: number}
+    utilization:
+      type: object
+      required: [fleet, by_state]
+      properties:
+        fleet: {type: number, description: "Доля продуктивного времени флота"}
+        by_state: {$ref: '#/StateShare'}
+        per_robot:
+          type: array
+          items:
+            type: object
+            properties:
+              robot_id: {type: string}
+              utilization: {type: number}
+              tasks: {type: integer}
+              distance_km: {type: number}
+              charges: {type: integer}
+    queue:
+      type: object
+      properties: {avg: {type: number}, max: {type: integer}, at_end: {type: integer}, max_at_hour: {type: number}}
+    congestion:
+      type: object
+      properties:
+        total_wait_hours: {type: number}
+        top_edges:
+          type: array
+          items:
+            type: object
+            properties: {edge_id: {type: string}, name: {type: string}, wait_s: {type: number}, share: {type: number}}
+    chargers:
+      type: object
+      properties: {count: {type: integer}, utilization: {type: number}, queue_max: {type: integer}, energy_kwh: {type: number}}
+    stations:
+      type: object
+      properties: {count: {type: integer}, utilization: {type: number}, queue_max: {type: integer}}
+    bottleneck: {$ref: '#/Bottleneck'}
+    vs_analytic:
+      type: object
+      description: Сверка «расчёт против имитации» — блок, который должен быть на экране (ТЗ 3.6.2).
+      required: [analytic_throughput_per_hour, sim_throughput_per_hour, delta_pct, verdict]
+      properties:
+        analytic_throughput_per_hour: {type: number}
+        sim_throughput_per_hour: {type: number}
+        delta_pct: {type: number}
+        verdict: {type: string, enum: [confirmed, shortfall, excess]}
+        text: {type: string, example: "Имитация подтверждает расчёт: 131 палл/ч против 136 (−4 %), SLA выполнен"}
+    baseline:
+      type: object
+      description: Тот же день ручным процессом (если compare_baseline).
+      properties: {throughput_per_hour: {type: number}, sla_achieved_pct: {type: number}, avg_lead_time_min: {type: number}}
+    per_process:
+      type: array
+      items:
+        type: object
+        properties:
+          process_key: {type: string}
+          robots: {type: integer}
+          completed: {type: integer}
+          sla_achieved_pct: {type: number}
+          utilization: {type: number}
+
+SimulationRun:
+  type: object
+  required: [id, scenario_id, status, progress, config, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    scenario_id: {type: string, format: uuid}
+    calculation_id: {type: [string, "null"], format: uuid, description: "Расчёт, на числах которого запущена имитация"}
+    status: {$ref: './common.yaml#/JobStatus'}
+    progress: {type: number, minimum: 0, maximum: 1}
+    stage: {type: [string, "null"]}
+    config: {$ref: '#/SimulationRequest'}
+    versions: {$ref: './common.yaml#/VersionStamp'}
+    layout_id: {type: string, format: uuid}
+    layout_version: {type: integer}
+    seed: {type: integer}
+    fleet:
+      type: array
+      items:
+        type: object
+        properties: {process_key: {type: string}, product_name: {type: string}, count: {type: integer}, stations: {type: [integer, "null"]}}
+    summary: {oneOf: [{$ref: '#/SimulationSummary'}, {type: "null"}]}
+    duration_ms: {type: [integer, "null"]}
+    created_at: {type: string, format: date-time}
+    finished_at: {type: [string, "null"], format: date-time}
+    error: {oneOf: [{$ref: './common.yaml#/Problem'}, {type: "null"}]}
+
+SimulationList:
+  type: object
+  required: [items]
+  properties:
+    items: {type: array, items: {$ref: '#/SimulationRun'}}
+
+TimelinePoint:
+  type: object
+  required: [t_min, done, demand_cum, queue, sla_running_pct, utilization]
+  properties:
+    t_min: {type: number}
+    done: {type: integer}
+    demand_cum: {type: integer}
+    queue: {type: integer}
+    sla_running_pct: {type: number}
+    utilization: {type: number}
+    charging: {type: integer, description: "Роботов на зарядке"}
+    failed: {type: integer}
+    late_cum: {type: integer}
+
+SimulationTimeline:
+  type: object
+  required: [simulation_id, step_min, points]
+  properties:
+    simulation_id: {type: string, format: uuid}
+    step_min: {type: number, example: 5}
+    points: {type: array, items: {$ref: '#/TimelinePoint'}}
+
+SimEventType:
+  type: string
+  enum: [move, load, unload, wait, charge, fail, recover, idle, task_assigned, task_done, station_busy, human_takeover]
+
+SimEvent:
+  type: object
+  description: |
+    Событие журнала. move: робот идёт по узлам path, прибытие в момент eta; фронт интерполирует положение по рёбрам.
+    Остальные типы — состояние в узле на dur секунд.
+  required: [t, type]
+  properties:
+    t: {type: number, description: "Секунды от начала прогона"}
+    robot_id: {type: [string, "null"], example: "R03"}
+    type: {$ref: '#/SimEventType'}
+    path: {type: array, items: {type: string}, description: "Узлы маршрута (для move)"}
+    eta: {type: [number, "null"], description: "Момент прибытия (для move)"}
+    node: {type: [string, "null"]}
+    edge: {type: [string, "null"]}
+    task_id: {type: [string, "null"]}
+    process_key: {type: [string, "null"]}
+    dur: {type: [number, "null"], description: "Длительность состояния, с"}
+    reason: {type: [string, "null"], example: "aisle_busy"}
+    battery_pct: {type: [number, "null"]}
+    queue_after: {type: [integer, "null"]}
+
+SimulationReplay:
+  type: object
+  description: "Всё, что нужно 2D-плееру: планировка, роботы, отрезок журнала событий."
+  required: [simulation_id, layout, robots, total_seconds, from_s, to_s, events]
+  properties:
+    simulation_id: {type: string, format: uuid}
+    layout: {$ref: './projects.yaml#/Layout'}
+    robots:
+      type: array
+      items:
+        type: object
+        required: [id, process_key, product_name]
+        properties:
+          id: {type: string}
+          process_key: {type: string}
+          product_name: {type: string}
+          footprint_m: {type: array, items: {type: number}, description: "[длина, ширина]"}
+          speed_mps: {type: number}
+          home_node: {type: string}
+    total_seconds: {type: number}
+    from_s: {type: number}
+    to_s: {type: number}
+    next_from_s: {type: [number, "null"], description: "С какой секунды запрашивать следующую страницу"}
+    events: {type: array, items: {$ref: '#/SimEvent'}}
+    tasks_snapshot:
+      type: array
+      description: Очередь задач на момент from_s — чтобы плеер стартовал не с пустой сцены.
+      items:
+        type: object
+        properties: {task_id: {type: string}, process_key: {type: string}, from_node: {type: string}, to_node: {type: string}, created_at_s: {type: number}}
+
+SimulationHeatmap:
+  type: object
+  required: [simulation_id, edges, zones]
+  properties:
+    simulation_id: {type: string, format: uuid}
+    edges:
+      type: array
+      items:
+        type: object
+        required: [edge_id, traffic, wait_s]
+        properties:
+          edge_id: {type: string}
+          traffic: {type: integer, description: "Проходов роботов"}
+          wait_s: {type: number}
+          intensity: {type: number, minimum: 0, maximum: 1}
+    zones:
+      type: array
+      items:
+        type: object
+        properties: {zone_id: {type: string}, occupancy: {type: number}, queue_avg: {type: number}}
+    nodes:
+      type: array
+      items:
+        type: object
+        properties: {node_id: {type: string}, visits: {type: integer}, wait_s: {type: number}}
+
+FleetSweepRequest:
+  type: object
+  description: Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость».
+  required: [process_key]
+  properties:
+    process_key: {type: string}
+    from_count: {type: integer, minimum: 0}
+    to_count: {type: integer}
+    mode: {$ref: '#/SimulationMode'}
+    seed: {type: [integer, "null"]}
+
+FleetSweepResult:
+  type: object
+  required: [process_key, points, recommended_count]
+  properties:
+    process_key: {type: string}
+    points:
+      type: array
+      items:
+        type: object
+        required: [count, sla_achieved_pct, utilization, throughput_per_hour]
+        properties:
+          count: {type: integer}
+          sla_achieved_pct: {type: number}
+          utilization: {type: number}
+          throughput_per_hour: {type: number}
+          queue_max: {type: integer}
+          capex_rub: {type: [number, "null"]}
+          payback_years: {type: [number, "null"]}
+          simulation_id: {type: string, format: uuid}
+    recommended_count: {type: integer}
+    explanation: {type: string, example: "12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 %"}
+
+ProgressEvent:
+  type: object
+  description: "Сообщение SSE-потока прогресса (event: progress | done | error)."
+  required: [job_id, status, progress]
+  properties:
+    job_id: {type: string, format: uuid}
+    status: {$ref: './common.yaml#/JobStatus'}
+    progress: {type: number}
+    stage: {type: [string, "null"]}
+    partial:
+      type: object
+      description: Промежуточные KPI, чтобы показывать бегущие цифры до конца прогона.
+      properties: {t_min: {type: number}, done: {type: integer}, queue: {type: integer}, sla_running_pct: {type: number}}

@@ -1,0 +1,426 @@
+# Проекты: параметры объекта с происхождением, импорт, валидация, качество данных, спрос по процессам, планировка.
+
+ProjectStatus:
+  type: string
+  enum: [draft, ready, calculated, archived]
+
+DataQualitySummary:
+  type: object
+  description: Сводка происхождения параметров — «панель доверия» на экране объекта.
+  required: [score, counts]
+  properties:
+    score: {type: number, minimum: 0, maximum: 1, description: "Взвешенная доля подтверждённых и введённых значений среди влияющих на результат"}
+    counts:
+      type: object
+      description: Количество параметров по статусам происхождения.
+      additionalProperties: {type: integer}
+      example: {user: 18, imported: 20, default: 9, assumption: 4, missing: 1}
+
+Project:
+  type: object
+  required: [id, name, object_type, status, version, owner_id, created_at, updated_at, data_quality, scenarios_count]
+  properties:
+    id: {type: string, format: uuid}
+    name: {type: string, example: "РЦ Подмосковье, 20 000 м²"}
+    object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
+    status: {$ref: '#/ProjectStatus'}
+    version: {type: integer, description: "Растёт при изменении параметров и планировки; расчёты ссылаются на версию"}
+    owner_id: {type: string, format: uuid}
+    organization: {type: [string, "null"]}
+    notes: {type: [string, "null"]}
+    tags: {type: array, items: {type: string}}
+    created_at: {type: string, format: date-time}
+    updated_at: {type: string, format: date-time}
+    data_quality: {$ref: '#/DataQualitySummary'}
+    scenarios_count: {type: integer}
+    last_calculation_id: {type: [string, "null"], format: uuid}
+    recommended_scenario_id: {type: [string, "null"], format: uuid}
+    headline_metrics:
+      type: object
+      description: Короткая сводка для карточки в списке (если есть расчёт).
+      properties:
+        payback_years: {type: [number, "null"]}
+        capex_rub: {type: [number, "null"]}
+        effect_rub_year: {type: [number, "null"]}
+        verdict: {type: [string, "null"]}
+    is_demo: {type: boolean, default: false}
+
+ProjectList:
+  type: object
+  required: [items, page, page_size, total]
+  properties:
+    items: {type: array, items: {$ref: '#/Project'}}
+    page: {type: integer}
+    page_size: {type: integer}
+    total: {type: integer}
+
+ProjectCreate:
+  type: object
+  required: [name, object_type]
+  properties:
+    name: {type: string, minLength: 1, maxLength: 200}
+    object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
+    init:
+      type: object
+      description: Чем заполнить проект при создании.
+      properties:
+        mode: {type: string, enum: [blank, demo, copy], default: blank}
+        demo_key: {type: [string, "null"], example: "warehouse_demo_01"}
+        source_project_id: {type: [string, "null"], format: uuid}
+    notes: {type: [string, "null"]}
+    tags: {type: array, items: {type: string}}
+
+ProjectUpdate:
+  type: object
+  properties:
+    name: {type: string}
+    notes: {type: [string, "null"]}
+    tags: {type: array, items: {type: string}}
+    status: {type: string, enum: [draft, ready, archived]}
+
+ParamValidation:
+  type: object
+  required: [status]
+  properties:
+    status: {type: string, enum: [ok, warning, error, missing]}
+    code: {type: [string, "null"], example: "RANGE_EXCEEDED"}
+    message: {type: [string, "null"], example: "Значение 12 000 выше типичного диапазона 500–5 000 палл/сут"}
+    how_to_fix: {type: [string, "null"], example: "Проверьте единицы: возможно, указано значение в неделю"}
+
+ProjectParam:
+  type: object
+  description: Параметр объекта в проекте — значение, происхождение, валидация, история правок.
+  required: [key, name, group, value, provenance, validation]
+  properties:
+    key: {type: string, example: "aisle_width_m"}
+    name: {type: string, example: "Ширина рабочих проходов"}
+    group: {type: string, example: "site"}
+    value:
+      oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]
+    unit: {type: [string, "null"], example: "м"}
+    provenance: {$ref: './common.yaml#/Provenance'}
+    validation: {$ref: '#/ParamValidation'}
+    definition: {$ref: './reference.yaml#/ParameterDef'}
+    history_count: {type: integer, default: 0}
+    sensitivity_rank: {type: [integer, "null"], description: "Место в торнадо последнего расчёта, если есть"}
+
+ProjectParams:
+  type: object
+  required: [project_id, project_version, params]
+  properties:
+    project_id: {type: string, format: uuid}
+    project_version: {type: integer}
+    params: {type: array, items: {$ref: '#/ProjectParam'}}
+    data_quality: {$ref: '#/DataQualitySummary'}
+
+ParamUpsert:
+  type: object
+  required: [key, value]
+  properties:
+    key: {type: string}
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    unit: {type: [string, "null"], description: "Если отличается от базовой единицы — бэкенд конвертирует"}
+    note: {type: [string, "null"], description: "Комментарий к правке, попадает в историю"}
+
+ParamsBulkUpsert:
+  type: object
+  required: [params]
+  properties:
+    params: {type: array, minItems: 1, items: {$ref: '#/ParamUpsert'}}
+
+ParamHistoryItem:
+  type: object
+  required: [changed_at, changed_by, old_value, new_value, status]
+  properties:
+    changed_at: {type: string, format: date-time}
+    changed_by: {type: string}
+    old_value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    new_value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    status: {$ref: './common.yaml#/ProvenanceStatus'}
+    note: {type: [string, "null"]}
+
+ImportMappedItem:
+  type: object
+  required: [key, name, value, status, confidence]
+  properties:
+    key: {type: string}
+    name: {type: string}
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    unit: {type: [string, "null"]}
+    raw_field: {type: [string, "null"], example: "Рабочий коридор, мм"}
+    raw_value: {type: [string, "null"], example: "3200"}
+    status: {$ref: './common.yaml#/ProvenanceStatus'}
+    confidence: {type: number, minimum: 0, maximum: 1}
+    conflict_with_current:
+      type: object
+      description: Если в проекте уже есть другое значение.
+      properties:
+        current_value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+        current_status: {$ref: './common.yaml#/ProvenanceStatus'}
+
+ImportResult:
+  type: object
+  description: |
+    Результат разбора файла или текста. Ничего не применяется автоматически: фронт показывает таблицу,
+    пользователь снимает галочки и нажимает «Применить» (POST …/import/{import_id}/apply).
+  required: [import_id, source_kind, mapped, unmapped, warnings, applied]
+  properties:
+    import_id: {type: string, format: uuid}
+    source_kind: {type: string, enum: [xlsx_template, xlsx_freeform, csv, json, text_llm, pdf_llm]}
+    provider: {type: string, example: "rules", description: "rules — детерминированный разбор шаблона; gemini — ассистент"}
+    mapped: {type: array, items: {$ref: '#/ImportMappedItem'}}
+    unmapped:
+      type: array
+      description: Поля из файла, которые не удалось сопоставить.
+      items:
+        type: object
+        properties:
+          raw_field: {type: string}
+          raw_value: {type: string}
+          suggestion_key: {type: [string, "null"]}
+    warnings: {type: array, items: {type: string}}
+    applied: {type: boolean}
+
+ImportApply:
+  type: object
+  properties:
+    accept_keys: {type: array, items: {type: string}, description: "Если пусто — применить все mapped"}
+    overwrite_user_values: {type: boolean, default: false}
+
+SmartImportRequest:
+  type: object
+  required: [text]
+  properties:
+    text: {type: string, maxLength: 20000, example: "Склад 7 000 м², 24 сотрудника, два стеллажных ряда, проходы 2,8 м, 600 паллет в сутки…"}
+
+ValidationIssue:
+  type: object
+  required: [key, severity, code, message]
+  properties:
+    key: {type: string}
+    name: {type: string}
+    severity: {type: string, enum: [error, warning, info]}
+    code: {type: string, example: "REQUIRED_MISSING"}
+    message: {type: string}
+    how_to_fix: {type: [string, "null"]}
+    blocks: {type: array, items: {type: string, enum: [matching, calculation, simulation, report]}}
+
+ValidationReport:
+  type: object
+  required: [status, issues, can_match, can_calculate, can_simulate]
+  properties:
+    status: {type: string, enum: [ok, warnings, errors]}
+    issues: {type: array, items: {$ref: '#/ValidationIssue'}}
+    can_match: {type: boolean}
+    can_calculate: {type: boolean}
+    can_simulate: {type: boolean}
+
+DataQualityReport:
+  type: object
+  description: "Развёрнутая панель доверия: какие параметры откуда и насколько они важны для результата."
+  required: [summary, items]
+  properties:
+    summary: {$ref: '#/DataQualitySummary'}
+    items:
+      type: array
+      items:
+        type: object
+        required: [key, name, status, impact]
+        properties:
+          key: {type: string}
+          name: {type: string}
+          status: {$ref: './common.yaml#/ProvenanceStatus'}
+          impact: {type: string, enum: [high, medium, low, unknown], description: "По чувствительности последнего расчёта"}
+          source_title: {type: [string, "null"]}
+
+LaborGroup:
+  type: object
+  required: [key, name, headcount, salary_rub_month, cost_rub_year]
+  properties:
+    key: {type: string, example: "pickers"}
+    name: {type: string, example: "Отборщики"}
+    headcount: {type: number}
+    salary_rub_month: {type: number, description: "Оклад gross"}
+    cost_rub_year: {type: number, description: "Полные затраты работодателя (оклад × 12 × коэффициент начислений)"}
+    provenance: {$ref: './common.yaml#/Provenance'}
+
+ProcessDemand:
+  type: object
+  description: "«Где деньги»: спрос и текущая стоимость процесса. Строится из параметров до подбора."
+  required: [process_key, name, demand_unit, demand_per_day, peak_per_hour, avg_per_hour, robotizable]
+  properties:
+    process_key: {type: string, example: "order_picking"}
+    name: {type: string, example: "Отбор заказов"}
+    demand_unit: {$ref: './reference.yaml#/DemandUnit'}
+    demand_per_day: {type: number, example: 100000}
+    avg_per_hour: {type: number, example: 4545}
+    peak_per_hour: {type: number, example: 6818}
+    hourly_profile:
+      type: array
+      minItems: 24
+      maxItems: 24
+      items: {type: number}
+      description: Доли суточного объёма по часам (сумма = 1). Источник профиля — допущение с источником.
+    profile_provenance: {$ref: './common.yaml#/Provenance'}
+    current:
+      type: object
+      description: Как процесс выполняется сейчас.
+      properties:
+        labor_groups: {type: array, items: {$ref: '#/LaborGroup'}}
+        fte: {type: number}
+        cost_rub_year: {type: number}
+        productivity_per_hour: {type: [number, "null"], description: "На одного сотрудника"}
+        sla_now: {type: [number, "null"], description: "Доля вовремя, если оценима"}
+    share_of_labor_cost: {type: number, minimum: 0, maximum: 1}
+    robotizable: {type: boolean}
+    solution_types: {type: array, items: {type: string}}
+    notes: {type: array, items: {type: string}}
+
+ProcessDemandList:
+  type: object
+  required: [project_id, project_version, processes, total_labor_cost_rub_year]
+  properties:
+    project_id: {type: string, format: uuid}
+    project_version: {type: integer}
+    processes: {type: array, items: {$ref: '#/ProcessDemand'}}
+    total_labor_cost_rub_year: {type: number}
+    working_hours_per_day: {type: number, example: 22}
+    peak_factor: {type: number, example: 1.5}
+
+# ---- Планировка (2D-схема) ----
+
+ZoneKind:
+  type: string
+  enum: [receiving, storage, picking, packing, shipping, buffer, charging, corridor, station, elevator,
+         kitchen, laundry, pharmacy, lab, ward, waste, gate, apron, terminal, obstacle, office]
+
+NodeKind:
+  type: string
+  enum: [waypoint, dock_in, dock_out, pick_station, charger, elevator, pickup, dropoff, rack_face, parking]
+
+Point:
+  type: array
+  minItems: 2
+  maxItems: 2
+  items: {type: number}
+  description: "[x, y] в метрах, начало координат — левый верхний угол"
+
+Zone:
+  type: object
+  required: [id, kind, name, polygon]
+  properties:
+    id: {type: string}
+    kind: {$ref: '#/ZoneKind'}
+    name: {type: string, example: "Приёмка"}
+    polygon: {type: array, minItems: 3, items: {$ref: '#/Point'}}
+    capacity: {type: [integer, "null"], description: "Мест или единиц одновременно (доки, станции)"}
+    meta: {type: object, additionalProperties: true}
+
+Rack:
+  type: object
+  required: [id, polygon]
+  properties:
+    id: {type: string}
+    polygon: {type: array, items: {$ref: '#/Point'}}
+    levels: {type: integer, example: 6}
+    orientation: {type: string, enum: [horizontal, vertical]}
+    slots: {type: [integer, "null"], description: "Паллетомест"}
+
+LayoutNode:
+  type: object
+  required: [id, x, y, kind]
+  properties:
+    id: {type: string, example: "n17"}
+    x: {type: number}
+    y: {type: number}
+    kind: {$ref: '#/NodeKind'}
+    zone_id: {type: [string, "null"]}
+    capacity: {type: [integer, "null"], description: "Сколько роботов одновременно (станция, зарядка)"}
+    label: {type: [string, "null"]}
+
+LayoutEdge:
+  type: object
+  required: [id, from, to, length_m, width_m, capacity]
+  properties:
+    id: {type: string, example: "e17-18"}
+    from: {type: string}
+    to: {type: string}
+    length_m: {type: number}
+    width_m: {type: number, description: "Ширина прохода — участвует в жёстких проверках и заторах"}
+    capacity: {type: integer, description: "Сколько роботов одновременно на участке"}
+    one_way: {type: boolean, default: false}
+    kind: {type: string, enum: [main_aisle, rack_aisle, corridor, door, elevator_link, ramp], default: rack_aisle}
+    speed_limit_mps: {type: [number, "null"]}
+
+Layout:
+  type: object
+  description: |
+    Планировка объекта — единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
+    пользователь может подправить зоны и станции в простом редакторе. Не CAD.
+  required: [id, project_id, version, width_m, height_m, zones, nodes, edges, generated]
+  properties:
+    id: {type: string, format: uuid}
+    project_id: {type: string, format: uuid}
+    version: {type: integer}
+    width_m: {type: number, example: 125}
+    height_m: {type: number, example: 80}
+    background_image: {oneOf: [{$ref: './common.yaml#/FileRef'}, {type: "null"}]}
+    background_scale_m_per_px: {type: [number, "null"]}
+    zones: {type: array, items: {$ref: '#/Zone'}}
+    racks: {type: array, items: {$ref: '#/Rack'}}
+    nodes: {type: array, items: {$ref: '#/LayoutNode'}}
+    edges: {type: array, items: {$ref: '#/LayoutEdge'}}
+    generated: {type: boolean}
+    generator: {type: object, properties: {template: {type: string}, seed: {type: integer}, params: {type: object, additionalProperties: true}}}
+    stats:
+      type: object
+      description: Что вытекает из геометрии — попадает в расчёт цикла.
+      properties:
+        avg_route_m: {type: object, additionalProperties: {type: number}, example: {dock_in_to_storage: 68, storage_to_dock_out: 74}}
+        min_aisle_width_m: {type: number}
+        rack_slots_total: {type: integer}
+        chargers: {type: integer}
+        pick_stations: {type: integer}
+    updated_at: {type: string, format: date-time}
+
+LayoutGenerateRequest:
+  type: object
+  properties:
+    template: {type: [string, "null"], example: "warehouse_flow_through"}
+    seed: {type: [integer, "null"]}
+    overrides:
+      type: object
+      description: Переопределения генератора (число доков, ориентация стеллажей, число станций).
+      additionalProperties: true
+
+LayoutUpdate:
+  type: object
+  description: Частичное обновление — присланные массивы замещают целиком.
+  properties:
+    zones: {type: array, items: {$ref: '#/Zone'}}
+    racks: {type: array, items: {$ref: '#/Rack'}}
+    nodes: {type: array, items: {$ref: '#/LayoutNode'}}
+    edges: {type: array, items: {$ref: '#/LayoutEdge'}}
+    background_scale_m_per_px: {type: [number, "null"]}
+
+AuditEvent:
+  type: object
+  required: [id, at, actor, entity, action]
+  properties:
+    id: {type: string, format: uuid}
+    at: {type: string, format: date-time}
+    actor: {type: string, example: "mark@example.com"}
+    entity: {type: string, example: "project_param:aisle_width_m"}
+    action: {type: string, enum: [create, update, delete, import, calculate, simulate, export, override]}
+    before: {type: object, additionalProperties: true}
+    after: {type: object, additionalProperties: true}
+    note: {type: [string, "null"]}
+
+AuditList:
+  type: object
+  required: [items, page, page_size, total]
+  properties:
+    items: {type: array, items: {$ref: '#/AuditEvent'}}
+    page: {type: integer}
+    page_size: {type: integer}
+    total: {type: integer}

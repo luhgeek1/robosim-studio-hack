@@ -1,0 +1,197 @@
+# Справочники: типы объектов, параметры, процессы, типы решений, нормативы.
+# Всё это данные, а не код: новый тип объекта = новые записи справочников + шаблон планировки.
+
+ObjectTypeKey:
+  type: string
+  description: warehouse — склад (в полной глубине), airport, hospital — параметры и подбор; custom — свой объект.
+  enum: [warehouse, airport, hospital, custom]
+
+ObjectType:
+  type: object
+  required: [key, name, industry, depth, parameter_groups, processes]
+  properties:
+    key: {$ref: '#/ObjectTypeKey'}
+    name: {type: string, example: "Склад"}
+    description: {type: string}
+    industry: {type: string, example: "Торговля и услуги"}
+    depth:
+      type: string
+      description: full — расчёт, симуляция, отчёт; basic — параметры, подбор, аналитическая экономика без симуляции.
+      enum: [full, basic]
+    demo_projects:
+      type: array
+      items:
+        type: object
+        required: [key, name]
+        properties:
+          key: {type: string, example: "warehouse_demo_01"}
+          name: {type: string, example: "Склад 20 000 м², 180 сотрудников (данные организатора)"}
+          description: {type: string}
+    parameter_groups:
+      type: array
+      items: {$ref: '#/ParameterGroup'}
+    processes:
+      type: array
+      items: {$ref: '#/ProcessDef'}
+    layout_templates:
+      type: array
+      items: {type: string, example: "warehouse_cross_dock"}
+
+ParameterGroup:
+  type: object
+  required: [key, name, parameters]
+  properties:
+    key: {type: string, example: "operations"}
+    name: {type: string, example: "Операции"}
+    order: {type: integer}
+    parameters:
+      type: array
+      items: {$ref: '#/ParameterDef'}
+
+ParameterDef:
+  type: object
+  description: Описание одного параметра объекта — по нему фронт строит форму, валидацию и подсказки (ТЗ 4.5.3).
+  required: [key, name, type, required]
+  properties:
+    key: {type: string, example: "pallets_in_per_day"}
+    name: {type: string, example: "Приёмка паллет в сутки"}
+    group: {type: string, example: "operations"}
+    type: {type: string, enum: [number, integer, string, boolean, enum, dimensions]}
+    unit: {type: [string, "null"], example: "палл/сут"}
+    required: {type: boolean}
+    min: {type: [number, "null"], example: 500}
+    max: {type: [number, "null"], example: 5000}
+    step: {type: [number, "null"]}
+    enum_values:
+      type: array
+      items:
+        type: object
+        properties: {value: {type: string}, label: {type: string}}
+    default: {oneOf: [{$ref: './common.yaml#/PValue'}, {type: "null"}]}
+    hint: {type: string, example: "Среднее за рабочий день; пик задаётся отдельным коэффициентом"}
+    example: {type: [string, "null"], example: "1000"}
+    affects:
+      type: array
+      description: Какие процессы зависят от параметра — для подсветки «что пересчитается».
+      items: {type: string}
+    order: {type: integer}
+
+DemandUnit:
+  type: string
+  enum: [pallet, line, item, m2, trip, kg, bag, portion, container]
+
+SizingModel:
+  type: string
+  description: Каким расчётом определяется производительность робота для процесса.
+  enum: [transport_cycle, goods_to_person, area_coverage, station_throughput, tow_train, elevator_cycle]
+
+ProcessDef:
+  type: object
+  description: Процесс объекта, который можно роботизировать. Иерархия ТЗ 3.3.1 — отрасль → объект → процесс → тип решения → продукт.
+  required: [key, name, demand_unit, solution_types]
+  properties:
+    key: {type: string, example: "pallet_transport"}
+    name: {type: string, example: "Перемещение паллет (приёмка → хранение → отгрузка)"}
+    description: {type: string}
+    demand_unit: {$ref: '#/DemandUnit'}
+    demand_formula: {type: string, description: "Человекочитаемая формула спроса", example: "приёмка + отгрузка, палл/сут"}
+    sla:
+      type: object
+      properties:
+        kind: {type: string, enum: [lead_time, on_time_share, coverage]}
+        target_value: {type: number, example: 20}
+        unit: {type: string, example: "мин"}
+    labor_groups:
+      type: array
+      description: Группы персонала, чей труд замещает роботизация процесса.
+      items: {type: string, example: "forklift_operators"}
+    solution_types:
+      type: array
+      items: {type: string, example: "amr_transport"}
+    sizing_model: {$ref: '#/SizingModel'}
+
+SolutionType:
+  type: object
+  required: [key, name, sizing_model, capability_keys]
+  properties:
+    key: {type: string, example: "amr_transport"}
+    name: {type: string, example: "AMR — транспортный мобильный робот"}
+    description: {type: string}
+    sizing_model: {$ref: '#/SizingModel'}
+    capability_keys:
+      type: array
+      description: Ключи ТТХ, участвующие в жёстких проверках для этого типа.
+      items: {type: string, example: "payload_kg"}
+    processes: {type: array, items: {type: string}}
+    products_count: {type: integer}
+
+NormCategory:
+  type: string
+  enum: [capex, opex, labor, finance, operations, simulation, sizing, risk]
+
+Norm:
+  type: object
+  description: |
+    Норматив расчётной модели. ТЗ 3.5.1 запрещает недокументированные коэффициенты — каждый норматив имеет источник
+    и обоснование, и пользователь видит его в интерфейсе (ТЗ 3.2.5, 3.5.8).
+  required: [key, name, value, unit, category, source, editable_by_user]
+  properties:
+    key: {type: string, example: "amr_utilization_target"}
+    name: {type: string, example: "Целевая загрузка AMR"}
+    value: {type: number, example: 0.8}
+    unit: {type: string, example: "доля"}
+    category: {$ref: '#/NormCategory'}
+    range:
+      type: object
+      properties: {min: {type: number, example: 0.7}, max: {type: number, example: 0.85}}
+    source: {$ref: './common.yaml#/Source'}
+    rationale: {type: string, example: "Лист «Легенда» датасета организатора: загрузка AMR 70–85 %"}
+    affects: {type: array, items: {type: string}, description: "Ключи метрик, на которые влияет"}
+    editable_by_user: {type: boolean, description: "Можно ли переопределить в сценарии (ТЗ 3.5.3)"}
+    object_types: {type: array, items: {$ref: '#/ObjectTypeKey'}}
+
+NormSet:
+  type: object
+  required: [version, published_at, norms_count]
+  properties:
+    version: {type: string, example: "v1.2"}
+    published_at: {type: string, format: date-time}
+    published_by: {type: [string, "null"]}
+    notes: {type: string, example: "Обновлена ставка дисконтирования по ключевой ставке ЦБ 14 %"}
+    norms_count: {type: integer}
+    is_current: {type: boolean}
+
+NormSetCreate:
+  type: object
+  required: [notes, changes]
+  properties:
+    notes: {type: string}
+    changes:
+      type: array
+      items:
+        type: object
+        required: [key, value]
+        properties:
+          key: {type: string}
+          value: {type: number}
+          unit: {type: [string, "null"]}
+          source: {$ref: '#/SourceWrite'}
+          rationale: {type: string}
+
+SourceWrite:
+  type: object
+  required: [kind, title]
+  properties:
+    kind: {$ref: './common.yaml#/SourceKind'}
+    title: {type: string}
+    url: {type: [string, "null"], format: uri}
+    retrieved_at: {type: [string, "null"], format: date}
+    note: {type: [string, "null"]}
+
+Industry:
+  type: object
+  required: [key, name]
+  properties:
+    key: {type: string, example: "trade"}
+    name: {type: string, example: "Торговля и услуги"}
+    products_count: {type: integer}

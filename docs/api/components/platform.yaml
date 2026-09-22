@@ -1,0 +1,417 @@
+# Платформенные схемы: пользователи и роли, ключи API, отчёты, ассистент (LLM), демо для гостя,
+# меры господдержки, запрос вендорам, аналитика для ФЦ БАС, интеграции.
+
+# ---------------- Пользователи ----------------
+
+Role:
+  type: string
+  description: guest — без токена (каталог и демо); user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
+  enum: [guest, user, admin, vendor]
+
+User:
+  type: object
+  required: [id, email, name, role, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    email: {type: string, format: email}
+    name: {type: string}
+    role: {$ref: '#/Role'}
+    organization: {type: [string, "null"]}
+    position: {type: [string, "null"], example: "Директор по логистике"}
+    vendor_manufacturer_id: {type: [string, "null"], format: uuid}
+    created_at: {type: string, format: date-time}
+    last_login_at: {type: [string, "null"], format: date-time}
+    is_active: {type: boolean, default: true}
+
+RegisterRequest:
+  type: object
+  required: [email, password, name]
+  properties:
+    email: {type: string, format: email}
+    password: {type: string, minLength: 8, maxLength: 128}
+    name: {type: string, minLength: 1, maxLength: 120}
+    organization: {type: [string, "null"]}
+    position: {type: [string, "null"]}
+
+LoginRequest:
+  type: object
+  required: [email, password]
+  properties:
+    email: {type: string, format: email}
+    password: {type: string}
+
+TokenPair:
+  type: object
+  required: [access_token, token_type, expires_in]
+  properties:
+    access_token: {type: string}
+    refresh_token: {type: [string, "null"], description: "Для X-Client=web всегда null — токен в httpOnly-cookie"}
+    token_type: {type: string, default: bearer}
+    expires_in: {type: integer, description: "Секунд до истечения access-токена"}
+    user: {$ref: '#/User'}
+
+UserUpdate:
+  type: object
+  properties:
+    name: {type: string}
+    organization: {type: [string, "null"]}
+    position: {type: [string, "null"]}
+
+AdminUserUpdate:
+  type: object
+  properties:
+    role: {$ref: '#/Role'}
+    is_active: {type: boolean}
+    vendor_manufacturer_id: {type: [string, "null"], format: uuid}
+
+UserList:
+  type: object
+  required: [items, page, page_size, total]
+  properties:
+    items: {type: array, items: {$ref: '#/User'}}
+    page: {type: integer}
+    page_size: {type: integer}
+    total: {type: integer}
+
+ApiKey:
+  type: object
+  required: [id, name, prefix, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    name: {type: string, example: "1С:WMS, тестовый контур"}
+    prefix: {type: string, example: "rs_live_a1b2"}
+    scopes: {type: array, items: {type: string, enum: [projects:write, catalog:write, norms:write]}}
+    created_at: {type: string, format: date-time}
+    last_used_at: {type: [string, "null"], format: date-time}
+
+ApiKeyCreate:
+  type: object
+  required: [name, scopes]
+  properties:
+    name: {type: string}
+    scopes: {type: array, items: {type: string}}
+
+ApiKeyCreated:
+  allOf:
+    - $ref: '#/ApiKey'
+    - type: object
+      required: [secret]
+      properties:
+        secret: {type: string, description: "Показывается один раз"}
+
+# ---------------- Отчёты ----------------
+
+ReportFormat:
+  type: string
+  enum: [pdf, xlsx, docx, json]
+
+ReportSection:
+  type: string
+  enum: [summary, object_params, processes, matching, sizing, economics, comparison, sensitivity, monte_carlo, simulation, assumptions, sources, survey_priorities, next_steps]
+
+ReportRequest:
+  type: object
+  required: [format]
+  properties:
+    format: {$ref: '#/ReportFormat'}
+    scenario_ids: {type: array, items: {type: string, format: uuid}, description: "Если пусто — все сценарии проекта"}
+    sections: {type: array, items: {$ref: '#/ReportSection'}, description: "Если пусто — все"}
+    simulation_ids: {type: array, items: {type: string, format: uuid}}
+    visual_ids: {type: array, items: {type: string, format: uuid}, description: "Загруженные снимки имитации"}
+    title: {type: [string, "null"]}
+    live_formulas: {type: boolean, default: true, description: "Для xlsx — формулы, а не значения"}
+
+Report:
+  type: object
+  required: [id, project_id, format, status, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    project_id: {type: string, format: uuid}
+    format: {$ref: '#/ReportFormat'}
+    status: {$ref: './common.yaml#/JobStatus'}
+    file: {oneOf: [{$ref: './common.yaml#/FileRef'}, {type: "null"}]}
+    versions: {$ref: './common.yaml#/VersionStamp'}
+    sections: {type: array, items: {$ref: '#/ReportSection'}}
+    disclaimer: {type: string, example: "Предварительная оценка. Результат требует верификации при обследовании объекта."}
+    created_at: {type: string, format: date-time}
+    finished_at: {type: [string, "null"], format: date-time}
+
+ReportList:
+  type: object
+  required: [items]
+  properties:
+    items: {type: array, items: {$ref: '#/Report'}}
+
+VisualUpload:
+  type: object
+  required: [id, file, kind]
+  properties:
+    id: {type: string, format: uuid}
+    kind: {type: string, enum: [simulation_png, simulation_gif, chart_png]}
+    simulation_id: {type: [string, "null"], format: uuid}
+    file: {$ref: './common.yaml#/FileRef'}
+    caption: {type: [string, "null"]}
+
+# ---------------- Ассистент (LLM) ----------------
+
+AssistStatus:
+  type: object
+  required: [enabled, provider, fallback]
+  properties:
+    enabled: {type: boolean}
+    provider: {type: string, example: "gemini"}
+    model: {type: [string, "null"]}
+    fallback: {type: string, enum: [rules], description: "Что работает без LLM"}
+    features:
+      type: object
+      description: Какие функции доступны сейчас.
+      additionalProperties: {type: boolean}
+      example: {smart_import: true, explain: true, narrative: true, enrichment: true, assumption_review: true}
+
+Citation:
+  type: object
+  required: [kind, key, text]
+  properties:
+    kind: {type: string, enum: [metric, param, norm, spec, simulation, source]}
+    key: {type: string, example: "payback_years"}
+    text: {type: string, example: "Простой срок окупаемости: 41,2 / 15,8 = 2,61 года"}
+    url: {type: [string, "null"]}
+
+ExplainRequest:
+  type: object
+  required: [question]
+  properties:
+    question: {type: string, maxLength: 2000, example: "Почему 12 роботов, а не 10?"}
+    context:
+      type: object
+      properties:
+        calculation_id: {type: [string, "null"], format: uuid}
+        simulation_id: {type: [string, "null"], format: uuid}
+        scenario_id: {type: [string, "null"], format: uuid}
+    history:
+      type: array
+      description: Предыдущие реплики диалога (без хранения на сервере).
+      items:
+        type: object
+        properties: {role: {type: string, enum: [user, assistant]}, text: {type: string}}
+
+ExplainResponse:
+  type: object
+  required: [answer, citations, generated_by]
+  properties:
+    answer: {type: string}
+    citations: {type: array, items: {$ref: '#/Citation'}}
+    generated_by: {type: string, enum: [llm, rules]}
+    confidence: {type: [number, "null"]}
+    suggested_actions:
+      type: array
+      items:
+        type: object
+        properties:
+          label: {type: string, example: "Запустить перебор 10–14 роботов"}
+          action: {type: string, example: "fleet_sweep"}
+          payload: {type: object, additionalProperties: true}
+
+Narrative:
+  type: object
+  description: Текст для руководителя — executive summary и следующие шаги. Всегда есть fallback из шаблонов.
+  required: [executive_summary, key_findings, next_steps, generated_by, generated_at]
+  properties:
+    executive_summary: {type: string}
+    key_findings: {type: array, items: {type: string}}
+    risks_text: {type: array, items: {type: string}}
+    next_steps: {type: array, items: {type: string}}
+    generated_by: {type: string, enum: [llm, rules]}
+    generated_at: {type: string, format: date-time}
+
+AssumptionReview:
+  type: object
+  description: Проверка допущений сценария на правдоподобие относительно бенчмарков.
+  required: [flags, generated_by]
+  properties:
+    flags:
+      type: array
+      items:
+        type: object
+        required: [key, kind, message, severity]
+        properties:
+          key: {type: string}
+          kind: {type: string, enum: [param, norm]}
+          message: {type: string, example: "Зарплата отборщика 60 тыс. ₽ ниже рыночной для Москвы (103 тыс., IBC 2026)"}
+          severity: {type: string, enum: [info, warning]}
+          benchmark: {type: [string, "null"]}
+          source: {oneOf: [{$ref: './common.yaml#/Source'}, {type: "null"}]}
+    generated_by: {type: string, enum: [llm, rules]}
+
+# ---------------- Демо для гостя ----------------
+
+DemoProject:
+  type: object
+  required: [key, name, object_type, description, headline]
+  properties:
+    key: {type: string, example: "warehouse_demo_01"}
+    name: {type: string}
+    object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
+    description: {type: string}
+    headline:
+      type: object
+      properties:
+        robots_total: {type: integer}
+        capex_rub: {type: number}
+        payback_years: {type: number}
+        effect_rub_year: {type: number}
+        verdict: {type: string}
+    image_url: {type: [string, "null"]}
+
+DemoSnapshot:
+  type: object
+  description: Предрассчитанный демо-проект целиком, только чтение.
+  required: [demo, params, processes, matching, scenarios, comparison]
+  properties:
+    demo: {$ref: '#/DemoProject'}
+    params: {type: array, items: {$ref: './projects.yaml#/ProjectParam'}}
+    processes: {type: array, items: {$ref: './projects.yaml#/ProcessDemand'}}
+    matching: {$ref: './analysis.yaml#/MatchingResult'}
+    scenarios: {type: array, items: {$ref: './analysis.yaml#/Scenario'}}
+    comparison: {$ref: './analysis.yaml#/ComparisonTable'}
+    simulation: {oneOf: [{$ref: './simulation.yaml#/SimulationRun'}, {type: "null"}]}
+    layout: {oneOf: [{$ref: './projects.yaml#/Layout'}, {type: "null"}]}
+
+DemoWhatIfRequest:
+  type: object
+  description: Ограниченный what-if для гостя — несколько множителей без сохранения.
+  properties:
+    salary_multiplier: {type: number, minimum: 0.5, maximum: 2, default: 1}
+    volume_multiplier: {type: number, minimum: 0.5, maximum: 2, default: 1}
+    robot_price_multiplier: {type: number, minimum: 0.5, maximum: 2, default: 1}
+    horizon_years: {type: integer, minimum: 3, maximum: 10}
+    scenario_kind: {$ref: './analysis.yaml#/ScenarioKind'}
+
+DemoWhatIfResult:
+  type: object
+  required: [metrics, interpretation]
+  properties:
+    metrics: {$ref: './analysis.yaml#/Metrics'}
+    interpretation: {$ref: './analysis.yaml#/Interpretation'}
+    cashflow_yearly: {type: array, items: {$ref: './analysis.yaml#/CashflowPoint'}}
+
+# ---------------- Меры господдержки ----------------
+
+SupportMeasure:
+  type: object
+  required: [key, name, kind, eligible, source]
+  properties:
+    key: {type: string, example: "minpromtorg_cashback_20"}
+    name: {type: string, example: "Промышленный кешбэк Минпромторга"}
+    kind: {type: string, enum: [subsidy, loan, lease, tax, grant]}
+    description: {type: string}
+    eligible: {type: boolean}
+    eligibility_reason: {type: string, example: "Только для ОКВЭД раздела C; у объекта 52.10 — не применимо"}
+    conditions: {type: array, items: {type: string}}
+    estimated_benefit_rub: {type: [number, "null"]}
+    effect_on_metrics: {type: object, additionalProperties: {type: number}, example: {capex_rub: -8240000, payback_years: -0.5}}
+    source: {$ref: './common.yaml#/Source'}
+    as_of: {type: string, format: date}
+
+SupportMeasureList:
+  type: object
+  required: [items, context]
+  properties:
+    items: {type: array, items: {$ref: '#/SupportMeasure'}}
+    context:
+      type: object
+      properties:
+        okved: {type: [string, "null"]}
+        region: {type: [string, "null"]}
+        localization_pct: {type: [number, "null"]}
+        domestic_share_pct: {type: [number, "null"]}
+
+# ---------------- Запрос вендорам (RFQ) ----------------
+
+RfqRequest:
+  type: object
+  required: [scenario_id, product_ids]
+  properties:
+    scenario_id: {type: string, format: uuid}
+    product_ids: {type: array, items: {type: string, format: uuid}}
+    contact:
+      type: object
+      properties: {name: {type: string}, email: {type: string, format: email}, phone: {type: [string, "null"]}, organization: {type: string}}
+    message: {type: [string, "null"]}
+
+Rfq:
+  type: object
+  required: [id, project_id, scenario_id, products, document, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    project_id: {type: string, format: uuid}
+    scenario_id: {type: string, format: uuid}
+    products: {type: array, items: {$ref: './catalog.yaml#/Product'}}
+    document: {$ref: './common.yaml#/FileRef'}
+    payload:
+      type: object
+      description: Структурированный запрос — параметры объекта, требуемые ТТХ, количество, вопросы вендору.
+      additionalProperties: true
+    created_at: {type: string, format: date-time}
+
+# ---------------- Аналитика для ФЦ БАС ----------------
+
+AnalyticsOverview:
+  type: object
+  properties:
+    period: {type: object, properties: {from: {type: string, format: date}, to: {type: string, format: date}}}
+    projects_by_object_type: {type: object, additionalProperties: {type: integer}}
+    calculations_count: {type: integer}
+    avg_payback_years_by_object_type: {type: object, additionalProperties: {type: number}}
+    top_products_in_scenarios:
+      type: array
+      items: {type: object, properties: {product_id: {type: string}, name: {type: string}, count: {type: integer}}}
+    demand_by_industry: {type: object, additionalProperties: {type: integer}}
+    catalog_gaps:
+      type: array
+      description: Процессы, для которых чаще всего нет подходящих решений — сигнал для ФЦ БАС.
+      items: {type: object, properties: {object_type: {type: string}, process_key: {type: string}, no_fit_count: {type: integer}}}
+    rfq_count: {type: integer}
+
+# ---------------- Интеграции ----------------
+
+IntegrationProjectCreate:
+  type: object
+  description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи.
+  required: [name, object_type, params]
+  properties:
+    external_id: {type: [string, "null"], description: "Идентификатор объекта во внешней системе"}
+    name: {type: string}
+    object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
+    params:
+      type: array
+      items:
+        type: object
+        required: [key, value]
+        properties:
+          key: {type: string}
+          value: {oneOf: [{type: number}, {type: string}, {type: boolean}]}
+          unit: {type: [string, "null"]}
+    source_title: {type: string, example: "1С:WMS, выгрузка от 22.09.2026"}
+    auto_calculate: {type: boolean, default: false}
+
+SystemVersion:
+  type: object
+  required: [app_version, engine_version, catalog_version, norm_set_version]
+  properties:
+    app_version: {type: string}
+    engine_version: {type: string}
+    catalog_version: {type: string}
+    norm_set_version: {type: string}
+    llm_enabled: {type: boolean}
+    build_sha: {type: [string, "null"]}
+
+Health:
+  type: object
+  required: [status]
+  properties:
+    status: {type: string, enum: [ok, degraded, down]}
+    checks:
+      type: object
+      additionalProperties: {type: string, enum: [ok, fail, skipped]}
+      example: {database: ok, redis: ok, worker: ok, llm: skipped}

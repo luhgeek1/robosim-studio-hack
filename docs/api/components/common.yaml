@@ -1,0 +1,264 @@
+# Общие схемы: ошибки, пагинация, происхождение данных, деньги, фоновые задачи, версии.
+# Подключаются из paths/*.yaml как $ref: '../components/common.yaml#/<Имя>'.
+
+Problem:
+  type: object
+  description: |
+    Стандартный конверт ошибки (RFC 7807 + error_code). Возвращается на любой 4xx/5xx.
+    Фронт разбирает его одним парсером и маппит error_code → текст для пользователя.
+  required: [type, title, status, detail, error_code, instance, timestamp, request_id]
+  properties:
+    type: {type: string, example: "about:blank"}
+    title: {type: string, example: "Not Found"}
+    status: {type: integer, example: 404}
+    detail: {type: string, example: "Проект не найден или недоступен"}
+    error_code:
+      $ref: '#/ErrorCode'
+    instance: {type: string, example: "/api/v1/projects/2f4c…"}
+    timestamp: {type: string, format: date-time}
+    request_id: {type: string, example: "8f1c0d2e-…"}
+    details:
+      type: array
+      description: Детали валидации (для 422) или доменные подробности.
+      items:
+        type: object
+        properties:
+          loc: {type: array, items: {type: string}}
+          msg: {type: string}
+          type: {type: string}
+          code: {type: string, description: "Доменный код поля, например RANGE_EXCEEDED"}
+
+ErrorCode:
+  type: string
+  description: Закрытый список кодов ошибок. Новые коды добавляются только через правку контракта.
+  enum:
+    - BAD_REQUEST
+    - REQUEST_VALIDATION_ERROR
+    - UNAUTHORIZED
+    - TOKEN_EXPIRED
+    - FORBIDDEN
+    - NOT_FOUND
+    - CONFLICT
+    - RATE_LIMITED
+    - HTTP_ERROR
+    - INTERNAL_ERROR
+    - PROJECT_LOCKED
+    - PARAMS_INVALID
+    - IMPORT_FAILED
+    - FILE_TOO_LARGE
+    - UNSUPPORTED_FILE_TYPE
+    - OBJECT_TYPE_NOT_SUPPORTED
+    - NO_CANDIDATES
+    - SCENARIO_INCOMPLETE
+    - CALCULATION_FAILED
+    - SIMULATION_FAILED
+    - JOB_NOT_READY
+    - LLM_UNAVAILABLE
+    - DEMO_LIMIT
+
+ProvenanceStatus:
+  type: string
+  description: |
+    Откуда взялось значение и можно ли ему верить.
+    user — ввёл пользователь; imported — из файла пользователя; llm_suggested — предложил ассистент, не подтверждено;
+    default — значение по умолчанию из справочника (с источником); assumption — допущение команды с обоснованием;
+    derived — вычислено из других параметров; confirmed — подтверждено первичным источником (для ТТХ и нормативов);
+    vendor_claim — заявка производителя без независимого подтверждения; missing — данных нет.
+  enum: [user, imported, llm_suggested, default, assumption, derived, confirmed, vendor_claim, missing]
+
+SourceKind:
+  type: string
+  enum: [organizer_dataset, organizer_catalog, fcbas_scenario, vendor_site, open_source, regulation, team_assumption, user_input, llm_extracted, simulation]
+
+Source:
+  type: object
+  description: Источник значения. Показывается пользователю как бейдж и в отчёте в разделе «Источники».
+  required: [id, kind, title]
+  properties:
+    id: {type: string, format: uuid}
+    kind: {$ref: '#/SourceKind'}
+    title: {type: string, example: "Датасеты_хакатон.xlsx, лист «Легенда»"}
+    url: {type: [string, "null"], format: uri}
+    retrieved_at: {type: [string, "null"], format: date}
+    note: {type: [string, "null"], description: "Пояснение, например «цена с НДС, без доставки и ПНР»"}
+
+Provenance:
+  type: object
+  required: [status]
+  properties:
+    status: {$ref: '#/ProvenanceStatus'}
+    source: {oneOf: [{$ref: '#/Source'}, {type: "null"}]}
+    confidence: {type: [number, "null"], minimum: 0, maximum: 1, description: "Уверенность для imported/llm_suggested"}
+    raw_value: {type: [string, "null"], description: "Исходная строка из файла или текста, из которой извлечено значение"}
+    note: {type: [string, "null"]}
+    changed_by: {type: [string, "null"], description: "Кто последним менял (email или system)"}
+    changed_at: {type: [string, "null"], format: date-time}
+
+PValue:
+  type: object
+  description: Значение с единицей измерения и происхождением. Базовый кирпич всех данных платформы.
+  required: [value, provenance]
+  properties:
+    value:
+      oneOf:
+        - {type: number}
+        - {type: string}
+        - {type: boolean}
+        - {type: "null"}
+    unit: {type: [string, "null"], example: "м²"}
+    provenance: {$ref: '#/Provenance'}
+  example:
+    value: 20000
+    unit: "м²"
+    provenance:
+      status: default
+      source: {id: "6f1d2c3b-4a5e-4f60-9b7c-1d2e3f4a5b6c", kind: organizer_dataset, title: "Датасеты_хакатон.xlsx / Склад", retrieved_at: "2026-09-15"}
+
+Money:
+  type: object
+  required: [amount_rub]
+  properties:
+    amount_rub: {type: number, description: "Сумма в рублях (не в млн)"}
+    vat_included: {type: boolean, default: true}
+  example: {amount_rub: 2700000, vat_included: true}
+
+JobStatus:
+  type: string
+  enum: [queued, running, done, failed, cancelled]
+
+JobType:
+  type: string
+  enum: [simulation, monte_carlo, report, enrichment, import, calibration]
+
+Job:
+  type: object
+  description: |
+    Фоновая задача. Долгие операции (симуляция, Монте-Карло, отчёт, обогащение) возвращают Job сразу;
+    результат забирается по result_url или по SSE-потоку прогресса.
+  required: [id, type, status, progress, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    type: {$ref: '#/JobType'}
+    status: {$ref: '#/JobStatus'}
+    progress: {type: number, minimum: 0, maximum: 1}
+    stage: {type: [string, "null"], example: "Прогон пикового дня, час 14 из 24"}
+    created_at: {type: string, format: date-time}
+    started_at: {type: [string, "null"], format: date-time}
+    finished_at: {type: [string, "null"], format: date-time}
+    result_url: {type: [string, "null"], description: "Куда идти за результатом, когда status=done"}
+    error: {oneOf: [{$ref: '#/Problem'}, {type: "null"}]}
+
+VersionStamp:
+  type: object
+  description: Версии всего, от чего зависит результат. Позволяет воспроизвести расчёт (ТЗ 3.1.5).
+  required: [project_version, catalog_version, norm_set_version, engine_version, computed_at]
+  properties:
+    project_version: {type: integer, description: "Растёт при каждом изменении параметров или планировки"}
+    catalog_version: {type: string, example: "2026-09-22.3"}
+    norm_set_version: {type: string, example: "v1.2"}
+    engine_version: {type: string, example: "0.4.0"}
+    layout_version: {type: [integer, "null"]}
+    computed_at: {type: string, format: date-time}
+    inputs_hash: {type: [string, "null"], description: "Хэш всех входов; одинаковый хэш = одинаковый результат"}
+
+PageMeta:
+  type: object
+  required: [page, page_size, total]
+  properties:
+    page: {type: integer, minimum: 1}
+    page_size: {type: integer, minimum: 1, maximum: 200}
+    total: {type: integer, minimum: 0}
+
+Empty:
+  type: object
+  additionalProperties: false
+
+Id:
+  type: object
+  required: [id]
+  properties:
+    id: {type: string, format: uuid}
+
+FileRef:
+  type: object
+  required: [url, filename, content_type, size_bytes]
+  properties:
+    url: {type: string, format: uri}
+    filename: {type: string}
+    content_type: {type: string}
+    size_bytes: {type: integer}
+    expires_at: {type: [string, "null"], format: date-time}
+
+# Ответы, переиспользуемые во всех путях.
+responses:
+  BadRequest:
+    description: Некорректный запрос
+    content: {application/json: {schema: {$ref: '#/Problem'}}}
+  Unauthorized:
+    description: Нет или истёк токен
+    content: {application/json: {schema: {$ref: '#/Problem'}}}
+  Forbidden:
+    description: Недостаточно прав или чужой проект
+    content: {application/json: {schema: {$ref: '#/Problem'}}}
+  NotFound:
+    description: Не найдено
+    content: {application/json: {schema: {$ref: '#/Problem'}}}
+  Conflict:
+    description: Конфликт состояния
+    content: {application/json: {schema: {$ref: '#/Problem'}}}
+  ValidationError:
+    description: Ошибка валидации запроса
+    content: {application/json: {schema: {$ref: '#/Problem'}}}
+  RateLimited:
+    description: Слишком много запросов
+    content: {application/json: {schema: {$ref: '#/Problem'}}}
+  JobAccepted:
+    description: Задача принята, результат позже
+    content: {application/json: {schema: {$ref: '#/Job'}}}
+
+parameters:
+  Page:
+    name: page
+    in: query
+    schema: {type: integer, minimum: 1, default: 1}
+  PageSize:
+    name: page_size
+    in: query
+    schema: {type: integer, minimum: 1, maximum: 200, default: 20}
+  ProjectId:
+    name: project_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
+  ScenarioId:
+    name: scenario_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
+  CalculationId:
+    name: calculation_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
+  SimulationId:
+    name: simulation_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
+  ProductId:
+    name: product_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
+  JobId:
+    name: job_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
+  XClient:
+    name: X-Client
+    in: header
+    required: false
+    description: |
+      web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле.
+    schema: {type: string, enum: [web, mobile], default: web}

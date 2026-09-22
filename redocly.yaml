@@ -1,0 +1,6 @@
+# Lint config for docs/api/openapi.yaml.
+extends:
+  - recommended
+rules:
+  # /api/v1 is part of every path on purpose (mock, vite proxy and vercel rewrite share it), so no `servers`.
+  no-empty-servers: off

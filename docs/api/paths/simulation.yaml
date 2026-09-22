@@ -1,0 +1,130 @@
+# Имитация: запуск, статус, KPI, таймлайн, журнал событий для плеера, тепловая карта, перебор флота, снимки.
+
+scenarioSimulations:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+  get:
+    tags: [simulation]
+    operationId: listSimulations
+    summary: Прогоны сценария
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationList'}}}}
+  post:
+    tags: [simulation]
+    operationId: startSimulation
+    summary: Запустить имитацию (фоновая задача, до 60 с; прогресс по SSE)
+    description: |
+      Использует планировку проекта, состав сценария и параметры объекта. Возвращает SimulationRun со status=queued;
+      прогресс — `GET /jobs/{id}/stream` или опрос `GET /simulations/{id}`.
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationRequest'}}}
+    responses:
+      '202': {description: "Принято", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationRun'}}}}
+      '409': {description: "Нет планировки или сценарий не полон", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+scenarioFleetSweep:
+  post:
+    tags: [simulation]
+    operationId: runFleetSweep
+    summary: Перебор количества роботов — кривая N → SLA, загрузка, окупаемость (фоновая задача)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/simulation.yaml#/FleetSweepRequest'}}}
+    responses:
+      '202': {$ref: '../components/common.yaml#/responses/JobAccepted'}
+
+scenarioFleetSweepResult:
+  get:
+    tags: [simulation]
+    operationId: getFleetSweepResult
+    summary: Результат перебора флота
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ScenarioId'}
+      - {$ref: '../components/common.yaml#/parameters/JobId'}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/FleetSweepResult'}}}}
+      '409': {description: "Ещё считается", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+simulation:
+  parameters: [{$ref: '../components/common.yaml#/parameters/SimulationId'}]
+  get:
+    tags: [simulation]
+    operationId: getSimulation
+    summary: Состояние прогона и сводка KPI
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationRun'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+  delete:
+    tags: [simulation]
+    operationId: cancelSimulation
+    summary: Отменить или удалить прогон
+    responses:
+      '204': {description: "Отменён"}
+
+simulationTimeline:
+  get:
+    tags: [simulation]
+    operationId: getSimulationTimeline
+    summary: KPI по времени — графики очереди, SLA, загрузки
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/SimulationId'}
+      - {name: step_min, in: query, schema: {type: number, default: 5}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationTimeline'}}}}
+      '409': {description: "Прогон не завершён", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+simulationReplay:
+  get:
+    tags: [simulation]
+    operationId: getSimulationReplay
+    summary: Журнал событий для 2D-плеера (постранично по времени)
+    description: |
+      Плеер запрашивает окно `[from_s, to_s)`, интерполирует движение по рёбрам планировки и держит буфер на следующее окно.
+      Первый запрос — с from_s=0; в ответе есть `tasks_snapshot` для стартового состояния.
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/SimulationId'}
+      - {name: from_s, in: query, schema: {type: number, default: 0}}
+      - {name: to_s, in: query, schema: {type: number}, description: "По умолчанию from_s + 3600"}
+      - {name: robots, in: query, schema: {type: array, items: {type: string}}, style: form, explode: false, description: "Фильтр по роботам"}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationReplay'}}}}
+      '409': {description: "Прогон без записи событий или не завершён", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+simulationHeatmap:
+  get:
+    tags: [simulation]
+    operationId: getSimulationHeatmap
+    summary: Тепловая карта заторов и загрузки зон
+    parameters: [{$ref: '../components/common.yaml#/parameters/SimulationId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationHeatmap'}}}}
+
+simulationStream:
+  get:
+    tags: [simulation]
+    operationId: streamSimulation
+    summary: SSE-поток прогресса и бегущих KPI прогона
+    parameters: [{$ref: '../components/common.yaml#/parameters/SimulationId'}]
+    responses:
+      '200': {description: "Поток ProgressEvent", content: {text/event-stream: {schema: {type: string}}}}
+
+simulationVisuals:
+  post:
+    tags: [simulation]
+    operationId: uploadSimulationVisual
+    summary: Сохранить снимок или запись плеера для отчёта (ТЗ 3.7.4)
+    parameters: [{$ref: '../components/common.yaml#/parameters/SimulationId'}]
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [file, kind]
+            properties:
+              file: {type: string, format: binary}
+              kind: {type: string, enum: [simulation_png, simulation_gif]}
+              caption: {type: string}
+    responses:
+      '201': {description: "Сохранено", content: {application/json: {schema: {$ref: '../components/platform.yaml#/VisualUpload'}}}}

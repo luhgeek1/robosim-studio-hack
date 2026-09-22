@@ -1,0 +1,1188 @@
+# Seed-датасет ТТХ складских роботов из каталога организатора (ЛЦТ 2026, задача 1).
+# status: confirmed = страница/спецификация вендора; claim = пресса, интегратор, дилер или таблица организатора;
+#         inferred = выведено нами (указано как); missing = не найдено (value: null, число не придумываем).
+# retrieved = дата открытия страницы. Цены в рублях. Единицы указаны в unit.
+# Группы: A — AMR-транспорт, B — FMR/штабелёры/тягачи, C — G2P и хранение, D — комплектация и инвентаризация, E — уборка.
+
+# ---------------------------------------------------------------------------
+# Группа A. AMR-транспорт
+# ---------------------------------------------------------------------------
+- product: "Ronavi H1500"
+  manufacturer: "Ронави Роботикс"
+  catalog_price_mln_rub: 2.70
+  country: RU
+  vendor_url: "https://ronavi-robotics.ru/catalogue/h1500"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing, note: "на странице продукта не упоминается"}
+  specs:
+    payload_kg: {value: 1500, unit: kg, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "1044x654x380", unit: "mm LxWxH", source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 250, unit: kg, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 1.5, unit: "m/s", source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed, note: "кейс-страница вендора (Восток-Сервис) и robotrends указывают 1,3 м/с — противоречие внутри сайта вендора"}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "вендор: «приподнимает на несколько сантиметров», число не публикуется"}
+    navigation: {value: "QR-метки + SLAM (лидар)", unit: null, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: 3, unit: "±mm", source: "https://robob2b.ru/catalog/mobilnye-roboty/logisticheskiy-amr-robot-ronavi-h1500/", retrieved: "2026-09-22", status: claim, note: "каталог интегратора RoboB2B; то же значение в таблице организатора; на странице вендора не указано"}
+    battery_capacity: {value: 60, unit: "Ah (60000 mAh)", source: "https://robob2b.ru/catalog/mobilnye-roboty/logisticheskiy-amr-robot-ronavi-h1500/", retrieved: "2026-09-22", status: claim, note: "каталог интегратора RoboB2B"}
+    runtime_h: {value: 10, unit: h, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed, note: "«до 10 часов» при разряде с 80% до 20%; таблица организатора: 6 ч; RoboB2B: 3-5 ч — большой разброс, в расчётах брать консервативно"}
+    charging_time_min: {value: 18, unit: min, source: "https://ronavi-robotics.ru/media/kak-rabotaet-robotizirovannaya-zona-na-sklade-vostok-servis", retrieved: "2026-09-22", status: confirmed, note: "«быстрая зарядка ~18 минут» — кейс-страница вендора; RoboB2B: полный цикл 1,3 ч (~78 мин)"}
+    charging_type: {value: "opportunity (автоматическая зарядная станция Ronavi Charger)", unit: null, source: "https://ronavi-robotics.ru/catalogue", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: 750, unit: mm, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+    operating_temp_c: {value: "+5…+25", unit: "°C", source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed, note: "вендор явно указывает только нижнюю границу +5 °C (неотапливаемые склады); верхняя +25 °C — таблица организатора"}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+    wms_integration: {value: "Открытое API; совместимость с WMS/MES (1С, SAP, Oracle); собственная RMS Hyper RMS; в кейсе Восток-Сервис — 1С:WMS", unit: null, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+    wireless: {value: "Wi-Fi 5 ГГц 802.11 a/c/n", unit: null, source: "https://ronavi-robotics.ru/catalogue/h1500", retrieved: "2026-09-22", status: confirmed}
+  throughput_claims:
+    - {value: "80-100", unit: "паллет/ч", conditions: "условия не указаны; фигурирует в таблице организатора", source: "таблица организатора (case/dataset, см. docs/DATA.md)", status: claim}
+    - {value: "x5", unit: "скорость комплектации", conditions: "G2P-зона Восток-Сервис: 48 H1500 + ~1000 мобильных стеллажей, RMS 6.0, 1С:WMS; персонал сокращён в 2-3 раза; окупаемость 6 мес.", source: "https://ronavi-robotics.ru/media/kak-rabotaet-robotizirovannaya-zona-na-sklade-vostok-servis", status: claim}
+  commercial:
+    price_rub: "2 160 000 (от 100 шт.) — 2 700 000"
+    price_source: "https://ronavi-robotics.ru/catalogue/h1500"
+    rent_rub_month: null
+    raas_notes: "Три модели (ronavi-robotics.ru/pricing): покупка (инсталляционный платёж, гарантия 1 год, далее сервисный контракт); аренда (инсталляционный платёж, минимальный срок 2 месяца, обновления ПО и ТО включены, выкуп по остаточной стоимости, сезонное расширение парка); плата за действие (минимальный контракт ~30 месяцев, зарядные станции, ТО и поддержка включены, оплата по числу операций с минимальным порогом). Ставок в рублях на сайте нет"
+    source: "https://ronavi-robotics.ru/pricing"
+  references:
+    - {customer: "Восток-Сервис", count: 48, source: "https://ronavi-robotics.ru/media/kak-rabotaet-robotizirovannaya-zona-na-sklade-vostok-servis", note: "плюс ~1000 мобильных стеллажей; G2P"}
+  notes: "Каталожная цена 2,70 совпадает с верхней границей диапазона вендора. Скорость: 1,5 м/с (спецификация) против 1,3 м/с (кейс) — в расчётах брать консервативные 1,3 или помечать диапазон."
+
+- product: "Ronavi H2000"
+  manufacturer: "Ронави Роботикс"
+  catalog_price_mln_rub: 2.64
+  country: RU
+  vendor_url: "https://ronavi-robotics.ru/catalogue/h2000"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 2000, unit: kg, source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "1540x990x250", unit: "mm LxWxH", source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 320, unit: kg, source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 1.0, unit: "m/s", source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "QR-метки + SLAM", unit: null, source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 10, unit: h, source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed, note: "80% → 20%"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "opportunity (Ronavi Charger)", unit: null, source: "https://ronavi-robotics.ru/catalogue", retrieved: "2026-09-22", status: inferred, note: "общая зарядная станция линейки"}
+    min_aisle_width_mm: {value: 1190, unit: mm, source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+    wms_integration: {value: "API, интеграция с WMS/MES; Hyper RMS", unit: null, source: "https://ronavi-robotics.ru/catalogue/h2000", retrieved: "2026-09-22", status: confirmed}
+  throughput_claims: []
+  commercial:
+    price_rub: "2 805 000 (от 100 шт.) — 3 300 000"
+    price_source: "https://ronavi-robotics.ru/catalogue/h2000"
+    rent_rub_month: null
+    raas_notes: "См. Ronavi H1500 (общая тарифная политика вендора)"
+    source: "https://ronavi-robotics.ru/pricing"
+  references: []
+  notes: "Позиционируется как «гибкий конвейер» для крупногабаритных объектов (столы, тележки). Каталожная цена 2,64 НИЖЕ минимальной цены вендора 2,805 — расхождение, стоит пометить в реестре допущений."
+
+- product: "Ronavi M (подвоз стеллажей, G2P)"
+  manufacturer: "Ронави Роботикс"
+  catalog_price_mln_rub: 2.40
+  country: RU
+  vendor_url: "https://ronavi-robotics.ru/catalogue/m"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 1200, unit: kg, source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed, note: "старые публикации упоминают модель M500 на 500 кг"}
+    dimensions_mm: {value: "960x660x335", unit: "mm LxWxH", source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 200, unit: kg, source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 2.5, unit: "m/s", source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "QR-метки + SLAM", unit: null, source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: 20, unit: "±mm", source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed, note: "из FAQ на странице"}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 8, unit: h, source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed, note: "80% → 20%"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "opportunity (Ronavi Charger)", unit: null, source: "https://ronavi-robotics.ru/catalogue", retrieved: "2026-09-22", status: inferred}
+    min_aisle_width_mm: {value: 760, unit: mm, source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed, note: "FAQ рекомендует 800 мм"}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed}
+    wms_integration: {value: "Открытое API (1С, SAP, Oracle); RMS получает задания из WMS; интеграция под ключ", unit: null, source: "https://ronavi-robotics.ru/catalogue/m", retrieved: "2026-09-22", status: confirmed}
+  throughput_claims: []
+  commercial:
+    price_rub: "1 785 000 (от 100 шт.) — 2 400 000"
+    price_source: "https://ronavi-robotics.ru/catalogue/m"
+    rent_rub_month: null
+    raas_notes: "На странице: пилот, лизинг (RaaS) или покупка; цифр нет"
+    source: "https://ronavi-robotics.ru/catalogue/m"
+  references:
+    - {customer: "Восток-Сервис (G2P-зона)", count: null, source: "https://ronavi-robotics.ru/media/kak-rabotaet-robotizirovannaya-zona-na-sklade-vostok-servis", note: "в кейсе стеллажи возят H1500, а не M"}
+  notes: "Каталожная цена 2,40 = верхняя граница вендора."
+
+- product: "МОРОС AMR 100"
+  manufacturer: "МОРОС (морос.рф)"
+  catalog_price_mln_rub: 1.50
+  country: RU
+  vendor_url: "https://xn--l1aeahg.xn--p1ai/amr-100/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing, note: "prommoscow.info: «полностью отечественная разработка и производство» — реестр не упоминается"}
+  specs:
+    payload_kg: {value: 150, unit: kg, source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed, note: "prommoscow.info пишет «до 90 кг» и 47x45x30 см — вероятно, старая ревизия"}
+    dimensions_mm: {value: "600x400x220", unit: "mm LxWxH", source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 25, unit: kg, source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 3.0, unit: "m/s", source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed, note: "prommoscow.info: 0,8 м/с — противоречие; для расчётов лучше консервативное значение"}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "QR-метки, SLAM (лидар + энкодеры)", unit: null, source: "https://prommoscow.info/factories/mobile-robots-moros", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: 10, unit: "±mm", source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: "20 (средняя нагрузка) / 10 (максимальная)", unit: h, source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "автоматическая док-станция / ручная зарядка", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: "+5…+40", unit: "°C", source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: "IP54 и выше (опция)", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-100/", retrieved: "2026-09-22", status: confirmed}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен и аренды на сайте нет", source: "https://xn--l1aeahg.xn--p1ai/amr-100/"}
+  references: []
+  notes: "Сайт вендора — морос.рф (punycode xn--l1aeahg.xn--p1ai)."
+
+- product: "МОРОС AMR 800"
+  manufacturer: "МОРОС (морос.рф)"
+  catalog_price_mln_rub: 1.80
+  country: RU
+  vendor_url: "https://xn--l1aeahg.xn--p1ai/amr-800/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 800, unit: kg, source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "940x640x230", unit: "mm LxWxH", source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 150, unit: kg, source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 2.0, unit: "m/s", source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed, note: "prommoscow.info: 2,5 м/с"}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "QR-метки, SLAM", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: 10, unit: "±mm", source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    battery_capacity: {value: "LiFePO4, ёмкость не указана", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    runtime_h: {value: "24 (средняя нагрузка) / 14 (максимальная)", unit: h, source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "автоматическая док-станция / ручная зарядка, 1ф 220 В 10 А", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: "+5…+40", unit: "°C", source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: "IP54 и выше (опция)", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-800/", retrieved: "2026-09-22", status: confirmed}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен и аренды на сайте нет", source: "https://xn--l1aeahg.xn--p1ai/amr-800/"}
+  references: []
+  notes: ""
+
+- product: "МОРОС AMR 1500"
+  manufacturer: "МОРОС (морос.рф)"
+  catalog_price_mln_rub: 2.20
+  country: RU
+  vendor_url: "https://xn--l1aeahg.xn--p1ai/amr-1500/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 1500, unit: kg, source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed, note: "«два европаллета» (prommoscow.info)"}
+    dimensions_mm: {value: "1080x640x230", unit: "mm LxWxH", source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 185, unit: kg, source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 1.5, unit: "m/s", source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "QR-метки, SLAM", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: 10, unit: "±mm", source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: "20 (средняя нагрузка) / 10 (максимальная)", unit: h, source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "автоматическая док-станция / ручная зарядка", unit: null, source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: "+5…+40", unit: "°C", source: "https://xn--l1aeahg.xn--p1ai/amr-1500/", retrieved: "2026-09-22", status: confirmed}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен и аренды на сайте нет", source: "https://xn--l1aeahg.xn--p1ai/amr-1500/"}
+  references: []
+  notes: ""
+
+- product: "ДиКом DMR 1200"
+  manufacturer: "ДиКом (ДиКом Автоматизация; в каталоге — Диком-Сервис)"
+  catalog_price_mln_rub: 4.00
+  country: RU
+  vendor_url: null
+  registry_minpromtorg: {value: "входит в Реестр российского оборудования, сертификат Минпромторга России", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim, note: "формулировка дилера КИИТ; номер записи реестра не указан"}
+  specs:
+    payload_kg: {value: 1200, unit: kg, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+    dimensions_mm: {value: "1115x845x255", unit: "mm LxWxH", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 2.0, unit: "m/s", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "у DMR 600 — 60 мм, по аналогии вероятно так же"}
+    navigation: {value: "SLAM (лидар), без инфраструктуры", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: 5, unit: "±mm (±0,5°)", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 8, unit: h, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+    charging_time_min: {value: 120, unit: min, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim, note: "10% → 80%"}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: "перепад высот до 5 мм, зазор до 30 мм", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim, note: "12 месяцев"}
+    wms_integration: {value: "собственное ПО ДиКом; интеграция с WMS; дилер упоминает интеграцию с «Яндекс Роботикс»", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/", retrieved: "2026-09-22", status: claim}
+  throughput_claims: []
+  commercial:
+    price_rub: "от 4 250 000 (карточка КИИТ #1) / 4 000 000 (карточка КИИТ #2)"
+    price_source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/ ; https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-dikom-dmr-1200/"
+    rent_rub_month: null
+    raas_notes: null
+    source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-1200/"
+  references: []
+  notes: "Все ТТХ — с сайта дилера КИИТ (kiit.ru); на dikom.ru отдельная страница робота не найдена (см. README). Каталожная цена 4,00 совпадает с одной из карточек КИИТ."
+
+- product: "ДиКом DMR 600"
+  manufacturer: "ДиКом (в каталоге — Диком-Сервис)"
+  catalog_price_mln_rub: 3.75
+  country: RU
+  vendor_url: null
+  registry_minpromtorg: {value: "входит в Реестр российского оборудования, сертификат Минпромторга России", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+  specs:
+    payload_kg: {value: 600, unit: kg, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+    dimensions_mm: {value: "960x650x250", unit: "mm LxWxH", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim, note: "платформа 850x600 мм"}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 2.0, unit: "m/s", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim, note: "«≤ 2,0 м/с»"}
+    lift_height_mm: {value: 60, unit: mm, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+    navigation: {value: "SLAM + QR-метки", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: 5, unit: "±mm (±0,5°)", source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 8, unit: h, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+    charging_time_min: {value: 120, unit: min, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim, note: "«≤2 ч», 10% → 80%"}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: "уклон ≤5 %, ступень 5 мм, впадина 20 мм", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+    wms_integration: {value: "собственное ПО ДиКом; безопасность: 2D-лидар, аварийные кнопки, бампер", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/", retrieved: "2026-09-22", status: claim}
+  throughput_claims: []
+  commercial:
+    price_rub: "от 3 750 000 (карточка КИИТ #1) / 3 400 000 (карточка КИИТ #2)"
+    price_source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/ ; https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-dikom-dmr-600/"
+    rent_rub_month: null
+    raas_notes: null
+    source: "https://www.kiit.ru/product/avtonomnyy-mobilnyy-robot-amr-dikom-dmr-600/"
+  references: []
+  notes: "Каталожная цена 3,75 совпадает с карточкой КИИТ «от 3 750 000»."
+
+- product: "Сёмабот (AGV, линейка 50–2000 кг)"
+  manufacturer: "Семаргл (ООО «Семаргл», Санкт-Петербург)"
+  catalog_price_mln_rub: 2.50
+  country: RU
+  vendor_url: "https://semargl.pro/equipment/agv-roboty-syemabot/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: "50 / 400 / 1000 / 1500 / 2000 (линейка)", unit: kg, source: "https://semargl.pro/equipment/agv-roboty-syemabot/", retrieved: "2026-09-22", status: confirmed, note: "какая модель стоит 2,50 млн — в каталоге организатора не указано; mosregdata.ru пишет «до 6 т», CeMAT — «до 2000 кг»"}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "SLAM (техническое зрение) или по маякам/меткам (Data-matrix); разворот на месте", unit: null, source: "https://semargl.pro/equipment/agv-roboty-syemabot/", retrieved: "2026-09-22", status: confirmed, note: "mosregdata.ru: QR-коды + лазерные датчики + система предотвращения столкновений"}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 12, unit: h, source: "https://mosregdata.ru/article/obzor-robota-semabot", retrieved: "2026-09-22", status: claim, note: "«до 12 часов»"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "беспроводные зарядные станции", unit: null, source: "https://semargl.pro/equipment/agv-roboty-syemabot/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "система управления флотом DIACON RMS", unit: null, source: "https://mosregdata.ru/article/obzor-robota-semabot", retrieved: "2026-09-22", status: claim}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет", source: "https://semargl.pro/equipment/agv-roboty-syemabot/"}
+  references: []
+  notes: "Вендор публикует только линейку грузоподъёмности и тип навигации; для расчётов нужен запрос спецификации. Показывался на CeMAT Russia и Иннопром-2025."
+
+- product: "Cargo UNIT"
+  manufacturer: "Дронсхаб (DRONESHUB)"
+  catalog_price_mln_rub: 2.63
+  country: RU
+  vendor_url: "https://droneshub.ru/rovers/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 150, unit: kg, source: "https://campus.stt.ru/articles/roboty-uzhe-zdes-na-skladakh-i-v-dostavke/", retrieved: "2026-09-22", status: claim, note: "«не более 150 кг единовременно»; страница платформы DH:FRAME на droneshub.ru — 200 кг, дилер VVP Group для FRAME 150 — 150 кг"}
+    dimensions_mm: {value: "1200x800x500", unit: "mm LxWxH", source: "https://droneshub.ru/rovers/", retrieved: "2026-09-22", status: inferred, note: "значение платформы DH:FRAME; допущение: Cargo Unit — грузовая конфигурация FRAME. У дилера для FRAME 150: 1300x1000x600"}
+    weight_kg: {value: 110, unit: kg, source: "https://droneshub.ru/rovers/", retrieved: "2026-09-22", status: inferred, note: "DH:FRAME"}
+    max_speed_mps: {value: 8.3, unit: "m/s (30 км/ч)", source: "https://droneshub.ru/rovers/", retrieved: "2026-09-22", status: inferred, note: "DH:FRAME 30 км/ч; дилер для FRAME 150 — 20 км/ч; для склада в помещении неприменимо, нужна ограниченная скорость"}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "GPS, загружаемая карта, навигационная разметка, визуальные маркеры; лидары, сонары, CV", unit: null, source: "https://droneshub.ru/rovers/", retrieved: "2026-09-22", status: inferred, note: "DH:FRAME; уличная платформа, indoor-навигация без GPS не описана"}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: "LiFePO4 48 В 50 А·ч (~2,4 кВт·ч)", unit: null, source: "https://vvpgroup.com/robotics/droneshub/frame", retrieved: "2026-09-22", status: claim, note: "дилер VVP Group, платформа FRAME 150"}
+    runtime_h: {value: 6, unit: h, source: "https://vvpgroup.com/robotics/droneshub/frame", retrieved: "2026-09-22", status: claim, note: "запас хода 40 км (дилер) / 30 км (droneshub.ru)"}
+    charging_time_min: {value: 120, unit: min, source: "https://droneshub.ru/rovers/", retrieved: "2026-09-22", status: inferred, note: "DH:FRAME «2 часа»"}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: "клиренс 180 мм, полный привод 4x4 (уличная платформа)", unit: null, source: "https://droneshub.ru/rovers/", retrieved: "2026-09-22", status: inferred}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет", source: "https://droneshub.ru/rovers/"}
+  references:
+    - {customer: "Международный учебный центр беспилотной авиации (Максима Кондратьева)", count: null, source: "https://campus.stt.ru/articles/roboty-uzhe-zdes-na-skladakh-i-v-dostavke/"}
+  notes: "Отдельной страницы «Cargo Unit» на droneshub.ru не найдено; вендор с 2016 г. делает уличные роверы (DH:FRAME 150/400). Для складского сценария — самый слабый кандидат по подтверждённым ТТХ; страница «грузовые мобильные роботы» — чисто маркетинговая."
+
+# ---------------------------------------------------------------------------
+# Группа B. FMR: автономные погрузчики, штабелёры, тягачи
+# ---------------------------------------------------------------------------
+- product: "ДиКом DMR Carrier P (FMR робот-штабелёр)"
+  manufacturer: "ДиКом (в каталоге — Диком-Сервис)"
+  catalog_price_mln_rub: 4.30
+  country: RU
+  vendor_url: null
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing, note: "на карточке Carrier P у дилера не указано (в отличие от DMR 600/1200)"}
+  specs:
+    payload_kg: {value: 1500, unit: kg, source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/", retrieved: "2026-09-22", status: claim}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 1.5, unit: "m/s", source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/", retrieved: "2026-09-22", status: claim}
+    lift_height_mm: {value: 1600, unit: mm, source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/", retrieved: "2026-09-22", status: claim, note: "для EUR-паллет"}
+    navigation: {value: "SLAM без инфраструктуры: лидар + 3D-камера; два защитных лидара", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 10, unit: h, source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/", retrieved: "2026-09-22", status: claim, note: "«до 10 часов»"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "«компактное шасси с малым радиусом разворота» — числа нет"}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "интеграция с WMS и 1С; собственное ПО ДиКом", unit: null, source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/", retrieved: "2026-09-22", status: claim}
+  throughput_claims: []
+  commercial:
+    price_rub: "4 300 000 (с НДС)"
+    price_source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/"
+    rent_rub_month: null
+    raas_notes: null
+    source: "https://www.kiit.ru/product/avtonomnyy-robot-shtabeler-dikom-dmr-carrier-p-fmr-robot-dlya-pallet-1-5-t/"
+  references: []
+  notes: "Цена дилера совпадает с каталожной 4,30. У КИИТ есть также «DMR 300 Carrier B» за 10,8 млн (вероятно, соответствует AS-RS B в каталоге организатора — проверить)."
+
+- product: "АК-2000-2 (FMR, напольная перевозка паллет)"
+  manufacturer: "Автомакон (Автомакон Роботикс)"
+  catalog_price_mln_rub: 2.94
+  country: "RU (бренд/интегратор); производитель шасси на сайте не раскрыт"
+  vendor_url: "https://agv.automacon.ru/catalog"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 2000, unit: kg, source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "1980x1065x2285", unit: "mm LxWxH", source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 2.6, unit: "m/s", source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: 175, unit: mm, source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed, note: "напольный (низкий подъём), не штабелирование"}
+    navigation: {value: "3D лазерный SLAM; автономный захват груза, распознавание нескольких паллет", unit: null, source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: "LiFePO4 24 В 225 А·ч (≈5,4 кВт·ч — пересчёт наш)", unit: null, source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed}
+    runtime_h: {value: "6-8", unit: h, source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed}
+    charging_time_min: {value: 120, unit: min, source: "https://agv.automacon.ru/catalog", retrieved: "2026-09-22", status: confirmed}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing, note: "в каталоге есть раздел ПО (/catalog#soft), детали не извлечены"}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен в каталоге нет", source: "https://agv.automacon.ru/catalog"}
+  references:
+    - {customer: "X5 Group (РЦ)", count: 67, source: "каталог организатора (case/dataset, см. docs/DATA.md)", note: "открытого пресс-подтверждения в этой сессии не искали"}
+  notes: "В линейке Автомакон также AK-C (штабелёр до 3,5 м / 1,4 т), AK-R1, AK-G, AK-XSC, AK-XQC201E, AK-XNA, AK-LF5. Индексы вида XQC201E похожи на OEM-платформы — происхождение шасси стоит уточнить у вендора."
+
+- product: "Робот-штабелёр RoboCV"
+  manufacturer: "Робосиви (RoboCV)"
+  catalog_price_mln_rub: 2.50
+  country: "RU (комплект автономности); базовый штабелёр — серийная машина, модель не указана"
+  vendor_url: "https://robocv.ru/robot-shtabelyor"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 1400, unit: kg, source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "2100x1100x3000", unit: "mm LxWxH", source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 1200, unit: kg, source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 2.0, unit: "m/s", source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: 7000, unit: mm, source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed, note: "операции выше 1 м — только в зонах без людей"}
+    navigation: {value: "безынфраструктурная (компьютерное зрение / лидар) — тип на странице не назван явно", unit: null, source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: 30, unit: "±mm", source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed, note: "«точность навигации 3 см»; допуск положения паллеты ±20 см, ±15°; мин. зазор между паллетами 10 см"}
+    battery_capacity: {value: "АКБ Li-Ion / Pb (ёмкость не указана)", unit: null, source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing, note: "режим 24/7 за счёт замены/подзарядки АКБ"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "замена АКБ / подзарядка", unit: null, source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: 1900, unit: mm, source: "https://robocv.ru/robot-shtabelyor", retrieved: "2026-09-22", status: confirmed, note: "для движения с максимальной скоростью; минимальная ширина для разворота 2900 мм"}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен и аренды на странице нет", source: "https://robocv.ru/robot-shtabelyor"}
+  references: []
+  notes: "У RoboCV есть также робот-ричтрак (robocv.ru/robot-richtrak). Цена 2,50 в каталоге организатора выглядит заниженной для штабелёра 1,4 т с подъёмом 7 м (ср. DMR Carrier P 4,30 при 1,6 м)."
+
+- product: "Робот-тягач RoboCV"
+  manufacturer: "Робосиви (RoboCV)"
+  catalog_price_mln_rub: 2.50
+  country: "RU (комплект автономности); базовый тягач — серийная машина"
+  vendor_url: "https://robocv.ru/robot-tyagach"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 5000, unit: "kg (буксируемая масса)", source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "1600x800x2200", unit: "mm LxWxH", source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 1220, unit: kg, source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 2.2, unit: "m/s", source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо (тягач)"}
+    navigation: {value: "безынфраструктурная, тип не назван явно", unit: null, source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: 50, unit: "±mm", source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed}
+    battery_capacity: {value: "АКБ Li-Ion / Pb (ёмкость не указана)", unit: null, source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing, note: "режим 24/7"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "замена АКБ / подзарядка", unit: null, source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: 2900, unit: mm, source: "https://robocv.ru/robot-tyagach", retrieved: "2026-09-22", status: confirmed, note: "и для разворота без прицепа, и для максимальной скорости"}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен и аренды на странице нет", source: "https://robocv.ru/robot-tyagach"}
+  references: []
+  notes: ""
+
+- product: "Беспилотный погрузчик МФТИ (программно-аппаратный комплекс автономизации)"
+  manufacturer: "МФТИ (Долгопрудный)"
+  catalog_price_mln_rub: 3.00
+  country: RU
+  vendor_url: "http://ai.mipt.ru/news/tpost/n0tcjtjoy1-avtonomnii-sklad-inzheneri-mfti-razrabot"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "комплекс ставится на серийные электротележки/погрузчики — грузоподъёмность определяется базовой машиной"}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "камера, читающая круглые оптические метки на потолке (код Хэмминга); работа в общем с людьми пространстве", unit: null, source: "https://lognews.ru/mfti-razrabotal-programmno-apparatnyy-kompleks-dlya-bespilotnoy-raboty-skladskikh-pogruzchikov", retrieved: "2026-09-22", status: claim, note: "по выдаче поиска (lognews.ru, cnews.ru 12.01.2026, regions.ru); полигон — макет 1:10 склада 600 м² с потолком ~12 м"}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "утверждение разработчика: навигация «в несколько раз дешевле мировых аналогов»; цен нет", source: "https://lognews.ru/mfti-razrabotal-programmno-apparatnyy-kompleks-dlya-bespilotnoy-raboty-skladskikh-pogruzchikov"}
+  references:
+    - {customer: "ВкусВилл (пилот)", count: null, source: "https://lognews.ru/mfti-razrabotal-programmno-apparatnyy-kompleks-dlya-bespilotnoy-raboty-skladskikh-pogruzchikov"}
+    - {customer: "X5 Group (пилот)", count: null, source: "https://lognews.ru/mfti-razrabotal-programmno-apparatnyy-kompleks-dlya-bespilotnoy-raboty-skladskikh-pogruzchikov"}
+    - {customer: "СберЛогистика (пилот)", count: null, source: "https://lognews.ru/mfti-razrabotal-programmno-apparatnyy-kompleks-dlya-bespilotnoy-raboty-skladskikh-pogruzchikov"}
+    - {customer: "НижБел (первый коммерческий контракт)", count: null, source: "https://lognews.ru/mfti-razrabotal-programmno-apparatnyy-kompleks-dlya-bespilotnoy-raboty-skladskikh-pogruzchikov"}
+  notes: "Это не серийный робот, а комплект автономизации (retrofit) для стандартных складских электротележек. Числовых ТТХ в открытых источниках нет; для подбора нужны параметры базовой машины. См. также zanauku.ru/2024/08/07 (робот-кладовщик МФТИ)."
+
+- product: "MULE (автономный транспортировщик паллет)"
+  manufacturer: "СМ Роботикс (SM Robotics, Москва)"
+  catalog_price_mln_rub: 3.00
+  country: RU
+  vendor_url: "https://sm-robotics.ru/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 1500, unit: kg, source: "https://sm-robotics.ru/", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 1.3, unit: "m/s", source: "https://sm-robotics.ru/", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "SLAM-навигация; перестроение маршрута на лету, обнаружение людей/препятствий, E-Stop", unit: null, source: "https://sm-robotics.ru/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "автоматическая зарядка", unit: null, source: "https://sm-robotics.ru/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "система управления флотом M-CONTROL: интеграция с WMS, маршрутизация, мониторинг, статистика и рекомендации", unit: null, source: "https://sm-robotics.ru/", retrieved: "2026-09-22", status: confirmed}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет", source: "https://sm-robotics.ru/"}
+  references:
+    - {customer: "RFL (логистический оператор), склад — с конца февраля 2026", count: null, source: "https://www.tadviser.ru/index.php/Статья:Складские_роботы", note: "по выдаче поиска, страница не открывалась"}
+  notes: "Сайт вендора даёт только 4 параметра; габариты/АКБ/автономность запрашивать."
+
+- product: "Беспилотный тягач Cognitive Pilot (багажный/грузовой)"
+  manufacturer: "Cognitive Pilot (ООО «Когнитив Роботикс», СП Сбера и Cognitive Technologies)"
+  catalog_price_mln_rub: 4.00
+  country: RU
+  vendor_url: "https://cognitivepilot.com/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 3000, unit: "kg (буксируемая масса тележек, «не менее 3 т»)", source: "https://www.dp.ru/a/2026/04/01/kollektivnij-razum-robota", retrieved: "2026-09-22", status: claim}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 4.2, unit: "m/s (≤15 км/ч)", source: "https://www.dp.ru/a/2026/04/01/kollektivnij-razum-robota", retrieved: "2026-09-22", status: claim}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо (тягач)"}
+    navigation: {value: "компьютерное зрение + глубокое обучение, без наземной инфраструктуры (магнитных лент, маяков); обмен траекториями между тягачами («роевой» ИИ)", unit: null, source: "https://www.dp.ru/a/2026/04/01/kollektivnij-razum-robota", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing, note: "уличная эксплуатация на перроне, зимой — см. также снегоуборочная функция в пресс-релизах"}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "сумма сделки с Пулково не раскрывается", source: "https://www.dp.ru/a/2026/04/01/kollektivnij-razum-robota"}
+  references:
+    - {customer: "Аэропорт Пулково", count: 45, source: "https://www.dp.ru/a/2026/04/01/kollektivnij-razum-robota", note: "«45 беспилотных тягачей» до конца 2026 (dp.ru); tourdom/fomag: «до 45 роботов до конца 2028», включая уборку снега"}
+  notes: "Продукт аэропортовый (перрон), не складской; на сайте cognitivepilot.com отдельной страницы тягача не найдено (сайт про агро). ТТХ — только из прессы."
+
+- product: "EVOCARGO N1 (автономный электрогрузовик)"
+  manufacturer: "Эвокарго (Evocargo, Москва)"
+  catalog_price_mln_rub: 6.00
+  country: RU
+  vendor_url: "https://evocargo.com/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 2000, unit: "kg (6 европаллет)", source: "https://www.ixbt.com/news/2024/03/29/v-rossii-predstavili-avtonomnyj-jelektricheskij-gruzovik-evocargo-n1-otechestvennoj-razrabotki.html", retrieved: "2026-09-22", status: claim, note: "«6 европаллет» — таблица организатора; на evocargo.com число не указано"}
+    dimensions_mm: {value: "5000x1800x2200", unit: "mm LxWxH", source: "https://www.connect-wit.ru/mobilnye-roboty-evocargo-v-rossii-nachali-serijnyj-vypusk-promyshlennyh-bespilotnyh-avtomobilej.html", retrieved: "2026-09-22", status: claim, note: "по выдаче поиска, страница не открывалась"}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 6.9, unit: "m/s (до 25 км/ч)", source: "https://www.connect-wit.ru/mobilnye-roboty-evocargo-v-rossii-nachali-serijnyj-vypusk-promyshlennyh-bespilotnyh-avtomobilej.html", retrieved: "2026-09-22", status: claim, note: "по выдаче поиска"}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо"}
+    navigation: {value: "автопилот 5-го поколения; цифровая карта объекта + набор сенсоров (лидары/камеры)", unit: null, source: "https://evocargo.com/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: "36 кВт·ч LiFePO4", unit: kWh, source: "https://www.connect-wit.ru/mobilnye-roboty-evocargo-v-rossii-nachali-serijnyj-vypusk-promyshlennyh-bespilotnyh-avtomobilej.html", retrieved: "2026-09-22", status: claim, note: "по выдаче поиска; ixbt: планируются li-ion АКБ Росатома"}
+    runtime_h: {value: "запас хода до 200 км", unit: "km", source: "https://www.ixbt.com/news/2024/03/29/v-rossii-predstavili-avtonomnyj-jelektricheskij-gruzovik-evocargo-n1-otechestvennoj-razrabotki.html", retrieved: "2026-09-22", status: claim, note: "таблица организатора: 150–200 км; вендор: «заряда хватает до недели работы»"}
+    charging_time_min: {value: "360 (бытовая розетка) / 40 (быстрая)", unit: min, source: "https://www.connect-wit.ru/mobilnye-roboty-evocargo-v-rossii-nachali-serijnyj-vypusk-promyshlennyh-bespilotnyh-avtomobilej.html", retrieved: "2026-09-22", status: claim, note: "по выдаче поиска"}
+    charging_type: {value: "от обычной розетки во время погрузки/разгрузки; 24/7 с остановками на зарядку", unit: null, source: "https://evocargo.com/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: "-40…+50", unit: "°C", source: "таблица организатора (case/dataset, см. docs/DATA.md)", retrieved: "2026-09-22", status: claim, note: "вендор: «широкий диапазон климатических зон»"}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing, note: "уличный транспорт: дороги промплощадки, выход на дороги общего пользования (mashnews)"}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial:
+    price_rub: null
+    rent_rub_month: null
+    raas_notes: "Вендор продаёт как «Robots as a Service»: полный цикл перевозок под ключ, включая обслуживание; цифр нет"
+    source: "https://evocargo.com/"
+  references:
+    - {customer: "Wildberries, Марвел-Логистика, Почта России, Fplus, SPAR, Евраз, Газпром нефть, СИБУР и др.", count: null, source: "https://evocargo.com/", note: "«более 50 внедрений»"}
+  notes: "Межкорпусной/уличный транспорт, а не внутрискладской робот. В прессе есть водородный вариант — на сайте вендора не подтверждено."
+
+# ---------------------------------------------------------------------------
+# Группа C. Goods-to-person и системы хранения
+# ---------------------------------------------------------------------------
+- product: "SmartCube (кубическое хранение G2P)"
+  manufacturer: "АРС (ARS Smart Robotics)"
+  catalog_price_mln_rub: 2.70
+  country: RU
+  vendor_url: "https://arobosys.ru/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing, note: "вендор: «полный цикл производства в России»"}
+  specs:
+    payload_kg: {value: null, unit: "kg (ящик)", source: null, retrieved: "2026-09-22", status: missing}
+    dimensions_mm: {value: null, unit: "mm LxWxH (робот)", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: 14000, unit: "mm (высота шахт, до)", source: "https://arobosys.ru/", retrieved: "2026-09-22", status: confirmed, note: "зависит от высоты потолка"}
+    navigation: {value: "роботы ездят по рельсовой решётке над массивом хранения; алюминиевые шахты, ящики, рабочие станции", unit: null, source: "https://arobosys.ru/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing, note: "вендор: рекуперация энергии, потребление роботов ниже, чем у освещения мезонина"}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: 0, unit: mm, source: "https://vc.ru/tech/3067844-avtomatizatsiya-skladov-s-sistemoy-smartcube", retrieved: "2026-09-22", status: claim, note: "плотный массив без проходов; роботы над решёткой"}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing, note: "собственное ПО системы; детали интеграции с WMS не опубликованы"}
+  throughput_claims:
+    - {value: "до x3", unit: "производительность сборщика", conditions: "не указаны", source: "https://arobosys.ru/", status: confirmed}
+    - {value: "до x4", unit: "плотность хранения", conditions: "относительно стеллажного хранения (не уточнено)", source: "https://arobosys.ru/", status: confirmed}
+    - {value: "50 → 400", unit: "SKU/ч на сотрудника", conditions: "расчёт компании; G2P vs ручной отбор", source: "https://vc.ru/tech/3067844-avtomatizatsiya-skladov-s-sistemoy-smartcube", status: claim}
+    - {value: ">100 млн ₽/год экономии", unit: "на один модуль", conditions: "дарк-стор онлайн-продуктового ритейлера; персонал −72 %, аренда −55 % (расчёт компании)", source: "https://vc.ru/tech/3067844-avtomatizatsiya-skladov-s-sistemoy-smartcube", status: claim}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет; каталожные 2,70 млн — вероятно, за одного робота, а не за модуль (проверить)", source: "https://arobosys.ru/"}
+  references: []
+  notes: "Система (шахты + роботы + станции), а не отдельный AMR: в подборе учитывать как объект с параметрами модуля. Числовых ТТХ робота вендор не публикует."
+
+- product: "ДиКом AS-RS P (паллетный кран-штабелёр)"
+  manufacturer: "ДиКом (в каталоге — Диком-Сервис)"
+  catalog_price_mln_rub: 10.00
+  country: RU
+  vendor_url: "https://www.kiit.ru/product/avtomatizirovannyy-sklad-dikom-as-rs-p/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 3000, unit: kg, source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/", retrieved: "2026-09-22", status: claim}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: 24000, unit: "mm (высота системы, до)", source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/", retrieved: "2026-09-22", status: claim}
+    navigation: {value: "кран-штабелёр в стеллажном проходе (рельсовый)", unit: null, source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing, note: "стационарное питание (кран)"}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial: {price_rub: "по запросу (под заказ)", rent_rub_month: null, raas_notes: null, source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/"}
+  references: []
+  notes: "Каталожная цена 10,00 общая для AS-RS P / AS-RS B; у дилера цена P — по запросу, B — от 10 млн. Значит, 10,00 относится к AS-RS B."
+
+- product: "ДиКом AS-RS B (робот-штабелёр для KLT 600x400)"
+  manufacturer: "ДиКом (в каталоге — Диком-Сервис)"
+  catalog_price_mln_rub: 10.00
+  country: RU
+  vendor_url: "https://www.kiit.ru/product/avtomatizirovannyy-sklad-dikom-as-rs-b/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: "kg (ящик KLT 600x400)", source: null, retrieved: "2026-09-22", status: missing}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: 12000, unit: "mm (высота системы, до)", source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/", retrieved: "2026-09-22", status: claim}
+    navigation: {value: "робот-штабелёр в стеллажном проходе", unit: null, source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "единая система управления с DMR 300 Carrier B и коллаборативными роботами (дилер)", unit: null, source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/", retrieved: "2026-09-22", status: claim}
+  throughput_claims: []
+  commercial: {price_rub: "от 10 000 000", rent_rub_month: null, raas_notes: null, source: "https://www.kiit.ru/katalog/avtomatizirovannye-sklady/brand-dikom/"}
+  references: []
+  notes: "Сопутствующие позиции у дилера: DMR 300 Carrier B (AMR для KLT, 10,8 млн), DMR 300 Rider (манипулятор 5 кг на AMR, 1,5 м/с, SLAM, 8 ч, от 5,1 млн, реестр), D.Operator B (коллаборативный робот 10 кг/1300 мм, от 8,739 млн)."
+
+- product: "Pallet Shuttle (радиошаттл для паллетных стеллажей)"
+  manufacturer: "Завод Стелкон (стеллажи); сам шаттл — импорт (по данным дилера, Швеция)"
+  catalog_price_mln_rub: 7.00
+  country: "RU (стеллажи) / SE (шаттл — по сниппету поиска, не подтверждено на открытой странице)"
+  vendor_url: "https://www.stelkon.ru/catalog/palletnye-stellazhi/pallet/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "«шаттл проектируется индивидуально под любые типы и размеры паллет»"}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "шаттл ставится погрузчиком на рельсы нужного яруса"}
+    navigation: {value: "рельсы внутри канала стеллажа; радиоуправление; FIFO/LIFO", unit: null, source: "https://www.stelkon.ru/catalog/palletnye-stellazhi/pallet/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "нужен проход для погрузчика/штабелёра, который переставляет шаттл"}
+    operating_temp_c: {value: "до -35", unit: "°C", source: "https://www.stelkon.ru/catalog/palletnye-stellazhi/pallet/", retrieved: "2026-09-22", status: confirmed, note: "работа в морозильных камерах"}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims: []
+  commercial:
+    price_rub: null
+    price_eur: "28 000 EUR за радиоуправляемую тележку без опций, поставка из Швеции"
+    rent_rub_month: null
+    raas_notes: "по сниппету поиска (страница stelkon.ru/catalog/palletnye-stellazhi/pallet/shuttle/ не открывалась)"
+    source: "https://www.stelkon.ru/catalog/palletnye-stellazhi/pallet/shuttle/"
+  references: []
+  notes: "Каталожные 7,00 млн ≈ 2,5x цены шаттла в евро — вероятно, включают стеллажную секцию; уточнить. Это полуавтомат: шаттл переставляет погрузчик, поэтому «робот» в подборе — только вместе с техникой."
+
+- product: "Ronavi SR (сортировочный робот с конвейером)"
+  manufacturer: "Ронави Роботикс"
+  catalog_price_mln_rub: 0.95
+  country: RU
+  vendor_url: "https://ronavi-robotics.ru/catalogue/sr"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 50, unit: kg, source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "590x810x870", unit: "mm LxWxH", source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 80, unit: kg, source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 3.0, unit: "m/s", source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: "200-1000", unit: "mm (высота конвейера/рольганга от пола)", source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    navigation: {value: "QR-метки", unit: null, source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 16, unit: h, source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed, note: "80% → 20%"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "opportunity (Ronavi Charger)", unit: null, source: "https://ronavi-robotics.ru/catalogue", retrieved: "2026-09-22", status: inferred}
+    min_aisle_width_mm: {value: 690, unit: mm, source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://ronavi-robotics.ru/catalogue/sr", retrieved: "2026-09-22", status: confirmed}
+    wms_integration: {value: "Hyper RMS / API (общее для линейки)", unit: null, source: "https://ronavi-robotics.ru/catalogue", retrieved: "2026-09-22", status: inferred}
+  throughput_claims: []
+  commercial: {price_rub: "600 000 (от 100 шт.) — 950 000", rent_rub_month: null, raas_notes: "см. Ronavi H1500 (общая тарифная политика)", source: "https://ronavi-robotics.ru/catalogue/sr"}
+  references: []
+  notes: "Каталожная цена 0,95 = верхняя граница вендора."
+
+- product: "Ronavi SD (сортировочный робот с откидной крышкой)"
+  manufacturer: "Ронави Роботикс"
+  catalog_price_mln_rub: 1.40
+  country: RU
+  vendor_url: "https://ronavi-robotics.ru/catalogue/sd"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: 10, unit: kg, source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed}
+    dimensions_mm: {value: "420x400x200", unit: "mm LxWxH", source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 20, unit: kg, source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: 2.5, unit: "m/s", source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо (откидная крышка)"}
+    navigation: {value: "QR-метки", unit: null, source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: 1, unit: "±mm", source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed, note: "«с точностью до миллиметра» — маркетинговая формулировка"}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 10, unit: h, source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed, note: "80% → 20%"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "opportunity (Ronavi Charger)", unit: null, source: "https://ronavi-robotics.ru/catalogue", retrieved: "2026-09-22", status: inferred}
+    min_aisle_width_mm: {value: 500, unit: mm, source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://ronavi-robotics.ru/catalogue/sd", retrieved: "2026-09-22", status: confirmed}
+    wms_integration: {value: "Hyper RMS / API (общее для линейки)", unit: null, source: "https://ronavi-robotics.ru/catalogue", retrieved: "2026-09-22", status: inferred}
+  throughput_claims: []
+  commercial: {price_rub: "360 000 (от 100 шт.) — 400 000", rent_rub_month: null, raas_notes: "см. Ronavi H1500", source: "https://ronavi-robotics.ru/catalogue/sd"}
+  references: []
+  notes: "ВАЖНО: каталожная цена 1,40 млн в 3,5 раза выше цены вендора (0,36–0,40 млн). Возможно, в каталоге — цена с сортировочной инфраструктурой (платформа/рампы). Зафиксировать в реестре допущений."
+
+# ---------------------------------------------------------------------------
+# Группа D. Средства комплектации и инвентаризация
+# ---------------------------------------------------------------------------
+- product: "Pick by Voice / Pick by Light"
+  manufacturer: "Умный сервис (интегратор; голосовая система — Voiceman)"
+  catalog_price_mln_rub: 1.00
+  country: RU
+  vendor_url: "https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-voice/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо: носимая/стационарная система, не робот"}
+    dimensions_mm: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "Voice: гарнитура + микрофон + наручный ТСД, распознавание речи (мультиязычное); Light: световые индикаторы/дисплеи на ячейках, старт по скану штрихкода заказа", unit: null, source: "https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-voice/", retrieved: "2026-09-22", status: confirmed, note: "Pick by Light — https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-light-sistema-svetovogo-otbora/ (по сниппету поиска)"}
+    positioning_accuracy_mm: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "WMS API (документация v1.0.12 на странице), настройка бизнес-процессов без программирования, масштабирование добавлением терминалов", unit: null, source: "https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-voice/", retrieved: "2026-09-22", status: confirmed}
+  throughput_claims:
+    - {value: "-40 %", unit: "время сборки заказов", conditions: "не указаны", source: "https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-voice/", status: confirmed}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет; каталожная 1,00 млн — вероятно, за комплект на N рабочих мест (уточнить)", source: "https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-voice/"}
+  references: []
+  notes: "Не робот: в модели учитывать как коэффициент к производительности ручного отбора, а не как единицу с ТТХ."
+
+- product: "Робот-комплектовщик (G2P) Яндекс Роботикс"
+  manufacturer: "Яндекс Роботикс"
+  catalog_price_mln_rub: 2.50
+  country: RU
+  vendor_url: "https://robotics.yandex.ru/g2p"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "QR-метки или SLAM", unit: null, source: "https://robotics.yandex.ru/blogs/sbor-zakaza", retrieved: "2026-09-22", status: claim, note: "по сниппету поиска по домену robotics.yandex.ru; главная страница при загрузке отдала пустой контент"}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 16, unit: h, source: "https://robotics.yandex.ru/blogs/sbor-zakaza", retrieved: "2026-09-22", status: claim, note: "«до 16 часов»"}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims:
+    - {value: "250-300", unit: "отборов/ч на станцию", conditions: "G2P: роботы везут контейнеры к оператору", source: "https://robotics.yandex.ru/g2p", status: claim}
+    - {value: "x2 на товар / +30 % на заказ", unit: "скорость сборки", conditions: "не указаны", source: "https://robotics.yandex.ru/blogs/sbor-zakaza", status: claim}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: null, source: "https://robotics.yandex.ru/g2p"}
+  references:
+    - {customer: "Азбука Вкуса (кейс)", count: null, source: "https://robotics.yandex.ru/cases/azbuka-vkusa", note: "содержание кейса не проверялось"}
+  notes: "Страницы robotics.yandex.ru не удалось прочитать (контент рендерится скриптами) — все значения из сниппетов поиска по домену вендора. Происхождение железа не подтверждено."
+
+- product: "Роборука (робот-манипулятор для отбора/пополнения контейнеров)"
+  manufacturer: "Сбер (Центр робототехники Сбера / SberLabs)"
+  catalog_price_mln_rub: 2.60
+  country: RU
+  vendor_url: "https://sberlabs.com/laboratories/tsentr-robototekhniki"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "ранний прототип (2019) переносил предметы до 1,5 кг — if24.ru/rambler, по сниппету поиска"}
+    dimensions_mm: {value: null, unit: "mm", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "стационарный манипулятор: захват по фото, 3D-модель объекта", unit: null, source: "https://sberlabs.com/laboratories/tsentr-robototekhniki", retrieved: "2026-09-22", status: claim, note: "по сниппету поиска, страница не открывалась"}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "в связке с системой SberShuttle для полной автоматизации склада (по сниппету)", unit: null, source: "https://sberlabs.com/laboratories/tsentr-robototekhniki", retrieved: "2026-09-22", status: claim}
+  throughput_claims: []
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: null, source: null}
+  references: []
+  notes: "Публичной продуктовой страницы с ТТХ не найдено; это скорее внутренняя разработка Сбера для фулфилмент-центров. Для подбора нужны данные от организатора."
+
+- product: "Робот-инвентаризатор Яндекс Роботикс"
+  manufacturer: "Яндекс Роботикс"
+  catalog_price_mln_rub: 2.00
+  country: RU
+  vendor_url: "https://robotics.yandex.ru/robotizatsiya-sklada"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо"}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: 12500, unit: "mm (мачта сканирования, до)", source: "https://robotics.yandex.ru/robotizatsiya-sklada", retrieved: "2026-09-22", status: claim, note: "по сниппету поиска по домену вендора"}
+    navigation: {value: "автономное перемещение по складу без остановки операций (тип не уточнён)", unit: null, source: "https://robotics.yandex.ru/robotizatsiya-sklada", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "сверка отсканированных ячеек с WMS", unit: null, source: "https://robotics.yandex.ru/robotizatsiya-sklada", retrieved: "2026-09-22", status: claim}
+  throughput_claims:
+    - {value: "1-2 ч вместо нескольких дней", unit: "полная инвентаризация паллетных зон", conditions: "без остановки склада и без персонала", source: "https://robotics.yandex.ru/robotizatsiya-sklada", status: claim}
+    - {value: "4 недели → 1,5 ч, до 3 раз в сутки", unit: "инвентаризация крупногабарита", conditions: "склад Яндекс Маркета", source: "https://robotics.yandex.ru/cases", status: claim}
+    - {value: "8 ч → 2 ч", unit: "плановая инвентаризация", conditions: "склад «Перекрёсток»", source: "https://robotics.yandex.ru/cases", status: claim}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: null, source: "https://robotics.yandex.ru/robotizatsiya-sklada"}
+  references:
+    - {customer: "Яндекс Маркет", count: null, source: "https://robotics.yandex.ru/cases"}
+    - {customer: "Перекрёсток", count: null, source: "https://robotics.yandex.ru/cases"}
+    - {customer: "СТА Карго", count: null, source: "https://robotics.yandex.ru/cases/stacargo"}
+  notes: "Все значения — сниппеты поиска по домену вендора; страницы не прочитаны (SPA). Скорость и автономность неизвестны — для симуляции брать по аналогу AI Stock Counter 12M (0,6 м/с, 2 ч) как допущение."
+
+- product: "AI Stock Counter 12M (Neurus AUSC12, робот-инвентаризатор)"
+  manufacturer: "Автомакон"
+  catalog_price_mln_rub: 2.60
+  country: RU
+  vendor_url: "https://automacon.ru/inventarizator/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing, note: "пресса: «полностью на отечественной технологической базе» (new-retail.ru)"}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо"}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: 0.6, unit: "m/s", source: "https://automacon.ru/inventarizator/", retrieved: "2026-09-22", status: confirmed}
+    lift_height_mm: {value: 12000, unit: "mm (мачта)", source: "https://automacon.ru/inventarizator/", retrieved: "2026-09-22", status: confirmed, note: "пресса упоминает «до 14 м»"}
+    navigation: {value: "настраиваемый маршрут патрулирования; компьютерное зрение, камеры с подсветкой; сканирование QR паллетомест и ячеек, дальность до 2 м", unit: null, source: "https://automacon.ru/inventarizator/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 2, unit: h, source: "https://automacon.ru/inventarizator/", retrieved: "2026-09-22", status: confirmed}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "автоматическая зарядка", unit: null, source: "https://automacon.ru/inventarizator/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: "интеграция с WMS (собственная разработка), AI-видеоаналитика сверяет QR товара и ячейки", unit: null, source: "https://automacon.ru/inventarizator/", retrieved: "2026-09-22", status: confirmed}
+  throughput_claims:
+    - {value: "до 20 сотрудников за смену", unit: "замещение персонала", conditions: "высотный склад; формулировка прессы", source: "https://new-retail.ru/novosti/retail/na_raspredelitelnom_tsentre_vkusvilla_zapustilsya_pervyy_robot_inventarizator/", status: claim}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет", source: "https://automacon.ru/inventarizator/"}
+  references:
+    - {customer: "ВкусВилл, РЦ «Домодедово»", count: 1, source: "https://lognews.ru/na-raspredelitelnom-centre-vkusvilla-domodedovo-zapuschen-v-rabotu-innovacionnyy-robot", note: "первый робот-инвентаризатор; по сниппету поиска"}
+  notes: "Автономность 2 ч при 0,6 м/с — ограничивающий параметр для симуляции (частые дозарядки)."
+
+# ---------------------------------------------------------------------------
+# Группа E. Роботы-уборщики (поломоечные)
+# ---------------------------------------------------------------------------
+- product: "MARK 2 SE (робот-уборщик)"
+  manufacturer: "Р2Б (R2B)"
+  catalog_price_mln_rub: 1.90
+  country: RU
+  vendor_url: "https://r2b.company/mark2se"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо; бак раствора 40 л"}
+    dimensions_mm: {value: "860x610x980", unit: "mm LxWxH", source: "https://r2b.company/mark2se", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо"}
+    navigation: {value: "3 типа датчиков + камеры; автономное построение маршрута, объезд людей и препятствий, возврат на базу", unit: null, source: "https://r2b.company/mark2se", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: "LiFePO4 100 А·ч", unit: Ah, source: "https://r2b.company/mark2se", retrieved: "2026-09-22", status: confirmed}
+    runtime_h: {value: 3, unit: h, source: "https://r2b.company/mark2se", retrieved: "2026-09-22", status: confirmed, note: "дилеры/пресса: «до 14 ч в сутки» с дозарядками"}
+    charging_time_min: {value: 120, unit: min, source: "https://r2b.company/mark2se", retrieved: "2026-09-22", status: confirmed}
+    charging_type: {value: "док-станция: автозарядка, автослив грязной и залив чистой воды", unit: null, source: "https://r2b.company/mark2se", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "ширина машины 610 мм, водосборная балка 670 мм"}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 1, unit: years, source: "https://r2b.company/rent", retrieved: "2026-09-22", status: confirmed, note: "расходники (щётки, резинки сквиджа) в гарантию не входят"}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing, note: "удалённая диагностика; выезд инженера"}
+  throughput_claims:
+    - {value: "600-700", unit: "м²/ч", conditions: "среднее в реальных условиях (вендор); ширина щётки 450 мм", source: "https://r2b.company/mark2se", status: confirmed}
+    - {value: "до 1800 / до 1000", unit: "м²/ч", conditions: "склады и производство / торговые залы с высокой проходимостью (дилеры, пресса)", source: "https://vc.ru/tech/2276814-promyshlennyy-robot-uborshchik-preimushchestva-i-okupayemost", status: claim}
+  commercial:
+    price_rub: "2 050 000 — 2 100 000 (дилер КИИТ); 2 000 000 за MARK 2 (cleantec.ru)"
+    price_source: "https://www.kiit.ru/product/rossiyskiy-robot-uborshchik-r2b-mark-2-se/"
+    rent_rub_month: 100000
+    raas_notes: "Аренда от 100 000 ₽/мес: включает специалиста-интегратора, обучение персонала, удалённую поддержку; срок и выкуп не указаны. Окупаемость покупки, по вендору, 2–3 года на крупных объектах"
+    source: "https://r2b.company/rent"
+  references: []
+  notes: "Единственный в выборке вендор с опубликованной ценой аренды. Каталожная 1,90 ниже дилерских 2,05–2,10."
+
+- product: "РУБИ-С-03 (РУБИ С, робот-уборщик)"
+  manufacturer: "РОБО (robo.ooo)"
+  catalog_price_mln_rub: 2.20
+  country: RU
+  vendor_url: "https://robo.ooo/rubi_s"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо; баки 50 л / 50 л"}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо"}
+    navigation: {value: "компьютерное зрение EAGLE EYE (обзор 210°, до 1000 ориентиров), 2 лидара, 5 камер глубины (45 к/с, отклик 20 мс, точность дистанции 20 мм), 12 ультразвуковых датчиков, динамический бампер", unit: null, source: "https://robo.ooo/rubi_s", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: "LiFePO4 (ёмкость не указана)", unit: null, source: "https://robo.ooo/rubi_s", retrieved: "2026-09-22", status: confirmed}
+    runtime_h: {value: 10, unit: h, source: "https://robo.ooo/rubi_s", retrieved: "2026-09-22", status: confirmed}
+    charging_time_min: {value: 210, unit: min, source: "https://robo.ooo/rubi_s", retrieved: "2026-09-22", status: confirmed, note: "3,5 ч"}
+    charging_type: {value: "автоматическая электрозарядка, автослив грязной воды, автозалив чистой воды и средства", unit: null, source: "https://robo.ooo/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: 3, unit: years, source: "https://robo.ooo/rubi_s", retrieved: "2026-09-22", status: confirmed}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims:
+    - {value: "0,5 м²/с (≈1800 м²/ч)", unit: "м²/ч", conditions: "скорость уборки по вендору; «до 2500 м²» за сеанс — противоречит 10 ч × 1800 м²/ч, уточнить", source: "https://robo.ooo/rubi_s", status: confirmed}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет", source: "https://robo.ooo/rubi_s"}
+  references: []
+  notes: "Индекс «-03» на странице вендора не встречается — это модификация РУБИ С. Гарантия 3 года — лучшая в выборке."
+
+- product: "Клинботикс 400 PRO (Cleanbotics 400 PRO)"
+  manufacturer: "Вейбот (Waybot Robotics)"
+  catalog_price_mln_rub: 1.50
+  country: RU
+  vendor_url: "https://waybotrobotics.com/models/400pro"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо; баки 15 л чистой / 17 л грязной, пылесборник 4 л (дилер)"}
+    dimensions_mm: {value: "676x560x744", unit: "mm LxWxH", source: "https://robob2b.ru/catalog/roboty-uborshchiki/robot-uborshchik-promyshlennyy-waybot-cleanbotics-400-pro/", retrieved: "2026-09-22", status: claim, note: "по сниппету поиска (RoboB2B / waybotrobot.ru)"}
+    weight_kg: {value: 50, unit: kg, source: "https://robob2b.ru/catalog/roboty-uborshchiki/robot-uborshchik-promyshlennyy-waybot-cleanbotics-400-pro/", retrieved: "2026-09-22", status: claim}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо"}
+    navigation: {value: "автономная; 4 режима (влажная/сухая уборка независимыми блоками)", unit: null, source: "https://waybotrobot.ru/cleanbotics-model-400-pro", retrieved: "2026-09-22", status: claim}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: 3, unit: h, source: "https://robob2b.ru/catalog/roboty-uborshchiki/robot-uborshchik-promyshlennyy-waybot-cleanbotics-400-pro/", retrieved: "2026-09-22", status: claim, note: "в режиме мойки"}
+    charging_time_min: {value: 60, unit: min, source: "https://robob2b.ru/catalog/roboty-uborshchiki/robot-uborshchik-promyshlennyy-waybot-cleanbotics-400-pro/", retrieved: "2026-09-22", status: claim}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims:
+    - {value: 700, unit: "м²/ч", conditions: "ширина полосы 40 см (дилер)", source: "https://robob2b.ru/catalog/roboty-uborshchiki/robot-uborshchik-promyshlennyy-waybot-cleanbotics-400-pro/", status: claim}
+    - {value: "до 4000", unit: "м² (площадь объекта)", conditions: "сравнительная страница вендора; другая страница вендора говорит «до 2000 м²» — противоречие", source: "https://waybotrobot.ru/sravnenie-modelej-cleanbotics-400-pro-i-cleanbotics-600-chto-vybrat", status: confirmed}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: null, source: "https://waybotrobot.ru/"}
+  references: []
+  notes: "Полупрофессиональная модель для средних объектов; для склада 10+ тыс. м² вендор рекомендует 600. Страница вендора с полной таблицей ТТХ не открывалась (лимит вызовов)."
+
+- product: "Клинботикс 600 (Cleanbotics 600)"
+  manufacturer: "Вейбот (Waybot Robotics)"
+  catalog_price_mln_rub: 2.31
+  country: RU
+  vendor_url: "https://waybotrobot.ru/sravnenie-modelej-cleanbotics-400-pro-i-cleanbotics-600-chto-vybrat"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims:
+    - {value: "до 8000", unit: "м² (площадь объекта)", conditions: "сравнительная страница вендора", source: "https://waybotrobot.ru/sravnenie-modelej-cleanbotics-400-pro-i-cleanbotics-600-chto-vybrat", status: confirmed}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: null, source: "https://waybotrobot.ru/"}
+  references: []
+  notes: "НЕ ЗАВЕРШЕНО: числовых ТТХ не собрано (лимит вызовов). Продаётся также через Автомакон: https://robot.automacon.ru/cleanbotics600 — проверить там таблицу характеристик."
+
+- product: "Unit (робот-мойщик полов)"
+  manufacturer: "Яку Роботикс (YaCuAi)"
+  catalog_price_mln_rub: 2.30
+  country: RU
+  vendor_url: "https://yacuai.com/ru/unit/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing, note: "вендор: «сделано в России»"}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо; баки 50 л / 50 л"}
+    dimensions_mm: {value: "900x560x800", unit: "mm LxWxH", source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    weight_kg: {value: 130, unit: "kg (с заполненными баками)", source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "не применимо"}
+    navigation: {value: "RTLS (радиопозиционирование) + лидар 360° + стереокамера + радар + нейросеть (стекло, эскалаторы); объект до 20 000 м²; до стен 3 см", unit: null, source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: "24 В (ёмкость не указана)", unit: null, source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    runtime_h: {value: 5, unit: h, source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "автоматическая док-станция (опция)", unit: null, source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing, note: "ширина машины 560 мм, сквидж 800–820 мм"}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: "уклон до 2°", unit: null, source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: 5, unit: "years (более 5)", source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    warranty_years: {value: 1, unit: years, source: "https://yacuai.com/ru/unit/", retrieved: "2026-09-22", status: confirmed}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing, note: "поддержка 24/7; ручное управление джойстиком"}
+  throughput_claims:
+    - {value: 7200, unit: "м² за один заряд", conditions: "5 ч работы → ≈1440 м²/ч (пересчёт наш); ширина 800–820 мм", source: "https://yacuai.com/ru/unit/", status: confirmed}
+    - {value: "до 80 %", unit: "снижение затрат на клининг", conditions: "утверждение вендора", source: "https://yacuai.com/ru/unit/", status: claim}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: "цен на сайте нет; дилер unibot.ru", source: "https://yacuai.com/ru/unit/"}
+  references: []
+  notes: "Самая полная спецификация среди уборщиков (кроме цены)."
+
+- product: "АК-SC80 (робот-уборщик)"
+  manufacturer: "Автомакон"
+  catalog_price_mln_rub: 4.06
+  country: "не подтверждено (индекс SC80 совпадает с OEM-поломойками Viggo/Chancee/ASTOR SC80 других дилеров — вероятно, перемаркированная платформа)"
+  vendor_url: "https://automacon.ru/cleaner/"
+  registry_minpromtorg: {value: null, source: null, retrieved: "2026-09-22", status: missing}
+  specs:
+    payload_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    dimensions_mm: {value: null, unit: "mm LxWxH", source: null, retrieved: "2026-09-22", status: missing}
+    weight_kg: {value: null, unit: kg, source: null, retrieved: "2026-09-22", status: missing}
+    max_speed_mps: {value: null, unit: "m/s", source: null, retrieved: "2026-09-22", status: missing}
+    lift_height_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    navigation: {value: "«запатентованная система навигации, различающая контуры помещения и предметов»; чистит, подметает и моет крытые и открытые площади", unit: null, source: "https://automacon.ru/cleaner/", retrieved: "2026-09-22", status: claim, note: "по сниппету поиска; сама страница при загрузке отдала только форму авторизации"}
+    positioning_accuracy_mm: {value: null, unit: "±mm", source: null, retrieved: "2026-09-22", status: missing}
+    battery_capacity: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    runtime_h: {value: null, unit: h, source: null, retrieved: "2026-09-22", status: missing}
+    charging_time_min: {value: null, unit: min, source: null, retrieved: "2026-09-22", status: missing}
+    charging_type: {value: "автоматическая подзарядка и возврат к работе без человека", unit: null, source: "https://automacon.ru/cleaner/", retrieved: "2026-09-22", status: claim}
+    min_aisle_width_mm: {value: null, unit: mm, source: null, retrieved: "2026-09-22", status: missing}
+    operating_temp_c: {value: null, unit: "°C", source: null, retrieved: "2026-09-22", status: missing}
+    floor_requirements: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    noise_dba: {value: null, unit: dBA, source: null, retrieved: "2026-09-22", status: missing}
+    ip_rating: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+    service_life_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    warranty_years: {value: null, unit: years, source: null, retrieved: "2026-09-22", status: missing}
+    wms_integration: {value: null, unit: null, source: null, retrieved: "2026-09-22", status: missing}
+  throughput_claims:
+    - {value: "окупаемость 12 мес.", unit: "срок окупаемости", conditions: "утверждение вендора, условия не указаны", source: "https://automacon.ru/cleaner/", status: claim}
+  commercial: {price_rub: null, rent_rub_month: null, raas_notes: null, source: "https://automacon.ru/cleaner/"}
+  references: []
+  notes: "НЕ ЗАВЕРШЕНО: страница вендора не прочиталась (лимит вызовов). Альтернативные источники: https://robot.automacon.ru/cleaner, https://automacon.ru/cleaners/. Для ориентира ТТХ можно взять OEM-аналоги SC80 (viggorobot.ru/viggo-sc80, umserv.ru Viggo SC80Pro) — только как допущение с пометкой. Цена 4,06 млн — самая высокая среди уборщиков."

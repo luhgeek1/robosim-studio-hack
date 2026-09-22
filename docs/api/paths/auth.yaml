@@ -1,0 +1,163 @@
+# Аутентификация, профиль, ключи API, система. Подключаются из ../openapi.yaml.
+
+register:
+  post:
+    tags: [auth]
+    operationId: register
+    summary: Регистрация пользователя
+    security: []
+    parameters: [{$ref: '../components/common.yaml#/parameters/XClient'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/RegisterRequest'}}}
+    responses:
+      '201': {description: "Создан", content: {application/json: {schema: {$ref: '../components/platform.yaml#/TokenPair'}}}}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
+
+login:
+  post:
+    tags: [auth]
+    operationId: login
+    summary: Вход
+    security: []
+    parameters: [{$ref: '../components/common.yaml#/parameters/XClient'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/LoginRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/TokenPair'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
+
+refresh:
+  post:
+    tags: [auth]
+    operationId: refreshTokens
+    summary: Обновить пару токенов
+    description: Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; для других клиентов — refresh-токен в теле.
+    security: []
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/XClient'}
+      - {name: X-CSRF-Token, in: header, required: false, schema: {type: string}}
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema: {type: object, properties: {refresh_token: {type: string}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/TokenPair'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+
+logout:
+  post:
+    tags: [auth]
+    operationId: logout
+    summary: Выход (отзыв refresh-токена)
+    responses:
+      '204': {description: "Вышли"}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+
+me:
+  get:
+    tags: [auth]
+    operationId: getMe
+    summary: Текущий пользователь
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/User'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+  patch:
+    tags: [auth]
+    operationId: updateMe
+    summary: Обновить профиль
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/UserUpdate'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/User'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+apiKeys:
+  get:
+    tags: [auth]
+    operationId: listApiKeys
+    summary: Ключи API пользователя (для интеграций WMS/ERP/1С)
+    responses:
+      '200':
+        description: OK
+        content: {application/json: {schema: {type: object, properties: {items: {type: array, items: {$ref: '../components/platform.yaml#/ApiKey'}}}}}}
+  post:
+    tags: [auth]
+    operationId: createApiKey
+    summary: Создать ключ API
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/ApiKeyCreate'}}}
+    responses:
+      '201': {description: "Создан; secret показывается один раз", content: {application/json: {schema: {$ref: '../components/platform.yaml#/ApiKeyCreated'}}}}
+
+apiKey:
+  delete:
+    tags: [auth]
+    operationId: revokeApiKey
+    summary: Отозвать ключ API
+    parameters: [{name: key_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    responses:
+      '204': {description: "Отозван"}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+health:
+  get:
+    tags: [system]
+    operationId: health
+    summary: Liveness (без внешних вызовов)
+    security: []
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Health'}}}}
+
+ready:
+  get:
+    tags: [system]
+    operationId: ready
+    summary: Readiness (БД, Redis, воркер)
+    security: []
+    responses:
+      '200': {description: "Готов", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Health'}}}}
+      '503': {description: "Не готов", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Health'}}}}
+
+version:
+  get:
+    tags: [system]
+    operationId: version
+    summary: Версии приложения, движка, каталога и нормативов
+    security: []
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/SystemVersion'}}}}
+
+jobs:
+  get:
+    tags: [system]
+    operationId: getJob
+    summary: Состояние фоновой задачи
+    parameters: [{$ref: '../components/common.yaml#/parameters/JobId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/common.yaml#/Job'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+jobStream:
+  get:
+    tags: [system]
+    operationId: streamJob
+    summary: SSE-поток прогресса задачи
+    description: |
+      `text/event-stream`. События: `progress` (ProgressEvent), `done` (ProgressEvent со status=done), `error` (Problem).
+      Поток закрывается после done/error. Для симуляции в `partial` приходят бегущие KPI.
+    parameters: [{$ref: '../components/common.yaml#/parameters/JobId'}]
+    responses:
+      '200':
+        description: Поток событий
+        content: {text/event-stream: {schema: {type: string}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}

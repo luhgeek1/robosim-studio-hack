@@ -1,0 +1,226 @@
+# Подбор, сценарии, расчёты, сравнение, чувствительность, Монте-Карло, приоритеты обследования.
+
+projectMatching:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+  get:
+    tags: [matching]
+    operationId: getMatching
+    summary: Подбор решений по процессам с причинами и скорингом (ТЗ 3.4)
+    description: Возвращает последний результат; если параметры менялись — пересчитывает автоматически.
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MatchingResult'}}}}
+      '409': {description: "Не хватает обязательных параметров", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+  post:
+    tags: [matching]
+    operationId: runMatching
+    summary: Пересчитать подбор с другими весами
+    requestBody:
+      required: false
+      content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MatchingRunRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MatchingResult'}}}}
+
+projectMatchingManual:
+  post:
+    tags: [matching]
+    operationId: addManualCandidate
+    summary: Добавить продукт в подбор вручную с предупреждением (ТЗ 3.4.4)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/analysis.yaml#/ManualAddRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/Candidate'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+# ---------------- Сценарии ----------------
+
+projectScenarios:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+  get:
+    tags: [scenarios]
+    operationId: listScenarios
+    summary: Сценарии проекта (база создаётся автоматически)
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/analysis.yaml#/Scenario'}}}}
+  post:
+    tags: [scenarios]
+    operationId: createScenario
+    summary: Создать сценарий роботизации
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/analysis.yaml#/ScenarioCreate'}}}
+    responses:
+      '201': {description: "Создан", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/Scenario'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+scenario:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+  get:
+    tags: [scenarios]
+    operationId: getScenario
+    summary: Сценарий
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/Scenario'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+  patch:
+    tags: [scenarios]
+    operationId: updateScenario
+    summary: Изменить состав, финансирование, горизонт, переопределения нормативов
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/analysis.yaml#/ScenarioUpdate'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/Scenario'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+  delete:
+    tags: [scenarios]
+    operationId: deleteScenario
+    summary: Удалить сценарий (базовый удалить нельзя)
+    responses:
+      '204': {description: "Удалён"}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+
+scenarioCopy:
+  post:
+    tags: [scenarios]
+    operationId: copyScenario
+    summary: Копировать сценарий (например, «покупка» → «RaaS» с тем же составом)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name: {type: string}
+              kind: {$ref: '../components/analysis.yaml#/ScenarioKind'}
+    responses:
+      '201': {description: "Копия", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/Scenario'}}}}
+
+scenarioCalculate:
+  post:
+    tags: [calculations]
+    operationId: calculateScenario
+    summary: Рассчитать экономику сценария (синхронно, ≤ 10 с)
+    description: |
+      Считает количество роботов (аналитически + по последней симуляции сценария, если она есть), CAPEX, OPEX, эффект,
+      денежный поток, метрики, интерпретацию и риски. Результат сохраняется с версиями входов.
+    parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              use_simulation: {type: boolean, default: true, description: "Брать N из последней успешной симуляции"}
+    responses:
+      '200': {description: "Готово", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/CalculationRun'}}}}
+      '409': {description: "Сценарий не полон (нет продуктов) или параметры невалидны", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+scenarioSensitivity:
+  post:
+    tags: [calculations]
+    operationId: runSensitivity
+    summary: Чувствительность к параметрам — торнадо и тепловая карта (ТЗ 3.5.6)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+    requestBody:
+      required: false
+      content: {application/json: {schema: {$ref: '../components/analysis.yaml#/SensitivityRequest'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/SensitivityResult'}}}}
+      '409': {description: "Нет расчёта", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+scenarioMonteCarlo:
+  post:
+    tags: [calculations]
+    operationId: runMonteCarlo
+    summary: Монте-Карло по неопределённости входов
+    description: method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+    parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+    requestBody:
+      required: false
+      content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MonteCarloRequest'}}}
+    responses:
+      '200': {description: "Готово", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MonteCarloResult'}}}}
+      '202': {$ref: '../components/common.yaml#/responses/JobAccepted'}
+
+scenarioMonteCarloResult:
+  get:
+    tags: [calculations]
+    operationId: getMonteCarloResult
+    summary: Результат фонового Монте-Карло
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ScenarioId'}
+      - {$ref: '../components/common.yaml#/parameters/JobId'}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MonteCarloResult'}}}}
+      '409': {description: "Ещё считается", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+scenarioSurveyPriorities:
+  get:
+    tags: [calculations]
+    operationId: getSurveyPriorities
+    summary: Что уточнить при обследовании объекта (чувствительность × происхождение)
+    parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/SurveyPriorities'}}}}
+
+# ---------------- Расчёты ----------------
+
+calculation:
+  get:
+    tags: [calculations]
+    operationId: getCalculation
+    summary: Сохранённый расчёт (воспроизводим по версиям)
+    parameters: [{$ref: '../components/common.yaml#/parameters/CalculationId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/CalculationRun'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+calculationTrace:
+  get:
+    tags: [calculations]
+    operationId: getCalculationTrace
+    summary: Трасса расчёта — каждая метрика с формулой, входами и источниками (ТЗ 3.5.8)
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/CalculationId'}
+      - {name: section, in: query, schema: {type: string, enum: [demand, sizing, capex, opex, baseline, effect, cashflow, metrics]}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/CalculationTrace'}}}}
+
+calculationRerun:
+  post:
+    tags: [calculations]
+    operationId: rerunCalculation
+    summary: Пересчитать на актуальных версиях каталога и нормативов, показать разницу
+    parameters: [{$ref: '../components/common.yaml#/parameters/CalculationId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/RerunResult'}}}}
+
+calculationNarrative:
+  get:
+    tags: [calculations, assist]
+    operationId: getCalculationNarrative
+    summary: Executive summary и следующие шаги (LLM с fallback на шаблоны)
+    parameters: [{$ref: '../components/common.yaml#/parameters/CalculationId'}]
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Narrative'}}}}
+
+projectComparison:
+  get:
+    tags: [calculations]
+    operationId: getComparison
+    summary: Сводная таблица сценариев и рекомендация (ТЗ 3.5.5, 3.7.1)
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ProjectId'}
+      - {name: recalculate_stale, in: query, schema: {type: boolean, default: true}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/ComparisonTable'}}}}
+      '409': {description: "Нет рассчитанных сценариев", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
