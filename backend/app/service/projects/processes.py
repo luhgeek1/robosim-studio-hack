@@ -39,6 +39,7 @@ class ProcessAnalysis:
     norms: Book
     views: list[ProcessView]
     total_labor_cost_rub_year: float
+    layout: Book
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,7 +87,8 @@ class ProcessService:
         norms = await self._norms.book(context.project.object_type)
         for key, quantity in norms.items.items():
             values.setdefault(key, quantity.value)
-        for key, quantity in (await self._layouts.book(context.project.id)).items.items():
+        layout = await self._layouts.book(context.project.id)
+        for key, quantity in layout.items.items():
             values.setdefault(key, quantity.value)
         groups = _groups(context, values)
         payroll = self._payroll_coefficient(values)
@@ -115,7 +117,7 @@ class ProcessService:
                     notes=notes,
                 )
             )
-        return ProcessAnalysis(context, values, norms, views, total)
+        return ProcessAnalysis(context, values, norms, views, total, layout)
 
     async def overview(self, project_id: UUID) -> ProcessesOverview:
         analysis = await self.analyse(await self._loader.context(self._user, project_id))

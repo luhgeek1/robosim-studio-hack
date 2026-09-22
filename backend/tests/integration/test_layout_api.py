@@ -174,3 +174,12 @@ async def test_foreign_user_cannot_read_the_layout(client: AsyncClient) -> None:
     stranger = bearer((await login(client, "vendor@roboscope.demo"))["access"])
     response = await client.get(f"/api/v1/projects/{project_id}/layout", headers=stranger)
     assert response.status_code in {403, 404}
+
+
+async def test_candidate_estimate_uses_layout_routes(client: AsyncClient) -> None:
+    project_id, headers = await _project(client)
+    body = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=headers)).json()
+    candidates = next(p for p in body["processes"] if p["process_key"] == "pallet_transport")["candidates"]
+    h1500 = next(c for c in candidates if "H1500" in c["product"]["name"])["estimate"]
+    # With the 200 m default route the same robot needs ~2× the fleet and does not pay back in 10 years.
+    assert h1500["payback_years"] < 10

@@ -49,6 +49,7 @@ def quick_economics(
         labor_groups=context.object_type.labor_groups,
         site_costs=context.object_type.site_costs,
         items=[item],
+        layout=analysis.layout,
     )
     try:
         metrics = calculate(engine_input, render=False).economics.metrics
