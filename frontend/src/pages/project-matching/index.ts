@@ -1,1 +1,1 @@
-export { MatchingPage } from './stubs'
+export { MatchingPage } from './MatchingPage'

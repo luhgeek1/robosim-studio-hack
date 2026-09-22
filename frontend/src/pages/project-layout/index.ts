@@ -1,1 +1,1 @@
-export { LayoutPage } from './stubs'
+export { LayoutPage } from './LayoutPage'
