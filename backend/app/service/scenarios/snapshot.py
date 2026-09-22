@@ -195,7 +195,10 @@ class SnapshotBuilder:
                 status = CandidateStatus.MANUAL
             statuses[item.process_key] = status.value
             spec_status[item.process_key] = {s.key: s.status for s in own_specs if s.is_primary}
-            result.append(self._item_input(item, product, offer, spec_book(own_specs, keys), models, status))
+            simulated = _simulated(item, context.project.version)
+            result.append(
+                self._item_input(item, product, offer, spec_book(own_specs, keys), models, status, simulated)
+            )
         return result, spec_status, statuses
 
     @staticmethod
@@ -210,6 +213,7 @@ class SnapshotBuilder:
         specs: Book,
         models: dict[str, Any],
         status: CandidateStatus,
+        simulated: int | None,
     ) -> ItemInput:
         catalog_price = offer.price_rub if offer else product.price_from_rub
         return ItemInput(
@@ -226,7 +230,16 @@ class SnapshotBuilder:
             stations_manual=item.stations_count if item.stations_mode == CountMode.MANUAL else None,
             throughput_override=item.throughput_override_per_hour,
             candidate_status=status.value,
+            simulated_robots=simulated,
+            simulation_id=item.simulation_id if simulated else None,
         )
+
+
+def _simulated(item: ScenarioItem, project_version: int) -> int | None:
+    """The fleet sweep's N counts only for the project version it was computed on and for automatic count."""
+    if item.count_mode != CountMode.AUTO or not item.simulated_count:
+        return None
+    return item.simulated_count if item.simulated_project_version == project_version else None
 
 
 def _inputs_json(snapshot: Snapshot, financing: dict[str, Any]) -> dict[str, Any]:
@@ -258,6 +271,7 @@ def _inputs_json(snapshot: Snapshot, financing: dict[str, Any]) -> dict[str, Any
                 "count_manual": item.count_manual,
                 "stations_manual": item.stations_manual,
                 "throughput_override": item.throughput_override,
+                "simulated_robots": item.simulated_robots,
             }
             for item in inp.items
         ],

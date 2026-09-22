@@ -4372,6 +4372,19 @@ components:
           type: integer
         seed:
           type: integer
+        purpose:
+          type: string
+          enum:
+            - run
+            - sweep
+          description: sweep — прогон рекомендованного N, записанный перебором флота
+        job_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+        events_count:
+          type: integer
         fleet:
           type: array
           items:
@@ -4585,6 +4598,16 @@ components:
                 type: number
               utilization:
                 type: number
+        skipped_processes:
+          type: array
+          description: Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) — их N остаётся по расчёту.
+          items:
+            type: object
+            properties:
+              process_key:
+                type: string
+              reason:
+                type: string
     SimulationReplay:
       type: object
       description: 'Всё, что нужно 2D-плееру: планировка, роботы, отрезок журнала событий.'
@@ -7530,8 +7553,8 @@ components:
           description: false — только KPI, быстрее (для перебора N)
         compare_baseline:
           type: boolean
-          default: true
-          description: Прогнать тем же движком ручной процесс для «SLA как сейчас»
+          default: false
+          description: Прогнать тем же движком ручной процесс для «SLA как сейчас» — пока не поддерживается, summary.baseline = null
     StateShare:
       type: object
       description: Доли времени по состояниям (сумма = 1).
@@ -7608,10 +7631,16 @@ components:
         process_key:
           type: string
         from_count:
-          type: integer
-          minimum: 0
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          description: Вместе с to_count — полный перебор диапазона вместо поиска
         to_count:
-          type: integer
+          type:
+            - integer
+            - 'null'
+          minimum: 1
         mode:
           $ref: '#/components/schemas/SimulationMode'
         seed:
@@ -7620,10 +7649,15 @@ components:
             - 'null'
     FleetSweepResult:
       type: object
+      description: |
+        Минимальное N, при котором среднее SLA по `sim_replications` прогонам пикового режима не ниже цели.
+        Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
+        Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
       required:
         - process_key
         - points
         - recommended_count
+        - explanation
       properties:
         process_key:
           type: string
@@ -7641,6 +7675,16 @@ components:
                 type: integer
               sla_achieved_pct:
                 type: number
+                description: Среднее по повторам
+              sla_min_pct:
+                type:
+                  - number
+                  - 'null'
+                description: Худший повтор
+              passed:
+                type: boolean
+              runs:
+                type: integer
               utilization:
                 type: number
               throughput_per_hour:
@@ -7656,10 +7700,32 @@ components:
                   - number
                   - 'null'
               simulation_id:
-                type: string
+                type:
+                  - string
+                  - 'null'
                 format: uuid
         recommended_count:
-          type: integer
+          type:
+            - integer
+            - 'null'
+          description: 'null — даже тройной парк не выполняет SLA: ограничение не в роботах'
+        analytic_count:
+          type:
+            - integer
+            - 'null'
+        target_pct:
+          type:
+            - number
+            - 'null'
+        simulation_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: Прогон рекомендованного N с журналом для плеера
+        applied:
+          type: boolean
+          description: N записано в сценарий
         explanation:
           type: string
           example: 12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 %

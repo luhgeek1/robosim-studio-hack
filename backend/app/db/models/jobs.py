@@ -25,6 +25,7 @@ class Job(UuidPkMixin, CreatedAtMixin, Base):
     stage: Mapped[str | None] = mapped_column(sa.String(255))
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     result_url: Mapped[str | None] = mapped_column(sa.String(512))
+    result: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     error: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     attempts: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
     max_attempts: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=3)

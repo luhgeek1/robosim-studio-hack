@@ -64,6 +64,13 @@ class ScenarioItem(UuidPkMixin, Base):
     throughput_override_per_hour: Mapped[float | None] = mapped_column(sa.Float)
     override_reason: Mapped[str | None] = mapped_column(sa.Text)
     notes: Mapped[str | None] = mapped_column(sa.Text)
+    # The fleet sweep's answer: the smallest N meeting SLA, valid while the project version is the same.
+    simulated_count: Mapped[int | None] = mapped_column(sa.Integer)
+    simulation_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("simulation_runs.id", ondelete="SET NULL", use_alter=True)
+    )
+    simulated_project_version: Mapped[int | None] = mapped_column(sa.Integer)
+    simulation_note: Mapped[str | None] = mapped_column(sa.Text)
 
     scenario: Mapped[Scenario] = relationship(back_populates="items")
 

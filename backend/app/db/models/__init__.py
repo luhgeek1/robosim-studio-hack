@@ -17,6 +17,7 @@ from app.db.models.reference import (
     SpecKey,
 )
 from app.db.models.scenarios import CalculationRun, Scenario, ScenarioItem
+from app.db.models.simulations import SimulationRun
 
 __all__ = [
     "ApiKey",
@@ -44,6 +45,7 @@ __all__ = [
     "ProjectParam",
     "Scenario",
     "ScenarioItem",
+    "SimulationRun",
     "SolutionType",
     "Source",
     "SpecKey",

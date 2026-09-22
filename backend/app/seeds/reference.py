@@ -149,6 +149,8 @@ def _route_problems(object_type: ObjectTypeSeed, names: set[str]) -> list[str]:
     problems: list[str] = []
     for process in object_type.processes:
         formulas = {"route_length": process.route_length, "unit_weight": process.unit_weight}
+        if process.simulation is not None:
+            formulas |= {f"simulation.{k}": v for k, v in process.simulation.formulas().items()}
         for where, formula in formulas.items():
             if formula:
                 problems += _expression_problems(f"{process.key}.{where}", formula, known)

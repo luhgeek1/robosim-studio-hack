@@ -213,6 +213,7 @@ class ScenarioService:
                 raise InvalidInputError("В базовом сценарии нет роботов — создайте сценарий роботизации")
             context = await self._loader.context(self._user, project.id)
             items = await self._items(context.object_type, patch.items)
+            _keep_simulation(scenario.items, items)
             # Old rows go first: the new composition may reuse the same (scenario, process) unique key.
             scenario.items.clear()
             await self._uow.flush()
@@ -431,3 +432,15 @@ class ScenarioService:
 
 def _npv(view: CandidateView) -> float:
     return view.economics.npv_rub if view.economics else float("-inf")
+
+
+def _keep_simulation(old: list[ScenarioItem], new: list[ScenarioItem]) -> None:
+    """A fleet sweep stays valid while the process keeps the same product; any other change drops it."""
+    previous = {(item.process_key, item.product_id): item for item in old}
+    for item in new:
+        source = previous.get((item.process_key, item.product_id))
+        if source is not None and source.simulated_count:
+            item.simulated_count = source.simulated_count
+            item.simulation_id = source.simulation_id
+            item.simulated_project_version = source.simulated_project_version
+            item.simulation_note = source.simulation_note

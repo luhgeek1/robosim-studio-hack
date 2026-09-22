@@ -1,8 +1,12 @@
+import asyncio
+import json
 import logging
+from collections.abc import AsyncIterator
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Path, Response, status
+from fastapi import APIRouter, Path, Request, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import text
 
 from app.api.deps import CurrentUserDep, RedisDep, SettingsDep, UowDep
@@ -10,7 +14,10 @@ from app.api.schemas.system import CheckState, Health, Job, SystemVersion
 from app.core.errors import NotFoundError
 from app.core.versions import ENGINE_VERSION
 from app.db.repositories.jobs import to_info
+from app.db.session import Database
+from app.db.uow import UnitOfWork
 from app.domain.auth import Permission
+from app.domain.jobs import JobStatus
 from app.infra.worker_heartbeat import HEARTBEAT_KEY
 from app.service.reference import ReferenceService
 
@@ -18,6 +25,7 @@ router = APIRouter(tags=["system"])
 logger = logging.getLogger(__name__)
 
 NO_DATA_VERSION = "none"
+STREAM_POLL_S = 0.5
 
 
 @router.get("/health", operation_id="health", summary="Liveness (без внешних вызовов)")
@@ -74,3 +82,45 @@ async def get_job(job_id: Annotated[UUID, Path()], user: CurrentUserDep, uow: Uo
     if job is None or (job.owner_id != user.id and not user.can(Permission.USERS_MANAGE)):
         raise NotFoundError("Задача не найдена")
     return Job.from_domain(to_info(job))
+
+
+async def _job_events(db: Database, job_id: UUID) -> AsyncIterator[str]:
+    while True:
+        async with UnitOfWork(db.session()) as uow:
+            job = await uow.jobs.get(job_id)
+            if job is None:
+                return
+            info = to_info(job)
+        body = {
+            "job_id": str(info.id),
+            "status": info.status.value,
+            "progress": info.progress,
+            "stage": info.stage,
+        }
+        if info.status == JobStatus.FAILED:
+            yield f"event: error\ndata: {json.dumps(info.error or {}, ensure_ascii=False)}\n\n"
+            return
+        final = info.status in {JobStatus.DONE, JobStatus.CANCELLED}
+        yield f"event: {'done' if final else 'progress'}\ndata: {json.dumps(body, ensure_ascii=False)}\n\n"
+        if final:
+            return
+        await asyncio.sleep(STREAM_POLL_S)
+
+
+@router.get(
+    "/jobs/{job_id}/stream",
+    operation_id="streamJob",
+    summary="SSE-поток прогресса задачи",
+    response_class=StreamingResponse,
+    responses={
+        200: {"content": {"text/event-stream": {}}, "description": "Поток событий"},
+        404: {"description": "Не найдено"},
+    },
+)
+async def stream_job(
+    job_id: Annotated[UUID, Path()], request: Request, user: CurrentUserDep, uow: UowDep
+) -> StreamingResponse:
+    job = await uow.jobs.get(job_id)
+    if job is None or (job.owner_id != user.id and not user.can(Permission.USERS_MANAGE)):
+        raise NotFoundError("Задача не найдена")
+    return StreamingResponse(_job_events(request.app.state.db, job.id), media_type="text/event-stream")

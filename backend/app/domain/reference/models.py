@@ -92,6 +92,7 @@ class ProcessDef:
     requirements: list["Requirement"] = field(default_factory=list)
     labor_release: str | None = None
     labor_release_by_type: dict[str, str] = field(default_factory=dict)
+    simulation: dict[str, str] | None = None
 
     def release_formula(self, solution_type: str) -> str | None:
         return self.labor_release_by_type.get(solution_type, self.labor_release)

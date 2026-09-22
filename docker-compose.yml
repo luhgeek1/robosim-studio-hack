@@ -7,6 +7,7 @@ x-backend: &backend
     RS_DATABASE_URL: postgresql+asyncpg://roboscope:roboscope@db:5432/roboscope
     RS_REDIS_URL: redis://redis:6379/0
     RS_DOCS_ENABLED: ${RS_DOCS_ENABLED:-true}
+    RS_JOBS_BACKEND: arq
   depends_on:
     db: {condition: service_healthy}
     redis: {condition: service_healthy}

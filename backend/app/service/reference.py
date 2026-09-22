@@ -84,6 +84,7 @@ def _process(process: ProcessDef) -> ProcessDefInfo:
         requirements=[Requirement(**item) for item in process.requirements],
         labor_release=process.labor_release,
         labor_release_by_type=process.labor_release_by_type,
+        simulation=process.simulation,
     )
 
 

@@ -919,6 +919,13 @@ processes:
     70 % — к перемещению паллет.'
   solution_types: [amr_transport, fmr_forklift, tow_tractor]
   sizing_model: transport_cycle
+  simulation:
+    model: transport
+    inbound: pallets_in_per_day
+    outbound: pallets_out_per_day
+    internal: pallets_internal_per_day
+    lead_time_min: pallet_lead_time_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
   route_length: "coalesce(pallet_route_length_m, (pallets_in_per_day * layout_route_dock_in_to_storage_m + pallets_out_per_day * layout_route_storage_to_dock_out_m + pallets_internal_per_day * layout_route_storage_to_storage_m) / (pallets_in_per_day + pallets_out_per_day + pallets_internal_per_day), transport_default_one_way_distance_m)"
   unit_weight: pallet_weight_kg
   requirements:
@@ -997,6 +1004,13 @@ processes:
     процессу. Какая часть высвобождается, задаёт норматив labor_release_share_picking.'
   solution_types: [goods_to_person, pick_assist, piece_picking_arm, amr_transport]
   sizing_model: goods_to_person
+  simulation:
+    model: goods_to_person
+    lines: order_lines_per_day
+    lines_per_trip: g2p_robot_lines_per_trip
+    station_lines_per_hour: g2p_station_lines_per_hour
+    lead_time_min: sim_line_lead_time_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
   route_length: coalesce(layout_route_pod_to_station_m, g2p_one_way_distance_m)
   unit_weight: item_weight_kg * pieces_per_day / order_lines_per_day
   requirements:

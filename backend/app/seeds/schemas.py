@@ -95,6 +95,23 @@ class RequirementSeed(SeedModel):
     why_needed: str
 
 
+class SimulationSeed(SeedModel):
+    """How the discrete-event model reads this process: expressions over params and norms."""
+
+    model: Literal["transport", "goods_to_person"]
+    inbound: str | None = None
+    outbound: str | None = None
+    internal: str | None = None
+    lines: str | None = None
+    lines_per_trip: str | None = None
+    station_lines_per_hour: str | None = None
+    lead_time_min: str
+    target_share: str
+
+    def formulas(self) -> dict[str, str]:
+        return {k: v for k, v in self.model_dump(exclude={"model"}).items() if v}
+
+
 class ProcessSeed(SeedModel):
     key: str
     name: str
@@ -114,6 +131,7 @@ class ProcessSeed(SeedModel):
     requirements: list[RequirementSeed] = []
     labor_release: str | None = None
     labor_release_by_type: dict[str, str] = {}
+    simulation: SimulationSeed | None = None
 
 
 class CheckSeed(SeedModel):

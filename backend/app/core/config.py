@@ -41,6 +41,10 @@ class Settings(BaseSettings):
 
     auth_rate_limit_per_min: int = 20
     worker_heartbeat_ttl_s: int = 90
+    jobs_backend: Literal["inline", "arq"] = Field(
+        default="inline", description="inline — in the API process after the response; arq — the worker"
+    )
+    job_timeout_s: int = 300
 
     seed_on_startup: bool = True
     data_root: Path = Field(default=REPO_ROOT, description="Folder with case/dataset and research/")
