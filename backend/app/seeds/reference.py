@@ -7,6 +7,7 @@ from app.core.config import Settings
 from app.db.models import Industry, ObjectType, ParameterDef, ProcessDef, SolutionType, SpecKey
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import ProvenanceStatus
+from app.domain.layout.models import RouteKey
 from app.engine.expressions import ExpressionError, parse
 from app.seeds.dataset import DatasetRow, read_dataset
 from app.seeds.schemas import (
@@ -142,9 +143,21 @@ def _expression_problems(where: str, source: str, names: set[str]) -> list[str]:
     return [f"{where}: unknown names {unknown}"] if unknown else []
 
 
+def _route_problems(object_type: ObjectTypeSeed, names: set[str]) -> list[str]:
+    """Route and weight formulas may also read the layout's route lengths (`layout_route_*_m`)."""
+    known = names | {key.param_key for key in RouteKey}
+    problems: list[str] = []
+    for process in object_type.processes:
+        formulas = {"route_length": process.route_length, "unit_weight": process.unit_weight}
+        for where, formula in formulas.items():
+            if formula:
+                problems += _expression_problems(f"{process.key}.{where}", formula, known)
+    return problems
+
+
 def _formula_problems(object_type: ObjectTypeSeed, norm_keys: set[str]) -> list[str]:
     names = {p.key for p in object_type.parameters} | norm_keys
-    problems: list[str] = []
+    problems = _route_problems(object_type, names)
     allocated: dict[str, float] = {}
     for process in object_type.processes:
         if process.demand is not None:

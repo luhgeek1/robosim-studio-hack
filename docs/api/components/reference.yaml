@@ -129,7 +129,7 @@ SolutionType:
 
 NormCategory:
   type: string
-  enum: [capex, opex, labor, finance, operations, simulation, sizing, risk]
+  enum: [capex, opex, labor, finance, operations, simulation, sizing, risk, layout]
 
 Norm:
   type: object

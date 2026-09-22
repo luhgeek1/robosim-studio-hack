@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: RoboScope API
-  version: 0.2.0
+  version: 0.3.0
   license:
     name: MIT
     identifier: MIT
@@ -1242,8 +1242,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Layout'
+        '404':
+          description: Планировка ещё не сгенерирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '413':
+          description: Файл больше 10 МБ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '415':
           description: Неподдерживаемый формат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    get:
+      tags:
+        - layout
+      operationId: getLayoutBackground
+      summary: Файл подложки планировки
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Файл в исходном формате
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Подложка не загружена
           content:
             application/json:
               schema:
@@ -3504,7 +3545,8 @@ components:
       type: object
       description: |
         Планировка объекта — единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
-        пользователь может подправить зоны и станции в простом редакторе. Не CAD.
+        пользователь может подправить зоны и станции в простом редакторе. Не CAD. Сохранение или перегенерация
+        повышает версию проекта: расчёты становятся stale.
       required:
         - id
         - project_id
@@ -3515,6 +3557,10 @@ components:
         - nodes
         - edges
         - generated
+        - stats
+        - derivation
+        - warnings
+        - params_changed
       properties:
         id:
           type: string
@@ -3524,16 +3570,21 @@ components:
           format: uuid
         version:
           type: integer
+        template:
+          oneOf:
+            - $ref: '#/components/schemas/LayoutTemplate'
+            - type: 'null'
         width_m:
           type: number
-          example: 125
+          example: 200
         height_m:
           type: number
-          example: 80
+          example: 100
         background_image:
           oneOf:
             - $ref: '#/components/schemas/FileRef'
             - type: 'null'
+          description: url ведёт на GET …/layout/background
         background_scale_m_per_px:
           type:
             - number
@@ -3556,38 +3607,92 @@ components:
             $ref: '#/components/schemas/LayoutEdge'
         generated:
           type: boolean
+          description: false — после ручной правки в редакторе
         generator:
           type: object
           properties:
             template:
               type: string
             seed:
-              type: integer
-            params:
-              type: object
-              additionalProperties: true
-        stats:
-          type: object
-          description: Что вытекает из геометрии — попадает в расчёт цикла.
-          properties:
-            avg_route_m:
+              type:
+                - integer
+                - 'null'
+            overrides:
               type: object
               additionalProperties:
                 type: number
-              example:
-                dock_in_to_storage: 68
-                storage_to_dock_out: 74
-            min_aisle_width_m:
-              type: number
-            rack_slots_total:
+            params:
+              type: object
+              additionalProperties:
+                type: number
+              description: Значения параметров и нормативов, использованные генератором
+            project_version:
               type: integer
-            chargers:
-              type: integer
-            pick_stations:
-              type: integer
+        stats:
+          $ref: '#/components/schemas/LayoutStats'
+        derivation:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayoutDerivationStep'
+        warnings:
+          type: array
+          items:
+            type: string
+          example:
+            - В здании помещается 19 500 из 20 000 паллетомест при 5 ярусах — проверьте высоту потолков и площадь
+        params_changed:
+          type: boolean
+          description: Параметры объекта менялись после генерации — стоит перегенерировать
         updated_at:
           type: string
           format: date-time
+    LayoutStats:
+      type: object
+      description: Что вытекает из геометрии — попадает в расчёт цикла и в имитацию.
+      properties:
+        avg_route_m:
+          type: object
+          additionalProperties:
+            type: number
+          example:
+            dock_in_to_storage: 91.1
+            storage_to_dock_out: 98.2
+            pod_to_station: 42.5
+          description: Ключи — LayoutRoute.key. В расчёт идут как входы `layout_route_<key>_m` (вид `layout` в трассе)
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayoutRoute'
+        min_aisle_width_m:
+          type:
+            - number
+            - 'null'
+          description: Самый узкий проезд для паллетных роботов
+        rack_slots_total:
+          type: integer
+        chargers:
+          type: integer
+        pick_stations:
+          type: integer
+        docks_in:
+          type: integer
+        docks_out:
+          type: integer
+        pods:
+          type: integer
+          description: Мобильных стеллажей в зоне «товар к человеку»
+        nodes:
+          type: integer
+        edges:
+          type: integer
+    LayoutTemplate:
+      type: string
+      description: |
+        warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
+        warehouse_flow_through — приёмка и отгрузка на противоположных фасадах.
+      enum:
+        - warehouse_u_flow
+        - warehouse_flow_through
     MatchingResult:
       type: object
       required:
@@ -5017,6 +5122,7 @@ components:
         - simulation
         - sizing
         - risk
+        - layout
     NormSet:
       type: object
       required:
@@ -6043,9 +6149,90 @@ components:
           type:
             - number
             - 'null'
+    LayoutRoute:
+      type: object
+      required:
+        - key
+        - name
+        - value_m
+        - pairs
+      properties:
+        key:
+          type: string
+          enum:
+            - dock_in_to_storage
+            - storage_to_dock_out
+            - storage_to_storage
+            - pod_to_station
+            - storage_to_charger
+        name:
+          type: string
+          example: Ворота приёмки → место хранения
+        value_m:
+          type: number
+          example: 91.1
+          description: Среднее кратчайших путей по графу, взвешенное по паллетоместам
+        pairs:
+          type: integer
+          description: Сколько пар «откуда → куда» усреднено
+    LayoutDerivationStep:
+      type: object
+      description: Шаг вывода геометрии — формула, подставленные значения и входы (параметры объекта и нормативы).
+      required:
+        - key
+        - name
+        - value
+        - formula
+        - formula_rendered
+        - inputs
+      properties:
+        key:
+          type: string
+          example: rack_levels
+        name:
+          type: string
+          example: Ярусов хранения
+        value:
+          type: number
+        unit:
+          type:
+            - string
+            - 'null'
+        formula:
+          type: string
+          example: ⌊(ceiling_height_m − layout_rack_top_clearance_m) / layout_rack_level_pitch_m⌋
+        formula_rendered:
+          type: string
+          example: ⌊(10 − 0,5) / 1,9⌋ = 5 шт
+        inputs:
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - name
+              - value
+              - kind
+            properties:
+              key:
+                type: string
+              name:
+                type: string
+              value:
+                type: number
+              unit:
+                type:
+                  - string
+                  - 'null'
+              kind:
+                type: string
+                enum:
+                  - param
+                  - norm
+                  - metric
     LayoutUpdate:
       type: object
-      description: Частичное обновление — присланные массивы замещают целиком.
+      description: Частичное обновление — присланные массивы замещают целиком. Длины прямых рёбер пересчитываются по координатам узлов.
       properties:
         zones:
           type: array
@@ -6071,18 +6258,40 @@ components:
       type: object
       properties:
         template:
-          type:
-            - string
-            - 'null'
-          example: warehouse_flow_through
+          oneOf:
+            - $ref: '#/components/schemas/LayoutTemplate'
+            - type: 'null'
         seed:
           type:
             - integer
             - 'null'
+          description: 'Зарезервировано: генератор детерминирован'
         overrides:
           type: object
-          description: Переопределения генератора (число доков, ориентация стеллажей, число станций).
-          additionalProperties: true
+          description: Переопределения генератора; неизвестный ключ — 409.
+          properties:
+            aspect_ratio:
+              type: number
+              example: 2
+              description: Длина здания к глубине
+            docks_in:
+              type: integer
+              minimum: 1
+            docks_out:
+              type: integer
+              minimum: 1
+            pick_stations:
+              type: integer
+              minimum: 0
+            chargers:
+              type: integer
+              minimum: 1
+              description: Например, число зарядок из расчёта сценария
+            cross_aisles:
+              type: integer
+              minimum: 0
+          additionalProperties:
+            type: number
     ScoreComponent:
       type: object
       required:
@@ -6748,7 +6957,8 @@ components:
             - spec
             - metric
             - simulation
-          description: Параметр объекта, норматив, ТТХ, другая метрика или результат симуляции
+            - layout
+          description: Параметр объекта, норматив, ТТХ, другая метрика, результат симуляции или маршрут по планировке
     SizingResult:
       type: object
       description: Как получилось число роботов для процесса — сердце «паспорт против физики».

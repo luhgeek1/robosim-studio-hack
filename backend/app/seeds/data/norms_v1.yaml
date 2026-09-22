@@ -151,6 +151,24 @@ sources:
     url: "https://realty.ria.ru/20260914/sklady-2117035170.html"
     retrieved_at: 2026-09-19
     note: "Круглосуточный пост ≈ 4,2 FTE (docs/MARKET.md)"
+  - key: en_15620
+    kind: regulation
+    title: "EN 15620:2021 Steel static storage systems — Adjustable pallet racking — Tolerances, deformations and clearances"
+    url: "https://cdn.standards.iteh.ai/samples/69288/b2f9330f01574f7da08ab66fe4ee03d9/SIST-EN-15620-2021.pdf"
+    retrieved_at: 2026-09-23
+    note: "Зазоры X3–X6 между грузом и стойкой или соседним грузом не менее 75 мм; вертикальный зазор Y3 75–150 мм в зависимости от высоты балки; зазор между спаренными рядами без распорок не менее 100 мм + H/100"
+  - key: nfpa_13
+    kind: regulation
+    title: "NFPA 13 Standard for the Installation of Sprinkler Systems: clearance from deflector to top of storage"
+    url: "https://up.codes/s/clearance-to-storage-standard-pendent-and-upright-spray-sprinklers"
+    retrieved_at: 2026-09-23
+    note: "Не менее 18 дюймов (450 мм) от дефлектора оросителя до верха хранения; для ESFR — 36 дюймов (≈ 0,9 м)"
+  - key: rmfs_lamballais_2017
+    kind: open_source
+    title: "Lamballais T., Roy D., De Koster R. Estimating performance in a Robotic Mobile Fulfillment System. European Journal of Operational Research 256(3), 2017, p. 976–990"
+    url: "https://repub.eur.nl/pub/107376/"
+    retrieved_at: 2026-09-23
+    note: "Модель зоны «товар к человеку»: стеллажи-поды блоками между полосами движения, станции отбора по периметру зоны хранения"
   - key: team
     kind: team_assumption
     title: "Допущение команды RoboScope"
@@ -1201,5 +1219,225 @@ norms:
     source: team
     rationale: "Зона goods-to-person компактна: робот везёт стеллаж из соседнего блока хранения к станции. Кейс Восток-Сервис (research/catalog_specs): около 1000 мобильных стеллажей — порядка 1000 м² хранения плюс проезды ≈ 2000 м², сторона зоны ≈ 45 м; средний путь ≈ половина стороны плюс подъезд к станции ≈ 40 м. Уточняется планировкой и имитацией."
     affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_building_aspect_ratio
+    name: Соотношение длины здания к глубине (нет плана)
+    value: 2
+    unit: коэфф.
+    category: layout
+    range: {min: 1.5, max: 3}
+    source: team
+    rationale: "Формы здания в датасете нет. Складской корпус класса A вытянут вдоль фасада с воротами: при сетке колонн 12 × 24 м корпус 20 000 м² — около 100 × 200 м, то есть 2 : 1. Используется, только пока не загружена подложка-план; меняется при генерации планировки."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_dock_staging_depth_m
+    name: Глубина зоны приёмки и отгрузки у ворот
+    value: 15
+    unit: м
+    category: layout
+    range: {min: 12, max: 20}
+    source: team
+    rationale: "Перед воротами раскладывают паллеты одной машины (33 европаллеты в 2–3 ряда по 1,2 м) и оставляют проезд погрузчика: 12–20 м. Берём середину."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_dock_door_pitch_m
+    name: Шаг доковых ворот
+    value: 4
+    unit: м
+    category: layout
+    range: {min: 3.6, max: 4.5}
+    source: team
+    rationale: "Доковые ворота 3 × 3 м с уравнительной платформой ставят с шагом 3,6–4,5 м по осям, чтобы рядом встали две фуры. Берём 4 м."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_dock_pallets_per_door_hour
+    name: Пропускная способность ворот
+    value: 30
+    unit: палл/ч на ворота
+    category: layout
+    range: {min: 20, max: 45}
+    source: team
+    rationale: "Число ворот в датасете не задано. Фура на 33 европаллеты разгружается за 45–60 мин и 10–15 мин встаёт под ворота — около 30 паллет в час на ворота. Число ворот = пиковый поток паллет в час / 30; пользователь может задать ворота в параметрах объекта."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_rack_bay_pitch_m
+    name: Шаг секции паллетного стеллажа
+    value: 2.8
+    unit: м
+    category: layout
+    range: {min: 2.7, max: 3.0}
+    source: en_15620
+    rationale: "Балка под три европаллеты шириной 800 мм: 3 × 800 + 4 зазора по 75 мм (EN 15620) = 2 700 мм, плюс стойка около 100 мм."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_pallets_per_bay_level
+    name: Паллет на ярусе одной секции
+    value: 3
+    unit: палл
+    category: layout
+    range: {min: 2, max: 3}
+    source: en_15620
+    rationale: "Секция 2 700 мм вмещает три европаллеты 800 мм с зазорами 75 мм (EN 15620); для паллет 1 200 × 1 000 — две."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_rack_depth_m
+    name: Глубина ряда стеллажа
+    value: 1.1
+    unit: м
+    category: layout
+    range: {min: 1.0, max: 1.2}
+    source: team
+    rationale: "Рама 1 100 мм под паллету длиной 1 200 мм (датасет: 1200 × 800 × 1600): паллета выступает на 50 мм с каждой стороны — стандартная схема фронтального стеллажа."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_rack_flue_m
+    name: Зазор между спаренными рядами
+    value: 0.2
+    unit: м
+    category: layout
+    range: {min: 0.15, max: 0.3}
+    source: en_15620
+    rationale: "EN 15620: между рядами «спина к спине» без распорок — не менее 100 мм + H/100. При верхней балке около 7,6 м это 176 мм, округляем до 0,2 м."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_rack_level_pitch_m
+    name: Шаг ярусов стеллажа
+    value: 1.9
+    unit: м
+    category: layout
+    range: {min: 1.8, max: 2.1}
+    source: en_15620
+    rationale: "Паллета с грузом 1 600 мм (датасет) + вертикальный зазор 100 мм (EN 15620, Y3 для средних ярусов) + балка около 150 мм ≈ 1,85 м, округляем до 1,9 м."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_rack_top_clearance_m
+    name: Зазор от верха груза до потолка
+    value: 0.5
+    unit: м
+    category: layout
+    range: {min: 0.45, max: 0.9}
+    source: nfpa_13
+    rationale: "NFPA 13: не менее 450 мм от дефлектора оросителя до верха хранения, для ESFR — около 0,9 м. Берём 0,5 м от высоты потолка из датасета."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_cross_aisle_interval_m
+    name: Шаг поперечных проездов в зоне стеллажей
+    value: 45
+    unit: м
+    category: layout
+    range: {min: 30, max: 60}
+    source: team
+    rationale: "Поперечный проезд через каждые 30–60 м ряда сокращает объезды и нужен для путей эвакуации. Точное требование зависит от класса пожарной опасности и проверяется проектировщиком. Берём середину."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_pick_station_pitch_m
+    name: Ширина места станции отбора
+    value: 3
+    unit: м
+    category: layout
+    range: {min: 2.5, max: 4}
+    source: team
+    rationale: "Станция «товар к человеку»: рабочее место оператора 2–2,5 м с ограждением и подъездом робота к окну выдачи, всего 2,5–4 м вдоль фасада зоны."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_pick_station_depth_m
+    name: Глубина станции отбора с очередью
+    value: 5
+    unit: м
+    category: layout
+    range: {min: 4, max: 7}
+    source: rmfs_lamballais_2017
+    rationale: "Станции стоят по периметру зоны хранения (Lamballais и др., 2017); перед окном выдачи — буфер на 2–3 робота со стеллажом по 1,2 м. Вместе с рабочим местом около 5 м."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_g2p_pod_pitch_m
+    name: Шаг мобильного стеллажа G2P
+    value: 1.2
+    unit: м
+    category: layout
+    range: {min: 1.0, max: 1.5}
+    source: team
+    rationale: "Мобильный стеллаж под подъёмного робота — около 1 × 1 м в плане, плюс 0,2 м зазора. Полоса движения берётся той же ширины: по ней едет робот со стеллажом."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_g2p_block_width_pods
+    name: Стеллажей G2P в глубину блока
+    value: 2
+    unit: шт
+    category: layout
+    range: {min: 2, max: 2}
+    source: rmfs_lamballais_2017
+    rationale: "Блок в два стеллажа глубиной — каждый касается полосы движения, и робот забирает его без перестановок (типовая схема RMFS, Lamballais и др., 2017)."
+    affects: [robot_count]
+    editable_by_user: false
+    object_types: [warehouse]
+  - key: layout_g2p_block_length_pods
+    name: Стеллажей G2P в длину блока
+    value: 5
+    unit: шт
+    category: layout
+    range: {min: 3, max: 10}
+    source: rmfs_lamballais_2017
+    rationale: "Блоки 2 × 5 между поперечными полосами — компромисс между плотностью хранения и объездами в моделях RMFS (Lamballais и др., 2017). Длиннее блок — плотнее хранение, но длиннее путь к краю блока."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_charger_pitch_m
+    name: Шаг места зарядки
+    value: 1.5
+    unit: м
+    category: layout
+    range: {min: 1.2, max: 2}
+    source: team
+    rationale: "Робот около 1 м шириной плюс проход техника: 1,2–2 м на место у зарядной станции."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_default_charger_slots
+    name: Мест зарядки на схеме (до расчёта сценария)
+    value: 8
+    unit: шт
+    category: layout
+    range: {min: 1, max: 30}
+    source: team
+    rationale: "До расчёта сценария число роботов неизвестно; резервируем место под 8 зарядок — до 24 роботов при нормативе robots_per_charging_station = 3. После расчёта планировку перегенерируют с числом зарядок из сценария."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_robot_headway_m
+    name: Минимальная дистанция между роботами на проезде
+    value: 3
+    unit: м
+    category: layout
+    range: {min: 2, max: 5}
+    source: team
+    rationale: "Длина робота с паллетой 1,5–2 м плюс защитное поле лидара около 1 м. Задаёт, сколько роботов одновременно помещается на участке проезда (вместимость ребра графа в имитации)."
+    affects: [sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: layout_loaded_vehicle_width_m
+    name: Габарит робота с паллетой поперёк проезда
+    value: 1.2
+    unit: м
+    category: layout
+    range: {min: 0.8, max: 1.3}
+    source: team
+    rationale: "Европаллета 1 200 мм по длинной стороне (датасет) определяет, разъедутся ли два робота: проезд двусторонний, если он не уже 2 × 1,2 м + зазор безопасности (aisle_safety_clearance_mm). В рабочем проходе 2,8 м движение одностороннее, в главном проезде 3,5 м — двустороннее."
+    affects: [sla]
     editable_by_user: true
     object_types: [warehouse]

@@ -14,6 +14,7 @@ from app.engine.demand import (
     total_labor_cost,
 )
 from app.engine.trace import Book
+from app.service.layouts.reader import LayoutReader
 from app.service.projects.context import ProjectContext, ProjectLoader
 from app.service.projects.norms import NormLoader
 
@@ -68,6 +69,7 @@ class ProcessService:
         self._loader = ProjectLoader(uow)
         self._catalog = CatalogRepository(uow.session)
         self._norms = NormLoader(uow)
+        self._layouts = LayoutReader(uow)
 
     @staticmethod
     def _payroll_coefficient(values: dict[str, float | None]) -> float:
@@ -83,6 +85,8 @@ class ProcessService:
         values = context.numeric()
         norms = await self._norms.book(context.project.object_type)
         for key, quantity in norms.items.items():
+            values.setdefault(key, quantity.value)
+        for key, quantity in (await self._layouts.book(context.project.id)).items.items():
             values.setdefault(key, quantity.value)
         groups = _groups(context, values)
         payroll = self._payroll_coefficient(values)

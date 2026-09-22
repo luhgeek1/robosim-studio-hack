@@ -20,11 +20,13 @@ class Books:
             ],
         )
         self.norms = inp.norms
+        self.layout = inp.layout
         self.values: dict[str, float | None] = {k: q.value for k, q in inp.norms.items.items()}
+        self.values.update({k: q.value for k, q in inp.layout.items.items()})
         self.values.update({k: v for k, v in inp.params.items() if v is not None})
 
     def quantity(self, name: str) -> Quantity:
-        return self.params.optional(name) or self.norms.get(name)
+        return self.params.optional(name) or self.layout.optional(name) or self.norms.get(name)
 
     def expression(self, source: str) -> tuple[float, list[Quantity]]:
         expression = parse(source)

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: RoboScope API
-  version: 0.2.0
+  version: 0.3.0
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -184,6 +184,8 @@ components:
     ProjectParam: {$ref: './components/projects.yaml#/ProjectParam'}
     ProcessDemand: {$ref: './components/projects.yaml#/ProcessDemand'}
     Layout: {$ref: './components/projects.yaml#/Layout'}
+    LayoutStats: {$ref: './components/projects.yaml#/LayoutStats'}
+    LayoutTemplate: {$ref: './components/projects.yaml#/LayoutTemplate'}
     MatchingResult: {$ref: './components/analysis.yaml#/MatchingResult'}
     Candidate: {$ref: './components/analysis.yaml#/Candidate'}
     Scenario: {$ref: './components/analysis.yaml#/Scenario'}

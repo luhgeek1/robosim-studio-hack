@@ -52,6 +52,12 @@ class Serializer:
             return self._param(quantity.key)
         if quantity.kind == InputKind.SPEC:
             return self._spec(quantity.key, namespace)
+        if quantity.kind == InputKind.LAYOUT:
+            return {
+                "status": ProvenanceStatus.DERIVED.value,
+                "note": f"Кратчайшие пути по графу планировки v{self.snap.layout_version}, "
+                "средние по местам хранения",
+            }
         return dict(_DERIVED)
 
     def _norm(self, key: str) -> dict[str, Any]:

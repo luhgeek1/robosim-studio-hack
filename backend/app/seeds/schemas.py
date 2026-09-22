@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, TypeAdapter
 
 from app.domain.catalog import Badge
 from app.domain.common.provenance import ProvenanceStatus, SourceKind
+from app.domain.layout.models import LayoutTemplate
 from app.domain.reference import NormCategory, ObjectTypeKey, SizingModel, SpecGroup
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -147,7 +148,7 @@ class ObjectTypeSeed(SeedModel):
     industry: str
     depth: Literal["full", "basic"]
     dataset_sheet: str | None = None
-    layout_templates: list[str] = []
+    layout_templates: list[LayoutTemplate] = []
     parameter_groups: list[ParameterGroupSeed]
     parameters: list[ParameterSeed]
     labor_groups: list[LaborGroupSeed] = []

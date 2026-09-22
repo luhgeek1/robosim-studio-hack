@@ -24,7 +24,7 @@ class TraceInput(ApiModel):
     value: float | str | None
     unit: str | None = None
     provenance: Provenance | None = None
-    kind: Literal["param", "norm", "spec", "metric", "simulation"]
+    kind: Literal["param", "norm", "spec", "metric", "simulation", "layout"]
 
 
 class CostItem(ApiModel):

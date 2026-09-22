@@ -9,9 +9,11 @@ class InputKind(StrEnum):
     SPEC = "spec"
     METRIC = "metric"
     SIMULATION = "simulation"
+    LAYOUT = "layout"
 
 
 class Section(StrEnum):
+    LAYOUT = "layout"
     DEMAND = "demand"
     SIZING = "sizing"
     CAPEX = "capex"

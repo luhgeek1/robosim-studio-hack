@@ -284,7 +284,7 @@ TraceInput:
     value: {oneOf: [{type: number}, {type: string}, {type: "null"}], example: 100000}
     unit: {type: [string, "null"], example: "₽/мес"}
     provenance: {$ref: './common.yaml#/Provenance'}
-    kind: {type: string, enum: [param, norm, spec, metric, simulation], description: "Параметр объекта, норматив, ТТХ, другая метрика или результат симуляции"}
+    kind: {type: string, enum: [param, norm, spec, metric, simulation, layout], description: "Параметр объекта, норматив, ТТХ, другая метрика, результат симуляции или маршрут по планировке"}
 
 CostItem:
   type: object

@@ -31,6 +31,7 @@ class NormCategory(StrEnum):
     SIMULATION = "simulation"
     SIZING = "sizing"
     RISK = "risk"
+    LAYOUT = "layout"
 
 
 class SpecGroup(StrEnum):

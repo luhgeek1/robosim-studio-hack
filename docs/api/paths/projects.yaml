@@ -269,7 +269,22 @@ projectLayoutBackground:
               scale_m_per_px: {type: number}
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/Layout'}}}}
+      '404': {description: "Планировка ещё не сгенерирована", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '413': {description: "Файл больше 10 МБ", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
       '415': {description: "Неподдерживаемый формат", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+  get:
+    tags: [layout]
+    operationId: getLayoutBackground
+    summary: Файл подложки планировки
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    responses:
+      '200':
+        description: "Файл в исходном формате"
+        content:
+          image/png: {schema: {type: string, format: binary}}
+          image/jpeg: {schema: {type: string, format: binary}}
+          application/pdf: {schema: {type: string, format: binary}}
+      '404': {description: "Подложка не загружена", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
 
 projectAudit:
   get:

@@ -1,10 +1,12 @@
+import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from app.core.errors import DomainError, ErrorCode, NotFoundError
+from app.core.errors import ConflictError, DomainError, ErrorCode, NotFoundError
 from app.db.models import Project
+from app.db.repositories.layouts import LayoutRepository
 from app.db.repositories.projects import ProjectRepository, ProjectSort
 from app.db.repositories.scenarios import ScenarioRepository
 from app.db.uow import UnitOfWork
@@ -12,10 +14,13 @@ from app.domain.auth import CurrentUser
 from app.domain.project.models import AuditEntry, InitMode, ProjectInfo, ProjectStatus
 from app.domain.project.params import data_quality
 from app.domain.scenario.models import ScenarioKind
+from app.service.layouts.service import LayoutService
 from app.service.projects.audit import AuditLog
 from app.service.projects.context import ProjectContext, ProjectLoader
 
 _EDITABLE_STATUSES = frozenset({ProjectStatus.DRAFT, ProjectStatus.READY, ProjectStatus.ARCHIVED})
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,7 +166,16 @@ class ProjectService:
         self._repo.add(project)
         await self._uow.flush()
         self._audit.write(project.id, "project", "create", after=self._repo.snapshot(project))
+        if draft.mode == InitMode.DEMO and object_type.layout_templates:
+            await self._demo_layout(project.id)
         return await self.get(project.id)
+
+    async def _demo_layout(self, project_id: UUID) -> None:
+        """A demo object comes with its layout: routes in matching and scenarios are real from the start."""
+        try:
+            await LayoutService(self._uow, self._user).generate(project_id, None, {}, bump=False)
+        except ConflictError as exc:
+            logger.warning("demo_layout_skipped", extra={"project_id": str(project_id), "reason": exc.detail})
 
     async def update(self, project_id: UUID, patch: ProjectPatch) -> ProjectInfo:
         project = await self._loader.project(self._user, project_id, lock=True)
@@ -217,6 +231,7 @@ class ProjectService:
         self._repo.add(copy)
         await self._uow.flush()
         await self._repo.copy_params(source.id, copy.id)
+        await LayoutRepository(self._uow.session).copy(source.id, copy.id, self._user.email)
         await self._scenarios.copy_to(source.id, copy.id, self._user.email)
         self._audit.write(copy.id, "project", "create", after={"copied_from": str(source.id)})
         await self._uow.flush()

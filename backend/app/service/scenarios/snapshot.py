@@ -18,6 +18,7 @@ from app.domain.scenario.models import CountMode, NormOverride
 from app.engine.calculation import CalculationInput, ItemInput, ParamMeta
 from app.engine.matching import CandidateStatus, evaluate
 from app.engine.trace import Book, InputKind, Quantity
+from app.service.layouts.reader import LayoutReader, layout_book
 from app.service.matching.candidates import ProcessSizing, build_candidate, choose_offer, spec_book
 from app.service.projects.context import ProjectContext
 from app.service.projects.norms import NormLoader
@@ -45,6 +46,7 @@ class Snapshot:
     budget_rub: float | None
     inputs: dict[str, Any] = field(default_factory=dict)
     survey_hints: dict[str, str | None] = field(default_factory=dict)
+    layout_version: int | None = None
 
     @property
     def inputs_hash(self) -> str:
@@ -82,6 +84,7 @@ class SnapshotBuilder:
         self._reference = ReferenceRepository(uow.session)
         self._matching = MatchingRepository(uow.session)
         self._norms = NormLoader(uow)
+        self._layouts = LayoutReader(uow)
 
     async def norms(self, object_type: str, overrides: list[NormOverride]) -> tuple[Book, dict[str, Norm]]:
         rows = {norm.key: norm for norm in await self._norms.rows(object_type)}
@@ -122,6 +125,7 @@ class SnapshotBuilder:
             else norms.get("discount_rate")
         )
         financing = financing_from_json(scenario.financing)
+        layout = await self._layouts.layout(project.id)
         engine_input = CalculationInput(
             object_type=project.object_type,
             kind=scenario.kind,
@@ -135,6 +139,7 @@ class SnapshotBuilder:
             labor_groups=object_type.labor_groups,
             site_costs=object_type.site_costs,
             items=items,
+            layout=layout_book(layout),
         )
         sources = await self._reference.sources({norm.source_id for norm in rows.values()})
         budget = values.get("capex_budget_mln_rub")
@@ -155,6 +160,7 @@ class SnapshotBuilder:
                 for group in object_type.parameter_groups
                 for param in group.parameters
             },
+            layout_version=layout.version if layout else None,
         )
         snapshot.inputs = _inputs_json(snapshot, financing_to_json(financing))
         return snapshot
@@ -236,6 +242,8 @@ def _inputs_json(snapshot: Snapshot, financing: dict[str, Any]) -> dict[str, Any
         "param_names": {k: meta.name for k, meta in sorted(inp.param_meta.items())},
         "norms": {k: q.value for k, q in sorted(inp.norms.items.items())},
         "norm_names": {k: q.name for k, q in sorted(inp.norms.items.items())},
+        "layout_version": snapshot.layout_version,
+        "layout": {k: q.value for k, q in sorted(inp.layout.items.items())},
         "overrides": snapshot.scenario.overrides,
         "candidate_status": snapshot.candidate_status,
         "items": [

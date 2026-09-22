@@ -7,7 +7,7 @@ from app.domain.reference import LaborGroupDef, ProcessDef, SiteCostDef, SizingM
 from app.domain.scenario.models import CountMode, CountSource, Financing, ScenarioKind
 from app.engine.economics import EconomicsResult
 from app.engine.sizing import SizingOutcome
-from app.engine.trace import Book, Quantity, TraceStep
+from app.engine.trace import Book, InputKind, Quantity, TraceStep
 
 
 class CalculationError(ValueError):
@@ -54,6 +54,7 @@ class CalculationInput:
     labor_groups: Sequence[LaborGroupDef]
     site_costs: Sequence[SiteCostDef]
     items: Sequence[ItemInput]
+    layout: Book = field(default_factory=lambda: Book(InputKind.LAYOUT, {}))
 
 
 @dataclass(frozen=True, slots=True)

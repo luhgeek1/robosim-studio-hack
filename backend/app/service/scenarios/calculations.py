@@ -114,6 +114,7 @@ class CalculationService:
             catalog_version=snapshot.versions.catalog_version,
             norm_set_version=snapshot.versions.norm_set_version,
             engine_version=ENGINE_VERSION,
+            layout_version=snapshot.layout_version,
             inputs_hash=snapshot.inputs_hash,
             duration_ms=int((time.perf_counter() - started) * MS_PER_S),
             created_by=self._user.email,
