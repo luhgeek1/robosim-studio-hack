@@ -1,1 +1,1 @@
-export { ObjectPage } from './stubs'
+export { ObjectPage } from './ObjectPage'

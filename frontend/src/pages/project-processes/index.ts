@@ -1,1 +1,1 @@
-export { ProcessesPage } from './stubs'
+export { ProcessesPage } from './ProcessesPage'
