@@ -59,6 +59,7 @@ class ParameterDef:
     example: str | None
     affects: list[str]
     order: int
+    dataset_row: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +82,19 @@ class ProcessDef:
     labor_groups: list[str]
     solution_types: list[str]
     sizing_model: SizingModel | None
+    demand: dict[str, str] | None = None
+    labor_allocation: dict[str, float] = field(default_factory=dict)
+    labor_allocation_note: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class CrossCheck:
+    key: str
+    expression: str
+    severity: str
+    params: list[str]
+    message: str
+    how_to_fix: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +124,11 @@ class ObjectTypeDetail:
     labor_groups: list[LaborGroupDef]
     layout_templates: list[str]
     demo_projects: list[DemoProjectRef] = field(default_factory=list)
+    checks: list[CrossCheck] = field(default_factory=list)
+
+    @property
+    def parameters(self) -> list[ParameterDef]:
+        return [param for group in self.parameter_groups for param in group.parameters]
 
 
 @dataclass(frozen=True, slots=True)

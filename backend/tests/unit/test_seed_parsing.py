@@ -1,7 +1,7 @@
 import pytest
 
+from app.core.parsing import first_number, parse_dimensions, parse_range, parse_ru_money, parse_scalar
 from app.seeds.catalog_sources import _remap
-from app.seeds.parsing import first_number, parse_dimensions, parse_range, parse_ru_money, parse_scalar
 
 
 def test_money_with_spaces_and_comma() -> None:

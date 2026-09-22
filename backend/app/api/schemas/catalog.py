@@ -7,15 +7,11 @@ from app.api.schemas.base import ApiModel
 from app.api.schemas.common import Money, Provenance, Scalar, Source
 from app.domain.catalog import (
     Badge,
+    CompareRow as CompareRowInfo,
+    ProductDetail as ProductDetailInfo,
     ProductStatus,
     ProductSummary,
     SpecValue,
-)
-from app.domain.catalog import (
-    CompareRow as CompareRowInfo,
-)
-from app.domain.catalog import (
-    ProductDetail as ProductDetailInfo,
 )
 from app.domain.reference import ObjectTypeKey, SpecGroup
 from app.service.catalog import CatalogFacets as CatalogFacetsInfo

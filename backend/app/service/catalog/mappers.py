@@ -4,18 +4,12 @@ from app.db.models import Manufacturer, Product, ProductCase, ProductOffer, Prod
 from app.db.repositories.sources import to_source
 from app.domain.catalog import (
     Badge,
+    Manufacturer as ManufacturerInfo,
+    ProductCase as ProductCaseInfo,
+    ProductOffer as ProductOfferInfo,
     ProductStatus,
     ProductSummary,
     SpecValue,
-)
-from app.domain.catalog import (
-    Manufacturer as ManufacturerInfo,
-)
-from app.domain.catalog import (
-    ProductCase as ProductCaseInfo,
-)
-from app.domain.catalog import (
-    ProductOffer as ProductOfferInfo,
 )
 from app.domain.common.provenance import Provenance
 from app.domain.reference import SpecGroup

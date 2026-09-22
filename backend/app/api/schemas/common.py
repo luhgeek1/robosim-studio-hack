@@ -4,9 +4,13 @@ from uuid import UUID
 from pydantic import Field
 
 from app.api.schemas.base import ApiModel
-from app.domain.common.provenance import Provenance as ProvenanceInfo
-from app.domain.common.provenance import ProvenanceStatus, SourceInfo, SourceKind
-from app.domain.common.provenance import PValue as PValueInfo
+from app.domain.common.provenance import (
+    Provenance as ProvenanceInfo,
+    ProvenanceStatus,
+    PValue as PValueInfo,
+    SourceInfo,
+    SourceKind,
+)
 
 Scalar = float | int | str | bool | None
 

@@ -9,6 +9,8 @@ from app.db.repositories.sources import to_source
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import Provenance, PValue
 from app.domain.reference import (
+    CrossCheck,
+    DemoProjectRef,
     Industry,
     LaborGroupDef,
     NormCategory,
@@ -16,17 +18,13 @@ from app.domain.reference import (
     NormSetInfo,
     ObjectTypeDetail,
     ObjectTypeKey,
+    ParameterDef as ParameterDefInfo,
     ParameterGroup,
+    ProcessDef as ProcessDefInfo,
     SizingModel,
     SolutionTypeInfo,
     SpecGroup,
     SpecKeyInfo,
-)
-from app.domain.reference import (
-    ParameterDef as ParameterDefInfo,
-)
-from app.domain.reference import (
-    ProcessDef as ProcessDefInfo,
 )
 
 
@@ -60,6 +58,7 @@ def _parameter(param: ParameterDef, sources: dict[UUID, Source]) -> ParameterDef
         example=param.example,
         affects=param.affects,
         order=param.order,
+        dataset_row=param.dataset_row,
     )
 
 
@@ -75,6 +74,9 @@ def _process(process: ProcessDef) -> ProcessDefInfo:
         labor_groups=process.labor_groups,
         solution_types=process.solution_types,
         sizing_model=process.sizing_model,
+        demand=process.demand,
+        labor_allocation=process.labor_allocation,
+        labor_allocation_note=process.labor_allocation_note,
     )
 
 
@@ -103,6 +105,8 @@ def _object_type(
         processes=[_process(p) for p in processes],
         labor_groups=[LaborGroupDef(**g) for g in item.labor_groups],
         layout_templates=item.layout_templates,
+        demo_projects=[DemoProjectRef(**d) for d in item.demo_projects],
+        checks=[CrossCheck(**c) for c in item.checks],
     )
 
 

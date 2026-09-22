@@ -52,6 +52,9 @@ ignore = [
 # Route handlers receive their dependencies as parameters; FastAPI DI makes long signatures idiomatic.
 "app/api/v1/**" = ["PLR0913", "PLR0917"]
 
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
 [tool.ruff.lint.pylint]
 max-args = 7
 max-branches = 12

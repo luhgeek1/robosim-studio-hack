@@ -82,3 +82,9 @@ class RateLimitedError(DomainError):
     status_code = 429
     error_code = ErrorCode.RATE_LIMITED
     default_detail = "Слишком много запросов, попробуйте через минуту"
+
+
+class ParamsInvalidError(DomainError):
+    status_code = 422
+    error_code = ErrorCode.PARAMS_INVALID
+    default_detail = "Проверьте значения параметров"

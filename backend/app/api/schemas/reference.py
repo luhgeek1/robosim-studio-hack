@@ -10,16 +10,12 @@ from app.domain.reference import (
     NormSetInfo,
     ObjectTypeDetail,
     ObjectTypeKey,
+    ParameterDef as ParameterDefInfo,
+    ProcessDef as ProcessDefInfo,
     SizingModel,
     SolutionTypeInfo,
     SpecGroup,
     SpecKeyInfo,
-)
-from app.domain.reference import (
-    ParameterDef as ParameterDefInfo,
-)
-from app.domain.reference import (
-    ProcessDef as ProcessDefInfo,
 )
 
 

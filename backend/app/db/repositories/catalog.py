@@ -166,3 +166,9 @@ class CatalogRepository:
         base = _apply_filters(select(Product.price_from_rub.label("price")), query).subquery()
         row = (await self._session.execute(select(func.min(base.c.price), func.max(base.c.price)))).one()
         return row[0], row[1]
+
+    async def products_per_process(self, object_type: str) -> dict[str, int]:
+        process = func.unnest(Product.processes).label("process")
+        base = select(process).where(literal(object_type) == any_(Product.object_types)).subquery()
+        statement = select(base.c.process, func.count()).group_by(base.c.process)
+        return dict((await self._session.execute(statement)).tuples().all())
