@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useStore } from '../store'
 import { makeAgent, stepAgent, type Agent } from './agents'
-import { RobotMesh } from './Twin'
+import { RobotMesh } from './RobotMesh'
 import { DOCK_POINTS } from './layout'
 
 export const agentsRef: { current: Agent[] } = { current: [] }
@@ -76,6 +76,7 @@ function RobotAgent({ index }: { index: number }) {
       ref={group}
       visible={visible}
       onClick={(e) => {
+        if (e.delta > 4) return
         e.stopPropagation()
         setSelection(selected ? null : { kind: 'robot', index })
       }}
