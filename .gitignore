@@ -15,3 +15,6 @@ template/
 # Raw Telegram export: other participants' names, materials password, personal invite link.
 # Important facts from it are distilled in docs/CASE_BRIEF.md
 case/chat/
+
+# v0 backend kept locally as a logic donor only (full v0 is in tag v0-prototype)
+legacy/
