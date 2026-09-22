@@ -10,9 +10,11 @@ dependencies = [
     "asyncpg>=0.31.0",
     "email-validator>=2.3.0",
     "fastapi[standard]>=0.141.1",
+    "openpyxl>=3.1.5",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.14.0",
     "python-multipart>=0.0.32",
+    "pyyaml>=6.0.3",
     "redis>=5.3.1",
     "sqlalchemy[asyncio]>=2.0.54",
 ]
@@ -21,9 +23,9 @@ dependencies = [
 dev = [
     "httpx>=0.28.1",
     "mypy>=2.3.1",
+    "pandas>=3.0.6",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "pyyaml>=6.0.3",
     "ruff>=0.16.8",
     "types-pyyaml>=6.0.12.20260906",
 ]

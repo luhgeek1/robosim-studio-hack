@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: RoboScope API
-  version: 0.1.0
+  version: 0.1.1
   license:
     name: MIT
     identifier: MIT
@@ -4930,7 +4930,10 @@ components:
         description:
           type: string
         sizing_model:
-          $ref: '#/components/schemas/SizingModel'
+          description: null — категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог.
+          oneOf:
+            - $ref: '#/components/schemas/SizingModel'
+            - type: 'null'
         capability_keys:
           type: array
           description: Ключи ТТХ, участвующие в жёстких проверках для этого типа.

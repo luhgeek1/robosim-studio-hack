@@ -117,7 +117,9 @@ SolutionType:
     key: {type: string, example: "amr_transport"}
     name: {type: string, example: "AMR — транспортный мобильный робот"}
     description: {type: string}
-    sizing_model: {$ref: '#/SizingModel'}
+    sizing_model:
+      description: null — категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог.
+      oneOf: [{$ref: '#/SizingModel'}, {type: "null"}]
     capability_keys:
       type: array
       description: Ключи ТТХ, участвующие в жёстких проверках для этого типа.

@@ -4,9 +4,9 @@ _Обновлено: 2026-09-22. До дедлайна (29.09, 23:59 МСК) —
 
 ## Где мы
 
-Разработка. **Веха 1 (каркас) закрыта:** `make up` поднимает db → миграции → API → воркер, `/api/v1/ready` = ok.
-Реализовано 12 из 107 операций контракта: system (health, ready, version, jobs/{id}), auth (register, login, refresh,
-logout), me (get, patch), api-keys (list, create, revoke).
+Разработка. **Вехи 1 (каркас) и 2 (справочники и каталог) закрыты.** `make up` поднимает стек с сидами.
+Реализовано 23 из 107 операций контракта: system, auth, me, api-keys, reference (object-types, solution-types,
+industries, norms, norm-sets), catalog (products, facets, product, compare, spec-keys).
 
 ## Что готово
 
@@ -17,13 +17,17 @@ logout), me (get, patch), api-keys (list, create, revoke).
 - Миграция `20260922_0001` (users, api_keys, jobs; PG enum, naming convention, рабочий downgrade).
 - Тесты: 34 (unit + integration на реальных Postgres/Redis + контрактный: операции бэкенда ⊆ `docs/api`,
   operationId и 2xx совпадают). `make check` — ruff, format, mypy (strict на domain/service), pytest, линт контракта.
+- Справочники и каталог: 3 типа объектов (168 параметров с источником у каждого значения по умолчанию, 17 процессов),
+  28 типов решений, 44 ключа ТТХ, нормативы v1 (80 значений, 26 источников), каталог 187 продуктов / 223 предложения,
+  ТТХ из research с происхождением, бейджи, полнота карточки, полнотекстовый поиск. Детали и ловушки — `docs/DATA.md`.
+  Версия каталога поднимается только при изменении входных файлов (хэш в `data_versions`).
 - Фронт v0 перенесён в `frontend/`; v0-бэкенд — в `legacy/backend-v0/`, тег `v0-prototype`.
 - Документы планирования (D-003…D-013), контракт `docs/api/` (107 операций), `research/` — см. прошлые записи в git.
 
 ## Дальше (порядок)
 
-1. **Сиды:** каталог из `case/dataset` + ТТХ из `research/catalog_specs/` + бейджи; нормативы v1 с источниками;
-   справочники ObjectType/ParameterDef/ProcessDef; демо-проекты трёх типов. API: reference + catalog.
+1. **Проекты и параметры:** projects CRUD/copy, params с историей и происхождением, валидация, data-quality,
+   processes («где деньги»), шаблон Excel и импорт; демо-проекты трёх типов из датасета.
 2. **Ядро** `engine/`: demand → matching → sizing → economics + trace; эталонные тесты; калибровка по ФЦ БАС.
 3. **Симуляция:** генератор планировки → DES на графе → summary/timeline/replay → fleet-sweep → N в экономику.
 4. **API** по порядку из `docs/api/README.md`; фронт снимает моки по мере готовности.
@@ -36,7 +40,7 @@ logout), me (get, patch), api-keys (list, create, revoke).
 ## Технический долг
 
 - CI не настроен: ворота пока `make check` локально. Шаг: пайплайн SourceCraft после переезда (Q-010).
-- `version` отдаёт `catalog_version`/`norm_set_version` = `none` — заменить на реальные версии вместе с сидами каталога.
+- В каталоге нет фото продуктов (`image_url` пуст) — взять из PDF-каталога организатора.
 - `legacy/backend-v0/` удалить после переноса логики (до сдачи).
 - Логи arq дублируются (свой обработчик arq + наш JSON) — выключить обработчик arq.
 
@@ -46,4 +50,4 @@ logout), me (get, patch), api-keys (list, create, revoke).
 - Платформа сдачи ложилась от нагрузки (15.09): сдаём 28.09.
 - Шаблон презентации ЛЦТ ещё не скачан (R10 в `docs/RESEARCH.md`) — сделать до 25.09.
 - LLM из docker жюри может быть недоступен — fallback обязателен (D-008).
-- Ставка НДС и финансовые нормативы 2026 не подтверждены источниками (R6) — до реализации экономики.
+- 38 нормативов — допущения команды (список в `docs/DATA.md`); защищать на питче, проверить калибровкой ФЦ БАС.

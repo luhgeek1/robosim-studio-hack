@@ -21,6 +21,27 @@ _BASE_DB_URL = os.environ.get(
 )
 _REDIS_URL = os.environ.get("RS_TEST_REDIS_URL", "redis://localhost:6379/15")
 DEMO_PASSWORD = "Demo12345!"
+# Seeded reference data survives between tests; only user-generated tables are truncated.
+SEEDED_TABLES = frozenset(
+    {
+        "alembic_version",
+        "sources",
+        "object_types",
+        "parameter_defs",
+        "process_defs",
+        "solution_types",
+        "spec_keys",
+        "industries",
+        "norm_sets",
+        "norms",
+        "data_versions",
+        "manufacturers",
+        "products",
+        "product_offers",
+        "product_specs",
+        "product_cases",
+    }
+)
 
 
 def make_settings(**overrides: object) -> Settings:
@@ -65,13 +86,8 @@ async def migrated_db() -> str:
 async def settings(migrated_db: str) -> Settings:
     engine = create_async_engine(migrated_db)
     async with engine.begin() as conn:
-        tables = await conn.scalars(
-            text(
-                "SELECT tablename FROM pg_tables "
-                "WHERE schemaname = 'public' AND tablename <> 'alembic_version'"
-            )
-        )
-        names = ", ".join(f'"{name}"' for name in tables)
+        tables = await conn.scalars(text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'"))
+        names = ", ".join(f'"{name}"' for name in tables if name not in SEEDED_TABLES)
         if names:
             await conn.execute(text(f"TRUNCATE {names} RESTART IDENTITY CASCADE"))
     await engine.dispose()

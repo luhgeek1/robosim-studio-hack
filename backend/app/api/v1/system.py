@@ -12,6 +12,7 @@ from app.core.versions import ENGINE_VERSION
 from app.db.repositories.jobs import to_info
 from app.domain.auth import Permission
 from app.infra.worker_heartbeat import HEARTBEAT_KEY
+from app.service.reference import ReferenceService
 
 router = APIRouter(tags=["system"])
 logger = logging.getLogger(__name__)
@@ -50,12 +51,13 @@ async def ready(response: Response, uow: UowDep, redis: RedisDep) -> Health:
 
 
 @router.get("/version", operation_id="version", summary="Версии приложения, движка, каталога и нормативов")
-async def version(settings: SettingsDep) -> SystemVersion:
+async def version(settings: SettingsDep, uow: UowDep) -> SystemVersion:
+    reference = ReferenceService(uow)
     return SystemVersion(
         app_version=settings.app_version,
         engine_version=ENGINE_VERSION,
-        catalog_version=NO_DATA_VERSION,
-        norm_set_version=NO_DATA_VERSION,
+        catalog_version=await reference.data_version("catalog") or NO_DATA_VERSION,
+        norm_set_version=await reference.current_norm_set_version() or NO_DATA_VERSION,
         llm_enabled=False,
         build_sha=settings.build_sha,
     )

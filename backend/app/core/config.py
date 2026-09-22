@@ -1,8 +1,11 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal, Self
 
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # Local-only defaults; the prod validator below refuses to start with them.
 DEV_JWT_SECRET = "dev-only-jwt-secret-change-me-in-prod-0123456789"  # noqa: S105
@@ -40,6 +43,7 @@ class Settings(BaseSettings):
     worker_heartbeat_ttl_s: int = 90
 
     seed_on_startup: bool = True
+    data_root: Path = Field(default=REPO_ROOT, description="Folder with case/dataset and research/")
     demo_password: SecretStr = SecretStr("Demo12345!")
 
     @property
