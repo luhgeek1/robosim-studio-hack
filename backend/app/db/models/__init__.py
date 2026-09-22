@@ -15,10 +15,12 @@ from app.db.models.reference import (
     Source,
     SpecKey,
 )
+from app.db.models.scenarios import CalculationRun, Scenario, ScenarioItem
 
 __all__ = [
     "ApiKey",
     "AuditEvent",
+    "CalculationRun",
     "DataVersion",
     "Industry",
     "Job",
@@ -38,6 +40,8 @@ __all__ = [
     "ProductSpec",
     "Project",
     "ProjectParam",
+    "Scenario",
+    "ScenarioItem",
     "SolutionType",
     "Source",
     "SpecKey",

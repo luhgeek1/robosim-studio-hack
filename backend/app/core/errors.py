@@ -84,6 +84,18 @@ class RateLimitedError(DomainError):
     default_detail = "Слишком много запросов, попробуйте через минуту"
 
 
+class InvalidInputError(DomainError):
+    status_code = 422
+    error_code = ErrorCode.REQUEST_VALIDATION_ERROR
+    default_detail = "Данные не прошли проверку"
+
+
+class ScenarioIncompleteError(DomainError):
+    status_code = 409
+    error_code = ErrorCode.SCENARIO_INCOMPLETE
+    default_detail = "Сценарий не полон"
+
+
 class ParamsInvalidError(DomainError):
     status_code = 422
     error_code = ErrorCode.PARAMS_INVALID

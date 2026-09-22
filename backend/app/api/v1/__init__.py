@@ -1,6 +1,17 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, catalog, matching, me, params, projects, reference, system
+from app.api.v1 import (
+    auth,
+    calculations,
+    catalog,
+    matching,
+    me,
+    params,
+    projects,
+    reference,
+    scenarios,
+    system,
+)
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(system.router)
@@ -11,3 +22,5 @@ api_router.include_router(catalog.router)
 api_router.include_router(projects.router)
 api_router.include_router(params.router)
 api_router.include_router(matching.router)
+api_router.include_router(scenarios.router)
+api_router.include_router(calculations.router)

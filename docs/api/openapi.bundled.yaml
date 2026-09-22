@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: RoboScope API
-  version: 0.1.1
+  version: 0.2.0
   license:
     name: MIT
     identifier: MIT
@@ -3866,6 +3866,41 @@ components:
               type:
                 - string
                 - 'null'
+            within_tolerance:
+              type:
+                - boolean
+                - 'null'
+            checks:
+              type: array
+              description: Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами — каждое число против их числа.
+              items:
+                type: object
+                required:
+                  - key
+                  - name
+                  - ours
+                  - reference
+                  - deviation_pct
+                properties:
+                  key:
+                    type: string
+                    example: fcbas_warehouse_amr.robot_cost
+                  name:
+                    type: string
+                  ours:
+                    type: number
+                  reference:
+                    type: number
+                  deviation_pct:
+                    type: number
+                  unit:
+                    type:
+                      - string
+                      - 'null'
+                  tolerance_pct:
+                    type:
+                      - number
+                      - 'null'
     CalculationTrace:
       type: object
       description: 'Полный граф расчёта: каждая метрика → формула → входы → источники. Основа Excel с живыми формулами.'
@@ -4054,6 +4089,9 @@ components:
                 enum:
                   - param
                   - norm
+                  - catalog
+                  - group
+                description: catalog — цена оборудования; group — группа параметров (все зарплаты, все объёмы)
               unit:
                 type:
                   - string
@@ -6264,8 +6302,11 @@ components:
         product_name:
           type: string
         offer_id:
-          type: string
+          type:
+            - string
+            - 'null'
           format: uuid
+          description: Предложение каталога (отрасль объекта); null — у продукта нет предложений
         count_mode:
           $ref: '#/components/schemas/CountMode'
         count_manual:
@@ -6276,6 +6317,29 @@ components:
           oneOf:
             - $ref: '#/components/schemas/CountResult'
             - type: 'null'
+        price_rub:
+          type: number
+          description: Цена за единицу, по которой считается сценарий (с НДС)
+        price_source:
+          type: string
+          enum:
+            - catalog
+            - override
+        price_override_rub:
+          type:
+            - number
+            - 'null'
+          description: Своя цена за единицу (ТЗ 3.5.3)
+        throughput_override_per_hour:
+          type:
+            - number
+            - 'null'
+          description: Своя производительность робота, ед/ч (ТЗ 3.5.3)
+        override_reason:
+          type:
+            - string
+            - 'null'
+          description: Причина ручных значений — фиксация изменения (ТЗ 3.5.4)
         stations:
           type: object
           description: Для goods-to-person — станции отбора.
@@ -6468,6 +6532,21 @@ components:
           type:
             - string
             - 'null'
+        price_override_rub:
+          type:
+            - number
+            - 'null'
+          exclusiveMinimum: 0
+        throughput_override_per_hour:
+          type:
+            - number
+            - 'null'
+          exclusiveMinimum: 0
+        override_reason:
+          type:
+            - string
+            - 'null'
+          description: Обязательна при своей цене или производительности
     ScenarioCreate:
       type: object
       required:
@@ -6551,6 +6630,8 @@ components:
             - questionable
             - not_recommended
             - insufficient_data
+            - baseline
+          description: baseline — у базового сценария нет вердикта, он точка отсчёта
         band:
           type: string
           enum:
@@ -6558,6 +6639,7 @@ components:
             - from3to5
             - gt5
             - never
+            - none
         headline:
           type: string
           example: Роботизация отбора окупается за 2,6 года — привлекательно
@@ -6709,9 +6791,14 @@ components:
                     items:
                       $ref: '#/components/schemas/TraceInput'
             cycle_time_s:
-              type: number
+              type:
+                - number
+                - 'null'
+              description: null — у модели нет цикла (площадь, станция) или количество задано вручную
             nominal_throughput_per_hour:
-              type: number
+              type:
+                - number
+                - 'null'
               description: 3600 / цикл
             availability:
               type: number
@@ -6719,7 +6806,9 @@ components:
             utilization_target:
               type: number
             effective_throughput_per_hour:
-              type: number
+              type:
+                - number
+                - 'null'
             vendor_claim_per_hour:
               type:
                 - number

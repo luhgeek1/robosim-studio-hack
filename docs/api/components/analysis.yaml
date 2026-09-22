@@ -154,10 +154,15 @@ ScenarioItem:
     process_key: {type: string}
     product_id: {type: string, format: uuid}
     product_name: {type: string}
-    offer_id: {type: string, format: uuid}
+    offer_id: {type: [string, "null"], format: uuid, description: "Предложение каталога (отрасль объекта); null — у продукта нет предложений"}
     count_mode: {$ref: '#/CountMode'}
     count_manual: {type: [integer, "null"]}
     count_result: {oneOf: [{$ref: '#/CountResult'}, {type: "null"}]}
+    price_rub: {type: number, description: "Цена за единицу, по которой считается сценарий (с НДС)"}
+    price_source: {type: string, enum: [catalog, override]}
+    price_override_rub: {type: [number, "null"], description: "Своя цена за единицу (ТЗ 3.5.3)"}
+    throughput_override_per_hour: {type: [number, "null"], description: "Своя производительность робота, ед/ч (ТЗ 3.5.3)"}
+    override_reason: {type: [string, "null"], description: "Причина ручных значений — фиксация изменения (ТЗ 3.5.4)"}
     stations:
       type: object
       description: Для goods-to-person — станции отбора.
@@ -176,6 +181,9 @@ ScenarioItemWrite:
     count_manual: {type: [integer, "null"], minimum: 1}
     stations: {type: object, properties: {count_mode: {$ref: '#/CountMode'}, count: {type: [integer, "null"]}}}
     notes: {type: [string, "null"]}
+    price_override_rub: {type: [number, "null"], exclusiveMinimum: 0}
+    throughput_override_per_hour: {type: [number, "null"], exclusiveMinimum: 0}
+    override_reason: {type: [string, "null"], description: "Обязательна при своей цене или производительности"}
 
 Financing:
   type: object
@@ -355,8 +363,8 @@ Interpretation:
   description: Рекомендация не по жёсткому порогу, а по диапазонам с рисками и текстом (ТЗ 3.5.7).
   required: [verdict, band, headline, summary]
   properties:
-    verdict: {type: string, enum: [attractive, reasonable, questionable, not_recommended, insufficient_data]}
-    band: {type: string, enum: [lt3, from3to5, gt5, never]}
+    verdict: {type: string, enum: [attractive, reasonable, questionable, not_recommended, insufficient_data, baseline], description: "baseline — у базового сценария нет вердикта, он точка отсчёта"}
+    band: {type: string, enum: [lt3, from3to5, gt5, never, none]}
     headline: {type: string, example: "Роботизация отбора окупается за 2,6 года — привлекательно"}
     summary: {type: string}
     key_drivers: {type: array, items: {type: string}}
@@ -398,11 +406,11 @@ SizingResult:
               name: {type: string, example: "Пробег с грузом (68 м при 1,2 м/с)"}
               seconds: {type: number}
               inputs: {type: array, items: {$ref: '#/TraceInput'}}
-        cycle_time_s: {type: number}
-        nominal_throughput_per_hour: {type: number, description: "3600 / цикл"}
+        cycle_time_s: {type: [number, "null"], description: "null — у модели нет цикла (площадь, станция) или количество задано вручную"}
+        nominal_throughput_per_hour: {type: [number, "null"], description: "3600 / цикл"}
         availability: {type: number, description: "Доля времени в работе с учётом зарядки и простоев"}
         utilization_target: {type: number}
-        effective_throughput_per_hour: {type: number}
+        effective_throughput_per_hour: {type: [number, "null"]}
         vendor_claim_per_hour: {type: [number, "null"], description: "Заявка производителя — для сравнения"}
     count: {$ref: '#/CountResult'}
     stations_count: {type: [integer, "null"]}
@@ -454,6 +462,21 @@ CalculationRun:
         reference: {type: string, example: "ФЦ БАС, сценарий «Складские мобильные роботы», март 2026"}
         deviation_pct: {type: [number, "null"]}
         note: {type: [string, "null"]}
+        within_tolerance: {type: [boolean, "null"]}
+        checks:
+          type: array
+          description: Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами — каждое число против их числа.
+          items:
+            type: object
+            required: [key, name, ours, reference, deviation_pct]
+            properties:
+              key: {type: string, example: "fcbas_warehouse_amr.robot_cost"}
+              name: {type: string}
+              ours: {type: number}
+              reference: {type: number}
+              deviation_pct: {type: number}
+              unit: {type: [string, "null"]}
+              tolerance_pct: {type: [number, "null"]}
 
 TraceItem:
   type: object
@@ -586,7 +609,7 @@ SensitivityResult:
         properties:
           key: {type: string}
           name: {type: string}
-          kind: {type: string, enum: [param, norm]}
+          kind: {type: string, enum: [param, norm, catalog, group], description: "catalog — цена оборудования; group — группа параметров (все зарплаты, все объёмы)"}
           unit: {type: [string, "null"]}
           base_input: {type: number}
           low_input: {type: number}
