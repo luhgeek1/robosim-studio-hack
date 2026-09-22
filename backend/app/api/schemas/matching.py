@@ -92,6 +92,7 @@ class Candidate(ApiModel):
             estimate=Estimate(
                 robots_count=view.data.input.robots_estimate,
                 capex_rub=view.data.input.capex_estimate_rub,
+                payback_years=view.economics.payback_years if view.economics else None,
                 note=ESTIMATE_NOTE,
             ),
         )

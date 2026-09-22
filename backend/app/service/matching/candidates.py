@@ -19,6 +19,8 @@ class CandidateData:
     offer: ProductOffer | None
     input: CandidateInput
     sizing: SizingOutcome | None
+    specs: Book
+    sizing_model: SizingModel | None = None
 
 
 def choose_offer(offers: Sequence[ProductOffer], industry_key: str | None) -> ProductOffer | None:
@@ -49,6 +51,8 @@ def demand_input(
         demand_per_day=result.demand_per_day,
         hours_per_day=result.hours_per_day or 0.0,
         unit_weight_kg=_expression(process.unit_weight, values),
+        units_per_trip=_expression((process.demand or {}).get("load_per_trip"), values),
+        trip_tare_kg=_expression((process.demand or {}).get("trip_tare_kg"), values),
     )
 
 
@@ -113,7 +117,9 @@ def build_candidate(
         robots_estimate=robots,
         capex_estimate_rub=price * robots if robots and price > 0 else None,
     )
-    return CandidateData(product=product, offer=offer, input=candidate, sizing=outcome)
+    return CandidateData(
+        product=product, offer=offer, input=candidate, sizing=outcome, specs=book, sizing_model=sizing_model
+    )
 
 
 def specs_by_product(rows: Sequence[ProductSpec]) -> dict[UUID, list[ProductSpec]]:

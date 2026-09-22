@@ -777,11 +777,11 @@ processes:
   demand_formula: мест багажа в сутки; пик — рейсов в пиковый час ÷ среднечасовых рейсов
   demand_params: [baggage_per_day, operating_hours_per_day, flights_per_day, flights_peak_hour]
   demand: {per_day: baggage_per_day, hours_per_day: operating_hours_per_day, peak_factor: flights_peak_hour * operating_hours_per_day
-      / flights_per_day}
+      / flights_per_day, load_per_trip: tow_train_carts_per_trip * bags_per_cart, trip_tare_kg: tow_train_carts_per_trip * baggage_cart_tare_kg}
   sla: {kind: lead_time, target_value: 45, unit: мин}
   labor_groups: [ground_staff]
   labor_allocation: {ground_staff: 0.2}
-  labor_release: labor_release_share_transport
+  labor_release: labor_release_share_transport * tow_driving_share
   labor_allocation_note: 'Датасет не делит персонал перрона по операциям, но в примечании к строке «Среднее количество операций
     наземного обслуживания на 1 рейс» перечисляет пять видов работ: буксировка, питание, заправка, уборка, разгрузка и погрузка.
     Допущение команды: виды работ равны по трудоёмкости, на багаж (разгрузка и погрузка) приходится 1 из 5, то есть 20 % персонала
@@ -834,11 +834,12 @@ processes:
       * operating_hours_per_day / pax_per_day}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [terminal_staff]
-  labor_allocation: {terminal_staff: 0.67}
+  labor_allocation: {terminal_staff: 0.12}
   labor_release: labor_release_share_transport
-  labor_allocation_note: 'Датасет не делит персонал терминала по функциям, но перечисляет три роли: «Уборщики, курьеры, грузчики
-    терминала». Допущение команды: роли равны по численности, поэтому треть относим к уборке, две трети (курьеры и грузчики)
-    — к перевозке грузов и мусора.'
+  labor_allocation_note: 'Датасет не делит персонал терминала по функциям («уборщики, курьеры, грузчики»), поэтому долю считаем
+    по объёму работ из того же листа: (420 рейсов тележек + 85 контейнеров мусора) в сутки × ~15 мин на рейс (200 м туда
+    и обратно с тележкой + погрузка и выгрузка) ≈ 126 ч работы в сутки ≈ 5,3 поста 24/7 × 4,2 FTE на пост (норматив fte_per_24x7_post)
+    ≈ 22 человека из 180, то есть 0,12.'
   solution_types: [amr_transport, tow_tractor, delivery_robot]
   sizing_model: transport_cycle
   route_length: terminal_route_length_m
@@ -858,14 +859,15 @@ processes:
   demand_unit: m2
   demand_formula: площадь для роботизированной уборки × кратность уборки в сутки, м²/сут
   demand_params: [cleaning_area_m2, operating_hours_per_day, scheduled_peak_factor]
-  demand: {per_day: cleaning_area_m2 * cleaning_passes_per_day, hours_per_day: operating_hours_per_day, peak_factor: scheduled_peak_factor}
+  demand: {per_day: cleaning_area_m2 * cleaning_passes_per_day, hours_per_day: operating_hours_per_day, peak_factor: scheduled_peak_factor, manual_rate: machine_cleaning_m2_per_hour}
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [terminal_staff]
-  labor_allocation: {terminal_staff: 0.33}
+  labor_allocation: {terminal_staff: 0.1}
   labor_release: labor_release_share_cleaning
-  labor_allocation_note: 'Датасет не делит персонал терминала по функциям, но перечисляет три роли: «Уборщики, курьеры, грузчики
-    терминала». Допущение команды: роли равны по численности, поэтому треть относим к уборке, две трети (курьеры и грузчики)
-    — к перевозке грузов и мусора.'
+  labor_allocation_note: 'В терминале работают 8 поломоечных машин (датасет), поэтому база — машинная уборка, а не ручная:
+    51 000 м² × 2 уборки в сутки (норматив cleaning_passes_per_day) / 1000 м²/ч (верх норматива manual_cleaning_m2_per_hour —
+    машина с оператором, ФЦ БАС) ≈ 102 ч в сутки ≈ 4,3 поста 24/7 × 4,2 FTE (норматив fte_per_24x7_post) ≈ 18 операторов из 180,
+    то есть 0,1. Остальной персонал терминала (санузлы, урны, помощь пассажирам) в роботизируемые процессы не входит.'
   solution_types: [cleaning_robot]
   sizing_model: area_coverage
   requirements:

@@ -78,6 +78,9 @@ class DemandSeed(SeedModel):
     per_day: str
     hours_per_day: str
     peak_factor: str
+    load_per_trip: str | None = None
+    trip_tare_kg: str | None = None
+    manual_rate: str | None = None
 
 
 class RequirementSeed(SeedModel):

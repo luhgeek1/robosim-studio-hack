@@ -24,6 +24,7 @@ from app.service.matching.candidates import (
     route_length,
     specs_by_product,
 )
+from app.service.matching.economics import QuickEconomics, quick_economics
 from app.service.projects.context import ProjectLoader
 from app.service.projects.processes import ProcessAnalysis, ProcessService, ProcessView
 
@@ -39,7 +40,10 @@ UNIT_LABELS = {
     "portion": "порций",
     "container": "конт.",
 }
-ESTIMATE_NOTE = "Аналитическая оценка по циклу; точное число даст имитация"
+ESTIMATE_NOTE = (
+    "Аналитическая оценка по циклу; точное число даст имитация. Окупаемость — покупка одного этого решения "
+    "с затратами объекта (интеграция, Wi-Fi, обучение) целиком"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +51,7 @@ class CandidateView:
     data: CandidateData
     result: CandidateResult
     summary: ProductSummary
+    economics: QuickEconomics | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,7 +196,14 @@ class MatchingService:
         by_id = {data.product.id: data for data in candidates}
         summaries = await self._summaries([data.product for data in candidates])
         views = [
-            CandidateView(by_id[r.candidate.product_id], r, summaries[r.candidate.product_id])
+            CandidateView(
+                by_id[r.candidate.product_id],
+                r,
+                summaries[r.candidate.product_id],
+                quick_economics(analysis, definition.key, by_id[r.candidate.product_id])
+                if r.candidate.robots_estimate and r.status != CandidateStatus.EXCLUDED
+                else None,
+            )
             for r in ordered
         ]
         types = await self._solution_types(definition, views)

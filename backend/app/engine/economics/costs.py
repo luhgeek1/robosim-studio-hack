@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from app.domain.scenario.models import ScenarioKind
 from app.engine.economics.lines import MONTHS_PER_YEAR, q
-from app.engine.economics.models import Breakdown, EffectKind, Line
+from app.engine.economics.models import Breakdown, EffectKind, FleetItem, Line
 from app.engine.economics.opex import OpexLines
 from app.engine.trace import InputKind, Quantity, Section, TraceStep
 
@@ -188,18 +188,50 @@ class CostModel(OpexLines):
                     f"{item.process_name}: не задана доля высвобождения персонала — экономия ФОТ не считается"
                 )
                 continue
+            share = self._released_share(item)
             step = self.tr.record(
                 f"labor_savings.{item.key}",
                 f"Высвобождение ФОТ: {item.process_name}",
-                item.labor_cost.value * item.release.value * item.coverage.value,
+                item.labor_cost.value * share.value,
                 "₽/год",
-                f"{item.labor_cost.key} × {item.release.key} × {item.coverage.key}",
-                [item.labor_cost, item.release, item.coverage],
+                f"{item.labor_cost.key} × {share.key}",
+                [item.labor_cost, share],
                 Section.EFFECT,
             )
-            fte = item.labor_fte * item.release.value * item.coverage.value
-            lines.append(Line(step, EffectKind.COST_REDUCTION, fte=fte))
+            lines.append(Line(step, EffectKind.COST_REDUCTION, fte=item.labor_fte * share.value))
         return lines
+
+    def _released_share(self, item: FleetItem) -> Quantity:
+        """Share of payroll released: release × coverage, capped by the work the robots actually take over."""
+        assert item.release is not None
+        wanted = item.release.value * item.coverage.value
+        cap = item.release_cap_fte
+        if cap is None or item.labor_fte <= 0:
+            return self.tr.record(
+                f"{item.key}.released_share",
+                "Доля ФОТ процесса, которая высвобождается",
+                wanted,
+                "доля",
+                f"{item.release.key} × {item.coverage.key}",
+                [item.release, item.coverage],
+                Section.EFFECT,
+            ).as_quantity()
+        fte = Quantity(f"{item.key}.labor_fte", "Персонал процесса", item.labor_fte, "FTE", InputKind.METRIC)
+        share = min(wanted, cap.value / item.labor_fte)
+        if share < wanted:
+            self.warnings.append(
+                f"{item.process_name}: высвобождение ограничено объёмом работ — {cap.value:.1f} FTE "
+                f"вместо {item.labor_fte * wanted:.1f} по численности из датасета"
+            )
+        return self.tr.record(
+            f"{item.key}.released_share",
+            "Доля ФОТ процесса, которая высвобождается",
+            share,
+            "доля",
+            f"min({item.release.key} × {item.coverage.key}, {cap.key} / {fte.key})",
+            [item.release, item.coverage, cap, fte],
+            Section.EFFECT,
+        ).as_quantity()
 
     def evaluate(self) -> AnnualCosts:
         baseline = self.baseline()

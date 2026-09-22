@@ -400,6 +400,39 @@ norms:
     affects: [labor_savings, effect, payback, npv, irr, roi]
     editable_by_user: true
     object_types: [warehouse]
+  - key: tow_driving_share
+    name: Доля вождения в процессе, который обслуживает буксируемая сцепка
+    value: 0.3
+    unit: доля
+    category: labor
+    range: {min: 0.2, max: 0.4}
+    source: team
+    rationale: "Беспилотный тягач заменяет водителя, а не тех, кто грузит сцепку: багаж на перроне грузят и выгружают люди, паллеты на тележки складского поезда ставит погрузчик. На обслуживание рейса типично 1 водитель багажной сцепки на 2–4 грузчика, то есть вождение — 20–33% труда процесса; берём 0,3. Доля высвобождения = labor_release_share_transport × эта доля."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: true
+    object_types: [warehouse, airport]
+  - key: machine_cleaning_m2_per_hour
+    name: Выработка поломоечной машины с оператором
+    value: 1000
+    unit: м²/ч
+    range: {min: 600, max: 1500}
+    category: labor
+    source: fcbas_cleaning
+    rationale: "ФЦ БАС (роботы-уборщики, с. 6): Tennant T300 с оператором — до 1000 м²/ч. База для объектов, где уборка уже машинная (8 уборочных машин в терминале аэропорта по датасету): сколько человеко-часов роботы реально заменяют."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: meal_transport_share
+    name: Доля транспортной функции в работе раздатчиков питания
+    value: 0.4
+    unit: доля
+    category: labor
+    range: {min: 0.25, max: 0.6}
+    source: team
+    rationale: "Датасет медучреждения: сотрудники пищеблока (раздача) замещаются «частично — только транспортная функция». Раздатчик везёт тележку в отделение и раздаёт порции; при 180 м до отделения и нормативе доставки 20 мин транспорт — около 40% цикла. Доля высвобождения процесса = labor_release_share_transport × эта доля."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: true
+    object_types: [hospital]
   - key: elevator_cycle_time_s
     name: Время лифтового цикла робота
     value: 120
@@ -495,10 +528,10 @@ norms:
     category: labor
     range: {min: 4, max: 4.8}
     source: ria_warehouse_wages
-    rationale: "8760 ч в году / ~2000 ч годового фонда времени одного сотрудника ≈ 4,2 FTE на пост 24/7. Используется, когда численность задана постами (аэропорт, больница 24/7)."
+    rationale: "8760 ч в году / ~2000 ч годового фонда времени одного сотрудника ≈ 4,2 FTE на пост 24/7. Используется, когда численность задана постами (аэропорт, больница 24/7), и для перевода человеко-часов работы в штатные единицы (потолок высвобождения)."
     affects: [labor_savings, opex]
     editable_by_user: true
-    object_types: [airport, hospital]
+    object_types: [warehouse, airport, hospital]
   - key: wage_indexation_rate
     name: Ежегодная индексация зарплат
     value: 0.08

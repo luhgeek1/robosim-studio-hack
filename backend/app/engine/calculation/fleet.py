@@ -10,6 +10,7 @@ from app.engine.sizing import DemandInput, SizingOptions, SizingOutcome, size
 from app.engine.trace import InputKind, Quantity, Section, TraceStep, display_formula, namespaced
 
 FMR_SOLUTION_TYPE = "fmr_forklift"
+HOURS_PER_YEAR = 24 * 365
 
 
 def _optional_expression(ctx: Context, source: str | None) -> tuple[float, list[Quantity]] | None:
@@ -21,6 +22,65 @@ def _optional_expression(ctx: Context, source: str | None) -> tuple[float, list[
         return None
 
 
+def _load(ctx: Context, process: ProcessDef) -> float | None:
+    source = (process.demand or {}).get("load_per_trip")
+    if not source or _optional_expression(ctx, source) is None:
+        return None
+    return ctx.record_expression(
+        f"{process.key}.load_per_trip", "Единиц спроса за рейс", source, "ед", Section.SIZING
+    ).value
+
+
+def _release_cap(
+    ctx: Context,
+    process: ProcessDef,
+    demand: dict[str, TraceStep],
+    outcome: SizingOutcome | None,
+    days: Quantity,
+) -> Quantity | None:
+    """FTE the demanded work needs when done by hand — robots cannot release more than that.
+
+    Manual rate: the process's own norm (уборка м²/ч, отбор строк/ч); for transport the robot's own nominal
+    cycle — a person with a cart or a forklift is not assumed faster than the robot on the same route.
+    """
+    ns = process.key
+    source = (process.demand or {}).get("manual_rate")
+    if source and _optional_expression(ctx, source) is not None:
+        rate = ctx.record_expression(
+            f"{ns}.manual_rate", "Выработка человека вручную", source, "ед/ч", Section.EFFECT
+        ).as_quantity()
+    elif outcome is not None and outcome.nominal_per_hour:
+        rate = Quantity(
+            f"{ns}.nominal_per_hour",
+            "Выработка на том же цикле (человек не быстрее робота)",
+            outcome.nominal_per_hour,
+            "ед/ч",
+            InputKind.METRIC,
+        )
+    else:
+        return None
+    post = ctx.books.norms.get("fte_per_24x7_post")
+    hours = ctx.tr.record(
+        "fte_annual_hours",
+        "Годовой фонд времени одной штатной единицы",
+        HOURS_PER_YEAR / post.value,
+        "ч",
+        f"24 × 365 / {post.key}",
+        [post],
+        Section.EFFECT,
+    ).as_quantity()
+    per_day = demand["per_day"].as_quantity()
+    return ctx.tr.record(
+        f"{ns}.release_cap_fte",
+        "Потолок высвобождения по объёму работ",
+        per_day.value * days.value / rate.value / hours.value,
+        "FTE",
+        f"{per_day.key} × {days.key} / {rate.key} / {hours.key}",
+        [per_day, days, rate, hours],
+        Section.EFFECT,
+    ).as_quantity()
+
+
 def size_item(
     ctx: Context, item: ItemInput, process: ProcessDef, demand: dict[str, TraceStep]
 ) -> SizingOutcome | None:
@@ -28,6 +88,8 @@ def size_item(
         return None
     ns = process.key
     weight = _optional_expression(ctx, process.unit_weight)
+    load = _load(ctx, process)
+    tare = _optional_expression(ctx, (process.demand or {}).get("trip_tare_kg"))
     route = _optional_expression(ctx, process.route_length)
     distance = None
     if route is not None:
@@ -63,6 +125,8 @@ def size_item(
             demand_per_day=demand["per_day"].value,
             hours_per_day=demand["hours"].value,
             unit_weight_kg=weight[0] if weight else None,
+            units_per_trip=load,
+            trip_tare_kg=tare[0] if tare else None,
         ),
         item.specs,
         ctx.books.norms,
@@ -204,6 +268,7 @@ def build_fleet_item(
         if release_formula
         else None
     )
+    cap = _release_cap(ctx, process, demand, outcome, days)
     operations = ctx.tr.record(
         f"{ns}.annual_operations",
         "Операций в год",
@@ -239,6 +304,7 @@ def build_fleet_item(
         or ctx.books.norms.get("robot_service_life_years"),
         rent_month=item.specs.optional("rent_rub_month"),
         annual_operations=operations,
+        release_cap_fte=cap,
     )
     sizing = ItemSizing(
         item=item,

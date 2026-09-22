@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from app.domain.reference import SizingModel
@@ -124,3 +126,38 @@ def test_manual_throughput_skips_cycle_model() -> None:
     assert (out.robots, out.reserve) == (2, 1)
     assert out.cycle_time_s is None
     assert any("вручную" in w for w in out.warnings)
+
+
+def test_tow_train_load_limited_by_carts_and_tare() -> None:
+    # 3 carts × 40 bags = 120; by mass (3000 − 3 × 300) / 18 = 116 → the train leaves not quite full
+    bags = DemandInput(
+        "baggage_handling",
+        peak_per_hour=1500,
+        avg_per_hour=1000,
+        demand_per_day=24000,
+        hours_per_day=24,
+        unit_weight_kg=18,
+        units_per_trip=120,
+        trip_tare_kg=900,
+    )
+    out = size(SizingModel.TOW_TRAIN, bags, specs(towing_capacity_kg=3000, max_speed_mps=4), NORMS)
+    load = next(step for step in out.trace.steps if step.key == "units_per_trip")
+    assert load.value == 116
+    assert any("неполный" in w for w in out.warnings)
+
+
+def test_transport_carries_several_units_per_trip() -> None:
+    linen = DemandInput(
+        "linen_transport",
+        peak_per_hour=300,
+        avg_per_hour=150,
+        demand_per_day=3600,
+        hours_per_day=24,
+        units_per_trip=55,
+    )
+    single = size(
+        SizingModel.TRANSPORT_CYCLE, replace(linen, units_per_trip=None), specs(max_speed_mps=1.5), NORMS
+    )
+    loaded = size(SizingModel.TRANSPORT_CYCLE, linen, specs(max_speed_mps=1.5), NORMS)
+    assert loaded.effective_per_hour == pytest.approx(single.effective_per_hour * 55)
+    assert loaded.robots < single.robots

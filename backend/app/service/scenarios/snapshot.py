@@ -65,7 +65,7 @@ class Snapshot:
         return to_source(source) if source else None
 
 
-def _param_meta(context: ProjectContext) -> dict[str, ParamMeta]:
+def param_meta(context: ProjectContext) -> dict[str, ParamMeta]:
     return {
         p.key: ParamMeta(
             name=p.definition.name,
@@ -129,7 +129,7 @@ class SnapshotBuilder:
             discount_rate=discount,
             financing=financing,
             params={k: v for k, v in context.numeric().items() if v is not None},
-            param_meta=_param_meta(context),
+            param_meta=param_meta(context),
             norms=norms,
             processes=object_type.processes,
             labor_groups=object_type.labor_groups,

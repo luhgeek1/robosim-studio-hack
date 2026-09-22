@@ -34,10 +34,12 @@ async def test_matching_ranks_pallet_robots_with_reasons(client: AsyncClient) ->
     top = pallets["candidates"][0]
     assert top["status"] == "fit"
     assert top["rank"] == 1
-    assert top["estimate"]["robots_count"] > 10
+    assert top["estimate"]["robots_count"] > 0
     assert sum(c["weight"] for c in top["score_breakdown"]) == pytest.approx(1)
     h1500 = _candidate(pallets, "H1500")
     assert any(r["code"] == "PAYLOAD_VS_PALLET_OK" for r in h1500["reasons"])
+    assert h1500["estimate"]["robots_count"] > 10
+    assert h1500["estimate"]["payback_years"] is not None
 
 
 async def test_confirmed_mismatch_is_excluded_with_numbers(client: AsyncClient) -> None:

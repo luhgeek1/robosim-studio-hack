@@ -148,10 +148,18 @@ def _formula_problems(object_type: ObjectTypeSeed, norm_keys: set[str]) -> list[
     allocated: dict[str, float] = {}
     for process in object_type.processes:
         if process.demand is not None:
-            for field in ("per_day", "hours_per_day", "peak_factor"):
-                problems += _expression_problems(
-                    f"{process.key}.{field}", getattr(process.demand, field), names
-                )
+            for field in (
+                "per_day",
+                "hours_per_day",
+                "peak_factor",
+                "load_per_trip",
+                "trip_tare_kg",
+                "manual_rate",
+            ):
+                if getattr(process.demand, field):
+                    problems += _expression_problems(
+                        f"{process.key}.{field}", getattr(process.demand, field), names
+                    )
         if process.labor_allocation and set(process.labor_allocation) != set(process.labor_groups):
             problems.append(f"{process.key}: labor_allocation keys differ from labor_groups")
         for group, share in process.labor_allocation.items():

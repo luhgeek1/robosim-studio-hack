@@ -21,7 +21,7 @@ from app.domain.scenario.models import (
 )
 from app.engine.matching import CandidateStatus
 from app.service.matching.candidates import choose_offer
-from app.service.matching.service import MatchingService
+from app.service.matching.service import CandidateView, MatchingService
 from app.service.projects.audit import AuditLog
 from app.service.projects.context import ProjectLoader
 from app.service.projects.norms import NormLoader
@@ -344,7 +344,10 @@ class ScenarioService:
             product = products.get(spec.product_id)
             if product is None:
                 raise InvalidInputError(f"Продукт {spec.product_id} не найден в каталоге")
-            if product.solution_type not in process.solution_types:
+            if (
+                spec.process_key not in product.processes
+                and product.solution_type not in process.solution_types
+            ):
                 raise InvalidInputError(f"«{product.name}» не решает процесс «{process.name}»")
             self._check_item(spec, product.name)
             items.append(self._item(spec, position, product, offers, industry))
@@ -389,28 +392,42 @@ class ScenarioService:
         )
 
     async def _recommended_items(self, project_id: UUID) -> list[ScenarioItemSpec]:
-        """Best-ranked fit candidate with a robot estimate for every process (ТЗ 2.2: подбор → расчёт)."""
+        """Per process, the best-ranked candidate whose own purchase has a positive NPV («подходит» first).
+
+        If no process pays back, the least unprofitable one is taken so the user sees why robotization loses.
+        """
         outcome = await MatchingService(self._uow, self._user).run(project_id)
-        items: list[ScenarioItemSpec] = []
+        chosen: list[tuple[str, CandidateView]] = []
+        fallback: tuple[str, CandidateView] | None = None
         for process in outcome.processes:
-            best = next(
-                (
-                    c
-                    for c in process.candidates
-                    if c.result.status == CandidateStatus.FIT and c.data.input.robots_estimate
-                ),
-                None,
-            )
-            if best is not None:
-                items.append(
-                    ScenarioItemSpec(
-                        process_key=process.process_key,
-                        product_id=best.data.product.id,
-                        offer_id=best.data.offer.id if best.data.offer else None,
-                    )
-                )
-        if not items:
+            priced = [c for c in process.candidates if c.economics is not None]
+            for status in (CandidateStatus.FIT, CandidateStatus.CHECK):
+                good = [c for c in priced if c.result.status == status and _npv(c) > 0]
+                if good:
+                    chosen.append((process.process_key, good[0]))
+                    break
+            for candidate in (c for c in priced if c.economics and c.economics.effect_rub_year > 0):
+                if fallback is None or _npv(candidate) > _npv(fallback[1]):
+                    fallback = (process.process_key, candidate)
+        if not chosen and fallback is not None:
+            chosen = [fallback]
+        if not chosen:
             raise ConflictError(
-                "Подбор не нашёл подходящих решений с оценкой количества — выберите продукты вручную"
+                "Ни одно решение из подбора не даёт положительного эффекта на этом объекте — "
+                "выберите продукты вручную, чтобы сравнить варианты"
             )
-        return items
+        return [
+            ScenarioItemSpec(
+                process_key=key,
+                product_id=view.data.product.id,
+                offer_id=view.data.offer.id if view.data.offer else None,
+                notes="Требует проверки ТТХ у вендора"
+                if view.result.status == CandidateStatus.CHECK
+                else None,
+            )
+            for key, view in chosen
+        ]
+
+
+def _npv(view: CandidateView) -> float:
+    return view.economics.npv_rub if view.economics else float("-inf")

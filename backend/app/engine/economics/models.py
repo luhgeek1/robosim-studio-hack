@@ -33,6 +33,7 @@ class FleetItem:
     service_life: Quantity
     rent_month: Quantity | None = None
     annual_operations: Quantity | None = None
+    release_cap_fte: Quantity | None = None
 
 
 @dataclass(frozen=True, slots=True)

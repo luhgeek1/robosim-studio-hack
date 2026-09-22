@@ -17,6 +17,8 @@ class DemandInput:
     demand_per_day: float
     hours_per_day: float
     unit_weight_kg: float | None = None
+    units_per_trip: float | None = None
+    trip_tare_kg: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,9 +191,15 @@ class _Sizer:
         out.fleet_per_hour = robots.value * per_robot.value
 
 
+def _load(s: _Sizer) -> Quantity | None:
+    """Demand units one trip carries (порций на отделение, кг в контейнере); None — one unit per trip."""
+    units = s.demand.units_per_trip
+    return _metric("units_per_trip", "Единиц спроса за рейс", units, "ед") if units else None
+
+
 def _transport(s: _Sizer, out: SizingOutcome) -> None:
     extra = s.norms.get("fork_lift_cycle_extra_s") if s.is_fmr else None
-    s.count(out, s.per_robot(out, None, s.cycle(out, extra)))
+    s.count(out, s.per_robot(out, _load(s), s.cycle(out, extra)))
 
 
 def _goods_to_person(s: _Sizer, out: SizingOutcome) -> None:
@@ -255,22 +263,39 @@ def _one_hour() -> Quantity:
 
 
 def _tow(s: _Sizer, out: SizingOutcome) -> None:
+    """Trip load = min(train capacity, (towing mass − tare of the carts) / unit weight)."""
     towing = s.specs.get("towing_capacity_kg")
-    carts = s.norms.get("tow_train_carts_per_trip")
-    if s.demand.unit_weight_kg is None:
+    weight = s.demand.unit_weight_kg
+    if weight is None:
         raise MissingInputError(InputKind.PARAM, "unit_weight_kg")
-    units = _metric(
-        "units_per_trip", "Единиц за рейс", max(1.0, math.floor(towing.value / s.demand.unit_weight_kg)), "ед"
+    tare = s.demand.trip_tare_kg or 0.0
+    by_mass = max(1.0, math.floor((towing.value - tare) / weight))
+    capacity = s.demand.units_per_trip
+    units = min(by_mass, capacity) if capacity else by_mass
+    load = s.trace.record(
+        "units_per_trip",
+        "Единиц за рейс сцепки",
+        units,
+        "ед",
+        f"min(train_capacity, ⌊({towing.key} − train_tare_kg) / unit_weight_kg⌋)",
+        [
+            towing,
+            _metric("train_capacity", "Вместимость сцепки", capacity or by_mass, "ед"),
+            _metric("train_tare_kg", "Масса пустых тележек", tare, "кг"),
+            _metric("unit_weight_kg", "Масса единицы", weight, "кг"),
+        ],
+        Section.SIZING,
     )
-    out.warnings.append(
-        f"Сцепка из {carts.value:.0f} тележек; вместимость рейса ограничена буксируемой массой"
-    )
-    s.count(out, s.per_robot(out, units, s.cycle(out)))
+    if capacity and by_mass < capacity:
+        out.warnings.append(
+            f"Буксируемой массы хватает на {by_mass:.0f} из {capacity:.0f} мест сцепки — рейс неполный"
+        )
+    s.count(out, s.per_robot(out, load.as_quantity(), s.cycle(out)))
 
 
 def _elevator(s: _Sizer, out: SizingOutcome) -> None:
     elevator = s.norms.get("elevator_cycle_time_s")
-    s.count(out, s.per_robot(out, None, s.cycle(out, elevator)))
+    s.count(out, s.per_robot(out, _load(s), s.cycle(out, elevator)))
 
 
 def _override(s: _Sizer, out: SizingOutcome, throughput: Quantity) -> None:

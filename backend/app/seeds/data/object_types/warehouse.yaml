@@ -912,6 +912,7 @@ processes:
   labor_groups: [forklift_operators]
   labor_allocation: {forklift_operators: 0.7}
   labor_release: labor_release_share_transport
+  labor_release_by_type: {tow_tractor: labor_release_share_transport * tow_driving_share}
   labor_allocation_note: 'Датасет не делит операторов погрузчиков по операциям. Допущение команды: при фронтальных стеллажах
     каждый цикл погрузчика — это перевозка паллеты между воротами и стеллажом и подъём на ярус. Подъём занимает около минуты
     (норматив fork_lift_cycle_extra_s = 60 с) из цикла в 3–4 минуты, поэтому 30 % времени операторов относим к высотному хранению,
@@ -986,7 +987,7 @@ processes:
   demand_unit: line
   demand_formula: строк отбора в сутки; в пик × пиковый коэффициент
   demand_params: [order_lines_per_day, shifts_per_day, shift_hours, peak_factor]
-  demand: {per_day: order_lines_per_day, hours_per_day: shifts_per_day * shift_hours, peak_factor: peak_factor}
+  demand: {per_day: order_lines_per_day, hours_per_day: shifts_per_day * shift_hours, peak_factor: peak_factor, manual_rate: picker_productivity_lines_per_hour}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [pickers]
   labor_allocation: {pickers: 1.0}
@@ -1188,7 +1189,7 @@ processes:
   demand_formula: площадь уборки (если не задана — общая площадь склада) × кратность уборки в сутки, м²/сут
   demand_params: [cleaning_area_m2, area_m2, shifts_per_day, shift_hours, scheduled_peak_factor]
   demand: {per_day: 'coalesce(cleaning_area_m2, area_m2) * cleaning_passes_per_day', hours_per_day: shifts_per_day * shift_hours,
-    peak_factor: scheduled_peak_factor}
+    peak_factor: scheduled_peak_factor, manual_rate: manual_cleaning_m2_per_hour}
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [cleaners]
   labor_allocation: {cleaners: 1.0}
