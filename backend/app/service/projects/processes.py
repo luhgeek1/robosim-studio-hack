@@ -10,6 +10,7 @@ from app.engine.demand import (
     LaborGroupInput,
     ProcessDemandResult,
     ProcessInput,
+    day_profile,
     process_demand,
     total_labor_cost,
 )
@@ -21,6 +22,7 @@ from app.service.projects.norms import NormLoader
 PAYROLL_COEFF_PARAM = "payroll_tax_coeff"
 PAYROLL_SHARE_NORM = "payroll_tax_share"
 PEAK_FACTOR_PARAM = "peak_factor"
+PEAK_WINDOW_NORM = "sim_peak_window_hours"
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +32,7 @@ class ProcessView:
     robotizable: bool
     solution_types: list[str]
     notes: list[str]
+    hourly_profile: list[float] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +65,14 @@ def _groups(context: ProjectContext, values: dict[str, float | None]) -> dict[st
         )
         for group in context.object_type.labor_groups
     }
+
+
+def _profile(result: ProcessDemandResult, norms: Book) -> list[float] | None:
+    """The same day profile the simulation plays: a peak window in the middle of the working day."""
+    window = norms.optional(PEAK_WINDOW_NORM)
+    if window is None or not result.hours_per_day or result.peak_factor is None:
+        return None
+    return [round(share, 5) for share in day_profile(result.hours_per_day, result.peak_factor, window.value)]
 
 
 class ProcessService:
@@ -115,6 +126,7 @@ class ProcessService:
                     robotizable=available.get(process.key, 0) > 0,
                     solution_types=process.solution_types,
                     notes=notes,
+                    hourly_profile=_profile(result, norms),
                 )
             )
         return ProcessAnalysis(context, values, norms, views, total, layout)

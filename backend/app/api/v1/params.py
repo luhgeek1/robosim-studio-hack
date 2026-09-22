@@ -28,6 +28,7 @@ from app.service.projects.context import ProjectContext
 from app.service.projects.imports import ImportService, ImportView
 from app.service.projects.params import ParamChange, ParamsService
 from app.service.projects.processes import ProcessService
+from app.service.scenarios.analysis import AnalysisService
 
 router = APIRouter(prefix="/projects/{project_id}", tags=["params"])
 
@@ -116,7 +117,8 @@ async def validation(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) -> 
     summary="Панель доверия — происхождение параметров и их влияние",
 )
 async def data_quality_report(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) -> DataQualityReport:
-    summary, items = await ParamsService(uow, user).data_quality(project_id)
+    impact = await AnalysisService(uow, user).param_impact(project_id)
+    summary, items = await ParamsService(uow, user).data_quality(project_id, impact)
     return DataQualityReport(
         summary=DataQualitySummary.from_domain(summary), items=[DataQualityItem.from_domain(i) for i in items]
     )

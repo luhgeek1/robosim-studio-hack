@@ -1,4 +1,5 @@
 import hashlib
+import sys
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,7 +20,7 @@ from app.db.models import (
     SolutionType,
 )
 from app.db.uow import UnitOfWork
-from app.domain.catalog import Badge, SpecValue, completeness, derived_badges
+from app.domain.catalog import Badge, SpecValue, completeness, derived_badges, rules
 from app.domain.common.provenance import Provenance
 from app.domain.reference import SpecGroup
 from app.seeds import catalog_sources
@@ -48,7 +49,7 @@ _OFFER_NAMESPACE = uuid.UUID("5b3f0c1e-8a1d-4d8e-9f62-3c0a4b7e2d11")
 
 
 _SEED_FILES = ("catalog_mapping.yaml", "spec_keys.yaml", "solution_types.yaml")
-_LOADER_MODULES = (catalog_sources, parsing)
+_LOADER_MODULES = (catalog_sources, parsing, rules, sys.modules[__name__])
 
 
 def seed_inputs_hash(settings: Settings) -> str:
@@ -61,6 +62,16 @@ def seed_inputs_hash(settings: Settings) -> str:
     for module in _LOADER_MODULES:
         digest.update(Path(module.__file__ or "").read_bytes())
     return digest.hexdigest()
+
+
+def _case_owners(rows_by_id: dict[str, list[CatalogRow]]) -> dict[str, set[str]]:
+    owners: dict[str, set[str]] = {}
+    for product_id, rows in rows_by_id.items():
+        for row in rows:
+            text = (row.get("Кейсы") or "").strip()
+            if text:
+                owners.setdefault(text, set()).add(product_id)
+    return owners
 
 
 def catalog_version_label(now: datetime, revision: int) -> str:
@@ -98,6 +109,7 @@ class CatalogSeeder:
         self._sources = SourceRegistry(uow)
         self._spec_keys = {spec.key: spec for spec in load_spec_keys()}
         self._research = read_research_specs(settings.data_root, self._spec_keys)
+        self._case_owners: dict[str, set[str]] = {}
 
     async def run(self) -> int:
         inputs_hash = seed_inputs_hash(self._settings)
@@ -116,6 +128,7 @@ class CatalogSeeder:
             select(SolutionType.key, SolutionType.capability_keys)
         )
         capabilities = dict(capability_rows.tuples().all())
+        self._case_owners = _case_owners(rows_by_id)
         touched = 0
         for product_id, rows in rows_by_id.items():
             existing = await self._uow.session.get(Product, uuid.UUID(product_id))
@@ -259,7 +272,10 @@ class CatalogSeeder:
         assigned = [Badge(badge) for badge in item.badges]
         if research and research.in_registry:
             assigned.append(Badge.IN_REGISTRY_719)
-        has_cases = bool(research and research.cases) or any(row.get("Кейсы") for row in rows)
+        # The organizer's «Кейсы» column is filled for every product, often with one category text (41 rows
+        # say «БАС применяется для мониторинговых задач»): only a text of this product alone is its own case.
+        own_case = any(len(self._case_owners.get((row.get("Кейсы") or "").strip(), ())) == 1 for row in rows)
+        has_cases = bool(research and research.cases) or own_case
         product.badges = [
             b.value
             for b in derived_badges(

@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Path, Query
 
-from app.api.deps import UowDep
+from app.api.deps import OptionalUserDep, UowDep
 from app.api.schemas.catalog import (
     CatalogFacets,
     CompareRequest,
@@ -14,9 +14,11 @@ from app.api.schemas.catalog import (
     ProductList,
 )
 from app.api.schemas.reference import SpecKey, SpecKeyList
+from app.core.errors import UnauthorizedError
 from app.domain.catalog import Badge, ProductQuery, ProductSort, ProductStatus
 from app.domain.reference import ObjectTypeKey
 from app.service.catalog import CatalogService
+from app.service.matching.service import MatchingService
 from app.service.reference import ReferenceService
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
@@ -105,9 +107,17 @@ async def get_product(product_id: Annotated[UUID, Path()], uow: UowDep) -> Produ
 @router.post(
     "/compare", operation_id="compareProducts", summary="Сравнение 2–5 продуктов по группам характеристик"
 )
-async def compare_products(payload: CompareRequest, uow: UowDep) -> CompareResult:
+async def compare_products(payload: CompareRequest, uow: UowDep, user: OptionalUserDep) -> CompareResult:
     result = await CatalogService(uow).compare(payload.product_ids)
+    compatibility: dict[str, str] = {}
+    if payload.project_id is not None:
+        if user is None:
+            raise UnauthorizedError("Совместимость с проектом видна после входа")
+        compatibility = await MatchingService(uow, user).compatibility(
+            payload.project_id, payload.product_ids, payload.process_key
+        )
     return CompareResult(
         products=[Product.from_domain(p) for p in result.products],
         rows=[CompareRow.from_domain(r) for r in result.rows],
+        compatibility=compatibility,
     )

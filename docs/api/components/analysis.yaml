@@ -563,7 +563,9 @@ ComparisonTable:
     verdict: {$ref: '#/Interpretation'}
     cashflow_overlay:
       type: object
-      description: Кумулятивные кривые всех сценариев для одного графика.
+      description: |
+        Накопленный денежный поток каждого сценария относительно «как сейчас» по годам, с точки 0 (старт, минус
+        первоначальные вложения). База — линия нуля; пересечение нуля — окупаемость. Один график на все сценарии.
       additionalProperties:
         type: array
         items: {$ref: '#/CashflowPoint'}

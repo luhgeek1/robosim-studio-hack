@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from app.engine.economics.models import CashflowRow
 from app.engine.finance import (
@@ -129,7 +129,6 @@ class _Month:
 @dataclass(slots=True)
 class _Totals:
     rows: list[CashflowRow] = field(default_factory=list)
-    total_cost: list[float] = field(default_factory=list)
     flows: list[float] = field(default_factory=list)
     tco: float = 0.0
     tco_baseline: float = 0.0
@@ -211,7 +210,6 @@ def simulate(plan: CashflowPlan) -> CashflowOutcome:
         if plan.is_baseline:
             cumulative -= flow.labor
             totals.rows.append(CashflowRow(month, 0.0, flow.labor, 0.0, 0.0, -flow.labor, cumulative, None))
-            totals.total_cost.append(flow.labor)
             continue
         totals.interest += flow.interest
         totals.replaced += flow.events
@@ -240,7 +238,6 @@ def simulate(plan: CashflowPlan) -> CashflowOutcome:
                 discounted,
             )
         )
-        totals.total_cost.append(flow.labor - flow.savings + flow.opex + financing + events + upfront)
     return _outcome(plan, model, totals)
 
 
@@ -265,19 +262,21 @@ def _yearly(rows: list[CashflowRow], months: int) -> list[CashflowRow]:
     return result
 
 
-def _overlay(total_cost: list[float]) -> list[CashflowRow]:
-    """Cumulative full cost by year (labor included) — curves of all scenarios cross at the payback point."""
-    result: list[CashflowRow] = []
-    cumulative = 0.0
-    for year in range(0, len(total_cost), MONTHS_PER_YEAR):
-        cost = sum(total_cost[year : year + MONTHS_PER_YEAR])
-        cumulative -= cost
-        result.append(CashflowRow(year // MONTHS_PER_YEAR + 1, 0.0, cost, 0.0, 0.0, -cost, cumulative, None))
-    return result
+def _overlay(plan: CashflowPlan, yearly: list[CashflowRow]) -> list[CashflowRow]:
+    """Cumulative cash flow against «как сейчас» by year, from the start: the baseline is the zero line and a
+    scenario's curve crosses it at the payback — one chart for purchase, RaaS and lease side by side."""
+    if plan.is_baseline:
+        return [CashflowRow(period, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) for period in range(len(yearly) + 1)]
+    upfront = plan.upfront
+    start = CashflowRow(0, upfront, 0.0, 0.0, 0.0, -upfront, -upfront, -upfront)
+    # The first year's row carries the upfront investment; on this chart it sits at the start instead.
+    first = [replace(row, capex=row.capex - upfront, net=row.net + upfront) for row in yearly[:1]]
+    return [start, *first, *yearly[1:]]
 
 
 def _outcome(plan: CashflowPlan, model: _Model, totals: _Totals) -> CashflowOutcome:
-    yearly, overlay = _yearly(totals.rows, plan.months), _overlay(totals.total_cost)
+    yearly = _yearly(totals.rows, plan.months)
+    overlay = _overlay(plan, yearly)
     if plan.is_baseline:
         return CashflowOutcome(
             monthly=totals.rows,

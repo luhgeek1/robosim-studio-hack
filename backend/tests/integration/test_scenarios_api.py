@@ -124,6 +124,11 @@ async def test_raas_copy_and_comparison_recommends(client: AsyncClient) -> None:
     assert payback["better"] == "lower"
     assert table["recommendation"]["scenario_id"]
     assert set(table["cashflow_overlay"]) == {s["scenario_id"] for s in table["scenarios"]}
+    by_kind = {s["kind"]: table["cashflow_overlay"][s["scenario_id"]] for s in table["scenarios"]}
+    # One chart against «как сейчас»: the baseline is the zero line, purchase starts at minus its CAPEX.
+    assert all(point["cumulative_rub"] == 0 for point in by_kind["baseline"])
+    assert by_kind["purchase"][0]["period"] == 0
+    assert by_kind["purchase"][0]["cumulative_rub"] < by_kind["raas"][0]["cumulative_rub"] <= 0
     project = (await client.get(f"/api/v1/projects/{project_id}", headers=headers)).json()
     assert project["scenarios_count"] == 3
     assert project["recommended_scenario_id"] == table["recommendation"]["scenario_id"]

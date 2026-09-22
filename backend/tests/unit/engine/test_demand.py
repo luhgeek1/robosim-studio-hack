@@ -4,6 +4,7 @@ from app.engine.demand import (
     DemandFormula,
     LaborGroupInput,
     ProcessInput,
+    day_profile,
     labor_cost_rub_year,
     process_demand,
     total_labor_cost,
@@ -64,3 +65,12 @@ def test_missing_inputs_are_named() -> None:
     assert result.demand_per_day is None
     assert result.peak_per_hour is None
     assert "pallets_out_per_day" in result.missing
+
+
+def test_day_profile_sums_to_the_day_and_peaks_in_the_middle() -> None:
+    profile = day_profile(22, 1.5, 3)
+    assert sum(profile) == pytest.approx(1.0)
+    assert profile[22] == profile[23] == 0
+    # A 3-hour window centred in 22 working hours spans 9.5–12.5: two full peak hours at 1.5 / 22.
+    assert profile[10] == profile[11] == pytest.approx(1.5 / 22)
+    assert profile[0] < profile[10]

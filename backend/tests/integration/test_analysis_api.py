@@ -92,3 +92,16 @@ async def test_baseline_has_no_sensitivity(client: AsyncClient) -> None:
     baseline = listed["items"][0]["id"]
     response = await client.post(f"/api/v1/scenarios/{baseline}/sensitivity", headers=headers)
     assert response.status_code == 409
+
+
+async def test_trust_panel_ranks_parameter_impact_by_the_latest_calculation(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client)
+    url = f"/api/v1/projects/{project_id}/data-quality"
+    before = (await client.get(url, headers=headers)).json()
+    assert {item["impact"] for item in before["items"]} == {"unknown"}
+    scenario = await _purchase(client, headers, project_id)
+    await client.post(f"/api/v1/scenarios/{scenario['id']}/calculate", headers=headers)
+    items = {item["key"]: item["impact"] for item in (await client.get(url, headers=headers)).json()["items"]}
+    assert items["forklift_salary_rub_month"] == "high"
+    assert items["sku_count"] == "low"
+    assert set(items.values()) <= {"high", "medium", "low"}

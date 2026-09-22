@@ -1,3 +1,4 @@
+import itertools
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
@@ -145,3 +146,39 @@ def process_demand(
         share_of_labor_cost=cost / total_labor_rub_year if total_labor_rub_year else 0.0,
         missing=missing,
     )
+
+
+HOURS_PER_DAY = 24
+
+
+def profile_rate(hour: float, hours_per_day: float, peak_factor: float, window_h: float) -> float:
+    """Demand rate at `hour` as a multiple of the working-day average.
+
+    The day follows a peak window of `window_h` hours in the middle of the working day at `peak_factor`,
+    the other working hours evenly, so that the day sums to its volume; outside working hours — zero.
+    """
+    if hour < 0 or hour >= hours_per_day or hours_per_day <= 0:
+        return 0.0
+    window = min(window_h, hours_per_day)
+    start = (hours_per_day - window) / 2
+    if start <= hour < start + window:
+        return peak_factor
+    if hours_per_day <= window:
+        return 0.0
+    return max(0.0, (hours_per_day - peak_factor * window) / (hours_per_day - window))
+
+
+def day_profile(hours_per_day: float, peak_factor: float, window_h: float) -> list[float]:
+    """Share of the daily volume in each clock hour (sums to 1): the integral of `profile_rate` per hour."""
+    window = min(window_h, hours_per_day)
+    start = (hours_per_day - window) / 2
+    breaks = sorted({0.0, start, start + window, hours_per_day, float(HOURS_PER_DAY)})
+    shares: list[float] = []
+    for hour in range(HOURS_PER_DAY):
+        points = [hour, *(b for b in breaks if hour < b < hour + 1), hour + 1]
+        area = sum(
+            profile_rate(a, hours_per_day, peak_factor, window_h) * (b - a)
+            for a, b in itertools.pairwise(points)
+        )
+        shares.append(area / hours_per_day if hours_per_day else 0.0)
+    return shares

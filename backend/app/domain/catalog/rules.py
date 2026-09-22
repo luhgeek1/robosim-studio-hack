@@ -5,6 +5,16 @@ from app.domain.catalog.models import Badge, SpecValue
 from app.domain.common.provenance import ProvenanceStatus
 
 BASE_COMPLETENESS_FIELDS = ("description", "price")
+# Categories outside the platform's processes (drones, arms, rovers) have no key specs of their own: their
+# card is judged by one characteristic per ТЗ group: size, mass, payload, autonomy, life, environment.
+GENERIC_KEYS = (
+    "dimensions_mm",
+    "weight_kg",
+    "payload_kg",
+    "runtime_h",
+    "service_life_years",
+    "operating_environment",
+)
 
 _FILLED = frozenset(
     {
@@ -31,8 +41,9 @@ def completeness(
 
     Assumptions (ProvenanceStatus.ASSUMPTION) do not count: they are placeholders, not data about the product.
     """
-    filled = sum(_is_filled(specs.get(key)) for key in capability_keys) + has_description + has_price
-    total = len(capability_keys) + len(BASE_COMPLETENESS_FIELDS)
+    keys = capability_keys or GENERIC_KEYS
+    filled = sum(_is_filled(specs.get(key)) for key in keys) + has_description + has_price
+    total = len(keys) + len(BASE_COMPLETENESS_FIELDS)
     return round(filled / total, 3)
 
 

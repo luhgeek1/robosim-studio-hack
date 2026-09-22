@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -235,6 +236,8 @@ class ParamsService:
         context = await self.context(project_id)
         return build_report(field_issues(context.params), cross_check_issues(context))
 
-    async def data_quality(self, project_id: UUID) -> tuple[DataQualitySummary, list[DataQualityItem]]:
+    async def data_quality(
+        self, project_id: UUID, impact: Mapping[str, str] | None = None
+    ) -> tuple[DataQualitySummary, list[DataQualityItem]]:
         context = await self.context(project_id)
-        return data_quality(context.params, {})
+        return data_quality(context.params, impact or {})

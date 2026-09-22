@@ -86,6 +86,20 @@ async def current_user(
 CurrentUserDep = Annotated[CurrentUser, Depends(current_user)]
 
 
+async def optional_user(
+    creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+    codec: CodecDep,
+    uow: UowDep,
+) -> CurrentUser | None:
+    """Guest endpoints that show more to a signed-in user (e.g. compatibility with their project)."""
+    if creds is None:
+        return None
+    return await current_user(creds, codec, uow)
+
+
+OptionalUserDep = Annotated[CurrentUser | None, Depends(optional_user)]
+
+
 def require(permission: Permission) -> Callable[[CurrentUser], Awaitable[CurrentUser]]:
     async def dependency(user: CurrentUserDep) -> CurrentUser:
         if not user.can(permission):

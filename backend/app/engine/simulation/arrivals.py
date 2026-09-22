@@ -4,6 +4,7 @@ from typing import Any
 
 import simpy
 
+from app.engine.demand import profile_rate
 from app.engine.layout import Node
 from app.engine.simulation.models import SimConfig, SimMode, SimProcess, SimSettings
 
@@ -14,23 +15,15 @@ Emit = Callable[[str, str, str], None]
 def hourly_rate(
     per_day: float, process: SimProcess, settings: SimSettings, config: SimConfig, t_s: float
 ) -> float:
-    """Units per hour at time t: a peak window at peak_factor, the rest evenly; the day sums to per_day."""
+    """Units per hour at time t: the day profile of `engine.demand` (the same one `/processes` shows)."""
     hours = process.hours_per_day
     if per_day <= 0 or hours <= 0:
         return 0.0
     average = per_day / hours
-    peak = average * process.peak_factor
     if config.mode == SimMode.PEAK:
-        return peak * config.volume_multiplier
-    hour = t_s / SECONDS_PER_HOUR
-    if hour >= hours:
-        return 0.0
-    window = min(settings.peak_window_h, hours)
-    start = (hours - window) / 2
-    if start <= hour < start + window:
-        return peak * config.volume_multiplier
-    rest = max(0.0, (per_day - peak * window) / (hours - window)) if hours > window else 0.0
-    return rest * config.volume_multiplier
+        return average * process.peak_factor * config.volume_multiplier
+    rate = profile_rate(t_s / SECONDS_PER_HOUR, hours, process.peak_factor, settings.peak_window_h)
+    return average * rate * config.volume_multiplier
 
 
 class Picker:

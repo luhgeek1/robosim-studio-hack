@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import CalculationRun, Project, Scenario, ScenarioItem
+from app.domain.scenario.models import ScenarioKind
 
 
 class ScenarioRepository:
@@ -60,6 +61,18 @@ class ScenarioRepository:
         )
         statement = select(CalculationRun).join(latest, on_latest)
         return {run.scenario_id: run for run in (await self._session.scalars(statement)).all()}
+
+    async def latest_robotized_run(self, project_id: UUID) -> CalculationRun | None:
+        statement = (
+            select(CalculationRun)
+            .where(
+                CalculationRun.project_id == project_id, CalculationRun.scenario_kind != ScenarioKind.BASELINE
+            )
+            .order_by(CalculationRun.computed_at.desc())
+            .limit(1)
+        )
+        run: CalculationRun | None = await self._session.scalar(statement)
+        return run
 
     async def run_owned(self, run_id: UUID, owner_id: UUID) -> CalculationRun | None:
         statement = (

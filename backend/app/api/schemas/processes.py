@@ -1,9 +1,16 @@
+from typing import Any
 from uuid import UUID
 
 from pydantic import Field
 
 from app.api.schemas.base import ApiModel
 from app.service.projects.processes import ProcessesOverview, ProcessView
+
+PROFILE_PROVENANCE: dict[str, Any] = {
+    "status": "assumption",
+    "note": "Пиковое окно sim_peak_window_hours в середине рабочего дня с пиковым коэффициентом объекта, "
+    "остальные рабочие часы — равномерно; сумма за сутки — объём из параметров",
+}
 
 
 class LaborGroup(ApiModel):
@@ -31,6 +38,10 @@ class ProcessDemand(ApiModel):
     demand_per_day: float | None
     avg_per_hour: float | None
     peak_per_hour: float | None
+    hourly_profile: list[float] | None = Field(
+        default=None, description="Доли суточного объёма по часам (сумма = 1); тот же профиль играет имитация"
+    )
+    profile_provenance: dict[str, Any] | None = None
     current: CurrentState
     share_of_labor_cost: float = Field(ge=0, le=1)
     robotizable: bool
@@ -47,6 +58,8 @@ class ProcessDemand(ApiModel):
             demand_per_day=result.demand_per_day,
             avg_per_hour=result.avg_per_hour,
             peak_per_hour=result.peak_per_hour,
+            hourly_profile=item.hourly_profile,
+            profile_provenance=PROFILE_PROVENANCE if item.hourly_profile else None,
             current=CurrentState(
                 labor_groups=[
                     LaborGroup(

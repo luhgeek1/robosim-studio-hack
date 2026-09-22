@@ -1,6 +1,8 @@
 import pytest
 from httpx import AsyncClient
 
+from tests.conftest import bearer, login
+
 pytestmark = pytest.mark.integration
 
 PRODUCTS = "/api/v1/catalog/products"
@@ -100,3 +102,25 @@ async def test_spec_keys_dictionary(client: AsyncClient) -> None:
     payload = next(item for item in items if item["key"] == "payload_kg")
     assert payload["is_key_constraint"] is True
     assert payload["group"] == "technical"
+
+
+async def test_compare_shows_compatibility_with_a_project(client: AsyncClient) -> None:
+    h1500 = await _find(client, "H1500")
+    h2000 = await _find(client, "H2000")
+    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    payload = {
+        "name": "Склад",
+        "object_type": "warehouse",
+        "init": {"mode": "demo", "demo_key": "warehouse_demo_01"},
+    }
+    project = (await client.post("/api/v1/projects", json=payload, headers=headers)).json()
+    request = {
+        "product_ids": [h1500["id"], h2000["id"]],
+        "project_id": project["id"],
+        "process_key": "pallet_transport",
+    }
+    guest = await client.post("/api/v1/catalog/compare", json=request)
+    assert guest.status_code == 401
+    body = (await client.post("/api/v1/catalog/compare", json=request, headers=headers)).json()
+    assert set(body["compatibility"]) == {h1500["id"], h2000["id"]}
+    assert body["compatibility"][h1500["id"]] in {"fit", "check", "excluded"}

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field, replace
 from uuid import UUID
 
 from app.core.errors import ConflictError, InvalidInputError, ScenarioIncompleteError
+from app.db.repositories.scenarios import ScenarioRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.common.provenance import ProvenanceStatus
@@ -27,6 +28,7 @@ from app.service.scenarios.snapshot import Snapshot
 DEFAULT_SWING_PCT = 20.0
 SURVEY_LIMIT = 10
 SURVEY_METRIC = "npv_rub"
+IMPACT_LEVELS = ("high", "medium", "low")
 _UNVERIFIED = frozenset({ProvenanceStatus.DEFAULT, ProvenanceStatus.ASSUMPTION, ProvenanceStatus.MISSING})
 _DEFAULT_NORMS = (
     "amr_utilization_target",
@@ -159,6 +161,7 @@ class Drivers:
 class AnalysisService:
     def __init__(self, uow: UnitOfWork, user: CurrentUser) -> None:
         self._calculations = CalculationService(uow, user)
+        self._runs = ScenarioRepository(uow.session)
 
     async def _evaluation(self, scenario_id: UUID) -> Evaluation:
         evaluation = await self._calculations.evaluate(scenario_id)
@@ -242,6 +245,31 @@ class AnalysisService:
             if item.swing > 0
         ]
         return SurveyView(survey[:SURVEY_LIMIT])
+
+    async def param_impact(self, project_id: UUID) -> dict[str, str]:
+        """Trust panel: how much each parameter moves NPV in the latest robotization scenario (±20 % tornado).
+
+        Parameters the calculation does not read are «low»; the ones it reads split by rank into thirds.
+        Without a calculated scenario the impact is unknown.
+        """
+        run = await self._runs.latest_robotized_run(project_id)
+        if run is None:
+            return {}
+        try:
+            evaluation = await self._calculations.evaluate(run.scenario_id)
+        except (ScenarioIncompleteError, CalculationError):
+            return {}
+        resolver = Drivers(evaluation)
+        params = evaluation.snapshot.input.params
+        used = sorted(k for k in _used_keys(evaluation, InputKind.PARAM) if params.get(k))
+        drivers = [resolver.param(key, -DEFAULT_SWING_PCT, DEFAULT_SWING_PCT) for key in used]
+        _, items = tornado(evaluation.snapshot.input, drivers, SURVEY_METRIC)
+        moving = [item for item in items if item.swing > 0]
+        impact = dict.fromkeys(evaluation.snapshot.input.param_meta, "low")
+        third = len(moving) / len(IMPACT_LEVELS) if moving else 0
+        for position, item in enumerate(moving):
+            impact[item.driver.key] = IMPACT_LEVELS[min(len(IMPACT_LEVELS) - 1, int(position // third))]
+        return impact
 
 
 def _recommendation(driver: Driver, snapshot: Snapshot) -> str:

@@ -29,6 +29,7 @@ from app.service.projects.context import ProjectLoader
 from app.service.projects.processes import ProcessAnalysis, ProcessService, ProcessView
 
 WEIGHT_NORM_PREFIX = "matching_weight_"
+_STATUS_ORDER = (CandidateStatus.FIT, CandidateStatus.MANUAL, CandidateStatus.CHECK, CandidateStatus.EXCLUDED)
 UNIT_LABELS = {
     "pallet": "палл",
     "line": "строк",
@@ -269,6 +270,26 @@ class MatchingService:
                 )
                 reason = blocking or "Все продукты исключены"
             result.append(SolutionTypeView(key, names.get(key, key), bool(usable), reason, len(own)))
+        return result
+
+    async def compatibility(
+        self, project_id: UUID, product_ids: list[UUID], process_key: str | None
+    ) -> dict[str, str]:
+        """Status of each product in the project's matching: for the given process or the best it fits."""
+        outcome = await self.run(project_id)
+        rank = {status: position for position, status in enumerate(_STATUS_ORDER)}
+        result: dict[str, str] = {}
+        for process in outcome.processes:
+            if process_key and process.process_key != process_key:
+                continue
+            for candidate in process.candidates:
+                product_id = candidate.data.product.id
+                if product_id not in product_ids:
+                    continue
+                status = candidate.result.status.value
+                current = result.get(str(product_id))
+                if current is None or rank[CandidateStatus(status)] < rank[CandidateStatus(current)]:
+                    result[str(product_id)] = status
         return result
 
     async def add_manual(

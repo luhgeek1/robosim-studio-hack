@@ -229,3 +229,6 @@ class CompareRow(ApiModel):
 class CompareResult(ApiModel):
     products: list[Product]
     rows: list[CompareRow]
+    compatibility: dict[str, str] = Field(
+        default_factory=dict, description="product_id → статус подбора для проекта (если передан project_id)"
+    )

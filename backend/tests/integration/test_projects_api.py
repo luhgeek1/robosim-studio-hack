@@ -150,6 +150,12 @@ async def test_processes_show_where_the_money_is(client: AsyncClient) -> None:
     assert pallets["demand_per_day"] == 2000
     assert pallets["peak_per_hour"] == pytest.approx(136.36, rel=1e-3)
     assert pallets["robotizable"] is True
+    profile = pallets["hourly_profile"]
+    assert len(profile) == 24
+    assert sum(profile) == pytest.approx(1.0, abs=1e-3)
+    # The peak hour carries peak_factor / working hours of the day: 1.5 / 22.
+    assert max(profile) == pytest.approx(1.5 / 22, rel=1e-3)
+    assert pallets["profile_provenance"]["status"] == "assumption"
     picking = by_key["order_picking"]
     assert picking["current"]["cost_rub_year"] == pytest.approx(156_240_000, rel=1e-3)
     assert picking["share_of_labor_cost"] > pallets["share_of_labor_cost"]
