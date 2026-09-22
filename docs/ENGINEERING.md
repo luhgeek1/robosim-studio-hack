@@ -70,7 +70,8 @@ backend/
       verdict.py            интерпретация по интервалам ТЗ 3.5.7 и риски
       calibration.py        пересчёт модельных кейсов ФЦ БАС нашими формулами и нормативами
       sensitivity.py        торнадо, тепловая карта, Монте-Карло (аналитический)
-      simulation/           DES на SimPy: model.py (граф, роботы, задачи), policies.py, kpi.py, events.py
+      simulation/           DES на SimPy: network (маршруты, однополосные участки), arrivals (фуры, строки), agents,
+                            actions (поведение робота), model, kpi + summary (сводка, узкое место), sweep (перебор N)
       surrogate.py          метамодель (P2)
       trace.py              построение CalculationTrace из шагов расчёта
     service/                оркестрация: UoW, репозитории, engine, задачи; возвращают domain DTO
