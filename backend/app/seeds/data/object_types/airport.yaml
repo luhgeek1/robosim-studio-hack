@@ -315,6 +315,42 @@ parameters:
   affects: [baggage_handling]
   order: 20
   default: null
+- key: bags_per_cart
+  group: ramp
+  name: Мест багажа на одной тележке
+  type: integer
+  unit: мест
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько мест багажа помещается на одну багажную тележку сцепки.
+  example: '40'
+  affects: [baggage_handling]
+  order: 21
+  default:
+    value: 40
+    status: assumption
+    rationale: 'В датасете нет. Берём оценку из обоснования норматива tow_train_carts_per_trip (реестр нормативов v1): «багажная
+      тележка ≈ 40 мест × 18 кг». Уточнить по паспорту тележек аэропорта.'
+- key: baggage_cart_tare_kg
+  group: ramp
+  name: Масса пустой багажной тележки
+  type: number
+  unit: кг
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Собственная масса пустой багажной тележки.
+  example: '300'
+  affects: [baggage_handling]
+  order: 22
+  default:
+    value: 300
+    status: assumption
+    rationale: 'В датасете нет. Берём оценку из обоснования норматива tow_train_carts_per_trip (реестр нормативов v1): «собственная
+      масса ~300 кг». Уточнить по паспорту тележек аэропорта.'
 - key: baggage_carousels
   group: ramp
   name: Количество лент выдачи багажа
@@ -327,7 +363,7 @@ parameters:
   hint: Сколько каруселей выдачи багажа. Конечные точки маршрута при прилёте.
   example: '8'
   affects: [baggage_handling]
-  order: 21
+  order: 23
   default: null
 - key: baggage_route_length_m
   group: ramp
@@ -341,7 +377,7 @@ parameters:
   hint: Средний путь багажной сцепки от зала сортировки до стоянки самолёта в одну сторону. Замерьте по схеме перрона.
   example: '300'
   affects: [baggage_handling]
-  order: 22
+  order: 24
   default:
     value: 300
     status: assumption
@@ -360,7 +396,7 @@ parameters:
     процесс для них пока не считается.
   example: '22000'
   affects: []
-  order: 23
+  order: 25
   default: null
 - key: refuelling_flights_per_day
   group: ramp
@@ -375,7 +411,7 @@ parameters:
     обычно только вылетающие рейсы — вероятно, около половины. В расчёте не участвует.
   example: '280'
   affects: []
-  order: 24
+  order: 26
   default: null
 - key: internal_cart_trips_per_day
   group: terminal_logistics
@@ -389,7 +425,7 @@ parameters:
   hint: Сколько раз за сутки внутри терминала перевозят грузы, расходные материалы и отходы на тележках.
   example: '420'
   affects: [cart_and_waste_logistics]
-  order: 25
+  order: 27
   default: null
 - key: terminal_route_length_m
   group: terminal_logistics
@@ -403,7 +439,7 @@ parameters:
   hint: 'Средний путь тележки внутри терминала в одну сторону: от склада или мусорной площадки до точки обслуживания.'
   example: '200'
   affects: [cart_and_waste_logistics]
-  order: 26
+  order: 28
   default:
     value: 200
     status: assumption
@@ -421,7 +457,7 @@ parameters:
   hint: Сколько мусорных контейнеров или тележек вывозится за сутки.
   example: '85'
   affects: [cart_and_waste_logistics]
-  order: 27
+  order: 29
   default: null
 - key: cleaning_machines
   group: terminal_logistics
@@ -435,7 +471,7 @@ parameters:
   hint: Сколько поломоечных машин сейчас работает в терминале. Их могут заменить автономные машины.
   example: '8'
   affects: [terminal_cleaning]
-  order: 28
+  order: 30
   default: null
 - key: cleaning_area_m2
   group: terminal_logistics
@@ -450,7 +486,7 @@ parameters:
     60 % площади терминалов.'
   example: '51000'
   affects: [terminal_cleaning]
-  order: 29
+  order: 31
   default: null
 - key: ground_staff
   group: staff
@@ -464,7 +500,7 @@ parameters:
   hint: 'Сколько человек работает на перроне: грузчики багажа, водители техники. В датасете не разбито по функциям.'
   example: '320'
   affects: [baggage_handling]
-  order: 30
+  order: 32
   default: null
 - key: terminal_staff
   group: staff
@@ -478,7 +514,7 @@ parameters:
   hint: Уборщики, курьеры и грузчики терминала. В датасете не разбито по функциям.
   example: '180'
   affects: [cart_and_waste_logistics, terminal_cleaning]
-  order: 31
+  order: 33
   default: null
 - key: ground_staff_salary_rub_month
   group: staff
@@ -492,7 +528,7 @@ parameters:
   hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
   example: '100000'
   affects: [baggage_handling]
-  order: 32
+  order: 34
   default: null
 - key: cleaner_salary_rub_month
   group: staff
@@ -506,7 +542,7 @@ parameters:
   hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц. Используется для всего персонала терминала.
   example: '65000'
   affects: [cart_and_waste_logistics, terminal_cleaning]
-  order: 33
+  order: 35
   default: null
 - key: payroll_tax_coeff
   group: staff
@@ -520,7 +556,7 @@ parameters:
   hint: 'Во сколько раз затраты работодателя больше начисленной зарплаты: 1,302 = зарплата + 30,2 % страховых взносов.'
   example: '1.302'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning]
-  order: 34
+  order: 36
   default: null
 - key: terminal_staff_turnover_pct
   group: staff
@@ -534,7 +570,7 @@ parameters:
   hint: Какая доля сотрудников терминала увольняется за год. Высокая текучесть — дополнительный довод за роботов.
   example: '35'
   affects: [cart_and_waste_logistics, terminal_cleaning]
-  order: 35
+  order: 37
   default: null
 - key: patrol_rounds_per_day
   group: security
@@ -549,7 +585,7 @@ parameters:
     без этого числа потребность в роботах-патрульных не считается.
   example: '6'
   affects: [security_patrol]
-  order: 36
+  order: 38
   default: null
 - key: has_open_air_zones
   group: security
@@ -563,7 +599,7 @@ parameters:
   hint: 'Работают ли роботы на улице: перрон, привокзальная площадь. На открытых зонах нужны защита от погоды и морозостойкость.'
   example: Да
   affects: [baggage_handling]
-  order: 37
+  order: 39
   default:
     value: true
     status: assumption
@@ -582,7 +618,7 @@ parameters:
     для техники.'
   example: '4'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 38
+  order: 40
   default: null
 - key: access_control
   group: security
@@ -596,7 +632,7 @@ parameters:
   hint: Есть ли СКУД и по какому протоколу. Роботы должны открывать двери и проходить турникеты через СКУД.
   example: Да (OSDP)
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 39
+  order: 41
   default: null
 - key: airside_certification
   group: security
@@ -611,7 +647,7 @@ parameters:
     EASA на практике не применяются — уточните у службы авиабезопасности.
   example: EASA/ИКАО
   affects: [baggage_handling]
-  order: 40
+  order: 42
   default: null
 - key: noise_limit_dba
   group: security
@@ -625,7 +661,7 @@ parameters:
   hint: Максимальный уровень шума в зоне работы роботов. Важно для работы ночью.
   example: '70'
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 41
+  order: 43
   default: null
 - key: apron_min_temperature_c
   group: security
@@ -639,7 +675,7 @@ parameters:
   hint: Самая низкая температура на перроне и в неотапливаемых зонах. Многие роботы не работают ниже −20 °C.
   example: '-25'
   affects: [baggage_handling]
-  order: 42
+  order: 44
   default: null
 - key: has_fids_aodb
   group: infrastructure
@@ -653,7 +689,7 @@ parameters:
   hint: FIDS — табло с информацией о рейсах, AODB — операционная база данных аэропорта. Из них роботы получают расписание.
   example: Да
   affects: [baggage_handling, passenger_assistance]
-  order: 43
+  order: 45
   default: null
 - key: has_bms
   group: infrastructure
@@ -667,7 +703,7 @@ parameters:
   hint: Через BMS роботы вызывают лифты, открывают двери и управляют освещением.
   example: Да
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 44
+  order: 46
   default: null
 - key: charging_power_kw
   group: infrastructure
@@ -681,7 +717,7 @@ parameters:
   hint: Свободная электрическая мощность под зарядные станции.
   example: '300'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 45
+  order: 47
   default: null
 - key: capex_budget_mln_rub
   group: economics
@@ -695,7 +731,7 @@ parameters:
   hint: Сколько аэропорт готов вложить в покупку и внедрение роботов.
   example: '120'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 46
+  order: 48
   default: null
 - key: horizon_years
   group: economics
@@ -709,7 +745,7 @@ parameters:
   hint: За сколько лет считаем затраты и эффект. Аэропортовые проекты обычно считают дольше складских из-за сложной интеграции.
   example: '7'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 47
+  order: 49
   default: null
 - key: sla_target_share
   group: economics
@@ -723,7 +759,7 @@ parameters:
   hint: Какая доля рейсов тележек и заявок должна выполняться в норматив. 0,95 — 95 %.
   example: '0.95'
   affects: [cart_and_waste_logistics, passenger_assistance]
-  order: 48
+  order: 50
   default:
     value: 0.95
     status: assumption
@@ -751,6 +787,41 @@ processes:
     перрона.'
   solution_types: [tow_tractor, amr_transport, autonomous_truck, sorting_robot]
   sizing_model: tow_train
+  route_length: baggage_route_length_m
+  unit_weight: baggage_weight_kg
+  requirements:
+  - key: towing_vs_baggage_train
+    spec: towing_capacity_kg
+    comparison: gte
+    required: tow_train_carts_per_trip * (bags_per_cart * baggage_weight_kg + baggage_cart_tare_kg)
+    unit: кг
+    solution_types: [tow_tractor]
+    message: Тягач не буксирует сцепку груженых багажных тележек
+    why_needed: Нужна буксируемая масса, чтобы проверить, увезёт ли тягач сцепку тележек с багажом массой {required} кг
+  - key: payload_vs_baggage_cart
+    spec: payload_kg
+    comparison: gte
+    required: bags_per_cart * baggage_weight_kg + baggage_cart_tare_kg
+    unit: кг
+    solution_types: [amr_transport, autonomous_truck]
+    message: Грузоподъёмность меньше массы груженой багажной тележки
+    why_needed: Нужна грузоподъёмность, чтобы проверить, увезёт ли робот груженую багажную тележку массой {required} кг
+  - key: payload_vs_bag
+    spec: payload_kg
+    comparison: gte
+    required: baggage_weight_kg
+    unit: кг
+    solution_types: [sorting_robot]
+    message: Робот-сортировщик не поднимет среднее место багажа
+    why_needed: Нужна грузоподъёмность, чтобы проверить, возьмёт ли робот место багажа массой {required} кг
+  - key: temperature_apron
+    spec: operating_temp_min_c
+    comparison: lte
+    required: apron_min_temperature_c
+    unit: °C
+    solution_types: [tow_tractor, amr_transport, autonomous_truck]
+    message: Робот не рассчитан на зимнюю температуру перрона
+    why_needed: 'Нужна минимальная рабочая температура: на перроне зимой бывает до {required} °C'
 - key: cart_and_waste_logistics
   name: Грузовые тележки и вывоз мусора в терминале
   description: Перевозка грузов, расходных материалов и мусорных контейнеров внутри терминала. Цель — «Целевая доля операций
@@ -768,6 +839,16 @@ processes:
     — к перевозке грузов и мусора.'
   solution_types: [amr_transport, tow_tractor, delivery_robot]
   sizing_model: transport_cycle
+  route_length: terminal_route_length_m
+  requirements:
+  - key: noise_limit
+    spec: noise_dba
+    comparison: lte
+    required: noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в зоне работы
+    why_needed: 'Нужен уровень шума робота: в зоне допускается не больше {required} дБА, особенно ночью'
 - key: terminal_cleaning
   name: Уборка терминала
   description: Влажная уборка залов терминала автономными поломоечными машинами. Цель — норматив «Кратность уборки в сутки»
@@ -784,6 +865,15 @@ processes:
     — к перевозке грузов и мусора.'
   solution_types: [cleaning_robot]
   sizing_model: area_coverage
+  requirements:
+  - key: noise_limit
+    spec: noise_dba
+    comparison: lte
+    required: noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в зоне работы
+    why_needed: 'Нужен уровень шума робота: в зоне допускается не больше {required} дБА, особенно ночью'
 - key: passenger_assistance
   name: Помощь и навигация пассажиров
   description: 'Роботы-консультанты и сопровождающие у стоек регистрации и выходов: подсказывают дорогу, провожают трансферных
@@ -800,6 +890,15 @@ processes:
     — сервис, ФОТ не распределяется.
   solution_types: [service_robot, delivery_robot]
   sizing_model: station_throughput
+  requirements:
+  - key: noise_limit
+    spec: noise_dba
+    comparison: lte
+    required: noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в зоне работы
+    why_needed: 'Нужен уровень шума робота: в зоне допускается не больше {required} дБА, особенно ночью'
 - key: security_patrol
   name: Патрулирование терминала
   description: Регулярный объезд залов терминала роботом с камерами. Сотрудников службы безопасности в датасете нет, поэтому
@@ -814,6 +913,15 @@ processes:
   labor_allocation_note: Сотрудников службы безопасности в датасете нет, ФОТ не распределяется.
   solution_types: [service_robot]
   sizing_model: area_coverage
+  requirements:
+  - key: noise_limit
+    spec: noise_dba
+    comparison: lte
+    required: noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в зоне работы
+    why_needed: 'Нужен уровень шума робота: в зоне допускается не больше {required} дБА, особенно ночью'
 checks:
 - key: cleaning_area_within_terminal
   expression: cleaning_area_m2 <= terminal_area_m2

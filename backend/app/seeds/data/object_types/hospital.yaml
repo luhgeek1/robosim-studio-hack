@@ -975,6 +975,49 @@ processes:
     заменяют только перевозку, — это учитывает доля высвобождения.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
+  route_length: kitchen_to_ward_distance_m
+  requirements:
+  - key: payload_vs_meal_cart
+    spec: payload_kg
+    comparison: gte
+    required: meal_cart_weight_kg
+    unit: кг
+    solution_types: [delivery_robot, amr_transport]
+    message: Грузоподъёмность меньше массы тележку с питанием
+    why_needed: Нужна грузоподъёмность, чтобы проверить, увезёт ли робот тележку с питанием массой {required} кг
+  - key: towing_vs_meal_cart
+    spec: towing_capacity_kg
+    comparison: gte
+    required: meal_cart_weight_kg
+    unit: кг
+    solution_types: [tow_tractor]
+    message: Тягач не буксирует тележку с питанием
+    why_needed: Нужна буксируемая масса, чтобы проверить, увезёт ли тягач тележку с питанием массой {required} кг
+  - key: width_in_corridor
+    spec: width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m) - aisle_safety_clearance_mm
+    unit: мм
+    solution_types: []
+    message: Робот шире, чем позволяет коридор с зазором для разъезда
+    why_needed: 'Нужна ширина робота, чтобы проверить, пройдёт ли он по коридору с зазором безопасности: не шире {required}
+      мм'
+  - key: min_aisle_in_corridor
+    spec: min_aisle_width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m)
+    unit: мм
+    solution_types: []
+    message: Роботу нужен проезд шире основных коридоров
+    why_needed: 'Нужна минимальная ширина проезда робота, чтобы сравнить её с шириной коридоров: {required} мм'
+  - key: night_noise
+    spec: noise_dba
+    comparison: lte
+    required: night_noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в палатах ночью
+    why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
 - key: linen_transport
   name: Перевозка белья (чистое и грязное)
   description: Сбор грязного белья из отделений в прачечную и развоз чистого. Цель — «Смен белья в сутки» (linen_changes_per_day)
@@ -990,6 +1033,49 @@ processes:
     белья — вся группа относится к процессу.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
+  route_length: kitchen_to_ward_distance_m
+  requirements:
+  - key: payload_vs_linen_container
+    spec: payload_kg
+    comparison: gte
+    required: linen_container_weight_kg
+    unit: кг
+    solution_types: [delivery_robot, amr_transport]
+    message: Грузоподъёмность меньше массы контейнер с бельём
+    why_needed: Нужна грузоподъёмность, чтобы проверить, увезёт ли робот контейнер с бельём массой {required} кг
+  - key: towing_vs_linen_container
+    spec: towing_capacity_kg
+    comparison: gte
+    required: linen_container_weight_kg
+    unit: кг
+    solution_types: [tow_tractor]
+    message: Тягач не буксирует контейнер с бельём
+    why_needed: Нужна буксируемая масса, чтобы проверить, увезёт ли тягач контейнер с бельём массой {required} кг
+  - key: width_in_corridor
+    spec: width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m) - aisle_safety_clearance_mm
+    unit: мм
+    solution_types: []
+    message: Робот шире, чем позволяет коридор с зазором для разъезда
+    why_needed: 'Нужна ширина робота, чтобы проверить, пройдёт ли он по коридору с зазором безопасности: не шире {required}
+      мм'
+  - key: min_aisle_in_corridor
+    spec: min_aisle_width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m)
+    unit: мм
+    solution_types: []
+    message: Роботу нужен проезд шире основных коридоров
+    why_needed: 'Нужна минимальная ширина проезда робота, чтобы сравнить её с шириной коридоров: {required} мм'
+  - key: night_noise
+    spec: noise_dba
+    comparison: lte
+    required: night_noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в палатах ночью
+    why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
 - key: waste_transport
   name: Вывоз медицинских отходов
   description: Вывоз контейнеров с отходами классов А и Б из отделений; для класса Б — отдельный маршрут и обеззараживание
@@ -1007,6 +1093,42 @@ processes:
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot, amr_transport]
   sizing_model: elevator_cycle
+  route_length: kitchen_to_ward_distance_m
+  requirements:
+  - key: payload_vs_waste_pickup
+    spec: payload_kg
+    comparison: gte
+    required: (waste_class_a_kg_per_day + waste_class_b_kg_per_day) / (waste_points * waste_pickups_per_day)
+    unit: кг
+    solution_types: [delivery_robot, amr_transport]
+    message: Грузоподъёмность меньше отходов, которые забираются из одной точки за один вывоз
+    why_needed: Нужна грузоподъёмность, чтобы проверить, заберёт ли робот отходы одной точки за один вывоз — {required} кг
+      (суточные отходы ÷ точек сбора ÷ вывозов в сутки)
+  - key: width_in_corridor
+    spec: width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m) - aisle_safety_clearance_mm
+    unit: мм
+    solution_types: []
+    message: Робот шире, чем позволяет коридор с зазором для разъезда
+    why_needed: 'Нужна ширина робота, чтобы проверить, пройдёт ли он по коридору с зазором безопасности: не шире {required}
+      мм'
+  - key: min_aisle_in_corridor
+    spec: min_aisle_width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m)
+    unit: мм
+    solution_types: []
+    message: Роботу нужен проезд шире основных коридоров
+    why_needed: 'Нужна минимальная ширина проезда робота, чтобы сравнить её с шириной коридоров: {required} мм'
+  - key: night_noise
+    spec: noise_dba
+    comparison: lte
+    required: night_noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в палатах ночью
+    why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
 - key: medication_delivery
   name: Доставка медикаментов и расходников
   description: Доставка собранных заявок из аптеки и расходных материалов в отделения; срочные доставки идут вне очереди.
@@ -1024,6 +1146,33 @@ processes:
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
+  route_length: kitchen_to_ward_distance_m
+  requirements:
+  - key: width_in_corridor
+    spec: width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m) - aisle_safety_clearance_mm
+    unit: мм
+    solution_types: []
+    message: Робот шире, чем позволяет коридор с зазором для разъезда
+    why_needed: 'Нужна ширина робота, чтобы проверить, пройдёт ли он по коридору с зазором безопасности: не шире {required}
+      мм'
+  - key: min_aisle_in_corridor
+    spec: min_aisle_width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m)
+    unit: мм
+    solution_types: []
+    message: Роботу нужен проезд шире основных коридоров
+    why_needed: 'Нужна минимальная ширина проезда робота, чтобы сравнить её с шириной коридоров: {required} мм'
+  - key: night_noise
+    spec: noise_dba
+    comparison: lte
+    required: night_noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в палатах ночью
+    why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
 - key: lab_sample_delivery
   name: Доставка проб в лабораторию
   description: Доставка биоматериалов от мест забора в лабораторию и развоз результатов. Норматив — «Норматив доставки пробы»
@@ -1041,6 +1190,33 @@ processes:
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
+  route_length: kitchen_to_ward_distance_m
+  requirements:
+  - key: width_in_corridor
+    spec: width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m) - aisle_safety_clearance_mm
+    unit: мм
+    solution_types: []
+    message: Робот шире, чем позволяет коридор с зазором для разъезда
+    why_needed: 'Нужна ширина робота, чтобы проверить, пройдёт ли он по коридору с зазором безопасности: не шире {required}
+      мм'
+  - key: min_aisle_in_corridor
+    spec: min_aisle_width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m)
+    unit: мм
+    solution_types: []
+    message: Роботу нужен проезд шире основных коридоров
+    why_needed: 'Нужна минимальная ширина проезда робота, чтобы сравнить её с шириной коридоров: {required} мм'
+  - key: night_noise
+    spec: noise_dba
+    comparison: lte
+    required: night_noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в палатах ночью
+    why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
 - key: floor_cleaning
   name: Уборка коридоров и холлов
   description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель — норматив «Кратность уборки в сутки»
@@ -1059,6 +1235,32 @@ processes:
     расписанию и должностным инструкциям.'
   solution_types: [cleaning_robot]
   sizing_model: area_coverage
+  requirements:
+  - key: width_in_corridor
+    spec: width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m) - aisle_safety_clearance_mm
+    unit: мм
+    solution_types: []
+    message: Робот шире, чем позволяет коридор с зазором для разъезда
+    why_needed: 'Нужна ширина робота, чтобы проверить, пройдёт ли он по коридору с зазором безопасности: не шире {required}
+      мм'
+  - key: min_aisle_in_corridor
+    spec: min_aisle_width_mm
+    comparison: lte
+    required: m_to_mm(corridor_width_m)
+    unit: мм
+    solution_types: []
+    message: Роботу нужен проезд шире основных коридоров
+    why_needed: 'Нужна минимальная ширина проезда робота, чтобы сравнить её с шириной коридоров: {required} мм'
+  - key: night_noise
+    spec: noise_dba
+    comparison: lte
+    required: night_noise_limit_dba
+    unit: дБА
+    solution_types: []
+    message: Робот шумнее, чем допускается в палатах ночью
+    why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
 checks:
 - key: meal_portions_match_beds
   expression: meal_portions_per_day <= beds * bed_occupancy_pct * feedings_per_day

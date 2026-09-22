@@ -90,6 +90,9 @@ class ProcessDef(UuidPkMixin, Base):
     demand: Mapped[dict[str, str] | None] = mapped_column(JSONB)
     labor_allocation: Mapped[dict[str, float]] = mapped_column(JSONB, default=dict, server_default="{}")
     labor_allocation_note: Mapped[str | None] = mapped_column(sa.Text)
+    route_length: Mapped[str | None] = mapped_column(sa.Text)
+    unit_weight: Mapped[str | None] = mapped_column(sa.Text)
+    requirements: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
     order: Mapped[int] = mapped_column(sa.Integer, default=0)
 
 

@@ -85,6 +85,21 @@ class ProcessDef:
     demand: dict[str, str] | None = None
     labor_allocation: dict[str, float] = field(default_factory=dict)
     labor_allocation_note: str | None = None
+    route_length: str | None = None
+    unit_weight: str | None = None
+    requirements: list["Requirement"] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class Requirement:
+    key: str
+    spec: str
+    comparison: str
+    required: str
+    unit: str | None
+    solution_types: list[str]
+    message: str
+    why_needed: str
 
 
 @dataclass(frozen=True, slots=True)

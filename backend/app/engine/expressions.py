@@ -20,7 +20,9 @@ _COMPARE: dict[type[ast.cmpop], Callable[[float, float], bool]] = {
     ast.Eq: operator.eq,
     ast.NotEq: operator.ne,
 }
-_FUNCTIONS = frozenset({"min", "max", "coalesce"})
+# Unit conversions are exact arithmetic, not coefficients, so they may live in code.
+_UNIT_FUNCTIONS: dict[str, float] = {"m_to_mm": 1000.0, "mm_to_m": 0.001, "t_to_kg": 1000.0, "kg_to_t": 0.001}
+_FUNCTIONS = frozenset({"min", "max", "coalesce", *_UNIT_FUNCTIONS})
 
 
 class ExpressionError(ValueError):
@@ -145,4 +147,8 @@ def _call(name: str, args: list[ast.expr], values: Mapping[str, float | None]) -
                 missing += exc.names
         raise MissingValueError(missing)
     numbers = [_number(arg, values) for arg in args]
+    if name in _UNIT_FUNCTIONS:
+        if len(numbers) != 1:
+            raise ExpressionError(f"{name}() takes exactly one argument")
+        return numbers[0] * _UNIT_FUNCTIONS[name]
     return min(numbers) if name == "min" else max(numbers)

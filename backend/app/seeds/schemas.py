@@ -79,6 +79,17 @@ class DemandSeed(SeedModel):
     peak_factor: str
 
 
+class RequirementSeed(SeedModel):
+    key: str
+    spec: str
+    comparison: Literal["gte", "lte"]
+    required: str
+    unit: str | None = None
+    solution_types: list[str] = []
+    message: str
+    why_needed: str
+
+
 class ProcessSeed(SeedModel):
     key: str
     name: str
@@ -93,6 +104,9 @@ class ProcessSeed(SeedModel):
     demand: DemandSeed | None = None
     labor_allocation: dict[str, float] = {}
     labor_allocation_note: str | None = None
+    route_length: str | None = None
+    unit_weight: str | None = None
+    requirements: list[RequirementSeed] = []
 
 
 class CheckSeed(SeedModel):

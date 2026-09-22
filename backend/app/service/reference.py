@@ -21,6 +21,7 @@ from app.domain.reference import (
     ParameterDef as ParameterDefInfo,
     ParameterGroup,
     ProcessDef as ProcessDefInfo,
+    Requirement,
     SizingModel,
     SolutionTypeInfo,
     SpecGroup,
@@ -77,6 +78,9 @@ def _process(process: ProcessDef) -> ProcessDefInfo:
         demand=process.demand,
         labor_allocation=process.labor_allocation,
         labor_allocation_note=process.labor_allocation_note,
+        route_length=process.route_length,
+        unit_weight=process.unit_weight,
+        requirements=[Requirement(**item) for item in process.requirements],
     )
 
 

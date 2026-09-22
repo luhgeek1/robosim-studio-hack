@@ -47,3 +47,12 @@ def test_rejects_literals_and_unsafe_syntax(source: str) -> None:
 def test_division_by_zero() -> None:
     with pytest.raises(ExpressionError):
         parse("a / b").evaluate({"a": 1, "b": 0})
+
+
+def test_unit_functions() -> None:
+    required = parse("m_to_mm(aisle_width_m) - aisle_safety_clearance_mm")
+    assert required.evaluate({"aisle_width_m": 2.8, "aisle_safety_clearance_mm": 500.0}) == pytest.approx(
+        2300
+    )
+    with pytest.raises(ExpressionError):
+        parse("m_to_mm(a, b)").evaluate({"a": 1.0, "b": 2.0})
