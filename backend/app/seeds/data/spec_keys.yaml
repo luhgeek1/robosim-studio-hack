@@ -1,0 +1,352 @@
+- key: country_of_origin
+  name: Страна производителя
+  group: identification
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: payload_kg
+  name: Грузоподъёмность
+  group: technical
+  unit: кг
+  value_type: number
+  better: higher
+  is_key_constraint: true
+  solution_types: [amr_transport, fmr_forklift, autonomous_truck, goods_to_person, asrs_storage, sorting_robot, piece_picking_arm, palletizing_arm, delivery_robot]
+- key: towing_capacity_kg
+  name: Буксируемая масса
+  group: technical
+  unit: кг
+  value_type: number
+  better: higher
+  is_key_constraint: true
+  solution_types: [tow_tractor, amr_transport]
+- key: dimensions_mm
+  name: Габариты (Д×Ш×В)
+  group: technical
+  unit: мм
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: length_mm
+  name: Длина
+  group: technical
+  unit: мм
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: []
+- key: width_mm
+  name: Ширина
+  group: technical
+  unit: мм
+  value_type: number
+  better: lower
+  is_key_constraint: true
+  solution_types: []
+- key: height_mm
+  name: Высота
+  group: technical
+  unit: мм
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: []
+- key: weight_kg
+  name: Собственная масса
+  group: technical
+  unit: кг
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: []
+- key: max_speed_mps
+  name: Максимальная скорость
+  group: technical
+  unit: м/с
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [amr_transport, fmr_forklift, tow_tractor, autonomous_truck, goods_to_person, sorting_robot, inventory_robot, delivery_robot, service_robot]
+- key: lift_height_mm
+  name: Высота подъёма груза
+  group: technical
+  unit: мм
+  value_type: number
+  better: higher
+  is_key_constraint: true
+  solution_types: [fmr_forklift, amr_transport, asrs_storage]
+- key: max_storage_height_m
+  name: Максимальная высота хранения
+  group: technical
+  unit: м
+  value_type: number
+  better: higher
+  is_key_constraint: true
+  solution_types: [asrs_storage, goods_to_person]
+- key: max_scan_height_m
+  name: Максимальная высота сканирования
+  group: technical
+  unit: м
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [inventory_robot]
+- key: throughput_units_h
+  name: Производительность
+  group: technical
+  unit: ед./ч
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [asrs_storage, sorting_robot, piece_picking_arm, palletizing_arm]
+- key: station_throughput_lines_h
+  name: Производительность станции отбора
+  group: technical
+  unit: строк/ч
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [goods_to_person]
+- key: productivity_gain_share
+  name: Прирост производительности отбора
+  group: technical
+  unit: доля
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [pick_assist]
+- key: coverage_m2_h
+  name: Производительность по площади
+  group: technical
+  unit: м²/ч
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [cleaning_robot, inventory_robot, service_robot]
+- key: cleaning_width_mm
+  name: Ширина уборки
+  group: technical
+  unit: мм
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [cleaning_robot]
+- key: navigation
+  name: Навигация
+  group: technical
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: positioning_accuracy_mm
+  name: Точность позиционирования
+  group: technical
+  unit: ± мм
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: [amr_transport, fmr_forklift, tow_tractor, goods_to_person, sorting_robot]
+- key: battery_capacity
+  name: Аккумулятор
+  group: technical
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: runtime_h
+  name: Время автономной работы
+  group: technical
+  unit: ч
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: []
+- key: range_km
+  name: Запас хода
+  group: technical
+  unit: км
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [autonomous_truck, tow_tractor]
+- key: charging_time_min
+  name: Время зарядки
+  group: technical
+  unit: мин
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: []
+- key: operating_temp_c
+  name: Диапазон рабочих температур
+  group: technical
+  unit: °C
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: operating_temp_min_c
+  name: Минимальная рабочая температура
+  group: technical
+  unit: °C
+  value_type: number
+  better: lower
+  is_key_constraint: true
+  solution_types: []
+- key: operating_temp_max_c
+  name: Максимальная рабочая температура
+  group: technical
+  unit: °C
+  value_type: number
+  better: higher
+  is_key_constraint: true
+  solution_types: []
+- key: noise_dba
+  name: Уровень шума
+  group: technical
+  unit: дБА
+  value_type: number
+  better: lower
+  is_key_constraint: true
+  solution_types: []
+- key: ip_rating
+  name: Степень защиты (IP)
+  group: technical
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: min_aisle_width_mm
+  name: Минимальная ширина проезда
+  group: infrastructure
+  unit: мм
+  value_type: number
+  better: lower
+  is_key_constraint: true
+  solution_types: [amr_transport, fmr_forklift, tow_tractor, goods_to_person, sorting_robot, cleaning_robot, inventory_robot, delivery_robot]
+- key: turning_radius_mm
+  name: Радиус поворота
+  group: infrastructure
+  unit: мм
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: [fmr_forklift, tow_tractor, autonomous_truck]
+- key: floor_requirements
+  name: Требования к полу
+  group: infrastructure
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: charging_type
+  name: Тип зарядки
+  group: infrastructure
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: charging_power_kw
+  name: Мощность зарядного устройства
+  group: infrastructure
+  unit: кВт
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: []
+- key: wireless
+  name: Связь
+  group: infrastructure
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: wms_integration
+  name: Интеграция с WMS/ERP
+  group: infrastructure
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: elevator_integration
+  name: Работа с лифтами
+  group: infrastructure
+  unit: null
+  value_type: boolean
+  better: higher
+  is_key_constraint: true
+  solution_types: [delivery_robot, amr_transport, cleaning_robot, service_robot]
+- key: access_control_integration
+  name: Интеграция с дверями и СКУД
+  group: infrastructure
+  unit: null
+  value_type: boolean
+  better: higher
+  is_key_constraint: false
+  solution_types: [delivery_robot, amr_transport, cleaning_robot, service_robot]
+- key: vendor_price_rub
+  name: Цена у производителя или дилера
+  group: economics
+  unit: ₽
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: rent_rub_month
+  name: Аренда (RaaS)
+  group: economics
+  unit: ₽/мес
+  value_type: number
+  better: lower
+  is_key_constraint: false
+  solution_types: []
+- key: acquisition_models
+  name: Модели приобретения
+  group: economics
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: service_life_years
+  name: Срок службы
+  group: economics
+  unit: лет
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: []
+- key: warranty_years
+  name: Гарантия
+  group: economics
+  unit: лет
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: []
+- key: operating_environment
+  name: Среда эксплуатации
+  group: applicability
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []
+- key: restrictions
+  name: Ограничения применения
+  group: applicability
+  unit: null
+  value_type: string
+  better: none
+  is_key_constraint: false
+  solution_types: []

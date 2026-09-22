@@ -1,0 +1,70 @@
+- key: amr_transport
+  name: AMR — транспортный мобильный робот
+  description: Автономная платформа, подъезжает под паллету, тележку или стеллаж и перевозит груз по складу.
+  sizing_model: transport_cycle
+  capability_keys: [payload_kg, min_aisle_width_mm, max_speed_mps, operating_temp_min_c, runtime_h, charging_time_min, width_mm]
+- key: fmr_forklift
+  name: FMR — автономный погрузчик или штабелёр
+  description: Беспилотный вилочный погрузчик или штабелёр; берёт паллету с пола или яруса стеллажа.
+  sizing_model: transport_cycle
+  capability_keys: [payload_kg, lift_height_mm, min_aisle_width_mm, max_speed_mps, operating_temp_min_c, runtime_h, width_mm]
+- key: tow_tractor
+  name: Беспилотный тягач
+  description: Буксирует сцепку тележек (багаж, контейнеры, тележки с грузом) по маршруту.
+  sizing_model: tow_train
+  capability_keys: [towing_capacity_kg, max_speed_mps, operating_temp_min_c, operating_temp_max_c, runtime_h]
+- key: autonomous_truck
+  name: Беспилотный грузовик для территории
+  description: Автономный грузовой автомобиль для перевозок по закрытой территории (склад — склад, перрон).
+  sizing_model: transport_cycle
+  capability_keys: [payload_kg, max_speed_mps, operating_temp_min_c, operating_temp_max_c, range_km]
+- key: goods_to_person
+  name: Доставка товара к человеку (goods-to-person)
+  description: Роботы подвозят стеллаж или контейнер к станции отбора; человек не ходит по складу.
+  sizing_model: goods_to_person
+  capability_keys: [payload_kg, max_speed_mps, station_throughput_lines_h, min_aisle_width_mm]
+- key: asrs_storage
+  name: Автоматизированная система хранения (AS/RS, шаттл, кран-штабелёр)
+  description: Стационарная система высотного хранения с автоматической подачей паллет или контейнеров.
+  sizing_model: station_throughput
+  capability_keys: [payload_kg, max_storage_height_m, throughput_units_h, operating_temp_min_c]
+- key: sorting_robot
+  name: Робот-сортировщик
+  description: Мобильные роботы сортируют посылки или коробки по направлениям.
+  sizing_model: station_throughput
+  capability_keys: [payload_kg, throughput_units_h, max_speed_mps]
+- key: pick_assist
+  name: Системы помощи отбору (Pick-by-Light, Pick-by-Voice)
+  description: Подсказки отборщику светом или голосом; повышают выработку и снижают ошибки.
+  sizing_model: station_throughput
+  capability_keys: [productivity_gain_share, wms_integration]
+- key: piece_picking_arm
+  name: Роботизированный отбор штучного товара (манипулятор)
+  description: Манипулятор с техническим зрением берёт штучный товар из контейнера.
+  sizing_model: station_throughput
+  capability_keys: [payload_kg, throughput_units_h]
+- key: palletizing_arm
+  name: Робот-паллетайзер (укладчик)
+  description: Манипулятор укладывает коробки на паллету на выходе линии.
+  sizing_model: station_throughput
+  capability_keys: [payload_kg, throughput_units_h]
+- key: inventory_robot
+  name: Робот-инвентаризатор
+  description: Объезжает стеллажи и сканирует остатки (RFID, штрихкоды, камеры).
+  sizing_model: area_coverage
+  capability_keys: [coverage_m2_h, max_scan_height_m, runtime_h]
+- key: cleaning_robot
+  name: Робот-уборщик
+  description: Автономная поломоечная или подметальная машина.
+  sizing_model: area_coverage
+  capability_keys: [coverage_m2_h, cleaning_width_mm, runtime_h, charging_time_min, noise_dba]
+- key: delivery_robot
+  name: Робот-доставщик внутри здания
+  description: Малый или средний робот доставки (медикаменты, пробы, питание, бельё), работает с лифтами и дверями.
+  sizing_model: elevator_cycle
+  capability_keys: [payload_kg, min_aisle_width_mm, elevator_integration, noise_dba, runtime_h]
+- key: service_robot
+  name: Сервисный робот (консультант, патруль)
+  description: Робот для общения с посетителями или патрулирования помещений.
+  sizing_model: area_coverage
+  capability_keys: [coverage_m2_h, runtime_h, noise_dba]

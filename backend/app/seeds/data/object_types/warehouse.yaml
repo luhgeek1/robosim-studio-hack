@@ -1,0 +1,965 @@
+key: warehouse
+name: Склад
+description: 'Распределительный или фулфилмент-склад: приёмка паллет, хранение, отбор заказов, сортировка, отгрузка. Считается
+  в полной глубине: подбор, количество роботов, экономика, 2D-имитация и отчёт.'
+industry: Торговля и услуги
+depth: full
+dataset_sheet: Склад
+layout_templates: [warehouse_standard]
+parameter_groups:
+- {key: facility, name: Объект, order: 1}
+- {key: operating_mode, name: Режим работы, order: 2}
+- {key: operations, name: 'Операции: объём и производительность', order: 3}
+- {key: staff, name: Персонал, order: 4}
+- {key: layout, name: Маршруты и планировка, order: 5}
+- {key: storage, name: Хранение и характеристики грузов, order: 6}
+- {key: infrastructure, name: Инфраструктура и ограничения, order: 7}
+- {key: economics, name: Цели и экономика, order: 8}
+parameters:
+- key: area_m2
+  group: facility
+  name: Общая площадь склада
+  type: number
+  unit: м²
+  required: true
+  dataset_row: Общая площадь склада
+  step: null
+  enum_values: null
+  hint: Площадь всего склада по техпаспорту или договору аренды, включая зоны приёмки, хранения и отгрузки.
+  example: '20000'
+  affects: [pallet_transport, inventory_count, floor_cleaning]
+  order: 1
+  default: null
+- key: robotized_area_m2
+  group: facility
+  name: Площадь зоны, где будут работать роботы
+  type: number
+  unit: м²
+  required: true
+  dataset_row: Площадь активной (роботизируемой) зоны
+  step: null
+  enum_values: null
+  hint: 'Часть склада, куда планируется допустить роботов: проезды, зона хранения, отбора. Если не знаете — возьмите примерно
+    половину общей площади.'
+  example: '10000'
+  affects: [pallet_transport, order_picking, high_bay_storage]
+  order: 2
+  default: null
+- key: ceiling_height_m
+  group: facility
+  name: Высота потолков в зоне хранения
+  type: number
+  unit: м
+  required: true
+  dataset_row: Высота потолков в зоне хранения
+  step: null
+  enum_values: null
+  hint: Высота от пола до нижней точки перекрытия или балок. Определяет, подойдёт ли высотное хранение (шаттлы, краны-штабелёры)
+    и до какой высоты поднимать паллету.
+  example: '10'
+  affects: [high_bay_storage, inventory_count]
+  order: 3
+  default: null
+- key: floors
+  group: facility
+  name: Количество этажей и мезонинов
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Количество этажей (мезонинов)
+  step: null
+  enum_values: null
+  hint: Сколько уровней, по которым перемещается груз. Больше одного — нужны лифты или подъёмники, это увеличивает затраты
+    на внедрение.
+  example: '1'
+  affects: [pallet_transport, order_picking, floor_cleaning]
+  order: 4
+  default: null
+- key: main_aisle_width_m
+  group: facility
+  name: Ширина главных проездов
+  type: number
+  unit: м
+  required: true
+  dataset_row: Ширина главных проездов
+  step: null
+  enum_values: null
+  hint: Ширина основных транспортных проездов между зонами склада в самом узком месте. Ограничивает габарит робота и возможность
+    разъехаться двум машинам.
+  example: '3.5'
+  affects: [pallet_transport, high_bay_storage, floor_cleaning]
+  order: 5
+  default: null
+- key: aisle_width_m
+  group: facility
+  name: Ширина рабочих проходов между стеллажами
+  type: number
+  unit: м
+  required: true
+  dataset_row: Ширина рабочих проходов между стеллажами
+  step: null
+  enum_values: null
+  hint: Расстояние между стеллажами в самом узком месте. Проход 1,5–2 м подходит только для узкопроходной техники.
+  example: '2.8'
+  affects: [pallet_transport, order_picking, high_bay_storage, inventory_count, floor_cleaning]
+  order: 6
+  default: null
+- key: floor_type
+  group: facility
+  name: Тип напольного покрытия
+  type: enum
+  unit: null
+  required: false
+  dataset_row: Тип напольного покрытия
+  step: null
+  enum_values:
+  - {value: industrial_concrete, label: Промышленный бетон}
+  - {value: epoxy, label: Эпоксидное покрытие}
+  - {value: asphalt, label: Асфальт}
+  hint: Материал пола в зоне работы роботов. Влияет на выбор колёс и на то, сможет ли робот ездить по полу.
+  example: Промышленный бетон
+  affects: [pallet_transport, high_bay_storage, floor_cleaning]
+  order: 7
+  default: null
+- key: floor_flatness_mm
+  group: facility
+  name: Ровность пола
+  type: number
+  unit: мм/2м
+  required: false
+  dataset_row: Ровность пола (отклонение)
+  step: null
+  enum_values: null
+  hint: 'Максимальный перепад высоты пола на отрезке 2 м (по DIN 15185 или классу FM2). Критично для высотных систем и складских
+    роботов: при большом перепаде нужна шлифовка пола.'
+  example: '3'
+  affects: [pallet_transport, high_bay_storage, inventory_count]
+  order: 8
+  default: null
+- key: min_temperature_c
+  group: facility
+  name: Минимальная температура в зоне работы роботов
+  type: number
+  unit: °C
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Самая низкая температура воздуха в зоне, где будут ездить роботы (зимой, у открытых ворот, в холодильной камере).
+    Многие складские роботы работают только в отапливаемом помещении. Если поле пустое, подбор пометит роботов как «требует
+    проверки».
+  example: '5'
+  affects: [pallet_transport, high_bay_storage, inventory_count, floor_cleaning]
+  order: 9
+  default: null
+- key: shifts_per_day
+  group: operating_mode
+  name: Количество рабочих смен в сутки
+  type: integer
+  unit: смен
+  required: true
+  dataset_row: Количество рабочих смен в сутки
+  step: null
+  enum_values: null
+  hint: Сколько смен в сутки работает склад.
+  example: '2'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 10
+  default: null
+- key: working_days_per_year
+  group: operating_mode
+  name: Рабочих дней в году
+  type: integer
+  unit: дн.
+  required: true
+  dataset_row: Рабочих дней в году
+  step: null
+  enum_values: null
+  hint: Сколько дней в году склад принимает и отгружает товар. Круглогодичный склад — 365.
+  example: '365'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 11
+  default: null
+- key: shift_hours
+  group: operating_mode
+  name: Продолжительность смены
+  type: number
+  unit: ч
+  required: true
+  dataset_row: Продолжительность смены
+  step: null
+  enum_values: null
+  hint: Чистое рабочее время одной смены без обеда и технических пауз. В примечании датасета сказано «2 смены по 12 ч», но
+    в значении 11 ч — используем значение 11 ч, так как оно уже учитывает перерывы.
+  example: '11'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 12
+  default: null
+- key: peak_factor
+  group: operating_mode
+  name: Пиковый коэффициент нагрузки
+  type: number
+  unit: null
+  required: true
+  dataset_row: Пиковый коэффициент нагрузки
+  step: null
+  enum_values: null
+  hint: 'Во сколько раз самый загруженный час больше среднего. Посчитать: максимум паллет или строк за час из WMS, делённый
+    на средний час. Для интернет-торговли — до 2,5. Роботов подбираем под пик.'
+  example: '1.5'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting]
+  order: 13
+  default: null
+- key: pallets_in_per_day
+  group: operations
+  name: Приёмка паллет в сутки
+  type: integer
+  unit: поддон/сут
+  required: true
+  dataset_row: Объём приёмки (поддоны/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько паллет в среднем принимается за сутки (входящий поток). Берётся из WMS или журнала приёмки. Один европоддон
+    — около 33 коробов.
+  example: '1000'
+  affects: [pallet_transport, high_bay_storage]
+  order: 14
+  default: null
+- key: pallets_out_per_day
+  group: operations
+  name: Отгрузка паллет в сутки
+  type: integer
+  unit: поддон/сут
+  required: true
+  dataset_row: Объём отгрузки (поддоны/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько паллет в среднем отгружается за сутки, включая собранные из заказов (консолидация).
+  example: '1000'
+  affects: [pallet_transport, high_bay_storage, parcel_sorting]
+  order: 15
+  default: null
+- key: pallets_internal_per_day
+  group: operations
+  name: Внутрискладские перемещения паллет в сутки
+  type: integer
+  unit: поддон/сут
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: 'Перемещения внутри склада, не связанные с приёмкой и отгрузкой: пополнение зоны отбора, перестановка между ячейками,
+    перевозка в зону упаковки. Возьмите из WMS число задач на перемещение за сутки.'
+  example: '300'
+  affects: [pallet_transport]
+  order: 16
+  default:
+    value: 0
+    status: assumption
+    rationale: В датасете организатора нет внутрискладских перемещений, а ТЗ 3.2.1 требует этот объём. Пока нет замера, считаем
+      0, чтобы не завышать потребность в роботах; поле попадает в список «что уточнить при обследовании» (задачи на перемещение
+      в WMS за сутки).
+- key: order_lines_per_day
+  group: operations
+  name: Строк отбора в сутки
+  type: integer
+  unit: строк/сут
+  required: true
+  dataset_row: Объём отбора (строк/сутки, всего)
+  step: null
+  enum_values: null
+  hint: Строка — одна позиция в заказе, сколько бы штук в ней ни было. Главный показатель для отбора заказов, берётся из WMS.
+  example: '100000'
+  affects: [order_picking]
+  order: 17
+  default: null
+- key: pieces_per_day
+  group: operations
+  name: Штук отбора в сутки
+  type: integer
+  unit: шт./сут
+  required: false
+  dataset_row: Объём отбора (штук/сутки, всего)
+  step: null
+  enum_values: null
+  hint: Сколько штук товара отбирается за сутки. Обычно около 1,5 штуки на строку.
+  example: '150000'
+  affects: [order_picking]
+  order: 18
+  default: null
+- key: piece_pick_pct
+  group: operations
+  name: Доля мелкоштучного отбора
+  type: number
+  unit: '%'
+  required: false
+  dataset_row: Доля мелкоштучного отбора (piece-pick)
+  step: null
+  enum_values: null
+  hint: Какая часть отбора — поштучная (остальное — коробами или паллетами). Поштучный отбор лучше всего роботизируется системами
+    «товар к человеку».
+  example: '30'
+  affects: [order_picking]
+  order: 19
+  default: null
+- key: sku_count
+  group: operations
+  name: Количество активных товарных позиций (SKU)
+  type: integer
+  unit: SKU
+  required: true
+  dataset_row: Количество SKU (активных)
+  step: null
+  enum_values: null
+  hint: Сколько разных артикулов реально хранится и отбирается. Влияет на маршруты и размещение товара.
+  example: '2000'
+  affects: [order_picking, high_bay_storage, inventory_count]
+  order: 20
+  default: null
+- key: a_class_sku_pct
+  group: operations
+  name: Доля быстро оборачиваемых позиций (класс A)
+  type: number
+  unit: '%'
+  required: false
+  dataset_row: Доля SKU с быстрым оборотом (A-класс)
+  step: null
+  enum_values: null
+  hint: Какая часть артикулов даёт основную долю отбора (ABC-анализ). Чем выше концентрация, тем короче маршруты.
+  example: '20'
+  affects: [order_picking]
+  order: 21
+  default: null
+- key: boxes_per_pallet
+  group: operations
+  name: Коробов на одной паллете
+  type: number
+  unit: короб/поддон
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько коробов в среднем на отгружаемой паллете. Нужно, чтобы оценить поток коробов на сортировку.
+  example: '33'
+  affects: [parcel_sorting]
+  order: 22
+  default:
+    value: 33
+    status: assumption
+    rationale: 'Примечание датасета организатора к строке «Объём приёмки (поддоны/сутки)»: «1 европоддон ≈ 33 короба». Отдельной
+      строки в датасете нет, поэтому берём число из примечания.'
+- key: inventory_counts_per_year
+  group: operations
+  name: Полных инвентаризаций в год
+  type: integer
+  unit: раз/год
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько раз в год пересчитываются все ячейки склада.
+  example: '12'
+  affects: [inventory_count]
+  order: 23
+  default:
+    value: 12
+    status: assumption
+    rationale: 'В датасете нет. Методика ФЦ БАС «Инвентаризация складов» (research/fcbas_scenarios, PDF стр. 9): базовый сценарий
+      — 12 полных проверок в год.'
+- key: cleaning_area_m2
+  group: operations
+  name: Площадь уборки
+  type: number
+  unit: м²
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Площадь пола, которую моют или подметают (проезды и проходы, без площади под стеллажами). Если поле пустое, берётся
+    общая площадь склада.
+  example: '12000'
+  affects: [floor_cleaning]
+  order: 24
+  default: null
+- key: cleaning_passes_per_day
+  group: operations
+  name: Уборок в сутки
+  type: number
+  unit: раз/сут
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько раз в сутки убирается вся площадь уборки.
+  example: '2'
+  affects: [floor_cleaning]
+  order: 25
+  default:
+    value: 2
+    status: assumption
+    rationale: 'В датасете нет. Методика ФЦ БАС «Роботы-уборщики» (research/fcbas_scenarios, PDF стр. 5): влажная уборка помещения
+      дважды в сутки.'
+- key: staff_total
+  group: staff
+  name: Всего сотрудников на складе
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: Общая численность персонала склада
+  step: null
+  enum_values: null
+  hint: Все сотрудники склада, включая ИТР, кладовщиков, водителей погрузчиков и уборку.
+  example: '180'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 26
+  default: null
+- key: pickers
+  group: staff
+  name: Отборщики (комплектовщики)
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: 'Из них: отборщики (комплектовщики)'
+  step: null
+  enum_values: null
+  hint: Сколько человек собирают заказы, во всех сменах вместе. Главная группа для экономии при роботизации.
+  example: '100'
+  affects: [order_picking]
+  order: 27
+  default: null
+- key: forklift_operators
+  group: staff
+  name: Операторы погрузчиков
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: 'Из них: операторы погрузчиков'
+  step: null
+  enum_values: null
+  hint: Сколько водителей погрузчиков и штабелёров во всех сменах вместе.
+  example: '25'
+  affects: [pallet_transport, high_bay_storage]
+  order: 28
+  default: null
+- key: packers
+  group: staff
+  name: Операторы упаковочных линий
+  type: integer
+  unit: чел.
+  required: false
+  dataset_row: 'Из них: операторы упаковочных линий'
+  step: null
+  enum_values: null
+  hint: Сколько человек упаковывают и сортируют заказы во всех сменах вместе.
+  example: '20'
+  affects: [parcel_sorting]
+  order: 29
+  default: null
+- key: inventory_staff
+  group: staff
+  name: Сотрудники на инвентаризации
+  type: integer
+  unit: чел.
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько сотрудников (в пересчёте на полную ставку) заняты пересчётом остатков.
+  example: '2'
+  affects: [inventory_count]
+  order: 30
+  default:
+    value: 2
+    status: assumption
+    rationale: 'В датасете нет. Методика ФЦ БАС «Инвентаризация складов» (PDF стр. 9): традиционный метод — 2 человека, 160
+      ч на одну полную инвентаризацию; при 12 проверках в год это 3 840 ч, то есть около 2 полных ставок.'
+- key: cleaners
+  group: staff
+  name: Уборщики склада
+  type: integer
+  unit: чел.
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько уборщиков или операторов поломоечных машин во всех сменах вместе. Если не знаете — оставьте пустым, платформа
+    оценит по площади уборки.
+  example: '4'
+  affects: [floor_cleaning]
+  order: 31
+  default: null
+- key: picker_salary_rub_month
+  group: staff
+  name: Зарплата отборщика
+  type: number
+  unit: руб./мес.
+  required: true
+  dataset_row: Средняя з/п отборщика (gross)
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
+  example: '100000'
+  affects: [order_picking]
+  order: 32
+  default: null
+- key: forklift_salary_rub_month
+  group: staff
+  name: Зарплата оператора погрузчика
+  type: number
+  unit: руб./мес.
+  required: true
+  dataset_row: Средняя з/п оператора погрузчика (gross)
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
+  example: '120000'
+  affects: [pallet_transport, high_bay_storage]
+  order: 33
+  default: null
+- key: packer_salary_rub_month
+  group: staff
+  name: Зарплата оператора упаковки
+  type: number
+  unit: руб./мес.
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
+  example: '100000'
+  affects: [parcel_sorting]
+  order: 34
+  default:
+    value: 100000
+    status: assumption
+    rationale: 'В датасете нет зарплаты упаковщиков. Берём зарплату отборщика из того же листа (100 000 руб./мес.): это складские
+      рабочие сопоставимой квалификации. Уточнить у заказчика.'
+- key: inventory_staff_salary_rub_month
+  group: staff
+  name: Зарплата сотрудника на инвентаризации
+  type: number
+  unit: руб./мес.
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата кладовщика или учётчика (gross) за месяц.
+  example: '100000'
+  affects: [inventory_count]
+  order: 35
+  default:
+    value: 100000
+    status: assumption
+    rationale: 'В датасете нет. Берём зарплату отборщика с листа «Склад» (100 000 руб./мес.). Сверка: в методике ФЦ БАС «Инвентаризация
+      складов» час работы 2 человек стоит 1 700 руб., то есть 850 руб./ч на человека с взносами — около 105–115 тыс. руб./мес.
+      gross при 165–176 ч в месяц, порядок совпадает.'
+- key: cleaner_salary_rub_month
+  group: staff
+  name: Зарплата уборщика
+  type: number
+  unit: руб./мес.
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата уборщика (gross) за месяц.
+  example: '65000'
+  affects: [floor_cleaning]
+  order: 36
+  default:
+    value: 65000
+    status: assumption
+    rationale: 'На листе «Склад» нет. Берём строку «Средняя з/п уборщика терминала (gross)» с листа «Аэропорт» того же датасета
+      организатора (65 000 руб./мес.): та же профессия, тот же регион.'
+- key: payroll_tax_coeff
+  group: staff
+  name: Коэффициент страховых взносов на зарплату
+  type: number
+  unit: null
+  required: true
+  dataset_row: Коэффициент начислений на ФОТ (страховые взносы)
+  step: null
+  enum_values: null
+  hint: 'Во сколько раз затраты работодателя больше начисленной зарплаты: 1,302 = зарплата + 30,2 % взносов (пенсионные 22
+    %, медицинские 5,1 %, социальные 2,9 %, травматизм 0,2 %).'
+  example: '1.302'
+  affects: [order_picking, pallet_transport, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 37
+  default: null
+- key: picker_productivity_lines_per_hour
+  group: staff
+  name: Выработка отборщика
+  type: number
+  unit: строк/ч·чел
+  required: true
+  dataset_row: Средняя выработка отборщика (строк/ч)
+  step: null
+  enum_values: null
+  hint: Сколько строк заказа один отборщик собирает за час сейчас, до роботизации, с учётом ходьбы, поиска и упаковки.
+  example: '150'
+  affects: [order_picking]
+  order: 38
+  default: null
+- key: time_loss_pct
+  group: staff
+  name: Потери рабочего времени
+  type: number
+  unit: '%'
+  required: true
+  dataset_row: Коэффициент потерь рабочего времени (отпуск, болезнь, текучесть)
+  step: null
+  enum_values: null
+  hint: Какую долю времени сотрудник отсутствует или не работает (отпуска, больничные, вакансии). Чтобы закрыть смену, людей
+    нужно на столько процентов больше нормы.
+  example: '25'
+  affects: [order_picking, pallet_transport, high_bay_storage, parcel_sorting]
+  order: 39
+  default: null
+- key: pick_route_length_m
+  group: layout
+  name: Путь отборщика на одну строку
+  type: number
+  unit: м
+  required: true
+  dataset_row: Средняя длина маршрута отборщика на 1 строку
+  step: null
+  enum_values: null
+  hint: Сколько метров в среднем проходит отборщик на одну строку заказа. Зависит от размера склада и размещения товара.
+  example: '25'
+  affects: [order_picking]
+  order: 40
+  default: null
+- key: pallet_route_length_m
+  group: layout
+  name: 'Путь паллеты: приёмка → хранение → отгрузка'
+  type: number
+  unit: м
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Средняя длина пути паллеты от ворот приёмки до места хранения и от места хранения до ворот отгрузки. Если поле пустое,
+    длина считается по сгенерированной планировке склада.
+  example: '150'
+  affects: [pallet_transport, high_bay_storage]
+  order: 41
+  default: null
+- key: dock_doors
+  group: layout
+  name: Количество ворот (доков)
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько ворот для разгрузки и загрузки машин. Нужно для схемы склада; если поле пустое, число ворот берётся из шаблона
+    планировки.
+  example: '12'
+  affects: [pallet_transport]
+  order: 42
+  default: null
+- key: conveyor_length_m
+  group: layout
+  name: Длина конвейера или транспортной системы
+  type: number
+  unit: м
+  required: false
+  dataset_row: Протяжённость конвейерной/транспортной системы
+  step: null
+  enum_values: null
+  hint: Общая длина конвейеров на складе. Если конвейера нет — 0. Конвейер может заменить часть перевозок роботами или мешать
+    их маршрутам.
+  example: '350'
+  affects: [pallet_transport, parcel_sorting]
+  order: 43
+  default: null
+- key: storage_type
+  group: storage
+  name: Тип стеллажной системы
+  type: enum
+  unit: null
+  required: true
+  dataset_row: Тип стеллажной системы
+  step: null
+  enum_values:
+  - {value: selective_pallet_racking, label: Фронтальные паллетные}
+  - {value: pallet_shuttle, label: Паллетный шаттл (Shuttle)}
+  - {value: autostore, label: Кубическое хранение контейнеров (AutoStore)}
+  - {value: miniload, label: Мини-лоад для коробов и контейнеров (Miniload)}
+  - {value: drive_in, label: Набивные (Drive-in)}
+  - {value: push_back, label: Гравитационные с выталкиванием (Push-back)}
+  hint: 'Как хранится товар. От этого зависит, какие роботы подойдут: погрузчики, шаттлы или системы «товар к человеку».'
+  example: Фронтальные паллетные
+  affects: [high_bay_storage, pallet_transport, order_picking, inventory_count]
+  order: 44
+  default: null
+- key: pallet_positions
+  group: storage
+  name: Количество паллетомест
+  type: integer
+  unit: м/п
+  required: true
+  dataset_row: Количество паллетомест
+  step: null
+  enum_values: null
+  hint: 'Ёмкость склада: сколько паллет можно разместить одновременно.'
+  example: '20000'
+  affects: [high_bay_storage, inventory_count]
+  order: 45
+  default: null
+- key: pallet_weight_kg
+  group: storage
+  name: Средняя масса паллеты с грузом
+  type: number
+  unit: кг
+  required: true
+  dataset_row: Средняя масса грузовой единицы (паллет)
+  step: null
+  enum_values: null
+  hint: Средний вес паллеты вместе с товаром. Робот должен поднимать не меньше.
+  example: '800'
+  affects: [pallet_transport, high_bay_storage]
+  order: 46
+  default: null
+- key: item_weight_kg
+  group: storage
+  name: Средняя масса штучного товара
+  type: number
+  unit: кг
+  required: false
+  dataset_row: Средняя масса штучной единицы (SKU)
+  step: null
+  enum_values: null
+  hint: Средний вес одной единицы товара при поштучном отборе. Важно для систем «товар к человеку» и манипуляторов.
+  example: '1.8'
+  affects: [order_picking]
+  order: 47
+  default: null
+- key: pallet_dims_mm
+  group: storage
+  name: Габариты паллеты с грузом (Д×Ш×В)
+  type: dimensions
+  unit: мм
+  required: true
+  dataset_row: Средние габариты паллеты (Д×Ш×В)
+  step: null
+  enum_values: null
+  hint: Длина × ширина × высота паллеты вместе с грузом, в миллиметрах. Европаллета — 1200×800.
+  example: 1200×800×1600
+  affects: [pallet_transport, high_bay_storage]
+  order: 48
+  default: null
+- key: item_dims_mm
+  group: storage
+  name: Габариты штучного товара (Д×Ш×В)
+  type: dimensions
+  unit: мм
+  required: false
+  dataset_row: Средние габариты штучной единицы (Д×Ш×В)
+  step: null
+  enum_values: null
+  hint: Длина × ширина × высота среднего короба или единицы товара, в миллиметрах.
+  example: 300×200×150
+  affects: [order_picking, parcel_sorting]
+  order: 49
+  default: null
+- key: nonstandard_cargo_pct
+  group: storage
+  name: Доля нестандартных и негабаритных грузов
+  type: number
+  unit: '%'
+  required: false
+  dataset_row: Доля негабаритных/нестандартных грузов
+  step: null
+  enum_values: null
+  hint: Какая часть грузов не помещается на стандартную паллету или нестандартна по форме. Такие грузы остаются на ручной
+    обработке.
+  example: '5'
+  affects: [pallet_transport, high_bay_storage, parcel_sorting]
+  order: 50
+  default: null
+- key: power_kw
+  group: infrastructure
+  name: Доступная электрическая мощность
+  type: number
+  unit: кВт
+  required: false
+  dataset_row: Мощность электроснабжения (доступная)
+  step: null
+  enum_values: null
+  hint: Свободная мощность, которую можно отдать под зарядные станции роботов. Узнать у главного энергетика.
+  example: '500'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 51
+  default: null
+- key: has_wms
+  group: infrastructure
+  name: Есть система управления складом (WMS)
+  type: boolean
+  unit: null
+  required: true
+  dataset_row: Наличие WMS
+  step: null
+  enum_values: null
+  hint: Роботы получают задания из WMS, поэтому без неё роботизация невозможна.
+  example: Да
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count]
+  order: 52
+  default: null
+- key: erp_system
+  group: infrastructure
+  name: Учётная система (ERP / 1С)
+  type: string
+  unit: null
+  required: false
+  dataset_row: Наличие ERP/1С
+  step: null
+  enum_values: null
+  hint: Какая учётная система используется. Интеграция — через REST API или COM-коннектор.
+  example: 1С:ERP
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count]
+  order: 53
+  default: null
+- key: capex_budget_mln_rub
+  group: economics
+  name: Бюджет на роботизацию (капитальные затраты)
+  type: number
+  unit: млн руб.
+  required: false
+  dataset_row: Планируемый бюджет на роботизацию (CAPEX)
+  step: null
+  enum_values: null
+  hint: Сколько компания готова вложить в покупку и внедрение. Решения дороже бюджета помечаются; аренда роботов (RaaS) и
+    лизинг — альтернатива.
+  example: '80'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 54
+  default: null
+- key: horizon_years
+  group: economics
+  name: Горизонт расчёта окупаемости
+  type: integer
+  unit: лет
+  required: true
+  dataset_row: Горизонт расчёта окупаемости
+  step: null
+  enum_values: null
+  hint: За сколько лет считаем затраты и эффект. Для складской автоматизации обычно 5 лет.
+  example: '5'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
+  order: 55
+  default: null
+- key: pallet_lead_time_min
+  group: economics
+  name: Норматив обработки паллеты
+  type: number
+  unit: мин
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: 'За сколько минут паллета должна уйти из зоны приёмки на хранение или из хранения в зону отгрузки. Проверить можно
+    по WMS: время от сканирования на приёмке до размещения.'
+  example: '20'
+  affects: [pallet_transport, high_bay_storage]
+  order: 56
+  default:
+    value: 20
+    status: assumption
+    rationale: 'В датасете нет. Допущение команды, перенесено из прототипа v0: паллета должна покинуть зону у ворот быстрее,
+      чем подходит следующая партия, иначе буфер растёт. Поле попадает в список «что уточнить при обследовании»; чувствительность
+      расчёта к нему показывается.'
+- key: sla_target_share
+  group: economics
+  name: Целевая доля операций в срок
+  type: number
+  unit: доля
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Какая доля паллет и строк заказа должна обрабатываться в норматив. 0,95 — 95 %. Имитация подбирает наименьшее число
+    роботов, при котором эта доля достигается.
+  example: '0.95'
+  affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting]
+  order: 57
+  default:
+    value: 0.95
+    status: assumption
+    rationale: 'В датасете и ТЗ нет. Допущение команды: 95 % операций в срок — рабочая цель уровня сервиса, при которой редкие
+      пиковые задержки допустимы; меньшая цель занижает число роботов, 100 % требует флота под худший случай. Пользователь
+      меняет значение в сценарии.'
+labor_groups:
+- {key: pickers, name: Отборщики (комплектовщики), headcount_param: pickers, salary_param: picker_salary_rub_month}
+- {key: forklift_operators, name: Операторы погрузчиков, headcount_param: forklift_operators, salary_param: forklift_salary_rub_month}
+- {key: packers, name: Операторы упаковочных линий, headcount_param: packers, salary_param: packer_salary_rub_month}
+- {key: inventory_staff, name: Сотрудники на инвентаризации, headcount_param: inventory_staff, salary_param: inventory_staff_salary_rub_month}
+- {key: cleaners, name: Уборщики, headcount_param: cleaners, salary_param: cleaner_salary_rub_month}
+processes:
+- key: pallet_transport
+  name: Перемещение паллет (приёмка → хранение → отгрузка)
+  description: Перевозка паллет от ворот приёмки в зону хранения, из хранения к воротам отгрузки и внутри склада. Норматив
+    — «Норматив обработки паллеты» (pallet_lead_time_min) для доли «Целевая доля операций в срок» (sla_target_share).
+  demand_unit: pallet
+  demand_formula: приёмка + отгрузка + внутрискладские перемещения, палл/сут; в пик × пиковый коэффициент
+  demand_params: [pallets_in_per_day, pallets_out_per_day, pallets_internal_per_day, peak_factor]
+  sla: {kind: lead_time, target_value: 20, unit: мин}
+  labor_groups: [forklift_operators]
+  solution_types: [amr_transport, fmr_forklift, tow_tractor]
+  sizing_model: transport_cycle
+- key: order_picking
+  name: Отбор заказов
+  description: 'Сборка заказов по строкам: вместо того чтобы отборщик ходил по складу, роботы подвозят товар к станции или
+    подсказывают, что брать. Цель — доля строк в срок «Целевая доля операций в срок» (sla_target_share).'
+  demand_unit: line
+  demand_formula: строк отбора в сутки; в пик × пиковый коэффициент
+  demand_params: [order_lines_per_day, peak_factor]
+  sla: {kind: on_time_share, target_value: 0.95, unit: доля}
+  labor_groups: [pickers]
+  solution_types: [goods_to_person, pick_assist, piece_picking_arm, amr_transport]
+  sizing_model: goods_to_person
+- key: high_bay_storage
+  name: Высотное хранение и размещение паллет
+  description: Размещение паллет в ячейки и выдача из ячеек автоматической системой хранения или беспилотным штабелёром. Цель
+    — доля операций в срок «Целевая доля операций в срок» (sla_target_share).
+  demand_unit: pallet
+  demand_formula: размещение (= приёмка) + выдача (= отгрузка), палл/сут; ёмкость — паллетомест
+  demand_params: [pallets_in_per_day, pallets_out_per_day, pallet_positions, peak_factor]
+  sla: {kind: on_time_share, target_value: 0.95, unit: доля}
+  labor_groups: [forklift_operators]
+  solution_types: [asrs_storage, fmr_forklift]
+  sizing_model: station_throughput
+- key: parcel_sorting
+  name: Сортировка коробов и посылок по направлениям
+  description: Разбор отгружаемых коробов по направлениям и укладка на паллеты. Поток коробов оценивается из отгрузки паллет
+    и числа коробов на паллете. Цель — «Целевая доля операций в срок» (sla_target_share).
+  demand_unit: item
+  demand_formula: отгрузка паллет в сутки × коробов на паллете, коробов/сут
+  demand_params: [pallets_out_per_day, boxes_per_pallet, peak_factor]
+  sla: {kind: on_time_share, target_value: 0.95, unit: доля}
+  labor_groups: [packers]
+  solution_types: [sorting_robot, palletizing_arm]
+  sizing_model: station_throughput
+- key: inventory_count
+  name: Инвентаризация остатков
+  description: Пересчёт остатков в ячейках роботом-сканером вместо людей с терминалами и подъёмной техникой. Цель — выполнить
+    «Полных инвентаризаций в год» (inventory_counts_per_year).
+  demand_unit: m2
+  demand_formula: площадь склада × полных инвентаризаций в год, м²/год
+  demand_params: [area_m2, inventory_counts_per_year]
+  sla: {kind: coverage, target_value: 12, unit: раз/год}
+  labor_groups: [inventory_staff]
+  solution_types: [inventory_robot]
+  sizing_model: area_coverage
+- key: floor_cleaning
+  name: Уборка пола
+  description: Влажная уборка или подметание проездов и проходов автономной поломоечной машиной. Цель — «Уборок в сутки» (cleaning_passes_per_day)
+    по всей площади уборки.
+  demand_unit: m2
+  demand_formula: площадь уборки (если не задана — общая площадь склада) × уборок в сутки, м²/сут
+  demand_params: [cleaning_area_m2, area_m2, cleaning_passes_per_day]
+  sla: {kind: coverage, target_value: 2, unit: раз/сут}
+  labor_groups: [cleaners]
+  solution_types: [cleaning_robot]
+  sizing_model: area_coverage

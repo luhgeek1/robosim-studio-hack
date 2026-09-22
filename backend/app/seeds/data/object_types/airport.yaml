@@ -1,0 +1,772 @@
+key: airport
+name: Аэропорт
+description: 'Пассажирский аэропорт: багаж на перроне, внутренняя логистика и уборка терминалов, помощь пассажирам, патрулирование.
+  Считается на базовом уровне: параметры, подбор и аналитическая экономика без имитации.'
+industry: Транспорт и логистика
+depth: basic
+dataset_sheet: Аэропорт
+layout_templates: []
+parameter_groups:
+- {key: facility, name: Объект, order: 1}
+- {key: operating_mode, name: Режим работы, order: 2}
+- {key: passengers, name: Пассажирский поток, order: 3}
+- {key: ramp, name: Наземное обслуживание (перрон), order: 4}
+- {key: terminal_logistics, name: Логистика и уборка терминала, order: 5}
+- {key: staff, name: Персонал, order: 6}
+- {key: security, name: Безопасность и ограничения, order: 7}
+- {key: infrastructure, name: Инфраструктура, order: 8}
+- {key: economics, name: Цели и экономика, order: 9}
+parameters:
+- key: terminal_area_m2
+  group: facility
+  name: Площадь терминалов
+  type: number
+  unit: м²
+  required: true
+  dataset_row: Суммарная площадь терминала (ов)
+  step: null
+  enum_values: null
+  hint: Суммарная площадь пассажирских терминалов. От неё зависят маршруты роботов внутри здания и площадь уборки.
+  example: '85000'
+  affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 1
+  default: null
+- key: apron_area_m2
+  group: facility
+  name: Площадь перрона и технических зон
+  type: number
+  unit: м²
+  required: true
+  dataset_row: Площадь перрона и технических зон
+  step: null
+  enum_values: null
+  hint: Площадь открытых зон, где работает наземная техника. На улице роботам мешают погода и требования допуска.
+  example: '100000'
+  affects: [baggage_handling]
+  order: 2
+  default: null
+- key: terminals
+  group: facility
+  name: Количество терминалов
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество терминалов
+  step: null
+  enum_values: null
+  hint: Сколько отдельных терминалов. Несколько терминалов усложняют логистику между ними.
+  example: '2'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning]
+  order: 3
+  default: null
+- key: gates
+  group: facility
+  name: Количество выходов на посадку (гейтов)
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество выходов на посадку (гейтов)
+  step: null
+  enum_values: null
+  hint: Сколько выходов на посадку. Влияет на маршруты доставки и число роботов.
+  example: '20'
+  affects: [baggage_handling, cart_and_waste_logistics, passenger_assistance]
+  order: 4
+  default: null
+- key: runways
+  group: facility
+  name: Количество взлётно-посадочных полос
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество взлётно-посадочных полос
+  step: null
+  enum_values: null
+  hint: Показывает масштаб аэропорта, в расчёте напрямую не участвует.
+  example: '2'
+  affects: []
+  order: 5
+  default: null
+- key: operating_hours_per_day
+  group: operating_mode
+  name: Часов работы в сутки
+  type: number
+  unit: ч/сут
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько часов в сутки аэропорт принимает и отправляет рейсы.
+  example: '24'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 6
+  default:
+    value: 24
+    status: assumption
+    rationale: Режима работы в датасете нет, а ТЗ 3.2.1 его требует. Лист «Аэропорт» построен по данным Шереметьево (лист
+      «Легенда и использование»), который работает круглосуточно; при 280 рейсах в сутки и 32 в пик принимаем круглосуточный
+      режим.
+- key: working_days_per_year
+  group: operating_mode
+  name: Рабочих дней в году
+  type: integer
+  unit: дн.
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько дней в году работает аэропорт.
+  example: '365'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 7
+  default:
+    value: 365
+    status: assumption
+    rationale: Режима работы в датасете нет. Аэропорт работает без выходных; строка «Среднесуточное количество пассажиров»
+      датасета получена делением годового потока на 365.
+- key: pax_per_year_mln
+  group: passengers
+  name: Пассажиропоток в год
+  type: number
+  unit: млн пасс./год
+  required: true
+  dataset_row: Пассажиропоток (млн пассажиров/год)
+  step: null
+  enum_values: null
+  hint: Сколько миллионов пассажиров обслуживает аэропорт за год (прилёт + вылет).
+  example: '8.5'
+  affects: [baggage_handling, passenger_assistance]
+  order: 8
+  default: null
+- key: pax_per_day
+  group: passengers
+  name: Пассажиров в сутки
+  type: integer
+  unit: пасс./сут
+  required: true
+  dataset_row: Среднесуточное количество пассажиров
+  step: null
+  enum_values: null
+  hint: 'Среднее число пассажиров за сутки: годовой поток, делённый на 365.'
+  example: '23300'
+  affects: [baggage_handling, passenger_assistance, terminal_cleaning]
+  order: 9
+  default: null
+- key: pax_peak_hour
+  group: passengers
+  name: Пассажиров в пиковый час
+  type: integer
+  unit: пасс./ч
+  required: true
+  dataset_row: Пиковое количество пассажиров в час (PHF)
+  step: null
+  enum_values: null
+  hint: Сколько пассажиров проходит через аэропорт в самый загруженный час.
+  example: '3200'
+  affects: [passenger_assistance, terminal_cleaning]
+  order: 10
+  default: null
+- key: transfer_pax_pct
+  group: passengers
+  name: Доля трансферных пассажиров
+  type: number
+  unit: '%'
+  required: false
+  dataset_row: Доля трансферных пассажиров
+  step: null
+  enum_values: null
+  hint: Какая часть пассажиров пересаживается с рейса на рейс. Им чаще нужна помощь с навигацией и багажом.
+  example: '15'
+  affects: [passenger_assistance]
+  order: 11
+  default: null
+- key: checkin_desks
+  group: passengers
+  name: Количество стоек регистрации
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество стоек регистрации
+  step: null
+  enum_values: null
+  hint: Сколько стоек регистрации. Зона работы роботов-помощников и багажных тележек.
+  example: '50'
+  affects: [passenger_assistance, baggage_handling]
+  order: 12
+  default: null
+- key: flights_per_day
+  group: ramp
+  name: Рейсов в сутки (взлёт + посадка)
+  type: integer
+  unit: рейсов/сут
+  required: true
+  dataset_row: Среднесуточное количество рейсов (взлёт+посадка)
+  step: null
+  enum_values: null
+  hint: Сколько взлётов и посадок в среднем за сутки.
+  example: '280'
+  affects: [baggage_handling]
+  order: 13
+  default: null
+- key: flights_peak_hour
+  group: ramp
+  name: Рейсов в пиковый час
+  type: integer
+  unit: рейсов/ч
+  required: true
+  dataset_row: Пиковое количество рейсов в час
+  step: null
+  enum_values: null
+  hint: Сколько взлётов и посадок в самый загруженный час. Пиковая нагрузка = рейсов в пиковый час ÷ среднечасовых рейсов.
+  example: '32'
+  affects: [baggage_handling]
+  order: 14
+  default: null
+- key: turnaround_min
+  group: ramp
+  name: Время оборота самолёта
+  type: number
+  unit: мин
+  required: true
+  dataset_row: Среднее время оборота воздушного судна (TAT)
+  step: null
+  enum_values: null
+  hint: Сколько минут самолёт стоит от посадки до взлёта. За это время багаж нужно выгрузить и загрузить.
+  example: '45'
+  affects: [baggage_handling]
+  order: 15
+  default: null
+- key: ground_ops_per_flight
+  group: ramp
+  name: Операций наземного обслуживания на рейс
+  type: integer
+  unit: операций
+  required: false
+  dataset_row: Среднее количество операций наземного обслуживания на 1 рейс
+  step: null
+  enum_values: null
+  hint: 'Сколько разных операций выполняется при обслуживании одного рейса: буксировка, питание, заправка, уборка, разгрузка
+    и погрузка.'
+  example: '18'
+  affects: [baggage_handling]
+  order: 16
+  default: null
+- key: baggage_per_day
+  group: ramp
+  name: Мест багажа в сутки
+  type: integer
+  unit: ед./сут
+  required: true
+  dataset_row: Объём перемещения багажа (единиц/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько единиц багажа перемещается за сутки. В датасете это около 1,5 места на пассажира — выше обычного; проверьте
+    по данным системы обработки багажа.
+  example: '35000'
+  affects: [baggage_handling]
+  order: 17
+  default: null
+- key: baggage_weight_kg
+  group: ramp
+  name: Средняя масса единицы багажа
+  type: number
+  unit: кг
+  required: true
+  dataset_row: Средняя масса единицы багажа
+  step: null
+  enum_values: null
+  hint: Средний вес одного места багажа. Нужен для проверки грузоподъёмности тягачей и тележек.
+  example: '18'
+  affects: [baggage_handling]
+  order: 18
+  default: null
+- key: baggage_dims_mm
+  group: ramp
+  name: Габариты единицы багажа (Д×Ш×В)
+  type: dimensions
+  unit: мм
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: 'Средние длина × ширина × высота места багажа, в миллиметрах. В датасете нет. Для ориентира: по правилам IATA сумма
+    трёх измерений стандартного места — не более 158 см.'
+  example: 750×500×300
+  affects: [baggage_handling]
+  order: 19
+  default: null
+- key: baggage_carousels
+  group: ramp
+  name: Количество лент выдачи багажа
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество стоек выдачи багажа (каруселей)
+  step: null
+  enum_values: null
+  hint: Сколько каруселей выдачи багажа. Конечные точки маршрута при прилёте.
+  example: '8'
+  affects: [baggage_handling]
+  order: 20
+  default: null
+- key: baggage_route_length_m
+  group: ramp
+  name: 'Длина маршрута багажа: сортировка → стоянка самолёта'
+  type: number
+  unit: м
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Средний путь багажной сцепки от зала сортировки до стоянки самолёта в одну сторону. Замерьте по схеме перрона.
+  example: '300'
+  affects: [baggage_handling]
+  order: 21
+  default:
+    value: 300
+    status: assumption
+    rationale: 'Длин маршрутов в датасете нет, а ТЗ 3.2.1 их требует. Оценка: сторона квадрата той же площади, что и перрон
+      из датасета (√100 000 м² ≈ 316 м), округлено до 300 м. Заменить замером по схеме аэропорта.'
+- key: catering_portions_per_day
+  group: ramp
+  name: Порций бортового питания в сутки
+  type: integer
+  unit: порций/сут
+  required: false
+  dataset_row: Объём бортового питания (порций/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько порций питания загружается на борт за сутки. Показывает потенциал автономных тележек бортпитания; отдельный
+    процесс для них пока не считается.
+  example: '22000'
+  affects: []
+  order: 22
+  default: null
+- key: refuelling_flights_per_day
+  group: ramp
+  name: Заправок самолётов в сутки
+  type: integer
+  unit: рейсов/сут
+  required: false
+  dataset_row: Объём заправки воздушных судов (рейсов/сут)
+  step: null
+  enum_values: null
+  hint: Сколько рейсов заправляется за сутки. В датасете значение совпадает с числом взлётов и посадок (280), хотя заправляют
+    обычно только вылетающие рейсы — вероятно, около половины. В расчёте не участвует.
+  example: '280'
+  affects: []
+  order: 23
+  default: null
+- key: internal_cart_trips_per_day
+  group: terminal_logistics
+  name: Рейсов грузовых тележек внутри терминала в сутки
+  type: integer
+  unit: рейсов/сут
+  required: true
+  dataset_row: Суточное количество рейсов внутренних грузовых тележек (внутри терминала)
+  step: null
+  enum_values: null
+  hint: Сколько раз за сутки внутри терминала перевозят грузы, расходные материалы и отходы на тележках.
+  example: '420'
+  affects: [cart_and_waste_logistics]
+  order: 24
+  default: null
+- key: terminal_route_length_m
+  group: terminal_logistics
+  name: Средняя длина маршрута тележки в терминале
+  type: number
+  unit: м
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: 'Средний путь тележки внутри терминала в одну сторону: от склада или мусорной площадки до точки обслуживания.'
+  example: '200'
+  affects: [cart_and_waste_logistics]
+  order: 25
+  default:
+    value: 200
+    status: assumption
+    rationale: 'Длин маршрутов в датасете нет. Оценка: сторона квадрата площадью одного терминала — 85 000 м² на 2 терминала
+      = 42 500 м², √42 500 ≈ 206 м, округлено до 200 м. Заменить замером по поэтажному плану.'
+- key: waste_containers_per_day
+  group: terminal_logistics
+  name: Контейнеров мусора в сутки
+  type: integer
+  unit: конт./сут
+  required: true
+  dataset_row: Суточный объём вывоза мусора (контейнеров)
+  step: null
+  enum_values: null
+  hint: Сколько мусорных контейнеров или тележек вывозится за сутки.
+  example: '85'
+  affects: [cart_and_waste_logistics]
+  order: 26
+  default: null
+- key: cleaning_machines
+  group: terminal_logistics
+  name: Уборочных машин в терминале
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество уборочных машин (терминал)
+  step: null
+  enum_values: null
+  hint: Сколько поломоечных машин сейчас работает в терминале. Их могут заменить автономные машины.
+  example: '8'
+  affects: [terminal_cleaning]
+  order: 27
+  default: null
+- key: cleaning_area_m2
+  group: terminal_logistics
+  name: Площадь для роботизированной уборки
+  type: number
+  unit: м²
+  required: true
+  dataset_row: Площадь, убираемая роботизированной уборкой
+  step: null
+  enum_values: null
+  hint: 'Площадь, которую можно убирать роботами: открытые залы без закрытых и режимных зон. В датасете посчитана формулой:
+    60 % площади терминалов.'
+  example: '51000'
+  affects: [terminal_cleaning]
+  order: 28
+  default: null
+- key: cleaning_passes_per_day
+  group: terminal_logistics
+  name: Уборок в сутки
+  type: number
+  unit: раз/сут
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько раз в сутки убирается вся площадь уборки.
+  example: '2'
+  affects: [terminal_cleaning]
+  order: 29
+  default:
+    value: 2
+    status: assumption
+    rationale: 'В датасете нет. Методика ФЦ БАС «Роботы-уборщики» (research/fcbas_scenarios, PDF стр. 5): влажная уборка помещения
+      дважды в сутки.'
+- key: ground_staff
+  group: staff
+  name: Персонал наземного обслуживания (перрон)
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: Численность персонала наземного обслуживания (рамп)
+  step: null
+  enum_values: null
+  hint: 'Сколько человек работает на перроне: грузчики багажа, водители техники. В датасете не разбито по функциям.'
+  example: '320'
+  affects: [baggage_handling]
+  order: 30
+  default: null
+- key: terminal_staff
+  group: staff
+  name: Персонал внутри терминала (логистика и уборка)
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: Численность персонала внутри терминала (логистика, уборка)
+  step: null
+  enum_values: null
+  hint: Уборщики, курьеры и грузчики терминала. В датасете не разбито по функциям.
+  example: '180'
+  affects: [cart_and_waste_logistics, terminal_cleaning]
+  order: 31
+  default: null
+- key: ground_staff_salary_rub_month
+  group: staff
+  name: Зарплата сотрудника наземного обслуживания
+  type: number
+  unit: руб./мес.
+  required: true
+  dataset_row: Средняя з/п сотрудника наземного обслуживания (gross)
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
+  example: '100000'
+  affects: [baggage_handling]
+  order: 32
+  default: null
+- key: cleaner_salary_rub_month
+  group: staff
+  name: Зарплата уборщика терминала
+  type: number
+  unit: руб./мес.
+  required: true
+  dataset_row: Средняя з/п уборщика терминала (gross)
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц. Используется для всего персонала терминала.
+  example: '65000'
+  affects: [cart_and_waste_logistics, terminal_cleaning]
+  order: 33
+  default: null
+- key: payroll_tax_coeff
+  group: staff
+  name: Коэффициент страховых взносов на зарплату
+  type: number
+  unit: null
+  required: true
+  dataset_row: Коэффициент начислений на ФОТ
+  step: null
+  enum_values: null
+  hint: 'Во сколько раз затраты работодателя больше начисленной зарплаты: 1,302 = зарплата + 30,2 % страховых взносов.'
+  example: '1.302'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning]
+  order: 34
+  default: null
+- key: terminal_staff_turnover_pct
+  group: staff
+  name: Годовая текучесть персонала терминала
+  type: number
+  unit: '%'
+  required: false
+  dataset_row: Годовая текучесть (персонал терминала)
+  step: null
+  enum_values: null
+  hint: Какая доля сотрудников терминала увольняется за год. Высокая текучесть — дополнительный довод за роботов.
+  example: '35'
+  affects: [cart_and_waste_logistics, terminal_cleaning]
+  order: 35
+  default: null
+- key: has_open_air_zones
+  group: security
+  name: Есть открытые зоны (перрон, улица)
+  type: boolean
+  unit: null
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: 'Работают ли роботы на улице: перрон, привокзальная площадь. На открытых зонах нужны защита от погоды и морозостойкость.'
+  example: Да
+  affects: [baggage_handling]
+  order: 36
+  default:
+    value: true
+    status: assumption
+    rationale: Отдельного поля в датасете нет, а ТЗ 3.2.1 требует указать закрытые и открытые зоны. В датасете есть «Площадь
+      перрона и технических зон» 100 000 м² с примечанием «Открытая зона», значит открытые зоны есть.
+- key: security_zones
+  group: security
+  name: Количество режимных зон
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Зонирование (количество режимных зон)
+  step: null
+  enum_values: null
+  hint: 'Сколько зон с разным режимом доступа: чистая и стерильная зоны, перрон, служебные помещения. У каждой свои допуски
+    для техники.'
+  example: '4'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 37
+  default: null
+- key: access_control
+  group: security
+  name: Система контроля доступа (СКУД)
+  type: string
+  unit: null
+  required: true
+  dataset_row: Наличие системы контроля доступа (СКУД)
+  step: null
+  enum_values: null
+  hint: Есть ли СКУД и по какому протоколу. Роботы должны открывать двери и проходить турникеты через СКУД.
+  example: Да (OSDP)
+  affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 38
+  default: null
+- key: airside_certification
+  group: security
+  name: Требования к допуску техники на перрон
+  type: string
+  unit: null
+  required: true
+  dataset_row: Требования по сертификации оборудования для airside
+  step: null
+  enum_values: null
+  hint: Какие сертификаты нужны технике для работы на перроне. В датасете указаны EASA и ИКАО; для российских аэропортов требования
+    EASA на практике не применяются — уточните у службы авиабезопасности.
+  example: EASA/ИКАО
+  affects: [baggage_handling]
+  order: 39
+  default: null
+- key: noise_limit_dba
+  group: security
+  name: Допустимый уровень шума
+  type: number
+  unit: дБА
+  required: false
+  dataset_row: Ограничения по уровню шума (зона)
+  step: null
+  enum_values: null
+  hint: Максимальный уровень шума в зоне работы роботов. Важно для работы ночью.
+  example: '70'
+  affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 40
+  default: null
+- key: apron_min_temperature_c
+  group: security
+  name: Минимальная температура на перроне зимой
+  type: number
+  unit: °C
+  required: true
+  dataset_row: Температура в неотапливаемых зонах (перрон, зима)
+  step: null
+  enum_values: null
+  hint: Самая низкая температура на перроне и в неотапливаемых зонах. Многие роботы не работают ниже −20 °C.
+  example: '-25'
+  affects: [baggage_handling]
+  order: 41
+  default: null
+- key: has_fids_aodb
+  group: infrastructure
+  name: Есть системы FIDS и AODB
+  type: boolean
+  unit: null
+  required: false
+  dataset_row: Наличие FIDS/AODB системы
+  step: null
+  enum_values: null
+  hint: FIDS — табло с информацией о рейсах, AODB — операционная база данных аэропорта. Из них роботы получают расписание.
+  example: Да
+  affects: [baggage_handling, passenger_assistance]
+  order: 42
+  default: null
+- key: has_bms
+  group: infrastructure
+  name: Есть система управления зданием (BMS)
+  type: boolean
+  unit: null
+  required: false
+  dataset_row: Наличие BMS (системы управления зданием)
+  step: null
+  enum_values: null
+  hint: Через BMS роботы вызывают лифты, открывают двери и управляют освещением.
+  example: Да
+  affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 43
+  default: null
+- key: charging_power_kw
+  group: infrastructure
+  name: Доступная мощность для зарядки роботов
+  type: number
+  unit: кВт
+  required: false
+  dataset_row: Доступная мощность для зарядной инфраструктуры
+  step: null
+  enum_values: null
+  hint: Свободная электрическая мощность под зарядные станции.
+  example: '300'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 44
+  default: null
+- key: capex_budget_mln_rub
+  group: economics
+  name: Бюджет на роботизацию (капитальные затраты)
+  type: number
+  unit: млн руб.
+  required: false
+  dataset_row: Планируемый бюджет на роботизацию (CAPEX)
+  step: null
+  enum_values: null
+  hint: Сколько аэропорт готов вложить в покупку и внедрение роботов.
+  example: '120'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 45
+  default: null
+- key: horizon_years
+  group: economics
+  name: Горизонт расчёта окупаемости
+  type: integer
+  unit: лет
+  required: true
+  dataset_row: Горизонт расчёта окупаемости
+  step: null
+  enum_values: null
+  hint: За сколько лет считаем затраты и эффект. Аэропортовые проекты обычно считают дольше складских из-за сложной интеграции.
+  example: '7'
+  affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
+  order: 46
+  default: null
+- key: sla_target_share
+  group: economics
+  name: Целевая доля операций в срок
+  type: number
+  unit: доля
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Какая доля рейсов тележек и заявок должна выполняться в норматив. 0,95 — 95 %.
+  example: '0.95'
+  affects: [cart_and_waste_logistics, passenger_assistance]
+  order: 47
+  default:
+    value: 0.95
+    status: assumption
+    rationale: 'В датасете и ТЗ нет. То же допущение команды, что и для склада: 95 % операций в срок — рабочая цель уровня
+      сервиса, при которой редкие пиковые задержки допустимы. Пользователь меняет значение.'
+labor_groups:
+- {key: ground_staff, name: Персонал наземного обслуживания, headcount_param: ground_staff, salary_param: ground_staff_salary_rub_month}
+- {key: terminal_staff, name: Персонал терминала (логистика и уборка), headcount_param: terminal_staff, salary_param: cleaner_salary_rub_month}
+processes:
+- key: baggage_handling
+  name: Перевозка багажа между терминалом и самолётом
+  description: 'Доставка багажа от зала сортировки к стоянке самолёта и обратно беспилотными тягачами с тележками или багажными
+    AMR. Норматив — «Время оборота самолёта» (turnaround_min): багаж должен успеть за стоянку.'
+  demand_unit: bag
+  demand_formula: мест багажа в сутки; в пик × (рейсов в пиковый час ÷ среднечасовых рейсов)
+  demand_params: [baggage_per_day, flights_per_day, flights_peak_hour, operating_hours_per_day]
+  sla: {kind: lead_time, target_value: 45, unit: мин}
+  labor_groups: [ground_staff]
+  solution_types: [tow_tractor, amr_transport, autonomous_truck, sorting_robot]
+  sizing_model: tow_train
+- key: cart_and_waste_logistics
+  name: Грузовые тележки и вывоз мусора в терминале
+  description: Перевозка грузов, расходных материалов и мусорных контейнеров внутри терминала. Цель — «Целевая доля операций
+    в срок» (sla_target_share).
+  demand_unit: trip
+  demand_formula: рейсов грузовых тележек + контейнеров мусора в сутки
+  demand_params: [internal_cart_trips_per_day, waste_containers_per_day, operating_hours_per_day]
+  sla: {kind: on_time_share, target_value: 0.95, unit: доля}
+  labor_groups: [terminal_staff]
+  solution_types: [amr_transport, tow_tractor, delivery_robot]
+  sizing_model: transport_cycle
+- key: terminal_cleaning
+  name: Уборка терминала
+  description: Влажная уборка залов терминала автономными поломоечными машинами. Цель — «Уборок в сутки» (cleaning_passes_per_day)
+    по всей площади роботизированной уборки.
+  demand_unit: m2
+  demand_formula: площадь для роботизированной уборки × уборок в сутки, м²/сут
+  demand_params: [cleaning_area_m2, cleaning_passes_per_day]
+  sla: {kind: coverage, target_value: 2, unit: раз/сут}
+  labor_groups: [terminal_staff]
+  solution_types: [cleaning_robot]
+  sizing_model: area_coverage
+- key: passenger_assistance
+  name: Помощь и навигация пассажиров
+  description: 'Роботы-консультанты и сопровождающие у стоек регистрации и выходов: подсказывают дорогу, провожают трансферных
+    пассажиров. Эффект — сервис, а не замещение персонала, поэтому группы персонала не заданы.'
+  demand_unit: trip
+  demand_formula: пассажиров в сутки × доля трансферных, сопровождений/сут
+  demand_params: [pax_per_day, transfer_pax_pct, pax_peak_hour]
+  sla: {kind: on_time_share, target_value: 0.95, unit: доля}
+  labor_groups: []
+  solution_types: [service_robot, delivery_robot]
+  sizing_model: station_throughput
+- key: security_patrol
+  name: Патрулирование терминала
+  description: Регулярный объезд залов терминала роботом с камерами. Сотрудников службы безопасности в датасете нет, поэтому
+    эффект по персоналу не считается, а норматив обхода не задан.
+  demand_unit: m2
+  demand_formula: площадь терминалов, м²
+  demand_params: [terminal_area_m2]
+  labor_groups: []
+  solution_types: [service_robot]
+  sizing_model: area_coverage

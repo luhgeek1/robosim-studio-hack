@@ -1,0 +1,1040 @@
+version: v1
+notes: "Первый набор нормативов расчётной модели на 22.09.2026: легенда датасета организатора, методика ФЦ БАС, данные Банка России и НК РФ, сайты вендоров и явные допущения команды. Денежные нормативы указаны с НДС, как цены каталога (Доп. 3.1), кроме случаев, оговорённых в обосновании."
+sources:
+  - key: dataset_legend
+    kind: organizer_dataset
+    title: "Датасеты_хакатон.xlsx, лист «Легенда и использование», раздел «Важные допущения»"
+    url: null
+    retrieved_at: 2026-09-15
+    note: null
+  - key: dataset_warehouse
+    kind: organizer_dataset
+    title: "Датасеты_хакатон.xlsx, лист «Склад»"
+    url: null
+    retrieved_at: 2026-09-15
+    note: "Разделы «Персонал» и «Инфраструктура и ограничения»"
+  - key: dataset_airport
+    kind: organizer_dataset
+    title: "Датасеты_хакатон.xlsx, лист «Аэропорт»"
+    url: null
+    retrieved_at: 2026-09-15
+    note: "Раздел «Инфраструктура», строка «Горизонт расчёта окупаемости»"
+  - key: dataset_hospital
+    kind: organizer_dataset
+    title: "Датасеты_хакатон.xlsx, лист «Медучреждение»"
+    url: null
+    retrieved_at: 2026-09-15
+    note: "Разделы «Режим работы» и «Инфраструктура»"
+  - key: organizer_examples_docx
+    kind: organizer_dataset
+    title: "Примеры_решений_типы_объектов.docx, таблица аэропорта (Cognitive Pilot: 3000 кг на буксире)"
+    url: null
+    retrieved_at: 2026-09-15
+    note: null
+  - key: tz_3_5_7
+    kind: organizer_dataset
+    title: "ТЗ ФЦ БАС, п. 3.5.7 (case/task/01_ТЗ_ФЦ_БАС.md): интервалы окупаемости до 3 лет, 3–5 лет, более 5 лет"
+    url: null
+    retrieved_at: 2026-09-15
+    note: null
+  - key: tz_supplement
+    kind: organizer_dataset
+    title: "Дополнения для участников, п. 2.1–2.4 и 3.1 (case/task/02_Дополнения_для_участников.md)"
+    url: null
+    retrieved_at: 2026-09-15
+    note: "Цены каталога с НДС, без доставки, ПНР и глубокой интеграции"
+  - key: fcbas_warehouse_amr
+    kind: fcbas_scenario
+    title: "ФЦ БАС, «Сценарии применения БРС: Складские мобильные роботы», март 2026, с. 5, 8–9, 13"
+    url: "https://xn--80ab3cjk.xn--p1ai/assets/prez/pdf/%D0%A4%D0%A6_%D0%91%D0%A0%D0%A1_%D0%A1%D0%BA%D0%BB%D0%B0%D0%B4%D1%81%D0%BA%D0%B8%D0%B5_%D0%BC%D0%BE%D0%B1%D0%B8%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5_%D1%80%D0%BE%D0%B1%D0%BE%D1%82%D1%8B.pdf"
+    retrieved_at: 2026-09-22
+    note: "Разбор: research/fcbas_scenarios/README.md, раздел 1"
+  - key: fcbas_cleaning
+    kind: fcbas_scenario
+    title: "ФЦ БАС, «Сценарии применения БРС: Роботы-уборщики», март 2026, с. 5, 6, 8, 9"
+    url: "https://xn--80ab3cjk.xn--p1ai/assets/prez/pdf/%D0%A4%D0%A6_%D0%91%D0%A0%D0%A1_%D1%80%D0%BE%D0%B1%D0%BE%D1%82%D1%8B_%D1%83%D0%B1%D0%BE%D1%80%D1%89%D0%B8%D0%BA%D0%B8.pdf"
+    retrieved_at: 2026-09-22
+    note: "Разбор: research/fcbas_scenarios/README.md, раздел 2"
+  - key: fcbas_methodology
+    kind: fcbas_scenario
+    title: "ФЦ БАС, 16 сценариев БРС, сквозные паттерны методики (лизинг, ТО, операторы, горизонты)"
+    url: "https://xn--80ab3cjk.xn--p1ai/landing/scenarios"
+    retrieved_at: 2026-09-22
+    note: "Разбор: research/fcbas_scenarios/README.md, разделы 5–7 (уборка улиц, роверы, официанты, ПВЗ, робокафе, меры поддержки)"
+  - key: ronavi_tco
+    kind: vendor_site
+    title: "Ronavi Robotics, «Как считать стоимость владения (TCO) логистических роботов»"
+    url: "https://ronavi-robotics.ru/media/tpost/l8s0fty3m1-kak-schitat-stoimost-vladeniya-tco-logis"
+    retrieved_at: 2026-09-19
+    note: "Интеграция и ПО 0,5–2 млн ₽ на проект; зарядная станция 200–400 тыс. ₽; сервис ≈10% стоимости в год (docs/MARKET.md)"
+  - key: ronavi_catalogue
+    kind: vendor_site
+    title: "Ronavi Robotics, карточки H1500, H2000, M: автономность при разряде с 80% до 20%"
+    url: "https://ronavi-robotics.ru/catalogue/h1500"
+    retrieved_at: 2026-09-22
+    note: "research/catalog_specs/warehouse_specs.yaml"
+  - key: ronavi_pricing
+    kind: vendor_site
+    title: "Ronavi Robotics, страница моделей оплаты: аренда от 2 мес., «плата за действие» с контрактом ~30 мес."
+    url: "https://ronavi-robotics.ru/pricing"
+    retrieved_at: 2026-09-22
+    note: "Ставки не опубликованы (research/catalog_specs/README.md)"
+  - key: r2b_rent
+    kind: vendor_site
+    title: "R2B (Роботы для бизнеса), аренда MARK 2 SE от 100 000 ₽/мес"
+    url: "https://r2b.company/rent"
+    retrieved_at: 2026-09-22
+    note: "В аренду включены интегратор, обучение, удалённая поддержка"
+  - key: r2b_mark2se
+    kind: vendor_site
+    title: "R2B, карточка MARK 2 SE: 600–700 м²/ч в реальных условиях"
+    url: "https://r2b.company/mark2se"
+    retrieved_at: 2026-09-22
+    note: null
+  - key: yacuai_unit
+    kind: vendor_site
+    title: "YaCu Robotics, карточка Unit: срок службы более 5 лет"
+    url: "https://yacuai.com/ru/unit/"
+    retrieved_at: 2026-09-22
+    note: "Единственный вендор в выборке, публикующий срок службы (research/catalog_specs/README.md)"
+  - key: automacon_catalog
+    kind: vendor_site
+    title: "Автомакон, каталог AGV/FMR: АК-2000-2, LiFePO4 24 В 225 А·ч, работа 6–8 ч"
+    url: "https://agv.automacon.ru/catalog"
+    retrieved_at: 2026-09-22
+    note: "Пересчёт в кВт·ч (≈5,4) — наш"
+  - key: pick_rate_benchmarks
+    kind: open_source
+    title: "Pallite Group, e-commerce pick rate benchmarks; Locus Robotics, RaaS warehouse ROI"
+    url: "https://pallitegroup.com/en/news/ecommerce-pick-rate-benchmarks/"
+    retrieved_at: 2026-09-19
+    note: "Ручной отбор 60–120 строк/ч, с AMR-ассистентом 250+, «товар к человеку» 300–600 (docs/MARKET.md)"
+  - key: cbr_key_rate
+    kind: regulation
+    title: "Банк России, решение Совета директоров от 11.09.2026: ключевая ставка 14,00%; прогноз инфляции 6–7% в 2026 г., 4% с 2027 г."
+    url: "https://www.cbr.ru/press/keypr/"
+    retrieved_at: 2026-09-22
+    note: "Следующее заседание 23.10.2026"
+  - key: cbr_loan_rates
+    kind: open_source
+    title: "Банк России, «Процентные ставки по кредитным и депозитным операциям», июнь 2026: долгосрочные кредиты нефинансовым организациям 12,9%, МСП 15,1%"
+    url: "https://cbr.ru/statistics/bank_sector/int_rat/0626/"
+    retrieved_at: 2026-09-22
+    note: null
+  - key: vat_425fz
+    kind: regulation
+    title: "Федеральный закон от 28.11.2025 № 425-ФЗ: основная ставка НДС 22% с 01.01.2026"
+    url: "https://its.1c.ru/db/content/newscomm/src/497590.htm"
+    retrieved_at: 2026-09-22
+    note: null
+  - key: profit_tax_176fz
+    kind: regulation
+    title: "НК РФ, ст. 284 п. 1 в ред. Федерального закона от 12.07.2024 № 176-ФЗ: налог на прибыль 25% с 01.01.2025"
+    url: "https://www.garant.ru/1c-wiseadvice/guide/osnovnye-izmeneniya-po-nalogu-na-pribyl-organizatsyi-2025/"
+    retrieved_at: 2026-09-22
+    note: null
+  - key: mosenergosbyt_2026
+    kind: open_source
+    title: "АО «Мосэнергосбыт», прогноз предельных уровней нерегулируемых цен на 2026 г. для потребителей менее 670 кВт в г. Москве, 1 ЦК (по состоянию на 30.01.2026)"
+    url: "https://www.mosenergosbyt.ru/upload/docs/prognoz-cen-300126.xlsx"
+    retrieved_at: 2026-09-22
+    note: "СН-2: 6,62–7,99 ₽/кВт·ч без НДС по месяцам, среднее 7,15; НН: 8,30–9,92; индексация сетевой составляющей с 01.10.2026"
+  - key: minek_wage_forecast
+    kind: open_source
+    title: "Минэкономразвития, сценарные условия: номинальный рост зарплат в 2026 г. 7,9% (пересказ 29.ру, 14.05.2026)"
+    url: "https://29.ru/text/job/2026/05/14/76418800/"
+    retrieved_at: 2026-09-22
+    note: null
+  - key: ria_warehouse_wages
+    kind: open_source
+    title: "РИА Недвижимость по данным IBC: зарплаты на складах Москвы 2026 (комплектовщики 103 тыс. ₽, +6%; водители погрузчиков 119 тыс. ₽, +16%)"
+    url: "https://realty.ria.ru/20260914/sklady-2117035170.html"
+    retrieved_at: 2026-09-19
+    note: "Круглосуточный пост ≈ 4,2 FTE (docs/MARKET.md)"
+  - key: team
+    kind: team_assumption
+    title: "Допущение команды RoboScope"
+    url: null
+    retrieved_at: 2026-09-22
+    note: "Проверяется при обследовании объекта; значение редактируется в сценарии с фиксацией изменения"
+norms:
+  - key: amr_utilization_target
+    name: Целевая загрузка AMR
+    value: 0.8
+    unit: доля
+    category: sizing
+    range: {min: 0.7, max: 0.85}
+    source: dataset_legend
+    rationale: "Легенда датасета: типовой KPI загрузки AMR 70–85%, берём середину. В нашей модели загрузка — доля занятости в доступное время (ожидание, разъезды); зарядка и отказы учитываются отдельно доступностью и в имитации. Это строже легенды, где зарядка входит в загрузку, и даёт консервативное число роботов."
+    affects: [robot_count, capex, opex, payback, npv, roi, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: fleet_reserve_share
+    name: Резерв парка к пиковой потребности
+    value: 0.15
+    unit: доля
+    category: sizing
+    range: {min: 0.15, max: 0.2}
+    source: dataset_legend
+    rationale: "Легенда датасета: робот рассчитывается на пиковую нагрузку с резервом 15–20%. Берём нижнюю границу как стартовую, потому что итоговый резерв подтверждается стресс-тестом имитации (отказ робота, +20% объёма) и может быть поднят до 20%."
+    affects: [robot_count, capex, opex, payback, npv, roi, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: load_handling_time_s
+    name: Время захвата груза
+    value: 30
+    unit: с
+    category: sizing
+    range: {min: 15, max: 45}
+    source: team
+    rationale: "Подъезд к точке, доводка по QR/лидару, подъём платформы или ввод вил под паллету. Вендоры каталога время захвата не публикуют. 30 с — консервативная оценка для паллеты 1200×800; диапазон для чувствительности."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: unload_handling_time_s
+    name: Время отдачи груза
+    value: 30
+    unit: с
+    category: sizing
+    range: {min: 15, max: 45}
+    source: team
+    rationale: "Симметрично захвату: позиционирование в точке выгрузки, опускание платформы, отъезд. Данных вендоров нет, допущение проверяется замером на пилоте."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: fork_lift_cycle_extra_s
+    name: Доп. время FMR на подъём к ярусу стеллажа
+    value: 60
+    unit: с
+    category: sizing
+    range: {min: 30, max: 120}
+    source: team
+    rationale: "Подъём и опускание вил на ярус 4–6 м при скорости подъёма автономных штабелёров порядка 0,2–0,3 м/с плюс точная доводка к ячейке. Вендоры скорость подъёма не публикуют; для высоких ярусов (до 7–11 м у RoboCV) брать верх диапазона."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: effective_speed_factor
+    name: Коэффициент эффективной скорости
+    value: 0.6
+    unit: доля
+    category: sizing
+    range: {min: 0.5, max: 0.75}
+    source: team
+    rationale: "Отношение средней скорости на маршруте к паспортной максимальной: разгон и торможение, повороты, перекрёстки, зоны совместной работы с людьми с ограничением скорости. Уже в кейсе Ronavi H1500 реальная скорость 1,3 м/с против 1,5 м/с по спецификации (research/catalog_specs), а это ещё без поворотов и остановок. Имитация уточняет значение на планировке."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: battery_min_charge_share
+    name: Порог уровня заряда для постановки на зарядку
+    value: 0.2
+    unit: доля
+    category: operations
+    range: {min: 0.15, max: 0.3}
+    source: ronavi_catalogue
+    rationale: "Ronavi указывает автономность при разряде с 80% до 20%, т.е. рабочее окно батареи 20–80%. Порог 20% совпадает с паспортным режимом вендора."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: analytic_availability_default
+    name: Доступность робота по умолчанию (нет данных о работе и зарядке)
+    value: 0.75
+    unit: доля
+    category: sizing
+    range: {min: 0.7, max: 0.92}
+    source: fcbas_warehouse_amr
+    rationale: "Методика ФЦ БАС, каталог AMR (с. 8–9): Ronavi H1500 — 240 мин работы на 80 мин зарядки, т.е. 240 / 320 = 0,75; МОРОС AMR1500 — 1320/120, т.е. 0,92. Если у продукта нет данных о работе и зарядке, берём худшее значение из таблицы заказчика."
+    affects: [robot_count, capex, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: charger_efficiency
+    name: КПД зарядки
+    value: 0.9
+    unit: доля
+    category: opex
+    range: {min: 0.85, max: 0.95}
+    source: team
+    rationale: "Потери в зарядной станции и батарее: энергия из сети = энергия, отданная роботом / КПД. Для LiFePO4 с импульсными зарядными устройствами типично 85–95%; берём середину."
+    affects: [opex, effect, payback, npv]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: transport_default_one_way_distance_m
+    name: Средний пробег робота в одну сторону (нет планировки)
+    value: 200
+    unit: м
+    category: sizing
+    range: {min: 100, max: 400}
+    source: fcbas_warehouse_amr
+    rationale: "Модельный кейс ФЦ БАС (с. 5): средний пробег робота от точки погрузки до точки отгрузки паллеты 200 м. Используется только когда длина маршрута не получена из сгенерированной планировки."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: airport_default_route_length_m
+    name: Средняя длина маршрута в терминале (нет планировки)
+    value: 700
+    unit: м
+    category: sizing
+    range: {min: 300, max: 1500}
+    source: team
+    rationale: "В датасете аэропорта нет длин маршрутов (docs/DATA.md, ловушки). Терминал 85 000 м² в двух корпусах ≈ 42 500 м² на корпус, т.е. размер порядка 300 × 140 м; маршрут «сортировка багажа — стоянка/гейт» с обходом зон — 500–1000 м. Проверяется по реальному генплану."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [airport]
+  - key: g2p_station_lines_per_hour
+    name: Производительность станции «товар к человеку»
+    value: 300
+    unit: строк/ч
+    category: sizing
+    range: {min: 250, max: 600}
+    source: pick_rate_benchmarks
+    rationale: "Бенчмарки отбора: goods-to-person 300–600 строк/ч на станцию против 60–120 при ручном отборе. Берём нижнюю границу (консервативно): в датасете уже 150 строк/ч на отборщика, т.е. выигрыш x2, а не x4."
+    affects: [robot_count, labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: g2p_robot_lines_per_trip
+    name: Строк отбора за один подвоз стеллажа
+    value: 3
+    unit: строк/рейс
+    category: sizing
+    range: {min: 1.5, max: 6}
+    source: team
+    rationale: "Сколько строк отбирают из одного подвезённого стеллажа или контейнера за визит на станцию. Зависит от числа SKU на стеллаже и группировки заказов; при 2000 SKU и доле A-класса 20% (датасет) берём умеренные 3 строки. Главный драйвер числа G2P-роботов, поэтому в торнадо."
+    affects: [robot_count, capex, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: pick_assist_productivity_gain_share
+    name: Прирост выработки отборщика с Pick-by-Light/Voice
+    value: 0.2
+    unit: доля
+    category: sizing
+    range: {min: 0.1, max: 0.67}
+    source: team
+    rationale: "Вендор (Умный сервис) заявляет −40% времени сборки без условий, что соответствует приросту выработки до 1/0,6 − 1 = 67% — это верх диапазона. Базовое 20% — консервативно: подсказки сокращают поиск и ошибки, но не ходьбу (25 м на строку по датасету)."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: manual_cleaning_m2_per_hour
+    name: Выработка уборки вручную
+    value: 200
+    unit: м²/ч
+    category: labor
+    range: {min: 150, max: 1000}
+    source: fcbas_methodology
+    rationale: "Методика ФЦ БАС (уборка улиц): уборщик 200 м²/ч. Верх диапазона — поломоечная машина с оператором, Tennant T300 до 1000 м²/ч (ФЦ БАС, роботы-уборщики, с. 6); выбирается, если база — машинная уборка (например, 8 уборочных машин аэропорта)."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: cleaning_real_to_passport_share
+    name: Реальная производительность робота-уборщика к паспортной
+    value: 0.6
+    unit: доля
+    category: sizing
+    range: {min: 0.43, max: 0.8}
+    source: r2b_mark2se
+    rationale: "R2B: MARK 2 SE в реальных условиях 600–700 м²/ч при паспортных 1000 (docx организатора) или 1500 м²/ч (каталог ФЦ БАС), т.е. 0,43–0,65. Берём 0,6 и применяем ко всем уборщикам, у которых нет данных о реальной производительности."
+    affects: [robot_count, capex, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: cleaning_passes_per_day
+    name: Кратность уборки в сутки
+    value: 2
+    unit: раз/сут
+    category: sizing
+    range: {min: 1, max: 3}
+    source: fcbas_cleaning
+    rationale: "Сценарий ФЦ БАС «Роботы-уборщики»: автономная влажная уборка помещения дважды в сутки."
+    affects: [robot_count, labor_savings]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: labor_release_share_transport
+    name: Доля высвобождаемого персонала — перемещение грузов
+    value: 0.85
+    unit: доля
+    category: labor
+    range: {min: 0.7, max: 0.95}
+    source: team
+    rationale: "Не весь ФОТ процесса уходит: 5% негабарита остаётся ручным (датасет склада), ещё ~10% — исключения, повреждённые паллеты, подмена при отказах. Методика ФЦ БАС (1 робот ≈ 3 человека в 3 смены) задаёт замещение на линию, а эта доля ограничивает его на весь процесс."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: labor_release_share_picking
+    name: Доля высвобождаемого персонала — отбор
+    value: 0.6
+    unit: доля
+    category: labor
+    range: {min: 0.4, max: 0.8}
+    source: team
+    rationale: "Верхняя граница высвобождения отборщиков: при G2P люди остаются на станциях, упаковке, отборе негабарита и нестандартных заказов. Расчётное высвобождение (из выработки станций) обрезается этой долей. Кейс Восток-Сервис (персонал −2…3 раза, вендор) соответствует 0,5–0,67."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: labor_release_share_cleaning
+    name: Доля высвобождаемого персонала — уборка
+    value: 0.8
+    unit: доля
+    category: labor
+    range: {min: 0.6, max: 0.9}
+    source: fcbas_cleaning
+    rationale: "ФЦ БАС (роботы-уборщики, с. 9): ФОТ 1800 тыс. ₽/год на машину с человеком против 282 тыс. ₽/год при роботе, т.е. высвобождается 1 − 282/1800 = 0,84. Округляем вниз до 0,8: остаются подготовка зоны, пополнение расходников, трудные загрязнения."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: elevator_cycle_time_s
+    name: Время лифтового цикла робота
+    value: 120
+    unit: с
+    category: sizing
+    range: {min: 60, max: 240}
+    source: team
+    rationale: "Ожидание кабины при общем пользовании, вход, проезд в среднем на 4 этажа из 9, выход. Данных в датасете нет, а лифты — главное узкое место больницы (docs/DATA.md). Замеряется при обследовании."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: elevator_robot_capacity_share
+    name: Доля пропускной способности лифтов, доступная роботам
+    value: 0.25
+    unit: доля
+    category: sizing
+    range: {min: 0.1, max: 0.5}
+    source: team
+    rationale: "Лифты больницы общие для пациентов, каталок и персонала; в пики 07–10 и 15–17 (датасет) роботам доступна малая часть. Ограничивает число межэтажных рейсов в час на лифт."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: hospital_peak_factor
+    name: Пиковый коэффициент логистики больницы
+    value: 2.0
+    unit: коэфф.
+    category: sizing
+    range: {min: 1.5, max: 2.5}
+    source: team
+    rationale: "Датасет даёт пиковые окна 07–10 и 15–17 (5 ч), но не коэффициент. Допускаем, что на эти 5 ч приходится 40% суточной логистики: (0,4 / 5) / (1 / 24) = 1,92, округляем до 2,0. Диапазон совпадает со складским 1,2–2,5."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: airport_operating_hours_per_day
+    name: Часы работы аэропорта в сутки
+    value: 24
+    unit: ч/сут
+    category: operations
+    range: {min: 18, max: 24}
+    source: team
+    rationale: "В датасете аэропорта нет режима работы (docs/DATA.md). Аэропорт на 8,5 млн пасс./год и 280 рейсов/сут работает круглосуточно; нижняя граница — для аэропортов с ночным ограничением полётов."
+    affects: [robot_count, labor_savings, opex]
+    editable_by_user: true
+    object_types: [airport]
+  - key: tow_train_carts_per_trip
+    name: Тележек в сцепке тягача за рейс
+    value: 3
+    unit: шт
+    category: sizing
+    range: {min: 2, max: 4}
+    source: organizer_examples_docx
+    rationale: "Cognitive Pilot тянет 3000 кг (docx организатора). Багажная тележка ≈ 40 мест × 18 кг (датасет) + собственная масса ~300 кг ≈ 1 т, т.е. 3 тележки на сцепку. Пересчёт наш."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [airport]
+  - key: aisle_safety_clearance_mm
+    name: Суммарный зазор безопасности в проходе
+    value: 500
+    unit: мм
+    category: operations
+    range: {min: 300, max: 1000}
+    source: team
+    rationale: "Жёсткий фильтр подбора: ширина робота с грузом + зазор ≤ ширина прохода. 250 мм с каждой стороны на погрешность траектории и защитные поля сканеров. Датасет больницы для коридора требует минимум 1,8 м с разминовкой с каталками."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: payroll_tax_share
+    name: Начисления на ФОТ (страховые взносы)
+    value: 0.302
+    unit: доля
+    category: labor
+    range: null
+    source: dataset_legend
+    rationale: "Легенда датасета: 30,2% (ОПФ 22% + ОМС 5,1% + ОСС 2,9% + НСиПЗ 0,2%, лист «Склад»). Полные затраты работодателя = зарплата × 1,302. Зарплаты датасета (55–120 тыс. ₽/мес) ниже предельной базы, поэтому пониженный тариф сверх базы не применяется."
+    affects: [labor_savings, effect, payback, npv, irr, roi]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: labor_time_loss_share
+    name: Потери рабочего времени (отпуск, болезнь, текучесть)
+    value: 0.25
+    unit: доля
+    category: labor
+    range: {min: 0.15, max: 0.35}
+    source: dataset_warehouse
+    rationale: "Датасет склада: +25% к нормативной численности. Для аэропорта и больницы берём то же значение как допущение, поскольку в их листах коэффициента нет."
+    affects: [labor_savings, effect]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: fte_per_24x7_post
+    name: Штатных единиц на круглосуточный пост
+    value: 4.2
+    unit: FTE на пост
+    category: labor
+    range: {min: 4, max: 4.8}
+    source: ria_warehouse_wages
+    rationale: "8760 ч в году / ~2000 ч годового фонда времени одного сотрудника ≈ 4,2 FTE на пост 24/7. Используется, когда численность задана постами (аэропорт, больница 24/7)."
+    affects: [labor_savings, opex]
+    editable_by_user: true
+    object_types: [airport, hospital]
+  - key: wage_indexation_rate
+    name: Ежегодная индексация зарплат
+    value: 0.08
+    unit: доля/год
+    category: labor
+    range: {min: 0.05, max: 0.15}
+    source: minek_wage_forecast
+    rationale: "Минэкономразвития: номинальный рост зарплат в 2026 г. 7,9%. Факт выше (Росстат: +14,4% в марте, +15,1% за I кв. 2026), складской рынок Москвы +6…+16% (IBC). Для базы берём прогноз 8%: рост ФОТ увеличивает экономию, поэтому высокая индексация была бы неконсервативной."
+    affects: [labor_savings, effect, npv, irr, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: robot_operator_ftes_per_10_robots
+    name: Персонал эксплуатации на 10 роботов
+    value: 1.0
+    unit: FTE на 10 роботов
+    category: labor
+    range: {min: 0.2, max: 3.3}
+    source: fcbas_methodology
+    rationale: "Методика ФЦ БАС: 1 оператор на 10 роверов (последняя миля); диапазон — от 1 специалиста на 50 уборщиков (0,2) до 1 оператора на 3 уличных робота (3,3). Диспетчер и техник для складского парка AMR ближе к варианту с роверами."
+    affects: [opex, effect, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: robot_operator_min_ftes_per_site
+    name: Минимум персонала эксплуатации на объект
+    value: 2
+    unit: FTE
+    category: labor
+    range: {min: 1, max: 4}
+    source: team
+    rationale: "Даже для малого парка нужен ответственный в каждой смене (склад — 2 смены по датасету) для сброса ошибок, извлечения застрявшего груза и связи с сервисом. Применяется как нижняя граница к пропорциональному нормативу."
+    affects: [opex, effect, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: robot_operator_salary_rub_month
+    name: Зарплата оператора/техника роботов (gross)
+    value: 150000
+    unit: ₽/мес
+    category: labor
+    range: {min: 100000, max: 180000}
+    source: fcbas_methodology
+    rationale: "Методика ФЦ БАС (уборка улиц): оператор флота роботов с ЗП 150 тыс. ₽/мес. Это выше, чем у оператора погрузчика по датасету (120 тыс.), — консервативно, так как это доп. OPEX роботизации. Начисления 30,2% добавляются сверху."
+    affects: [opex, effect, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: vat_rate
+    name: Ставка НДС
+    value: 0.22
+    unit: доля
+    category: capex
+    range: null
+    source: vat_425fz
+    rationale: "Основная ставка НДС 22% с 01.01.2026 (425-ФЗ). Цены каталога с НДС (Доп. 3.1), поэтому модель считает всё с НДС; ставка нужна для пересчёта нормативов без НДС (электроэнергия) и для показа сумм без НДС в отчёте."
+    affects: [capex, opex, tco]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: delivery_share_of_hardware
+    name: Доставка оборудования, доля от стоимости
+    value: 0.02
+    unit: доля
+    category: capex
+    range: {min: 0.01, max: 0.05}
+    source: tz_supplement
+    rationale: "Доп. 3.1: цены каталога не включают доставку. Размер доли — допущение команды: все производители российские, доставка автотранспортом до Москвы — 1–5% стоимости."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: rms_license_rub_per_robot
+    name: Лицензия системы управления парком (RMS), на робота
+    value: 150000
+    unit: ₽ на робота
+    category: capex
+    range: {min: 50000, max: 300000}
+    source: team
+    rationale: "Разовая лицензия fleet manager/RCS. Вендоры не публикуют цены отдельно от проекта; Ronavi оценивает интеграцию и ПО в 0,5–2 млн ₽ на проект. Для парка 10–20 роботов 150 тыс. ₽ на робота вместе с интеграцией дают верх этого диапазона."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: wms_integration_rub
+    name: Интеграция с WMS/ERP/МИС/AODB
+    value: 2000000
+    unit: ₽
+    category: capex
+    range: {min: 500000, max: 5000000}
+    source: ronavi_tco
+    rationale: "Ronavi: интеграция и ПО 0,5–2 млн ₽ на проект; берём верхнюю границу (консервативно), так как в датасете склада одновременно WMS и 1С:ERP. Верх диапазона — глубокая интеграция; в кейсе X5 она оценивается примерно в 40% стоимости платформы (оценка, docs/MARKET.md)."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: elevator_integration_rub_per_elevator
+    name: Интеграция робота с лифтом, на лифт
+    value: 800000
+    unit: ₽ на лифт
+    category: capex
+    range: {min: 400000, max: 1500000}
+    source: team
+    rationale: "IoT-модуль вызова кабины и выбора этажа плюс работы с лифтовой организацией (ФЦ БАС, доставка в гостиничных комплексах, называет IoT-модуль лифтов обязательным). BMS лифтов в больнице «частично» (датасет), поэтому доработка нужна на каждом используемом лифте."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: commissioning_share_of_hardware
+    name: Пусконаладка (ПНР), доля от стоимости оборудования
+    value: 0.1
+    unit: доля
+    category: capex
+    range: {min: 0.05, max: 0.15}
+    source: team
+    rationale: "Доп. 3.1: ПНР не входят в цену каталога. Картирование, настройка маршрутов и зон, приёмочные испытания. 10% — середина диапазона; в CAPEX первого года ФЦ БАС (≈3,2 млн ₽ на линию при средней цене AMR ≈2,97 млн) на станцию и внедрение приходится ≈8%."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: training_rub
+    name: Обучение персонала, на проект
+    value: 300000
+    unit: ₽
+    category: capex
+    range: {min: 100000, max: 600000}
+    source: team
+    rationale: "Легенда датасета включает обучение в CAPEX, но без суммы. Обучение операторов, техников и смежного персонала (2–3 группы, 2–3 дня) у вендора или интегратора."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: infrastructure_rub_per_m2
+    name: Подготовка площадки (разметка, QR, ограждения), на м² активной зоны
+    value: 300
+    unit: ₽/м²
+    category: capex
+    range: {min: 100, max: 800}
+    source: team
+    rationale: "QR-разметка пола (стандартный комплект по ФЦ БАС для складских AMR), разметка зон безопасности, локальный ремонт стыков пола. Для SLAM-роботов — нижняя граница. На активную зону склада 10 000 м² это ≈3 млн ₽."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: wifi_upgrade_rub
+    name: Модернизация Wi-Fi под роботов, на проект
+    value: 1500000
+    unit: ₽
+    category: capex
+    range: {min: 500000, max: 3000000}
+    source: team
+    rationale: "Радиообследование и доустановка промышленных точек доступа с бесшовным роумингом (порядка 10 точек по 100–150 тыс. ₽ с монтажом). ФЦ БАС отмечает бесшовный Wi-Fi как требование к объекту для внутренней доставки."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: charging_station_rub
+    name: Зарядная станция
+    value: 300000
+    unit: ₽ за станцию
+    category: capex
+    range: {min: 200000, max: 400000}
+    source: ronavi_tco
+    rationale: "Ronavi: зарядная станция 200–400 тыс. ₽; берём середину."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: robots_per_charging_station
+    name: Роботов на одну зарядную станцию
+    value: 3
+    unit: шт на станцию
+    category: capex
+    range: {min: 1, max: 6}
+    source: team
+    rationale: "Для H1500 доля зарядки 80 / (240 + 80) = 0,25 (каталог ФЦ БАС), т.е. в среднем 1 из 4 роботов на зарядке; с запасом на совпадение зарядок берём 3. Нижняя граница 1 — стандартный комплект ФЦ БАС «робот + станция»; имитация проверяет очередь на зарядку."
+    affects: [capex, robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: capex_contingency_share
+    name: Резерв CAPEX на непредвиденные расходы
+    value: 0.1
+    unit: доля
+    category: capex
+    range: {min: 0.05, max: 0.15}
+    source: dataset_legend
+    rationale: "Легенда датасета: CAPEX = оборудование + ПО + интеграция + ПНР + обучение + резерв 10%."
+    affects: [capex, payback, npv, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: service_share_of_hardware_per_year
+    name: Сервисное обслуживание, доля от стоимости оборудования в год
+    value: 0.1
+    unit: доля/год
+    category: opex
+    range: {min: 0.08, max: 0.15}
+    source: ronavi_tco
+    rationale: "Ronavi: сервис ≈10% стоимости в год. Совпадает с методикой ФЦ БАС (ремонт и ТО 10% от цены в год для официантов и уборки улиц; 15% для роверов — верх диапазона)."
+    affects: [opex, effect, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: software_subscription_rub_per_robot_year
+    name: Подписка на ПО и удалённый мониторинг, на робота в год
+    value: 60000
+    unit: ₽/год на робота
+    category: opex
+    range: {min: 0, max: 150000}
+    source: team
+    rationale: "Обновления RMS, облачная телеметрия, техподдержка вендора (≈5 тыс. ₽/мес на робота). Легенда датасета включает лицензии в OPEX; публичных цен нет. Нижняя граница 0 — если подписка входит в сервисный контракт."
+    affects: [opex, effect, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: electricity_tariff_rub_kwh
+    name: Тариф на электроэнергию (с НДС)
+    value: 8.73
+    unit: ₽/кВт·ч
+    category: opex
+    range: {min: 7.25, max: 12.1}
+    source: mosenergosbyt_2026
+    rationale: "Мосэнергосбыт, 2026, потребители менее 670 кВт, 1-я ценовая категория, СН-2: среднее за 12 месяцев 7,15 ₽/кВт·ч без НДС × 1,22 = 8,73. Верх — НН в ноябре (9,92 × 1,22 = 12,1); низ — 7,25 из методики ФЦ БАС (уборка улиц)."
+    affects: [opex, effect, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: robot_avg_power_kw
+    name: Средняя потребляемая мощность робота в работе
+    value: 0.7
+    unit: кВт
+    category: opex
+    range: {min: 0.3, max: 1.2}
+    source: automacon_catalog
+    rationale: "Автомакон АК-2000-2: батарея ≈5,4 кВт·ч на 6–8 ч работы, т.е. 0,68–0,9 кВт при полном разряде (пересчёт наш). Берём 0,7 кВт; для лёгких роботов и уборщиков — нижняя часть диапазона. Энергия из сети = мощность × часы работы / КПД зарядки."
+    affects: [opex, effect, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: battery_replacement_interval_years
+    name: Интервал замены АКБ
+    value: 4
+    unit: лет
+    category: opex
+    range: {min: 3, max: 5}
+    source: dataset_legend
+    rationale: "Легенда датасета: замена АКБ примерно раз в 3–5 лет; берём середину. При 2 сменах и более работа идёт интенсивнее, поэтому для чувствительности нижняя граница 3 года."
+    affects: [opex, tco, npv]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: battery_cost_share_of_hardware
+    name: Стоимость АКБ, доля от цены робота
+    value: 0.1
+    unit: доля
+    category: opex
+    range: {min: 0.07, max: 0.15}
+    source: team
+    rationale: "Тяговая LiFePO4 на 2,4–5,4 кВт·ч (данные вендоров в research/catalog_specs) при цене робота 1,5–4,3 млн ₽ — порядка 7–10% цены; с заменой и утилизацией округляем до 10%."
+    affects: [opex, tco, npv]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: spare_parts_share_of_hardware_per_year
+    name: Расходники и запчасти вне сервисного контракта, доля в год
+    value: 0.02
+    unit: доля/год
+    category: opex
+    range: {min: 0.01, max: 0.04}
+    source: team
+    rationale: "Колёса, бамперы, щётки и сквиджи уборщиков — R2B прямо исключает расходники из гарантии. Отдельная статья сверх сервиса 10%, чтобы не занизить OPEX."
+    affects: [opex, effect, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: connectivity_rub_per_year
+    name: Связь и удалённый доступ, на объект в год
+    value: 120000
+    unit: ₽/год
+    category: opex
+    range: {min: 50000, max: 300000}
+    source: team
+    rationale: "Выделенный канал и VPN для удалённой поддержки вендора, резервный LTE для диспетчерской. ТЗ 3.5.2 называет связь статьёй OPEX; публичных бенчмарков нет."
+    affects: [opex, effect, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: opex_indexation_rate
+    name: Ежегодная индексация OPEX (кроме ФОТ)
+    value: 0.05
+    unit: доля/год
+    category: finance
+    range: {min: 0.04, max: 0.07}
+    source: cbr_key_rate
+    rationale: "Банк России (11.09.2026): инфляция 6–7% в 2026 г., 4% с 2027 г. На горизонте 5–7 лет среднее ≈4,5%, округляем вверх до 5%. Применяется к сервису, электроэнергии, ПО и RaaS."
+    affects: [opex, npv, irr, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: key_rate
+    name: Ключевая ставка ЦБ
+    value: 0.14
+    unit: доля/год
+    category: finance
+    range: null
+    source: cbr_key_rate
+    rationale: "Решение Совета директоров Банка России от 11.09.2026: 14,00% годовых. Опорная ставка для дисконтирования и займов; следующее решение — 23.10.2026."
+    affects: [npv, irr]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: discount_rate
+    name: Ставка дисконтирования
+    value: 0.18
+    unit: доля/год
+    category: finance
+    range: {min: 0.14, max: 0.25}
+    source: team
+    rationale: "Ключевая ставка 14% + премия 4 п.п. за риск внедрения новой технологии; сопоставимо с долгосрочными кредитами МСП 15,1% (ЦБ, июнь 2026) и типовой ставкой лизинга 18% в методике ФЦ БАС. Номинальная ставка, потому что потоки индексируются."
+    affects: [npv, payback]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: profit_tax_rate
+    name: Ставка налога на прибыль
+    value: 0.25
+    unit: доля
+    category: finance
+    range: null
+    source: profit_tax_176fz
+    rationale: "Ст. 284 НК РФ в ред. 176-ФЗ: 25% с 2025 г. Нужна только для посленалогового NPV и налогового эффекта амортизации (Доп. 2.2); базовые метрики — до налога."
+    affects: [npv, irr]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: robot_service_life_years
+    name: Срок службы робота
+    value: 5
+    unit: лет
+    category: finance
+    range: {min: 5, max: 8}
+    source: yacuai_unit
+    rationale: "Единственный вендор, публикующий срок службы, — YaCu Robotics: «более 5 лет». Берём 5 лет (консервативно): на горизонте 7 лет (аэропорт, больница) модель закладывает замену парка; этот же срок — период линейной амортизации (Доп. 2.2)."
+    affects: [capex, tco, npv, irr, roi]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: raas_fee_rub_per_robot_month
+    name: Плата RaaS за робота в месяц
+    value: 100000
+    unit: ₽/мес на робота
+    category: finance
+    range: {min: 80000, max: 150000}
+    source: r2b_rent
+    rationale: "R2B: аренда MARK 2 SE от 100 000 ₽/мес (интегратор, обучение, поддержка включены). ComNews: RaaS в РФ от 100 тыс. ₽/мес, Mark 2 SE от 80 тыс.; пилот Ronavi 2 робота × 2 мес = 400 тыс. ₽, т.е. те же 100 тыс. на робота в месяц. Верх 150 тыс. — для паллетных AMR и FMR дороже уборщика."
+    affects: [opex, effect, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: raas_fee_share_of_hardware_month
+    name: Плата RaaS в месяц, доля от цены робота
+    value: 0.053
+    unit: доля/мес
+    category: finance
+    range: {min: 0.04, max: 0.07}
+    source: r2b_rent
+    rationale: "Масштабирование бенчмарка на роботы другой цены: 100 000 ₽/мес / 1,9 млн ₽ (MARK 2 SE в каталоге организатора) = 5,3% в месяц. Применяется, если для продукта нет своей ставки RaaS; плата — наибольшая из этой доли и фиксированного норматива."
+    affects: [opex, effect, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: raas_setup_fee_share
+    name: Разовый платёж за подключение RaaS, доля от цены оборудования
+    value: 0.1
+    unit: доля
+    category: finance
+    range: {min: 0, max: 0.2}
+    source: team
+    rationale: "Картирование, интеграция с WMS, разметка при RaaS обычно оплачиваются отдельно или зашиваются в минимальный срок контракта. 10% — аналог ПНР при покупке; 0 — если вендор включает подключение в абонемент (как R2B)."
+    affects: [capex, payback, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: raas_min_contract_months
+    name: Минимальный срок контракта RaaS
+    value: 30
+    unit: мес
+    category: finance
+    range: {min: 2, max: 36}
+    source: ronavi_pricing
+    rationale: "Ronavi: «плата за действие» с минимальным контрактом около 30 месяцев (зарядка, ТО, поддержка включены); аренда — от 2 месяцев. Нужен для сравнения RaaS и покупки на горизонте и для условий выкупа."
+    affects: [opex, npv, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: lease_rate
+    name: Ставка лизинга (удорожание в год)
+    value: 0.18
+    unit: доля/год
+    category: finance
+    range: {min: 0.05, max: 0.21}
+    source: fcbas_methodology
+    rationale: "Методика ФЦ БАС: типовой лизинг 18% на 3 года (официанты, ПВЗ, роверы, робокафе); сценарии чувствительности 21% / 16% / 5% (уборщики), где 5% — льготная ставка займов ФРП. Аннуитет по номинальной ставке."
+    affects: [opex, payback, npv, irr, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: lease_term_months
+    name: Срок лизинга
+    value: 36
+    unit: мес
+    category: finance
+    range: {min: 24, max: 60}
+    source: fcbas_methodology
+    rationale: "Методика ФЦ БАС: аннуитет на 36 мес. в большинстве сценариев; 5 лет — для уборки улиц (верх диапазона)."
+    affects: [opex, payback, npv, irr]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: lease_down_payment_share
+    name: Аванс по лизингу
+    value: 0.2
+    unit: доля
+    category: finance
+    range: {min: 0, max: 0.3}
+    source: team
+    rationale: "В методике ФЦ БАС аванс не показан (лизинг от полной цены). 20% — типичный аванс для нового оборудования у небольшого лизингополучателя при высокой ключевой ставке; 0 воспроизводит расчёт ФЦ БАС. Рыночная ставка аванса по источнику не подтверждена."
+    affects: [capex, payback, npv, irr]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: loan_rate
+    name: Ставка кредита
+    value: 0.151
+    unit: доля/год
+    category: finance
+    range: {min: 0.05, max: 0.21}
+    source: cbr_loan_rates
+    rationale: "Банк России, июнь 2026: средневзвешенная ставка по долгосрочным кредитам МСП 15,1% (по всем нефинансовым организациям 12,9%). Берём ставку МСП как консервативную. Низ 5% — займы ФРП, верх 21% — рыночный кредит в сценарии ФЦ БАС."
+    affects: [opex, payback, npv, irr]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: loan_term_months
+    name: Срок кредита
+    value: 36
+    unit: мес
+    category: finance
+    range: {min: 12, max: 60}
+    source: fcbas_cleaning
+    rationale: "ФЦ БАС (роботы-уборщики, с. 9): кредит аннуитетом на 36 мес.; займы ФРП — до 5 лет (верх диапазона)."
+    affects: [opex, payback, npv, irr]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: horizon_years_warehouse
+    name: Горизонт расчёта — склад
+    value: 5
+    unit: лет
+    category: finance
+    range: {min: 3, max: 10}
+    source: dataset_warehouse
+    rationale: "Датасет склада: горизонт расчёта окупаемости 5 лет (3–10), типовой горизонт ТЭО складской автоматизации; ТЗ 3.5.2 требует TCO минимум на 5 лет."
+    affects: [npv, irr, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: horizon_years_airport
+    name: Горизонт расчёта — аэропорт
+    value: 7
+    unit: лет
+    category: finance
+    range: {min: 5, max: 15}
+    source: dataset_airport
+    rationale: "Датасет аэропорта: горизонт 7 лет (5–15) из-за сложности интеграции."
+    affects: [npv, irr, roi, tco]
+    editable_by_user: true
+    object_types: [airport]
+  - key: horizon_years_hospital
+    name: Горизонт расчёта — медучреждение
+    value: 7
+    unit: лет
+    category: finance
+    range: {min: 5, max: 15}
+    source: dataset_hospital
+    rationale: "Датасет медучреждения: горизонт 7 лет (5–15)."
+    affects: [npv, irr, roi, tco]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: verdict_payback_attractive_years
+    name: Порог окупаемости «привлекательно»
+    value: 3
+    unit: лет
+    category: risk
+    range: {min: 2, max: 4}
+    source: tz_3_5_7
+    rationale: "ТЗ 3.5.7: настраиваемые интервалы, например до 3 лет. Соответствует рыночному ориентиру окупаемости AMR 1,5–3 года (Яндекс Роботикс, docs/MARKET.md)."
+    affects: [payback]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: verdict_payback_reasonable_years
+    name: Порог окупаемости «обоснованно»
+    value: 5
+    unit: лет
+    category: risk
+    range: {min: 4, max: 7}
+    source: tz_3_5_7
+    rationale: "ТЗ 3.5.7: интервал 3–5 лет; совпадает со сроком службы робота 5 лет, после которого окупаемость внутри жизненного цикла не достигается."
+    affects: [payback]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: verdict_payback_questionable_years
+    name: Порог окупаемости «сомнительно»
+    value: 7
+    unit: лет
+    category: risk
+    range: {min: 5, max: 10}
+    source: team
+    rationale: "ТЗ 3.5.7 выделяет «более 5 лет» одним интервалом; мы делим его: 5–7 лет — сомнительно (в пределах горизонта аэропорта и больницы, но с заменой парка), более 7 лет или вне горизонта — нецелесообразно."
+    affects: [payback]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: monte_carlo_runs
+    name: Число прогонов Монте-Карло
+    value: 1000
+    unit: прогонов
+    category: risk
+    range: {min: 500, max: 10000}
+    source: team
+    rationale: "1000 прогонов по аналитической модели дают погрешность доли «окупилось быстрее порога» не более ±3,1 п.п. (95%, худший случай p = 0,5) и укладываются в требование ТЗ 4 «экономика ≤ 10 с»."
+    affects: [payback, npv]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: sim_sla_target_share
+    name: Целевой SLA имитации (доля задач в срок)
+    value: 0.95
+    unit: доля
+    category: simulation
+    range: {min: 0.9, max: 0.99}
+    source: team
+    rationale: "Критерий перебора флота (D-007): минимальное N, при котором не менее 95% задач пикового дня выполнены в нормативное время. Для больницы нормативы времени берутся из датасета (питание 20 мин, пробы 30 мин)."
+    affects: [robot_count, sla, capex]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: sim_warmup_min
+    name: Разогрев имитации
+    value: 30
+    unit: мин
+    category: simulation
+    range: {min: 15, max: 60}
+    source: team
+    rationale: "Первые минуты, когда очереди и заряд батарей ещё не вышли на установившийся режим, исключаются из KPI. 30 мин — больше типового цикла робота (несколько минут) с запасом на первую волну зарядок."
+    affects: [sla, robot_count]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: sim_replications
+    name: Повторов имитации на вариант флота
+    value: 5
+    unit: прогонов
+    category: simulation
+    range: {min: 3, max: 20}
+    source: team
+    rationale: "Стохастика задач и отказов требует нескольких прогонов на каждое N; 5 повторов × 4 варианта N укладываются в лимит ТЗ 4 «имитация ≤ 60 с»."
+    affects: [sla, robot_count]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
+  - key: sim_aisle_capacity_robots
+    name: Вместимость сегмента рабочего прохода
+    value: 1
+    unit: роботов на сегмент
+    category: simulation
+    range: {min: 1, max: 2}
+    source: team
+    rationale: "В рабочем проходе 2,8 м (датасет) два робота с паллетой 1200 мм и зазором 500 мм не разъедутся: 2 × 1200 + 500 > 2800. Поэтому сегмент — ресурс на 1 робота; главные проезды 3,5 м — на 2."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: sim_failure_mtbf_h
+    name: Средняя наработка робота на отказ
+    value: 400
+    unit: ч
+    category: simulation
+    range: {min: 200, max: 1000}
+    source: team
+    rationale: "Отказ — событие, требующее вмешательства человека (застревание, ошибка локализации, сбой). Вендоры MTBF не публикуют; 400 ч ≈ один отказ в 2–3 недели при 22 ч работы в сутки. Стресс-тест дополнительно выводит робота из строя принудительно."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: sim_repair_time_min
+    name: Среднее время восстановления после отказа
+    value: 60
+    unit: мин
+    category: simulation
+    range: {min: 30, max: 240}
+    source: team
+    rationale: "Реакция техника на объекте и сброс или замена узла; при отказе, требующем выезда вендора, — верх диапазона. Штат эксплуатации задан нормативом robot_operator_ftes_per_10_robots."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]

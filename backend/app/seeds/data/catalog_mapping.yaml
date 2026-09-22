@@ -1,0 +1,1772 @@
+industry_keys:
+  "Торговля и услуги": "trade"
+  "Промышленность": "industry"
+  "Транспорт и логистика": "transport_logistics"
+  "ТЭК": "energy"
+  "Сельское хозяйство": "agriculture"
+  "Безопасность": "security"
+  "Строительство": "construction"
+  "ЖКХ": "housing_utilities"
+  "Лесное хозяйство": "forestry"
+subtype_synonyms:
+  "Робот уборщик": "Робот-уборщик"
+  "Робот инвентаризатор": "Робот-инвентаризатор"
+  "Робот-штабелер": "Робот-штабелёр"
+  "Мультиротор": "БАС мультироторного типа"
+  "Модульная наводная многофункциональная платформа": "Модульная надводная многофункциональная платформа"
+  "Многофункциональный бэзэкипажный катер": "Многофункциональный безэкипажный катер"
+extra_solution_types:
+  - key: uav
+    name: "Беспилотная авиационная система"
+    description: "Дроны мультироторного, самолётного и вертолётного типа: мониторинг, аэросъёмка, доставка, мойка фасадов."
+    sizing_model: null
+    capability_keys: []
+  - key: marine_robot
+    name: "Морской робот"
+    description: "Безэкипажные катера, надводные платформы и телеуправляемые подводные аппараты."
+    sizing_model: null
+    capability_keys: []
+  - key: agro_robot
+    name: "Сельскохозяйственный робот"
+    description: "Беспилотная сельхозтехника, сбор урожая, животноводство и системы автономного управления тракторами."
+    sizing_model: null
+    capability_keys: []
+  - key: construction_robot
+    name: "Строительная и дорожная робототехника"
+    description: "Беспилотная дорожная техника, строительные 3D-принтеры, демонтажные роботы, управление кранами."
+    sizing_model: null
+    capability_keys: []
+  - key: inspection_robot
+    name: "Инспекционный робот"
+    description: "Внутритрубная диагностика, контроль сварных швов, обследование подземной инфраструктуры."
+    sizing_model: null
+    capability_keys: []
+  - key: industrial_arm
+    name: "Промышленный манипулятор или роботизированная ячейка"
+    description: "Манипуляторы и ячейки для сварки, обслуживания станков, сборки и укладки на производстве."
+    sizing_model: null
+    capability_keys: []
+  - key: humanoid_robot
+    name: "Антропоморфный робот"
+    description: "Человекоподобные роботы для общения с посетителями и пилотных сценариев."
+    sizing_model: null
+    capability_keys: []
+  - key: passenger_transport
+    name: "Беспилотный пассажирский транспорт"
+    description: "Беспилотные такси, трамваи и поезда метро."
+    sizing_model: null
+    capability_keys: []
+  - key: road_offroad_vehicle
+    name: "Беспилотный грузовой транспорт для дорог и бездорожья"
+    description: "Магистральные тягачи, внедорожные грузовики и платформы для труднодоступных районов."
+    sizing_model: null
+    capability_keys: []
+  - key: last_mile_delivery
+    name: "Робот-доставщик последней мили"
+    description: "Уличные роботы доставки заказов до подъезда или двери."
+    sizing_model: null
+    capability_keys: []
+  - key: retail_automation
+    name: "Роботизированная торговля и общепит"
+    description: "Робо-кафе, фудтраки и мобильные вендинговые автоматы."
+    sizing_model: null
+    capability_keys: []
+  - key: railway_robot
+    name: "Робот для железнодорожной инфраструктуры"
+    description: "Расцепка вагонов, отпуск тормозов, обслуживание путей."
+    sizing_model: null
+    capability_keys: []
+  - key: medical_robot
+    name: "Медицинский робототехнический комплекс"
+    description: "Реабилитационные и медицинские комплексы, не связанные с логистикой учреждения."
+    sizing_model: null
+    capability_keys: []
+  - key: special_purpose_robot
+    name: "Специальный робот"
+    description: "Спасательные, пожарные, экологические и прочие роботы специального назначения."
+    sizing_model: null
+    capability_keys: []
+products:
+  - id: c8331668-727b-4b5f-a39f-bff2248beb5e
+    name: "85ТК"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 5a36611d-033e-4893-bd49-5d4f776f57dd
+    name: "AK-2000-2"
+    solution_type: fmr_forklift
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "АК-2000-2 (FMR, напольная перевозка паллет)"
+    badges: []
+    website: "https://agv.automacon.ru/catalog"
+    note: null
+  - id: 89ffd69f-f07b-4bf2-8023-1fd765a2b6ff
+    name: "AMR 100 (грузоподъемность до 100 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "МОРОС AMR 100"
+    badges: []
+    website: "https://xn--l1aeahg.xn--p1ai/amr-100/"
+    note: "Лёгкие грузы (до 100–150 кг): паллету не повезёт, отсекается проверкой грузоподъёмности."
+  - id: 7d5a76d2-7bf3-4a40-b6f7-64590d4d9273
+    name: "AMR 1500 (грузоподъемность до 1 500 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "МОРОС AMR 1500"
+    badges: [tested_fcbas]
+    website: "https://xn--l1aeahg.xn--p1ai/amr-1500/"
+    note: null
+  - id: 5ec66969-8fcc-47b3-b517-a9c29372fffe
+    name: "AMR 800 (грузоподъемность до 800 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "МОРОС AMR 800"
+    badges: [tested_fcbas]
+    website: "https://xn--l1aeahg.xn--p1ai/amr-800/"
+    note: null
+  - id: d55f507b-b3f2-4666-b3f4-dd3d48813e9d
+    name: "ARIPIX А1"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: d6f3eec1-61c1-40ac-98b1-0f5d80877cb7
+    name: "ARM95-200 (грузоподъемность до 18 кг)"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: c125ce9a-8f04-4183-a136-5ddbb3c5ae89
+    name: "AS-RS B"
+    solution_type: asrs_storage
+    object_types: [warehouse]
+    processes: [high_bay_storage, order_picking]
+    specs_ref: "ДиКом AS-RS B (робот-штабелёр для KLT 600x400)"
+    badges: [in_registry_719]
+    website: "https://www.kiit.ru/product/avtomatizirovannyy-sklad-dikom-as-rs-b/"
+    note: "Хранение в ящиках KLT с подачей «товар к человеку»: закрывает и хранение, и отбор."
+  - id: cebbdfa8-500a-425f-bcbc-ad2dcc106539
+    name: "AS-RS P"
+    solution_type: asrs_storage
+    object_types: [warehouse]
+    processes: [high_bay_storage]
+    specs_ref: "ДиКом AS-RS P (паллетный кран-штабелёр)"
+    badges: [in_registry_719]
+    website: "https://www.kiit.ru/product/avtomatizirovannyy-sklad-dikom-as-rs-p/"
+    note: null
+  - id: a51bb921-1931-474f-974e-7c37f9fd9aa0
+    name: "Astramis AeroUnit"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 1625ac11-76d0-4994-a86a-e0a540453984
+    name: "Astramis SurfexUnit"
+    solution_type: cleaning_robot
+    object_types: [warehouse]
+    processes: [floor_cleaning]
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Гусеничный робот сухой уборки, стадия разработки (УГТ 5); по кейсу протестирован на складах и в логистических центрах."
+  - id: 3c19d4d7-f1b7-4c46-8169-6c3b6b9345fb
+    name: "Azarrus 1.0A"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 441fadd3-016a-43f9-a331-f6e757c04ce9
+    name: "Cargo UNIT"
+    solution_type: amr_transport
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "Cargo UNIT"
+    badges: []
+    website: "https://droneshub.ru/rovers/"
+    note: "Уличный ровер (отрасль «Строительство»); для склада — только перевозки по территории, с оговорками."
+  - id: 98ceb2a0-f777-48ef-9863-3f9a80f8a237
+    name: "COGNITIVE AGRO PILOT для трактора с ИИ"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: e11fd28e-58be-448d-b32d-236e4de8d6d8
+    name: "D. Operator P"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 164329f5-2baf-47bd-86d5-adabb2fbcbc0
+    name: "DH: Cloud Control"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 5b43b013-3a2e-42ca-9013-33d0a9c39b05
+    name: "DMP 15000"
+    solution_type: amr_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Промышленная платформа на 15 т для крупногабаритных сборочных единиц; по Q&A для склада почти не подходит."
+  - id: cccd0c0d-8ae7-435d-a171-45f5d82886e6
+    name: "DMR 1200 (грузоподъемность до 1 200 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse, hospital]
+    processes: [pallet_transport, meal_delivery, linen_transport, waste_transport]
+    specs_ref: "ДиКом DMR 1200"
+    badges: [tested_fcbas]
+    website: null
+    note: "Кейс каталога: перемещение грузов на стеллажах и тележках. В больнице — как робот под тележку ≥120 кг (питание, бельё, отходы); работа с лифтами и дверями не подтверждена."
+  - id: a83abbfd-78ee-43dc-9111-f51db4938001
+    name: "DMR 300 Carrier B"
+    solution_type: amr_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: "Внутрипроизводственная логистика ящиков KLT с загрузкой в станки (отрасль «Промышленность»); к паллетному складу не относится."
+  - id: be814758-3616-4b94-befa-9848be2ac604
+    name: "DMR 600 (грузоподъемность до 600 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "ДиКом DMR 600"
+    badges: [in_registry_719, tested_fcbas]
+    website: null
+    note: null
+  - id: f7634ef8-0034-4c5b-b2f0-e44a14f05a76
+    name: "DMR Carrier P"
+    solution_type: fmr_forklift
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "ДиКом DMR Carrier P (FMR робот-штабелёр)"
+    badges: []
+    website: null
+    note: "Подтип в CSV пуст; по описанию — FMR-штабелёр на 1500 кг."
+  - id: cf9643b1-7a04-429c-9ac2-33060c9f42dd
+    name: "EVOCARGO N1"
+    solution_type: autonomous_truck
+    object_types: [airport]
+    processes: [cart_and_waste_logistics]
+    specs_ref: "EVOCARGO N1 (автономный электрогрузовик)"
+    badges: []
+    website: "https://evocargo.com/"
+    note: "Грузовик для закрытых территорий (РЦ, заводы); внутри складского здания не работает."
+  - id: 51505cb4-2db8-498b-a16c-421e6b816f82
+    name: "Innospector"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 42aed284-0f9c-45f4-a395-d7a5bf4fb5e7
+    name: "InnoVTOL-3S"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: 69437741-0523-499a-820a-cb375c1bf1ca
+    name: "IQ-BUS V"
+    solution_type: retail_automation
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: a834aa03-136e-4f61-a1d6-b5563d798f68
+    name: "L5"
+    solution_type: road_offroad_vehicle
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 446c5207-a099-45e0-b615-afd60de08589
+    name: "MARK 2 SE"
+    solution_type: cleaning_robot
+    object_types: [warehouse, airport, hospital]
+    processes: [floor_cleaning, terminal_cleaning]
+    specs_ref: "MARK 2 SE (робот-уборщик)"
+    badges: [tested_fcbas]
+    website: "https://r2b.company/mark2se"
+    note: null
+  - id: bd7a808d-3f50-4bd0-93e9-87e9646cfb26
+    name: "MARK A (Agro)"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 5778fa74-615d-4f5e-8660-70d0d7ee4b88
+    name: "MARTin"
+    solution_type: inspection_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 34aa6c6a-e650-4327-ae15-9bad2024b007
+    name: "miniSIGMA"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: ecd7d582-b342-449a-b43b-66288d159a32
+    name: "MULE"
+    solution_type: fmr_forklift
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "MULE (автономный транспортировщик паллет)"
+    badges: []
+    website: "https://sm-robotics.ru/"
+    note: null
+  - id: 00ddbb71-8fca-4cb1-9998-78250c62ea03
+    name: "OG-07 \"Стрекоза\""
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: c05b1315-5e53-46fe-bbc1-a5eb6a1aa6ae
+    name: "Omega"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: eff2586c-892d-4e44-a407-1ec7f06c8f76
+    name: "Pallet Shuttle"
+    solution_type: asrs_storage
+    object_types: [warehouse]
+    processes: [high_bay_storage]
+    specs_ref: "Pallet Shuttle (радиошаттл для паллетных стеллажей)"
+    badges: []
+    website: "https://www.stelkon.ru/catalog/palletnye-stellazhi/pallet/"
+    note: null
+  - id: a556b956-a781-4c38-9fc8-7daeca279b59
+    name: "Pick by light"
+    solution_type: pick_assist
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: "Pick by Voice / Pick by Light"
+    badges: []
+    website: "https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-light-sistema-svetovogo-otbora/"
+    note: null
+  - id: 05505022-3ef7-43da-8279-718e7c432491
+    name: "Pick by Voice"
+    solution_type: pick_assist
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: "Pick by Voice / Pick by Light"
+    badges: []
+    website: "https://www.umserv.ru/catalog/resheniya-dlya-sklada/pick-by-voice/"
+    note: null
+  - id: fade5829-1946-4cf6-a0e6-8f8381d64312
+    name: "Promobot V.4"
+    solution_type: service_robot
+    object_types: [airport]
+    processes: [passenger_assistance]
+    specs_ref: null
+    badges: []
+    website: null
+    note: "В CSV подтип «Антропоморфный робот», но это колёсный робот-консультант для мест скопления людей."
+  - id: 1615bcc8-7168-48b2-b2d3-99a9b89f54c0
+    name: "R-Cafe 1.3"
+    solution_type: retail_automation
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0a4cab58-e194-4329-8f23-6074a5f7455f
+    name: "RC5-16"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0f4d3500-ce64-4525-a1c1-bfb542c022d3
+    name: "RH06A2"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 5760e938-9a43-45a7-b8e8-f4f2e6383930
+    name: "Ronavi H1500 (грузоподъемность до 1 500 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse, hospital]
+    processes: [pallet_transport, meal_delivery, linen_transport, waste_transport]
+    specs_ref: "Ronavi H1500"
+    badges: []
+    website: "https://ronavi-robotics.ru/catalogue/h1500"
+    note: "Описание каталога: перемещение паллет, тележек и конвейерных модулей. В больнице — как робот под тележку ≥120 кг (питание, бельё, отходы); работа с лифтами и дверями не подтверждена."
+  - id: 6f3da854-41da-4363-8496-5487f37c845a
+    name: "Ronavi H2000 (грузоподъемность до 2 000 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse, hospital]
+    processes: [pallet_transport, meal_delivery, linen_transport, waste_transport]
+    specs_ref: "Ronavi H2000"
+    badges: []
+    website: "https://ronavi-robotics.ru/catalogue/h2000"
+    note: "Вендор позиционирует для крупногабаритных грузов (столы, тележки) и производственной логистики. В больнице — как робот под тележку ≥120 кг (питание, бельё, отходы); работа с лифтами и дверями не подтверждена."
+  - id: dcfd9975-81eb-49b5-a422-827a720ba582
+    name: "Ronavi M (грузоподъемность до 1200 кг)"
+    solution_type: goods_to_person
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: "Ronavi M (подвоз стеллажей, G2P)"
+    badges: []
+    website: "https://ronavi-robotics.ru/catalogue/m"
+    note: "В CSV подтип AMR, но назначение — подвоз мобильных стеллажей к станции комплектации (goods-to-person)."
+  - id: 4d347e47-38f9-415b-aae1-7a6d3759a75c
+    name: "Ronavi RCM (грузоподъемность до 350 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse, hospital]
+    processes: [pallet_transport, meal_delivery, linen_transport, waste_transport]
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Стадия разработки (УГТ 3): робот для ролл-кейджей до 350 кг, ТТХ не опубликованы. В больнице — как робот под тележку ≥120 кг (питание, бельё, отходы); работа с лифтами и дверями не подтверждена."
+  - id: 66d8e7ad-cdcd-4287-afb0-e2afa9ef5217
+    name: "Ronavi SD (грузоподъемность до 10 кг)"
+    solution_type: sorting_robot
+    object_types: [warehouse]
+    processes: [parcel_sorting]
+    specs_ref: "Ronavi SD (сортировочный робот с откидной крышкой)"
+    badges: []
+    website: "https://ronavi-robotics.ru/catalogue/sd"
+    note: "В CSV подтип AMR, но назначение — подиумная сортировка посылок."
+  - id: 3f2aaa1b-2237-4d7b-b215-1ac5ec789ed5
+    name: "Ronavi SR (грузоподъемность до 50 кг)"
+    solution_type: sorting_robot
+    object_types: [warehouse]
+    processes: [parcel_sorting]
+    specs_ref: "Ronavi SR (сортировочный робот с конвейером)"
+    badges: []
+    website: "https://ronavi-robotics.ru/catalogue/sr"
+    note: "В CSV подтип AMR, но назначение — сортировка посылок."
+  - id: afa183fe-b6d2-467c-9e2d-a0a2310d8f3d
+    name: "SIGMA"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0ece582a-084c-4a8b-99f4-576f0e01b7c8
+    name: "SmartCube"
+    solution_type: goods_to_person
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: "SmartCube (кубическое хранение G2P)"
+    badges: []
+    website: "https://arobosys.ru/"
+    note: null
+  - id: 4d5900ff-77ef-4536-8077-7f18bc242a53
+    name: "Supercam X4"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: 8dbe4684-18ef-49f7-bced-95969703a49a
+    name: "Supercam X4E"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 6d9890b0-d95a-4bae-8947-0a09d23c30e5
+    name: "Supercam Х6М2"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: ece9a02a-2d71-496f-a29d-39ab24a8e9d9
+    name: "T-16"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 2d247e24-f7ff-4952-816e-61b6eea96664
+    name: "T-300-8E"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 3f2a1265-3c35-4823-9d20-1978c86e424b
+    name: "Tagarka (грузоподъемность до 35 000 кг)"
+    solution_type: amr_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Промышленная платформа на 35 т; по Q&A AMR на 15–35 т для склада почти не подходят."
+  - id: c9e9517c-18f0-47b4-aa05-4344566aa885
+    name: "Tagarka (грузоподъемность до 6 000 кг)"
+    solution_type: amr_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Промышленная платформа на 6 т для цехов; по Q&A промышленные AMR большой грузоподъёмности для склада почти не подходят."
+  - id: ac5b3159-9df0-4911-8cc3-31227a5b3b59
+    name: "TFM-15-8E"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: 9b20417a-0ac7-4786-985b-f3459a15075d
+    name: "Unit"
+    solution_type: cleaning_robot
+    object_types: [warehouse, airport, hospital]
+    processes: [floor_cleaning, terminal_cleaning]
+    specs_ref: "Unit (робот-мойщик полов)"
+    badges: []
+    website: "https://yacuai.com/ru/unit/"
+    note: null
+  - id: cbaf82f3-3cf4-4ac8-9b8f-eddfdeb337ce
+    name: "А-50"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 9186592a-aa17-47a3-b1bb-1477d71cf28d
+    name: "Агробот"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: c70f67e1-8f70-4dff-a4e2-584f0ebaefa1
+    name: "Айдол"
+    solution_type: humanoid_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: e2095cfe-3ce4-404e-a4bb-2f378480d7ca
+    name: "АК-SC80"
+    solution_type: cleaning_robot
+    object_types: [warehouse, airport, hospital]
+    processes: [floor_cleaning, terminal_cleaning]
+    specs_ref: "АК-SC80 (робот-уборщик)"
+    badges: []
+    website: "https://automacon.ru/cleaner/"
+    note: null
+  - id: b639b73b-9c1e-4eec-af6f-9662e1d1d171
+    name: "Альбатрос М5"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: a3b4c902-9e1b-454b-a2bf-01c6d0e98bdb
+    name: "АМТ S300"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 80c41c98-283d-4a29-8fce-4b9e6a1afce3
+    name: "Арди"
+    solution_type: humanoid_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: fbd349c2-88c1-412f-95c2-96a8383217ed
+    name: "Аркус"
+    solution_type: humanoid_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Человекоподобный робот-курьер последней мили, пилотный проект."
+  - id: 9a941386-07e2-4350-ae35-f0d37a1d9f3f
+    name: "Атлант"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: d532535e-0a3b-48f4-98bd-a063f2c743db
+    name: "Багира"
+    solution_type: road_offroad_vehicle
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 3b6ed000-db61-40d2-a1fc-aed019e7007c
+    name: "Барабулька"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: f347978a-e6d5-473c-be89-2209a2d8c003
+    name: "БВС ОМДЖЕТ -М01"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: b5ead192-27fb-4898-b267-edff4ed825a0
+    name: "БВС ОМДЖЕТ-03"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: cdf80f5b-c60a-447b-af30-2c8a44480f98
+    name: "Белка"
+    solution_type: last_mile_delivery
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Уличная доставка до подъезда или двери; внутри больницы и склада не работает."
+  - id: 72acd18d-325d-4a3e-9472-093ecdcdbb4b
+    name: "Берилл"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 5bda11dc-0ea8-47fa-8f73-5ff324575af8
+    name: "Беспилотное такси Яндекс"
+    solution_type: passenger_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: d59a8cc3-4edf-428b-8b36-783ac2bf1514
+    name: "Беспилотный AMT 6×6"
+    solution_type: road_offroad_vehicle
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: 7d1f1ab8-9bc2-45a0-9d76-c1de80c029df
+    name: "Беспилотный «Львёнок-Москва»"
+    solution_type: passenger_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: f2b0dca0-0e77-454d-8d41-d6198a2a82b8
+    name: "Беспилотный асфальтоукладчик"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: f0e502e3-5771-4464-a1df-97110801c7c3
+    name: "Беспилотный бульдозер"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 94795e84-261d-456f-a58c-66b3e79a8213
+    name: "Беспилотный каток"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 19a68304-56f7-432f-afd8-b97b2b8466ba
+    name: "Беспилотный погрузчик"
+    solution_type: fmr_forklift
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "Беспилотный погрузчик МФТИ (программно-аппаратный комплекс автономизации)"
+    badges: []
+    website: "http://ai.mipt.ru/news/tpost/n0tcjtjoy1-avtonomnii-sklad-inzheneri-mfti-razrabot"
+    note: "Комплект автономизации серийных погрузчиков; ТТХ определяются базовой машиной."
+  - id: 8900ef0c-62a4-4f79-92dc-402d6ac9fb72
+    name: "Беспилотный поезд \"2024\""
+    solution_type: passenger_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 28a5afa8-0473-4f80-99a9-b2922b76810f
+    name: "Беспилотный тягач (Когнитив Пилот)"
+    solution_type: tow_tractor
+    object_types: [warehouse, airport]
+    processes: [pallet_transport, baggage_handling, cart_and_waste_logistics]
+    specs_ref: "Беспилотный тягач Cognitive Pilot (багажный/грузовой)"
+    badges: []
+    website: "https://cognitivepilot.com/"
+    note: "Основной сценарий — багаж на перроне (45 шт. в Пулково); для склада — как тягач сцепки, с оговорками."
+  - id: 3cae8286-ea39-4329-b7fd-6444cf2f6f91
+    name: "БРИЗ"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: ba5d2051-3036-439f-8b2e-e05e26581fe6
+    name: "БРО 2.1"
+    solution_type: cleaning_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [tested_fcbas]
+    website: null
+    note: "Уличная уборка (парки, тротуары); для помещений склада, терминала и больницы не предназначен."
+  - id: ef375ca1-8de1-4a8d-9262-c1a6b71f0333
+    name: "БРО 3.0"
+    solution_type: cleaning_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [tested_fcbas]
+    website: null
+    note: "Уличная уборка (парки, тротуары); для помещений склада, терминала и больницы не предназначен."
+  - id: 3416f6ec-ccf2-457f-b076-fa9d09648e33
+    name: "БЭК \"Сивуч\""
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 60023f03-3a54-4d12-a1d7-6a00f8a353be
+    name: "БЭК-Р"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: f551e523-fa94-4a0b-a2c8-56ace2f51818
+    name: "В-120"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: d4b39362-518a-4cf2-8770-b69bc03585a0
+    name: "Веном Саранча"
+    solution_type: cleaning_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Уличный комплекс для борьбы с дикорастущими растениями; к уборке помещений не относится."
+  - id: 23195034-45aa-48c1-8cb5-1f384c2cacb7
+    name: "Вихрь-1М"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 32bea36f-5198-4f16-a167-2e47acd63bd9
+    name: "Внутренняя диагностика труб ЖКХ"
+    solution_type: inspection_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: bec9e863-0c3d-44cc-a656-766a323a9746
+    name: "Внутритрубные роботизированные системы Тьюбот"
+    solution_type: inspection_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: aa8e3b27-df64-4a6a-9248-b1eedb41dd4e
+    name: "Волшебник"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 4dc9e1a3-441b-440c-931c-8011f7869dcf
+    name: "Воркер"
+    solution_type: piece_picking_arm
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Мобильный манипулятор Сбера для сборки товаров, пилот в рознице («Перекрёсток»); применимость к складу — предположение."
+  - id: 2603f59e-cd37-49f3-85ca-705ec956e37a
+    name: "ВТ-440м"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 3d8ff7d4-19fb-4a21-bc4a-15fb13ad3393
+    name: "Геоскан 201"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: 19283c8d-abfd-41a4-a4dd-846392728ea9
+    name: "Геоскан 201 Агро"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: cf43e50c-bdf6-4069-accb-e16b1d2c670e
+    name: "Геоскан 201 Термо"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 6c0df6e9-ea39-40d2-93af-7aec13d629c7
+    name: "Геоскан 401"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 33fca97e-ef4f-459d-a773-ab58b7f84fd5
+    name: "Геоскан 401 Геодезия"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 845b14b5-e469-4676-a3f3-39725fc6354e
+    name: "Геоскан 401 Лидар"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: f1c8478c-86c2-4381-96db-08e0ae889b41
+    name: "Геоскан 701"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: 3e262660-f12a-4eff-8c26-ccf36f923755
+    name: "Геоскан 701 Видео"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: a23855b0-2d22-44f1-838c-b4d23f4a69fb
+    name: "Геоскан 801"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: c293732e-214e-4473-93fd-15db477db3af
+    name: "Геоскан Gemini"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 64061eae-b7cb-4aa2-bacd-92e8cdf9097b
+    name: "Горгона 15"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: a9c720bc-e618-4dcc-90e1-990c5a3d1ae2
+    name: "Грин"
+    solution_type: humanoid_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: c7c905b8-1dcd-43de-8d3c-6e4493077e28
+    name: "Грузовик M700 V2"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: e091d100-5f2a-4b05-a012-e972f6367a4d
+    name: "Грузовик М500 V2"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 04d05489-05fb-46b3-aed0-1012f96d34a3
+    name: "Гумич спасатель"
+    solution_type: special_purpose_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "В CSV подтип «Охранный робот», сценарий — эвакуация пострадавших при ЧС."
+  - id: 92c20e09-7763-4649-bc50-11381fe2818c
+    name: "Дельта-робот"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0b9f76be-8213-4938-9661-2bb669dc3d33
+    name: "Депеша-3"
+    solution_type: cleaning_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Уличная уборка (парки, тротуары); для помещений склада, терминала и больницы не предназначен."
+  - id: ee36ba78-6a9f-4ef8-9296-8ffa022782cd
+    name: "Дефектоскоп"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 22de87a2-a16a-4ce3-9581-1c3eb6f6d2ec
+    name: "ДИАМ 20"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 93ad5785-a2bb-47a2-b611-1b9b857cea48
+    name: "ДИАМ 20К"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 242d637c-6512-4bdf-9964-2c0010259f36
+    name: "Инвентаризатор AI Stock Counter 12M"
+    solution_type: inventory_robot
+    object_types: [warehouse]
+    processes: [inventory_count]
+    specs_ref: "AI Stock Counter 12M (Neurus AUSC12, робот-инвентаризатор)"
+    badges: []
+    website: "https://automacon.ru/inventarizator/"
+    note: null
+  - id: 74469f3b-8248-46ce-bcd4-34cd8731921c
+    name: "Интеллектуальный робот-манипулятор для автоматического сбора томатов"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 1aaa2bd1-c536-41e1-80f0-0f81ab1455b5
+    name: "ИРБИС"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 34590532-dff0-4178-a9ca-6782e4db1701
+    name: "Калкан"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 79b43d24-a12d-4852-a1b2-db6090f3c824
+    name: "Кати"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 3ab89426-fb2c-4f49-b7f9-36fc34a3c98f
+    name: "Кировец Агробот"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: f31223c1-44c8-4410-8381-6356e2158b61
+    name: "Клинботикс 400 PRO"
+    solution_type: cleaning_robot
+    object_types: [warehouse, airport, hospital]
+    processes: [floor_cleaning, terminal_cleaning]
+    specs_ref: "Клинботикс 400 PRO (Cleanbotics 400 PRO)"
+    badges: [tested_fcbas]
+    website: "https://waybotrobotics.com/models/400pro"
+    note: null
+  - id: 5a5b3599-bd64-4330-9bbb-4f8ce7d780b9
+    name: "Клинботикс 600"
+    solution_type: cleaning_robot
+    object_types: [warehouse, airport, hospital]
+    processes: [floor_cleaning, terminal_cleaning]
+    specs_ref: "Клинботикс 600 (Cleanbotics 600)"
+    badges: [tested_fcbas]
+    website: "https://waybotrobot.ru/sravnenie-modelej-cleanbotics-400-pro-i-cleanbotics-600-chto-vybrat"
+    note: null
+  - id: f381872e-d6aa-43b6-be2a-ba36cc9eb90a
+    name: "Колесный робот"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 1f82ce16-5670-4903-a4ea-bfdbbc710f20
+    name: "Комплекс управления кранами ВИРСАЙН СДУ"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0861538d-75c8-473e-a2ab-499a6b8c1d49
+    name: "Курьер-30"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0073d0bb-54cd-40f0-897b-75b22d3e9f8c
+    name: "Легат Патрол"
+    solution_type: special_purpose_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Экологический мониторинг промышленных объектов, не охрана."
+  - id: ccb79192-b9e8-418d-b7bd-eb26c78ee461
+    name: "Легионер Е29"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 26cb8cfb-e0bd-44e7-ae06-22b7bc8379f5
+    name: "Лоцман"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 5cecfb84-143b-4af7-89fb-afbf57403792
+    name: "МАРК"
+    solution_type: cleaning_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Уличная уборка (парки, тротуары); для помещений склада, терминала и больницы не предназначен."
+  - id: 9f06ff5b-0ed4-42e4-9795-b2cf3ac55fbb
+    name: "Марк"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 45487628-a2c6-421f-9ea4-761b6c3be240
+    name: "МК"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: fceeacf0-579f-46cc-92ff-2057fea5da7f
+    name: "Модель А12-1450"
+    solution_type: palletizing_arm
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: "Универсальный манипулятор 12 кг, в каталоге предложен для «Сортировки грузов» в торговле; кейсы — сварка и обучение, складская применимость — предположение."
+  - id: b6b87828-0604-4874-8ea9-46c513840c23
+    name: "Модель А220-2700"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: ce44017e-6ada-421d-bbce-6869b33c2cda
+    name: "Модель А25-1720"
+    solution_type: palletizing_arm
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: "Универсальный манипулятор 25 кг, в каталоге предложен для «Сортировки грузов» в торговле; на складе — укладка и перекладка коробов, нужна ячейка и интегратор."
+  - id: 1906efb4-3ed1-4882-ad33-2a527ef214ac
+    name: "Модель А6-2000"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: null
+  - id: 018cc2dd-3dfe-4bd2-aac6-f54cbebd783e
+    name: "Морской скорпион"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 192ce3de-958f-4bad-9440-c2b3ab56634a
+    name: "МРСК"
+    solution_type: construction_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 87af2fe4-1a49-4263-a2a0-85fbd2b87014
+    name: "Муравей"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [tested_fcbas]
+    website: null
+    note: null
+  - id: f6cc47ab-c645-4fe5-9bd1-0acc609758f0
+    name: "ОМДЖЕТ -ГМ01"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 1a694805-4d3a-42ff-80b9-5f68525e76b5
+    name: "ОРКАН"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0aaaa4d1-9ca6-4737-a3d6-92081635402c
+    name: "Ортез-1"
+    solution_type: medical_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [in_registry_719]
+    website: null
+    note: "Реабилитационный комплекс; в CSV ошибочно помечен как БАС (тип bas). К логистике и уборке больницы не относится."
+  - id: 8eb78e78-ab23-4f2a-9684-65fa37fd3a06
+    name: "Пегас"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 2f46660e-ea20-4845-9620-8c743b03225b
+    name: "Пиксель"
+    solution_type: cleaning_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: [tested_fcbas]
+    website: null
+    note: "Уличная уборка (парки, тротуары); для помещений склада, терминала и больницы не предназначен."
+  - id: cd5058fb-f2d3-4bd2-8213-5e708d1cef3b
+    name: "РБ-100"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: e0a7a647-8cdf-471a-bf6f-dff6ec9cec7d
+    name: "РБ-150"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 5e346a9f-abe8-4aad-a2c2-87ba696942e8
+    name: "РБ-300"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: dc9e8ee5-17bf-422d-a621-daa8876e385c
+    name: "РБ-600"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: aa6c4a0f-08d6-4e18-aae3-cb3856324c9c
+    name: "РБ-Мираж 1000"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: c87a27d2-065f-4b82-9ccc-91078a56ef15
+    name: "Роборука"
+    solution_type: piece_picking_arm
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: "Роборука (робот-манипулятор для отбора/пополнения контейнеров)"
+    badges: []
+    website: "https://sberlabs.com/laboratories/tsentr-robototekhniki"
+    note: "Стадия разработки (УГТ 5); публичных ТТХ нет."
+  - id: 49db955c-62c7-4f69-912f-2745000471fa
+    name: "Робот Городовой"
+    solution_type: service_robot
+    object_types: [airport]
+    processes: [security_patrol]
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Уличный патрульный робот; для аэропорта — патрулирование территории, в терминале не проверен."
+  - id: 0265d700-534e-417e-8fde-47de88fc3ebb
+    name: "Робот для транспортировки деталей и инструментов"
+    solution_type: amr_transport
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Разработка (УГТ 5) для производства ОДК-СТАР, не складской продукт."
+  - id: 9dfb0b55-4d9e-47fc-8a28-ad4390147a26
+    name: "Робот инвентаризатор"
+    solution_type: inventory_robot
+    object_types: [warehouse]
+    processes: [inventory_count]
+    specs_ref: "Робот-инвентаризатор Яндекс Роботикс"
+    badges: []
+    website: "https://robotics.yandex.ru/robotizatsiya-sklada"
+    note: null
+  - id: c3d39a80-5fb9-42d3-82ae-0696fb647128
+    name: "Робот-комплектовщик"
+    solution_type: goods_to_person
+    object_types: [warehouse]
+    processes: [order_picking]
+    specs_ref: "Робот-комплектовщик (G2P) Яндекс Роботикс"
+    badges: []
+    website: "https://robotics.yandex.ru/g2p"
+    note: "Стадия разработки; по данным вендора — G2P (роботы везут контейнеры к оператору)."
+  - id: c9c11d90-43b8-450f-b778-65d4f02db031
+    name: "Робот-лаборант"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 937da5de-b4a1-4a88-ac6d-a97206bdbe98
+    name: "Робот-паук"
+    solution_type: inspection_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0749847e-b059-4f55-ad40-b5d6eddc703a
+    name: "Робот-растормаживатель"
+    solution_type: railway_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 6c8ca14a-e25e-4051-9165-de89fbf5c283
+    name: "Робот-расцепщик"
+    solution_type: railway_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: b4a9ef38-b68a-4c0f-8512-9bc9a718c4e1
+    name: "Робот-тягач RoboCV"
+    solution_type: tow_tractor
+    object_types: [warehouse, airport]
+    processes: [pallet_transport, baggage_handling, cart_and_waste_logistics]
+    specs_ref: "Робот-тягач RoboCV"
+    badges: []
+    website: "https://robocv.ru/robot-tyagach"
+    note: "Складской тягач (5 т на буксире); для аэропорта — буксировка багажных тележек, работа на перроне не подтверждена."
+  - id: 2ffc706d-fe43-4c2b-baad-a624a95ad3ce
+    name: "Робот-штабелёр RoboCV"
+    solution_type: fmr_forklift
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "Робот-штабелёр RoboCV"
+    badges: []
+    website: "https://robocv.ru/robot-shtabelyor"
+    note: null
+  - id: 644aaab9-6ce1-4639-a60a-ed753f8bd589
+    name: "Роботизированная передвижная зарядная станция для электромобилей"
+    solution_type: special_purpose_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 3a18c8b1-ac3d-4a67-a814-b96ef4e58388
+    name: "Роботизированная платформа для выборочного сбора плодов"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 38db0187-c455-4601-9ba1-7a1012485e4a
+    name: "Роботизированная система патрулирования и охраны"
+    solution_type: service_robot
+    object_types: [airport]
+    processes: [security_patrol]
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Кейс: патрулирование стоянки самолётов в аэропорту Жуковский."
+  - id: 6a8c6254-6885-42bd-afb7-b3b4095fb972
+    name: "Роботизированный автономный минитрактор CP"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 807309a0-adcf-46ae-a3ea-bd211588c856
+    name: "Роботизированный диагностический комплекс"
+    solution_type: inspection_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: b86f4613-789b-4cee-9f75-5d010da90b61
+    name: "Роботизированный комплекс по обследованию грунта"
+    solution_type: inspection_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 22b5ba99-bc4f-46a7-9a9b-e4475ecd9fc7
+    name: "Роботизированный комплекс по укладке заготовок"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: bace806b-bb2c-42d1-806b-be4fd48f75f1
+    name: "Роботизированный лафетный ствол"
+    solution_type: special_purpose_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 3d96dcc2-134a-4f9c-85d1-51963038edab
+    name: "Роботизированный трактор с гибридной силовой установкой"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 7cd137fa-d946-4603-9ef3-e36914001ae8
+    name: "Робототехнический комплекс REDLOAD PRO 10 COBOT"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: eb72e89f-014f-4583-903c-c03be3bcfa1d
+    name: "Робототехнический комплекс REDWELD BASIC"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 8a0e653f-b151-46b9-8195-ab8c275a8007
+    name: "Робототехнический комплекс REDWELD PRO 10 COBOT"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 2c5d6d69-1a64-4846-bcc0-bb6119af4558
+    name: "Ровер для работы с грузовыми вагонами"
+    solution_type: railway_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: e8960183-1828-4fdb-8c39-91f5a3523a96
+    name: "РУБИ-С-03"
+    solution_type: cleaning_robot
+    object_types: [warehouse, airport, hospital]
+    processes: [floor_cleaning, terminal_cleaning]
+    specs_ref: "РУБИ-С-03 (РУБИ С, робот-уборщик)"
+    badges: [tested_fcbas]
+    website: "https://robo.ooo/rubi_s"
+    note: null
+  - id: 75877a99-cc68-454a-b77f-12f2641337cc
+    name: "Сарган"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 08ff32f6-6023-4b20-b528-322678f43910
+    name: "Серия Sigma (100D, 150, 200, 250А)"
+    solution_type: inspection_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 7ad0ceb9-6ea8-4862-9e52-8b352a8b3dda
+    name: "Сибирячок"
+    solution_type: uav
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 4469b185-99a3-4ba0-a95a-d5dd6946303a
+    name: "Система автоматизированного сбора ягод с использованием группы мобильных роботов"
+    solution_type: agro_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 993d980e-8b91-45e0-9c98-50ffab6e11e4
+    name: "Сёмабот (грузоподъемность до 1 500 кг)"
+    solution_type: amr_transport
+    object_types: [warehouse]
+    processes: [pallet_transport]
+    specs_ref: "Сёмабот (AGV, линейка 50–2000 кг)"
+    badges: [in_registry_719, tested_fcbas]
+    website: "https://semargl.pro/equipment/agv-roboty-syemabot/"
+    note: null
+  - id: 012ceb2f-4831-4039-a8db-64e6764884fb
+    name: "ТНПА «ГНОМ X»"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 4051cac7-0e4b-408e-b9c0-71fb93471ff7
+    name: "ТНПА «ГНОМ Про Вектор»"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 0a2e93bc-ebd4-4f0e-a4f5-c6097fe7a9b1
+    name: "ТНПА «ГНОМ Про»"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 6aa68572-2fef-4dd7-bfd5-68d117c558cc
+    name: "Трал Патруль 5"
+    solution_type: service_robot
+    object_types: [airport]
+    processes: [security_patrol]
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Уличный охранный робот (кейс — парк); для аэропорта — патрулирование территории, в терминале не проверен."
+  - id: 50005fcd-0788-4d5a-b133-bdb2f8ee0863
+    name: "Учебная ячейка REDEDUCATION PRO"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 7cd0705f-0615-4abd-9c1d-00ff384ffb51
+    name: "Фудтрак"
+    solution_type: retail_automation
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: 8ab1ea05-1c09-4f71-88a4-fffb0b725d6b
+    name: "Херсонес"
+    solution_type: marine_robot
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: null
+  - id: db02c054-a08a-4ddf-a957-6137eeef93ba
+    name: "Яндекс-ровер R 4.0"
+    solution_type: last_mile_delivery
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Уличная доставка до подъезда или двери; внутри больницы и склада не работает."
+  - id: 7dcb35ee-d630-408a-a3d7-54797ac162db
+    name: "Яша"
+    solution_type: industrial_arm
+    object_types: []
+    processes: []
+    specs_ref: null
+    badges: []
+    website: null
+    note: "Стационарный сортировщик фанерных листов на производстве; к сортировке посылок не относится."

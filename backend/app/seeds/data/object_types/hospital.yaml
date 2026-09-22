@@ -1,0 +1,1024 @@
+key: hospital
+name: Медицинское учреждение
+description: 'Больница или поликлиника: доставка питания, белья, медикаментов и анализов между отделениями, вывоз отходов,
+  уборка. Считается на базовом уровне: параметры, подбор и аналитическая экономика без имитации. Отрасли «Здравоохранение»
+  в каталоге организатора нет; ближайшая — «Торговля и услуги», там роботы-уборщики и робот-курьер для помещений.'
+industry: Торговля и услуги
+depth: basic
+dataset_sheet: Медучреждение
+layout_templates: []
+parameter_groups:
+- {key: facility, name: Объект, order: 1}
+- {key: operating_mode, name: Режим работы, order: 2}
+- {key: meals, name: 'Логистика: питание', order: 3}
+- {key: linen, name: 'Логистика: бельё', order: 4}
+- {key: medication, name: 'Логистика: медикаменты и расходники', order: 5}
+- {key: lab, name: 'Логистика: анализы и биоматериалы', order: 6}
+- {key: waste, name: 'Логистика: отходы', order: 7}
+- {key: cleaning, name: Уборка, order: 8}
+- {key: staff, name: Персонал, order: 9}
+- {key: sanitary, name: Безопасность и санитарные требования, order: 10}
+- {key: infrastructure, name: Инфраструктура, order: 11}
+- {key: economics, name: Цели и экономика, order: 12}
+parameters:
+- key: facility_type
+  group: facility
+  name: Тип медицинского учреждения
+  type: enum
+  unit: null
+  required: true
+  dataset_row: Тип медицинского учреждения
+  step: null
+  enum_values:
+  - {value: multi_profile_hospital, label: Многопрофильная больница}
+  - {value: polyclinic, label: Поликлиника}
+  - {value: oncology_center, label: Онкоцентр}
+  - {value: diagnostic_center, label: Диагностический центр}
+  hint: Вид учреждения. От него зависят набор логистических процессов и режим работы.
+  example: Многопрофильная больница
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 1
+  default: null
+- key: area_m2
+  group: facility
+  name: Общая площадь зданий
+  type: number
+  unit: м²
+  required: true
+  dataset_row: Общая площадь здания(й)
+  step: null
+  enum_values: null
+  hint: Суммарная площадь всех корпусов. Влияет на длину маршрутов, число роботов и площадь уборки.
+  example: '45000'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 2
+  default: null
+- key: floors
+  group: facility
+  name: Этажей в основном корпусе
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Количество этажей (основной корпус)
+  step: null
+  enum_values: null
+  hint: Сколько этажей в основном корпусе. От 5 этажей без лифтов роботу не обойтись.
+  example: '9'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 3
+  default: null
+- key: elevators
+  group: facility
+  name: Грузовых и медицинских лифтов
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Количество лифтов (грузовых/медицинских)
+  step: null
+  enum_values: null
+  hint: Сколько лифтов могут возить тележки и роботов. Лифт — частое узкое место доставки.
+  example: '4'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 4
+  default: null
+- key: beds
+  group: facility
+  name: Коек в стационаре
+  type: integer
+  unit: коек
+  required: true
+  dataset_row: Количество коек (стационар)
+  step: null
+  enum_values: null
+  hint: Число коек по штатному расписанию. Основа потребности в питании, белье и медикаментах.
+  example: '650'
+  affects: [meal_delivery, linen_transport, medication_delivery]
+  order: 5
+  default: null
+- key: bed_occupancy_pct
+  group: facility
+  name: Средняя занятость коек
+  type: number
+  unit: '%'
+  required: true
+  dataset_row: Коечный фонд в эксплуатации (средняя занятость)
+  step: null
+  enum_values: null
+  hint: Какая доля коек в среднем занята пациентами.
+  example: '82'
+  affects: [meal_delivery, linen_transport, medication_delivery]
+  order: 6
+  default: null
+- key: operating_rooms
+  group: facility
+  name: Операционных
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество операционных
+  step: null
+  enum_values: null
+  hint: Сколько операционных. Доставка стерильных наборов и срочных медикаментов туда — приоритетная.
+  example: '12'
+  affects: [medication_delivery, linen_transport]
+  order: 7
+  default: null
+- key: outpatient_visits_per_day
+  group: facility
+  name: Амбулаторных посещений в сутки
+  type: integer
+  unit: посещений/сут
+  required: false
+  dataset_row: Количество амбулаторных посещений в сутки
+  step: null
+  enum_values: null
+  hint: Сколько пациентов поликлиники приходит за сутки. Влияет на число анализов.
+  example: '850'
+  affects: [lab_sample_delivery]
+  order: 8
+  default: null
+- key: inpatient_schedule
+  group: operating_mode
+  name: Режим работы стационара
+  type: string
+  unit: null
+  required: true
+  dataset_row: Режим работы стационара
+  step: null
+  enum_values: null
+  hint: Как работает стационар, например «24/7/365» — круглосуточно без выходных. Определяет требования к надёжности роботов.
+  example: 24/7/365
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 9
+  default: null
+- key: outpatient_schedule
+  group: operating_mode
+  name: Режим работы поликлиники
+  type: string
+  unit: null
+  required: false
+  dataset_row: Режим работы амбулатории
+  step: null
+  enum_values: null
+  hint: Дни и часы работы поликлиники, например «5/2, 08:00-20:00».
+  example: 5/2, 08:00-20:00
+  affects: [lab_sample_delivery]
+  order: 10
+  default: null
+- key: operating_hours_per_day
+  group: operating_mode
+  name: Часов работы логистики в сутки
+  type: number
+  unit: ч/сут
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько часов в сутки идёт доставка по больнице. Нужно для расчёта часовой нагрузки.
+  example: '24'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 11
+  default:
+    value: 24
+    status: assumption
+    rationale: Числового поля в датасете нет; значение выведено из строки датасета «Режим работы стационара» = «24/7/365»
+      (круглосуточно).
+- key: working_days_per_year
+  group: operating_mode
+  name: Рабочих дней в году
+  type: integer
+  unit: дн.
+  required: true
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько дней в году работает стационар.
+  example: '365'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 12
+  default:
+    value: 365
+    status: assumption
+    rationale: Числового поля в датасете нет; значение выведено из строки датасета «Режим работы стационара» = «24/7/365»
+      (365 дней в году).
+- key: nursing_shifts_per_day
+  group: operating_mode
+  name: Смен медперсонала в сутки
+  type: integer
+  unit: смен/сут
+  required: false
+  dataset_row: Количество смен медперсонала (уход за пациентами)
+  step: null
+  enum_values: null
+  hint: 'Сколько смен в сутки у персонала: 3 смены по 8 ч или 2 по 12 ч.'
+  example: '3'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 13
+  default: null
+- key: logistics_peak_hours
+  group: operating_mode
+  name: Часы пиковой логистической нагрузки
+  type: string
+  unit: null
+  required: false
+  dataset_row: Пиковое время логистической нагрузки
+  step: null
+  enum_values: null
+  hint: 'В какие часы больше всего перевозок: завтрак, обед, смена белья, приём анализов.'
+  example: 07:00-10:00 и 15:00-17:00
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 14
+  default: null
+- key: feedings_per_day
+  group: meals
+  name: Кормлений в сутки
+  type: integer
+  unit: раз/сут
+  required: true
+  dataset_row: Количество кормлений в сутки
+  step: null
+  enum_values: null
+  hint: 'Сколько раз в сутки раздают питание: завтрак, обед, ужин, иногда полдник и второй ужин.'
+  example: '3'
+  affects: [meal_delivery]
+  order: 15
+  default: null
+- key: meal_portions_per_day
+  group: meals
+  name: Порций питания в сутки
+  type: integer
+  unit: порций/сут
+  required: true
+  dataset_row: Общее количество порций питания в сутки
+  step: null
+  enum_values: null
+  hint: 'Сколько порций раздаётся за сутки. Можно посчитать: коек × занятость × кормлений в сутки. В датасете 1 950 = 650
+    × 3 без учёта занятости; по формуле 650 × 0,82 × 3 ≈ 1 599 порций. Организаторы на Q&A разрешили считать по своей формуле.
+    Если есть фактическое число с пищеблока, введите его.'
+  example: '1950'
+  affects: [meal_delivery]
+  order: 16
+  default: null
+- key: kitchen_to_ward_distance_m
+  group: meals
+  name: Расстояние от пищеблока до отделения
+  type: number
+  unit: м
+  required: true
+  dataset_row: Среднее расстояние от пищеблока до отделения
+  step: null
+  enum_values: null
+  hint: Средний путь тележки с питанием от пищеблока до отделения, без учёта ожидания лифта. В датасете одно расстояние на
+    всё здание; используется и для других перевозок, если своего расстояния нет.
+  example: '180'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 17
+  default: null
+- key: meal_points
+  group: meals
+  name: Точек раздачи питания (отделений)
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Количество точек раздачи питания (отделений)
+  step: null
+  enum_values: null
+  hint: Куда доставляется питание. Один рейс робота — одно отделение или несколько по цепочке.
+  example: '18'
+  affects: [meal_delivery]
+  order: 18
+  default: null
+- key: meal_cart_weight_kg
+  group: meals
+  name: Масса тележки с питанием
+  type: number
+  unit: кг
+  required: true
+  dataset_row: Средняя масса тележки с питанием (брутто)
+  step: null
+  enum_values: null
+  hint: Вес загруженной тележки. Робот должен перевозить не меньше.
+  example: '120'
+  affects: [meal_delivery]
+  order: 19
+  default: null
+- key: meal_delivery_norm_min
+  group: meals
+  name: Норматив доставки питания
+  type: number
+  unit: мин
+  required: true
+  dataset_row: Норматив доставки питания (мин от пищеблока до отделения)
+  step: null
+  enum_values: null
+  hint: За сколько минут питание должно попасть от пищеблока в отделение (санитарные правила и технологическая карта).
+  example: '20'
+  affects: [meal_delivery]
+  order: 20
+  default: null
+- key: linen_dirty_kg_per_day
+  group: linen
+  name: Грязного белья в сутки
+  type: number
+  unit: кг/сут
+  required: true
+  dataset_row: Объём грязного белья (кг/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько килограммов грязного белья вывозится из отделений за сутки. Ориентир — 2,5–3,5 кг на койку.
+  example: '1800'
+  affects: [linen_transport]
+  order: 21
+  default: null
+- key: linen_clean_kg_per_day
+  group: linen
+  name: Чистого белья в сутки
+  type: number
+  unit: кг/сут
+  required: true
+  dataset_row: Объём чистого белья на раздачу (кг/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько килограммов чистого белья развозится по отделениям за сутки.
+  example: '1800'
+  affects: [linen_transport]
+  order: 22
+  default: null
+- key: linen_points
+  group: linen
+  name: Точек сбора и выдачи белья
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Количество точек сбора/выдачи белья
+  step: null
+  enum_values: null
+  hint: По числу отделений плюс операционный блок.
+  example: '18'
+  affects: [linen_transport]
+  order: 23
+  default: null
+- key: linen_changes_per_day
+  group: linen
+  name: Смен белья в сутки
+  type: number
+  unit: раз/сут
+  required: false
+  dataset_row: Периодичность смены белья (раз в сутки, в среднем)
+  step: null
+  enum_values: null
+  hint: 'Сколько раз в сутки в среднем меняют бельё: плановая смена раз в сутки плюс экстренные.'
+  example: '1.3'
+  affects: [linen_transport]
+  order: 24
+  default: null
+- key: linen_container_weight_kg
+  group: linen
+  name: Масса контейнера с бельём
+  type: number
+  unit: кг
+  required: true
+  dataset_row: Средняя масса контейнера с бельём
+  step: null
+  enum_values: null
+  hint: Вес загруженной тележки или закрытого контейнера с бельём.
+  example: '55'
+  affects: [linen_transport]
+  order: 25
+  default: null
+- key: medication_items_count
+  group: medication
+  name: Наименований медикаментов
+  type: integer
+  unit: наименований
+  required: false
+  dataset_row: Количество наименований медикаментов в обращении
+  step: null
+  enum_values: null
+  hint: Сколько разных препаратов в обращении — аналог товарных позиций на складе.
+  example: '2800'
+  affects: [medication_delivery]
+  order: 26
+  default: null
+- key: medication_orders_per_day
+  group: medication
+  name: Заявок на медикаменты в сутки
+  type: integer
+  unit: заявок/сут
+  required: true
+  dataset_row: Объём выдачи медикаментов (заявок/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько заявок аптека собирает за сутки. Одна заявка — одно отделение на одну смену.
+  example: '340'
+  affects: [medication_delivery]
+  order: 27
+  default: null
+- key: pharmacy_points
+  group: medication
+  name: Аптечных точек выдачи
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество аптечных точек выдачи (аптека, аптечные склады)
+  step: null
+  enum_values: null
+  hint: 'Откуда отправляются медикаменты: аптека и аптечные склады.'
+  example: '2'
+  affects: [medication_delivery]
+  order: 28
+  default: null
+- key: medication_delivery_points
+  group: medication
+  name: Точек доставки медикаментов
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Количество точек доставки (отделений + ОР + реанимация)
+  step: null
+  enum_values: null
+  hint: 'Куда доставляются медикаменты: отделения, операционные, реанимация.'
+  example: '22'
+  affects: [medication_delivery]
+  order: 29
+  default: null
+- key: medication_picking_time_min
+  group: medication
+  name: Время сборки одной заявки в аптеке
+  type: number
+  unit: мин
+  required: false
+  dataset_row: Среднее время комплектации 1 заявки в аптеке
+  step: null
+  enum_values: null
+  hint: Сколько минут аптека собирает одну заявку. Задаёт ритм отправки роботов.
+  example: '12'
+  affects: [medication_delivery]
+  order: 30
+  default: null
+- key: stat_delivery_pct
+  group: medication
+  name: Доля срочных доставок
+  type: number
+  unit: '%'
+  required: false
+  dataset_row: Доля срочных (STAT) доставок медикаментов
+  step: null
+  enum_values: null
+  hint: Какая часть доставок срочная. Для них робот прерывает плановый маршрут.
+  example: '8'
+  affects: [medication_delivery]
+  order: 31
+  default: null
+- key: supply_trips_per_day
+  group: medication
+  name: Рейсов расходных материалов в сутки
+  type: integer
+  unit: рейсов/сут
+  required: false
+  dataset_row: Объём доставки расходных материалов (рейсов/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько рейсов за сутки везут шприцы, бинты, перчатки и другие расходники.
+  example: '45'
+  affects: [medication_delivery]
+  order: 32
+  default: null
+- key: lab_samples_per_day
+  group: lab
+  name: Проб биоматериала в сутки
+  type: integer
+  unit: проб/сут
+  required: true
+  dataset_row: Количество биоматериалов (проб) в сутки
+  step: null
+  enum_values: null
+  hint: Сколько проб за сутки доставляется от пациентов в лабораторию.
+  example: '1200'
+  affects: [lab_sample_delivery]
+  order: 33
+  default: null
+- key: labs
+  group: lab
+  name: Клинико-диагностических лабораторий
+  type: integer
+  unit: шт.
+  required: false
+  dataset_row: Количество клинико-диагностических лабораторий (КДЛ)
+  step: null
+  enum_values: null
+  hint: Сколько лабораторий принимают пробы.
+  example: '2'
+  affects: [lab_sample_delivery]
+  order: 34
+  default: null
+- key: lab_delivery_norm_min
+  group: lab
+  name: Норматив доставки пробы
+  type: number
+  unit: мин
+  required: true
+  dataset_row: Среднее время доставки пробы (норматив)
+  step: null
+  enum_values: null
+  hint: За сколько минут проба должна попасть в лабораторию (ГОСТ Р 53079.4-2008). Критично для отдельных видов анализов.
+  example: '30'
+  affects: [lab_sample_delivery]
+  order: 35
+  default: null
+- key: lab_results_trips_per_day
+  group: lab
+  name: Рейсов с результатами анализов в сутки
+  type: integer
+  unit: рейсов/сут
+  required: false
+  dataset_row: Объём выдачи результатов анализов (рейсов/сутки)
+  step: null
+  enum_values: null
+  hint: Сколько рейсов за сутки развозят бумажные результаты. С лабораторной информационной системой их меньше.
+  example: '28'
+  affects: [lab_sample_delivery]
+  order: 36
+  default: null
+- key: waste_class_a_kg_per_day
+  group: waste
+  name: Отходов класса А в сутки
+  type: number
+  unit: кг/сут
+  required: true
+  dataset_row: Объём медицинских отходов класса А (ненасыщенные)
+  step: null
+  enum_values: null
+  hint: Неопасные отходы, похожие на бытовые, кг в сутки.
+  example: '850'
+  affects: [waste_transport]
+  order: 37
+  default: null
+- key: waste_class_b_kg_per_day
+  group: waste
+  name: Отходов класса Б в сутки
+  type: number
+  unit: кг/сут
+  required: true
+  dataset_row: Объём медицинских отходов класса Б (инфицированные)
+  step: null
+  enum_values: null
+  hint: Эпидемиологически опасные отходы, кг в сутки. Для них особые контейнеры, маршрут и обеззараживание робота.
+  example: '220'
+  affects: [waste_transport]
+  order: 38
+  default: null
+- key: waste_points
+  group: waste
+  name: Точек сбора отходов
+  type: integer
+  unit: шт.
+  required: true
+  dataset_row: Количество точек сбора отходов
+  step: null
+  enum_values: null
+  hint: По числу отделений плюс операционный блок.
+  example: '20'
+  affects: [waste_transport]
+  order: 39
+  default: null
+- key: waste_pickups_per_day
+  group: waste
+  name: Вывозов отходов из отделений в сутки
+  type: number
+  unit: раз/сут
+  required: true
+  dataset_row: Периодичность вывоза отходов из отделений
+  step: null
+  enum_values: null
+  hint: Сколько раз в сутки отходы забирают из каждого отделения (СанПиН 2.1.3684-21).
+  example: '2'
+  affects: [waste_transport]
+  order: 40
+  default: null
+- key: cleaning_area_m2
+  group: cleaning
+  name: Площадь уборки
+  type: number
+  unit: м²
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Площадь коридоров и холлов, которую можно убирать роботом. Если поле пустое, берётся общая площадь зданий.
+  example: '20000'
+  affects: [floor_cleaning]
+  order: 41
+  default: null
+- key: cleaning_passes_per_day
+  group: cleaning
+  name: Уборок в сутки
+  type: number
+  unit: раз/сут
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько раз в сутки убирается вся площадь уборки.
+  example: '2'
+  affects: [floor_cleaning]
+  order: 42
+  default:
+    value: 2
+    status: assumption
+    rationale: 'В датасете нет. Методика ФЦ БАС «Роботы-уборщики» (research/fcbas_scenarios, PDF стр. 5): влажная уборка помещения
+      дважды в сутки.'
+- key: orderlies
+  group: staff
+  name: Санитары и транспортировщики
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: Численность санитаров и транспортировщиков
+  step: null
+  enum_values: null
+  hint: Сколько санитаров и транспортировщиков перевозят грузы по больнице, во всех сменах вместе. Основная группа для замещения
+    роботами.
+  example: '65'
+  affects: [waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 43
+  default: null
+- key: kitchen_staff
+  group: staff
+  name: Сотрудники пищеблока на раздаче
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: Численность сотрудников пищеблока (раздача)
+  step: null
+  enum_values: null
+  hint: Сколько сотрудников пищеблока развозят питание. Робот заменяет только перевозку, не раздачу.
+  example: '28'
+  affects: [meal_delivery]
+  order: 44
+  default: null
+- key: laundry_staff
+  group: staff
+  name: Сотрудники прачечной на перевозке белья
+  type: integer
+  unit: чел.
+  required: true
+  dataset_row: Численность сотрудников прачечной (транспорт белья)
+  step: null
+  enum_values: null
+  hint: Сколько сотрудников прачечной развозят и собирают бельё.
+  example: '18'
+  affects: [linen_transport]
+  order: 45
+  default: null
+- key: orderly_salary_rub_month
+  group: staff
+  name: Зарплата санитара или транспортировщика
+  type: number
+  unit: руб./мес.
+  required: true
+  dataset_row: Средняя з/п санитара/транспортировщика (gross)
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
+  example: '55000'
+  affects: [waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 46
+  default: null
+- key: kitchen_salary_rub_month
+  group: staff
+  name: Зарплата сотрудника пищеблока
+  type: number
+  unit: руб./мес.
+  required: true
+  dataset_row: Средняя з/п сотрудника пищеблока (gross)
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
+  example: '52000'
+  affects: [meal_delivery]
+  order: 47
+  default: null
+- key: laundry_salary_rub_month
+  group: staff
+  name: Зарплата сотрудника прачечной
+  type: number
+  unit: руб./мес.
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Средняя начисленная зарплата до вычета НДФЛ (gross) за месяц, без страховых взносов.
+  example: '55000'
+  affects: [linen_transport]
+  order: 48
+  default:
+    value: 55000
+    status: assumption
+    rationale: 'В датасете нет зарплаты сотрудников прачечной. Берём строку того же листа «Средняя з/п санитара/транспортировщика
+      (gross)» (55 000 руб./мес., Москва и МО 2024–2025): та же работа по перевозке тележек. Уточнить у заказчика.'
+- key: payroll_tax_coeff
+  group: staff
+  name: Коэффициент страховых взносов на зарплату
+  type: number
+  unit: null
+  required: true
+  dataset_row: Коэффициент начислений на ФОТ
+  step: null
+  enum_values: null
+  hint: 'Во сколько раз затраты работодателя больше начисленной зарплаты: 1,302 = зарплата + 30,2 % страховых взносов.'
+  example: '1.302'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 49
+  default: null
+- key: staff_turnover_pct
+  group: staff
+  name: Годовая текучесть немедицинского персонала
+  type: number
+  unit: '%'
+  required: false
+  dataset_row: Годовая текучесть (немедицинский персонал)
+  step: null
+  enum_values: null
+  hint: Какая доля санитаров, транспортировщиков и сотрудников пищеблока увольняется за год.
+  example: '45'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 50
+  default: null
+- key: robot_disinfection
+  group: sanitary
+  name: Обеззараживание робота между рейсами
+  type: string
+  unit: null
+  required: true
+  dataset_row: Обеззараживание робота между рейсами
+  step: null
+  enum_values: null
+  hint: 'Когда робот обязательно обрабатывается: ультрафиолетом или дезинфицирующим средством. Учитывается в эксплуатационных
+    затратах.'
+  example: Обязательно для Б-маршрутов
+  affects: [waste_transport, lab_sample_delivery, meal_delivery]
+  order: 51
+  default: null
+- key: night_noise_limit_dba
+  group: sanitary
+  name: Допустимый шум в палатах ночью
+  type: number
+  unit: дБА
+  required: false
+  dataset_row: Требования к уровню шума в палатах (ночное время)
+  step: null
+  enum_values: null
+  hint: Максимальный уровень шума ночью. Указанный в датасете СанПиН 2.1.3.2630-10 утратил силу; действующие нормы шума —
+    СанПиН 1.2.3685-21.
+  example: '30'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 52
+  default: null
+- key: has_access_control
+  group: sanitary
+  name: Есть контроль доступа по зонам (СКУД)
+  type: boolean
+  unit: null
+  required: true
+  dataset_row: Наличие СКУД (контроль доступа по зонам)
+  step: null
+  enum_values: null
+  hint: Роботы проходят двери и зоны через интеграцию со СКУД и лифтами.
+  example: Да
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 53
+  default: null
+- key: robot_surface_material
+  group: sanitary
+  name: Требования к материалу корпуса робота
+  type: string
+  unit: null
+  required: false
+  dataset_row: Требования к материалу поверхностей робота
+  step: null
+  enum_values: null
+  hint: Из какого материала должен быть корпус, чтобы его можно было протирать дезинфицирующими средствами.
+  example: Нержавеющая сталь или ABS с антибактер. покрытием
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 54
+  default: null
+- key: mis_system
+  group: infrastructure
+  name: Медицинская информационная система (МИС)
+  type: string
+  unit: null
+  required: false
+  dataset_row: Наличие МИС (медицинская информационная система)
+  step: null
+  enum_values: null
+  hint: Какая МИС используется. Из неё берутся данные для планирования маршрутов.
+  example: Да (ЕМИАС)
+  affects: [medication_delivery, meal_delivery]
+  order: 55
+  default: null
+- key: has_lis
+  group: infrastructure
+  name: Есть лабораторная информационная система (ЛИС)
+  type: boolean
+  unit: null
+  required: false
+  dataset_row: Наличие ЛИС (лабораторная информационная система)
+  step: null
+  enum_values: null
+  hint: С ЛИС заявки на доставку проб формируются автоматически.
+  example: Да
+  affects: [lab_sample_delivery]
+  order: 56
+  default: null
+- key: elevator_control
+  group: infrastructure
+  name: Управление лифтами из системы здания
+  type: enum
+  unit: null
+  required: true
+  dataset_row: Наличие системы управления лифтами (BMS)
+  step: null
+  enum_values:
+  - {value: 'yes', label: Да}
+  - {value: partial, label: Да (частично)}
+  - {value: 'no', label: Нет}
+  hint: Могут ли роботы сами вызывать лифт через систему управления зданием. Без этого робот не переезжает между этажами.
+  example: Да (частично)
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 57
+  default: null
+- key: elevator_cycle_min
+  group: infrastructure
+  name: Время поездки на лифте с ожиданием
+  type: number
+  unit: мин
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Среднее время от вызова лифта до выхода на нужном этаже, в минутах. Замерьте секундомером в часы пик. Лифты — главное
+    узкое место доставки; если поле пустое, расчёт помечается как требующий проверки.
+  example: '4'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 58
+  default: null
+- key: corridor_width_m
+  group: infrastructure
+  name: Ширина основных коридоров
+  type: number
+  unit: м
+  required: true
+  dataset_row: Ширина коридоров (основных)
+  step: null
+  enum_values: null
+  hint: Ширина коридоров в самом узком месте. Нужно не меньше 1,8 м, чтобы робот разъехался с каталкой.
+  example: '2.4'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 59
+  default: null
+- key: has_ramps_or_lifts
+  group: infrastructure
+  name: Есть пандусы или подъёмники между этажами
+  type: boolean
+  unit: null
+  required: false
+  dataset_row: Наличие пандусов/подъёмников (для межэтажного AMR без лифта)
+  step: null
+  enum_values: null
+  hint: Нужны, если роботы не интегрированы с лифтами.
+  example: Нет
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
+  order: 60
+  default: null
+- key: charging_power_kw
+  group: infrastructure
+  name: Доступная мощность для зарядки роботов
+  type: number
+  unit: кВт
+  required: false
+  dataset_row: Доступная мощность для зарядной инфраструктуры
+  step: null
+  enum_values: null
+  hint: Свободная электрическая мощность под зарядные станции (обычно у сестринских постов или в технических нишах).
+  example: '80'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 61
+  default: null
+- key: capex_budget_mln_rub
+  group: economics
+  name: Бюджет на роботизацию (капитальные затраты)
+  type: number
+  unit: млн руб.
+  required: false
+  dataset_row: Планируемый бюджет на роботизацию (CAPEX)
+  step: null
+  enum_values: null
+  hint: Сколько учреждение готово вложить. Медицина часто начинает с пилота на 1–3 робота.
+  example: '35'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 62
+  default: null
+- key: horizon_years
+  group: economics
+  name: Горизонт расчёта окупаемости
+  type: integer
+  unit: лет
+  required: true
+  dataset_row: Горизонт расчёта окупаемости
+  step: null
+  enum_values: null
+  hint: За сколько лет считаем затраты и эффект.
+  example: '7'
+  affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
+  order: 63
+  default: null
+- key: sla_target_share
+  group: economics
+  name: Целевая доля доставок в срок
+  type: number
+  unit: доля
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Какая доля доставок должна укладываться в норматив. 0,95 — 95 %.
+  example: '0.95'
+  affects: [meal_delivery, medication_delivery, lab_sample_delivery]
+  order: 64
+  default:
+    value: 0.95
+    status: assumption
+    rationale: 'В датасете и ТЗ нет. То же допущение команды, что и для склада: 95 % доставок в срок — рабочая цель уровня
+      сервиса; сами нормативы времени (питание 20 мин, пробы 30 мин) взяты из датасета. Пользователь меняет значение.'
+labor_groups:
+- {key: orderlies, name: Санитары и транспортировщики, headcount_param: orderlies, salary_param: orderly_salary_rub_month}
+- {key: kitchen_staff, name: Сотрудники пищеблока (раздача), headcount_param: kitchen_staff, salary_param: kitchen_salary_rub_month}
+- {key: laundry_staff, name: Сотрудники прачечной (перевозка белья), headcount_param: laundry_staff, salary_param: laundry_salary_rub_month}
+processes:
+- key: meal_delivery
+  name: Доставка питания из пищеблока в отделения
+  description: Робот везёт тележку с питанием от пищеблока до отделений, сам вызывает лифт. Норматив — «Норматив доставки
+    питания» (meal_delivery_norm_min) из датасета.
+  demand_unit: portion
+  demand_formula: порций в сутки (≈ коек × занятость × кормлений); рейсов = точек раздачи × кормлений в сутки
+  demand_params: [meal_portions_per_day, beds, bed_occupancy_pct, feedings_per_day, meal_points]
+  sla: {kind: lead_time, target_value: 20, unit: мин}
+  labor_groups: [kitchen_staff]
+  solution_types: [delivery_robot, amr_transport, tow_tractor]
+  sizing_model: elevator_cycle
+- key: linen_transport
+  name: Перевозка белья (чистое и грязное)
+  description: Сбор грязного белья из отделений в прачечную и развоз чистого. Цель — «Смен белья в сутки» (linen_changes_per_day)
+    в каждой точке.
+  demand_unit: kg
+  demand_formula: грязное + чистое бельё, кг/сут; рейсов ≈ кг ÷ масса контейнера
+  demand_params: [linen_dirty_kg_per_day, linen_clean_kg_per_day, linen_container_weight_kg, linen_points]
+  sla: {kind: coverage, target_value: 1.3, unit: раз/сут}
+  labor_groups: [laundry_staff]
+  solution_types: [delivery_robot, amr_transport, tow_tractor]
+  sizing_model: elevator_cycle
+- key: waste_transport
+  name: Вывоз медицинских отходов
+  description: Вывоз контейнеров с отходами классов А и Б из отделений; для класса Б — отдельный маршрут и обеззараживание
+    робота. Цель — «Вывозов отходов из отделений в сутки» (waste_pickups_per_day) по СанПиН 2.1.3684-21.
+  demand_unit: kg
+  demand_formula: отходы класса А + класса Б, кг/сут; рейсов = точек сбора × вывозов в сутки
+  demand_params: [waste_class_a_kg_per_day, waste_class_b_kg_per_day, waste_points, waste_pickups_per_day]
+  sla: {kind: coverage, target_value: 2, unit: раз/сут}
+  labor_groups: [orderlies]
+  solution_types: [delivery_robot, amr_transport]
+  sizing_model: elevator_cycle
+- key: medication_delivery
+  name: Доставка медикаментов и расходников
+  description: Доставка собранных заявок из аптеки и расходных материалов в отделения; срочные доставки идут вне очереди.
+    Цель — «Целевая доля доставок в срок» (sla_target_share).
+  demand_unit: trip
+  demand_formula: заявок на медикаменты + рейсов расходных материалов в сутки
+  demand_params: [medication_orders_per_day, supply_trips_per_day, stat_delivery_pct]
+  sla: {kind: on_time_share, target_value: 0.95, unit: доля}
+  labor_groups: [orderlies]
+  solution_types: [delivery_robot]
+  sizing_model: elevator_cycle
+- key: lab_sample_delivery
+  name: Доставка проб в лабораторию
+  description: Доставка биоматериалов от мест забора в лабораторию и развоз результатов. Норматив — «Норматив доставки пробы»
+    (lab_delivery_norm_min) из датасета.
+  demand_unit: item
+  demand_formula: проб в сутки; плюс рейсов с результатами анализов
+  demand_params: [lab_samples_per_day, lab_results_trips_per_day]
+  sla: {kind: lead_time, target_value: 30, unit: мин}
+  labor_groups: [orderlies]
+  solution_types: [delivery_robot]
+  sizing_model: elevator_cycle
+- key: floor_cleaning
+  name: Уборка коридоров и холлов
+  description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель — «Уборок в сутки» (cleaning_passes_per_day)
+    по всей площади уборки.
+  demand_unit: m2
+  demand_formula: площадь уборки (если не задана — общая площадь зданий) × уборок в сутки, м²/сут
+  demand_params: [cleaning_area_m2, area_m2, cleaning_passes_per_day]
+  sla: {kind: coverage, target_value: 2, unit: раз/сут}
+  labor_groups: [orderlies]
+  solution_types: [cleaning_robot]
+  sizing_model: area_coverage
