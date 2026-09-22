@@ -112,7 +112,7 @@ def _internal(graph: Graph, faces: list[Node]) -> tuple[float, int] | None:
     return (mean, pairs) if mean is not None else None
 
 
-def _pallet_edges(plan: Plan) -> Callable[[Edge], bool]:
+def pallet_edges(plan: Plan) -> Callable[[Edge], bool]:
     """Pallet robots do not cut through the goods-to-person field: its lanes carry pods, not pallets."""
     picking = {zone.id for zone in plan.zones if zone.kind == ZoneKind.PICKING}
     zone_of = {node.id: node.zone_id for node in plan.nodes}
@@ -120,7 +120,7 @@ def _pallet_edges(plan: Plan) -> Callable[[Edge], bool]:
 
 
 def routes(plan: Plan) -> dict[RouteKey, RouteStat]:
-    pallets = Graph(plan, _pallet_edges(plan))
+    pallets = Graph(plan, pallet_edges(plan))
     everything = Graph(plan)
     faces = _of_kind(plan, NodeKind.RACK_FACE)
     docks_in, docks_out = _of_kind(plan, NodeKind.DOCK_IN), _of_kind(plan, NodeKind.DOCK_OUT)

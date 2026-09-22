@@ -20,6 +20,7 @@ NORMS = Book.of(
         ("robots_per_charging_station", "Роботов на зарядку", 3.0, "шт"),
         ("g2p_robot_lines_per_trip", "Строк за рейс", 3.0, "строк"),
         ("g2p_station_lines_per_hour", "Производительность станции", 300.0, "строк/ч"),
+        ("g2p_station_utilization_target", "Целевая загрузка станции", 0.85, "доля"),
         ("cleaning_real_to_passport_share", "Реальная / паспортная", 0.6, "доля"),
         ("tow_train_carts_per_trip", "Тележек в сцепке", 3.0, "шт"),
         ("elevator_cycle_time_s", "Цикл лифта", 120.0, "с"),
@@ -83,7 +84,9 @@ def test_goods_to_person_counts_stations() -> None:
         specs(max_speed_mps=1.0, runtime_h=8, charging_time_min=60),
         NORMS,
     )
-    assert out.stations == 23  # ⌈6818.2 / 300⌉
+    assert out.stations == 27  # ⌈6818.2 / (300 × 0.85)⌉
+    dwell = next(s for s in out.trace.steps if s.key == "station_dwell_s")
+    assert dwell.value == pytest.approx(36.0)  # 3 lines × 3600 / 300
     assert out.robots is not None
     assert out.robots > out.stations
 

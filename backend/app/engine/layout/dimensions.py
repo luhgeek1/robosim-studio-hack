@@ -282,14 +282,16 @@ class Deriver:
             return 0
         peak = self.per_hour(lines.key)
         rate = self.inp.norm("g2p_station_lines_per_hour")
+        target = self.inp.norm("g2p_station_utilization_target")
         return int(
             self.rec(
                 "pick_stations",
                 "Станций отбора товар-к-человеку",
-                float(math.ceil(peak.value / rate.value)),
+                float(math.ceil(peak.value / (rate.value * target.value))),
                 "шт",
-                "⌈order_lines_per_day_peak_per_hour / g2p_station_lines_per_hour⌉",
-                [peak, rate],
+                "⌈order_lines_per_day_peak_per_hour"
+                " / (g2p_station_lines_per_hour × g2p_station_utilization_target)⌉",
+                [peak, rate, target],
             ).value
         )
 
@@ -326,7 +328,8 @@ class Deriver:
             "2 × layout_rack_depth_m + layout_rack_flue_m + aisle_width_m",
             [depth, flue, aisle],
         )
-        reserve = stations * self.inp.norm("layout_pick_station_pitch_m").value
+        # Stations stand in two rows (along both main aisles), so half of them sets the width of the zone.
+        reserve = math.ceil(stations / 2) * self.inp.norm("layout_pick_station_pitch_m").value
 
         def fits(space: float) -> int:
             return math.floor((space + flue.value) / module.value)

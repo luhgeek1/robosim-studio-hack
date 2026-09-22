@@ -203,20 +203,32 @@ def _transport(s: _Sizer, out: SizingOutcome) -> None:
 
 
 def _goods_to_person(s: _Sizer, out: SizingOutcome) -> None:
+    """The robot waits at the station while the operator picks its lines: part of the cycle (found by DES)."""
     lines = s.norms.get("g2p_robot_lines_per_trip")
-    s.count(out, s.per_robot(out, lines, s.cycle(out)))
+    station = s.specs.optional("station_throughput_lines_h") or s.norms.get("g2p_station_lines_per_hour")
+    dwell = s.trace.record(
+        "station_dwell_s",
+        "Стоянка у станции, пока отбирают строки",
+        lines.value * SECONDS_PER_HOUR / station.value,
+        "с",
+        f"{lines.key} × 3600 / {station.key}",
+        [lines, station],
+        Section.SIZING,
+    ).as_quantity()
+    s.count(out, s.per_robot(out, lines, s.cycle(out, dwell)))
     _stations(s, out)
 
 
 def _stations(s: _Sizer, out: SizingOutcome) -> None:
     station = s.specs.optional("station_throughput_lines_h") or s.norms.get("g2p_station_lines_per_hour")
+    target = s.norms.get("g2p_station_utilization_target")
     stations = s.trace.record(
         "stations",
         "Станций отбора",
-        float(math.ceil(s.demand.peak_per_hour / station.value)),
+        float(math.ceil(s.demand.peak_per_hour / (station.value * target.value))),
         "шт",
-        f"⌈demand_peak_per_hour / {station.key}⌉",
-        [s.peak(), station],
+        f"⌈demand_peak_per_hour / ({station.key} × {target.key})⌉",
+        [s.peak(), station, target],
         Section.SIZING,
     )
     out.stations = int(stations.value)

@@ -1441,3 +1441,91 @@ norms:
     affects: [sla]
     editable_by_user: true
     object_types: [warehouse]
+  - key: sim_peak_window_hours
+    name: Длительность пикового окна в обычном дне имитации
+    value: 3
+    unit: ч
+    category: simulation
+    range: {min: 1, max: 6}
+    source: team
+    rationale: "Пиковый коэффициент датасета задаёт интенсивность пикового часа, но не длительность пика. Приёмка и отгрузка на РЦ идут волнами по 2–4 часа (утренний заезд, вечерняя отгрузка); берём 3 часа посередине рабочего дня. Остальные часы — с интенсивностью, при которой сумма за сутки совпадает с объёмом из параметров."
+    affects: [sla, robot_count]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: sim_peak_duration_hours
+    name: Длительность прогона «пиковый режим»
+    value: 4
+    unit: ч
+    category: simulation
+    range: {min: 2, max: 8}
+    source: team
+    rationale: "Перебор флота (D-007) проверяет SLA при пиковой интенсивности без передышки. Четыре часа — дольше пиковой волны (3 ч) и десятков циклов робота, чтобы очереди вышли на установившийся режим; короче суток, чтобы 5 повторов × 6 вариантов N уложились в лимит ТЗ 60 с."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: sim_truck_pallets
+    name: Паллет в одной машине
+    value: 33
+    unit: палл
+    category: simulation
+    range: {min: 18, max: 33}
+    source: team
+    rationale: "Стандартный полуприцеп 13,6 м вмещает 33 европаллеты 1200 × 800 в один ярус; такие машины приходят на РЦ. Паллеты машины появляются у ворот в темпе разгрузки (layout_dock_pallets_per_door_hour) — отсюда всплески задач, которых нет в среднем спросе."
+    affects: [sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: sim_charge_threshold_share
+    name: Заряд, при котором робот уходит на зарядку
+    value: 0.2
+    unit: доля
+    category: simulation
+    range: {min: 0.1, max: 0.4}
+    source: team
+    rationale: "Системы управления парком AMR отправляют робота на зарядку при 20–30 % заряда, чтобы он гарантированно доехал до станции. Берём нижнюю границу: консервативно для доступности парка это не так важно, как очередь на зарядку, которую показывает имитация."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: sim_human_takeover_wait_min
+    name: Ожидание, после которого задачу забирают люди
+    value: 60
+    unit: мин
+    category: simulation
+    range: {min: 20, max: 120}
+    source: team
+    rationale: "Если паллета или строка ждут робота дольше часа, диспетчер отдаёт задачу водителю погрузчика или отборщику. Такие задачи считаются просроченными и показываются отдельно, чтобы очередь не росла бесконечно при нехватке роботов."
+    affects: [sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: sim_line_lead_time_min
+    name: Норматив выполнения строки отбора
+    value: 30
+    unit: мин
+    category: simulation
+    range: {min: 15, max: 60}
+    source: team
+    rationale: "В датасете для отбора задана доля строк в срок (95 %), но не сам срок. Берём 30 минут от появления строки до отбора на станции: заказ с несколькими строками успевает собраться до ближайшей волны отгрузки."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: sim_bottleneck_utilization
+    name: Загрузка ресурса, при которой он считается узким местом
+    value: 0.85
+    unit: доля
+    category: simulation
+    range: {min: 0.75, max: 0.95}
+    source: team
+    rationale: "По теории очередей (M/M/1) время ожидания растёт как ρ / (1 − ρ): при загрузке 85 % очередь уже в 5,7 раза длиннее обслуживания. Верхняя граница легенды датасета для AMR — тоже 85 %. Ресурс с загрузкой выше порога — кандидат в узкое место."
+    affects: [sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: g2p_station_utilization_target
+    name: Целевая загрузка станции отбора
+    value: 0.85
+    unit: доля
+    category: sizing
+    range: {min: 0.75, max: 0.95}
+    source: team
+    rationale: "Станцию нельзя планировать на 100 %: по теории очередей (M/M/1) ожидание растёт как ρ / (1 − ρ), и при загрузке 99 % роботы со стеллажами стоят в очереди у станций — это показала имитация на демо-складе (23 станции на 6 818 строк/ч). При 85 % очередь конечна; та же граница — в нормативе узкого места sim_bottleneck_utilization."
+    affects: [robot_count, capex]
+    editable_by_user: true
+    object_types: [warehouse]

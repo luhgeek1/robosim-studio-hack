@@ -212,9 +212,13 @@ class CatalogMappingSeed(SeedModel):
     products: list[ProductMappingSeed]
 
 
+# libyaml parses the seed files an order of magnitude faster; the pure-Python loader is the fallback.
+_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
 def load_yaml[T](path: Path, model: type[T]) -> T:
     with path.open(encoding="utf-8") as handle:
-        return TypeAdapter(model).validate_python(yaml.safe_load(handle))
+        return TypeAdapter(model).validate_python(yaml.load(handle, Loader=_LOADER))  # noqa: S506
 
 
 def load_solution_types() -> list[SolutionTypeSeed]:

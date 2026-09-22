@@ -110,35 +110,64 @@ class WarehouseDrawer:
             self.b.rack((x0, y0, x1, y0 + length), self.d.levels, self.d.bays_per_segment * per_bay)
 
     def _picking(self, dock_aisle: Aisle, top_aisle: Aisle) -> None:
+        """Pod field between two rows of stations, one along each main aisle: pods travel from both ends."""
         d, b = self.d, self.b
         x0, width = d.block_width, d.width - d.block_width
         lane = d.pod_pitch
         column = d.pod_block_width * d.pod_pitch + lane
         row = d.pod_block_length * d.pod_pitch + lane
-        field_top = d.band_top + (d.station_depth if d.flow_through else 0)
-        field_bottom = d.band_bottom - (0 if d.flow_through else d.station_depth)
+        field_top, field_bottom = d.band_top + d.station_depth, d.band_bottom - d.station_depth
         columns = math.floor((width - lane) / column)
         rows = math.floor((field_bottom - field_top - lane) / row)
         if d.stations == 0 or columns < 1 or rows < 1:
             if d.stations:
                 self.warnings.append("Зона отбора не поместилась: маршрут G2P берётся по нормативу")
             return
-        placed = min(d.stations, math.floor(width / d.station_pitch))
-        if placed < d.stations:
+        per_row = math.floor(width / d.station_pitch)
+        wanted = (math.ceil(d.stations / 2), d.stations // 2)
+        placed = (min(wanted[0], per_row), min(wanted[1], per_row))
+        if sum(placed) < d.stations:
             self.warnings.append(
-                f"Вдоль зоны отбора помещается {placed} из {d.stations} станций"
-                " — остальные ставить во второй ряд"
+                f"Вдоль зоны отбора помещается {sum(placed)} из {d.stations} станций"
+                " — остальные ставить в третий ряд"
             )
         zone = b.zone(ZoneKind.PICKING, "Отбор товар-к-человеку", (x0, field_top, d.width, field_bottom))
-        station_y0 = d.band_top if d.flow_through else field_bottom
-        stations_zone = b.zone(
-            ZoneKind.STATION,
-            "Станции отбора",
-            (x0, station_y0, d.width, station_y0 + d.station_depth),
-            capacity=placed,
-        )
         xs = [x0 + lane * HALF + i * column for i in range(columns + 1)]
         ys = [field_top + lane * HALF + j * row for j in range(rows + 1)]
+        grid = self._pod_field(zone, xs, ys, columns, rows)
+        rows_of_stations = (
+            (placed[0], d.band_bottom - d.station_depth, dock_aisle, rows),
+            (placed[1], d.band_top, top_aisle, 0),
+        )
+        number = 0
+        for count, y0, aisle, lattice_row in rows_of_stations:
+            if count == 0:
+                continue
+            strip = b.zone(
+                ZoneKind.STATION, "Станции отбора", (x0, y0, d.width, y0 + d.station_depth), capacity=count
+            )
+            for k in range(count):
+                number += 1
+                x = x0 + (k + HALF) * d.station_pitch
+                station = b.node(
+                    x,
+                    y0 + d.station_depth * HALF,
+                    NodeKind.PICK_STATION,
+                    zone=strip,
+                    capacity=1,
+                    label=f"Станция {number}",
+                )
+                nearest = min(range(len(xs)), key=lambda i: abs(xs[i] - x))
+                b.edge(station, grid[nearest][lattice_row], lane, EdgeKind.CORRIDOR)
+                b.edge(station, aisle.stop(x), d.main, EdgeKind.CORRIDOR)
+        self.stations_placed = number
+
+    def _pod_field(
+        self, zone: str, xs: list[float], ys: list[float], columns: int, rows: int
+    ) -> list[list[str]]:
+        """Lanes between blocks of pods; a pickup node on a lane stands for the pods on both its sides."""
+        d, b = self.d, self.b
+        lane, row = d.pod_pitch, d.pod_block_length * d.pod_pitch + d.pod_pitch
         grid = [[b.node(x, y, NodeKind.WAYPOINT, zone=zone) for y in ys] for x in xs]
         pods = 0
         for i, x in enumerate(xs):
@@ -147,32 +176,14 @@ class WarehouseDrawer:
             for j, y in enumerate(ys):
                 path.append(grid[i][j])
                 if j < rows:
-                    path.append(
-                        b.node(
-                            x, y + row * HALF, NodeKind.PICKUP, zone=zone, capacity=sides * d.pod_block_length
-                        )
-                    )
-                    pods += sides * d.pod_block_length
+                    capacity = sides * d.pod_block_length
+                    path.append(b.node(x, y + row * HALF, NodeKind.PICKUP, zone=zone, capacity=capacity))
+                    pods += capacity
             b.chain(path, lane, EdgeKind.CORRIDOR)
         for j in range(len(ys)):
             b.chain([grid[i][j] for i in range(len(xs))], lane, EdgeKind.CORRIDOR)
         self.pods = PodField(columns, rows, pods)
-        edge_row = 0 if d.flow_through else rows
-        aisle = top_aisle if d.flow_through else dock_aisle
-        for k in range(placed):
-            x = x0 + (k + HALF) * d.station_pitch
-            station = b.node(
-                x,
-                station_y0 + d.station_depth * HALF,
-                NodeKind.PICK_STATION,
-                zone=stations_zone,
-                capacity=1,
-                label=f"Станция {k + 1}",
-            )
-            nearest = min(range(len(xs)), key=lambda i: abs(xs[i] - x))
-            b.edge(station, grid[nearest][edge_row], lane, EdgeKind.CORRIDOR)
-            b.edge(station, aisle.stop(x), d.main, EdgeKind.CORRIDOR)
-        self.stations_placed = placed
+        return grid
 
     def _docks(self, aisle: Aisle, count: int, kind: NodeKind, span: tuple[float, float], y: float) -> None:
         d, b = self.d, self.b

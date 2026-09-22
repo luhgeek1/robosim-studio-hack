@@ -50,15 +50,17 @@ def test_demo_warehouse_geometry_is_derived_from_params_and_norms() -> None:
     assert step(generated, "slots_per_aisle") == 780
     assert step(generated, "aisles_needed") == 26
     assert step(generated, "docks_in") == 3
-    assert step(generated, "pick_stations") == 23
+    # 6 818 lines/h at peak / (300 lines/h × 0.85 station utilization target) = 26.7 → 27.
+    assert step(generated, "pick_stations") == 27
     assert all(s.rendered for s in generated.derivation)
 
 
-def test_capacity_shortfall_is_reported_not_hidden() -> None:
+def test_demo_capacity_fits_and_a_shortfall_is_reported_not_hidden() -> None:
     generated = build()
-    summary = stats(generated.plan)
-    assert summary.rack_slots_total == 19_500
-    assert any("19 500 из 20 000" in w for w in generated.warnings)
+    assert stats(generated.plan).rack_slots_total >= 20_000
+    assert generated.warnings == []
+    bigger = build(pallet_positions=30_000.0)
+    assert any("из 30 000 паллетомест" in w for w in bigger.warnings)
 
 
 def test_routes_come_from_the_graph_and_are_plausible() -> None:
@@ -71,7 +73,7 @@ def test_routes_come_from_the_graph_and_are_plausible() -> None:
     assert routes[RouteKey.DOCK_IN_TO_STORAGE].value_m < NORMS.value("transport_default_one_way_distance_m")
     assert 20 < routes[RouteKey.POD_TO_STATION].value_m < 60
     assert summary.min_aisle_width_m == pytest.approx(2.8)
-    assert (summary.docks_in, summary.docks_out, summary.pick_stations, summary.chargers) == (3, 3, 23, 8)
+    assert (summary.docks_in, summary.docks_out, summary.pick_stations, summary.chargers) == (3, 3, 27, 8)
     assert summary.pods > 0
 
 
