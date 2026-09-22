@@ -2,6 +2,7 @@ import re
 from typing import Any
 
 _NUMBER = re.compile(r"[-+−]?\d+(?:[.,]\d+)?")
+_GROUPED_NUMBER = re.compile(r"[-+−]?\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?|[-+−]?\d+(?:[.,]\d+)?")
 _DIMENSIONS = re.compile(
     r"(\d+(?:[.,]\d+)?)\s*[x×х*]\s*(\d+(?:[.,]\d+)?)(?:\s*[x×х*]\s*(\d+(?:[.,]\d+)?))?", re.I
 )
@@ -24,8 +25,11 @@ def parse_ru_money(text: str | float | int | None) -> float | None:
 
 
 def first_number(text: str) -> float | None:
-    match = _NUMBER.search(text.replace(" ", " "))
-    return _to_float(match.group()) if match else None
+    """First number in the text; «1 500» with a thousands space counts as one number."""
+    match = _GROUPED_NUMBER.search(text)
+    if not match:
+        return None
+    return _to_float(re.sub(r"[\s\u00a0\u202f]", "", match.group()))
 
 
 def parse_dimensions(text: str) -> tuple[float, float, float | None] | None:

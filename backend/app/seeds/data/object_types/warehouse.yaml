@@ -993,7 +993,7 @@ processes:
     процессу. Какая часть высвобождается, задаёт норматив labor_release_share_picking.'
   solution_types: [goods_to_person, pick_assist, piece_picking_arm, amr_transport]
   sizing_model: goods_to_person
-  route_length: transport_default_one_way_distance_m
+  route_length: g2p_one_way_distance_m
   unit_weight: item_weight_kg * pieces_per_day / order_lines_per_day
   requirements:
   - key: payload_vs_item

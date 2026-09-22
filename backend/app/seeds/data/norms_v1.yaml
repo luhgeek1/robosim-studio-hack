@@ -1038,3 +1038,80 @@ norms:
     affects: [robot_count, sla]
     editable_by_user: true
     object_types: [warehouse, airport, hospital]
+  - key: matching_weight_performance
+    name: "Вес критерия «производительность» в скоринге подбора"
+    value: 0.25
+    unit: доля
+    category: operations
+    range: {min: 0, max: 1}
+    source: team
+    rationale: "Сколько роботов нужно под пиковый спрос — главный фактор экономики вместе со стоимостью; равный вес со стоимостью, чтобы не выигрывал дешёвый, но медленный робот. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: matching_weight_cost_efficiency
+    name: "Вес критерия «стоимость конфигурации» в скоринге подбора"
+    value: 0.25
+    unit: доля
+    category: operations
+    range: {min: 0, max: 1}
+    source: team
+    rationale: "CAPEX оборудования = цена × число роботов; вместе с производительностью даёт половину оценки — это то, что заказчик сравнивает первым. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: matching_weight_infrastructure_fit
+    name: "Вес критерия «совместимость с объектом» в скоринге подбора"
+    value: 0.15
+    unit: доля
+    category: operations
+    range: {min: 0, max: 1}
+    source: team
+    rationale: "Доля пройденных жёстких проверок с подтверждёнными данными: чем больше проверено, тем меньше риск на обследовании. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: matching_weight_maturity
+    name: "Вес критерия «зрелость (УГТ)» в скоринге подбора"
+    value: 0.15
+    unit: доля
+    category: operations
+    range: {min: 0, max: 1}
+    source: team
+    rationale: "УГТ из каталога организатора: эксплуатационный продукт с УГТ 9 снижает риск пилота. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: matching_weight_data_quality
+    name: "Вес критерия «полнота ТТХ» в скоринге подбора"
+    value: 0.1
+    unit: доля
+    category: operations
+    range: {min: 0, max: 1}
+    source: team
+    rationale: "Полнота карточки (ключевые ТТХ, описание, цена) — насколько расчёт опирается на данные продукта, а не на нормативы. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: matching_weight_references
+    name: "Вес критерия «внедрения» в скоринге подбора"
+    value: 0.1
+    unit: доля
+    category: operations
+    range: {min: 0, max: 1}
+    source: team
+    rationale: "Число известных внедрений (кейсы каталога и research) — подтверждение работы в реальных условиях. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: g2p_one_way_distance_m
+    name: Средний путь робота goods-to-person в одну сторону
+    value: 40
+    unit: м
+    category: sizing
+    range: {min: 20, max: 80}
+    source: team
+    rationale: "Зона goods-to-person компактна: робот везёт стеллаж из соседнего блока хранения к станции. Кейс Восток-Сервис (research/catalog_specs): около 1000 мобильных стеллажей — порядка 1000 м² хранения плюс проезды ≈ 2000 м², сторона зоны ≈ 45 м; средний путь ≈ половина стороны плюс подъезд к станции ≈ 40 м. Уточняется планировкой и имитацией."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [warehouse]

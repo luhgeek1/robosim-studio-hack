@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.parsing import first_number, parse_dimensions, parse_range, parse_ru_money, parse_scalar
-from app.seeds.catalog_sources import _remap
+from app.seeds.catalog_sources import _claim_number, _remap
 
 
 def test_money_with_spaces_and_comma() -> None:
@@ -44,6 +44,8 @@ def test_scalar_cells() -> None:
 
 def test_first_number_in_text() -> None:
     assert first_number("до 10 часов") == 10.0
+    assert first_number("2 160 000 (от 100 шт.)") == 2_160_000
+    assert first_number("1044x654x380") == 1044
 
 
 def test_research_keys_are_remapped_by_unit() -> None:
@@ -51,3 +53,9 @@ def test_research_keys_are_remapped_by_unit() -> None:
     assert _remap("lift_height_mm", 12500, "mm (мачта сканирования, до)") == ("max_scan_height_m", 12.5)
     assert _remap("lift_height_mm", 1600, "mm") == ("lift_height_mm", 1600)
     assert _remap("runtime_h", "запас хода до 200 км", "km") == ("range_km", 200.0)
+
+
+def test_claim_number_prefers_value_before_unit() -> None:
+    assert _claim_number("0,5 м²/с (≈1800 м²/ч)", "м²/ч") == 1800
+    assert _claim_number("600-700", "м²/ч") == 600
+    assert _claim_number("до 1 500", "м²/ч") == 1500

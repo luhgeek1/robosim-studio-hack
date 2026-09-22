@@ -172,3 +172,34 @@ class CatalogRepository:
         base = select(process).where(literal(object_type) == any_(Product.object_types)).subquery()
         statement = select(base.c.process, func.count()).group_by(base.c.process)
         return dict((await self._session.execute(statement)).tuples().all())
+
+    async def candidates(self, object_type: str, process_key: str) -> Sequence[Product]:
+        statement = (
+            select(Product)
+            .where(
+                literal(object_type) == any_(Product.object_types),
+                literal(process_key) == any_(Product.processes),
+            )
+            .order_by(Product.name)
+        )
+        return (await self._session.scalars(statement)).all()
+
+    async def cases_count(self, product_ids: Sequence[UUID]) -> dict[UUID, int]:
+        statement = (
+            select(ProductCase.product_id, func.count())
+            .where(ProductCase.product_id.in_(product_ids))
+            .group_by(ProductCase.product_id)
+        )
+        return dict((await self._session.execute(statement)).tuples().all())
+
+    async def offers_for(self, product_ids: Sequence[UUID]) -> Sequence[ProductOffer]:
+        statement = (
+            select(ProductOffer)
+            .where(ProductOffer.product_id.in_(product_ids))
+            .order_by(ProductOffer.price_rub)
+        )
+        return (await self._session.scalars(statement)).all()
+
+    async def industry_key(self, name: str) -> str | None:
+        key: str | None = await self._session.scalar(select(Industry.key).where(Industry.name == name))
+        return key

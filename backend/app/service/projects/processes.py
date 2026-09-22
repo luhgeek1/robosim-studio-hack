@@ -3,7 +3,6 @@ from uuid import UUID
 
 from app.core.errors import ConflictError, DomainError, ErrorCode
 from app.db.repositories.catalog import CatalogRepository
-from app.db.repositories.reference import ReferenceRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.engine.demand import (
@@ -14,7 +13,9 @@ from app.engine.demand import (
     process_demand,
     total_labor_cost,
 )
+from app.engine.trace import Book
 from app.service.projects.context import ProjectContext, ProjectLoader
+from app.service.projects.norms import NormLoader
 
 PAYROLL_COEFF_PARAM = "payroll_tax_coeff"
 PAYROLL_SHARE_NORM = "payroll_tax_share"
@@ -28,6 +29,15 @@ class ProcessView:
     robotizable: bool
     solution_types: list[str]
     notes: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class ProcessAnalysis:
+    context: ProjectContext
+    values: dict[str, float | None]
+    norms: Book
+    views: list[ProcessView]
+    total_labor_cost_rub_year: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,30 +67,28 @@ class ProcessService:
         self._user = user
         self._loader = ProjectLoader(uow)
         self._catalog = CatalogRepository(uow.session)
-        self._reference = ReferenceRepository(uow.session)
+        self._norms = NormLoader(uow)
 
-    async def _payroll_coefficient(self, values: dict[str, float | None]) -> float:
+    @staticmethod
+    def _payroll_coefficient(values: dict[str, float | None]) -> float:
         coefficient = values.get(PAYROLL_COEFF_PARAM)
         if coefficient is not None:
             return coefficient
-        norm_set = await self._reference.norm_set(None)
-        norms = await self._reference.norms(norm_set.id, None, None) if norm_set else []
-        share = next((n.value for n in norms if n.key == PAYROLL_SHARE_NORM), None)
+        share = values.get(PAYROLL_SHARE_NORM)
         if share is None:
             raise DomainError("Не задан коэффициент начислений на ФОТ", error_code=ErrorCode.PARAMS_INVALID)
         return 1 + share
 
-    async def overview(self, project_id: UUID) -> ProcessesOverview:
-        context = await self._loader.context(self._user, project_id)
+    async def analyse(self, context: ProjectContext) -> ProcessAnalysis:
         values = context.numeric()
-        norm_set = await self._reference.norm_set(None)
-        if norm_set is not None:
-            for norm in await self._reference.norms(norm_set.id, None, context.project.object_type):
-                values.setdefault(norm.key, norm.value)
+        norms = await self._norms.book(context.project.object_type)
+        for key, quantity in norms.items.items():
+            values.setdefault(key, quantity.value)
         groups = _groups(context, values)
-        payroll = await self._payroll_coefficient(values)
+        payroll = self._payroll_coefficient(values)
         total = total_labor_cost(list(groups.values()), payroll)
         available = await self._catalog.products_per_process(context.project.object_type)
+        names = {p.key: p.definition.name for p in context.params}
         views: list[ProcessView] = []
         for process in context.object_type.processes:
             demand = DemandFormula(**process.demand) if process.demand else None
@@ -91,7 +99,6 @@ class ProcessService:
                 payroll,
                 total,
             )
-            names = {p.key: p.definition.name for p in context.params}
             notes = [f"Нет данных: {names.get(key, key)}" for key in result.missing]
             if process.labor_allocation_note:
                 notes.append(f"Распределение персонала: {process.labor_allocation_note}")
@@ -104,17 +111,24 @@ class ProcessService:
                     notes=notes,
                 )
             )
+        return ProcessAnalysis(context, values, norms, views, total)
+
+    async def overview(self, project_id: UUID) -> ProcessesOverview:
+        analysis = await self.analyse(await self._loader.context(self._user, project_id))
+        views = analysis.views
         if views and all(v.result.demand_per_day is None for v in views):
             raise ConflictError(
                 "Не хватает обязательных параметров, чтобы оценить процессы: заполните объёмы и режим работы",
                 error_code=ErrorCode.PARAMS_INVALID,
             )
-        hours = next((v.result.hours_per_day for v in views if v.result.hours_per_day), None)
+        project = analysis.context.project
         return ProcessesOverview(
-            project_id=context.project.id,
-            project_version=context.project.version,
+            project_id=project.id,
+            project_version=project.version,
             processes=views,
-            total_labor_cost_rub_year=total,
-            working_hours_per_day=hours,
-            peak_factor=values.get(PEAK_FACTOR_PARAM),
+            total_labor_cost_rub_year=analysis.total_labor_cost_rub_year,
+            working_hours_per_day=next(
+                (v.result.hours_per_day for v in views if v.result.hours_per_day), None
+            ),
+            peak_factor=analysis.values.get(PEAK_FACTOR_PARAM),
         )

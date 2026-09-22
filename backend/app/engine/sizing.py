@@ -204,18 +204,27 @@ def _goods_to_person(s: _Sizer, out: SizingOutcome) -> None:
     out.stations = int(stations.value)
 
 
+def _real_coverage(s: _Sizer) -> tuple[Quantity, list[Quantity], str]:
+    """Real-world m²/h if the vendor publishes it; otherwise passport m²/h × real-to-passport norm."""
+    real = s.specs.optional("coverage_real_m2_h")
+    if real is not None:
+        return real, [real], real.key
+    passport, share = s.specs.get("coverage_m2_h"), s.norms.get("cleaning_real_to_passport_share")
+    return passport, [passport, share], f"{passport.key} × {share.key}"
+
+
 def _area(s: _Sizer, out: SizingOutcome) -> None:
-    coverage = s.specs.get("coverage_m2_h")
-    real = s.norms.get("cleaning_real_to_passport_share")
+    coverage, inputs, expression = _real_coverage(s)
+    factor = 1.0 if coverage.key == "coverage_real_m2_h" else s.norms.value("cleaning_real_to_passport_share")
     availability = s.availability(out)
     hours = _metric("hours_per_day", "Рабочих часов в сутки", s.demand.hours_per_day, "ч")
     per_robot = s.trace.record(
         "effective_per_day",
         "Площадь за сутки одним роботом",
-        coverage.value * real.value * availability.value * hours.value,
+        coverage.value * factor * availability.value * hours.value,
         "м²/сут",
-        f"{coverage.key} × {real.key} × {availability.key} × hours_per_day",
-        [coverage, real, availability, hours],
+        f"{expression} × {availability.key} × hours_per_day",
+        [*inputs, availability, hours],
         Section.SIZING,
     )
     out.effective_per_hour = per_robot.value / hours.value

@@ -1,4 +1,5 @@
 import csv
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -149,6 +150,59 @@ def _spec_records(
     return [r for r in records if r.key in keys and r.value is not None]
 
 
+_CLAIM_UNITS: list[tuple[str, str]] = [
+    ("отборов/ч на станцию", "station_throughput_lines_h"),
+    ("м²/ч", "coverage_m2_h"),
+    ("паллет/ч", "vendor_throughput_per_hour"),
+]
+_REAL_CONDITIONS = "реальн"
+
+
+def _claim_key(claim: dict[str, Any]) -> str | None:
+    unit = str(claim.get("unit") or "")
+    for marker, key in _CLAIM_UNITS:
+        if unit == marker:
+            real = _REAL_CONDITIONS in str(claim.get("conditions") or "").lower()
+            return "coverage_real_m2_h" if key == "coverage_m2_h" and real else key
+    return None
+
+
+def _claim_number(text: str, unit: str) -> float | None:
+    """The number written right before the unit wins: «0,5 м²/с (≈1800 м²/ч)» → 1800."""
+    match = re.search(r"(\d[\d\s]*(?:[.,]\d+)?)\s*" + re.escape(unit), text)
+    if match:
+        return first_number(match.group(1).replace(" ", ""))
+    return first_number(text)
+
+
+def _claim_records(
+    claims: list[dict[str, Any]], keys: dict[str, SpecKeySeed], vendor: str | None
+) -> list[SpecRecord]:
+    """Throughput claims → specs; a range keeps its lower bound (conservative), the text is the raw value."""
+    records: list[SpecRecord] = []
+    for claim in claims:
+        key = _claim_key(claim)
+        number = _claim_number(str(claim.get("value") or ""), str(claim.get("unit") or ""))
+        status = _RESEARCH_STATUS.get(str(claim.get("status")))
+        if key is None or key not in keys or number is None or status is None:
+            continue
+        if any(record.key == key for record in records):
+            continue
+        records.append(
+            SpecRecord(
+                key=key,
+                value=number,
+                value_num=number,
+                unit=keys[key].unit,
+                status=status,
+                source=_source_for(claim.get("source"), None, vendor),
+                raw_value=f"{claim.get('value')} {claim.get('unit')}",
+                note=claim.get("conditions"),
+            )
+        )
+    return records
+
+
 def read_research_specs(data_root: Path, keys: dict[str, SpecKeySeed]) -> dict[str, ResearchProduct]:
     with (data_root / SPECS_FILE).open(encoding="utf-8") as handle:
         items: list[dict[str, Any]] = yaml.safe_load(handle)
@@ -159,6 +213,9 @@ def read_research_specs(data_root: Path, keys: dict[str, SpecKeySeed]) -> dict[s
         product = ResearchProduct(name=item["product"], vendor_url=vendor_url)
         for key, entry in (item.get("specs") or {}).items():
             product.specs += _spec_records(key, entry or {}, keys, vendor_domain)
+        present = {record.key for record in product.specs}
+        claims = _claim_records(item.get("throughput_claims") or [], keys, vendor_domain)
+        product.specs += [record for record in claims if record.key not in present]
         for ref in item.get("references") or []:
             product.cases.append({**ref, "source_spec": _source_for(ref.get("source"), None, vendor_domain)})
         registry = item.get("registry_minpromtorg") or {}

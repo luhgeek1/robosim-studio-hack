@@ -1,11 +1,13 @@
 import hashlib
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.core import parsing
 from app.core.config import Settings
 from app.db.models import (
     DataVersion,
@@ -20,6 +22,7 @@ from app.db.uow import UnitOfWork
 from app.domain.catalog import Badge, SpecValue, completeness, derived_badges
 from app.domain.common.provenance import Provenance
 from app.domain.reference import SpecGroup
+from app.seeds import catalog_sources
 from app.seeds.catalog_sources import (
     CATALOG_FILE,
     CATALOG_SOURCE,
@@ -45,6 +48,7 @@ _OFFER_NAMESPACE = uuid.UUID("5b3f0c1e-8a1d-4d8e-9f62-3c0a4b7e2d11")
 
 
 _SEED_FILES = ("catalog_mapping.yaml", "spec_keys.yaml", "solution_types.yaml")
+_LOADER_MODULES = (catalog_sources, parsing)
 
 
 def seed_inputs_hash(settings: Settings) -> str:
@@ -53,6 +57,9 @@ def seed_inputs_hash(settings: Settings) -> str:
         digest.update(path.read_bytes())
     for name in _SEED_FILES:
         digest.update((DATA_DIR / name).read_bytes())
+    # The loader itself is an input too: changing how research specs are read must reload the catalog.
+    for module in _LOADER_MODULES:
+        digest.update(Path(module.__file__ or "").read_bytes())
     return digest.hexdigest()
 
 

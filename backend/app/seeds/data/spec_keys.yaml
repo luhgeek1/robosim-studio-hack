@@ -126,6 +126,22 @@
   better: higher
   is_key_constraint: false
   solution_types: [cleaning_robot, inventory_robot, service_robot]
+- key: coverage_real_m2_h
+  name: Производительность по площади в реальных условиях
+  group: technical
+  unit: м²/ч
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [cleaning_robot, inventory_robot, service_robot]
+- key: vendor_throughput_per_hour
+  name: Заявленная производительность (паспорт)
+  group: technical
+  unit: ед/ч
+  value_type: number
+  better: higher
+  is_key_constraint: false
+  solution_types: [amr_transport, fmr_forklift, asrs_storage]
 - key: cleaning_width_mm
   name: Ширина уборки
   group: technical
