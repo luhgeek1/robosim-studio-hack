@@ -1,5 +1,3 @@
-"""Refresh-token revocation list in Redis; entries expire together with the token."""
-
 from datetime import UTC, datetime
 
 from redis.asyncio import Redis

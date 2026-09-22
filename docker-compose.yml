@@ -1,4 +1,3 @@
-# Full local stack: `docker compose up --build`. API: http://localhost:8000/api/docs
 x-backend: &backend
   build: {context: ., dockerfile: backend/Dockerfile}
   # Secrets (RS_JWT_SECRET, RS_CSRF_KEY; required when RS_STAGE=prod) go to .env, see backend/.env.example.

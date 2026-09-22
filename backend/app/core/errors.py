@@ -1,5 +1,3 @@
-"""Domain error hierarchy. Each error maps to a contract ``Problem`` with an ``error_code``."""
-
 from enum import StrEnum
 from typing import Any
 

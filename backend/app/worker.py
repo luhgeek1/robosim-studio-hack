@@ -1,8 +1,3 @@
-"""Background worker (arq). Same image as the API, started with ``arq app.worker.WorkerSettings``.
-
-Job functions are registered here as they are implemented (simulation, reports, enrichment).
-"""
-
 from typing import Any, ClassVar
 
 from arq import cron

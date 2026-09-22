@@ -1,8 +1,3 @@
-"""RBAC: a role is a fixed set of permissions defined in code.
-
-ТЗ 3.1.1: гость, пользователь, администратор, вендор (опционально).
-"""
-
 from enum import StrEnum
 
 

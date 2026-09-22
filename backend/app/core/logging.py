@@ -1,5 +1,3 @@
-"""Structured logging: one JSON object per line with the current ``request_id``."""
-
 import json
 import logging
 from contextvars import ContextVar

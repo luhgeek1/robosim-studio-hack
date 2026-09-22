@@ -1,5 +1,3 @@
-"""Fixed-window rate limiter in Redis: ``limit`` hits per ``window_s`` per key."""
-
 from redis.asyncio import Redis
 
 

@@ -1,5 +1,3 @@
-"""Demo accounts for the jury (ТЗ 8.2: демо-учётки). Password comes from settings, not from code."""
-
 from app.core.config import Settings
 from app.core.security.passwords import hash_password
 from app.db.models import User

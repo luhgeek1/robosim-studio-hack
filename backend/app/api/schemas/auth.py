@@ -1,5 +1,3 @@
-"""Schemas from docs/api/components/platform.yaml (users, tokens, API keys)."""
-
 from datetime import datetime
 from enum import StrEnum
 from uuid import UUID

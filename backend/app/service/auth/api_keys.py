@@ -1,5 +1,3 @@
-"""Integration API keys (ТЗ 3.8.2). The secret is shown once; only its SHA-256 is stored."""
-
 import hashlib
 import secrets
 from dataclasses import dataclass

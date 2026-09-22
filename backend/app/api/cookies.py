@@ -1,5 +1,3 @@
-"""Auth cookies for browser clients: httpOnly refresh token + readable CSRF token (double submit)."""
-
 from typing import Any
 
 from fastapi import Response

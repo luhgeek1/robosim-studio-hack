@@ -1,10 +1,3 @@
-"""Auth: users, API keys; background jobs.
-
-Revision ID: 3127dd397c39
-Revises:
-Create Date: 2026-09-22 01:23:43.476175+00:00
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa

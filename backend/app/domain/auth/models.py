@@ -1,5 +1,3 @@
-"""Auth DTOs that cross layer boundaries. ORM objects never leave repositories and services."""
-
 from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID

@@ -1,5 +1,3 @@
-"""ASGI request tracing: ``X-Request-ID`` in/out, ``X-Process-Time-Ms``, one access log line per request."""
-
 import logging
 import time
 from uuid import uuid4

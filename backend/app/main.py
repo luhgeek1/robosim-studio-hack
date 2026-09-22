@@ -1,5 +1,3 @@
-"""Application factory. ``create_app(settings)`` builds an isolated app (used by tests and uvicorn)."""
-
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 

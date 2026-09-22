@@ -1,5 +1,3 @@
-"""argon2id hashing off the event loop (hashing is CPU-bound, ~50 ms)."""
-
 import asyncio
 
 from argon2 import PasswordHasher

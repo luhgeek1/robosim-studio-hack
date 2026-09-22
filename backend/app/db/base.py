@@ -1,5 +1,3 @@
-"""Declarative base with a naming convention so Alembic generates stable constraint names."""
-
 import uuid
 from datetime import UTC, datetime
 from enum import StrEnum

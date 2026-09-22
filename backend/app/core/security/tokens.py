@@ -1,5 +1,3 @@
-"""JWT encoding and decoding. Access and refresh tokens carry different ``jti``; revocation lives in Redis."""
-
 import hashlib
 import hmac
 from dataclasses import dataclass

@@ -1,5 +1,3 @@
-"""Registration, login, token rotation and logout."""
-
 from dataclasses import dataclass
 from datetime import UTC, datetime
 

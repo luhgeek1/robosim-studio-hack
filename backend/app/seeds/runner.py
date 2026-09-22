@@ -1,8 +1,3 @@
-"""Idempotent seed tasks, run in order at startup (dev/demo) or via ``python -m app.seeds``.
-
-Each task checks what already exists and only inserts what is missing, so re-running is safe.
-"""
-
 import logging
 from collections.abc import Awaitable, Callable
 

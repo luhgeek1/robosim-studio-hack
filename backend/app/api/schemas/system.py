@@ -1,5 +1,3 @@
-"""System endpoints and background jobs (platform.yaml#/Health, #/SystemVersion; common.yaml#/Job)."""
-
 from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID

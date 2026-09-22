@@ -1,8 +1,3 @@
-"""Integration fixtures on real Postgres and Redis (``docker compose up -d db redis``).
-
-Tests use a separate database ``<name>_test`` (created on first run) and Redis DB 15.
-"""
-
 import asyncio
 import os
 from collections.abc import AsyncIterator

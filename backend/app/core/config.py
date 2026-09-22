@@ -1,5 +1,3 @@
-"""Application settings. Read only through ``get_settings()`` / ``Depends(get_settings)``."""
-
 from functools import lru_cache
 from typing import Literal, Self
 

@@ -1,5 +1,3 @@
-"""Exception handlers that render every error as a contract ``Problem`` (RFC 7807 + ``error_code``)."""
-
 import logging
 from datetime import UTC, datetime
 from typing import Any

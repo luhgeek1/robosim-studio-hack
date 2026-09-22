@@ -1,5 +1,3 @@
-"""Request-scoped dependencies: settings, UoW (one transaction per request), user, permissions."""
-
 from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Annotated, Literal
 

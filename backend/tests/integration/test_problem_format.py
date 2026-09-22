@@ -1,5 +1,3 @@
-"""Every error is a contract Problem with an error_code from the closed list."""
-
 import pytest
 from httpx import AsyncClient
 

@@ -1,8 +1,3 @@
-"""Every operation the backend exposes must exist in docs/api with the same method, path and operationId.
-
-Coverage (implemented / all contract operations) is reported, not enforced: the contract leads the code.
-"""
-
 from pathlib import Path
 from typing import Any
 

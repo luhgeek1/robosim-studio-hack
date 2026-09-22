@@ -1,5 +1,3 @@
-"""Engine and session factory, created once per process from settings."""
-
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import Settings

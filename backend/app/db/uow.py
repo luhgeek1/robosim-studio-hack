@@ -1,5 +1,3 @@
-"""Unit of Work: one transaction per request. Services call ``flush()``; only the owner of the UoW commits."""
-
 from types import TracebackType
 from typing import Self
 
