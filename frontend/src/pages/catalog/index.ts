@@ -1,1 +1,1 @@
-export { CatalogPage } from './stubs'
+export { CatalogPage } from './CatalogPage'

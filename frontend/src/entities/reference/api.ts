@@ -9,6 +9,8 @@ export const referenceApi = {
   objectTypes: () => api.get<Res<'/api/v1/object-types', 'get'>>('/object-types').then((r) => r.data.items),
   objectType: (key: string) =>
     api.get<Res<'/api/v1/object-types/{object_type}', 'get'>>(`/object-types/${key}`).then((r) => r.data),
+  norms: (objectType?: string) =>
+    api.get<Res<'/api/v1/norms', 'get'>>('/norms', { params: { object_type: objectType } }).then((r) => r.data),
   version: () => api.get<Res<'/api/v1/version', 'get'>>('/version').then((r) => r.data),
   templateUrl: (objectType: string) => apiUrl(`/object-types/${objectType}/template.xlsx`),
 }
@@ -25,3 +27,10 @@ export const useObjectType = (key: string | undefined) =>
   })
 
 export const useSystemVersion = () => useQuery({ queryKey: qk.version, queryFn: referenceApi.version, staleTime: HOUR })
+
+export const useNorms = (objectType?: string) =>
+  useQuery({
+    queryKey: ['norms', objectType ?? null],
+    queryFn: () => referenceApi.norms(objectType),
+    staleTime: HOUR,
+  })

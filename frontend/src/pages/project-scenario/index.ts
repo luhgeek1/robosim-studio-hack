@@ -1,1 +1,1 @@
-export { ScenarioPage } from './stubs'
+export { ScenarioPage } from './ScenarioPage'

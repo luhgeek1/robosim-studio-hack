@@ -1,1 +1,1 @@
-export { ProductPage } from './stubs'
+export { ProductPage } from './ProductPage'
