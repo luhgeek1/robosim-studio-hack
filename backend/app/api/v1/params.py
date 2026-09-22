@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, File, Form, Path, Query, UploadFile
 
 from app.api.deps import UowDep, require
 from app.api.schemas.processes import ProcessDemandList
@@ -9,18 +9,23 @@ from app.api.schemas.projects import (
     DataQualityItem,
     DataQualityReport,
     DataQualitySummary,
+    ImportApply,
+    ImportResult,
     ParamHistoryItem,
     ParamHistoryList,
     ParamsBulkUpsert,
     ParamValueUpdate,
     ProjectParam,
     ProjectParams,
+    SmartImportRequest,
     ValidationReport,
 )
+from app.core.errors import LlmUnavailableError
 from app.domain.auth import CurrentUser, Permission
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.project.params import data_quality
 from app.service.projects.context import ProjectContext
+from app.service.projects.imports import ImportService, ImportView
 from app.service.projects.params import ParamChange, ParamsService
 from app.service.projects.processes import ProcessService
 
@@ -125,3 +130,72 @@ async def data_quality_report(project_id: ProjectIdPath, user: OwnerDep, uow: Uo
 )
 async def processes(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) -> ProcessDemandList:
     return ProcessDemandList.from_domain(await ProcessService(uow, user).overview(project_id))
+
+
+def _import_result(view: ImportView) -> ImportResult:
+    return ImportResult.model_validate(
+        {
+            "import_id": view.id,
+            "source_kind": view.source_kind,
+            "provider": view.provider,
+            "mapped": view.mapped,
+            "unmapped": view.unmapped,
+            "warnings": view.warnings,
+            "applied": view.applied,
+        }
+    )
+
+
+@router.post(
+    "/import",
+    operation_id="importProjectParamsFile",
+    summary="Загрузить параметры из файла (xlsx по шаблону, произвольный xlsx/csv, json)",
+    description="Возвращает результат сопоставления; ничего не применяется до `applyImport`.",
+    responses={413: {"description": "Файл больше 20 МБ"}, 415: {"description": "Неподдерживаемый формат"}},
+)
+async def import_file(
+    project_id: ProjectIdPath,
+    user: OwnerDep,
+    uow: UowDep,
+    file: Annotated[UploadFile, File()],
+    use_assistant: Annotated[bool, Form()] = False,
+) -> ImportResult:
+    content = await file.read()
+    view = await ImportService(uow, user).parse(project_id, file.filename or "upload", content)
+    return _import_result(view)
+
+
+@router.post(
+    "/import/text",
+    operation_id="importProjectParamsText",
+    summary="Умный импорт из свободного текста (ассистент)",
+    description="Описание объекта словами → предложения параметров со статусом llm_suggested. "
+    "Без LLM — 503 LLM_UNAVAILABLE.",
+    tags=["params", "assist"],
+    responses={503: {"description": "Ассистент недоступен"}},
+)
+async def import_text(
+    project_id: ProjectIdPath, payload: SmartImportRequest, user: OwnerDep, uow: UowDep
+) -> ImportResult:
+    await ParamsService(uow, user).context(project_id)
+    raise LlmUnavailableError()
+
+
+@router.post(
+    "/import/{import_id}/apply",
+    operation_id="applyImport",
+    summary="Применить выбранные значения импорта к проекту",
+    responses={404: {"description": "Не найдено"}},
+)
+async def apply_import(
+    project_id: ProjectIdPath,
+    import_id: Annotated[UUID, Path()],
+    user: OwnerDep,
+    uow: UowDep,
+    payload: ImportApply | None = None,
+) -> ProjectParams:
+    request = payload or ImportApply()
+    context = await ImportService(uow, user).apply(
+        project_id, import_id, request.accept_keys, request.overwrite_user_values
+    )
+    return _params(context)

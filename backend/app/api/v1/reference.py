@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Path, Query, Response
 
 from app.api.deps import UowDep
 from app.api.schemas.reference import (
@@ -16,7 +16,10 @@ from app.api.schemas.reference import (
     SolutionTypeList,
 )
 from app.domain.reference import NormCategory, ObjectTypeKey
+from app.infra.importers.template import build_template
 from app.service.reference import ReferenceService
+
+XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 router = APIRouter(tags=["reference"])
 
@@ -83,3 +86,20 @@ async def list_norms(
 @router.get("/norm-sets", operation_id="listNormSets", summary="Версии наборов нормативов")
 async def list_norm_sets(uow: UowDep) -> NormSetList:
     return NormSetList(items=[NormSet.from_domain(item) for item in await ReferenceService(uow).norm_sets()])
+
+
+@router.get(
+    "/object-types/{object_type}/template.xlsx",
+    operation_id="downloadImportTemplate",
+    summary="Excel-шаблон для загрузки параметров (ТЗ 3.2.3)",
+    response_class=Response,
+    responses={200: {"content": {XLSX_MEDIA_TYPE: {}}, "description": "Файл xlsx"}},
+)
+async def download_template(object_type: Annotated[ObjectTypeKey, Path()], uow: UowDep) -> Response:
+    detail = await ReferenceService(uow).object_type(object_type.value)
+    filename = f"roboscope_{object_type.value}_template.xlsx"
+    return Response(
+        content=build_template(detail),
+        media_type=XLSX_MEDIA_TYPE,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

@@ -50,7 +50,7 @@ class ProjectRepository:
         project: Project | None = await self._session.scalar(statement)
         return project
 
-    def add(self, item: Project | ProjectParam | ParamHistory | AuditEvent | ParamImport) -> None:
+    def add(self, item: Project | ProjectParam | ParamHistory | AuditEvent | ParamImport | Source) -> None:
         self._session.add(item)
 
     async def delete(self, project: Project) -> None:

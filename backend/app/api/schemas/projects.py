@@ -268,3 +268,45 @@ class AuditList(ApiModel):
     page: int
     page_size: int
     total: int
+
+
+class ImportConflict(ApiModel):
+    current_value: Scalar = None
+    current_status: str | None = None
+
+
+class ImportMappedItem(ApiModel):
+    key: str
+    name: str
+    value: Scalar
+    unit: str | None = None
+    raw_field: str | None = None
+    raw_value: str | None = None
+    status: str
+    confidence: float = Field(ge=0, le=1)
+    conflict_with_current: ImportConflict | None = None
+
+
+class ImportUnmapped(ApiModel):
+    raw_field: str
+    raw_value: str
+    suggestion_key: str | None = None
+
+
+class ImportResult(ApiModel):
+    import_id: UUID
+    source_kind: Literal["xlsx_template", "xlsx_freeform", "csv", "json", "text_llm", "pdf_llm"]
+    provider: str = Field(description="rules — детерминированный разбор шаблона; gemini — ассистент")
+    mapped: list[ImportMappedItem]
+    unmapped: list[ImportUnmapped]
+    warnings: list[str]
+    applied: bool
+
+
+class ImportApply(ApiModel):
+    accept_keys: list[str] = Field(default_factory=list, description="Если пусто — применить все mapped")
+    overwrite_user_values: bool = False
+
+
+class SmartImportRequest(ApiModel):
+    text: str = Field(max_length=20000)

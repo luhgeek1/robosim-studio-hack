@@ -88,3 +88,21 @@ class ParamsInvalidError(DomainError):
     status_code = 422
     error_code = ErrorCode.PARAMS_INVALID
     default_detail = "Проверьте значения параметров"
+
+
+class FileTooLargeError(DomainError):
+    status_code = 413
+    error_code = ErrorCode.FILE_TOO_LARGE
+    default_detail = "Файл слишком большой"
+
+
+class UnsupportedFileTypeError(DomainError):
+    status_code = 415
+    error_code = ErrorCode.UNSUPPORTED_FILE_TYPE
+    default_detail = "Неподдерживаемый формат файла"
+
+
+class LlmUnavailableError(DomainError):
+    status_code = 503
+    error_code = ErrorCode.LLM_UNAVAILABLE
+    default_detail = "Ассистент недоступен: загрузите файл по шаблону или заполните форму"
