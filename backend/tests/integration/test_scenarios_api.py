@@ -124,6 +124,10 @@ async def test_raas_copy_and_comparison_recommends(client: AsyncClient) -> None:
     assert payback["better"] == "lower"
     assert table["recommendation"]["scenario_id"]
     assert set(table["cashflow_overlay"]) == {s["scenario_id"] for s in table["scenarios"]}
+    project = (await client.get(f"/api/v1/projects/{project_id}", headers=headers)).json()
+    assert project["scenarios_count"] == 3
+    assert project["recommended_scenario_id"] == table["recommendation"]["scenario_id"]
+    assert project["last_calculation_id"]
 
 
 async def test_overrides_and_manual_values_are_validated(client: AsyncClient) -> None:
@@ -200,3 +204,14 @@ async def test_other_users_cannot_see_scenarios(client: AsyncClient) -> None:
     admin = bearer((await login(client, "admin@roboscope.demo"))["access"])
     response = await client.get(f"/api/v1/scenarios/{scenario['id']}", headers=admin)
     assert response.status_code == 404
+
+
+async def test_project_copy_takes_scenarios_along(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client)
+    await _purchase(client, headers, project_id)
+    copy = (
+        await client.post(f"/api/v1/projects/{project_id}/copy", json={"name": "Копия"}, headers=headers)
+    ).json()
+    listed = (await client.get(f"/api/v1/projects/{copy['id']}/scenarios", headers=headers)).json()
+    assert [s["kind"] for s in listed["items"]] == ["baseline", "purchase"]
+    assert listed["items"][1]["last_calculation"] is None

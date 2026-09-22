@@ -69,3 +69,59 @@ class ScenarioRepository:
         )
         run: CalculationRun | None = await self._session.scalar(statement)
         return run
+
+    async def latest_project_runs(self, project_ids: Sequence[UUID]) -> dict[UUID, CalculationRun]:
+        if not project_ids:
+            return {}
+        latest = (
+            select(CalculationRun.project_id, func.max(CalculationRun.computed_at).label("at"))
+            .where(CalculationRun.project_id.in_(project_ids))
+            .group_by(CalculationRun.project_id)
+            .subquery()
+        )
+        on_latest = (CalculationRun.project_id == latest.c.project_id) & (
+            CalculationRun.computed_at == latest.c.at
+        )
+        statement = select(CalculationRun).join(latest, on_latest)
+        return {run.project_id: run for run in (await self._session.scalars(statement)).all()}
+
+    async def recommended(self, project_ids: Sequence[UUID]) -> dict[UUID, Scenario]:
+        if not project_ids:
+            return {}
+        statement = select(Scenario).where(Scenario.project_id.in_(project_ids), Scenario.is_recommended)
+        return {s.project_id: s for s in (await self._session.scalars(statement)).all()}
+
+    async def copy_to(self, source_project_id: UUID, target_project_id: UUID, actor: str) -> int:
+        """Scenarios with their items move to the copy; calculations stay behind and are redone on demand."""
+        scenarios = await self.for_project(source_project_id)
+        for scenario in scenarios:
+            copy = Scenario(
+                project_id=target_project_id,
+                name=scenario.name,
+                kind=scenario.kind,
+                is_baseline=scenario.is_baseline,
+                financing=dict(scenario.financing),
+                horizon_years=scenario.horizon_years,
+                discount_rate_pct=scenario.discount_rate_pct,
+                overrides=list(scenario.overrides),
+                created_by=actor,
+            )
+            copy.items = [
+                ScenarioItem(
+                    position=item.position,
+                    process_key=item.process_key,
+                    product_id=item.product_id,
+                    offer_id=item.offer_id,
+                    count_mode=item.count_mode,
+                    count_manual=item.count_manual,
+                    stations_mode=item.stations_mode,
+                    stations_count=item.stations_count,
+                    price_override_rub=item.price_override_rub,
+                    throughput_override_per_hour=item.throughput_override_per_hour,
+                    override_reason=item.override_reason,
+                    notes=item.notes,
+                )
+                for item in scenario.items
+            ]
+            self._session.add(copy)
+        return len(scenarios)
