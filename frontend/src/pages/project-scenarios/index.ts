@@ -1,0 +1,1 @@
+export { ScenariosPage } from './stubs'

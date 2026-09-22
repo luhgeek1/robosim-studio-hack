@@ -1,0 +1,1 @@
+export { MatchingPage } from './stubs'

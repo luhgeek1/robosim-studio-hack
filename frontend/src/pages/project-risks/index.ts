@@ -1,0 +1,1 @@
+export { RisksPage } from './stubs'

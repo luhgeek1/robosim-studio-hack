@@ -1,0 +1,1 @@
+export { LayoutPage } from './stubs'

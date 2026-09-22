@@ -1,0 +1,1 @@
+export { ObjectPage } from './stubs'
