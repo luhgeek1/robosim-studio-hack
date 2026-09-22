@@ -98,7 +98,11 @@ def _object_type(
         by_group[param.group_key].append(_parameter(param, sources))
     groups = [
         ParameterGroup(
-            key=g["key"], name=g["name"], order=g.get("order", 0), parameters=by_group.get(g["key"], [])
+            key=g["key"],
+            name=g["name"],
+            order=g.get("order", 0),
+            parameters=by_group.get(g["key"], []),
+            survey_hint=g.get("survey_hint"),
         )
         for g in sorted(item.parameter_groups, key=lambda group: group.get("order", 0))
     ]

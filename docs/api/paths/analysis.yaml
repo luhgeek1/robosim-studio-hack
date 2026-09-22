@@ -142,7 +142,9 @@ scenarioMonteCarlo:
     tags: [calculations]
     operationId: runMonteCarlo
     summary: Монте-Карло по неопределённости входов
-    description: method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+    description: |
+      method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+      Пока имитация не готова, surrogate и des отвечают 409.
     parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
     requestBody:
       required: false
@@ -150,6 +152,7 @@ scenarioMonteCarlo:
     responses:
       '200': {description: "Готово", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MonteCarloResult'}}}}
       '202': {$ref: '../components/common.yaml#/responses/JobAccepted'}
+      '409': {description: "Метод пока недоступен или сценарий не рассчитывается", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
 
 scenarioMonteCarloResult:
   get:

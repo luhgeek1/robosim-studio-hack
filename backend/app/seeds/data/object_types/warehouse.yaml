@@ -7,14 +7,14 @@ depth: full
 dataset_sheet: Склад
 layout_templates: [warehouse_standard]
 parameter_groups:
-- {key: facility, name: Объект, order: 1}
-- {key: operating_mode, name: Режим работы, order: 2}
-- {key: operations, name: 'Операции: объём и производительность', order: 3}
-- {key: staff, name: Персонал, order: 4}
-- {key: layout, name: Маршруты и планировка, order: 5}
-- {key: storage, name: Хранение и характеристики грузов, order: 6}
-- {key: infrastructure, name: Инфраструктура и ограничения, order: 7}
-- {key: economics, name: Цели и экономика, order: 8}
+- {key: facility, name: Объект, order: 1, survey_hint: 'Сверить с поэтажным планом и техническим паспортом здания'}
+- {key: operating_mode, name: Режим работы, order: 2, survey_hint: 'Взять график смен и табель учёта рабочего времени за 3 месяца'}
+- {key: operations, name: 'Операции: объём и производительность', order: 3, survey_hint: 'Выгрузить из WMS фактические объёмы за 3 месяца, включая пиковые дни'}
+- {key: staff, name: Персонал, order: 4, survey_hint: 'Запросить у бухгалтерии численность и ФОТ с начислениями по группам за 12 месяцев'}
+- {key: layout, name: Маршруты и планировка, order: 5, survey_hint: 'Замерить маршруты по плану склада или сгенерировать планировку в платформе'}
+- {key: storage, name: Хранение и характеристики грузов, order: 6, survey_hint: 'Проверить по паспорту стеллажей и выгрузке ячеек из WMS'}
+- {key: infrastructure, name: Инфраструктура и ограничения, order: 7, survey_hint: 'Запросить у главного инженера схему электроснабжения, сети и интеграций'}
+- {key: economics, name: Цели и экономика, order: 8, survey_hint: 'Согласовать с финансовой службой бюджет, горизонт и целевой уровень сервиса'}
 parameters:
 - key: area_m2
   group: facility

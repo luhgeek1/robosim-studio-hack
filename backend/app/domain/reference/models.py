@@ -68,6 +68,7 @@ class ParameterGroup:
     name: str
     order: int
     parameters: list[ParameterDef]
+    survey_hint: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

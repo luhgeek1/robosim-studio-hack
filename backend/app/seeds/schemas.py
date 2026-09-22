@@ -64,6 +64,7 @@ class ParameterGroupSeed(SeedModel):
     key: str
     name: str
     order: int = 0
+    survey_hint: str | None = None
 
 
 class LaborGroupSeed(SeedModel):

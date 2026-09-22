@@ -44,6 +44,7 @@ class Snapshot:
     candidate_status: dict[str, str]
     budget_rub: float | None
     inputs: dict[str, Any] = field(default_factory=dict)
+    survey_hints: dict[str, str | None] = field(default_factory=dict)
 
     @property
     def inputs_hash(self) -> str:
@@ -149,6 +150,11 @@ class SnapshotBuilder:
             spec_status=spec_status,
             candidate_status=statuses,
             budget_rub=budget * 1_000_000 if budget else None,
+            survey_hints={
+                param.key: group.survey_hint
+                for group in object_type.parameter_groups
+                for param in group.parameters
+            },
         )
         snapshot.inputs = _inputs_json(snapshot, financing_to_json(financing))
         return snapshot

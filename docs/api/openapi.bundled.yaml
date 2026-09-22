@@ -1520,7 +1520,9 @@ paths:
         - calculations
       operationId: runMonteCarlo
       summary: Монте-Карло по неопределённости входов
-      description: method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+      description: |
+        method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+        Пока имитация не готова, surrogate и des отвечают 409.
       parameters:
         - $ref: '#/components/parameters/ScenarioId'
       requestBody:
@@ -1538,6 +1540,12 @@ paths:
                 $ref: '#/components/schemas/MonteCarloResult'
         '202':
           $ref: '#/components/responses/JobAccepted'
+        '409':
+          description: Метод пока недоступен или сценарий не рассчитывается
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/scenarios/{scenario_id}/monte-carlo/{job_id}:
     get:
       tags:
