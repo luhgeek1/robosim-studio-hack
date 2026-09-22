@@ -13,7 +13,8 @@
 
 Разработка (с 22.09). В `backend/` готовы каркас, справочники и каталог, проекты и подбор, сценарии и экономика
 (`engine/economics`, `engine/calculation`, трасса, чувствительность, калибровка по ФЦ БАС). Дальше — планировка
-и симуляция по порядку из `docs/STATUS.md`. Решения — `docs/DECISIONS.md` (D-003…D-015).
+и симуляция по порядку из `docs/STATUS.md`. MVP фронта делаем сами на новом каркасе (D-018, `docs/FRONTEND.md`).
+Решения — `docs/DECISIONS.md` (D-003…D-018).
 Прототип v0 не развиваем: его доменную логику переносим из `legacy/backend-v0/` с переработкой.
 
 ## Обязательный ритуал каждой сессии
@@ -41,7 +42,8 @@
 3. `docs/CASE_BRIEF.md` — выжимка ТЗ, дополнений и Q&A: требования, критерии, сроки.
 4. По задаче: `docs/PRODUCT.md` (видение, фичи, демо), `docs/CONTRACTS.md` + `docs/api/` (доменная модель и API),
    `docs/ENGINEERING.md` (стандарт кода и архитектуры), `docs/DATA.md` (датасеты и ловушки),
-   `docs/MARKET.md` (рынок, конкуренты, бенчмарки), `docs/RESEARCH.md` (ML, исследования, промпты).
+   `docs/MARKET.md` (рынок, конкуренты, бенчмарки), `docs/RESEARCH.md` (ML, исследования, промпты),
+   `docs/FRONTEND.md` (экраны, маршруты, эндпоинты фронта).
 5. Первоисточники — только когда нужна точная формулировка: `case/`. Результаты исследований — `research/`.
 
 ## Карта репозитория
@@ -60,7 +62,8 @@ case/                  материалы кейса — ТОЛЬКО ЧТЕНИ
   api/                 OpenAPI-контракт — источник истины по API (см. docs/CONTRACTS.md)
 research/              результаты исследований: сценарии ФЦ БАС, ТТХ роботов с источниками (входные данные, не истина)
 backend/               новый бэкенд: FastAPI + Postgres + Alembic + Redis/arq, uv; структура — docs/ENGINEERING.md §3
-frontend/              прототип v0: Vite + React 19 + three.js — фронтендер заменит каркасом из template/frontend
+frontend/              новый фронт: Vite + React 19 + shadcn + TanStack Query; экраны и эндпоинты — docs/FRONTEND.md
+legacy/frontend-v0/    фронт прототипа v0 (в .gitignore, донор стилей; 3D-карта — тег v0-twin-3d)
 legacy/backend-v0/     бэкенд прототипа v0 — только донор логики при переносе; удалить до сдачи (весь v0 — тег v0-prototype)
 template/              старый проект команды, основа нового каркаса (в .gitignore, свои секреты — не коммитить)
 ```
@@ -110,4 +113,4 @@ make migration m="add catalog"   # новая миграция (autogenerate + �
 ```
 
 Демо-учётки (пароль `Demo12345!`, задаётся `RS_DEMO_PASSWORD`): `admin@roboscope.demo`, `user@roboscope.demo`,
-`vendor@roboscope.demo`. Прототип v0 фронта: `cd frontend && npm install && npm run dev` (с новым API не работает).
+`vendor@roboscope.demo`. Фронт: `cd frontend && npm install && npm run dev` (:5173, `/api` проксируется на :8000).
