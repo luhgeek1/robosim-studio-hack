@@ -1,1 +1,1 @@
-export { ComparisonPage } from './stubs'
+export { ComparisonPage } from './ComparisonPage'

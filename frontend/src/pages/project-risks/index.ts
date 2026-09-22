@@ -1,1 +1,1 @@
-export { RisksPage } from './stubs'
+export { RisksPage } from './RisksPage'

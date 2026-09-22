@@ -54,7 +54,7 @@ export function TraceSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[720px] gap-0 sm:max-w-[720px]">
+      <SheetContent className="gap-0 data-[side=right]:w-[720px] data-[side=right]:sm:max-w-[min(720px,90vw)]">
         <SheetHeader className="border-b">
           <SheetTitle>Трасса расчёта</SheetTitle>
           <SheetDescription>

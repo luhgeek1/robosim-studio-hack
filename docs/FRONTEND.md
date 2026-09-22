@@ -14,12 +14,23 @@
 
 ## Стек
 
-Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (new-york), TanStack Query 5, react-router 7, axios
+Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль nova), TanStack Query 5, react-router 7, axios
 с single-flight refresh и CSRF (перенесён из `template/frontend`), recharts, sonner. Типы — `openapi-typescript`
 из `docs/api/openapi.bundled.yaml` (`npm run gen:api`). Без i18n, Sentry и PWA — не нужны для кейса.
 
 Раскладка FSD: `app/` (провайдеры, роутер, стили) → `pages/` → `widgets/` → `features/` → `entities/` → `shared/`
-(`api/` клиент и схема, `ui/` shadcn, `lib/` форматирование). Импорт только вниз по слоям.
+(`api/` клиент и схема, `ui/` shadcn, `lib/` форматирование). Импорт только вниз по слоям; `entities/provenance`
+(бейдж происхождения, формула) — базовая сущность, её импортируют другие сущности.
+
+## Соглашения для рестайла
+
+- **Типы ответов — из контракта:** `Res<'/api/v1/…', 'get'>` в `entities/*/api.ts`. Расхождение YAML и экрана ломает
+  `tsc`, а не демо. После правки контракта: `npm run gen:api`.
+- **Данные — в `entities/*/api.ts`** (запросы и хуки TanStack Query, ключи — `shared/api/keys.ts`); экраны их только
+  читают. Рестайл меняет `pages/`, `widgets/`, `shared/ui/` и токены в `app/index.css`, хуки не трогает.
+- Ошибки — один формат `Problem`: `parseApiProblem` / `problemText`; ошибки мутаций показываются тостом глобально.
+- Тема: токены shadcn + свои `ok / warn / crit / info` (`bg-ok-soft text-ok`…), класс `num` — табличные цифры.
+- Деньги приходят в рублях, на экране — `formatRub` (млн ₽); формулы и входы — компонент `Formula`.
 
 ## Экраны и эндпоинты
 
@@ -59,7 +70,8 @@ Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (new-york), TanStack
 cd frontend && npm install
 npm run dev          # :5173, /api проксируется на VITE_PROXY_TARGET (по умолчанию http://127.0.0.1:8000)
 npm run gen:api      # типы из docs/api/openapi.bundled.yaml
-npm run check        # tsc + eslint + сборка
+npm run check        # tsc + oxlint + prettier --check + сборка
 ```
 
 Без бэкенда: Prism-мок (`docs/api/README.md`) и `VITE_PROXY_TARGET=http://127.0.0.1:4010`.
+В составе стека: `make up` поднимает и фронт — http://localhost:3000 (nginx раздаёт сборку и проксирует `/api` на бэкенд).
