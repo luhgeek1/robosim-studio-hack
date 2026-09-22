@@ -1,8 +1,8 @@
 import pytest
 
 from app.domain.reference import SizingModel
-from app.engine.sizing import DemandInput, size
-from app.engine.trace import Book, InputKind
+from app.engine.sizing import DemandInput, SizingOptions, size
+from app.engine.trace import Book, InputKind, Quantity
 
 NORMS = Book.of(
     InputKind.NORM,
@@ -64,7 +64,9 @@ def test_passport_vs_physics() -> None:
 
 
 def test_fmr_adds_lift_time_and_default_availability() -> None:
-    out = size(SizingModel.TRANSPORT_CYCLE, PALLETS, specs(max_speed_mps=1.5), NORMS, is_fmr=True)
+    out = size(
+        SizingModel.TRANSPORT_CYCLE, PALLETS, specs(max_speed_mps=1.5), NORMS, SizingOptions(is_fmr=True)
+    )
     assert out.cycle_time_s == pytest.approx(564.44, rel=1e-4)
     assert out.availability == 0.75
 
@@ -109,3 +111,16 @@ def test_trace_renders_formula_with_numbers() -> None:
     step = next(s for s in out.trace.steps if s.key == "robots_analytic")
     assert step.rendered.endswith("= 25 шт")
     assert {q.key for q in step.inputs} == {"demand_peak_per_hour", "effective_per_hour"}
+
+
+def test_manual_throughput_skips_cycle_model() -> None:
+    # passport 90 pal/h instead of the cycle model: ⌈136.36 / 90⌉ = 2, reserve ⌈2 × 0.15⌉ = 1
+    override = Quantity(
+        "throughput_override_per_hour", "Производительность вручную", 90.0, "ед/ч", InputKind.PARAM
+    )
+    out = size(
+        SizingModel.TRANSPORT_CYCLE, PALLETS, specs(), NORMS, SizingOptions(throughput_override=override)
+    )
+    assert (out.robots, out.reserve) == (2, 1)
+    assert out.cycle_time_s is None
+    assert any("вручную" in w for w in out.warnings)

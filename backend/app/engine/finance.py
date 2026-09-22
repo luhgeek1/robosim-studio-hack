@@ -1,22 +1,12 @@
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
-from enum import StrEnum
 
 MONTHS_PER_YEAR = 12
 _IRR_LOW = -0.99
 _IRR_HIGH = 10.0
 _IRR_TOLERANCE = 1e-10
 _IRR_ITERATIONS = 200
-
-
-class PaymentSchedule(StrEnum):
-    MONTHLY = "monthly"
-    QUARTERLY = "quarterly"
-    ANNUAL = "annual"
-
-
-_MONTHS_PER_PERIOD = {PaymentSchedule.MONTHLY: 1, PaymentSchedule.QUARTERLY: 3, PaymentSchedule.ANNUAL: 12}
 
 
 def annuity_payment(principal: float, annual_rate: float, periods: int, periods_per_year: int) -> float:
@@ -39,10 +29,10 @@ class DebtPayment:
 
 
 def debt_schedule(
-    principal: float, annual_rate: float, term_months: int, schedule: PaymentSchedule
+    principal: float, annual_rate: float, term_months: int, months_per_period: int
 ) -> list[DebtPayment]:
-    """Annuity schedule; payment `k` falls at the end of month k × months-per-period."""
-    step = _MONTHS_PER_PERIOD[schedule]
+    """Annuity schedule; payment `k` falls at the end of month k × months_per_period."""
+    step = months_per_period
     periods = max(1, math.ceil(term_months / step))
     per_year = MONTHS_PER_YEAR // step
     payment = annuity_payment(principal, annual_rate, periods, per_year)

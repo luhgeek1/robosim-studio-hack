@@ -230,5 +230,25 @@ def load_norm_set(version: str = "v1") -> NormSetSeed:
     return load_yaml(DATA_DIR / f"norms_{version}.yaml", NormSetSeed)
 
 
+class CalibrationCaseSeed(SeedModel):
+    key: str
+    title: str
+    source: str
+    note: str
+    solution_types: list[str] = []
+    financing: list[str] = []
+    inputs: dict[str, float]
+    expected: dict[str, float]
+    tolerance_pct: float
+
+
+class CalibrationSeed(SeedModel):
+    cases: list[CalibrationCaseSeed]
+
+
+def load_calibration() -> CalibrationSeed:
+    return load_yaml(DATA_DIR / "calibration.yaml", CalibrationSeed)
+
+
 def load_catalog_mapping() -> CatalogMappingSeed:
     return load_yaml(DATA_DIR / "catalog_mapping.yaml", CatalogMappingSeed)

@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 
 
@@ -90,9 +90,28 @@ def fmt(value: float) -> str:
     return text.replace(",", " ").replace(".", ",")
 
 
+def display_formula(source: str) -> str:
+    return source.replace(" * ", " × ").replace("*", " × ")
+
+
+def namespaced(step: TraceStep, namespace: str) -> TraceStep:
+    """Moves a sub-calculation step (sizing of one process) under `namespace.` so keys stay unique."""
+
+    def rename(key: str) -> str:
+        return f"{namespace}.{key}"
+
+    return replace(
+        step,
+        key=rename(step.key),
+        inputs=tuple(replace(q, key=rename(q.key)) if q.kind == InputKind.METRIC else q for q in step.inputs),
+        depends_on=tuple(rename(key) for key in step.depends_on),
+    )
+
+
 @dataclass(slots=True)
 class Tracer:
     steps: list[TraceStep] = field(default_factory=list)
+    render: bool = True
 
     def record(
         self,
@@ -105,16 +124,19 @@ class Tracer:
         section: Section,
     ) -> TraceStep:
         used = tuple(inputs)
-        rendered = formula
-        for quantity in sorted(used, key=lambda q: len(q.key), reverse=True):
-            rendered = rendered.replace(quantity.key, fmt(quantity.value))
+        rendered = ""
+        if self.render:
+            rendered = formula
+            for quantity in sorted(used, key=lambda q: len(q.key), reverse=True):
+                rendered = rendered.replace(quantity.key, fmt(quantity.value))
+            rendered = f"{rendered} = {fmt(value)}{f' {unit}' if unit else ''}"
         step = TraceStep(
             key=key,
             name=name,
             value=value,
             unit=unit,
             formula=formula,
-            rendered=f"{rendered} = {fmt(value)}{f' {unit}' if unit else ''}",
+            rendered=rendered,
             inputs=used,
             section=section,
             depends_on=tuple(q.key for q in used if q.kind == InputKind.METRIC),

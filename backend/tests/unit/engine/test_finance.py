@@ -1,7 +1,6 @@
 import pytest
 
 from app.engine.finance import (
-    PaymentSchedule,
     annuity_payment,
     debt_schedule,
     irr,
@@ -23,7 +22,7 @@ def test_zero_rate_annuity_is_straight_line() -> None:
 
 
 def test_debt_schedule_repays_principal_exactly() -> None:
-    schedule = debt_schedule(1_000_000, 0.18, 36, PaymentSchedule.QUARTERLY)
+    schedule = debt_schedule(1_000_000, 0.18, 36, 3)
     assert [p.month for p in schedule[:3]] == [3, 6, 9]
     assert len(schedule) == 12
     assert sum(p.principal for p in schedule) == pytest.approx(1_000_000)

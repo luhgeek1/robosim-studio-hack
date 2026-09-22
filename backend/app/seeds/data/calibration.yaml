@@ -1,0 +1,39 @@
+cases:
+- key: fcbas_warehouse_amr
+  title: ФЦ БАС, «Сценарии применения БРС. Складские мобильные роботы», март 2026, с. 5, 8, 13, 14
+  source: fcbas_warehouse_amr
+  solution_types: [amr_transport, fmr_forklift, tow_tractor, autonomous_truck, goods_to_person]
+  note: "Модельный кейс: одна линия отгрузки pick-by-line, пробег 200 м, 1 робот + станция зарядки против 3 человек
+    в 3 смены. Цена робота — 44 млрд ₽ / 14 800 роботов (с. 14), стоимость сотрудника — 9,4 млн ₽ / 3 года / 3 человека.
+    Паспорт Ronavi H1500 — из каталога ФЦ БАС (с. 8): 1,3 м/с, 240 мин работы на 80 мин зарядки."
+  inputs:
+    robots: 1
+    chargers: 1
+    robot_price_rub: 2970000
+    people_replaced: 3
+    person_cost_rub_year: 1044000
+    years: 3
+    hours_per_day: 24
+    days_per_year: 365
+    route_length_m: 200
+    speed_mps: 1.3
+    runtime_min: 240
+    charging_min: 80
+  expected:
+    robot_cost_rub: 4400000
+    people_cost_rub: 9400000
+    pallets_per_year: 99500
+  tolerance_pct: 15
+- key: fcbas_cleaning_loan
+  title: ФЦ БАС, «Сценарии применения БРС. Роботы-уборщики», март 2026, с. 9
+  source: fcbas_cleaning
+  financing: [loan, lease]
+  note: "Слайд «Сравнительная экономика»: робот за 2,2 млн ₽ в кредит под 21 % аннуитетом на 36 месяцев — 995 тыс. ₽
+    платежей в год. Проверяет формулу аннуитета, которой платформа считает кредит и лизинг."
+  inputs:
+    principal_rub: 2200000
+    rate: 0.21
+    term_months: 36
+  expected:
+    annual_payment_rub: 995000
+  tolerance_pct: 1

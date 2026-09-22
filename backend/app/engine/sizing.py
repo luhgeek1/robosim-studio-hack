@@ -55,14 +55,20 @@ def _metric(key: str, name: str, value: float, unit: str | None) -> Quantity:
 
 class _Sizer:
     def __init__(
-        self, demand: DemandInput, specs: Book, norms: Book, distance: Quantity | None, is_fmr: bool
+        self,
+        demand: DemandInput,
+        specs: Book,
+        norms: Book,
+        distance: Quantity | None,
+        is_fmr: bool,
+        render: bool = True,
     ) -> None:
         self.demand = demand
         self.specs = specs
         self.norms = norms
         self.distance = distance
         self.is_fmr = is_fmr
-        self.trace = Tracer()
+        self.trace = Tracer(render=render)
 
     def peak(self) -> Quantity:
         return _metric("demand_peak_per_hour", "Спрос в пиковый час", self.demand.peak_per_hour, "ед/ч")
@@ -191,6 +197,10 @@ def _transport(s: _Sizer, out: SizingOutcome) -> None:
 def _goods_to_person(s: _Sizer, out: SizingOutcome) -> None:
     lines = s.norms.get("g2p_robot_lines_per_trip")
     s.count(out, s.per_robot(out, lines, s.cycle(out)))
+    _stations(s, out)
+
+
+def _stations(s: _Sizer, out: SizingOutcome) -> None:
     station = s.specs.optional("station_throughput_lines_h") or s.norms.get("g2p_station_lines_per_hour")
     stations = s.trace.record(
         "stations",
@@ -263,6 +273,29 @@ def _elevator(s: _Sizer, out: SizingOutcome) -> None:
     s.count(out, s.per_robot(out, None, s.cycle(out, elevator)))
 
 
+def _override(s: _Sizer, out: SizingOutcome, throughput: Quantity) -> None:
+    """ТЗ 3.5.3: the user sets robot throughput by hand; the cycle model is skipped, the value is traced."""
+    out.warnings.append(f"Производительность робота задана вручную: {throughput.value:g} ед/ч")
+    out.effective_per_hour = throughput.value
+    if out.model == SizingModel.AREA_COVERAGE:
+        hours = _metric("hours_per_day", "Рабочих часов в сутки", s.demand.hours_per_day, "ч")
+        per_day = s.trace.record(
+            "effective_per_day",
+            "Площадь за сутки одним роботом",
+            throughput.value * hours.value,
+            "м²/сут",
+            f"{throughput.key} × hours_per_day",
+            [throughput, hours],
+            Section.SIZING,
+        )
+        demand = _metric("demand_per_day", "Площадь к обработке в сутки", s.demand.demand_per_day, "м²/сут")
+        s.count(out, per_day.as_quantity(), demand)
+        return
+    s.count(out, throughput)
+    if out.model == SizingModel.GOODS_TO_PERSON:
+        _stations(s, out)
+
+
 _MODELS = {
     SizingModel.TRANSPORT_CYCLE: _transport,
     SizingModel.GOODS_TO_PERSON: _goods_to_person,
@@ -273,14 +306,16 @@ _MODELS = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class SizingOptions:
+    distance: Quantity | None = None
+    is_fmr: bool = False
+    render: bool = True
+    throughput_override: Quantity | None = None
+
+
 def size(
-    model: SizingModel,
-    demand: DemandInput,
-    specs: Book,
-    norms: Book,
-    *,
-    distance: Quantity | None = None,
-    is_fmr: bool = False,
+    model: SizingModel, demand: DemandInput, specs: Book, norms: Book, options: SizingOptions | None = None
 ) -> SizingOutcome:
     """Analytic robot count for one process and product.
 
@@ -288,10 +323,14 @@ def size(
     N = ⌈peak demand / throughput⌉; reserve = ⌈N × fleet_reserve_share⌉ (legend: 15–20 %).
     The simulation later checks and refines N (D-007); this is the starting point of that search.
     """
-    sizer = _Sizer(demand, specs, norms, distance, is_fmr)
+    opts = options or SizingOptions()
+    sizer = _Sizer(demand, specs, norms, opts.distance, opts.is_fmr, opts.render)
     out = SizingOutcome(model=model, trace=sizer.trace)
     try:
-        _MODELS[model](sizer, out)
+        if opts.throughput_override is not None:
+            _override(sizer, out, opts.throughput_override)
+        else:
+            _MODELS[model](sizer, out)
     except MissingInputError as exc:
         out.robots = out.reserve = out.chargers = None
         out.missing.append(f"{exc.kind.value}:{exc.key}")

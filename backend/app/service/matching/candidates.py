@@ -7,7 +7,7 @@ from app.domain.reference import ProcessDef, SizingModel
 from app.engine.demand import ProcessDemandResult
 from app.engine.expressions import ExpressionError, MissingValueError, parse
 from app.engine.matching import CandidateInput, SpecFact
-from app.engine.sizing import DemandInput, SizingOutcome, size
+from app.engine.sizing import DemandInput, SizingOptions, SizingOutcome, size
 from app.engine.trace import Book, InputKind, Quantity
 
 FMR_SOLUTION_TYPE = "fmr_forklift"
@@ -93,9 +93,8 @@ def build_candidate(
     outcome = None
     if sizing_model is not None and process.demand is not None:
         is_fmr = product.solution_type == FMR_SOLUTION_TYPE
-        outcome = size(
-            sizing_model, process.demand, book, process.norms, distance=process.distance, is_fmr=is_fmr
-        )
+        options = SizingOptions(distance=process.distance, is_fmr=is_fmr)
+        outcome = size(sizing_model, process.demand, book, process.norms, options)
     price = offer.price_rub if offer else product.price_from_rub
     robots = outcome.total_robots if outcome else None
     candidate = CandidateInput(
