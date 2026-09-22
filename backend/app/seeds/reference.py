@@ -7,11 +7,13 @@ from app.core.config import Settings
 from app.db.models import Industry, ObjectType, ParameterDef, ProcessDef, SolutionType, SpecKey
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import ProvenanceStatus
+from app.engine.expressions import ExpressionError, parse
 from app.seeds.dataset import DatasetRow, read_dataset
 from app.seeds.schemas import (
     ObjectTypeSeed,
     ParameterSeed,
     load_catalog_mapping,
+    load_norm_set,
     load_object_types,
     load_solution_types,
     load_spec_keys,
@@ -129,7 +131,40 @@ async def _parameter_row(
     return row
 
 
-def _validate(object_type: ObjectTypeSeed, solution_types: set[str]) -> None:
+_MAX_ALLOCATION = 1.0
+
+
+def _expression_problems(where: str, source: str, names: set[str]) -> list[str]:
+    try:
+        unknown = sorted(parse(source).names - names)
+    except ExpressionError as exc:
+        return [f"{where}: {exc}"]
+    return [f"{where}: unknown names {unknown}"] if unknown else []
+
+
+def _formula_problems(object_type: ObjectTypeSeed, norm_keys: set[str]) -> list[str]:
+    names = {p.key for p in object_type.parameters} | norm_keys
+    problems: list[str] = []
+    allocated: dict[str, float] = {}
+    for process in object_type.processes:
+        if process.demand is not None:
+            for field in ("per_day", "hours_per_day", "peak_factor"):
+                problems += _expression_problems(
+                    f"{process.key}.{field}", getattr(process.demand, field), names
+                )
+        if process.labor_allocation and set(process.labor_allocation) != set(process.labor_groups):
+            problems.append(f"{process.key}: labor_allocation keys differ from labor_groups")
+        for group, share in process.labor_allocation.items():
+            allocated[group] = allocated.get(group, 0.0) + share
+    problems += [
+        f"labor {g}: allocated {v:.2f} > 1" for g, v in allocated.items() if v > _MAX_ALLOCATION + 1e-9
+    ]
+    for check in object_type.checks:
+        problems += _expression_problems(f"check {check.key}", check.expression, names)
+    return problems
+
+
+def _validate(object_type: ObjectTypeSeed, solution_types: set[str], norm_keys: set[str]) -> None:
     params = {p.key for p in object_type.parameters}
     groups = {g.key for g in object_type.parameter_groups}
     labor = {g.key for g in object_type.labor_groups}
@@ -151,6 +186,7 @@ def _validate(object_type: ObjectTypeSeed, solution_types: set[str]) -> None:
             for s in process.solution_types
             if s not in solution_types
         ]
+    problems += _formula_problems(object_type, norm_keys)
     if problems:
         raise SeedDataError(f"{object_type.key}: " + "; ".join(problems))
 
@@ -158,10 +194,11 @@ def _validate(object_type: ObjectTypeSeed, solution_types: set[str]) -> None:
 async def seed_object_types(uow: UnitOfWork, settings: Settings) -> int:
     dataset = read_dataset(settings.data_root)
     solution_types = {item.key for item in load_solution_types()}
+    norm_keys = {norm.key for norm in load_norm_set("v1").norms}
     sources = SourceRegistry(uow)
     count = 0
     for order, object_type in enumerate(load_object_types()):
-        _validate(object_type, solution_types)
+        _validate(object_type, solution_types, norm_keys)
         key = object_type.key.value
         await _upsert(
             uow,
@@ -177,6 +214,8 @@ async def seed_object_types(uow: UnitOfWork, settings: Settings) -> int:
                     "parameter_groups": [g.model_dump() for g in object_type.parameter_groups],
                     "labor_groups": [g.model_dump() for g in object_type.labor_groups],
                     "layout_templates": object_type.layout_templates,
+                    "checks": [c.model_dump() for c in object_type.checks],
+                    "demo_projects": [d.model_dump() for d in object_type.demo_projects],
                     "order": order,
                 }
             ],

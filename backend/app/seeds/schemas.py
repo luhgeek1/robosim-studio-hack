@@ -73,6 +73,12 @@ class LaborGroupSeed(SeedModel):
     salary_param: str | None = None
 
 
+class DemandSeed(SeedModel):
+    per_day: str
+    hours_per_day: str
+    peak_factor: str
+
+
 class ProcessSeed(SeedModel):
     key: str
     name: str
@@ -84,6 +90,24 @@ class ProcessSeed(SeedModel):
     labor_groups: list[str] = []
     solution_types: list[str] = []
     sizing_model: SizingModel | None = None
+    demand: DemandSeed | None = None
+    labor_allocation: dict[str, float] = {}
+    labor_allocation_note: str | None = None
+
+
+class CheckSeed(SeedModel):
+    key: str
+    expression: str
+    severity: Literal["error", "warning", "info"]
+    params: list[str]
+    message: str
+    how_to_fix: str | None = None
+
+
+class DemoProjectSeed(SeedModel):
+    key: str
+    name: str
+    description: str | None = None
 
 
 class ObjectTypeSeed(SeedModel):
@@ -98,6 +122,8 @@ class ObjectTypeSeed(SeedModel):
     parameters: list[ParameterSeed]
     labor_groups: list[LaborGroupSeed] = []
     processes: list[ProcessSeed] = []
+    checks: list[CheckSeed] = []
+    demo_projects: list[DemoProjectSeed] = []
 
 
 class SourceSeed(SeedModel):

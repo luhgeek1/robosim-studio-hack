@@ -229,6 +229,26 @@ parameters:
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
   order: 14
   default: null
+- key: scheduled_peak_factor
+  group: operating_mode
+  name: Пиковый коэффициент плановых работ
+  type: number
+  unit: null
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Во сколько раз самый загруженный час плановых работ (уборка) больше среднего. Плановые работы идут по расписанию,
+    поэтому обычно 1.
+  example: '1'
+  affects: [floor_cleaning]
+  order: 15
+  default:
+    value: 1
+    status: assumption
+    rationale: 'Плановые работы (уборка) идут по расписанию и распределены по рабочему времени равномерно, поэтому пика нет:
+      коэффициент 1 означает «пиковый час равен среднему». Отдельный параметр нужен, потому что формулы расчёта не допускают
+      чисел без источника.'
 - key: feedings_per_day
   group: meals
   name: Кормлений в сутки
@@ -241,7 +261,7 @@ parameters:
   hint: 'Сколько раз в сутки раздают питание: завтрак, обед, ужин, иногда полдник и второй ужин.'
   example: '3'
   affects: [meal_delivery]
-  order: 15
+  order: 16
   default: null
 - key: meal_portions_per_day
   group: meals
@@ -257,7 +277,7 @@ parameters:
     Если есть фактическое число с пищеблока, введите его.'
   example: '1950'
   affects: [meal_delivery]
-  order: 16
+  order: 17
   default: null
 - key: kitchen_to_ward_distance_m
   group: meals
@@ -272,7 +292,7 @@ parameters:
     всё здание; используется и для других перевозок, если своего расстояния нет.
   example: '180'
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
-  order: 17
+  order: 18
   default: null
 - key: meal_points
   group: meals
@@ -286,7 +306,7 @@ parameters:
   hint: Куда доставляется питание. Один рейс робота — одно отделение или несколько по цепочке.
   example: '18'
   affects: [meal_delivery]
-  order: 18
+  order: 19
   default: null
 - key: meal_cart_weight_kg
   group: meals
@@ -300,7 +320,7 @@ parameters:
   hint: Вес загруженной тележки. Робот должен перевозить не меньше.
   example: '120'
   affects: [meal_delivery]
-  order: 19
+  order: 20
   default: null
 - key: meal_delivery_norm_min
   group: meals
@@ -314,7 +334,7 @@ parameters:
   hint: За сколько минут питание должно попасть от пищеблока в отделение (санитарные правила и технологическая карта).
   example: '20'
   affects: [meal_delivery]
-  order: 20
+  order: 21
   default: null
 - key: linen_dirty_kg_per_day
   group: linen
@@ -328,7 +348,7 @@ parameters:
   hint: Сколько килограммов грязного белья вывозится из отделений за сутки. Ориентир — 2,5–3,5 кг на койку.
   example: '1800'
   affects: [linen_transport]
-  order: 21
+  order: 22
   default: null
 - key: linen_clean_kg_per_day
   group: linen
@@ -342,7 +362,7 @@ parameters:
   hint: Сколько килограммов чистого белья развозится по отделениям за сутки.
   example: '1800'
   affects: [linen_transport]
-  order: 22
+  order: 23
   default: null
 - key: linen_points
   group: linen
@@ -356,7 +376,7 @@ parameters:
   hint: По числу отделений плюс операционный блок.
   example: '18'
   affects: [linen_transport]
-  order: 23
+  order: 24
   default: null
 - key: linen_changes_per_day
   group: linen
@@ -370,7 +390,7 @@ parameters:
   hint: 'Сколько раз в сутки в среднем меняют бельё: плановая смена раз в сутки плюс экстренные.'
   example: '1.3'
   affects: [linen_transport]
-  order: 24
+  order: 25
   default: null
 - key: linen_container_weight_kg
   group: linen
@@ -384,7 +404,7 @@ parameters:
   hint: Вес загруженной тележки или закрытого контейнера с бельём.
   example: '55'
   affects: [linen_transport]
-  order: 25
+  order: 26
   default: null
 - key: medication_items_count
   group: medication
@@ -398,7 +418,7 @@ parameters:
   hint: Сколько разных препаратов в обращении — аналог товарных позиций на складе.
   example: '2800'
   affects: [medication_delivery]
-  order: 26
+  order: 27
   default: null
 - key: medication_orders_per_day
   group: medication
@@ -412,7 +432,7 @@ parameters:
   hint: Сколько заявок аптека собирает за сутки. Одна заявка — одно отделение на одну смену.
   example: '340'
   affects: [medication_delivery]
-  order: 27
+  order: 28
   default: null
 - key: pharmacy_points
   group: medication
@@ -426,7 +446,7 @@ parameters:
   hint: 'Откуда отправляются медикаменты: аптека и аптечные склады.'
   example: '2'
   affects: [medication_delivery]
-  order: 28
+  order: 29
   default: null
 - key: medication_delivery_points
   group: medication
@@ -440,7 +460,7 @@ parameters:
   hint: 'Куда доставляются медикаменты: отделения, операционные, реанимация.'
   example: '22'
   affects: [medication_delivery]
-  order: 29
+  order: 30
   default: null
 - key: medication_picking_time_min
   group: medication
@@ -454,7 +474,7 @@ parameters:
   hint: Сколько минут аптека собирает одну заявку. Задаёт ритм отправки роботов.
   example: '12'
   affects: [medication_delivery]
-  order: 30
+  order: 31
   default: null
 - key: stat_delivery_pct
   group: medication
@@ -468,7 +488,7 @@ parameters:
   hint: Какая часть доставок срочная. Для них робот прерывает плановый маршрут.
   example: '8'
   affects: [medication_delivery]
-  order: 31
+  order: 32
   default: null
 - key: supply_trips_per_day
   group: medication
@@ -482,7 +502,7 @@ parameters:
   hint: Сколько рейсов за сутки везут шприцы, бинты, перчатки и другие расходники.
   example: '45'
   affects: [medication_delivery]
-  order: 32
+  order: 33
   default: null
 - key: lab_samples_per_day
   group: lab
@@ -496,7 +516,7 @@ parameters:
   hint: Сколько проб за сутки доставляется от пациентов в лабораторию.
   example: '1200'
   affects: [lab_sample_delivery]
-  order: 33
+  order: 34
   default: null
 - key: labs
   group: lab
@@ -510,7 +530,7 @@ parameters:
   hint: Сколько лабораторий принимают пробы.
   example: '2'
   affects: [lab_sample_delivery]
-  order: 34
+  order: 35
   default: null
 - key: lab_delivery_norm_min
   group: lab
@@ -524,7 +544,7 @@ parameters:
   hint: За сколько минут проба должна попасть в лабораторию (ГОСТ Р 53079.4-2008). Критично для отдельных видов анализов.
   example: '30'
   affects: [lab_sample_delivery]
-  order: 35
+  order: 36
   default: null
 - key: lab_results_trips_per_day
   group: lab
@@ -538,7 +558,7 @@ parameters:
   hint: Сколько рейсов за сутки развозят бумажные результаты. С лабораторной информационной системой их меньше.
   example: '28'
   affects: [lab_sample_delivery]
-  order: 36
+  order: 37
   default: null
 - key: waste_class_a_kg_per_day
   group: waste
@@ -552,7 +572,7 @@ parameters:
   hint: Неопасные отходы, похожие на бытовые, кг в сутки.
   example: '850'
   affects: [waste_transport]
-  order: 37
+  order: 38
   default: null
 - key: waste_class_b_kg_per_day
   group: waste
@@ -566,7 +586,7 @@ parameters:
   hint: Эпидемиологически опасные отходы, кг в сутки. Для них особые контейнеры, маршрут и обеззараживание робота.
   example: '220'
   affects: [waste_transport]
-  order: 38
+  order: 39
   default: null
 - key: waste_points
   group: waste
@@ -580,7 +600,7 @@ parameters:
   hint: По числу отделений плюс операционный блок.
   example: '20'
   affects: [waste_transport]
-  order: 39
+  order: 40
   default: null
 - key: waste_pickups_per_day
   group: waste
@@ -594,7 +614,7 @@ parameters:
   hint: Сколько раз в сутки отходы забирают из каждого отделения (СанПиН 2.1.3684-21).
   example: '2'
   affects: [waste_transport]
-  order: 40
+  order: 41
   default: null
 - key: cleaning_area_m2
   group: cleaning
@@ -608,26 +628,8 @@ parameters:
   hint: Площадь коридоров и холлов, которую можно убирать роботом. Если поле пустое, берётся общая площадь зданий.
   example: '20000'
   affects: [floor_cleaning]
-  order: 41
-  default: null
-- key: cleaning_passes_per_day
-  group: cleaning
-  name: Уборок в сутки
-  type: number
-  unit: раз/сут
-  required: false
-  dataset_row: null
-  step: null
-  enum_values: null
-  hint: Сколько раз в сутки убирается вся площадь уборки.
-  example: '2'
-  affects: [floor_cleaning]
   order: 42
-  default:
-    value: 2
-    status: assumption
-    rationale: 'В датасете нет. Методика ФЦ БАС «Роботы-уборщики» (research/fcbas_scenarios, PDF стр. 5): влажная уборка помещения
-      дважды в сутки.'
+  default: null
 - key: orderlies
   group: staff
   name: Санитары и транспортировщики
@@ -961,10 +963,16 @@ processes:
   description: Робот везёт тележку с питанием от пищеблока до отделений, сам вызывает лифт. Норматив — «Норматив доставки
     питания» (meal_delivery_norm_min) из датасета.
   demand_unit: portion
-  demand_formula: порций в сутки (≈ коек × занятость × кормлений); рейсов = точек раздачи × кормлений в сутки
-  demand_params: [meal_portions_per_day, beds, bed_occupancy_pct, feedings_per_day, meal_points]
+  demand_formula: 'коек × занятость × кормлений в сутки, порций/сут. Считаем по формуле, а не по строке «Общее количество
+    порций питания в сутки»: в датасете 1 950 = 650 × 3 без учёта занятости, организаторы на Q&A разрешили считать по своей
+    формуле. Строка датасета проверяется правилом meal_portions_match_beds.'
+  demand_params: [feedings_per_day, beds, bed_occupancy_pct, operating_hours_per_day]
+  demand: {per_day: beds * bed_occupancy_pct * feedings_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
   sla: {kind: lead_time, target_value: 20, unit: мин}
   labor_groups: [kitchen_staff]
+  labor_allocation: {kitchen_staff: 1.0}
+  labor_allocation_note: Вся группа «Сотрудники пищеблока (раздача)» относится к доставке питания. Датасет отмечает, что роботы
+    заменяют только перевозку, — это учитывает доля высвобождения.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
 - key: linen_transport
@@ -973,9 +981,13 @@ processes:
     в каждой точке.
   demand_unit: kg
   demand_formula: грязное + чистое бельё, кг/сут; рейсов ≈ кг ÷ масса контейнера
-  demand_params: [linen_dirty_kg_per_day, linen_clean_kg_per_day, linen_container_weight_kg, linen_points]
+  demand_params: [linen_dirty_kg_per_day, linen_clean_kg_per_day, operating_hours_per_day]
+  demand: {per_day: linen_dirty_kg_per_day + linen_clean_kg_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
   sla: {kind: coverage, target_value: 1.3, unit: раз/сут}
   labor_groups: [laundry_staff]
+  labor_allocation: {laundry_staff: 1.0}
+  labor_allocation_note: Строка датасета «Численность сотрудников прачечной (транспорт белья)» уже описывает только перевозку
+    белья — вся группа относится к процессу.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
 - key: waste_transport
@@ -984,9 +996,15 @@ processes:
     робота. Цель — «Вывозов отходов из отделений в сутки» (waste_pickups_per_day) по СанПиН 2.1.3684-21.
   demand_unit: kg
   demand_formula: отходы класса А + класса Б, кг/сут; рейсов = точек сбора × вывозов в сутки
-  demand_params: [waste_class_a_kg_per_day, waste_class_b_kg_per_day, waste_points, waste_pickups_per_day]
+  demand_params: [waste_class_a_kg_per_day, waste_class_b_kg_per_day, operating_hours_per_day]
+  demand: {per_day: waste_class_a_kg_per_day + waste_class_b_kg_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [orderlies]
+  labor_allocation: {orderlies: 0.15}
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+    расписанию и должностным инструкциям.'
   solution_types: [delivery_robot, amr_transport]
   sizing_model: elevator_cycle
 - key: medication_delivery
@@ -995,9 +1013,15 @@ processes:
     Цель — «Целевая доля доставок в срок» (sla_target_share).
   demand_unit: trip
   demand_formula: заявок на медикаменты + рейсов расходных материалов в сутки
-  demand_params: [medication_orders_per_day, supply_trips_per_day, stat_delivery_pct]
+  demand_params: [medication_orders_per_day, supply_trips_per_day, operating_hours_per_day]
+  demand: {per_day: medication_orders_per_day + supply_trips_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [orderlies]
+  labor_allocation: {orderlies: 0.15}
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+    расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
 - key: lab_sample_delivery
@@ -1005,20 +1029,56 @@ processes:
   description: Доставка биоматериалов от мест забора в лабораторию и развоз результатов. Норматив — «Норматив доставки пробы»
     (lab_delivery_norm_min) из датасета.
   demand_unit: item
-  demand_formula: проб в сутки; плюс рейсов с результатами анализов
-  demand_params: [lab_samples_per_day, lab_results_trips_per_day]
+  demand_formula: проб в сутки; рейсы с результатами анализов учитываются отдельно как попутная нагрузка
+  demand_params: [lab_samples_per_day, operating_hours_per_day]
+  demand: {per_day: lab_samples_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
   sla: {kind: lead_time, target_value: 30, unit: мин}
   labor_groups: [orderlies]
+  labor_allocation: {orderlies: 0.15}
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+    расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
 - key: floor_cleaning
   name: Уборка коридоров и холлов
-  description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель — «Уборок в сутки» (cleaning_passes_per_day)
-    по всей площади уборки.
+  description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель — норматив «Кратность уборки в сутки»
+    (cleaning_passes_per_day из реестра нормативов) по всей площади уборки.
   demand_unit: m2
-  demand_formula: площадь уборки (если не задана — общая площадь зданий) × уборок в сутки, м²/сут
-  demand_params: [cleaning_area_m2, area_m2, cleaning_passes_per_day]
+  demand_formula: площадь уборки (если не задана — общая площадь зданий) × кратность уборки в сутки, м²/сут
+  demand_params: [cleaning_area_m2, area_m2, operating_hours_per_day, scheduled_peak_factor]
+  demand: {per_day: 'coalesce(cleaning_area_m2, area_m2) * cleaning_passes_per_day', hours_per_day: operating_hours_per_day,
+    peak_factor: scheduled_peak_factor}
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [orderlies]
+  labor_allocation: {orderlies: 0.3}
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+    расписанию и должностным инструкциям.'
   solution_types: [cleaning_robot]
   sizing_model: area_coverage
+checks:
+- key: meal_portions_match_beds
+  expression: meal_portions_per_day <= beds * bed_occupancy_pct * feedings_per_day
+  severity: warning
+  params: [meal_portions_per_day, feedings_per_day, beds, bed_occupancy_pct]
+  message: Порций питания больше, чем коек × занятость × кормлений в сутки
+  how_to_fix: 'Проверьте число порций: возможно, оно посчитано на все койки без учёта занятости. Расчёт спроса идёт по формуле'
+- key: cleaning_area_within_total
+  expression: cleaning_area_m2 <= area_m2
+  severity: error
+  params: [cleaning_area_m2, area_m2]
+  message: Площадь уборки больше общей площади зданий
+  how_to_fix: Укажите площадь коридоров и холлов, которые убираются
+- key: class_b_waste_below_class_a
+  expression: waste_class_b_kg_per_day <= waste_class_a_kg_per_day
+  severity: info
+  params: [waste_class_b_kg_per_day, waste_class_a_kg_per_day]
+  message: Опасных отходов класса Б больше, чем неопасных класса А — так бывает редко
+  how_to_fix: Проверьте объёмы отходов по журналу учёта
+demo_projects:
+- {key: hospital_demo_01, name: 'Многопрофильная больница на 650 коек, 9 этажей (данные организатора)', description: 'Демо-объект
+    с листа «Медучреждение» датасета организатора: 45 000 м², 4 лифта, 1 200 проб и 340 заявок на медикаменты в сутки, 111
+    сотрудников на внутрибольничной логистике.'}

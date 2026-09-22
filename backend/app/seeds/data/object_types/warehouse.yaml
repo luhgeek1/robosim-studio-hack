@@ -210,6 +210,26 @@ parameters:
   affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting]
   order: 13
   default: null
+- key: scheduled_peak_factor
+  group: operating_mode
+  name: Пиковый коэффициент плановых работ
+  type: number
+  unit: null
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Во сколько раз самый загруженный час плановых работ (уборка, инвентаризация) больше среднего. Плановые работы идут
+    по расписанию, поэтому обычно 1.
+  example: '1'
+  affects: [inventory_count, floor_cleaning]
+  order: 14
+  default:
+    value: 1
+    status: assumption
+    rationale: 'Плановые работы (уборка, инвентаризация) идут по расписанию и распределены по рабочему времени равномерно,
+      поэтому пика нет: коэффициент 1 означает «пиковый час равен среднему». Отдельный параметр нужен, потому что формулы
+      расчёта не допускают чисел без источника.'
 - key: pallets_in_per_day
   group: operations
   name: Приёмка паллет в сутки
@@ -223,7 +243,7 @@ parameters:
     — около 33 коробов.
   example: '1000'
   affects: [pallet_transport, high_bay_storage]
-  order: 14
+  order: 15
   default: null
 - key: pallets_out_per_day
   group: operations
@@ -237,7 +257,7 @@ parameters:
   hint: Сколько паллет в среднем отгружается за сутки, включая собранные из заказов (консолидация).
   example: '1000'
   affects: [pallet_transport, high_bay_storage, parcel_sorting]
-  order: 15
+  order: 16
   default: null
 - key: pallets_internal_per_day
   group: operations
@@ -252,7 +272,7 @@ parameters:
     перевозка в зону упаковки. Возьмите из WMS число задач на перемещение за сутки.'
   example: '300'
   affects: [pallet_transport]
-  order: 16
+  order: 17
   default:
     value: 0
     status: assumption
@@ -271,7 +291,7 @@ parameters:
   hint: Строка — одна позиция в заказе, сколько бы штук в ней ни было. Главный показатель для отбора заказов, берётся из WMS.
   example: '100000'
   affects: [order_picking]
-  order: 17
+  order: 18
   default: null
 - key: pieces_per_day
   group: operations
@@ -285,7 +305,7 @@ parameters:
   hint: Сколько штук товара отбирается за сутки. Обычно около 1,5 штуки на строку.
   example: '150000'
   affects: [order_picking]
-  order: 18
+  order: 19
   default: null
 - key: piece_pick_pct
   group: operations
@@ -300,7 +320,7 @@ parameters:
     «товар к человеку».
   example: '30'
   affects: [order_picking]
-  order: 19
+  order: 20
   default: null
 - key: sku_count
   group: operations
@@ -314,7 +334,7 @@ parameters:
   hint: Сколько разных артикулов реально хранится и отбирается. Влияет на маршруты и размещение товара.
   example: '2000'
   affects: [order_picking, high_bay_storage, inventory_count]
-  order: 20
+  order: 21
   default: null
 - key: a_class_sku_pct
   group: operations
@@ -328,7 +348,7 @@ parameters:
   hint: Какая часть артикулов даёт основную долю отбора (ABC-анализ). Чем выше концентрация, тем короче маршруты.
   example: '20'
   affects: [order_picking]
-  order: 21
+  order: 22
   default: null
 - key: boxes_per_pallet
   group: operations
@@ -342,7 +362,7 @@ parameters:
   hint: Сколько коробов в среднем на отгружаемой паллете. Нужно, чтобы оценить поток коробов на сортировку.
   example: '33'
   affects: [parcel_sorting]
-  order: 22
+  order: 23
   default:
     value: 33
     status: assumption
@@ -360,7 +380,7 @@ parameters:
   hint: Сколько раз в год пересчитываются все ячейки склада.
   example: '12'
   affects: [inventory_count]
-  order: 23
+  order: 24
   default:
     value: 12
     status: assumption
@@ -379,26 +399,8 @@ parameters:
     общая площадь склада.
   example: '12000'
   affects: [floor_cleaning]
-  order: 24
-  default: null
-- key: cleaning_passes_per_day
-  group: operations
-  name: Уборок в сутки
-  type: number
-  unit: раз/сут
-  required: false
-  dataset_row: null
-  step: null
-  enum_values: null
-  hint: Сколько раз в сутки убирается вся площадь уборки.
-  example: '2'
-  affects: [floor_cleaning]
   order: 25
-  default:
-    value: 2
-    status: assumption
-    rationale: 'В датасете нет. Методика ФЦ БАС «Роботы-уборщики» (research/fcbas_scenarios, PDF стр. 5): влажная уборка помещения
-      дважды в сутки.'
+  default: null
 - key: staff_total
   group: staff
   name: Всего сотрудников на складе
@@ -903,9 +905,16 @@ processes:
     — «Норматив обработки паллеты» (pallet_lead_time_min) для доли «Целевая доля операций в срок» (sla_target_share).
   demand_unit: pallet
   demand_formula: приёмка + отгрузка + внутрискладские перемещения, палл/сут; в пик × пиковый коэффициент
-  demand_params: [pallets_in_per_day, pallets_out_per_day, pallets_internal_per_day, peak_factor]
+  demand_params: [pallets_internal_per_day, pallets_in_per_day, pallets_out_per_day, shifts_per_day, shift_hours, peak_factor]
+  demand: {per_day: pallets_in_per_day + pallets_out_per_day + pallets_internal_per_day, hours_per_day: shifts_per_day * shift_hours,
+    peak_factor: peak_factor}
   sla: {kind: lead_time, target_value: 20, unit: мин}
   labor_groups: [forklift_operators]
+  labor_allocation: {forklift_operators: 0.7}
+  labor_allocation_note: 'Датасет не делит операторов погрузчиков по операциям. Допущение команды: при фронтальных стеллажах
+    каждый цикл погрузчика — это перевозка паллеты между воротами и стеллажом и подъём на ярус. Подъём занимает около минуты
+    (норматив fork_lift_cycle_extra_s = 60 с) из цикла в 3–4 минуты, поэтому 30 % времени операторов относим к высотному хранению,
+    70 % — к перемещению паллет.'
   solution_types: [amr_transport, fmr_forklift, tow_tractor]
   sizing_model: transport_cycle
 - key: order_picking
@@ -914,9 +923,13 @@ processes:
     подсказывают, что брать. Цель — доля строк в срок «Целевая доля операций в срок» (sla_target_share).'
   demand_unit: line
   demand_formula: строк отбора в сутки; в пик × пиковый коэффициент
-  demand_params: [order_lines_per_day, peak_factor]
+  demand_params: [order_lines_per_day, shifts_per_day, shift_hours, peak_factor]
+  demand: {per_day: order_lines_per_day, hours_per_day: shifts_per_day * shift_hours, peak_factor: peak_factor}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [pickers]
+  labor_allocation: {pickers: 1.0}
+  labor_allocation_note: 'Отборщики заняты только отбором (строка датасета «Из них: отборщики»), вся группа относится к этому
+    процессу. Какая часть высвобождается, задаёт норматив labor_release_share_picking.'
   solution_types: [goods_to_person, pick_assist, piece_picking_arm, amr_transport]
   sizing_model: goods_to_person
 - key: high_bay_storage
@@ -925,9 +938,15 @@ processes:
     — доля операций в срок «Целевая доля операций в срок» (sla_target_share).
   demand_unit: pallet
   demand_formula: размещение (= приёмка) + выдача (= отгрузка), палл/сут; ёмкость — паллетомест
-  demand_params: [pallets_in_per_day, pallets_out_per_day, pallet_positions, peak_factor]
+  demand_params: [pallets_in_per_day, pallets_out_per_day, shifts_per_day, shift_hours, peak_factor]
+  demand: {per_day: pallets_in_per_day + pallets_out_per_day, hours_per_day: shifts_per_day * shift_hours, peak_factor: peak_factor}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [forklift_operators]
+  labor_allocation: {forklift_operators: 0.3}
+  labor_allocation_note: 'Датасет не делит операторов погрузчиков по операциям. Допущение команды: при фронтальных стеллажах
+    каждый цикл погрузчика — это перевозка паллеты между воротами и стеллажом и подъём на ярус. Подъём занимает около минуты
+    (норматив fork_lift_cycle_extra_s = 60 с) из цикла в 3–4 минуты, поэтому 30 % времени операторов относим к высотному хранению,
+    70 % — к перемещению паллет.'
   solution_types: [asrs_storage, fmr_forklift]
   sizing_model: station_throughput
 - key: parcel_sorting
@@ -936,9 +955,14 @@ processes:
     и числа коробов на паллете. Цель — «Целевая доля операций в срок» (sla_target_share).
   demand_unit: item
   demand_formula: отгрузка паллет в сутки × коробов на паллете, коробов/сут
-  demand_params: [pallets_out_per_day, boxes_per_pallet, peak_factor]
+  demand_params: [pallets_out_per_day, boxes_per_pallet, shifts_per_day, shift_hours, peak_factor]
+  demand: {per_day: pallets_out_per_day * boxes_per_pallet, hours_per_day: shifts_per_day * shift_hours, peak_factor: peak_factor}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [packers]
+  labor_allocation: {packers: 1.0}
+  labor_allocation_note: Операторы упаковочных линий — единственная группа, которая сейчас разбирает и упаковывает отгрузку;
+    вся группа относится к сортировке. Датасет отмечает, что функция автоматизируется частично — это учитывает доля высвобождения,
+    а не распределение.
   solution_types: [sorting_robot, palletizing_arm]
   sizing_model: station_throughput
 - key: inventory_count
@@ -946,20 +970,89 @@ processes:
   description: Пересчёт остатков в ячейках роботом-сканером вместо людей с терминалами и подъёмной техникой. Цель — выполнить
     «Полных инвентаризаций в год» (inventory_counts_per_year).
   demand_unit: m2
-  demand_formula: площадь склада × полных инвентаризаций в год, м²/год
-  demand_params: [area_m2, inventory_counts_per_year]
+  demand_formula: площадь склада × полных инвентаризаций в год ÷ рабочих дней в году, м²/сут
+  demand_params: [working_days_per_year, area_m2, inventory_counts_per_year, shifts_per_day, shift_hours, scheduled_peak_factor]
+  demand: {per_day: area_m2 * inventory_counts_per_year / working_days_per_year, hours_per_day: shifts_per_day * shift_hours,
+    peak_factor: scheduled_peak_factor}
   sla: {kind: coverage, target_value: 12, unit: раз/год}
   labor_groups: [inventory_staff]
+  labor_allocation: {inventory_staff: 1.0}
+  labor_allocation_note: 'Сотрудники на инвентаризации (оценка по методике ФЦ БАС: 2 полные ставки) заняты только пересчётом
+    остатков.'
   solution_types: [inventory_robot]
   sizing_model: area_coverage
 - key: floor_cleaning
   name: Уборка пола
-  description: Влажная уборка или подметание проездов и проходов автономной поломоечной машиной. Цель — «Уборок в сутки» (cleaning_passes_per_day)
-    по всей площади уборки.
+  description: Влажная уборка или подметание проездов и проходов автономной поломоечной машиной. Цель — норматив «Кратность
+    уборки в сутки» (cleaning_passes_per_day из реестра нормативов) по всей площади уборки.
   demand_unit: m2
-  demand_formula: площадь уборки (если не задана — общая площадь склада) × уборок в сутки, м²/сут
-  demand_params: [cleaning_area_m2, area_m2, cleaning_passes_per_day]
+  demand_formula: площадь уборки (если не задана — общая площадь склада) × кратность уборки в сутки, м²/сут
+  demand_params: [cleaning_area_m2, area_m2, shifts_per_day, shift_hours, scheduled_peak_factor]
+  demand: {per_day: 'coalesce(cleaning_area_m2, area_m2) * cleaning_passes_per_day', hours_per_day: shifts_per_day * shift_hours,
+    peak_factor: scheduled_peak_factor}
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [cleaners]
+  labor_allocation: {cleaners: 1.0}
+  labor_allocation_note: Уборщики склада заняты только уборкой.
   solution_types: [cleaning_robot]
   sizing_model: area_coverage
+checks:
+- key: robotized_area_within_total
+  expression: robotized_area_m2 <= area_m2
+  severity: error
+  params: [robotized_area_m2, area_m2]
+  message: Зона для роботов больше общей площади склада
+  how_to_fix: 'Проверьте площади: зона роботизации — часть склада'
+- key: cleaning_area_within_total
+  expression: cleaning_area_m2 <= area_m2
+  severity: error
+  params: [cleaning_area_m2, area_m2]
+  message: Площадь уборки больше общей площади склада
+  how_to_fix: Укажите площадь проездов и проходов, которые реально убираются
+- key: staff_groups_within_total
+  expression: pickers + forklift_operators + packers <= staff_total
+  severity: error
+  params: [staff_total, packers, pickers, forklift_operators]
+  message: Отборщиков, операторов погрузчиков и упаковщиков вместе больше, чем всего сотрудников склада
+  how_to_fix: 'Проверьте численность: группы входят в общую численность персонала'
+- key: staff_groups_with_support_within_total
+  expression: pickers + forklift_operators + packers + inventory_staff + cleaners <= staff_total
+  severity: warning
+  params: [staff_total, cleaners, inventory_staff, packers, pickers, forklift_operators]
+  message: Сумма всех групп персонала больше общей численности склада
+  how_to_fix: Проверьте численность уборщиков и сотрудников на инвентаризации
+- key: pieces_not_less_than_lines
+  expression: pieces_per_day >= order_lines_per_day
+  severity: error
+  params: [pieces_per_day, order_lines_per_day]
+  message: 'Штук отбора меньше, чем строк: в каждой строке заказа хотя бы одна штука'
+  how_to_fix: Проверьте объёмы отбора в строках и в штуках
+- key: pickers_cover_current_volume
+  expression: pickers * picker_productivity_lines_per_hour * shift_hours - pickers * picker_productivity_lines_per_hour *
+    shift_hours * time_loss_pct >= order_lines_per_day
+  severity: warning
+  params: [order_lines_per_day, shift_hours, time_loss_pct, pickers, picker_productivity_lines_per_hour]
+  message: Текущий штат отборщиков при указанной выработке не собирает суточный объём строк
+  how_to_fix: Проверьте выработку отборщика, число отборщиков и потери рабочего времени — одно из чисел, вероятно, неточно
+- key: storage_holds_daily_receipts
+  expression: pallet_positions >= pallets_in_per_day
+  severity: warning
+  params: [pallet_positions, pallets_in_per_day]
+  message: Паллетомест меньше, чем паллет принимается за сутки
+  how_to_fix: Проверьте ёмкость склада и объём приёмки
+- key: working_aisle_not_wider_than_main
+  expression: aisle_width_m <= main_aisle_width_m
+  severity: info
+  params: [aisle_width_m, main_aisle_width_m]
+  message: Рабочие проходы шире главных проездов — так бывает редко
+  how_to_fix: 'Проверьте ширину: для подбора роботов важна самая узкая точка маршрута'
+- key: item_lighter_than_pallet
+  expression: item_weight_kg <= pallet_weight_kg
+  severity: error
+  params: [item_weight_kg, pallet_weight_kg]
+  message: Штучный товар тяжелее паллеты
+  how_to_fix: Проверьте массу паллеты и штучной единицы
+demo_projects:
+- {key: warehouse_demo_01, name: 'Склад 20 000 м², 180 сотрудников (данные организатора)', description: 'Демо-объект с листа
+    «Склад» датасета организатора: 1 000 паллет приёмки и 1 000 отгрузки, 100 000 строк отбора в сутки, 2 смены по 11 ч, фронтальные
+    стеллажи на 20 000 паллетомест.'}

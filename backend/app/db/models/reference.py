@@ -37,6 +37,8 @@ class ObjectType(Base):
     parameter_groups: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     labor_groups: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     layout_templates: Mapped[list[str]] = mapped_column(ARRAY(sa.String(64)), default=list)
+    checks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
+    demo_projects: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list, server_default="[]")
     order: Mapped[int] = mapped_column(sa.Integer, default=0)
 
 
@@ -85,6 +87,9 @@ class ProcessDef(UuidPkMixin, Base):
     labor_groups: Mapped[list[str]] = mapped_column(ARRAY(sa.String(64)), default=list)
     solution_types: Mapped[list[str]] = mapped_column(ARRAY(sa.String(64)), default=list)
     sizing_model: Mapped[SizingModel | None] = mapped_column(sizing_enum)
+    demand: Mapped[dict[str, str] | None] = mapped_column(JSONB)
+    labor_allocation: Mapped[dict[str, float]] = mapped_column(JSONB, default=dict, server_default="{}")
+    labor_allocation_note: Mapped[str | None] = mapped_column(sa.Text)
     order: Mapped[int] = mapped_column(sa.Integer, default=0)
 
 

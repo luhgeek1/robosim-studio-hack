@@ -124,6 +124,26 @@ parameters:
     status: assumption
     rationale: Режима работы в датасете нет. Аэропорт работает без выходных; строка «Среднесуточное количество пассажиров»
       датасета получена делением годового потока на 365.
+- key: scheduled_peak_factor
+  group: operating_mode
+  name: Пиковый коэффициент плановых работ
+  type: number
+  unit: null
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Во сколько раз самый загруженный час плановых работ (уборка) больше среднего. Плановые работы идут по расписанию,
+    поэтому обычно 1.
+  example: '1'
+  affects: [terminal_cleaning]
+  order: 8
+  default:
+    value: 1
+    status: assumption
+    rationale: 'Плановые работы (уборка) идут по расписанию и распределены по рабочему времени равномерно, поэтому пика нет:
+      коэффициент 1 означает «пиковый час равен среднему». Отдельный параметр нужен, потому что формулы расчёта не допускают
+      чисел без источника.'
 - key: pax_per_year_mln
   group: passengers
   name: Пассажиропоток в год
@@ -136,7 +156,7 @@ parameters:
   hint: Сколько миллионов пассажиров обслуживает аэропорт за год (прилёт + вылет).
   example: '8.5'
   affects: [baggage_handling, passenger_assistance]
-  order: 8
+  order: 9
   default: null
 - key: pax_per_day
   group: passengers
@@ -150,7 +170,7 @@ parameters:
   hint: 'Среднее число пассажиров за сутки: годовой поток, делённый на 365.'
   example: '23300'
   affects: [baggage_handling, passenger_assistance, terminal_cleaning]
-  order: 9
+  order: 10
   default: null
 - key: pax_peak_hour
   group: passengers
@@ -164,7 +184,7 @@ parameters:
   hint: Сколько пассажиров проходит через аэропорт в самый загруженный час.
   example: '3200'
   affects: [passenger_assistance, terminal_cleaning]
-  order: 10
+  order: 11
   default: null
 - key: transfer_pax_pct
   group: passengers
@@ -178,7 +198,7 @@ parameters:
   hint: Какая часть пассажиров пересаживается с рейса на рейс. Им чаще нужна помощь с навигацией и багажом.
   example: '15'
   affects: [passenger_assistance]
-  order: 11
+  order: 12
   default: null
 - key: checkin_desks
   group: passengers
@@ -192,7 +212,7 @@ parameters:
   hint: Сколько стоек регистрации. Зона работы роботов-помощников и багажных тележек.
   example: '50'
   affects: [passenger_assistance, baggage_handling]
-  order: 12
+  order: 13
   default: null
 - key: flights_per_day
   group: ramp
@@ -206,7 +226,7 @@ parameters:
   hint: Сколько взлётов и посадок в среднем за сутки.
   example: '280'
   affects: [baggage_handling]
-  order: 13
+  order: 14
   default: null
 - key: flights_peak_hour
   group: ramp
@@ -220,7 +240,7 @@ parameters:
   hint: Сколько взлётов и посадок в самый загруженный час. Пиковая нагрузка = рейсов в пиковый час ÷ среднечасовых рейсов.
   example: '32'
   affects: [baggage_handling]
-  order: 14
+  order: 15
   default: null
 - key: turnaround_min
   group: ramp
@@ -234,7 +254,7 @@ parameters:
   hint: Сколько минут самолёт стоит от посадки до взлёта. За это время багаж нужно выгрузить и загрузить.
   example: '45'
   affects: [baggage_handling]
-  order: 15
+  order: 16
   default: null
 - key: ground_ops_per_flight
   group: ramp
@@ -249,7 +269,7 @@ parameters:
     и погрузка.'
   example: '18'
   affects: [baggage_handling]
-  order: 16
+  order: 17
   default: null
 - key: baggage_per_day
   group: ramp
@@ -264,7 +284,7 @@ parameters:
     по данным системы обработки багажа.
   example: '35000'
   affects: [baggage_handling]
-  order: 17
+  order: 18
   default: null
 - key: baggage_weight_kg
   group: ramp
@@ -278,7 +298,7 @@ parameters:
   hint: Средний вес одного места багажа. Нужен для проверки грузоподъёмности тягачей и тележек.
   example: '18'
   affects: [baggage_handling]
-  order: 18
+  order: 19
   default: null
 - key: baggage_dims_mm
   group: ramp
@@ -293,7 +313,7 @@ parameters:
     трёх измерений стандартного места — не более 158 см.'
   example: 750×500×300
   affects: [baggage_handling]
-  order: 19
+  order: 20
   default: null
 - key: baggage_carousels
   group: ramp
@@ -307,7 +327,7 @@ parameters:
   hint: Сколько каруселей выдачи багажа. Конечные точки маршрута при прилёте.
   example: '8'
   affects: [baggage_handling]
-  order: 20
+  order: 21
   default: null
 - key: baggage_route_length_m
   group: ramp
@@ -321,7 +341,7 @@ parameters:
   hint: Средний путь багажной сцепки от зала сортировки до стоянки самолёта в одну сторону. Замерьте по схеме перрона.
   example: '300'
   affects: [baggage_handling]
-  order: 21
+  order: 22
   default:
     value: 300
     status: assumption
@@ -340,7 +360,7 @@ parameters:
     процесс для них пока не считается.
   example: '22000'
   affects: []
-  order: 22
+  order: 23
   default: null
 - key: refuelling_flights_per_day
   group: ramp
@@ -355,7 +375,7 @@ parameters:
     обычно только вылетающие рейсы — вероятно, около половины. В расчёте не участвует.
   example: '280'
   affects: []
-  order: 23
+  order: 24
   default: null
 - key: internal_cart_trips_per_day
   group: terminal_logistics
@@ -369,7 +389,7 @@ parameters:
   hint: Сколько раз за сутки внутри терминала перевозят грузы, расходные материалы и отходы на тележках.
   example: '420'
   affects: [cart_and_waste_logistics]
-  order: 24
+  order: 25
   default: null
 - key: terminal_route_length_m
   group: terminal_logistics
@@ -383,7 +403,7 @@ parameters:
   hint: 'Средний путь тележки внутри терминала в одну сторону: от склада или мусорной площадки до точки обслуживания.'
   example: '200'
   affects: [cart_and_waste_logistics]
-  order: 25
+  order: 26
   default:
     value: 200
     status: assumption
@@ -401,7 +421,7 @@ parameters:
   hint: Сколько мусорных контейнеров или тележек вывозится за сутки.
   example: '85'
   affects: [cart_and_waste_logistics]
-  order: 26
+  order: 27
   default: null
 - key: cleaning_machines
   group: terminal_logistics
@@ -415,7 +435,7 @@ parameters:
   hint: Сколько поломоечных машин сейчас работает в терминале. Их могут заменить автономные машины.
   example: '8'
   affects: [terminal_cleaning]
-  order: 27
+  order: 28
   default: null
 - key: cleaning_area_m2
   group: terminal_logistics
@@ -430,26 +450,8 @@ parameters:
     60 % площади терминалов.'
   example: '51000'
   affects: [terminal_cleaning]
-  order: 28
-  default: null
-- key: cleaning_passes_per_day
-  group: terminal_logistics
-  name: Уборок в сутки
-  type: number
-  unit: раз/сут
-  required: false
-  dataset_row: null
-  step: null
-  enum_values: null
-  hint: Сколько раз в сутки убирается вся площадь уборки.
-  example: '2'
-  affects: [terminal_cleaning]
   order: 29
-  default:
-    value: 2
-    status: assumption
-    rationale: 'В датасете нет. Методика ФЦ БАС «Роботы-уборщики» (research/fcbas_scenarios, PDF стр. 5): влажная уборка помещения
-      дважды в сутки.'
+  default: null
 - key: ground_staff
   group: staff
   name: Персонал наземного обслуживания (перрон)
@@ -534,6 +536,21 @@ parameters:
   affects: [cart_and_waste_logistics, terminal_cleaning]
   order: 35
   default: null
+- key: patrol_rounds_per_day
+  group: security
+  name: Обходов терминала в сутки
+  type: number
+  unit: раз/сут
+  required: false
+  dataset_row: null
+  step: null
+  enum_values: null
+  hint: Сколько раз в сутки служба безопасности обходит все залы терминала. Узнайте по регламенту службы авиабезопасности;
+    без этого числа потребность в роботах-патрульных не считается.
+  example: '6'
+  affects: [security_patrol]
+  order: 36
+  default: null
 - key: has_open_air_zones
   group: security
   name: Есть открытые зоны (перрон, улица)
@@ -546,7 +563,7 @@ parameters:
   hint: 'Работают ли роботы на улице: перрон, привокзальная площадь. На открытых зонах нужны защита от погоды и морозостойкость.'
   example: Да
   affects: [baggage_handling]
-  order: 36
+  order: 37
   default:
     value: true
     status: assumption
@@ -565,7 +582,7 @@ parameters:
     для техники.'
   example: '4'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 37
+  order: 38
   default: null
 - key: access_control
   group: security
@@ -579,7 +596,7 @@ parameters:
   hint: Есть ли СКУД и по какому протоколу. Роботы должны открывать двери и проходить турникеты через СКУД.
   example: Да (OSDP)
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 38
+  order: 39
   default: null
 - key: airside_certification
   group: security
@@ -594,7 +611,7 @@ parameters:
     EASA на практике не применяются — уточните у службы авиабезопасности.
   example: EASA/ИКАО
   affects: [baggage_handling]
-  order: 39
+  order: 40
   default: null
 - key: noise_limit_dba
   group: security
@@ -608,7 +625,7 @@ parameters:
   hint: Максимальный уровень шума в зоне работы роботов. Важно для работы ночью.
   example: '70'
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 40
+  order: 41
   default: null
 - key: apron_min_temperature_c
   group: security
@@ -622,7 +639,7 @@ parameters:
   hint: Самая низкая температура на перроне и в неотапливаемых зонах. Многие роботы не работают ниже −20 °C.
   example: '-25'
   affects: [baggage_handling]
-  order: 41
+  order: 42
   default: null
 - key: has_fids_aodb
   group: infrastructure
@@ -636,7 +653,7 @@ parameters:
   hint: FIDS — табло с информацией о рейсах, AODB — операционная база данных аэропорта. Из них роботы получают расписание.
   example: Да
   affects: [baggage_handling, passenger_assistance]
-  order: 42
+  order: 43
   default: null
 - key: has_bms
   group: infrastructure
@@ -650,7 +667,7 @@ parameters:
   hint: Через BMS роботы вызывают лифты, открывают двери и управляют освещением.
   example: Да
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 43
+  order: 44
   default: null
 - key: charging_power_kw
   group: infrastructure
@@ -664,7 +681,7 @@ parameters:
   hint: Свободная электрическая мощность под зарядные станции.
   example: '300'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 44
+  order: 45
   default: null
 - key: capex_budget_mln_rub
   group: economics
@@ -678,7 +695,7 @@ parameters:
   hint: Сколько аэропорт готов вложить в покупку и внедрение роботов.
   example: '120'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 45
+  order: 46
   default: null
 - key: horizon_years
   group: economics
@@ -692,7 +709,7 @@ parameters:
   hint: За сколько лет считаем затраты и эффект. Аэропортовые проекты обычно считают дольше складских из-за сложной интеграции.
   example: '7'
   affects: [baggage_handling, cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
-  order: 46
+  order: 47
   default: null
 - key: sla_target_share
   group: economics
@@ -706,7 +723,7 @@ parameters:
   hint: Какая доля рейсов тележек и заявок должна выполняться в норматив. 0,95 — 95 %.
   example: '0.95'
   affects: [cart_and_waste_logistics, passenger_assistance]
-  order: 47
+  order: 48
   default:
     value: 0.95
     status: assumption
@@ -721,10 +738,17 @@ processes:
   description: 'Доставка багажа от зала сортировки к стоянке самолёта и обратно беспилотными тягачами с тележками или багажными
     AMR. Норматив — «Время оборота самолёта» (turnaround_min): багаж должен успеть за стоянку.'
   demand_unit: bag
-  demand_formula: мест багажа в сутки; в пик × (рейсов в пиковый час ÷ среднечасовых рейсов)
-  demand_params: [baggage_per_day, flights_per_day, flights_peak_hour, operating_hours_per_day]
+  demand_formula: мест багажа в сутки; пик — рейсов в пиковый час ÷ среднечасовых рейсов
+  demand_params: [baggage_per_day, operating_hours_per_day, flights_per_day, flights_peak_hour]
+  demand: {per_day: baggage_per_day, hours_per_day: operating_hours_per_day, peak_factor: flights_peak_hour * operating_hours_per_day
+      / flights_per_day}
   sla: {kind: lead_time, target_value: 45, unit: мин}
   labor_groups: [ground_staff]
+  labor_allocation: {ground_staff: 0.2}
+  labor_allocation_note: 'Датасет не делит персонал перрона по операциям, но в примечании к строке «Среднее количество операций
+    наземного обслуживания на 1 рейс» перечисляет пять видов работ: буксировка, питание, заправка, уборка, разгрузка и погрузка.
+    Допущение команды: виды работ равны по трудоёмкости, на багаж (разгрузка и погрузка) приходится 1 из 5, то есть 20 % персонала
+    перрона.'
   solution_types: [tow_tractor, amr_transport, autonomous_truck, sorting_robot]
   sizing_model: tow_train
 - key: cart_and_waste_logistics
@@ -732,21 +756,32 @@ processes:
   description: Перевозка грузов, расходных материалов и мусорных контейнеров внутри терминала. Цель — «Целевая доля операций
     в срок» (sla_target_share).
   demand_unit: trip
-  demand_formula: рейсов грузовых тележек + контейнеров мусора в сутки
-  demand_params: [internal_cart_trips_per_day, waste_containers_per_day, operating_hours_per_day]
+  demand_formula: рейсов грузовых тележек + контейнеров мусора в сутки; пик — по пассажиропотоку
+  demand_params: [internal_cart_trips_per_day, waste_containers_per_day, operating_hours_per_day, pax_per_day, pax_peak_hour]
+  demand: {per_day: internal_cart_trips_per_day + waste_containers_per_day, hours_per_day: operating_hours_per_day, peak_factor: pax_peak_hour
+      * operating_hours_per_day / pax_per_day}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [terminal_staff]
+  labor_allocation: {terminal_staff: 0.67}
+  labor_allocation_note: 'Датасет не делит персонал терминала по функциям, но перечисляет три роли: «Уборщики, курьеры, грузчики
+    терминала». Допущение команды: роли равны по численности, поэтому треть относим к уборке, две трети (курьеры и грузчики)
+    — к перевозке грузов и мусора.'
   solution_types: [amr_transport, tow_tractor, delivery_robot]
   sizing_model: transport_cycle
 - key: terminal_cleaning
   name: Уборка терминала
-  description: Влажная уборка залов терминала автономными поломоечными машинами. Цель — «Уборок в сутки» (cleaning_passes_per_day)
-    по всей площади роботизированной уборки.
+  description: Влажная уборка залов терминала автономными поломоечными машинами. Цель — норматив «Кратность уборки в сутки»
+    (cleaning_passes_per_day из реестра нормативов) по всей площади роботизированной уборки.
   demand_unit: m2
-  demand_formula: площадь для роботизированной уборки × уборок в сутки, м²/сут
-  demand_params: [cleaning_area_m2, cleaning_passes_per_day]
+  demand_formula: площадь для роботизированной уборки × кратность уборки в сутки, м²/сут
+  demand_params: [cleaning_area_m2, operating_hours_per_day, scheduled_peak_factor]
+  demand: {per_day: cleaning_area_m2 * cleaning_passes_per_day, hours_per_day: operating_hours_per_day, peak_factor: scheduled_peak_factor}
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [terminal_staff]
+  labor_allocation: {terminal_staff: 0.33}
+  labor_allocation_note: 'Датасет не делит персонал терминала по функциям, но перечисляет три роли: «Уборщики, курьеры, грузчики
+    терминала». Допущение команды: роли равны по численности, поэтому треть относим к уборке, две трети (курьеры и грузчики)
+    — к перевозке грузов и мусора.'
   solution_types: [cleaning_robot]
   sizing_model: area_coverage
 - key: passenger_assistance
@@ -754,19 +789,81 @@ processes:
   description: 'Роботы-консультанты и сопровождающие у стоек регистрации и выходов: подсказывают дорогу, провожают трансферных
     пассажиров. Эффект — сервис, а не замещение персонала, поэтому группы персонала не заданы.'
   demand_unit: trip
-  demand_formula: пассажиров в сутки × доля трансферных, сопровождений/сут
-  demand_params: [pax_per_day, transfer_pax_pct, pax_peak_hour]
+  demand_formula: пассажиров в сутки × доля трансферных, сопровождений/сут; пик — по пассажиропотоку
+  demand_params: [pax_per_day, transfer_pax_pct, operating_hours_per_day, pax_peak_hour]
+  demand: {per_day: pax_per_day * transfer_pax_pct, hours_per_day: operating_hours_per_day, peak_factor: pax_peak_hour * operating_hours_per_day
+      / pax_per_day}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: []
+  labor_allocation: {}
+  labor_allocation_note: Сопровождение пассажиров сейчас не выполняет ни одна группа персонала из датасета; эффект процесса
+    — сервис, ФОТ не распределяется.
   solution_types: [service_robot, delivery_robot]
   sizing_model: station_throughput
 - key: security_patrol
   name: Патрулирование терминала
   description: Регулярный объезд залов терминала роботом с камерами. Сотрудников службы безопасности в датасете нет, поэтому
-    эффект по персоналу не считается, а норматив обхода не задан.
+    эффект по персоналу не считается. Число обходов — параметр «Обходов терминала в сутки» (patrol_rounds_per_day), в датасете
+    его нет.
   demand_unit: m2
-  demand_formula: площадь терминалов, м²
-  demand_params: [terminal_area_m2]
+  demand_formula: площадь терминалов × обходов в сутки, м²/сут
+  demand_params: [terminal_area_m2, patrol_rounds_per_day, operating_hours_per_day, scheduled_peak_factor]
+  demand: {per_day: terminal_area_m2 * patrol_rounds_per_day, hours_per_day: operating_hours_per_day, peak_factor: scheduled_peak_factor}
   labor_groups: []
+  labor_allocation: {}
+  labor_allocation_note: Сотрудников службы безопасности в датасете нет, ФОТ не распределяется.
   solution_types: [service_robot]
   sizing_model: area_coverage
+checks:
+- key: cleaning_area_within_terminal
+  expression: cleaning_area_m2 <= terminal_area_m2
+  severity: error
+  params: [cleaning_area_m2, terminal_area_m2]
+  message: Площадь роботизированной уборки больше площади терминалов
+  how_to_fix: 'Уборка роботами возможна только внутри терминалов: проверьте обе площади'
+- key: pax_peak_below_daily
+  expression: pax_peak_hour <= pax_per_day
+  severity: error
+  params: [pax_peak_hour, pax_per_day]
+  message: Пассажиров в пиковый час больше, чем за сутки
+  how_to_fix: Проверьте пиковый и суточный пассажиропоток
+- key: pax_peak_not_below_average
+  expression: pax_peak_hour * operating_hours_per_day >= pax_per_day
+  severity: error
+  params: [pax_per_day, pax_peak_hour, operating_hours_per_day]
+  message: Пиковый час меньше среднего часа по пассажирам
+  how_to_fix: 'Пиковый поток не может быть меньше среднего: проверьте пиковый час и часы работы'
+- key: flights_peak_below_daily
+  expression: flights_peak_hour <= flights_per_day
+  severity: error
+  params: [flights_peak_hour, flights_per_day]
+  message: Рейсов в пиковый час больше, чем за сутки
+  how_to_fix: Проверьте число рейсов
+- key: flights_peak_not_below_average
+  expression: flights_peak_hour * operating_hours_per_day >= flights_per_day
+  severity: error
+  params: [flights_per_day, flights_peak_hour, operating_hours_per_day]
+  message: Пиковый час меньше среднего часа по рейсам
+  how_to_fix: 'Пиковое число рейсов не может быть меньше среднего: проверьте пиковый час и часы работы'
+- key: baggage_per_passenger
+  expression: baggage_per_day <= pax_per_day
+  severity: warning
+  params: [baggage_per_day, pax_per_day]
+  message: 'Мест багажа в сутки больше, чем пассажиров: больше одного места на каждого пассажира'
+  how_to_fix: 'Проверьте объём багажа по системе обработки багажа: обычно багаж сдаёт не каждый пассажир'
+- key: refuelling_below_flights
+  expression: refuelling_flights_per_day < flights_per_day
+  severity: info
+  params: [refuelling_flights_per_day, flights_per_day]
+  message: Заправок столько же или больше, чем взлётов и посадок, — вероятно, посадки посчитаны как заправки
+  how_to_fix: 'Заправляют вылетающие рейсы: укажите число заправок, а не всех движений'
+- key: cleaning_machines_within_staff
+  expression: cleaning_machines <= terminal_staff
+  severity: error
+  params: [cleaning_machines, terminal_staff]
+  message: Уборочных машин больше, чем сотрудников терминала
+  how_to_fix: Проверьте число машин и персонала терминала
+demo_projects:
+- {key: airport_demo_01, name: 'Аэропорт 8,5 млн пассажиров в год, 2 терминала (данные организатора)', description: 'Демо-объект
+    с листа «Аэропорт» датасета организатора: 280 рейсов и 35 000 мест багажа в сутки, терминалы 85 000 м², перрон 100 000
+    м², 500 сотрудников перрона и терминала.'}

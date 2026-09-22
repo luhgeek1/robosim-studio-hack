@@ -4,7 +4,7 @@ from typing import Any
 
 import openpyxl
 
-from app.seeds.parsing import parse_scalar
+from app.core.parsing import parse_scalar
 
 DATASET_FILE = "case/dataset/Датасеты_хакатон.xlsx"
 _HEADER_ROWS = 2
