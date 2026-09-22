@@ -124,6 +124,9 @@ async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
     assert count["simulated"] == recommended
     assert count["simulation_id"] == result["simulation_id"]
     assert count["final"] == recommended + count["reserve"]
+    # The simulated fleet covers the peak: the effect is not cut and no under-capacity risk is raised.
+    assert after["sizing"][0]["coverage_of_peak"] == 1
+    assert "UNDER_CAPACITY" not in {risk["code"] for risk in after["risks"]}
     assert analytic["analytic"] >= recommended - 1
     best = (await client.get(f"/api/v1/simulations/{result['simulation_id']}", headers=headers)).json()
     assert best["purpose"] == "sweep"

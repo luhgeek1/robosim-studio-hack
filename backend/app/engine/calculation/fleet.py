@@ -223,20 +223,41 @@ def build_fleet_item(
     count = resolve_count(ctx, item, process, outcome)
     warnings = list(outcome.warnings) if outcome else []
     effective = outcome.effective_per_hour if outcome else None
-    working = min(count.final, count.analytic) if count.analytic else count.final
+    simulated = count.source == CountSource.SIMULATED and bool(count.simulated)
+    working: int = (
+        (count.simulated or 0)
+        if simulated
+        else (min(count.final, count.analytic) if count.analytic else count.final)
+    )
     metric = InputKind.METRIC
     robots = Quantity(f"{ns}.robots_total", "Роботов в процессе", float(count.final), "шт", metric)
     working_q = ctx.tr.record(
         f"{ns}.robots_working",
         "Роботов в работе (без резерва)",
-        working,
+        float(working),
         "шт",
-        f"min({robots.key}, {ns}.robots_analytic)" if count.analytic else robots.key,
-        [robots],
+        "simulated_robots"
+        if simulated
+        else (f"min({robots.key}, {ns}.robots_analytic)" if count.analytic else robots.key),
+        [_simulated_robots(count)] if simulated else [robots],
         Section.SIZING,
     ).as_quantity()
     peak = demand["peak"].as_quantity()
-    if effective:
+    if simulated:
+        # The sweep checked this fleet against the peak demand in time, so it covers the peak by definition.
+        met = Quantity(
+            "simulated_sla_met", "SLA выполнен в имитации (1 — да)", 1.0, "доля", InputKind.SIMULATION
+        )
+        coverage = ctx.tr.record(
+            f"{ns}.coverage",
+            "Доля пикового спроса, которую закрывает парк (по имитации)",
+            met.value,
+            "доля",
+            met.key,
+            [met],
+            Section.SIZING,
+        ).as_quantity()
+    elif effective:
         per_robot = Quantity(
             f"{ns}.effective_per_hour", "Эффективная производительность робота", effective, "ед/ч", metric
         )
@@ -320,6 +341,16 @@ def build_fleet_item(
         warnings=warnings,
     )
     return fleet, sizing
+
+
+def _simulated_robots(count: CountResult) -> Quantity:
+    return Quantity(
+        "simulated_robots",
+        "Роботов по имитации (SLA выполнен)",
+        float(count.simulated or 0),
+        "шт",
+        InputKind.SIMULATION,
+    )
 
 
 def _chargers(
