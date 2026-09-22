@@ -110,3 +110,12 @@ async def test_manual_add_keeps_warning(client: AsyncClient) -> None:
     candidate = added.json()
     assert candidate["status"] == "manual"
     assert any(r["severity"] == "blocking" for r in candidate["reasons"])
+
+
+async def test_candidates_are_of_the_process_solution_types(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client)
+    body = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=headers)).json()
+    picking = next(p for p in body["processes"] if p["process_key"] == "order_picking")
+    allowed = {t["key"] for t in picking["solution_types"]}
+    assert {c["product"]["solution_type"] for c in picking["candidates"]} <= allowed
+    assert "palletizing_arm" not in {c["product"]["solution_type"] for c in picking["candidates"]}

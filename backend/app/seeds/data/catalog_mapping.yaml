@@ -1270,7 +1270,7 @@ products:
     name: "Модель А12-1450"
     solution_type: palletizing_arm
     object_types: [warehouse]
-    processes: [order_picking]
+    processes: [parcel_sorting]
     specs_ref: null
     badges: [in_registry_719]
     website: null
@@ -1288,7 +1288,7 @@ products:
     name: "Модель А25-1720"
     solution_type: palletizing_arm
     object_types: [warehouse]
-    processes: [order_picking]
+    processes: [parcel_sorting]
     specs_ref: null
     badges: [in_registry_719]
     website: null

@@ -178,7 +178,14 @@ class MatchingService:
         definition = next(
             p for p in analysis.context.object_type.processes if p.key == view.result.process_key
         )
-        products = list(await self._catalog.candidates(analysis.context.project.object_type, definition.key))
+        products = [
+            product
+            for product in await self._catalog.candidates(
+                analysis.context.project.object_type, definition.key
+            )
+            # A product of a solution type the process does not use is a slip in the catalog mapping.
+            if product.solution_type in definition.solution_types
+        ]
         manual = [
             m for m in await self._repo.manual(analysis.context.project.id) if m.process_key == definition.key
         ]

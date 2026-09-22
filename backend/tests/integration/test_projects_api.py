@@ -82,7 +82,11 @@ async def test_blank_project_requires_own_values(client: AsyncClient) -> None:
     }
     assert params["area_m2"]["value"] is None
     assert params["area_m2"]["validation"]["status"] == "missing"
+    # An optional empty field is shown as not filled, but it is not an error of the form.
+    assert params["min_temperature_c"]["validation"]["status"] == "missing"
     report = (await client.get(f"{PROJECTS}/{project_id}/validation", headers=headers)).json()
+    assert "min_temperature_c" not in {issue["key"] for issue in report["issues"]}
+    assert "area_m2" in {issue["key"] for issue in report["issues"]}
     assert report["status"] == "errors"
     assert report["can_calculate"] is False
     assert (await client.get(f"{PROJECTS}/{project_id}/processes", headers=headers)).status_code == 409

@@ -32,7 +32,8 @@ def _missing(definition: ParameterDef) -> ParamValidation:
             f"Не заполнен обязательный параметр «{definition.name}»",
             f"Введите значение{f' (например, {definition.example})' if definition.example else ''}",
         )
-    return ParamValidation(ValidationState.OK)
+    # An optional empty field is not an error, but it is not «ok» either: the form shows it as not filled.
+    return ParamValidation(ValidationState.MISSING)
 
 
 def _type_error(definition: ParameterDef, value: Scalar) -> ParamValidation | None:

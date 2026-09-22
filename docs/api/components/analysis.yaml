@@ -618,7 +618,7 @@ SensitivityResult:
           high_input: {type: number}
           metric_at_low: {type: [number, "null"]}
           metric_at_high: {type: [number, "null"]}
-          swing: {type: number}
+          swing: {type: number, description: "Размах метрики запроса (metric_at_high − metric_at_low по модулю) в её единицах; для окупаемости годы за горизонтом считаются равными горизонту"}
           rank: {type: integer}
           provenance_status: {$ref: './common.yaml#/ProvenanceStatus'}
     heatmap:
@@ -699,7 +699,7 @@ SurveyPriorities:
           status: {$ref: './common.yaml#/ProvenanceStatus'}
           current_value: {oneOf: [{type: number}, {type: string}, {type: "null"}]}
           unit: {type: [string, "null"]}
-          swing: {type: number, description: "Размах метрики в торнадо"}
+          swing: {type: number, description: "Размах NPV, ₽, при изменении входа по его диапазону (норматив) или на ±20 % (параметр объекта)"}
           rank: {type: integer}
           recommendation: {type: string, example: "Замерить фактическое время цикла погрузчика на приёмке за 2 смены"}
           how_to_measure: {type: [string, "null"]}
