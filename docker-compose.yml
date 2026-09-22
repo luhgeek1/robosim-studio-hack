@@ -1,26 +1,58 @@
+# Full local stack: `docker compose up --build`. API: http://localhost:8000/api/docs
+x-backend: &backend
+  build: {context: ., dockerfile: backend/Dockerfile}
+  # Secrets (RS_JWT_SECRET, RS_CSRF_KEY; required when RS_STAGE=prod) go to .env, see backend/.env.example.
+  env_file: [{path: .env, required: false}]
+  environment:
+    RS_STAGE: ${RS_STAGE:-dev}
+    RS_DATABASE_URL: postgresql+asyncpg://roboscope:roboscope@db:5432/roboscope
+    RS_REDIS_URL: redis://redis:6379/0
+    RS_DOCS_ENABLED: ${RS_DOCS_ENABLED:-true}
+  depends_on:
+    db: {condition: service_healthy}
+    redis: {condition: service_healthy}
+
 services:
+  db:
+    image: postgres:17-alpine
+    environment: {POSTGRES_USER: roboscope, POSTGRES_PASSWORD: roboscope, POSTGRES_DB: roboscope}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roboscope"]
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 20
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - backend-data:/srv/data
-    environment:
-      ROBOSCOPE_IMPORT_PROVIDER: rules
-      ROBOSCOPE_EXPLANATION_PROVIDER: rules
-  frontend:
-    image: node:22-alpine
-    working_dir: /app
-    command: sh -c "npm ci && npm run build && npx vite preview --host 0.0.0.0 --port 5173"
-    environment:
-      API_URL: http://backend:8000
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./:/app
+    <<: *backend
+    ports: ["8000:8000"]
     depends_on:
-      - backend
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 5s
+      retries: 20
+
+  worker:
+    <<: *backend
+    command: ["arq", "app.worker.WorkerSettings"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+
 volumes:
-  backend-data:
+  pgdata:

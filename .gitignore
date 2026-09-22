@@ -3,9 +3,11 @@ dist
 .DS_Store
 *.local
 *.tsbuildinfo
-backend/.venv
-backend/roboscope.db
+**/.venv
+.env
 backend/.env
+.mypy_cache
+.ruff_cache
 __pycache__
 .pytest_cache
 
