@@ -216,23 +216,10 @@ function ProcessView({
   const [filter, setFilter] = useState<Filter>('all')
   const ordered = STATUS_ORDER.flatMap((status) => process.candidates.filter((c) => c.status === status))
   const shown = filter === 'all' ? ordered : ordered.filter((c) => c.status === filter)
-  const applicable = process.solution_types.filter((t) => t.applicable)
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-        <div className="min-w-0">
-          <h2 className="h3 text-[20px]">{process.name}</h2>
-          <p className="mt-1 text-[13.5px] text-ink-3">
-            {process.demand_summary && (
-              <>
-                Спрос <span className="num text-ink">{process.demand_summary}</span>
-                {applicable.length > 0 && ' · '}
-              </>
-            )}
-            {applicable.map((t) => t.name).join(', ')}
-          </p>
-        </div>
+      <div>
         <Segmented
           layoutId="matching-filter"
           size="sm"
