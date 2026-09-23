@@ -52,7 +52,7 @@ export function ProjectsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
+      <div>
         <section>
           <div className="mb-3 flex items-center justify-between">
             <div className="h3">Проекты</div>
@@ -73,16 +73,6 @@ export function ProjectsPage() {
             </ul>
           )}
         </section>
-
-        <aside className="rounded-[12px] bg-surface-2 p-5 text-[13.5px] leading-relaxed text-ink-2">
-          <div className="h3 mb-2 text-ink">Как это работает</div>
-          <ol className="list-decimal space-y-1.5 pl-4">
-            <li>Создайте проект и выберите тип объекта — или возьмите демо-склад организатора.</li>
-            <li>Проверьте параметры: подтверждённые взяты из файла, допущения помечены.</li>
-            <li>Посмотрите, где деньги, и подберите роботов под ограничения объекта.</li>
-            <li>Соберите сценарии, сравните покупку и аренду, проверьте флот имитацией.</li>
-          </ol>
-        </aside>
       </div>
     </div>
   )

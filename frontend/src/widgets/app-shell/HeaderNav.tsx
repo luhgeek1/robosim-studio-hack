@@ -232,7 +232,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
 
 /* «+» открывает список проектов: уже открытые отмечены, клик по любому открывает или переключает вкладку.
    Внизу — создание нового проекта: переход на «Проекты» с открытой модалкой. */
-function AddProjectMenu({ openIds }: { openIds: Set<string> }) {
+function AddProjectMenu({ openIds, order }: { openIds: Set<string>; order: string }) {
   const [open, setOpen] = useState(false)
   const projects = useProjects()
   const tabs = useProjectTabs((s) => s.tabs)
@@ -246,7 +246,8 @@ function AddProjectMenu({ openIds }: { openIds: Set<string> }) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <motion.button
-          layout
+          layout="position"
+          layoutDependency={order}
           type="button"
           whileTap={{ scale: 0.92 }}
           transition={SPRING}
@@ -336,7 +337,7 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
           <Tab key={tab.id} tab={tab} active={tab.id === activeId} order={order} />
         ))}
       </AnimatePresence>
-      <AddProjectMenu openIds={new Set(tabs.map((t) => t.id))} />
+      <AddProjectMenu openIds={new Set(tabs.map((t) => t.id))} order={order} />
     </div>
   )
 }
