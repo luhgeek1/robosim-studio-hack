@@ -6,7 +6,14 @@ import { PerspectiveCamera, Vector3 } from 'three'
 
 export type CameraAction = 'home' | 'top' | 'in' | 'out'
 
-export function MapCamera({ command }: { command: { action: CameraAction; id: number } }) {
+export function MapCamera({
+  command,
+  extent,
+}: {
+  command: { action: CameraAction; id: number }
+  extent: { w: number; h: number }
+}) {
+  const span = Math.max(extent.w, extent.h)
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
   const { camera, size } = useThree()
   const viewport = useRef(size)
@@ -20,18 +27,21 @@ export function MapCamera({ command }: { command: { action: CameraAction; id: nu
     orbit.update()
     if (command.action === 'in' || command.action === 'out') {
       const offset = camera.position.clone().sub(orbit.target)
-      const distance = Math.max(20, Math.min(220, offset.length() * (command.action === 'in' ? 0.8 : 1.25)))
+      const distance = Math.max(
+        span * 0.12,
+        Math.min(span * 2.4, offset.length() * (command.action === 'in' ? 0.75 : 1.3)),
+      )
       camera.position.copy(orbit.target).add(offset.setLength(distance))
     } else {
       const aspect = viewport.current.width / viewport.current.height
-      const distance = Math.max(72, 43 / (Math.tan((camera.fov * Math.PI) / 360) * Math.min(aspect, 1.5)))
+      const distance = (span * 0.62) / (Math.tan((camera.fov * Math.PI) / 360) * Math.min(aspect, 1.5))
       const direction = command.action === 'top' ? new Vector3(0, 1, 0.001) : new Vector3(0.42, 0.8, 1)
       orbit.target.set(0, 0, 0)
-      camera.position.copy(direction.normalize().multiplyScalar(Math.min(210, distance)))
+      camera.position.copy(direction.normalize().multiplyScalar(distance))
     }
     orbit.update()
     orbit.enableDamping = true
-  }, [command, camera])
+  }, [command, camera, span])
 
   return (
     <OrbitControls
@@ -44,14 +54,16 @@ export function MapCamera({ command }: { command: { action: CameraAction; id: nu
       rotateSpeed={0.65}
       panSpeed={0.7}
       zoomSpeed={0.8}
-      minDistance={20}
-      maxDistance={220}
+      minDistance={span * 0.1}
+      maxDistance={span * 2.6}
       minPolarAngle={0.001}
       maxPolarAngle={Math.PI / 2 - 0.12}
       onChange={() => {
         const orbit = controls.current
         if (!orbit) return
-        const bounded = orbit.target.clone().clamp(new Vector3(-35, 0, -23), new Vector3(35, 0, 23))
+        const bounded = orbit.target
+          .clone()
+          .clamp(new Vector3(-extent.w / 2, 0, -extent.h / 2), new Vector3(extent.w / 2, 0, extent.h / 2))
         camera.position.add(bounded.clone().sub(orbit.target))
         orbit.target.copy(bounded)
       }}

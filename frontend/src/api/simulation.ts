@@ -1,7 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { qk } from '@/api/keys'
-import type { FleetSweepRequest, Job, Res, SimEvent, SimulationReplay, SimulationRequest } from '@/api/types'
+import type {
+  FleetSweepRequest,
+  FleetSweepResult,
+  Job,
+  Res,
+  SimEvent,
+  SimulationReplay,
+  SimulationRequest,
+} from '@/api/types'
+
+// Fields with contract defaults are optional for the caller; the backend fills them in.
+export type SimulationStart = Pick<SimulationRequest, 'mode'> & Partial<Omit<SimulationRequest, 'mode'>>
 
 const REPLAY_PAGE_S = 3600
 const POLL_MS = 1200
@@ -11,7 +22,7 @@ export const simulationApi = {
     api
       .get<Res<'/api/v1/scenarios/{scenario_id}/simulations', 'get'>>(`/scenarios/${scenarioId}/simulations`)
       .then((r) => r.data.items),
-  start: (scenarioId: string, body: SimulationRequest) =>
+  start: (scenarioId: string, body: SimulationStart) =>
     api
       .post<Res<'/api/v1/scenarios/{scenario_id}/simulations', 'post'>>(`/scenarios/${scenarioId}/simulations`, body)
       .then((r) => r.data),
@@ -99,7 +110,7 @@ export const useHeatmap = (id: string | null | undefined, ready: boolean) =>
 export function useStartSimulation(scenarioId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: SimulationRequest) => simulationApi.start(scenarioId, body),
+    mutationFn: (body: SimulationStart) => simulationApi.start(scenarioId, body),
     onSuccess: (run) => {
       queryClient.setQueryData(qk.simulations.one(run.id), run)
       return queryClient.invalidateQueries({ queryKey: qk.simulations.list(scenarioId) })
@@ -125,11 +136,24 @@ export function useFleetSweep(projectId: string, scenarioId: string) {
       if (done.status !== 'done') throw new Error('Перебор флота не завершился: попробуйте ещё раз')
       return simulationApi.sweepResult(scenarioId, job.id)
     },
-    onSuccess: () =>
-      Promise.all([
+    onSuccess: (result, body) => {
+      queryClient.setQueryData(sweepKey(scenarioId, body.process_key), result)
+      return Promise.all([
         queryClient.invalidateQueries({ queryKey: qk.scenarios.all }),
         queryClient.invalidateQueries({ queryKey: qk.projects.one(projectId) }),
         queryClient.invalidateQueries({ queryKey: qk.simulations.list(scenarioId) }),
-      ]),
+      ])
+    },
   })
 }
+
+const sweepKey = (scenarioId: string, processKey: string) => ['scenarios', scenarioId, 'sweep', processKey] as const
+
+// The backend keeps the sweep result only in its job; the last one is kept in the client cache for the screen.
+export const useLastSweep = (scenarioId: string | undefined, processKey: string | undefined) =>
+  useQuery<FleetSweepResult | null>({
+    queryKey: sweepKey(scenarioId ?? '', processKey ?? ''),
+    queryFn: () => null,
+    enabled: false,
+    staleTime: Infinity,
+  })
