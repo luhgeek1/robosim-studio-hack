@@ -85,8 +85,8 @@ function StepDock({ projectId }: { projectId: string }) {
             to={`/projects/${projectId}/${step.id}`}
             className={({ isActive }) =>
               cn(
-                'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors',
-                isActive ? 'text-ink' : step.soon ? 'text-ink-4 hover:text-ink-3' : 'text-ink-3 hover:text-ink',
+                'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap text-ink transition-colors',
+                !isActive && 'hover:bg-white/50',
               )
             }
           >
@@ -100,7 +100,7 @@ function StepDock({ projectId }: { projectId: string }) {
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
-                  <span className={cn('num text-[11px]', isActive ? 'text-ink-2' : 'text-ink-4')}>{i + 1}</span>
+                  <span className="num text-[11px] text-ink">{i + 1}</span>
                   {step.label}
                 </span>
               </>
