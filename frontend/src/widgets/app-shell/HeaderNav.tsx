@@ -120,7 +120,7 @@ function Tab({ tab, active }: { tab: ProjectTab; active: boolean }) {
       transition={SPRING}
       className={cn(
         'group relative flex h-9 max-w-64 min-w-36 shrink items-center rounded-[10px]',
-        !active && 'text-ink-3 hover:text-ink',
+        !active && 'text-ink-2 hover:text-ink',
       )}
       role="tab"
       aria-selected={active}
@@ -128,7 +128,7 @@ function Tab({ tab, active }: { tab: ProjectTab; active: boolean }) {
       {active ? (
         <HeaderPill variant="tab" />
       ) : (
-        <span className="absolute inset-0 rounded-[10px] transition-colors group-hover:bg-black/4" />
+        <span className="absolute inset-0 rounded-[10px] bg-black/4 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.03)] transition-colors group-hover:bg-black/7" />
       )}
       <Link
         to={tab.path}
@@ -138,7 +138,7 @@ function Tab({ tab, active }: { tab: ProjectTab; active: boolean }) {
         <span
           className={cn(
             'flex size-6 shrink-0 items-center justify-center rounded-md transition-colors',
-            active ? 'bg-black/5 text-ink-2' : 'text-ink-4',
+            active ? 'bg-black/5 text-ink-2' : 'text-ink-3',
           )}
         >
           <Icon size={14} />

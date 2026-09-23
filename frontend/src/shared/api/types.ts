@@ -111,3 +111,13 @@ export type SensitivityResult = S['SensitivityResult']
 export type MonteCarloRequest = S['MonteCarloRequest']
 export type MonteCarloResult = S['MonteCarloResult']
 export type SurveyPriorities = S['SurveyPriorities']
+
+export type Job = S['Job']
+export type SimulationReplay = S['SimulationReplay']
+export type SimulationHeatmap = S['SimulationHeatmap']
+export type TimelinePoint = S['TimelinePoint']
+export type SimEvent = S['SimEvent']
+
+export type Report = S['Report']
+export type ReportFormat = S['ReportFormat']
+export type ReportSection = S['ReportSection']
