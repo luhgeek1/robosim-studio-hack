@@ -33,11 +33,21 @@ const TOP = 4
 
 type Then = 'stay' | 'simulate'
 
-// Follow the money: the robotizable process with the largest labour cost that has solutions passing every check.
-function defaultProcess(data: MatchingResult, costs: Map<string, number>, robotizable: Set<string> | null) {
+// Follow the money, but open on a process the platform can size end to end: the one already in the scenario,
+// otherwise the costliest robotizable process whose fitting solution has a fleet estimate (then simulation applies).
+function defaultProcess(
+  data: MatchingResult,
+  costs: Map<string, number>,
+  robotizable: Set<string> | null,
+  inScenario: string[],
+) {
   const byCost = [...data.processes].sort((a, b) => (costs.get(b.process_key) ?? 0) - (costs.get(a.process_key) ?? 0))
   const eligible = byCost.filter((p) => !robotizable || robotizable.has(p.process_key))
+  const sizeable = (p: MatchingResult['processes'][number]) =>
+    p.candidates.some((c) => c.status === 'fit' && c.estimate?.robots_count != null)
   return (
+    eligible.find((p) => inScenario.includes(p.process_key)) ??
+    eligible.find(sizeable) ??
     eligible.find((p) => countBy(p.candidates, 'fit') > 0) ??
     eligible.find((p) => rankCandidates(p.candidates).length > 0) ??
     byCost[0]
@@ -58,7 +68,8 @@ export function RobotsScreen() {
     ? new Set(processes.data.processes.filter((p) => p.robotizable).map((p) => p.process_key))
     : null
   const process = data
-    ? (data.processes.find((p) => p.process_key === params.get('process')) ?? defaultProcess(data, costs, robotizable))
+    ? (data.processes.find((p) => p.process_key === params.get('process')) ??
+      defaultProcess(data, costs, robotizable, story.main?.items.map((i) => i.process_key) ?? []))
     : undefined
 
   if (!ready || !data || !process)

@@ -110,6 +110,7 @@ export const useHeatmap = (id: string | null | undefined, ready: boolean) =>
 export function useStartSimulation(scenarioId: string) {
   const queryClient = useQueryClient()
   return useMutation({
+    meta: { silent: true },
     mutationFn: (body: SimulationStart) => simulationApi.start(scenarioId, body),
     onSuccess: (run) => {
       queryClient.setQueryData(qk.simulations.one(run.id), run)
@@ -126,21 +127,31 @@ async function waitForJob(jobId: string): Promise<Job> {
   }
 }
 
-// A sweep writes the simulated N into the scenario, so the scenario and its calculation go stale afterwards.
-export function useFleetSweep(projectId: string, scenarioId: string) {
+export async function runSweep(scenarioId: string, body: FleetSweepRequest): Promise<FleetSweepResult> {
+  const job = await simulationApi.sweep(scenarioId, body)
+  const done = await waitForJob(job.id)
+  if (done.status !== 'done') throw new Error('Перебор флота не завершился: попробуйте ещё раз')
+  return simulationApi.sweepResult(scenarioId, job.id)
+}
+
+// A sweep writes the simulated N into one scenario. Variants with the same fleet (RaaS, leasing) get their own sweep —
+// the same deterministic run — so the comparison table compares equal fleets, each marked as simulated.
+export function useFleetSweep(projectId: string, scenarioId: string, variantIds: string[] = []) {
   const queryClient = useQueryClient()
   return useMutation({
+    meta: { silent: true },
     mutationFn: async (body: FleetSweepRequest) => {
-      const job = await simulationApi.sweep(scenarioId, body)
-      const done = await waitForJob(job.id)
-      if (done.status !== 'done') throw new Error('Перебор флота не завершился: попробуйте ещё раз')
-      return simulationApi.sweepResult(scenarioId, job.id)
+      const result = await runSweep(scenarioId, body)
+      for (const id of variantIds) await runSweep(id, body).catch(() => undefined)
+      return result
     },
     onSuccess: (result, body) => {
       queryClient.setQueryData(sweepKey(scenarioId, body.process_key), result)
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: qk.scenarios.all }),
         queryClient.invalidateQueries({ queryKey: qk.projects.one(projectId) }),
+        queryClient.invalidateQueries({ queryKey: qk.projects.scenarios(projectId) }),
+        queryClient.invalidateQueries({ queryKey: qk.projects.comparison(projectId) }),
         queryClient.invalidateQueries({ queryKey: qk.simulations.list(scenarioId) }),
       ])
     },

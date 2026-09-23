@@ -71,7 +71,10 @@ export function SimulationScreen() {
   const start = useStartSimulation(scenario?.id ?? '')
   const processKey = run.data?.fleet?.[0]?.process_key ?? scenario?.items[0]?.process_key
   const sweepData = useLastSweep(scenario?.id, processKey).data ?? undefined
-  const sweep = useFleetSweep(projectId, scenario?.id ?? '')
+  const variantIds = robotized
+    .filter((s) => s.id !== scenario?.id && s.items.some((i) => i.process_key === processKey))
+    .map((s) => s.id)
+  const sweep = useFleetSweep(projectId, scenario?.id ?? '', variantIds)
   const [selectedRobot, setSelectedRobot] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [draftFor, setDraftFor] = useState<string | null>(null)
@@ -109,15 +112,18 @@ export function SimulationScreen() {
       volume_multiplier: draft.volume ? VOLUME_STRESS : 1,
       failures: draft.failure ? [{ robot_index: 0, at_hour: 1, duration_hours: 2 }] : [],
     }
-    const created = await start.mutateAsync(body)
-    setPicked(created.id)
+    const created = await start.mutateAsync(body).catch(() => null)
+    if (created) setPicked(created.id)
   }
 
   const runSweep = async () => {
     if (!processKey) return
-    const result = await sweep.mutateAsync({ process_key: processKey, mode: 'peak' })
+    const result = await sweep.mutateAsync({ process_key: processKey, mode: 'peak' }).catch(() => null)
+    if (!result) return
     if (result.simulation_id) setPicked(result.simulation_id)
-    toast(`Перебор флота: ${result.recommended_count ?? '—'} роботов — число записано в сценарий`)
+    toast(
+      `Перебор флота: ${result.recommended_count ?? '—'} роботов — число записано в сценарий${variantIds.length ? ' и в варианты RaaS и лизинга' : ''}`,
+    )
   }
 
   if (story.isPending) return <Screen title="Имитация">{<Loading label="Загружаем сценарии…" />}</Screen>
@@ -151,7 +157,10 @@ export function SimulationScreen() {
       </Screen>
     )
 
-  const tone = summary ? slaTone(summary.sla.achieved_pct, summary.sla.target_pct) : 'neutral'
+  // The fleet decision is made on the sweep average; a single recorded run may land above or below it.
+  const sweepPoint = run.data?.purpose === 'sweep' ? sweepData?.points.find((p) => p.count === fleet?.count) : undefined
+  const headlineSla = sweepPoint?.sla_achieved_pct ?? summary?.sla.achieved_pct
+  const tone = summary && headlineSla != null ? slaTone(headlineSla, summary.sla.target_pct) : 'neutral'
   const countOptions = shown
     ? [shown.count - 1, shown.count, shown.count + 1]
         .filter((n) => n >= 1)
@@ -169,6 +178,9 @@ export function SimulationScreen() {
               <Pill tone={tone} className="!h-7 !px-2.5 !text-[13px]">
                 <Dot tone={tone} pulse={tone !== 'ok'} />
                 {SLA_LABEL[tone as keyof typeof SLA_LABEL] ?? ''}
+                {sweepPoint
+                  ? ` · ${formatNumber(sweepPoint.sla_achieved_pct, 1)} % в среднем по ${sweepPoint.runs} прогонам`
+                  : ''}
               </Pill>
             </span>
           </>
@@ -260,7 +272,10 @@ export function SimulationScreen() {
               <Button
                 icon={<Play size={15} />}
                 onClick={() =>
-                  void start.mutateAsync({ mode: 'peak', record_events: true }).then((r) => setPicked(r.id))
+                  void start
+                    .mutateAsync({ mode: 'peak', record_events: true })
+                    .then((r) => setPicked(r.id))
+                    .catch(() => undefined)
                 }
                 disabled={busy}
               >
@@ -272,6 +287,16 @@ export function SimulationScreen() {
           Перебор флота прогонит один и тот же пиковый день для разного числа роботов и запишет минимальное, при котором
           SLA выполняется, в сценарий.
         </Empty>
+      )}
+      {(sweep.error || start.error) && (
+        <div className="mb-4 space-y-2">
+          <ErrorState error={sweep.error ?? start.error} title="Имитация для этого состава не запустилась" />
+          <p className="text-[13px] text-ink-3">
+            Сейчас имитация строится для транспортных роботов и «товар к человеку». Для остальных типов число роботов
+            остаётся по расчёту времени цикла — его видно на шаге «Экономика». Чтобы проверить парк имитацией, выберите
+            транспортного робота (AMR) на шаге «Роботы».
+          </p>
+        </div>
       )}
       {run.error && <ErrorState error={run.error} />}
       {run.data?.status === 'failed' && <ErrorState error={run.data.error} title="Имитация завершилась с ошибкой" />}

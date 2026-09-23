@@ -187,10 +187,10 @@ export function TraceDrawer() {
           <section key={section} className="mb-5">
             <div className="meta mb-1.5 font-medium tracking-wide uppercase">{TRACE_SECTION_LABEL[section]}</div>
             <div className="divide-y divide-line rounded-[12px] border border-line">
-              {items.map((item) => {
+              {items.map((item, index) => {
                 const isOpen = expanded === item.metric_key
                 return (
-                  <div key={item.metric_key}>
+                  <div key={`${item.metric_key}-${index}`}>
                     <button
                       type="button"
                       onClick={() => setExpanded(isOpen ? null : item.metric_key)}
