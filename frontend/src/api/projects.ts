@@ -57,22 +57,23 @@ export const projectApi = {
 
 export const useProjects = () => useQuery({ queryKey: qk.projects.list, queryFn: projectApi.list })
 
-export const useProject = (id: string) => useQuery({ queryKey: qk.projects.one(id), queryFn: () => projectApi.get(id) })
+export const useProject = (id: string) =>
+  useQuery({ queryKey: qk.projects.one(id), queryFn: () => projectApi.get(id), enabled: Boolean(id) })
 
 export const useProjectParams = (id: string) =>
-  useQuery({ queryKey: qk.projects.params(id), queryFn: () => projectApi.params(id) })
+  useQuery({ queryKey: qk.projects.params(id), queryFn: () => projectApi.params(id), enabled: Boolean(id) })
 
 export const useValidation = (id: string) =>
-  useQuery({ queryKey: qk.projects.validation(id), queryFn: () => projectApi.validation(id) })
+  useQuery({ queryKey: qk.projects.validation(id), queryFn: () => projectApi.validation(id), enabled: Boolean(id) })
 
 export const useDataQuality = (id: string) =>
-  useQuery({ queryKey: qk.projects.dataQuality(id), queryFn: () => projectApi.dataQuality(id) })
+  useQuery({ queryKey: qk.projects.dataQuality(id), queryFn: () => projectApi.dataQuality(id), enabled: Boolean(id) })
 
 export const useProcesses = (id: string) =>
-  useQuery({ queryKey: qk.projects.processes(id), queryFn: () => projectApi.processes(id) })
+  useQuery({ queryKey: qk.projects.processes(id), queryFn: () => projectApi.processes(id), enabled: Boolean(id) })
 
 export const useAudit = (id: string) =>
-  useQuery({ queryKey: qk.projects.audit(id), queryFn: () => projectApi.audit(id) })
+  useQuery({ queryKey: qk.projects.audit(id), queryFn: () => projectApi.audit(id), enabled: Boolean(id) })
 
 export const useParamHistory = (id: string, key: string, enabled: boolean) =>
   useQuery({

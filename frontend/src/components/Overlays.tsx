@@ -5,7 +5,7 @@ import { useMatch } from 'react-router'
 import { useDataQuality, useProject } from '@/api/projects'
 import { useTrace } from '@/api/scenarios'
 import type { ProvenanceStatus, TraceItem } from '@/api/types'
-import { formatValue } from '@/lib/format'
+import { filledShare, formatValue } from '@/lib/format'
 import { PROVENANCE_LABEL, PROVENANCE_TONE, TRACE_SECTION_LABEL } from '@/lib/labels'
 import { useStore } from '@/store'
 import { Formula, SourcePill } from './Provenance'
@@ -58,16 +58,19 @@ export function TrustDrawer() {
   const counts = project.data?.data_quality.counts ?? {}
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1
   const score = Math.round((project.data?.data_quality.score ?? 0) * 100)
+  const fill = filledShare(counts)
   const toCheck = (quality.data?.items ?? []).filter((i) => ['missing', 'assumption', 'default'].includes(i.status))
 
   return (
     <Drawer open={open && Boolean(projectId)} onClose={close}>
       <DrawerHeader eyebrow="Откуда взяты данные объекта" title="Достоверность данных" onClose={close}>
         <div className="mt-3 flex items-center gap-3">
-          <ConfidenceRing value={score} size={36} />
+          <ConfidenceRing value={fill.pct} size={36} />
           <div>
-            <div className="display num text-[28px]">{score} %</div>
-            <div className="meta">доля введённых и подтверждённых значений среди влияющих на результат</div>
+            <div className="display num text-[28px]">{fill.pct} %</div>
+            <div className="meta">
+              заполнено {fill.filled} из {fill.total} параметров · подтверждено замерами {score} %
+            </div>
           </div>
         </div>
       </DrawerHeader>

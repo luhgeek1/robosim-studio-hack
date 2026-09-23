@@ -15,7 +15,12 @@ export const matchingApi = {
 }
 
 export const useMatching = (projectId: string) =>
-  useQuery({ queryKey: qk.projects.matching(projectId), queryFn: () => matchingApi.get(projectId), retry: false })
+  useQuery({
+    queryKey: qk.projects.matching(projectId),
+    queryFn: () => matchingApi.get(projectId),
+    enabled: Boolean(projectId),
+    retry: false,
+  })
 
 export function useRunMatching(projectId: string) {
   const queryClient = useQueryClient()

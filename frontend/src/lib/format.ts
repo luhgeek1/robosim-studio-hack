@@ -61,3 +61,10 @@ const dateOnly = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium' })
 
 export const formatDateTime = (iso: string | null | undefined) => (iso ? dateTime.format(new Date(iso)) : '—')
 export const formatDate = (iso: string | null | undefined) => (iso ? dateOnly.format(new Date(iso)) : '—')
+
+// Share of parameters that have any value (entered, imported, default with a source, assumption); the rest is "нет данных".
+export function filledShare(counts: Record<string, number>): { filled: number; total: number; pct: number } {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0)
+  const filled = total - (counts.missing ?? 0)
+  return { filled, total, pct: total ? Math.round((filled / total) * 100) : 0 }
+}

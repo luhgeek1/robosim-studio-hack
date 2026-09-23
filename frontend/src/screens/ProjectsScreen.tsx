@@ -8,7 +8,7 @@ import type { ObjectTypeKey, Project } from '@/api/types'
 import { ConfidenceRing } from '@/components/TopBar'
 import { ErrorState, Loading } from '@/components/States'
 import { Button, Pill, inputCls } from '@/components/ui'
-import { formatRub, formatYears } from '@/lib/format'
+import { filledShare, formatRub, formatYears } from '@/lib/format'
 import { OBJECT_TYPE_LABEL, VERDICT_LABEL, VERDICT_TONE, type Verdict } from '@/lib/labels'
 
 const ICONS: Partial<Record<ObjectTypeKey, ReactNode>> = {
@@ -163,7 +163,7 @@ function ProjectRow({ project: p }: { project: Project }) {
   const navigate = useNavigate()
   const remove = useDeleteProject()
   const copy = useCopyProject()
-  const quality = Math.round(p.data_quality.score * 100)
+  const quality = filledShare(p.data_quality.counts).pct
   const verdict = p.headline_metrics?.verdict
   return (
     <li className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-2">
@@ -185,7 +185,7 @@ function ProjectRow({ project: p }: { project: Project }) {
           </span>
         </span>
         {isVerdict(verdict) && <Pill tone={VERDICT_TONE[verdict]}>{VERDICT_LABEL[verdict]}</Pill>}
-        <span className="flex items-center gap-2 text-[13px] text-ink-2" title="Доля подтверждённых данных">
+        <span className="flex items-center gap-2 text-[13px] text-ink-2" title="Доля заполненных параметров объекта">
           <ConfidenceRing value={quality} size={20} />
           <span className="num">{quality} %</span>
         </span>

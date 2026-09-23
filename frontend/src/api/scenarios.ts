@@ -56,10 +56,14 @@ export const scenarioApi = {
 }
 
 export const useScenarios = (projectId: string) =>
-  useQuery({ queryKey: qk.projects.scenarios(projectId), queryFn: () => scenarioApi.list(projectId) })
+  useQuery({
+    queryKey: qk.projects.scenarios(projectId),
+    queryFn: () => scenarioApi.list(projectId),
+    enabled: Boolean(projectId),
+  })
 
 export const useScenario = (id: string) =>
-  useQuery({ queryKey: qk.scenarios.one(id), queryFn: () => scenarioApi.get(id) })
+  useQuery({ queryKey: qk.scenarios.one(id), queryFn: () => scenarioApi.get(id), enabled: Boolean(id) })
 
 export const useCalculation = (id: string | null | undefined) =>
   useQuery({
@@ -89,6 +93,7 @@ export const useComparison = (projectId: string) =>
   useQuery({
     queryKey: qk.projects.comparison(projectId),
     queryFn: () => scenarioApi.comparison(projectId),
+    enabled: Boolean(projectId),
     retry: false,
   })
 

@@ -3,6 +3,7 @@ import { FolderOpen, LogIn, LogOut, Search } from 'lucide-react'
 import { Link, NavLink, useMatch, useNavigate } from 'react-router'
 import { useProject } from '@/api/projects'
 import { useSession } from '@/api/sessionContext'
+import { filledShare } from '@/lib/format'
 import { STEPS, stepPath } from '@/lib/story'
 import { useStore } from '@/store'
 import { Button } from './ui'
@@ -23,7 +24,7 @@ function Logo() {
 function ProjectNav({ projectId }: { projectId: string }) {
   const project = useProject(projectId).data
   const setTrustOpen = useStore((s) => s.setTrustOpen)
-  const quality = project ? Math.round(project.data_quality.score * 100) : null
+  const quality = project ? filledShare(project.data_quality.counts).pct : null
   return (
     <>
       <div className="h-5 w-px bg-line-2" />
@@ -37,7 +38,7 @@ function ProjectNav({ projectId }: { projectId: string }) {
         {quality !== null && (
           <span className="hidden items-center gap-1.5 text-[12.5px] whitespace-nowrap text-ink-3 xl:flex">
             <ConfidenceRing value={quality} />
-            данные подтверждены на <span className="num font-medium text-ink">{quality} %</span>
+            данные заполнены на <span className="num font-medium text-ink">{quality} %</span>
           </span>
         )}
       </button>
