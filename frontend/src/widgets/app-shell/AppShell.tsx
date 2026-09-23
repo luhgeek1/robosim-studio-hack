@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
-import { FolderOpen, LogOut, UserRound } from 'lucide-react'
+import { LogOut, UserRound } from 'lucide-react'
+import { useState } from 'react'
 import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router'
-import { PROJECT_STEPS, useProject } from '@/entities/project'
+import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
 import type { Role } from '@/shared/api/types'
-import { formatPct } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import {
@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
-import { ConfidenceRing } from '@/shared/ui/v0'
+import { HeaderHighlight, ProjectTabs, Sections } from './HeaderNav'
 import { Logo } from './Logo'
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -66,37 +66,27 @@ function UserMenu() {
   )
 }
 
-/* Внутри проекта верхняя панель — это и есть навигация: название с индексом доверия и нумерованные шаги. */
-function ProjectNav({ projectId }: { projectId: string }) {
-  const project = useProject(projectId)
-  const score = project.data?.data_quality.score
+/* Плашка шагов закреплена под шапкой: контент прокручивается под стеклом, шаги всегда под рукой.
+   Шапка и плашка — fixed + layoutRoot, а место в потоке держат распорки той же высоты: framer умеет мерить
+   координаты только для fixed-корней, со sticky подсветка при переходе прилетала снизу на величину прокрутки. */
+function StepDock({ projectId }: { projectId: string }) {
   return (
-    <>
-      <div className="h-5 w-px bg-line-2" />
-      <Link
-        to={`/projects/${projectId}`}
-        className="group -mx-1 flex min-w-0 items-center gap-3 rounded-md px-1 py-1 transition-colors hover:bg-black/[0.04]"
-        title="Обзор проекта"
+    <motion.div
+      layoutRoot
+      className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-6 pt-3 pb-1"
+    >
+      <nav
+        className="glass pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5"
+        aria-label="Шаги оценки"
       >
-        <span className="max-w-48 truncate text-[14px] font-medium">{project.data?.name ?? '…'}</span>
-        {score !== undefined && (
-          <span className="hidden items-center gap-1.5 whitespace-nowrap text-[12.5px] text-ink-3 2xl:flex">
-            <ConfidenceRing value={score * 100} />
-            <span>
-              доверие <span className="num font-medium text-ink">{formatPct(score, { share: true, digits: 0 })}</span>
-            </span>
-          </span>
-        )}
-      </Link>
-      <nav className="ml-auto flex shrink-0 items-center gap-0.5" aria-label="Шаги оценки">
         {PROJECT_STEPS.map((step, i) => (
           <NavLink
             key={step.id}
             to={`/projects/${projectId}/${step.id}`}
             className={({ isActive }) =>
               cn(
-                'relative h-8 rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors',
-                isActive ? 'text-ink' : step.soon ? 'text-ink-4' : 'text-ink-3 hover:bg-black/[0.04] hover:text-ink',
+                'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap text-ink transition-colors',
+                !isActive && 'hover:bg-white/50',
               )
             }
           >
@@ -104,13 +94,13 @@ function ProjectNav({ projectId }: { projectId: string }) {
               <>
                 {isActive && (
                   <motion.span
-                    layoutId="nav-pill"
-                    className="absolute inset-0 rounded-md bg-black/[0.06]"
+                    layoutId="step-pill"
+                    className="absolute inset-0 rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,24,0.08),0_4px_12px_-4px_rgba(20,20,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]"
                     transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
-                  <span className={cn('num text-[11px]', isActive ? 'text-ink-2' : 'text-ink-4')}>{i + 1}</span>
+                  <span className="num text-[11px] text-ink">{i + 1}</span>
                   {step.label}
                 </span>
               </>
@@ -118,59 +108,42 @@ function ProjectNav({ projectId }: { projectId: string }) {
           </NavLink>
         ))}
       </nav>
-      <Button asChild size="sm" variant="ghost" className="text-ink-2">
-        <Link to="/projects">
-          <FolderOpen /> <span className="hidden 2xl:inline">Проекты</span>
-        </Link>
-      </Button>
-    </>
+    </motion.div>
   )
 }
 
 export function AppShell() {
+  // Callback-ref: эффект подсветки должен стартовать, когда строка шапки уже в DOM (обычный ref у родителя
+  // привязывается позже эффектов детей).
+  const [headerRow, setHeaderRow] = useState<HTMLDivElement | null>(null)
   const { user } = useSession()
   const match = useMatch('/projects/:projectId/*')
   const projectId = match?.params.projectId
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-line bg-canvas/85 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-[1440px] items-center gap-5 px-6">
+      <div className="h-14 shrink-0" aria-hidden />
+      <motion.header
+        layoutRoot
+        className="fixed inset-x-0 top-0 z-40 h-14 border-b border-line bg-canvas/85 backdrop-blur-md"
+      >
+        <div ref={setHeaderRow} className="relative mx-auto flex h-full max-w-360 items-center gap-5 px-6">
+          <HeaderHighlight container={headerRow} />
           <Logo />
-          {projectId ? (
-            <ProjectNav projectId={projectId} />
-          ) : (
-            <nav className="flex items-center gap-1" aria-label="Разделы">
-              {user && (
-                <NavLink
-                  to="/projects"
-                  className={({ isActive }) =>
-                    cn(
-                      'h-8 rounded-md px-3 text-[13px] font-medium leading-8',
-                      isActive ? 'bg-black/[0.06] text-ink' : 'text-ink-3 hover:text-ink',
-                    )
-                  }
-                >
-                  Проекты
-                </NavLink>
-              )}
-              <NavLink
-                to="/catalog"
-                className={({ isActive }) =>
-                  cn(
-                    'h-8 rounded-md px-3 text-[13px] font-medium leading-8',
-                    isActive ? 'bg-black/[0.06] text-ink' : 'text-ink-3 hover:text-ink',
-                  )
-                }
-              >
-                Каталог решений
-              </NavLink>
-            </nav>
-          )}
-          <div className={projectId ? '' : 'ml-auto'}>
+          <div className="h-5 w-px shrink-0 bg-line-2" />
+          <Sections projectId={projectId} />
+          <div className="h-5 w-px shrink-0 bg-line-2" />
+          {user ? <ProjectTabs activeId={projectId} /> : <div className="min-w-0 flex-1" />}
+          <div className="shrink-0">
             <UserMenu />
           </div>
         </div>
-      </header>
+      </motion.header>
+      {projectId && (
+        <>
+          <div className="h-16.5 shrink-0" aria-hidden />
+          <StepDock projectId={projectId} />
+        </>
+      )}
       <main className="flex min-h-0 flex-1 flex-col">
         <Outlet />
       </main>

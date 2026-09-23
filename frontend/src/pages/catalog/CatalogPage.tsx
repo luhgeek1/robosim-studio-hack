@@ -1,20 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Search, SearchX, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Search, SearchX, X } from 'lucide-react'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { useCatalogFacets, useProducts } from '@/entities/catalog'
 import { CompareSelectionBar, CompareToggle } from '@/features/catalog-compare-selection'
 import type { CatalogQuery } from '@/shared/api/keys'
-import type { Facet, Product } from '@/shared/api/types'
-import { formatNumber, pluralRu } from '@/shared/lib/format'
+import type { Product } from '@/shared/api/types'
+import { formatNumber, formatRub, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
-import { Checkbox } from '@/shared/ui/checkbox'
-import { Input } from '@/shared/ui/input'
-import { PageHeader } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { EmptyState, ErrorBlock, Spinner } from '@/shared/ui/states'
-import { PriceFrom, ProductBadges, ProductStatusBadge, TrlBadge } from './parts'
+import { ProductStatusMark, VerifiedMarks } from './parts'
 
 const PAGE_SIZE = 24
 const ALL = '__all'
@@ -85,44 +82,41 @@ export function CatalogPage() {
     window.scrollTo({ top: 0 })
   }
 
-  return (
-    <div className="mx-auto w-full max-w-[1400px] p-6 pb-28">
-      <PageHeader
-        title="Каталог решений"
-        description={
-          data
-            ? `${formatNumber(data.total)} ${pluralRu(data.total, ['решение', 'решения', 'решений'])} из каталога организатора и открытых источников. До 5 решений можно сравнить бок о бок.`
-            : undefined
-        }
-      />
+  const resetAll = () =>
+    update({ q: null, object_type: null, industry: null, solution_type: null, status: null, badge: null })
 
-      <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-6">
-        <aside className="sticky top-16 max-h-[calc(100vh-5rem)] space-y-5 overflow-y-auto rounded-lg border bg-surface p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Фильтры</h2>
+  return (
+    <div className="mx-auto w-full max-w-360 px-6 pt-12 pb-28">
+      <div className="mb-8 flex items-baseline gap-3">
+        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Каталог решений</h1>
+        {data && <span className="display num text-[28px] text-ink-4">{formatNumber(data.total)}</span>}
+      </div>
+
+      <div className="grid grid-cols-[232px_minmax(0,1fr)] items-start gap-10">
+        <aside className="scroll-thin sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 pb-4">
+          <div className="mb-4 flex h-7 items-center justify-between">
+            <span className="text-[13px] font-medium text-ink-2">Фильтры</span>
             {activeFilters && (
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={() =>
-                  update({ q: null, object_type: null, industry: null, solution_type: null, status: null, badge: null })
-                }
+              <button
+                type="button"
+                onClick={resetAll}
+                className="flex items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink"
               >
-                <X /> Сбросить
-              </Button>
+                <X size={13} /> Сбросить
+              </button>
             )}
           </div>
 
           {facets.isError && <ErrorBlock error={facets.error} onRetry={() => facets.refetch()} />}
-          {facets.isPending && <Skeleton className="h-64 w-full" />}
+          {facets.isPending && <Skeleton className="h-64 w-full rounded-xl" />}
           {facets.data && (
-            <>
+            <div className="divide-y divide-line">
               <FilterGroup title="Тип объекта">
-                <RadioList
-                  value={query.object_type ?? null}
-                  allLabel="Любой объект"
-                  options={facets.data.object_types ?? []}
-                  onChange={(value) => update({ object_type: value })}
+                <OptionList
+                  options={[{ key: ALL, name: 'Любой объект' }, ...(facets.data.object_types ?? [])]}
+                  isActive={(key) => (query.object_type ?? ALL) === key}
+                  onToggle={(key) => update({ object_type: key === ALL ? null : key })}
+                  kind="radio"
                 />
               </FilterGroup>
               <FilterGroup title="Отрасль">
@@ -130,7 +124,7 @@ export function CatalogPage() {
                   value={query.industry ?? ALL}
                   onValueChange={(value) => update({ industry: value === ALL ? null : value })}
                 >
-                  <SelectTrigger className="w-full" aria-label="Отрасль">
+                  <SelectTrigger className="h-9 w-full rounded-lg bg-card" aria-label="Отрасль">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -144,39 +138,42 @@ export function CatalogPage() {
                 </Select>
               </FilterGroup>
               <FilterGroup title="Тип решения">
-                <CheckList
+                <OptionList
                   options={facets.data.solution_types ?? []}
-                  selected={query.solution_type ?? []}
-                  onToggle={(value) => toggleIn('solution_type', value)}
+                  isActive={(key) => (query.solution_type ?? []).includes(key)}
+                  onToggle={(key) => toggleIn('solution_type', key)}
                   scroll
                 />
               </FilterGroup>
               <FilterGroup title="Стадия">
-                <CheckList
+                <OptionList
                   options={facets.data.statuses ?? []}
-                  selected={query.status ?? []}
-                  onToggle={(value) => toggleIn('status', value)}
+                  isActive={(key) => (query.status ?? []).includes(key)}
+                  onToggle={(key) => toggleIn('status', key)}
                 />
               </FilterGroup>
               <FilterGroup title="Отметки">
-                <CheckList
+                <OptionList
                   options={facets.data.badges ?? []}
-                  selected={query.badge ?? []}
-                  onToggle={(value) => toggleIn('badge', value)}
+                  isActive={(key) => (query.badge ?? []).includes(key)}
+                  onToggle={(key) => toggleIn('badge', key)}
                 />
               </FilterGroup>
-            </>
+            </div>
           )}
         </aside>
 
-        <div className="min-w-0 space-y-4">
-          <div className="flex items-center gap-3">
+        <div className="min-w-0">
+          <div className="mb-5 flex items-center gap-3">
             <SearchBox value={query.q ?? ''} onCommit={(q) => update({ q: q || null })} />
             <Select
               value={query.sort}
               onValueChange={(value) => update({ sort: value === 'relevance' ? null : value })}
             >
-              <SelectTrigger className="w-56" aria-label="Сортировка">
+              <SelectTrigger
+                className="h-11! w-56 rounded-xl bg-card text-[13.5px] shadow-[0_1px_2px_rgba(20,20,24,0.04)]"
+                aria-label="Сортировка"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -187,14 +184,13 @@ export function CatalogPage() {
                 ))}
               </SelectContent>
             </Select>
-            {products.isFetching && !products.isPending && <Spinner className="text-muted-foreground" />}
           </div>
 
           {products.isError && <ErrorBlock error={products.error} onRetry={() => products.refetch()} />}
           {products.isPending && (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 9 }, (_, i) => (
-                <Skeleton key={i} className="h-52 rounded-lg" />
+                <Skeleton key={i} className="h-56 rounded-[14px]" />
               ))}
             </div>
           )}
@@ -205,19 +201,7 @@ export function CatalogPage() {
               description="Попробуйте убрать часть фильтров или изменить запрос."
               action={
                 activeFilters && (
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      update({
-                        q: null,
-                        object_type: null,
-                        industry: null,
-                        solution_type: null,
-                        status: null,
-                        badge: null,
-                      })
-                    }
-                  >
+                  <Button variant="outline" onClick={resetAll}>
                     Сбросить фильтры
                   </Button>
                 )
@@ -227,7 +211,10 @@ export function CatalogPage() {
           {data && data.items.length > 0 && (
             <>
               <div
-                className={cn('grid grid-cols-3 gap-3 transition-opacity', products.isPlaceholderData && 'opacity-60')}
+                className={cn(
+                  'grid grid-cols-1 gap-4 transition-opacity md:grid-cols-2 xl:grid-cols-3',
+                  products.isPlaceholderData && 'opacity-60',
+                )}
               >
                 {data.items.map((product) => (
                   <ProductCard key={product.id} product={product} catalogSearch={location.search} />
@@ -239,6 +226,7 @@ export function CatalogPage() {
                 total={data.total}
                 pageSize={data.page_size}
                 shown={data.items.length}
+                fetching={products.isFetching}
                 onPage={goToPage}
               />
             </>
@@ -267,58 +255,80 @@ function SearchBox({ value, onCommit }: { value: string; onCommit: (q: string) =
   }, [text, value, onCommit])
 
   return (
-    <div className="relative flex-1">
-      <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
+    <label className="relative flex-1">
+      <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-3" />
+      <input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Поиск по названию, производителю, описанию — например, «AMR» или «Ronavi»"
-        className="h-9 pl-8"
+        placeholder="Название, производитель или описание — например, «AMR» или «Ronavi»"
+        className="h-11 w-full rounded-xl bg-card pr-4 pl-11 text-[14.5px] shadow-[0_1px_2px_rgba(20,20,24,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80"
         aria-label="Поиск по каталогу"
       />
-    </div>
+    </label>
   )
 }
 
 function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="space-y-2">
-      <div className="text-xs text-muted-foreground">{title}</div>
+    <div className="py-4 first:pt-0">
+      <div className="mb-2 text-[12.5px] text-ink-3">{title}</div>
       {children}
     </div>
   )
 }
 
-function RadioList({
-  value,
+/* Один вид для всех фильтров: строка с отметкой слева и числом справа. Радио — кружок, множественный выбор — квадрат. */
+function OptionList({
   options,
-  allLabel,
-  onChange,
+  isActive,
+  onToggle,
+  kind = 'check',
+  scroll,
 }: {
-  value: string | null
-  options: Facet[]
-  allLabel: string
-  onChange: (value: string | null) => void
+  options: { key: string; name: string; count?: number }[]
+  isActive: (key: string) => boolean
+  onToggle: (key: string) => void
+  kind?: 'check' | 'radio'
+  scroll?: boolean
 }) {
-  const items: { key: string | null; name: string; count?: number }[] = [{ key: null, name: allLabel }, ...options]
+  if (!options.length) return <div className="meta">Нет значений</div>
   return (
-    <div className="space-y-0.5" role="radiogroup">
-      {items.map((item) => {
-        const active = value === item.key
+    <div
+      className={cn('-mx-2 space-y-px', scroll && 'scroll-thin max-h-64 overflow-y-auto pr-1')}
+      role={kind === 'radio' ? 'radiogroup' : 'group'}
+    >
+      {options.map((option) => {
+        const active = isActive(option.key)
         return (
           <button
-            key={item.key ?? ALL}
+            key={option.key}
             type="button"
-            role="radio"
+            role={kind === 'radio' ? 'radio' : 'checkbox'}
             aria-checked={active}
-            onClick={() => onChange(item.key)}
+            onClick={() => onToggle(option.key)}
             className={cn(
-              'flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm hover:bg-raised',
-              active && 'bg-raised font-medium',
+              'flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13.5px] leading-snug transition-colors',
+              active ? 'bg-black/5 font-medium text-ink' : 'text-ink-2 hover:bg-black/4 hover:text-ink',
             )}
           >
-            <span>{item.name}</span>
-            {item.count !== undefined && <span className="num text-xs text-muted-foreground">{item.count}</span>}
+            <span
+              className={cn(
+                'mt-0.5 grid size-3.5 shrink-0 place-items-center transition-colors',
+                kind === 'radio' ? 'rounded-full' : 'rounded-[4px]',
+                active ? 'bg-ink text-white' : 'bg-card ring-1 ring-line-2',
+              )}
+            >
+              {active &&
+                (kind === 'radio' ? (
+                  <span className="size-1.5 rounded-full bg-white" />
+                ) : (
+                  <Check className="size-2.5" strokeWidth={3.5} />
+                ))}
+            </span>
+            <span className="min-w-0 flex-1">{option.name}</span>
+            {option.count !== undefined && (
+              <span className="num pt-px text-[12px] font-normal text-ink-4">{option.count}</span>
+            )}
           </button>
         )
       })}
@@ -326,78 +336,48 @@ function RadioList({
   )
 }
 
-function CheckList({
-  options,
-  selected,
-  onToggle,
-  scroll,
-}: {
-  options: Facet[]
-  selected: string[]
-  onToggle: (value: string) => void
-  scroll?: boolean
-}) {
-  if (!options.length) return <div className="text-xs text-muted-foreground">Нет значений</div>
-  return (
-    <div className={cn('space-y-1.5', scroll && 'max-h-56 overflow-y-auto pr-1')}>
-      {options.map((facet) => {
-        const id = `facet-${facet.key}`
-        return (
-          <label key={facet.key} htmlFor={id} className="flex cursor-pointer items-start gap-2 text-sm">
-            <Checkbox
-              id={id}
-              className="mt-0.5"
-              checked={selected.includes(facet.key)}
-              onCheckedChange={() => onToggle(facet.key)}
-            />
-            <span className="min-w-0 flex-1 leading-snug">{facet.name}</span>
-            <span className="num text-xs text-muted-foreground">{facet.count}</span>
-          </label>
-        )
-      })}
-    </div>
-  )
-}
-
 function ProductCard({ product, catalogSearch }: { product: Product; catalogSearch: string }) {
+  const offers = product.offers_count ?? 0
   return (
-    <div className="relative flex flex-col gap-3 rounded-lg border bg-surface p-4 transition-colors hover:border-primary/50">
-      <div className="space-y-1">
+    <article className="card group relative flex flex-col transition-[border-color,box-shadow] hover:border-ink/15 hover:shadow-card">
+      <div className="flex-1 px-5 pt-4.5 pb-4">
+        <div className="meta truncate" title={product.solution_type_name ?? product.solution_type}>
+          {product.solution_type_name ?? product.solution_type}
+        </div>
         <Link
           to={`/catalog/${product.id}`}
           state={{ catalogSearch }}
-          className="line-clamp-2 font-medium leading-snug after:absolute after:inset-0"
+          className="mt-1 line-clamp-2 text-[15.5px] leading-snug font-semibold tracking-[-0.01em] after:absolute after:inset-0"
           title={product.name}
         >
           {product.name}
         </Link>
-        <div className="truncate text-xs text-muted-foreground" title={product.manufacturer.name}>
+        <div className="mt-0.5 truncate text-[13px] text-ink-3" title={product.manufacturer.name}>
           {product.manufacturer.name}
         </div>
-      </div>
-      <div className="space-y-1.5">
-        <div className="line-clamp-1 text-xs" title={product.solution_type_name ?? product.solution_type}>
-          {product.solution_type_name ?? product.solution_type}
-        </div>
-        <div className="flex flex-wrap items-center gap-1">
-          <ProductStatusBadge status={product.status} />
-          <TrlBadge trl={product.trl} />
-        </div>
-        <ProductBadges badges={product.badges} verifiedOnly />
-      </div>
-      <div className="mt-auto space-y-3">
-        <div className="flex items-end justify-between gap-2">
-          <PriceFrom price={product.price_from} />
-          {product.offers_count !== undefined && product.offers_count > 1 && (
-            <span className="text-xs text-muted-foreground">
-              <span className="num">{product.offers_count}</span>{' '}
-              {pluralRu(product.offers_count, ['предложение', 'предложения', 'предложений'])}
+        <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-ink-2">
+          <ProductStatusMark status={product.status} />
+          {product.trl != null && (
+            <span className="text-ink-3" title="Уровень готовности технологии по каталогу организатора (1–9)">
+              УГТ <span className="num text-ink">{product.trl}</span>
             </span>
           )}
         </div>
-        <CompareToggle product={product} className="relative z-10 w-full" />
+        <VerifiedMarks badges={product.badges} className="mt-2" />
       </div>
-    </div>
+      <div className="hairline flex items-end justify-between gap-3 px-5 py-3.5">
+        <div className="min-w-0">
+          <div className="num text-[17px] leading-tight font-semibold tracking-[-0.01em]">
+            от {formatRub(product.price_from.amount_rub)}
+          </div>
+          <div className="meta mt-0.5 truncate">
+            {product.price_from.vat_included === false ? 'без НДС' : 'с НДС'}
+            {offers > 1 && ` · ${offers} ${pluralRu(offers, ['предложение', 'предложения', 'предложений'])}`}
+          </div>
+        </div>
+        <CompareToggle product={product} className="relative z-10 shrink-0" />
+      </div>
+    </article>
   )
 }
 
@@ -407,6 +387,7 @@ function Pagination({
   total,
   pageSize,
   shown,
+  fetching,
   onPage,
 }: {
   page: number
@@ -414,24 +395,38 @@ function Pagination({
   total: number
   pageSize: number
   shown: number
+  fetching: boolean
   onPage: (page: number) => void
 }) {
   const from = (page - 1) * pageSize + 1
   return (
-    <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-      <span className="num">
+    <div className="mt-6 flex items-center justify-between gap-3 text-[13px] text-ink-3">
+      <span className="num flex items-center gap-2">
         {from}–{from + shown - 1} из {formatNumber(total)}
+        {fetching && <Spinner className="size-3.5" />}
       </span>
       {totalPages > 1 && (
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>
-            <ChevronLeft /> Назад
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={page <= 1}
+            onClick={() => onPage(page - 1)}
+            aria-label="Назад"
+          >
+            <ChevronLeft />
           </Button>
-          <span className="num">
-            Страница {page} из {totalPages}
+          <span className="num px-2 text-ink-2">
+            {page} <span className="text-ink-4">/</span> {totalPages}
           </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>
-            Вперёд <ChevronRight />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={page >= totalPages}
+            onClick={() => onPage(page + 1)}
+            aria-label="Вперёд"
+          >
+            <ChevronRight />
           </Button>
         </div>
       )}

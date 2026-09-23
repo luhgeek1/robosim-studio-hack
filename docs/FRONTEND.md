@@ -79,7 +79,7 @@
 ### Ветка `frontend-rework`
 
 Прототип подачи по UX фронта v0 (история из шагов, ответ заголовком, 3D-двойник), переведённый на текущий API и эти
-требования. Фронтендер берёт его за основу и дорабатывает; `main` остаётся на MVP до решения команды.
+требования. Данные и логика из неё перенесены в `main` (D-023); дизайн ведёт `main`, ветка — справочник.
 
 ## Стек
 
@@ -106,8 +106,11 @@ Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль n
 - Верхняя панель внутри проекта — это навигация: название с индексом доверия и нумерованные шаги (D-020).
 - Примитивы v0 — `shared/ui/v0.tsx`: `Pill`, `Bar`, `Check`, `Dot`, `KpiNumber` (число плавно перетекает),
   `ConfidenceRing`, `Segmented`. Остальные элементы — shadcn с токенами v0.
-- 3D-двойник — `widgets/twin` (three, @react-three/fiber, drei, zustand): `Twin mode="overview"` на «Объекте»,
-  `mode="sim"` на «Имитации». Сцена типовая, цифры в ней — только из ответов бэкенда (`useTwin.setTarget`).
+- Двойник — `widgets/twin` (three, @react-three/fiber, drei): `Twin layout={…}` строится из планировки проекта
+  или прогона (`LayoutGeometry`), 2D — это `LayoutMap` со слоями роботов и заторов. Роботы двигаются только
+  по журналу событий: `entities/simulation/playback.ts` (`buildTracks`, `poseAt`, общий час `usePlayback`) —
+  фронт интерполирует, но не решает, куда ехать (D-006). Подписи зон — DOM-слой с проекцией камеры, не drei `Html`
+  (его корни не размонтируются чисто с React 19). `capture` снимает текущий вид в PNG для отчёта.
 - Деньги приходят в рублях, на экране — `formatRub` (млн ₽); формулы и входы — компонент `Formula`.
 - Скрыто до починки бэкенда (см. `STATUS.md`, долг): полнота карточки (100 % при пустых ТТХ) и бейджи «Отечественный»
   / «Есть внедрения» в списках (стоят у всех), «Потенциал рынка» и «Похожие решения» в карточке продукта.
@@ -122,16 +125,16 @@ Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль n
 | `/catalog/compare` | Сравнение 2–5 продуктов, лучшее значение подсвечено | `compareProducts` | MVP |
 | `/projects` | Проекты: сводка, создать (пустой / демо), копировать, удалить | `listProjects`, `createProject`, `copyProject`, `deleteProject`, `listObjectTypes` | MVP |
 | `/projects/:id` | Обзор: статус, панель доверия, путь по шагам, журнал | `getProject`, `getProjectDataQuality`, `listProjectAudit` | MVP |
-| `…/object` | Параметры по группам: правка, валидация, импорт Excel, шаблон | `listProjectParams`, `updateProjectParam`, `resetProjectParam`, `getProjectValidation`, `importProjectParamsFile`, `applyImport`, `downloadImportTemplate` | MVP |
+| `…/object` | Параметры по группам: правка, валидация, импорт Excel, шаблон; двойник на планировке проекта (построить, перестроить после правки параметров); «далее» по `can_match` | `listProjectParams`, `updateProjectParam`, `resetProjectParam`, `getProjectValidation`, `importProjectParamsFile`, `applyImport`, `downloadImportTemplate`, `getLayout`, `generateLayout` | MVP |
 | `…/processes` | «Где деньги»: спрос, пик, ФОТ по процессам, часовой профиль | `getProjectProcesses` | MVP |
-| `…/matching` | Подбор по процессам: подходит / проверить / исключено, причины, скоринг, веса | `getMatching`, `runMatching` | MVP |
+| `…/matching` | Подбор по процессам: подходит / проверить / исключено, причины, недостающие данные и зачем они нужны, скоринг, веса, ручное добавление исключённого с показом причин | `getMatching`, `runMatching`, `addManualCandidate` | MVP |
 | `…/layout` | 2D-схема склада, маршруты, вывод геометрии, перегенерация | `getLayout`, `generateLayout` | MVP (редактор — дальше) |
-| `…/scenarios` | Сценарии: из рекомендации, копия, удаление | `listScenarios`, `createScenario`, `copyScenario`, `deleteScenario` | MVP |
+| `…/scenarios` | Сценарии: из рекомендации, копия, удаление; покупка + RaaS + лизинг одной кнопкой с расчётом | `listScenarios`, `createScenario`, `copyScenario`, `deleteScenario`, `calculateScenario` | MVP |
 | `…/scenarios/:sid` | Состав, финансирование, горизонт; расчёт: N, CAPEX/OPEX/эффект с формулами, поток, вердикт, риски, калибровка, трасса | `getScenario`, `updateScenario`, `calculateScenario`, `getCalculation`, `getCalculationTrace`, `getCalculationNarrative` | MVP |
 | `…/comparison` | Как сейчас / покупка / RaaS / лизинг, рекомендация, кривые | `getComparison` | MVP |
 | `…/risks` | Торнадо, тепловая карта «ФОТ × объём», Монте-Карло, что замерить | `runSensitivity`, `runMonteCarlo`, `getSurveyPriorities` | MVP |
-| `…/simulation` | 3D-двойник на сводке прогона: N и режим → запуск, SLA, мощность, очередь, загрузка, таймлайн, «расчёт против имитации», узкое место, перебор флота | `startSimulation`, `getSimulation`, `getSimulationTimeline`, `runFleetSweep`, `getFleetSweepResult` | MVP (2D-плеер по журналу — дальше) |
-| `…/report` | PDF / Excel / DOCX | `/reports/*` | ждёт бэкенд |
+| `…/simulation` | 2D-схема и 3D на журнале событий: рабочий парк (резерв отдельно), пиковый/обычный день, «+20 % объёма», отказ робота, заторы; плеер (пуск, пауза, с начала, перемотка, скорость); SLA, выполнено/очередь/загрузка в момент плеера, чем заняты роботы, «расчёт против имитации», узкое место; перебор флота для всех вариантов с пересчётом; снимок в отчёт | `startSimulation`, `getSimulation`, `getSimulationTimeline`, `getSimulationReplay`, `getSimulationHeatmap`, `runFleetSweep`, `getFleetSweepResult`, `uploadSimulationVisual`, `calculateScenario` | MVP |
+| `…/report` | PDF, Excel с формулами, JSON; снимки имитации в PDF; список отчётов; «предварительная оценка» | `createReport`, `getReport`, `downloadReport`, `listReports` | MVP (DOCX — 422 на бэкенде) |
 | `/demo`, `/admin` | Демо гостя, админка каталога и нормативов | `/demo/*`, `/admin/*` | ждёт бэкенд |
 
 Пункты «ждёт бэкенд» видны в навигации неактивными с подписью «скоро» — жюри видит полный путь.

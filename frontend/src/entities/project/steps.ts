@@ -13,7 +13,7 @@ export const PROJECT_STEPS: ProjectStep[] = [
   { id: 'comparison', label: 'Сравнение', question: 'Купить, арендовать или оставить как есть' },
   { id: 'risks', label: 'Риски', question: 'Насколько это надёжно' },
   { id: 'simulation', label: 'Имитация', question: 'Справятся ли роботы' },
-  { id: 'report', label: 'Отчёт', question: 'Что делать', soon: true },
+  { id: 'report', label: 'Отчёт', question: 'Что делать' },
 ]
 
 export const stepIndex = (id: string | undefined) => PROJECT_STEPS.findIndex((s) => s.id === id)

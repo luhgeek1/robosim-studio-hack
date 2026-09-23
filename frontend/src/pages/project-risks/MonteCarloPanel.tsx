@@ -30,7 +30,8 @@ const NEG_COLOR = 'var(--chart-1)'
 
 export function MonteCarloPanel({ scenarioId }: { scenarioId: string }) {
   const [metric, setMetric] = useState<McMetric>('payback_years')
-  const mc = useMonteCarlo(scenarioId, { n: RUNS, metric, method: 'analytic' })
+  // Seed 1, как в отчёте (D-021): вероятности на экране и в PDF совпадают и не плывут от захода к заходу.
+  const mc = useMonteCarlo(scenarioId, { n: RUNS, metric, method: 'analytic', seed: 1 })
 
   return (
     <Section

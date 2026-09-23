@@ -36,7 +36,9 @@ export function MatchingPage() {
   const noFit = data ? (data.totals?.fit ?? 0) === 0 : true
   const fit = data?.totals?.fit ?? 0
   const total = fit + (data?.totals?.check ?? 0) + (data?.totals?.excluded ?? 0)
-  const best = data?.processes[0]?.candidates.find((c) => c.status === 'fit')
+  // «Лучшее» — первое место по баллу в первом процессе подбора; процесс называем, чтобы заголовок не обобщал.
+  const firstProcess = data?.processes.find((p) => p.candidates.some((c) => c.status === 'fit'))
+  const best = firstProcess?.candidates.find((c) => c.status === 'fit')
 
   return (
     <Screen
@@ -44,7 +46,7 @@ export function MatchingPage() {
       title={
         data
           ? fit
-            ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}${best ? `, лучшее — ${best.product.name}` : ''}`
+            ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}${best && firstProcess ? `, лучшее в процессе «${firstProcess.name.split(' (')[0]}» — ${best.product.name}` : ''}`
             : 'Подходящих решений не найдено'
           : 'Подбор роботов'
       }
@@ -90,6 +92,7 @@ export function MatchingPage() {
 
       {data && (
         <MatchingView
+          projectId={projectId}
           data={data}
           compare={compare}
           onToggleCompare={(id, on) =>
@@ -126,10 +129,12 @@ export function MatchingPage() {
 }
 
 function MatchingView({
+  projectId,
   data,
   compare,
   onToggleCompare,
 }: {
+  projectId: string
   data: MatchingResult
   compare: string[]
   onToggleCompare: (productId: string, on: boolean) => void
@@ -173,7 +178,7 @@ function MatchingView({
         />
       ) : (
         <div className="grid grid-cols-[260px_1fr] items-start gap-6">
-          <nav className="sticky top-16 space-y-1" aria-label="Процессы">
+          <nav className="sticky top-36 space-y-1" aria-label="Процессы">
             {data.processes.map((process) => {
               const counts = countByStatus(process.candidates)
               const active = process === selected
@@ -208,7 +213,9 @@ function MatchingView({
             })}
           </nav>
 
-          {selected && <ProcessView process={selected} compare={compare} onToggleCompare={onToggleCompare} />}
+          {selected && (
+            <ProcessView projectId={projectId} process={selected} compare={compare} onToggleCompare={onToggleCompare} />
+          )}
         </div>
       )}
     </>
@@ -216,10 +223,12 @@ function MatchingView({
 }
 
 function ProcessView({
+  projectId,
   process,
   compare,
   onToggleCompare,
 }: {
+  projectId: string
   process: ProcessMatching
   compare: string[]
   onToggleCompare: (productId: string, on: boolean) => void
@@ -272,6 +281,8 @@ function ProcessView({
       {groups.map(({ status, items }) => (
         <CandidateGroup
           key={status}
+          projectId={projectId}
+          processKey={process.process_key}
           status={status}
           items={items}
           compare={compare}
@@ -283,11 +294,15 @@ function ProcessView({
 }
 
 function CandidateGroup({
+  projectId,
+  processKey,
   status,
   items,
   compare,
   onToggleCompare,
 }: {
+  projectId: string
+  processKey: string
   status: CandidateStatus
   items: Candidate[]
   compare: string[]
@@ -306,7 +321,9 @@ function CandidateGroup({
       <CollapsibleContent className="mt-2 space-y-2">
         {items.map((candidate) => (
           <CandidateCard
-            key={candidate.offer_id}
+            key={candidate.offer_id ?? candidate.product.id}
+            projectId={projectId}
+            processKey={processKey}
             candidate={candidate}
             selected={compare.includes(candidate.product.id)}
             selectDisabled={compare.length >= MAX_COMPARE}

@@ -10,20 +10,24 @@ export function PageHeader({
   description,
   actions,
   eyebrow,
+  dense = false,
   className,
 }: {
   title: ReactNode
   description?: ReactNode
   actions?: ReactNode
   eyebrow?: ReactNode
+  dense?: boolean
   className?: string
 }) {
   return (
-    <div className={cn('mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-4', className)}>
+    <div className={cn('flex flex-wrap items-end justify-between gap-x-6 gap-y-4', dense ? 'mb-4' : 'mb-7', className)}>
       <div className="min-w-0 max-w-190">
-        {eyebrow && <div className="meta num mb-2">{eyebrow}</div>}
+        {eyebrow && <div className={cn('meta num', dense ? 'mb-1' : 'mb-2')}>{eyebrow}</div>}
         <h1 className="h1">{title}</h1>
-        {description && <p className="mt-3 text-[15.5px] leading-relaxed text-ink-2">{description}</p>}
+        {description && (
+          <p className={cn('text-[15.5px] leading-relaxed text-ink-2', dense ? 'mt-1.5' : 'mt-3')}>{description}</p>
+        )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -40,12 +44,14 @@ export function Screen({
   nextLabel,
   nextDisabled = false,
   nextTo,
+  dense = false,
   className,
 }: {
   title: ReactNode
   lead?: ReactNode
   children: ReactNode
   wide?: boolean
+  dense?: boolean
   actions?: ReactNode
   nextLabel?: string
   nextDisabled?: boolean
@@ -66,6 +72,7 @@ export function Screen({
         title={title}
         description={lead}
         actions={actions}
+        dense={dense}
       />
       {children}
       {idx >= 0 && (

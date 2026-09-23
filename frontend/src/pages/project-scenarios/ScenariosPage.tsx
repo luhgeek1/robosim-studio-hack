@@ -1,10 +1,11 @@
-import { Copy, MoreHorizontal, Plus, Sparkles, Star, Trash2 } from 'lucide-react'
+import { Copy, Layers, MoreHorizontal, Plus, Sparkles, Star, Trash2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useProjectId } from '@/entities/project'
 import {
   SCENARIO_KIND_LABEL,
   VerdictBadge,
+  useBuildComparisonSet,
   useCopyScenario,
   useCreateScenario,
   useDeleteScenario,
@@ -44,6 +45,7 @@ export function ScenariosPage() {
   const projectId = useProjectId()
   const scenarios = useScenarios(projectId)
   const create = useCreateScenario(projectId)
+  const buildSet = useBuildComparisonSet(projectId)
   const navigate = useNavigate()
 
   const fromRecommendation = async () => {
@@ -59,6 +61,17 @@ export function ScenariosPage() {
   const recommended =
     robotized.find((s) => s.is_recommended && s.last_calculation) ?? robotized.find((s) => s.last_calculation)
   const calc = recommended?.last_calculation
+  // Для сравнения нужны два рассчитанных варианта роботизации (ТЗ 3.5.5): предлагаем собрать их одной кнопкой.
+  const needsSet = scenarios.data !== undefined && robotized.filter((s) => s.last_calculation).length < 2
+  const buildSetButton = (
+    <Button
+      variant={robotized.length ? 'default' : 'outline'}
+      onClick={() => buildSet.mutate()}
+      disabled={buildSet.isPending}
+    >
+      {buildSet.isPending ? <Spinner /> : <Layers />} Собрать покупку, RaaS и лизинг
+    </Button>
+  )
 
   return (
     <Screen
@@ -72,9 +85,13 @@ export function ScenariosPage() {
       actions={
         <>
           <NewScenarioDialog projectId={projectId} />
-          <Button onClick={fromRecommendation} disabled={create.isPending}>
-            {create.isPending ? <Spinner /> : <Sparkles />} Из рекомендации подбора
-          </Button>
+          {needsSet && robotized.length > 0 ? (
+            buildSetButton
+          ) : (
+            <Button onClick={fromRecommendation} disabled={create.isPending}>
+              {create.isPending ? <Spinner /> : <Sparkles />} Из рекомендации подбора
+            </Button>
+          )}
         </>
       }
     >
@@ -93,9 +110,12 @@ export function ScenariosPage() {
           title="Сценариев роботизации пока нет"
           description="Быстрее всего — собрать сценарий из лучших подходящих решений по каждому процессу. Состав потом можно поменять."
           action={
-            <Button onClick={fromRecommendation} disabled={create.isPending}>
-              <Sparkles /> Из рекомендации подбора
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={fromRecommendation} disabled={create.isPending}>
+                <Sparkles /> Из рекомендации подбора
+              </Button>
+              {buildSetButton}
+            </div>
           }
         />
       )}

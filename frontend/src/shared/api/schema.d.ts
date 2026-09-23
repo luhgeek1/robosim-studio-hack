@@ -1196,7 +1196,12 @@ export interface paths {
     /** Сформированные отчёты проекта */
     get: operations['listReports']
     put?: never
-    /** Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача) */
+    /**
+     * Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача)
+     * @description Сейчас формируются `pdf` («предТЭО» с графиками, планировкой и имитацией), `xlsx` (входы и живые формулы
+     *     из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` — 422.
+     *     Сценарии с устаревшим расчётом пересчитываются.
+     */
     post: operations['createReport']
     delete?: never
     options?: never
@@ -1230,6 +1235,23 @@ export interface paths {
     }
     /** Скачать файл отчёта */
     get: operations['downloadReport']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/files/{file_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Скачать загруженный файл проекта (снимок имитации, подложка, отчёт) */
+    get: operations['downloadFile']
     put?: never
     post?: never
     delete?: never
@@ -1887,7 +1909,7 @@ export interface components {
         target_value?: number
         /** @example мин */
         unit?: string
-      }
+      } | null
       /** @description Группы персонала, чей труд замещает роботизация процесса. */
       labor_groups?: string[]
       solution_types: string[]
@@ -1912,7 +1934,7 @@ export interface components {
         min?: number
         /** @example 0.85 */
         max?: number
-      }
+      } | null
       source: components['schemas']['Source']
       /** @example Лист «Легенда» датасета организатора: загрузка AMR 70–85 % */
       rationale?: string
@@ -2009,7 +2031,7 @@ export interface components {
         capex_rub?: number | null
         effect_rub_year?: number | null
         verdict?: string | null
-      }
+      } | null
       /** @default false */
       is_demo: boolean
     }
@@ -2039,15 +2061,18 @@ export interface components {
       /** @example Отбор заказов */
       name: string
       demand_unit: components['schemas']['DemandUnit']
-      /** @example 100000 */
-      demand_per_day: number
+      /**
+       * @description null — не хватает параметров для оценки спроса
+       * @example 100000
+       */
+      demand_per_day: number | null
       /** @example 4545 */
-      avg_per_hour: number
+      avg_per_hour: number | null
       /** @example 6818 */
-      peak_per_hour: number
+      peak_per_hour: number | null
       /** @description Доли суточного объёма по часам (сумма = 1). Источник профиля — допущение с источником. */
-      hourly_profile?: number[]
-      profile_provenance?: components['schemas']['Provenance']
+      hourly_profile?: number[] | null
+      profile_provenance?: components['schemas']['Provenance'] | null
       /** @description Как процесс выполняется сейчас. */
       current?: {
         labor_groups?: components['schemas']['LaborGroup'][]
@@ -2112,6 +2137,20 @@ export interface components {
       params_changed: boolean
       /** Format: date-time */
       updated_at?: string
+    }
+    /**
+     * @description Геометрия планировки, на которой прошла имитация: прогон хранит свою копию, поэтому реплей показывает
+     *     ровно ту схему, по которой считался, даже если планировку проекта потом изменили.
+     */
+    LayoutPlan: {
+      /** @example 200 */
+      width_m: number
+      /** @example 100 */
+      height_m: number
+      zones: components['schemas']['Zone'][]
+      racks: components['schemas']['Rack'][]
+      nodes: components['schemas']['LayoutNode'][]
+      edges: components['schemas']['LayoutEdge'][]
     }
     /** @description Что вытекает из геометрии — попадает в расчёт цикла и в имитацию. */
     LayoutStats: {
@@ -2253,6 +2292,8 @@ export interface components {
         yearly: components['schemas']['CashflowPoint'][]
         /** @description Месяцы внедрения и разгона до полного эффекта */
         ramp_up_months?: number
+        /** @description Вложения в момент 0 (свои средства или первый взнос); в monthly они входят в месяц 1 */
+        upfront_rub?: number
       }
       metrics: components['schemas']['Metrics']
       interpretation: components['schemas']['Interpretation']
@@ -2278,7 +2319,7 @@ export interface components {
           unit?: string | null
           tolerance_pct?: number | null
         }[]
-      }
+      } | null
     }
     /** @description Полный граф расчёта: каждая метрика → формула → входы → источники. Основа Excel с живыми формулами. */
     CalculationTrace: {
@@ -2368,7 +2409,8 @@ export interface components {
         /** @description Размах метрики запроса (metric_at_high − metric_at_low по модулю) в её единицах; для окупаемости годы за горизонтом считаются равными горизонту */
         swing: number
         rank: number
-        provenance_status?: components['schemas']['ProvenanceStatus']
+        /** @description null — группа параметров */
+        provenance_status?: components['schemas']['ProvenanceStatus'] | null
       }[]
       heatmap?: {
         x_key?: string
@@ -2376,7 +2418,7 @@ export interface components {
         x_values?: number[]
         y_values?: number[]
         z?: (number | null)[][]
-      }
+      } | null
       /** Format: date-time */
       computed_at?: string
     }
@@ -2510,7 +2552,7 @@ export interface components {
         count?: number
         utilization?: number
         queue_max?: number
-        energy_kwh?: number
+        energy_kwh?: number | null
       }
       stations?: {
         count?: number
@@ -2528,12 +2570,12 @@ export interface components {
         /** @example Имитация подтверждает расчёт: 131 палл/ч против 136 (−4 %), SLA выполнен */
         text?: string
       }
-      /** @description Тот же день ручным процессом (если compare_baseline). */
+      /** @description Тот же день ручным процессом (если compare_baseline); пока не поддерживается — null. */
       baseline?: {
         throughput_per_hour?: number
         sla_achieved_pct?: number
         avg_lead_time_min?: number
-      }
+      } | null
       per_process?: {
         process_key?: string
         robots?: number
@@ -2551,13 +2593,13 @@ export interface components {
     SimulationReplay: {
       /** Format: uuid */
       simulation_id: string
-      layout: components['schemas']['Layout']
+      layout: components['schemas']['LayoutPlan']
       robots: {
         id: string
         process_key: string
         product_name: string
         /** @description [длина, ширина] */
-        footprint_m?: number[]
+        footprint_m?: number[] | null
         speed_mps?: number
         home_node?: string
       }[]
@@ -2609,10 +2651,17 @@ export interface components {
       format: components['schemas']['ReportFormat']
       status: components['schemas']['JobStatus']
       file?: components['schemas']['FileRef'] | null
-      versions?: components['schemas']['VersionStamp']
+      /** @description null, пока отчёт не собран */
+      versions?: components['schemas']['VersionStamp'] | null
       sections?: components['schemas']['ReportSection'][]
       /** @example Предварительная оценка. Результат требует верификации при обследовании объекта. */
       disclaimer?: string
+      /**
+       * Format: uuid
+       * @description Фоновая задача: прогресс — GET /jobs/{id} или SSE
+       */
+      job_id?: string | null
+      error?: components['schemas']['Problem'] | null
       /** Format: date-time */
       created_at: string
       /** Format: date-time */
@@ -2963,12 +3012,14 @@ export interface components {
       entity: string
       /** @enum {string} */
       action: 'create' | 'update' | 'delete' | 'import' | 'calculate' | 'simulate' | 'export' | 'override'
+      /** @description null при создании */
       before?: {
         [key: string]: unknown
-      }
+      } | null
+      /** @description null при удалении */
       after?: {
         [key: string]: unknown
-      }
+      } | null
       note?: string | null
     }
     AuditList: {
@@ -3029,7 +3080,7 @@ export interface components {
       conflict_with_current?: {
         current_value?: number | string | boolean | null
         current_status?: components['schemas']['ProvenanceStatus']
-      }
+      } | null
     }
     /**
      * @description Результат разбора файла или текста. Ничего не применяется автоматически: фронт показывает таблицу,
@@ -3120,7 +3171,7 @@ export interface components {
       /** @example 22 */
       working_hours_per_day?: number
       /** @example 1.5 */
-      peak_factor?: number
+      peak_factor?: number | null
     }
     FileRef: {
       /** Format: uri */
@@ -3320,7 +3371,7 @@ export interface components {
       process_key: string
       name: string
       /** @example 136 палл/ч в пик, 2 000 палл/сут */
-      demand_summary?: string
+      demand_summary?: string | null
       solution_types: {
         key: string
         name: string
@@ -3408,7 +3459,8 @@ export interface components {
         count_mode?: components['schemas']['CountMode']
         count?: number | null
       }
-      candidate_status?: components['schemas']['CandidateStatus']
+      /** @description null — позиция не из подбора */
+      candidate_status?: components['schemas']['CandidateStatus'] | null
       notes?: string | null
     }
     /** @description Условия финансирования сценария (Доп. 2.1, 2.4). Значения по умолчанию берутся из реестра нормативов. */
@@ -3595,7 +3647,7 @@ export interface components {
         nominal_throughput_per_hour?: number | null
         /** @description Доля времени в работе с учётом зарядки и простоев */
         availability?: number
-        utilization_target?: number
+        utilization_target?: number | null
         effective_throughput_per_hour: number | null
         /** @description Заявка производителя — для сравнения */
         vendor_claim_per_hour?: number | null
@@ -3942,7 +3994,7 @@ export interface components {
       zones: {
         zone_id?: string
         occupancy?: number
-        queue_avg?: number
+        queue_avg?: number | null
       }[]
       nodes?: {
         node_id?: string
@@ -3957,6 +4009,7 @@ export interface components {
       kind: 'simulation_png' | 'simulation_gif' | 'chart_png'
       /** Format: uuid */
       simulation_id?: string | null
+      /** @description url ведёт на GET /files/{id}; снимок попадает в PDF через visual_ids */
       file: components['schemas']['FileRef']
       caption?: string | null
     }
@@ -6600,7 +6653,7 @@ export interface operations {
           /** Format: binary */
           file: string
           /** @enum {string} */
-          kind: 'simulation_png' | 'simulation_gif'
+          kind: 'simulation_png' | 'simulation_gif' | 'chart_png'
           caption?: string
         }
       }
@@ -6613,6 +6666,24 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['VisualUpload']
+        }
+      }
+      /** @description Файл больше 10 МБ */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+      /** @description Принимаются PNG и GIF */
+      415: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
         }
       }
     }
@@ -6717,6 +6788,7 @@ export interface operations {
           'application/pdf': string
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document': string
+          'application/json': Record<string, never>
         }
       }
       /** @description Ещё формируется */
@@ -6728,6 +6800,33 @@ export interface operations {
           'application/json': components['schemas']['Problem']
         }
       }
+    }
+  }
+  downloadFile: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        file_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Файл в исходном формате */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'image/png': string
+          'image/gif': string
+          'image/jpeg': string
+          'application/pdf': string
+          'application/octet-stream': string
+        }
+      }
+      404: components['responses']['NotFound']
     }
   }
   getAssistStatus: {

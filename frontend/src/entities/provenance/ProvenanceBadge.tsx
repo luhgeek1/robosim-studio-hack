@@ -16,7 +16,6 @@ export function ProvenanceBadge({
 }) {
   const current = provenance?.status ?? status
   if (!current) return null
-  const source = provenance?.source
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -24,19 +23,26 @@ export function ProvenanceBadge({
           {PROVENANCE_LABEL[current]}
         </ToneBadge>
       </TooltipTrigger>
-      <TooltipContent className="max-w-sm space-y-1 text-left">
-        <div className="font-medium">{PROVENANCE_HINT[current]}</div>
-        {source && (
-          <div>
-            {SOURCE_KIND_LABEL[source.kind]}: {source.title}
-            {source.retrieved_at && <span className="opacity-70"> · {formatDate(source.retrieved_at)}</span>}
-          </div>
-        )}
-        {provenance?.note && <div className="opacity-80">{provenance.note}</div>}
-        {provenance?.raw_value && <div className="opacity-80">Исходное значение: {provenance.raw_value}</div>}
-        {provenance?.changed_by && <div className="opacity-70">Изменил: {provenance.changed_by}</div>}
-      </TooltipContent>
+      <ProvenanceTip status={current} provenance={provenance} />
     </Tooltip>
+  )
+}
+
+function ProvenanceTip({ status, provenance }: { status: ProvenanceStatus; provenance?: Provenance | null }) {
+  const source = provenance?.source
+  return (
+    <TooltipContent className="max-w-sm space-y-1 text-left">
+      <div className="font-medium">{PROVENANCE_HINT[status]}</div>
+      {source && (
+        <div>
+          {SOURCE_KIND_LABEL[source.kind]}: {source.title}
+          {source.retrieved_at && <span className="opacity-70"> · {formatDate(source.retrieved_at)}</span>}
+        </div>
+      )}
+      {provenance?.note && <div className="opacity-80">{provenance.note}</div>}
+      {provenance?.raw_value && <div className="opacity-80">Исходное значение: {provenance.raw_value}</div>}
+      {provenance?.changed_by && <div className="opacity-70">Изменил: {provenance.changed_by}</div>}
+    </TooltipContent>
   )
 }
 

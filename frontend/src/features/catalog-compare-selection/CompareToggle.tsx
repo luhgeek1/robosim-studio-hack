@@ -19,16 +19,16 @@ export function CompareToggle({
     <Button
       type="button"
       size={size}
-      variant={selected ? 'secondary' : 'outline'}
+      variant={selected ? 'default' : 'outline'}
       aria-pressed={selected}
-      className={cn(selected && 'text-primary', className)}
+      className={cn('rounded-lg', !selected && 'bg-card', className)}
       onClick={() => {
         const ok = selection.toggle({ id: product.id, name: product.name })
         if (!ok) toast.warning(`В сравнении уже ${COMPARE_LIMIT} решений — уберите одно, чтобы добавить новое`)
       }}
     >
       {selected ? <Check /> : <Plus />}
-      {selected ? 'В сравнении' : size === 'sm' ? 'В сравнение' : 'Добавить в сравнение'}
+      {selected ? 'В сравнении' : size === 'sm' ? 'Сравнить' : 'Добавить в сравнение'}
     </Button>
   )
 }

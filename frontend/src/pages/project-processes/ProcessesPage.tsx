@@ -83,7 +83,7 @@ export function ProcessesPage() {
                       key={process.process_key}
                       process={process}
                       solutionNames={solutionNames}
-                      peakFactor={data.peak_factor}
+                      peakFactor={data.peak_factor ?? undefined}
                     />
                   ))}
                 </div>

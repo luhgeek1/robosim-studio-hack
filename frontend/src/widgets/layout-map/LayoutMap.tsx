@@ -1,6 +1,6 @@
 import { Maximize2, Minus, Plus, Waypoints } from 'lucide-react'
 import { memo, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { Layout, LayoutNode } from '@/shared/api/types'
+import type { LayoutGeometry, LayoutNode } from '@/shared/api/types'
 import { formatNumber } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
@@ -21,7 +21,7 @@ import {
   type MarkerKind,
 } from './geometry'
 import { MapLegend } from './MapLegend'
-import { useViewport, type LayoutMapView } from './useViewport'
+import { useViewport, type FitPadding, type LayoutMapView } from './useViewport'
 
 export type LayoutHighlight = {
   zones?: string[]
@@ -30,7 +30,7 @@ export type LayoutHighlight = {
 }
 
 export type LayoutMapProps = {
-  layout: Layout
+  layout: LayoutGeometry
   /** Controlled route-graph visibility; omit to let the map toolbar own it. */
   showGraph?: boolean
   defaultShowGraph?: boolean
@@ -39,6 +39,14 @@ export type LayoutMapProps = {
   legend?: boolean
   /** Sizes the map viewport, e.g. `h-[560px]`. */
   className?: string
+  /** Stretch to the parent's height (the 2D view inside the twin card). */
+  fill?: boolean
+  /** Moves the zoom toolbar when the host puts its own controls in the corner. */
+  toolbarClassName?: string
+  /** Where the scale bar and the building size sit; a full-bleed host keeps the bottom for its own overlays. */
+  infoCorner?: 'bottom' | 'top-left'
+  /** Free space kept around the building at «Целиком», for hosts that lay their own overlays over the map. */
+  fitPadding?: FitPadding
   /** Overlay in meter coordinates (robots, heat spots); `view.k` is pixels per meter for constant-size marks. */
   children?: ReactNode | ((view: LayoutMapView) => ReactNode)
 }
@@ -53,6 +61,10 @@ export function LayoutMap({
   highlight,
   legend = true,
   className,
+  fill = false,
+  toolbarClassName,
+  infoCorner = 'bottom',
+  fitPadding,
   children,
 }: LayoutMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -66,12 +78,13 @@ export function LayoutMap({
     containerRef,
     layout.width_m,
     layout.height_m,
-    `${layout.id}:${layout.version}`,
+    `${layout.id ?? 'plan'}:${layout.version ?? `${layout.width_m}x${layout.height_m}`}`,
+    fitPadding,
   )
   const barMeters = scaleBarMeters(view.k)
 
   return (
-    <div className="space-y-3">
+    <div className={cn('space-y-3', fill && 'h-full')}>
       <div
         ref={containerRef}
         className={cn(
@@ -99,7 +112,10 @@ export function LayoutMap({
 
         <div
           data-map-control
-          className="absolute top-2 right-2 flex items-center gap-1 rounded-lg border bg-raised p-1 shadow-lg"
+          className={cn(
+            'absolute top-2 right-2 flex items-center gap-1 rounded-lg border bg-raised p-1 shadow-lg',
+            toolbarClassName,
+          )}
         >
           <Tooltip>
             <TooltipTrigger asChild>
@@ -120,12 +136,19 @@ export function LayoutMap({
           </Button>
         </div>
 
-        <div className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-raised/90 px-2 py-1 text-[11px]">
-          <div className="h-1.5 border-x border-b border-foreground" style={{ width: barMeters * view.k }} />
-          <div className="num mt-0.5">{formatNumber(barMeters)} м</div>
-        </div>
-        <div className="num pointer-events-none absolute right-2 bottom-2 rounded-md bg-raised/90 px-2 py-1 text-[11px] text-muted-foreground">
-          Здание {formatNumber(layout.width_m)} × {formatNumber(layout.height_m)} м
+        <div
+          className={cn(
+            'pointer-events-none absolute flex gap-2',
+            infoCorner === 'bottom' ? 'inset-x-2 bottom-2 items-end justify-between' : 'top-4 left-4 items-start',
+          )}
+        >
+          <div className="rounded-md bg-raised/90 px-2 py-1 text-[11px]">
+            <div className="h-1.5 border-x border-b border-foreground" style={{ width: barMeters * view.k }} />
+            <div className="num mt-0.5">{formatNumber(barMeters)} м</div>
+          </div>
+          <div className="num rounded-md bg-raised/90 px-2 py-1 text-[11px] text-muted-foreground">
+            Здание {formatNumber(layout.width_m)} × {formatNumber(layout.height_m)} м
+          </div>
         </div>
       </div>
       {legend && <MapLegend layout={layout} showGraph={graph} />}
@@ -133,7 +156,7 @@ export function LayoutMap({
   )
 }
 
-const StaticLayer = memo(function StaticLayer({ layout, showGraph }: { layout: Layout; showGraph: boolean }) {
+const StaticLayer = memo(function StaticLayer({ layout, showGraph }: { layout: LayoutGeometry; showGraph: boolean }) {
   const zones = useMemo(() => {
     const ordered = [...layout.zones].sort((a, b) => Number(a.kind === 'corridor') - Number(b.kind === 'corridor'))
     return ordered.map((zone) => ({ zone, d: polygonPath(zone.polygon) }))
@@ -231,7 +254,7 @@ function Marker({ node }: { node: LayoutNode & { kind: MarkerKind } }) {
   )
 }
 
-function HighlightLayer({ layout, highlight, k }: { layout: Layout; highlight: LayoutHighlight; k: number }) {
+function HighlightLayer({ layout, highlight, k }: { layout: LayoutGeometry; highlight: LayoutHighlight; k: number }) {
   const zoneIds = useMemo(() => new Set(highlight.zones ?? []), [highlight.zones])
   const nodeIds = useMemo(() => new Set(highlight.nodes ?? []), [highlight.nodes])
   const edgeD = useMemo(() => {
@@ -257,7 +280,7 @@ function HighlightLayer({ layout, highlight, k }: { layout: Layout; highlight: L
 
 const LABEL_CHAR_PX = 6.6
 
-function ZoneLabels({ layout, view }: { layout: Layout; view: LayoutMapView }) {
+function ZoneLabels({ layout, view }: { layout: LayoutGeometry; view: LayoutMapView }) {
   const items = useMemo(
     () =>
       layout.zones

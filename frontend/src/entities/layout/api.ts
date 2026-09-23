@@ -16,8 +16,13 @@ export const layoutApi = {
       .then((r) => r.data),
 }
 
-export const useLayout = (projectId: string) =>
-  useQuery({ queryKey: qk.projects.layout(projectId), queryFn: () => layoutApi.get(projectId), retry: false })
+export const useLayout = (projectId: string, enabled = true) =>
+  useQuery({
+    queryKey: qk.projects.layout(projectId),
+    queryFn: () => layoutApi.get(projectId),
+    enabled: Boolean(projectId) && enabled,
+    retry: false,
+  })
 
 export function useGenerateLayout(projectId: string) {
   const invalidate = useInvalidateProject()

@@ -7,16 +7,22 @@ export type LayoutMapView = {
   ty: number
 }
 
-const PAD_X = 24
+export type FitPadding = { x: number; top: number; bottom: number }
+
 // Room for the toolbar above and the scale bar below, so the building is not hidden under the controls at fit.
-const PAD_TOP = 52
-const PAD_BOTTOM = 40
+const DEFAULT_PAD: FitPadding = { x: 24, top: 52, bottom: 40 }
 const MIN_ZOOM = 0.5
 const MAX_ZOOM = 40
 
-export function fitView(width: number, height: number, contentW: number, contentH: number): LayoutMapView {
-  const k = Math.max(0.0001, Math.min((width - PAD_X * 2) / contentW, (height - PAD_TOP - PAD_BOTTOM) / contentH))
-  return { k, tx: (width - contentW * k) / 2, ty: PAD_TOP + (height - PAD_TOP - PAD_BOTTOM - contentH * k) / 2 }
+export function fitView(
+  width: number,
+  height: number,
+  contentW: number,
+  contentH: number,
+  pad: FitPadding = DEFAULT_PAD,
+): LayoutMapView {
+  const k = Math.max(0.0001, Math.min((width - pad.x * 2) / contentW, (height - pad.top - pad.bottom) / contentH))
+  return { k, tx: (width - contentW * k) / 2, ty: pad.top + (height - pad.top - pad.bottom - contentH * k) / 2 }
 }
 
 export function useViewport(
@@ -24,6 +30,7 @@ export function useViewport(
   contentW: number,
   contentH: number,
   fitKey: string,
+  pad: FitPadding = DEFAULT_PAD,
 ) {
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [view, setView] = useState<LayoutMapView>({ k: 1, tx: 0, ty: 0 })
@@ -44,10 +51,10 @@ export function useViewport(
 
   const fit = useCallback(() => {
     if (!size.width || !size.height) return
-    const next = fitView(size.width, size.height, contentW, contentH)
+    const next = fitView(size.width, size.height, contentW, contentH, pad)
     fitK.current = next.k
     setView(next)
-  }, [size.width, size.height, contentW, contentH])
+  }, [size.width, size.height, contentW, contentH, pad])
 
   const key = `${fitKey}:${size.width}x${size.height}`
   useLayoutEffect(() => {

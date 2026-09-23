@@ -110,7 +110,7 @@ export function ScenarioPage() {
       </div>
 
       {(dirty || problems.length > 0) && (
-        <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white/95 px-4 py-2.5 text-sm shadow-float backdrop-blur">
+        <div className="sticky top-34 z-20 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white/95 px-4 py-2.5 text-sm shadow-float backdrop-blur">
           <span className="font-medium">Есть несохранённые изменения</span>
           {problems.length > 0 && <span className="text-warn">{problems[0]}</span>}
           <div className="ml-auto flex gap-2">

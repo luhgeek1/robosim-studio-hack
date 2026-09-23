@@ -1,4 +1,4 @@
-import type { Layout, LayoutEdge, LayoutNode, ZoneKind } from '@/shared/api/types'
+import type { LayoutEdge, LayoutGeometry, LayoutNode, ZoneKind } from '@/shared/api/types'
 
 export type Point = [number, number]
 export type EdgeKind = NonNullable<LayoutEdge['kind']>
@@ -122,7 +122,7 @@ export function polygonSize(polygon: readonly (readonly number[])[]): Point {
   return [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)]
 }
 
-export function edgePaths(layout: Layout, onlyIds?: ReadonlySet<string>): Map<EdgeKind, string> {
+export function edgePaths(layout: LayoutGeometry, onlyIds?: ReadonlySet<string>): Map<EdgeKind, string> {
   const byId = new Map(layout.nodes.map((n) => [n.id, n]))
   const parts = new Map<EdgeKind, string[]>()
   for (const edge of layout.edges) {

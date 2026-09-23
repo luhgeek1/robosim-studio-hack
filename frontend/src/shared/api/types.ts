@@ -111,3 +111,22 @@ export type SensitivityResult = S['SensitivityResult']
 export type MonteCarloRequest = S['MonteCarloRequest']
 export type MonteCarloResult = S['MonteCarloResult']
 export type SurveyPriorities = S['SurveyPriorities']
+
+export type Job = S['Job']
+export type SimulationReplay = S['SimulationReplay']
+export type SimulationHeatmap = S['SimulationHeatmap']
+export type TimelinePoint = S['TimelinePoint']
+export type SimEvent = S['SimEvent']
+
+export type Report = S['Report']
+export type ReportFormat = S['ReportFormat']
+export type ReportSection = S['ReportSection']
+export type LayoutPlan = S['LayoutPlan']
+export type Rack = S['Rack']
+// What the 2D map and the 3D twin draw: the project layout or the copy a simulation run kept (LayoutPlan).
+export type LayoutGeometry = Pick<LayoutPlan, 'width_m' | 'height_m' | 'zones' | 'nodes' | 'edges'> & {
+  racks?: Rack[]
+  id?: string
+  version?: number
+  generator?: Layout['generator']
+}

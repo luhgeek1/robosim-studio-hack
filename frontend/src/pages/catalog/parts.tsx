@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { Link } from 'react-router'
 import { BADGE_LABEL, PRODUCT_STATUS_LABEL } from '@/entities/catalog'
 import type { Badge, Product, ProductStatus } from '@/shared/api/types'
@@ -23,6 +24,34 @@ export function TrlBadge({ trl }: { trl: number | null | undefined }) {
       </TooltipTrigger>
       <TooltipContent>Уровень готовности технологии по каталогу организатора (1–9)</TooltipContent>
     </Tooltip>
+  )
+}
+
+const STATUS_DOT: Record<ProductStatus, string> = { operation: 'bg-ok', piloting: 'bg-warn', rnd: 'bg-ink-4' }
+
+/* Тихая версия стадии для списков и таблиц: точка и подпись без плашки. */
+export function ProductStatusMark({ status, className }: { status: ProductStatus; className?: string }) {
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap', className)}>
+      <span className={cn('size-1.5 shrink-0 rounded-full', STATUS_DOT[status])} />
+      {PRODUCT_STATUS_LABEL[status]}
+    </span>
+  )
+}
+
+/* Отметки о проверке строкой с галочками — без плашек, чтобы карточка не пестрила. */
+export function VerifiedMarks({ badges, className }: { badges: Badge[]; className?: string }) {
+  const shown = badges.filter((badge) => VERIFIED_BADGES.has(badge))
+  if (!shown.length) return null
+  return (
+    <ul className={cn('flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-ink-2', className)}>
+      {shown.map((badge) => (
+        <li key={badge} className="inline-flex items-center gap-1">
+          <Check className="size-3.5 text-ok" strokeWidth={2.5} />
+          {BADGE_LABEL[badge]}
+        </li>
+      ))}
+    </ul>
   )
 }
 
