@@ -1,42 +1,55 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { motion } from 'framer-motion'
 import type { ProcessDemand } from '@/shared/api/types'
-import { formatMln, formatRub } from '@/shared/lib/format'
+import { formatPct, formatRub } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 
-type Row = { name: string; cost: number }
-
+/* ФОТ по процессам строками в языке сайта: чернильная полоса на светлой дорожке, сумма и доля справа.
+   Клик по строке ведёт к карточке процесса ниже. */
 export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
-  const data: Row[] = processes.map((p) => ({ name: p.name, cost: p.current?.cost_rub_year ?? 0 }))
-  const height = Math.max(160, data.length * 44 + 40)
-
+  const max = Math.max(...processes.map((p) => p.current?.cost_rub_year ?? 0), 1)
   return (
-    <div style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, bottom: 4, left: 8 }}>
-          <CartesianGrid horizontal={false} stroke="var(--border)" />
-          <XAxis
-            type="number"
-            tickFormatter={(value: number) => formatMln(value)}
-            tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
-            axisLine={false}
-            tickLine={false}
-            unit=" млн ₽"
-          />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={260}
-            tick={{ fontSize: 12, fill: 'var(--foreground)' }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip
-            cursor={{ fill: 'var(--muted)' }}
-            formatter={(value) => [formatRub(Number(value)), 'ФОТ в год']}
-            contentStyle={{ borderRadius: 8, fontSize: 12 }}
-          />
-          <Bar dataKey="cost" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={18} isAnimationActive={false} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ul className="divide-y divide-line">
+      {processes.map((process, i) => {
+        const cost = process.current?.cost_rub_year ?? 0
+        const share = process.share_of_labor_cost
+        return (
+          <li key={process.process_key}>
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(`process-${process.process_key}`)
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="group grid w-full grid-cols-[minmax(0,15rem)_minmax(0,1fr)_9rem] items-center gap-5 py-3 text-left"
+            >
+              <span
+                className="truncate text-[14px] text-ink-2 transition-colors group-hover:text-ink"
+                title={process.name}
+              >
+                {process.name}
+              </span>
+              <span className="h-2 overflow-hidden rounded-full bg-black/5">
+                <motion.span
+                  className={cn(
+                    'block h-full rounded-full transition-colors',
+                    i === 0 ? 'bg-ink' : 'bg-ink/35 group-hover:bg-ink/55',
+                  )}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(cost / max) * 100}%` }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 24, delay: i * 0.04 }}
+                />
+              </span>
+              <span className="num text-right text-[14px]">
+                <span className={cn('font-medium', cost === 0 && 'text-ink-4')}>{cost ? formatRub(cost) : '—'}</span>
+                {share !== undefined && cost > 0 && (
+                  <span className="ml-2 text-[12.5px] text-ink-3">{formatPct(share, { share: true, digits: 0 })}</span>
+                )}
+              </span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
   )
 }

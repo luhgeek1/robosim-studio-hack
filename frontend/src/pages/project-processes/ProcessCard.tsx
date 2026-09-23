@@ -27,7 +27,7 @@ export function ProcessCard({
   const solutions = (process.solution_types ?? []).map((key) => solutionNames.get(key) ?? key)
 
   return (
-    <article className="card overflow-hidden">
+    <article id={`process-${process.process_key}`} className="card scroll-mt-36 overflow-hidden">
       <header className="px-6 pt-5 pb-4">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
