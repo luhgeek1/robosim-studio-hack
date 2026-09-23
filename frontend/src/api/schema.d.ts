@@ -1196,7 +1196,12 @@ export interface paths {
     /** Сформированные отчёты проекта */
     get: operations['listReports']
     put?: never
-    /** Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача) */
+    /**
+     * Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача)
+     * @description Сейчас формируются `pdf` («предТЭО» с графиками, планировкой и имитацией), `xlsx` (входы и живые формулы
+     *     из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` — 422.
+     *     Сценарии с устаревшим расчётом пересчитываются.
+     */
     post: operations['createReport']
     delete?: never
     options?: never
@@ -1230,6 +1235,23 @@ export interface paths {
     }
     /** Скачать файл отчёта */
     get: operations['downloadReport']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/files/{file_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Скачать загруженный файл проекта (снимок имитации, подложка, отчёт) */
+    get: operations['downloadFile']
     put?: never
     post?: never
     delete?: never
@@ -2253,6 +2275,8 @@ export interface components {
         yearly: components['schemas']['CashflowPoint'][]
         /** @description Месяцы внедрения и разгона до полного эффекта */
         ramp_up_months?: number
+        /** @description Вложения в момент 0 (свои средства или первый взнос); в monthly они входят в месяц 1 */
+        upfront_rub?: number
       }
       metrics: components['schemas']['Metrics']
       interpretation: components['schemas']['Interpretation']
@@ -2613,6 +2637,12 @@ export interface components {
       sections?: components['schemas']['ReportSection'][]
       /** @example Предварительная оценка. Результат требует верификации при обследовании объекта. */
       disclaimer?: string
+      /**
+       * Format: uuid
+       * @description Фоновая задача: прогресс — GET /jobs/{id} или SSE
+       */
+      job_id?: string | null
+      error?: components['schemas']['Problem'] | null
       /** Format: date-time */
       created_at: string
       /** Format: date-time */
@@ -3957,6 +3987,7 @@ export interface components {
       kind: 'simulation_png' | 'simulation_gif' | 'chart_png'
       /** Format: uuid */
       simulation_id?: string | null
+      /** @description url ведёт на GET /files/{id}; снимок попадает в PDF через visual_ids */
       file: components['schemas']['FileRef']
       caption?: string | null
     }
@@ -6717,6 +6748,7 @@ export interface operations {
           'application/pdf': string
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document': string
+          'application/json': Record<string, never>
         }
       }
       /** @description Ещё формируется */
@@ -6728,6 +6760,29 @@ export interface operations {
           'application/json': components['schemas']['Problem']
         }
       }
+    }
+  }
+  downloadFile: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        file_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Файл в исходном формате */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/octet-stream': string
+        }
+      }
+      404: components['responses']['NotFound']
     }
   }
   getAssistStatus: {

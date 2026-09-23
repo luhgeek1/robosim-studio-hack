@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowLeft, Download, FileText, Info, ListTree } from 'lucide-react'
+import { ArrowLeft, Download, FileSpreadsheet, FileText, Info, ListTree } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { parseApiProblem, problemText } from '@/api/problem'
@@ -13,6 +13,7 @@ import { Button, Check, Disclosure, Hint, Pill } from '@/components/ui'
 import { SurveyList } from '@/components/verdict/SurveyList'
 import { TrustBadges } from '@/components/verdict/TrustBadges'
 import { downloadFile } from '@/lib/download'
+import { useMakeReport, type ReportFormat } from '@/api/reports'
 import { formatPct, formatRub, formatYears } from '@/lib/format'
 import { BAND_LABEL, SCENARIO_KIND_LABEL, VERDICT_LABEL, VERDICT_TONE } from '@/lib/labels'
 import { STEPS, stepPath, useProjectId } from '@/lib/story'
@@ -248,6 +249,12 @@ function Actions({
   const toast = useStore((s) => s.toast)
   const openTrace = useStore((s) => s.openTrace)
   const [exporting, setExporting] = useState(false)
+  const report = useMakeReport(projectId, projectName)
+  const makeReport = (format: ReportFormat) =>
+    report.mutate(format, {
+      onSuccess: () => toast(format === 'pdf' ? 'Отчёт PDF скачан' : 'Excel с формулами скачан'),
+      onError: (error) => toast(problemText(error), 'error'),
+    })
   const exportJson = async () => {
     setExporting(true)
     try {
@@ -260,19 +267,27 @@ function Actions({
   }
   return (
     <div className="mt-10 flex flex-wrap items-center gap-3">
+      <Button size="lg" icon={<Download size={16} />} onClick={() => void exportJson()} disabled={exporting}>
+        {exporting ? 'Готовим файл…' : 'Данные (JSON)'}
+      </Button>
       <Button
         variant="primary"
         size="lg"
-        icon={<Download size={16} />}
-        onClick={() => void exportJson()}
-        disabled={exporting}
+        icon={<FileText size={16} />}
+        onClick={() => makeReport('pdf')}
+        disabled={report.isPending}
       >
-        {exporting ? 'Готовим файл…' : 'Выгрузить данные проекта (JSON)'}
+        {report.isPending && report.variables === 'pdf' ? 'Формируем PDF…' : 'Отчёт PDF'}
       </Button>
-      <Hint content="Появится в следующей версии: предварительная оценка, требует обследования (ТЗ 3.7.5)">
+      <Hint content="Входы и живые формулы из трассы расчёта: поменяйте вход — пересчитается как на платформе">
         <span tabIndex={0} className="rounded-[10px]">
-          <Button size="lg" icon={<FileText size={16} />} disabled>
-            Отчёт PDF и Excel
+          <Button
+            size="lg"
+            icon={<FileSpreadsheet size={16} />}
+            onClick={() => makeReport('xlsx')}
+            disabled={report.isPending}
+          >
+            {report.isPending && report.variables === 'xlsx' ? 'Формируем Excel…' : 'Excel с формулами'}
           </Button>
         </span>
       </Hint>
