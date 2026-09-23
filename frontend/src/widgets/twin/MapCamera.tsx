@@ -71,20 +71,31 @@ export function MapCamera({
   )
 }
 
+export type ToolbarPlacement = 'top-left' | 'bottom-right'
+
 export function MapToolbar({
   onAction,
   routes,
   onRoutes,
+  placement = 'top-left',
 }: {
   onAction: (action: CameraAction) => void
   routes: boolean
   onRoutes: () => void
+  placement?: ToolbarPlacement
 }) {
   const [help, setHelp] = useState(false)
   const button =
     'flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600'
   return (
-    <div className="absolute left-4 top-16 z-20 flex flex-col items-start gap-2">
+    // In the bottom corner the help card opens upwards, above the toolbar.
+    <div
+      className={
+        placement === 'bottom-right'
+          ? 'absolute right-4 bottom-4 z-20 flex flex-col-reverse items-end gap-2'
+          : 'absolute left-4 top-16 z-20 flex flex-col items-start gap-2'
+      }
+    >
       <div
         role="toolbar"
         aria-label="Управление картой"

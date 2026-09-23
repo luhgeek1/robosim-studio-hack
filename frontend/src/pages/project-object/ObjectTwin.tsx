@@ -91,7 +91,7 @@ function LayoutTwin({
     <>
       {/* The 2D plan is the same map as on «Планировка», framed so the overlays above and below never cover it. */}
       {view === '3d' ? (
-        <Twin layout={layout} switcher={false} />
+        <Twin layout={layout} switcher={false} toolbarPlacement="bottom-right" />
       ) : (
         <div className="absolute inset-0 flex flex-col gap-3 bg-surface-2 px-4 pt-16 pb-26">
           <div className="min-h-0 flex-1">
@@ -160,9 +160,7 @@ function LayoutTwin({
             ))}
           </div>
         )}
-        <span className="text-[12px] text-ink-4">
-          {view === '3d' ? 'Вращайте сцену мышью' : 'Перетаскивайте и масштабируйте план'}
-        </span>
+        {view === '2d' && <span className="text-[12px] text-ink-4">Перетаскивайте и масштабируйте план</span>}
       </div>
     </>
   )

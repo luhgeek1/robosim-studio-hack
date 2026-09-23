@@ -5,7 +5,7 @@ import type { RobotTrack } from '@/entities/simulation'
 import type { LayoutGeometry, SimulationHeatmap } from '@/shared/api/types'
 import { Segmented } from '@/shared/ui/v0'
 import { LayoutMap } from '@/widgets/layout-map'
-import { MapCamera, MapToolbar, type CameraAction } from './MapCamera'
+import { MapCamera, MapToolbar, type CameraAction, type ToolbarPlacement } from './MapCamera'
 import { C } from './palette'
 import { HeatLayer, RobotsLayer } from './Robots2D'
 import { Building, Markers, Racks, RouteLines, Robots3D, sceneFrame, zoneLabels } from './scene3d'
@@ -30,6 +30,8 @@ export type TwinProps = {
   selectedRobot?: string | null
   onSelectRobot?: (id: string | null) => void
   capture?: TwinCapture
+  /** Where the 3D camera toolbar sits; a host with its own top-left overlays moves it to the bottom corner. */
+  toolbarPlacement?: ToolbarPlacement
   className?: string
 }
 
@@ -45,6 +47,7 @@ export function Twin({
   selectedRobot,
   onSelectRobot,
   capture,
+  toolbarPlacement,
   className = '',
 }: TwinProps) {
   const [ownView, setOwnView] = useState<TwinView>('3d')
@@ -114,6 +117,7 @@ export function Twin({
             onAction={(action) => setCommand((c) => ({ action, id: c.id + 1 }))}
             routes={routes}
             onRoutes={() => setRoutes((v) => !v)}
+            placement={toolbarPlacement}
           />
           <Canvas
             shadows={{ type: THREE.PCFSoftShadowMap }}
