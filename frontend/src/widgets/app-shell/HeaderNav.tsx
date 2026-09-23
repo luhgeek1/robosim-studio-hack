@@ -346,17 +346,29 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
   // Активная вкладка всегда в видимой части полосы. offsetLeft не учитывает анимационные сдвиги,
   // поэтому цель прокрутки верна даже пока вкладки ещё едут на места.
   useEffect(() => {
-    // Следующий кадр: в кадре добавления вкладки Chrome сбрасывает плавную прокрутку.
-    const frame = requestAnimationFrame(() => {
+    const reveal = (behavior: ScrollBehavior) => {
       const el = strip.current
       const tab = activeId ? el?.querySelector<HTMLElement>(`[data-tab-id="${activeId}"]`) : null
       if (!el || !tab) return
       const left = tab.offsetLeft
       const right = left + tab.offsetWidth
-      if (left < el.scrollLeft) el.scrollTo({ left, behavior: 'smooth' })
-      else if (right > el.scrollLeft + el.clientWidth) el.scrollTo({ left: right - el.clientWidth, behavior: 'smooth' })
-    })
-    return () => cancelAnimationFrame(frame)
+      if (left < el.scrollLeft) el.scrollTo({ left, behavior })
+      else if (right > el.scrollLeft + el.clientWidth) el.scrollTo({ left: right - el.clientWidth, behavior })
+    }
+    // Плавная прокрутка сразу, а когда вкладки доедут на места (их перестройка прерывает плавную прокрутку),
+    // — контрольная без анимации.
+    const frame = requestAnimationFrame(() => reveal('smooth'))
+    const settle = window.setTimeout(() => reveal('auto'), 700)
+    // Полоса сужается позже, когда в шапке появляются раздел «Проекты» и имя пользователя (после восстановления
+    // сессии), — тогда активная вкладка может уйти за край; держим её видимой при любом изменении размера.
+    const el = strip.current
+    const resize = new ResizeObserver(() => reveal('auto'))
+    if (el) resize.observe(el)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(settle)
+      resize.disconnect()
+    }
   }, [activeId, order])
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1">
