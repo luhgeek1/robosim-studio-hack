@@ -90,7 +90,7 @@ export function LoginPage() {
           <h1 className="display max-w-150 text-center text-[32px] leading-[1.05] tracking-[-0.035em] lg:text-[40px]">
             Стоит ли роботизировать ваш объект?
           </h1>
-          <div className="mt-14 w-full max-w-190 lg:mt-20">
+          <div className="mt-16 w-full max-w-190 lg:mt-28">
             <DeliveryScene />
           </div>
         </motion.section>
