@@ -1,11 +1,11 @@
-import { ArrowRight, Scale } from 'lucide-react'
+import { ArrowRight, Layers, Scale } from 'lucide-react'
 import { Link } from 'react-router'
 import { useProjectId } from '@/entities/project'
-import { useComparison } from '@/entities/scenario'
+import { useBuildComparisonSet, useComparison } from '@/entities/scenario'
 import { parseApiProblem } from '@/shared/api/problem'
 import { Button } from '@/shared/ui/button'
 import { Callout, Screen, Section } from '@/shared/ui/page'
-import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
+import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { CashflowChart } from './CashflowChart'
 import { ComparisonGrid } from './ComparisonGrid'
 import { VerdictPanel } from './VerdictPanel'
@@ -15,7 +15,13 @@ const MIN_ROBOTIZED = 2
 export function ComparisonPage() {
   const projectId = useProjectId()
   const comparison = useComparison(projectId)
+  const buildSet = useBuildComparisonSet(projectId)
   const table = comparison.data
+  const buildSetButton = (size?: 'sm') => (
+    <Button size={size} onClick={() => buildSet.mutate()} disabled={buildSet.isPending}>
+      {buildSet.isPending ? <Spinner /> : <Layers />} Собрать покупку, RaaS и лизинг
+    </Button>
+  )
 
   if (comparison.isPending) {
     return (
@@ -33,13 +39,16 @@ export function ComparisonPage() {
           <EmptyState
             icon={<Scale className="size-6" />}
             title="Нет рассчитанных сценариев роботизации"
-            description="Для сравнения нужен рассчитанный сценарий «как сейчас» и хотя бы один сценарий роботизации. Создайте сценарии из рекомендации подбора и запустите расчёт."
+            description="Для сравнения нужен рассчитанный сценарий «как сейчас» и хотя бы два сценария роботизации. Их можно собрать одной кнопкой: покупка по рекомендации подбора, её копии как RaaS и лизинг — все сразу рассчитаются."
             action={
-              <Button asChild>
-                <Link to="../scenarios">
-                  К сценариям <ArrowRight />
-                </Link>
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                {buildSetButton()}
+                <Button asChild variant="outline">
+                  <Link to="../scenarios">
+                    К сценариям <ArrowRight />
+                  </Link>
+                </Button>
+              </div>
             }
           />
         ) : (
@@ -58,9 +67,13 @@ export function ComparisonPage() {
         {(robotized < MIN_ROBOTIZED || stale > 0) && (
           <Callout
             action={
-              <Button asChild size="sm" variant="outline">
-                <Link to="../scenarios">К сценариям</Link>
-              </Button>
+              robotized < MIN_ROBOTIZED ? (
+                buildSetButton('sm')
+              ) : (
+                <Button asChild size="sm" variant="outline">
+                  <Link to="../scenarios">К сценариям</Link>
+                </Button>
+              )
             }
           >
             <div className="space-y-1">

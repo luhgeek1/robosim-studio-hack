@@ -4,6 +4,7 @@ import { qk } from '@/shared/api/keys'
 import type {
   MonteCarloRequest,
   Res,
+  Scenario,
   ScenarioCreate,
   ScenarioKind,
   ScenarioUpdate,
@@ -167,5 +168,48 @@ export function useCalculate(projectId: string, id: string) {
       queryClient.setQueryData(qk.calculations.one(run.id), run)
       return Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: qk.scenarios.one(id) })])
     },
+  })
+}
+
+// The comparison follows one purchase scenario; RaaS and leasing are copies of it with the same fleet.
+export function pickMainScenario(scenarios: Scenario[] | undefined): Scenario | undefined {
+  const robotized = (scenarios ?? []).filter((s) => !s.is_baseline && s.items.length > 0)
+  return (
+    robotized.find((s) => s.is_recommended && s.kind === 'purchase') ??
+    robotized.find((s) => s.kind === 'purchase') ??
+    robotized[0]
+  )
+}
+
+const VARIANT_NAME: Record<'raas' | 'lease', string> = { raas: 'Роботы как услуга (RaaS)', lease: 'Лизинг' }
+
+/* ТЗ 3.5.5: «как сейчас» и не меньше двух вариантов роботизации в одной таблице. Одна кнопка собирает набор:
+   покупку из рекомендации подбора (если её нет), её копии как RaaS и лизинг, и считает всё, что не посчитано. */
+export function useBuildComparisonSet(projectId: string) {
+  const refresh = useRefreshScenarios(projectId)
+  return useMutation({
+    mutationFn: async () => {
+      const existing = await scenarioApi.list(projectId)
+      let main = pickMainScenario(existing)
+      if (!main) {
+        main = await scenarioApi.create(projectId, {
+          name: 'Покупка по рекомендации подбора',
+          kind: 'purchase',
+          from_recommendation: true,
+        })
+      }
+      for (const kind of ['raas', 'lease'] as const) {
+        if (existing.some((s) => s.kind === kind && s.items.length > 0)) continue
+        await scenarioApi.copy(main.id, { kind, name: VARIANT_NAME[kind] })
+      }
+      const all = await scenarioApi.list(projectId)
+      await Promise.all(
+        all
+          .filter((s) => !s.last_calculation || s.last_calculation.status === 'stale')
+          .map((s) => scenarioApi.calculate(s.id)),
+      )
+      return main
+    },
+    onSuccess: refresh,
   })
 }
