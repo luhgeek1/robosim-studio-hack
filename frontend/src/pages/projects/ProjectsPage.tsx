@@ -1,17 +1,12 @@
 import { Copy, HeartPulse, MoreHorizontal, Plane, Plus, Trash2, Warehouse } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import {
-  OBJECT_TYPE_LABEL,
-  PROJECT_STATUS_LABEL,
-  useCopyProject,
-  useDeleteProject,
-  useProjects,
-} from '@/entities/project'
+import { OBJECT_TYPE_LABEL, useCopyProject, useDeleteProject, useProjects } from '@/entities/project'
 import { VerdictBadge } from '@/entities/scenario'
 import { CreateProjectDialog } from '@/features/project-create'
 import type { Project } from '@/shared/api/types'
 import { formatDateTime, formatPct, formatRub, formatYears } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { ConfirmDialog } from '@/shared/ui/confirm'
 import {
@@ -22,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
-import { ConfidenceRing, Pill } from '@/shared/ui/v0'
+import { ConfidenceRing } from '@/shared/ui/v0'
 
 const ICONS: Record<string, ReactNode> = {
   warehouse: <Warehouse size={18} />,
@@ -44,36 +39,27 @@ export function ProjectsPage() {
 
   return (
     <div className="mx-auto w-full max-w-275 px-6 pt-12 pb-16">
-      <div className="mb-8 max-w-180">
-        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Стоит ли роботизировать ваш объект?</h1>
-        <p className="mt-4 text-[16px] leading-relaxed text-ink-2">
-          Проект — один объект: параметры, подбор роботов, сценарии, экономика и имитация. Копия проекта сохраняет
-          сценарии.
-        </p>
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Проекты</h1>
+        <CreateProjectDialog trigger={newProject} open={creating} onOpenChange={setCreating} />
       </div>
 
-      <div>
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="h3">Проекты</div>
-            <CreateProjectDialog trigger={newProject} open={creating} onOpenChange={setCreating} />
+      <section>
+        {projects.isPending && <LoadingBlock label="Загружаем проекты…" />}
+        {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
+        {projects.data && projects.data.items.length === 0 && (
+          <div className="rounded-[12px] border border-dashed border-line px-5 py-10 text-center text-[14px] text-ink-3">
+            Проектов пока нет. Создайте первый — демо-склад организатора считается за минуту.
           </div>
-          {projects.isPending && <LoadingBlock label="Загружаем проекты…" />}
-          {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
-          {projects.data && projects.data.items.length === 0 && (
-            <div className="rounded-[12px] border border-dashed border-line px-5 py-10 text-center text-[14px] text-ink-3">
-              Проектов пока нет. Создайте первый — демо-склад организатора считается за минуту.
-            </div>
-          )}
-          {projects.data && projects.data.items.length > 0 && (
-            <ul className="card divide-y divide-line overflow-hidden">
-              {projects.data.items.map((project) => (
-                <ProjectRow key={project.id} project={project} />
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+        )}
+        {projects.data && projects.data.items.length > 0 && (
+          <ul className="card divide-y divide-line overflow-hidden">
+            {projects.data.items.map((project) => (
+              <ProjectRow key={project.id} project={project} />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }
@@ -91,55 +77,53 @@ function ProjectRow({ project }: { project: Project }) {
         {ICONS[project.object_type] ?? <Warehouse size={18} />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <Link
-            to={`/projects/${project.id}`}
-            className="truncate text-[15px] font-semibold after:absolute after:inset-0"
-          >
-            {project.name}
-          </Link>
-          {project.is_demo && <Pill>демо-данные</Pill>}
-          <Pill tone={project.status === 'calculated' ? 'ok' : 'neutral'}>{PROJECT_STATUS_LABEL[project.status]}</Pill>
-        </span>
+        <Link
+          to={`/projects/${project.id}`}
+          className="block truncate text-[15px] font-semibold after:absolute after:inset-0"
+        >
+          {project.name}
+        </Link>
         <span className="block truncate text-[13px] text-ink-3">
           {OBJECT_TYPE_LABEL[project.object_type]} · обновлён {formatDateTime(project.updated_at)}
         </span>
       </span>
       {metrics ? (
-        <span className="hidden items-center gap-5 text-[13px] md:flex">
-          <span>
-            <span className="num font-medium">{formatYears(metrics.payback_years)}</span>{' '}
-            <span className="text-ink-3">окупаемость</span>
+        <span className="hidden items-center text-[13px] md:flex">
+          <Metric value={formatYears(metrics.payback_years)} label="окупаемость" className="w-28" />
+          <Metric value={formatRub(metrics.capex_rub)} label="CAPEX" className="w-32" />
+          <span className="w-32">
+            <VerdictBadge verdict={metrics.verdict} />
           </span>
-          <span>
-            <span className="num font-medium">{formatRub(metrics.capex_rub)}</span>{' '}
-            <span className="text-ink-3">CAPEX</span>
-          </span>
-          <VerdictBadge verdict={metrics.verdict} />
         </span>
       ) : (
-        <span className="hidden text-[13px] text-ink-3 md:inline">
+        <span className="hidden w-92 text-[13px] text-ink-3 md:inline">
           {project.scenarios_count > 0 ? `Сценариев: ${project.scenarios_count}, расчёта нет` : 'Расчёта ещё нет'}
         </span>
       )}
-      <span className="flex items-center gap-2 text-[13px] text-ink-2">
-        <ConfidenceRing value={score * 100} size={20} />
-        <span className="num">{formatPct(score, { share: true, digits: 0 })}</span>
-      </span>
+      <Metric
+        value={
+          <span className="flex items-center gap-1.5">
+            <ConfidenceRing value={score * 100} size={16} />
+            {formatPct(score, { share: true, digits: 0 })}
+          </span>
+        }
+        label="данных введено"
+        className="w-28"
+      />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative z-10 text-ink-4" aria-label="Действия с проектом">
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-auto min-w-44">
           <DropdownMenuItem
             onSelect={async () => {
               const created = await copy.mutateAsync({ id: project.id, name: `${project.name} (копия)` })
               navigate(`/projects/${created.id}`)
             }}
           >
-            <Copy /> Копировать со сценариями
+            <Copy /> Дублировать
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <ConfirmDialog
@@ -155,5 +139,14 @@ function ProjectRow({ project }: { project: Project }) {
         </DropdownMenuContent>
       </DropdownMenu>
     </li>
+  )
+}
+
+function Metric({ value, label, className }: { value: ReactNode; label: string; className?: string }) {
+  return (
+    <span className={cn('flex flex-col', className)}>
+      <span className="num text-[14px] font-medium">{value}</span>
+      <span className="text-[12px] text-ink-3">{label}</span>
+    </span>
   )
 }
