@@ -8,7 +8,7 @@ import { Button } from '@/shared/ui/button'
 import { ErrorBlock, Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { Segmented } from '@/shared/ui/v0'
-import { LayoutMap, MapLegend } from '@/widgets/layout-map'
+import { LayoutMap } from '@/widgets/layout-map'
 import { Twin, type TwinView } from '@/widgets/twin'
 
 // The twin on «Объект» is the project's own generated layout: the same geometry the route lengths and the simulation
@@ -80,7 +80,6 @@ function LayoutTwin({
   error: ReactNode
 }) {
   const [view, setView] = useState<TwinView>('3d')
-  const [graph, setGraph] = useState(false)
   const stats = layout.stats
   const route = stats.avg_route_m?.dock_in_to_storage
   const numbers: [string, string][] = []
@@ -93,18 +92,8 @@ function LayoutTwin({
       {view === '3d' ? (
         <Twin layout={layout} switcher={false} toolbarPlacement="bottom-right" />
       ) : (
-        <div className="absolute inset-0 flex flex-col gap-3 bg-surface-2 px-4 pt-16 pb-26">
-          <div className="min-h-0 flex-1">
-            <LayoutMap
-              layout={layout}
-              fill
-              legend={false}
-              showGraph={graph}
-              onShowGraphChange={setGraph}
-              className="h-full bg-white"
-            />
-          </div>
-          <MapLegend layout={layout} showGraph={graph} />
+        <div className="absolute inset-0 bg-surface-2 px-4 pt-16 pb-26">
+          <LayoutMap layout={layout} fill legend={false} className="h-full bg-white" />
         </div>
       )}
       <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-[12px] bg-white/90 p-1 shadow-card backdrop-blur">
