@@ -155,37 +155,35 @@ function MatchingView({
   }
 
   return (
-    <div className="space-y-6">
-      <nav className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none]" aria-label="Процессы">
-        <div className="inline-flex gap-1 rounded-2xl bg-black/5 p-1">
-          {data.processes.map((process) => {
-            const active = process === selected
-            const fit = process.candidates.filter((c) => c.status === 'fit').length
-            return (
-              <button
-                key={process.process_key}
-                type="button"
-                onClick={() => setParams({ process: process.process_key }, { replace: true })}
-                className={cn(
-                  'relative flex h-10 items-center gap-2 rounded-xl px-4 text-[13.5px] font-medium whitespace-nowrap text-ink transition-colors',
-                  !active && 'hover:bg-white/50',
-                )}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="matching-process"
-                    className="absolute inset-0 rounded-xl bg-white shadow-[0_1px_2px_rgba(20,20,24,0.08),0_4px_12px_-4px_rgba(20,20,24,0.18)]"
-                    transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                  />
-                )}
-                <span className="relative">{shortName(process.name)}</span>
-                <span className={cn('num relative text-[12px]', fit ? 'text-ok' : 'text-ink-4')}>
-                  {fit}/{process.candidates.length}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+    <div className="grid grid-cols-[15rem_minmax(0,1fr)] items-start gap-8">
+      <nav className="sticky top-40 space-y-0.5" aria-label="Процессы">
+        {data.processes.map((process) => {
+          const active = process === selected
+          const fit = process.candidates.filter((c) => c.status === 'fit').length
+          return (
+            <button
+              key={process.process_key}
+              type="button"
+              onClick={() => setParams({ process: process.process_key }, { replace: true })}
+              className={cn(
+                'relative flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-[13.5px] transition-colors',
+                active ? 'text-ink' : 'text-ink-3 hover:text-ink',
+              )}
+            >
+              {active && (
+                <motion.span
+                  layoutId="matching-process"
+                  className="absolute inset-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(20,20,24,0.04)]"
+                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                />
+              )}
+              <span className="relative min-w-0 flex-1 leading-snug">{shortName(process.name)}</span>
+              <span className={cn('num relative text-[12px] leading-snug', fit ? 'text-ok' : 'text-ink-4')}>
+                {fit}/{process.candidates.length}
+              </span>
+            </button>
+          )
+        })}
       </nav>
 
       {selected && (
@@ -245,7 +243,7 @@ function ProcessView({
       {shown.length === 0 ? (
         <EmptyState title="Кандидатов нет" description="В каталоге нет продуктов для этого процесса и типа объекта." />
       ) : (
-        <motion.div layout className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <motion.div layout className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
           <AnimatePresence initial={false} mode="popLayout">
             {shown.map((candidate, i) => (
               <motion.div
