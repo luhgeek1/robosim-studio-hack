@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, type Transition } from 'framer-motion'
+import { AnimatePresence, motion, useIsPresent, type Transition } from 'framer-motion'
 import { Check, HeartPulse, Plane, Plus, Warehouse, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
@@ -163,6 +163,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
   const project = useProject(tab.id)
   const navigate = useNavigate()
   const close = useProjectTabs((s) => s.close)
+  const present = useIsPresent()
   const gone = project.isError && parseApiProblem(project.error).status === 404
   useEffect(() => {
     if (gone) close(tab.id)
@@ -191,8 +192,12 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
       role="tab"
       aria-selected={active}
     >
-      {active ? (
+      {active && present ? (
         <ActiveMark variant="tab" />
+      ) : active ? (
+        // Закрытая активная вкладка сразу отдаёт метку, и подсветка летит к новой цели, а не ждёт конца исчезновения;
+        // свой белый фон вкладка рисует сама и гаснет вместе с ним.
+        <span className="absolute inset-0 rounded-[10px] bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(231,231,227,1)]" />
       ) : (
         <span className="absolute inset-0 rounded-[10px] bg-black/4 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.03)] transition-colors group-hover:bg-black/7" />
       )}
@@ -339,6 +344,10 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
   const visit = useProjectTabs((s) => s.visit)
   const { pathname } = useLocation()
   const order = tabs.map((t) => t.id).join(',')
+  // Полоса держит место под закрытую вкладку, пока та исчезает: иначе крайняя справа обрезается сразу.
+  const [slots, setSlots] = useState(tabs.length)
+  if (tabs.length > slots) setSlots(tabs.length)
+  const width = Math.max(slots, tabs.length)
   useEffect(() => {
     if (activeId) visit(activeId, pathname)
   }, [activeId, pathname, visit])
@@ -375,17 +384,17 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
       <div
         ref={strip}
         className="relative flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
-        style={{ flex: tabs.length ? `0 1 ${tabs.length * 228}px` : '0 0 0' }}
+        style={{ flex: width ? `0 1 ${width * 228}px` : '0 0 0' }}
         role="tablist"
         aria-label="Открытые проекты"
       >
-        <AnimatePresence initial={false} mode="popLayout">
+        <AnimatePresence initial={false} mode="popLayout" onExitComplete={() => setSlots(tabs.length)}>
           {tabs.map((tab) => (
             <Tab key={tab.id} tab={tab} active={tab.id === activeId} order={order} />
           ))}
         </AnimatePresence>
       </div>
-      <AddProjectMenu openIds={new Set(tabs.map((t) => t.id))} order={order} />
+      <AddProjectMenu openIds={new Set(tabs.map((t) => t.id))} order={`${order}|${width}`} />
     </div>
   )
 }
