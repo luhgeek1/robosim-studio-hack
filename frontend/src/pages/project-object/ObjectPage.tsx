@@ -35,6 +35,7 @@ export function ObjectPage() {
   return (
     <Screen
       wide
+      dense
       title={project.name}
       lead="Из этих данных считаются подбор, экономика и имитация. Любое число можно исправить — расчёты пересчитаются."
       actions={
