@@ -13,7 +13,7 @@ POINTS_MAX = 100.0
 CRITERIA = ("performance", "cost_efficiency", "infrastructure_fit", "maturity", "data_quality", "references")
 CRITERION_NAMES = {
     "performance": "Производительность на объекте",
-    "cost_efficiency": "Стоимость конфигурации",
+    "cost_efficiency": "Экономика решения",
     "infrastructure_fit": "Совместимость с объектом",
     "maturity": "Зрелость (УГТ)",
     "data_quality": "Полнота и подтверждённость ТТХ",
@@ -200,17 +200,45 @@ def _relative(value: float | None, best: float | None, *, lower_is_better: bool)
     return POINTS_MAX * ratio
 
 
+def _economics(
+    c: CandidateInput, peers: Sequence[CandidateResult], npv: Mapping[UUID, float]
+) -> tuple[float, str]:
+    """NPV of buying the solution for the process, relative to the best one: cheap hardware that frees little
+    labour (a tow tractor replaces drivers, not loaders) must not outrank a solution that pays back."""
+    if npv:
+        known = [npv[p.candidate.product_id] for p in peers if p.candidate.product_id in npv]
+        own = npv.get(c.product_id)
+        if own is None:
+            return 0.0, "Экономика не оценена — нет модели производительности"
+        # Place by NPV among the process's candidates: robust to an outlier, and a smaller loss still ranks
+        # higher when no candidate pays back (the object's fixed costs are charged to each one in full).
+        better = sum(1 for value in known if value > own)
+        places = len(set(known)) - 1
+        points = POINTS_MAX * (1 - better / places) if places else POINTS_MAX
+        verdict = "окупается" if own > 0 else "не окупается за горизонт"
+        place = f"{better + 1}-е место из {len(known)}"
+        return points, f"NPV покупки {fmt(own / 1e6)} млн ₽ за горизонт — {verdict}; {place}"
+    capex = [p.candidate.capex_estimate_rub for p in peers if p.candidate.capex_estimate_rub]
+    if not c.capex_estimate_rub:
+        return 0.0, "CAPEX не оценён"
+    points = _relative(c.capex_estimate_rub, min(capex, default=None), lower_is_better=True)
+    return points, f"Ориентировочный CAPEX оборудования {fmt(c.capex_estimate_rub / 1e6)} млн ₽"
+
+
 def _components(
-    result: CandidateResult, peers: Sequence[CandidateResult], weights: Mapping[str, float]
+    result: CandidateResult,
+    peers: Sequence[CandidateResult],
+    weights: Mapping[str, float],
+    npv: Mapping[UUID, float],
 ) -> list[ScoreComponent]:
     c = result.candidate
     robots = [p.candidate.robots_estimate for p in peers if p.candidate.robots_estimate]
-    capex = [p.candidate.capex_estimate_rub for p in peers if p.candidate.capex_estimate_rub]
+    economics, economics_note = _economics(c, peers, npv)
     cases = max((p.candidate.cases_count for p in peers), default=0)
     infra = POINTS_MAX * result.checks_passed / result.checks_evaluated if result.checks_evaluated else 0.0
     points = {
         "performance": _relative(c.robots_estimate, min(robots, default=None), lower_is_better=True),
-        "cost_efficiency": _relative(c.capex_estimate_rub, min(capex, default=None), lower_is_better=True),
+        "cost_efficiency": economics,
         "infrastructure_fit": infra,
         "maturity": POINTS_MAX * (c.trl or 0) / TRL_SCALE_MAX,
         "data_quality": POINTS_MAX * c.completeness,
@@ -220,9 +248,7 @@ def _components(
         "performance": f"Нужно ≈{c.robots_estimate} шт."
         if c.robots_estimate
         else "Производительность не оценена — нет ТТХ",
-        "cost_efficiency": f"Ориентировочный CAPEX оборудования {fmt(c.capex_estimate_rub / 1e6)} млн ₽"
-        if c.capex_estimate_rub
-        else "CAPEX не оценён",
+        "cost_efficiency": economics_note,
         "infrastructure_fit": f"Пройдено проверок: {result.checks_passed} из {result.checks_evaluated}",
         "maturity": f"УГТ {c.trl} из {TRL_SCALE_MAX}" if c.trl else "УГТ не указан",
         "data_quality": f"Заполнено {round(c.completeness * POINTS_MAX)} % ключевых полей карточки",
@@ -237,11 +263,15 @@ def _components(
     ]
 
 
-def rank(results: list[CandidateResult], weights: Mapping[str, float]) -> list[CandidateResult]:
-    """Explainable score = Σ weight × points; points are relative to the best candidate of the process."""
+def rank(
+    results: list[CandidateResult], weights: Mapping[str, float], npv: Mapping[UUID, float] | None = None
+) -> list[CandidateResult]:
+    """Explainable score = Σ weight × points; points are relative to the best candidate of the process.
+
+    `npv` — the quick purchase estimate per product; without it the economics criterion compares CAPEX."""
     scored = [r for r in results if r.status != CandidateStatus.EXCLUDED]
     for result in scored:
-        result.breakdown = _components(result, scored, weights)
+        result.breakdown = _components(result, scored, weights, npv or {})
         result.score = round(sum(component.contribution for component in result.breakdown), 1)
     order = {
         CandidateStatus.FIT: 0,

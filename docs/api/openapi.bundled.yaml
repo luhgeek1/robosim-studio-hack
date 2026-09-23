@@ -6483,7 +6483,7 @@ components:
           example: cost_efficiency
         name:
           type: string
-          example: Стоимость конфигурации
+          example: Экономика решения
         weight:
           type: number
           example: 0.25
