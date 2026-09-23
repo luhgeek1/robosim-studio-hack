@@ -1,7 +1,8 @@
 import { ExternalLink } from 'lucide-react'
 import type { Provenance, ProvenanceStatus } from '@/shared/api/types'
 import { formatDate } from '@/shared/lib/format'
-import { ToneBadge } from '@/shared/ui/tone'
+import { cn } from '@/shared/lib/utils'
+import { ToneBadge, type Tone } from '@/shared/ui/tone'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { PROVENANCE_HINT, PROVENANCE_LABEL, PROVENANCE_TONE, SOURCE_KIND_LABEL } from './labels'
 
@@ -16,7 +17,6 @@ export function ProvenanceBadge({
 }) {
   const current = provenance?.status ?? status
   if (!current) return null
-  const source = provenance?.source
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -24,19 +24,57 @@ export function ProvenanceBadge({
           {PROVENANCE_LABEL[current]}
         </ToneBadge>
       </TooltipTrigger>
-      <TooltipContent className="max-w-sm space-y-1 text-left">
-        <div className="font-medium">{PROVENANCE_HINT[current]}</div>
-        {source && (
-          <div>
-            {SOURCE_KIND_LABEL[source.kind]}: {source.title}
-            {source.retrieved_at && <span className="opacity-70"> · {formatDate(source.retrieved_at)}</span>}
-          </div>
-        )}
-        {provenance?.note && <div className="opacity-80">{provenance.note}</div>}
-        {provenance?.raw_value && <div className="opacity-80">Исходное значение: {provenance.raw_value}</div>}
-        {provenance?.changed_by && <div className="opacity-70">Изменил: {provenance.changed_by}</div>}
-      </TooltipContent>
+      <ProvenanceTip status={current} provenance={provenance} />
     </Tooltip>
+  )
+}
+
+const DOT: Record<Tone, string> = {
+  ok: 'bg-ok',
+  info: 'bg-info',
+  warn: 'bg-warn',
+  crit: 'bg-crit',
+  muted: 'bg-ink-4',
+}
+
+/* Тихая версия бейджа для длинных списков: точка и подпись без плашки, та же подсказка об источнике. */
+export function ProvenanceMark({ provenance, className }: { provenance: Provenance; className?: string }) {
+  const current = provenance.status
+  const tone = PROVENANCE_TONE[current]
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(
+            'inline-flex cursor-help items-center gap-1.5 text-[12.5px] whitespace-nowrap',
+            tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink-3',
+            className,
+          )}
+        >
+          <span className={cn('size-1.5 shrink-0 rounded-full', DOT[tone])} />
+          {PROVENANCE_LABEL[current]}
+        </span>
+      </TooltipTrigger>
+      <ProvenanceTip status={current} provenance={provenance} />
+    </Tooltip>
+  )
+}
+
+function ProvenanceTip({ status, provenance }: { status: ProvenanceStatus; provenance?: Provenance | null }) {
+  const source = provenance?.source
+  return (
+    <TooltipContent className="max-w-sm space-y-1 text-left">
+      <div className="font-medium">{PROVENANCE_HINT[status]}</div>
+      {source && (
+        <div>
+          {SOURCE_KIND_LABEL[source.kind]}: {source.title}
+          {source.retrieved_at && <span className="opacity-70"> · {formatDate(source.retrieved_at)}</span>}
+        </div>
+      )}
+      {provenance?.note && <div className="opacity-80">{provenance.note}</div>}
+      {provenance?.raw_value && <div className="opacity-80">Исходное значение: {provenance.raw_value}</div>}
+      {provenance?.changed_by && <div className="opacity-70">Изменил: {provenance.changed_by}</div>}
+    </TooltipContent>
   )
 }
 

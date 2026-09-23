@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { useGenerateLayout, useLayout } from '@/entities/layout'
 import { parseApiProblem } from '@/shared/api/problem'
 import type { Layout, ObjectType } from '@/shared/api/types'
-import { formatNumber, formatValue, isNum } from '@/shared/lib/format'
+import { formatNumber, isNum } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { ErrorBlock, Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
@@ -11,15 +11,7 @@ import { Twin } from '@/widgets/twin'
 
 // The twin on «Объект» is the project's own generated layout: the same geometry the route lengths and the simulation
 // use. A type without a layout generator keeps the parameter-only explanation.
-export function ObjectTwin({
-  projectId,
-  objectType,
-  area,
-}: {
-  projectId: string
-  objectType: ObjectType
-  area: number | null
-}) {
+export function ObjectTwin({ projectId, objectType }: { projectId: string; objectType: ObjectType }) {
   const supported = (objectType.layout_templates?.length ?? 0) > 0
   const layout = useLayout(projectId, supported)
   const generate = useGenerateLayout(projectId)
@@ -67,7 +59,6 @@ export function ObjectTwin({
   return (
     <LayoutTwin
       layout={layout.data}
-      area={area}
       rebuilding={generate.isPending}
       onRebuild={() => generate.mutate({ template: layout.data.template ?? null })}
       error={generate.isError ? <GenerateError error={generate.error} paramNames={paramNames} /> : null}
@@ -77,13 +68,11 @@ export function ObjectTwin({
 
 function LayoutTwin({
   layout,
-  area,
   rebuilding,
   onRebuild,
   error,
 }: {
   layout: Layout
-  area: number | null
   rebuilding: boolean
   onRebuild: () => void
   error: ReactNode
@@ -91,7 +80,6 @@ function LayoutTwin({
   const stats = layout.stats
   const route = stats.avg_route_m?.dock_in_to_storage
   const numbers: [string, string][] = []
-  if (isNum(area)) numbers.push([formatValue(area, 'м²'), 'зона роботизации'])
   if (isNum(stats.rack_slots_total)) numbers.push([formatNumber(stats.rack_slots_total), 'паллетомест на схеме'])
   if (isNum(route)) numbers.push([`${formatNumber(route)} м`, 'средний путь от ворот до места'])
 
