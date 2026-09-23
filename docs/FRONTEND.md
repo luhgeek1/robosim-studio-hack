@@ -81,6 +81,18 @@
 Прототип подачи по UX фронта v0 (история из шагов, ответ заголовком, 3D-двойник), переведённый на текущий API и эти
 требования. Фронтендер берёт его за основу и дорабатывает; `main` остаётся на MVP до решения команды.
 
+Устройство (`frontend/src`):
+
+- `api/` — клиент с refresh и CSRF, типы из контракта (`Res<…>`), хуки TanStack Query по доменам; `story.ts` —
+  основной сценарий истории и сборка «покупка + RaaS + лизинг» одной кнопкой; `simulation.ts` — прогоны, реплей
+  целиком, перебор флота.
+- `lib/story.ts` — 6 шагов (`/projects/:id/object … /verdict`), `lib/labels.ts`, `lib/format.ts`.
+- `components/` — UI-кит v0 (`ui.tsx`: Button, Segmented, Pill, Drawer, Modal, Hint, Disclosure…), `Screen` (шаг:
+  ответ-заголовок, lead, «далее»), `Provenance` (точка-источник, формула), панели доверия и трассы; папки шагов.
+- `twin/` — 3D-двойник v0 на реальной планировке (`scene3d.tsx`) и 2D-схема (`map2d/`); оба читают одни часы
+  `playback.ts`, который интерполирует журнал событий имитации (фронт ничего не решает за роботов).
+- `screens/` — шаги истории, каталог, вход, проекты. Состояние интерфейса — `store.ts` (zustand), данные — только хуки.
+
 ## Стек
 
 Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль nova), TanStack Query 5, react-router 7, axios
