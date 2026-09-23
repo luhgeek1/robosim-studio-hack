@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion'
 import { Check, HeartPulse, Plane, Plus, Warehouse, X } from 'lucide-react'
-import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
 import { OBJECT_TYPE_LABEL, useProject, useProjects } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -38,10 +38,15 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
       if (!mark) return setBox(null)
       const r = mark.getBoundingClientRect()
       const c = root.getBoundingClientRect()
+      // Вкладка может быть частично прокручена за край полосы — подсветку обрезаем по видимой части.
+      const strip = mark.closest('[role=tablist]')?.getBoundingClientRect()
+      const left = strip ? Math.max(r.left, strip.left) : r.left
+      const right = strip ? Math.min(r.right, strip.right) : r.right
+      if (right - left < 4) return setBox(null)
       setBox({
-        x: r.left - c.left,
+        x: left - c.left,
         y: r.top - c.top,
-        w: r.width,
+        w: right - left,
         h: r.height,
         variant: mark.dataset.headerActive ?? 'section',
       })
@@ -149,6 +154,10 @@ export function Sections({ projectId }: { projectId?: string }) {
 
 /* Вкладка проекта как в браузере: плавно появляется, уезжает при закрытии, соседние сдвигаются следом. */
 function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: string }) {
+  const self = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (active) self.current?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+  }, [active, order])
   const project = useProject(tab.id)
   const navigate = useNavigate()
   const close = useProjectTabs((s) => s.close)
@@ -164,6 +173,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
   }
   return (
     <motion.div
+      ref={self}
       layout="position"
       // Раскладка анимируется только когда меняется набор вкладок; смена маршрута и прокрутки её не трогает.
       layoutDependency={order}
@@ -172,7 +182,8 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.16 } }}
       transition={SPRING}
       className={cn(
-        'group relative flex h-9 max-w-64 min-w-36 shrink items-center rounded-[10px]',
+        // Как в браузере: вкладки делят ширину поровну и сжимаются до 96 px, дальше полоса прокручивается.
+        'group relative flex h-9 max-w-56 min-w-24 flex-1 basis-56 items-center rounded-[10px]',
         !active && 'text-ink-2 hover:text-ink',
       )}
       role="tab"
@@ -327,16 +338,19 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
     if (activeId) visit(activeId, pathname)
   }, [activeId, pathname, visit])
   return (
-    <div
-      className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
-      role="tablist"
-      aria-label="Открытые проекты"
-    >
-      <AnimatePresence initial={false} mode="popLayout">
-        {tabs.map((tab) => (
-          <Tab key={tab.id} tab={tab} active={tab.id === activeId} order={order} />
-        ))}
-      </AnimatePresence>
+    <div className="flex min-w-0 flex-1 items-center gap-1">
+      <div
+        className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
+        style={{ flex: tabs.length ? `0 1 ${tabs.length * 228}px` : '0 0 0' }}
+        role="tablist"
+        aria-label="Открытые проекты"
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          {tabs.map((tab) => (
+            <Tab key={tab.id} tab={tab} active={tab.id === activeId} order={order} />
+          ))}
+        </AnimatePresence>
+      </div>
       <AddProjectMenu openIds={new Set(tabs.map((t) => t.id))} order={order} />
     </div>
   )
