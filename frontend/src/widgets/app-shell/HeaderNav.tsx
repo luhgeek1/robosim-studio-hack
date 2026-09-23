@@ -345,14 +345,18 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
   const strip = useRef<HTMLDivElement>(null)
   // Активная вкладка всегда в видимой части полосы. offsetLeft не учитывает анимационные сдвиги,
   // поэтому цель прокрутки верна даже пока вкладки ещё едут на места.
-  useLayoutEffect(() => {
-    const el = strip.current
-    const tab = activeId ? el?.querySelector<HTMLElement>(`[data-tab-id="${activeId}"]`) : null
-    if (!el || !tab) return
-    const left = tab.offsetLeft
-    const right = left + tab.offsetWidth
-    if (left < el.scrollLeft) el.scrollTo({ left, behavior: 'smooth' })
-    else if (right > el.scrollLeft + el.clientWidth) el.scrollTo({ left: right - el.clientWidth, behavior: 'smooth' })
+  useEffect(() => {
+    // Следующий кадр: в кадре добавления вкладки Chrome сбрасывает плавную прокрутку.
+    const frame = requestAnimationFrame(() => {
+      const el = strip.current
+      const tab = activeId ? el?.querySelector<HTMLElement>(`[data-tab-id="${activeId}"]`) : null
+      if (!el || !tab) return
+      const left = tab.offsetLeft
+      const right = left + tab.offsetWidth
+      if (left < el.scrollLeft) el.scrollTo({ left, behavior: 'smooth' })
+      else if (right > el.scrollLeft + el.clientWidth) el.scrollTo({ left: right - el.clientWidth, behavior: 'smooth' })
+    })
+    return () => cancelAnimationFrame(frame)
   }, [activeId, order])
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1">
