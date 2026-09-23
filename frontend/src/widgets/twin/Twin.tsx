@@ -32,8 +32,6 @@ export type TwinProps = {
   capture?: TwinCapture
   /** Where the 3D camera toolbar sits; a host with its own top-left overlays moves it to the bottom corner. */
   toolbarPlacement?: ToolbarPlacement
-  /** Adds «open full screen» to the 3D toolbar in place of the help button. */
-  onExpand?: () => void
   className?: string
 }
 
@@ -50,7 +48,6 @@ export function Twin({
   onSelectRobot,
   capture,
   toolbarPlacement,
-  onExpand,
   className = '',
 }: TwinProps) {
   const [ownView, setOwnView] = useState<TwinView>('3d')
@@ -121,7 +118,6 @@ export function Twin({
             routes={routes}
             onRoutes={() => setRoutes((v) => !v)}
             placement={toolbarPlacement}
-            onExpand={onExpand}
           />
           <Canvas
             shadows={{ type: THREE.PCFSoftShadowMap }}

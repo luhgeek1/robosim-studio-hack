@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ComponentRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { Box, HelpCircle, Map, Minus, Plus, RotateCcw, Route, Maximize2 } from 'lucide-react'
+import { Box, HelpCircle, Map, Minus, Plus, RotateCcw, Route } from 'lucide-react'
 import { PerspectiveCamera, Vector3 } from 'three'
 
 export type CameraAction = 'home' | 'top' | 'in' | 'out'
@@ -78,14 +78,11 @@ export function MapToolbar({
   routes,
   onRoutes,
   placement = 'top-left',
-  onExpand,
 }: {
   onAction: (action: CameraAction) => void
   routes: boolean
   onRoutes: () => void
   placement?: ToolbarPlacement
-  /** When set, the help button gives way to «open full screen». */
-  onExpand?: () => void
 }) {
   const [help, setHelp] = useState(false)
   const button =
@@ -135,21 +132,15 @@ export function MapToolbar({
         >
           <Route size={17} />
         </button>
-        {onExpand ? (
-          <button className={button} title="Открыть крупно" aria-label="Открыть крупно" onClick={onExpand}>
-            <Maximize2 size={16} />
-          </button>
-        ) : (
-          <button
-            className={button}
-            title="Как управлять картой"
-            aria-label="Как управлять картой"
-            aria-expanded={help}
-            onClick={() => setHelp((v) => !v)}
-          >
-            <HelpCircle size={17} />
-          </button>
-        )}
+        <button
+          className={button}
+          title="Как управлять картой"
+          aria-label="Как управлять картой"
+          aria-expanded={help}
+          onClick={() => setHelp((v) => !v)}
+        >
+          <HelpCircle size={17} />
+        </button>
       </div>
       {help && (
         <div className="max-w-[290px] rounded-xl border border-slate-200 bg-white/95 p-4 text-[12px] leading-6 text-slate-600 shadow-lg">

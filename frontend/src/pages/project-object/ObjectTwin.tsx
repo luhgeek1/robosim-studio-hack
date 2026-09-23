@@ -1,4 +1,4 @@
-import { AlertTriangle, Box, Map as MapIcon, RefreshCw, Rotate3d } from 'lucide-react'
+import { AlertTriangle, Box, Map as MapIcon, Maximize2, RefreshCw, Rotate3d } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useGenerateLayout, useLayout } from '@/entities/layout'
 import { parseApiProblem } from '@/shared/api/problem'
@@ -75,27 +75,24 @@ const PLAN_PAD: FitPadding = { x: 32, top: 76, bottom: 100 }
 const MODAL_PLAN_PAD: FitPadding = { x: 48, top: 80, bottom: 80 }
 
 // One stage for the card and the full-screen dialog: the 3D scene or the 2D plan under a centered switch.
-// Without `onExpand` (inside the dialog) the toolbars keep their own «?» and «Целиком».
 function TwinStage({
   layout,
   view,
   onViewChange,
   fitPadding,
-  onExpand,
   switchId,
 }: {
   layout: Layout
   view: TwinView
   onViewChange: (view: TwinView) => void
   fitPadding: FitPadding
-  onExpand?: () => void
   switchId: string
 }) {
   return (
     <>
       {/* The 2D plan is the same map as on «Планировка»; like the 3D scene it fills the stage under the overlays. */}
       {view === '3d' ? (
-        <Twin layout={layout} switcher={false} toolbarPlacement="bottom-right" onExpand={onExpand} />
+        <Twin layout={layout} switcher={false} toolbarPlacement="bottom-right" />
       ) : (
         <div className="absolute inset-0">
           <LayoutMap
@@ -104,7 +101,6 @@ function TwinStage({
             legend={false}
             infoCorner="top-left"
             fitPadding={fitPadding}
-            onExpand={onExpand}
             className="h-full rounded-none border-0"
             toolbarClassName="top-auto right-4 bottom-4 bg-white/95 shadow-card"
           />
@@ -148,14 +144,7 @@ function LayoutTwin({
 
   return (
     <>
-      <TwinStage
-        layout={layout}
-        view={view}
-        onViewChange={setView}
-        fitPadding={PLAN_PAD}
-        onExpand={() => setExpanded(true)}
-        switchId="object-twin-view"
-      />
+      <TwinStage layout={layout} view={view} onViewChange={setView} fitPadding={PLAN_PAD} switchId="object-twin-view" />
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent
           className="block h-[90vh] w-[90vw] max-w-none overflow-hidden p-0 sm:max-w-none"
@@ -174,6 +163,15 @@ function LayoutTwin({
         </DialogContent>
       </Dialog>
       <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          title="Открыть крупно"
+          aria-label="Открыть крупно"
+          className="flex size-11 items-center justify-center rounded-[12px] bg-white/90 text-ink-2 shadow-card backdrop-blur transition-colors hover:bg-white hover:text-ink"
+        >
+          <Maximize2 size={17} />
+        </button>
         {layout.warnings.length > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
