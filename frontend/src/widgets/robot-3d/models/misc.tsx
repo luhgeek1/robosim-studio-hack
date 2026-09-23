@@ -527,7 +527,7 @@ export function Exo({ v, accent }: ModelProps) {
     <group scale={k}>
       <BlobShadow w={1.4} d={0.9} />
       <RoundedBox args={[1.5, 0.12, 0.7]} radius={0.04} smoothness={3} position={[0, 0.07, 0]} material={M.dark} />
-      <group position={[0, 0.125, 0]}>
+      <group position={[0, 0.135, 0]}>
         <Lane drive={drive} length={1.4} width={0.6} />
       </group>
       {[-1, 1].map((s) => (
