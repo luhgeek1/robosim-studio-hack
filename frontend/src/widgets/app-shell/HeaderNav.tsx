@@ -97,7 +97,7 @@ export function Sections({ projectId }: { projectId?: string }) {
 }
 
 /* Вкладка проекта как в браузере: плавно появляется, уезжает при закрытии, соседние сдвигаются следом. */
-function Tab({ tab, active }: { tab: ProjectTab; active: boolean }) {
+function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: string }) {
   const project = useProject(tab.id)
   const navigate = useNavigate()
   const close = useProjectTabs((s) => s.close)
@@ -113,7 +113,9 @@ function Tab({ tab, active }: { tab: ProjectTab; active: boolean }) {
   }
   return (
     <motion.div
-      layout
+      layout="position"
+      // Раскладка анимируется только когда меняется набор вкладок; смена маршрута и прокрутки её не трогает.
+      layoutDependency={order}
       initial={{ opacity: 0, y: -6, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.16 } }}
@@ -268,6 +270,7 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
   const tabs = useProjectTabs((s) => s.tabs)
   const visit = useProjectTabs((s) => s.visit)
   const { pathname } = useLocation()
+  const order = tabs.map((t) => t.id).join(',')
   useEffect(() => {
     if (activeId) visit(activeId, pathname)
   }, [activeId, pathname, visit])
@@ -279,7 +282,7 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
     >
       <AnimatePresence initial={false} mode="popLayout">
         {tabs.map((tab) => (
-          <Tab key={tab.id} tab={tab} active={tab.id === activeId} />
+          <Tab key={tab.id} tab={tab} active={tab.id === activeId} order={order} />
         ))}
       </AnimatePresence>
       <AddProjectMenu openIds={new Set(tabs.map((t) => t.id))} />
