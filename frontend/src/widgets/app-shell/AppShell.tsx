@@ -65,10 +65,12 @@ function UserMenu() {
   )
 }
 
-/* Плашка шагов закреплена под шапкой: контент прокручивается под стеклом, шаги всегда под рукой. */
+/* Плашка шагов закреплена под шапкой: контент прокручивается под стеклом, шаги всегда под рукой.
+   layoutRoot у закреплённых шапки и плашки: без него framer считает, что они сдвинулись на величину прокрутки,
+   и подсветка при переходе прилетает снизу. */
 function StepDock({ projectId }: { projectId: string }) {
   return (
-    <div className="pointer-events-none sticky top-14 z-30 flex justify-center px-6 pt-3 pb-1">
+    <motion.div layoutRoot className="pointer-events-none sticky top-14 z-30 flex justify-center px-6 pt-3 pb-1">
       <nav
         className="glass pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5"
         aria-label="Шаги оценки"
@@ -102,7 +104,7 @@ function StepDock({ projectId }: { projectId: string }) {
           </NavLink>
         ))}
       </nav>
-    </div>
+    </motion.div>
   )
 }
 
@@ -112,7 +114,7 @@ export function AppShell() {
   const projectId = match?.params.projectId
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-line bg-canvas/85 backdrop-blur-md">
+      <motion.header layoutRoot className="sticky top-0 z-40 h-14 shrink-0 border-b border-line bg-canvas/85 backdrop-blur-md">
         <div className="mx-auto flex h-full max-w-360 items-center gap-5 px-6">
           <Logo />
           <div className="h-5 w-px shrink-0 bg-line-2" />
@@ -123,7 +125,7 @@ export function AppShell() {
             <UserMenu />
           </div>
         </div>
-      </header>
+      </motion.header>
       {projectId && <StepDock projectId={projectId} />}
       <main className="flex min-h-0 flex-1 flex-col">
         <Outlet />
