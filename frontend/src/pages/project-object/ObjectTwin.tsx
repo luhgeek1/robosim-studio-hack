@@ -1,5 +1,5 @@
-import { AlertTriangle, Box, RefreshCw } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { AlertTriangle, Box, Map as MapIcon, RefreshCw, Rotate3d } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { useGenerateLayout, useLayout } from '@/entities/layout'
 import { parseApiProblem } from '@/shared/api/problem'
 import type { Layout, ObjectType } from '@/shared/api/types'
@@ -7,7 +7,8 @@ import { formatNumber, isNum } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { ErrorBlock, Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
-import { Twin } from '@/widgets/twin'
+import { LayoutMap } from '@/widgets/layout-map'
+import { Twin, type TwinView } from '@/widgets/twin'
 
 // The twin on «Объект» is the project's own generated layout: the same geometry the route lengths and the simulation
 // use. A type without a layout generator keeps the parameter-only explanation.
@@ -77,6 +78,7 @@ function LayoutTwin({
   onRebuild: () => void
   error: ReactNode
 }) {
+  const [view, setView] = useState<TwinView>('3d')
   const stats = layout.stats
   const route = stats.avg_route_m?.dock_in_to_storage
   const numbers: [string, string][] = []
@@ -85,14 +87,26 @@ function LayoutTwin({
 
   return (
     <>
-      <Twin layout={layout} switcher={false} />
-      <div className="pointer-events-none absolute top-4 left-4 z-10 flex items-center gap-2">
-        <span className="rounded-full border border-line bg-white/90 px-2.5 py-1 text-[12.5px] font-medium">
-          Цифровой двойник
+      {/* The 2D plan is the same map as on «Планировка», framed so the overlays above and below never cover it. */}
+      {view === '3d' ? (
+        <Twin layout={layout} switcher={false} />
+      ) : (
+        <div className="absolute inset-0 bg-surface-2 px-4 pt-16 pb-26">
+          <LayoutMap layout={layout} fill legend={false} className="h-full bg-white" />
+        </div>
+      )}
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+        <span className="pointer-events-none rounded-full border border-line bg-white/90 px-2.5 py-1 text-[12.5px] font-medium">
+          {view === '3d' ? 'Цифровой двойник' : 'План планировки'}
         </span>
-        <span className="rounded-full bg-white/90 px-2.5 py-1 text-[12px] text-ink-3">
-          планировка из параметров объекта
-        </span>
+        <button
+          type="button"
+          onClick={() => setView(view === '3d' ? '2d' : '3d')}
+          className="flex items-center gap-1.5 rounded-full border border-line bg-white/90 px-2.5 py-1 text-[12px] text-ink-2 shadow-sm transition-colors hover:border-line-2 hover:bg-white hover:text-ink"
+        >
+          {view === '3d' ? <MapIcon size={13} /> : <Rotate3d size={13} />}
+          {view === '3d' ? 'Показать 2D-план' : 'Показать 3D'}
+        </button>
       </div>
       <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
         {layout.warnings.length > 0 && (
@@ -135,7 +149,9 @@ function LayoutTwin({
             ))}
           </div>
         )}
-        <span className="text-[12px] text-ink-4">Вращайте сцену мышью</span>
+        <span className="text-[12px] text-ink-4">
+          {view === '3d' ? 'Вращайте сцену мышью' : 'Перетаскивайте и масштабируйте план'}
+        </span>
       </div>
     </>
   )
