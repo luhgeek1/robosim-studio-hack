@@ -1,13 +1,15 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/onest';
+@import '@fontsource-variable/golos-text';
+@import '@fontsource-variable/jetbrains-mono';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Golos Text Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
@@ -17,6 +19,8 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-canvas: var(--canvas);
+  --color-surface: var(--card);
+  --color-raised: var(--raised);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -57,67 +61,106 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Одна тема — тёмная панель управления: ровный графитовый фон, поверхности на полтона светлее,
+   один акцент (лаванда) и три семантических тона ok / warn / crit, которые не спорят с акцентом. */
 :root {
-  --canvas: #f4f4f2;
-  --background: #f4f4f2;
-  --foreground: #17171a;
-  --card: #ffffff;
-  --card-foreground: #17171a;
-  --popover: #ffffff;
-  --popover-foreground: #17171a;
-  --primary: #2f55d4;
-  --primary-foreground: #ffffff;
-  --secondary: #ecece8;
-  --secondary-foreground: #17171a;
-  --muted: #f0f0ec;
-  --muted-foreground: #6b6b72;
-  --accent: #e6ebfb;
-  --accent-foreground: #223f9e;
-  --destructive: #d24b3f;
-  --border: #e2e2dd;
-  --input: #d9d9d4;
-  --ring: #2f55d4;
-  --ok: #1f8f5a;
-  --ok-soft: #e3f3ea;
-  --warn: #b87412;
-  --warn-soft: #fbefd9;
-  --crit: #d24b3f;
-  --crit-soft: #fbe4e1;
-  --info: #2f55d4;
-  --info-soft: #e6ebfb;
-  --chart-1: #2f55d4;
-  --chart-2: #1f8f5a;
-  --chart-3: #d18a1f;
-  --chart-4: #d24b3f;
-  --chart-5: #7b7b82;
-  --radius: 0.625rem;
-  --sidebar: #fbfbf9;
-  --sidebar-foreground: #17171a;
-  --sidebar-primary: #2f55d4;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ecece8;
-  --sidebar-accent-foreground: #17171a;
-  --sidebar-border: #e2e2dd;
-  --sidebar-ring: #2f55d4;
+  --canvas: #0e1114;
+  --background: #0e1114;
+  --foreground: #e6e9ee;
+  --card: #151920;
+  --card-foreground: #e6e9ee;
+  --raised: #1b2029;
+  --popover: #1b2029;
+  --popover-foreground: #e6e9ee;
+  --primary: #a79bff;
+  --primary-foreground: #14111f;
+  --secondary: #222834;
+  --secondary-foreground: #e6e9ee;
+  --muted: #1b2029;
+  --muted-foreground: #8b94a3;
+  --accent: #262a44;
+  --accent-foreground: #d9d3ff;
+  --destructive: #f0716a;
+  --border: #252b35;
+  --input: #2c3340;
+  --ring: #a79bff;
+  --ok: #4fc98c;
+  --ok-soft: rgb(79 201 140 / 0.14);
+  --warn: #e8b04a;
+  --warn-soft: rgb(232 176 74 / 0.14);
+  --crit: #f0716a;
+  --crit-soft: rgb(240 113 106 / 0.14);
+  --info: #a79bff;
+  --info-soft: rgb(167 155 255 / 0.14);
+  --chart-1: #a79bff;
+  --chart-2: #4fc98c;
+  --chart-3: #e8b04a;
+  --chart-4: #f0716a;
+  --chart-5: #6b7380;
+  --radius: 0.5rem;
+  --sidebar: #111419;
+  --sidebar-foreground: #e6e9ee;
+  --sidebar-primary: #a79bff;
+  --sidebar-primary-foreground: #14111f;
+  --sidebar-accent: #1b2029;
+  --sidebar-accent-foreground: #e6e9ee;
+  --sidebar-border: #1f252e;
+  --sidebar-ring: #a79bff;
+  color-scheme: dark;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground text-sm;
-  }
   html {
     @apply font-sans;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground text-sm;
   }
   html,
   body,
   #root {
     height: 100%;
   }
+  ::selection {
+    background: rgb(167 155 255 / 0.3);
+  }
   .num {
     font-variant-numeric: tabular-nums;
   }
+  /* Тонкие скроллбары внутри панелей: системные слишком яркие на тёмном. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--input) transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Recharts рисует подсказки и оси своими inline-цветами под светлую тему. */
+.recharts-default-tooltip {
+  background: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  color: var(--foreground) !important;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+}
+.recharts-tooltip-label {
+  color: var(--muted-foreground);
+}
+.recharts-cartesian-axis-tick-value {
+  fill: var(--muted-foreground);
+}
+.recharts-legend-item-text {
+  color: var(--muted-foreground) !important;
 }

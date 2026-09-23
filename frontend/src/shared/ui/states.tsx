@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { AlertTriangle, Inbox, Loader2, RotateCw } from 'lucide-react'
+import { AlertTriangle, Loader2, RotateCw } from 'lucide-react'
 import { parseApiProblem } from '@/shared/api/problem'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
@@ -13,7 +13,7 @@ export function LoadingBlock({ rows = 3, className }: { rows?: number; className
   return (
     <div className={cn('space-y-3', className)}>
       {Array.from({ length: rows }, (_, i) => (
-        <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        <Skeleton key={i} className="h-14 w-full rounded-lg" />
       ))}
     </div>
   )
@@ -30,14 +30,12 @@ export function ErrorBlock({
 }) {
   const problem = parseApiProblem(error)
   return (
-    <div
-      className={cn('flex items-start gap-3 rounded-xl border border-crit/20 bg-crit-soft p-4 text-crit', className)}
-    >
-      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+    <div className={cn('flex items-start gap-3 rounded-lg border border-l-2 border-l-crit bg-surface p-4', className)}>
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-crit" />
       <div className="min-w-0 flex-1">
         <div className="font-medium">{problem.detail}</div>
         {problem.details.length > 0 && (
-          <ul className="mt-1 list-disc pl-4 text-xs opacity-90">
+          <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
             {problem.details.slice(0, 5).map((d, i) => (
               <li key={i}>{d.msg}</li>
             ))}
@@ -69,14 +67,14 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed bg-card px-6 py-12 text-center',
+        'flex flex-col items-start gap-1.5 rounded-lg border border-dashed border-input bg-surface/60 px-6 py-8',
         className,
       )}
     >
-      <div className="text-muted-foreground">{icon ?? <Inbox className="size-6" />}</div>
+      {icon && <div className="mb-1 text-muted-foreground">{icon}</div>}
       <div className="text-base font-medium">{title}</div>
-      {description && <div className="max-w-md text-muted-foreground">{description}</div>}
-      {action && <div className="mt-2">{action}</div>}
+      {description && <div className="max-w-xl text-muted-foreground">{description}</div>}
+      {action && <div className="mt-3">{action}</div>}
     </div>
   )
 }

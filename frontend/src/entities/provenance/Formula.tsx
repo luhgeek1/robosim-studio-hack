@@ -24,7 +24,7 @@ export function Formula({
 }) {
   return (
     <div className="space-y-3">
-      <div className="space-y-1 rounded-lg bg-muted/60 p-3 font-mono text-xs leading-relaxed">
+      <div className="space-y-1 rounded-md bg-raised p-3 font-mono text-xs leading-relaxed">
         <div className="text-muted-foreground">{formula}</div>
         {rendered && <div className="font-medium text-foreground">{rendered}</div>}
       </div>

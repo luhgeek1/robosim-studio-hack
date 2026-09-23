@@ -27,8 +27,9 @@ function TopNavLink({ to, children }: { to: string; children: string }) {
       to={to}
       className={({ isActive }) =>
         cn(
-          'rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground',
-          isActive && 'bg-secondary text-foreground',
+          'relative flex h-12 items-center px-3 text-muted-foreground transition-colors hover:text-foreground',
+          'after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-t after:bg-primary after:opacity-0 after:transition-opacity',
+          isActive && 'text-foreground after:opacity-100',
         )
       }
     >
@@ -51,7 +52,7 @@ function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
           <UserRound />
           <span className="max-w-48 truncate">{user.name || user.email}</span>
         </Button>
@@ -82,10 +83,10 @@ export function AppShell() {
   const { user } = useSession()
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-40 h-14 shrink-0 border-b bg-background/90 backdrop-blur-md">
-        <div className="flex h-full items-center gap-6 px-5">
+      <header className="sticky top-0 z-40 h-12 shrink-0 border-b border-sidebar-border bg-sidebar">
+        <div className="flex h-full items-center gap-5 px-4">
           <Logo />
-          <nav className="flex items-center gap-1" aria-label="Разделы">
+          <nav className="flex items-center" aria-label="Разделы">
             {user && <TopNavLink to="/projects">Проекты</TopNavLink>}
             <TopNavLink to="/catalog">Каталог решений</TopNavLink>
           </nav>
