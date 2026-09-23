@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { LogOut, UserRound } from 'lucide-react'
-import { useRef } from 'react'
+import { useState } from 'react'
 import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -113,7 +113,9 @@ function StepDock({ projectId }: { projectId: string }) {
 }
 
 export function AppShell() {
-  const headerRow = useRef<HTMLDivElement>(null)
+  // Callback-ref: эффект подсветки должен стартовать, когда строка шапки уже в DOM (обычный ref у родителя
+  // привязывается позже эффектов детей).
+  const [headerRow, setHeaderRow] = useState<HTMLDivElement | null>(null)
   const { user } = useSession()
   const match = useMatch('/projects/:projectId/*')
   const projectId = match?.params.projectId
@@ -124,7 +126,7 @@ export function AppShell() {
         layoutRoot
         className="fixed inset-x-0 top-0 z-40 h-14 border-b border-line bg-canvas/85 backdrop-blur-md"
       >
-        <div ref={headerRow} className="relative mx-auto flex h-full max-w-360 items-center gap-5 px-6">
+        <div ref={setHeaderRow} className="relative mx-auto flex h-full max-w-360 items-center gap-5 px-6">
           <HeaderHighlight container={headerRow} />
           <Logo />
           <div className="h-5 w-px shrink-0 bg-line-2" />

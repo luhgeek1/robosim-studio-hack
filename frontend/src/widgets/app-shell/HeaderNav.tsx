@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion'
 import { Check, HeartPulse, Plane, Plus, Warehouse, X } from 'lucide-react'
-import { useEffect, useLayoutEffect, useState, type ReactNode, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
 import { OBJECT_TYPE_LABEL, useProject, useProjects } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -25,13 +25,13 @@ function ActiveMark({ variant }: { variant: 'section' | 'tab' }) {
 /* Одна подсветка на всю шапку: перелетает между разделами и вкладками проектов, меняя форму и цвет на лету.
    Координаты считаются относительно контейнера шапки, а не страницы, поэтому прокрутка контента её не сбивает
    (с общим layoutId framer брал позицию до смены прокрутки, и подсветка прилетала снизу). */
-export function HeaderHighlight({ container }: { container: RefObject<HTMLElement | null> }) {
+export function HeaderHighlight({ container }: { container: HTMLElement | null }) {
   const { pathname } = useLocation()
   const order = useProjectTabs((s) => s.tabs.map((t) => t.id).join(','))
   const [box, setBox] = useState<{ x: number; y: number; w: number; h: number; variant: string } | null>(null)
 
   useLayoutEffect(() => {
-    const root = container.current
+    const root = container
     if (!root) return
     const measure = () => {
       const mark = root.querySelector<HTMLElement>('[data-header-active]')
