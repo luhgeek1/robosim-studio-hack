@@ -1,7 +1,7 @@
 import type { SimulationTimeline } from '@/entities/simulation'
 
 /* Длина очереди по таймлайну прогона: одна линия, один пик. */
-export function QueueSparkline({ points }: { points: SimulationTimeline['points'] }) {
+export function QueueSparkline({ points, cursorMin }: { points: SimulationTimeline['points']; cursorMin?: number }) {
   if (!points.length) return null
   const W = 320
   const H = 64
@@ -17,6 +17,17 @@ export function QueueSparkline({ points }: { points: SimulationTimeline['points'
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Очередь в течение дня">
         <path d={`${path} L${W},${H} L0,${H} Z`} fill="#2f55d4" opacity={0.08} />
         <path d={path} fill="none" stroke="#2f55d4" strokeWidth={1.4} />
+        {cursorMin != null && (
+          <line
+            x1={Math.min(W, (cursorMin / tMax) * W)}
+            x2={Math.min(W, (cursorMin / tMax) * W)}
+            y1={0}
+            y2={H}
+            stroke="#17171a"
+            strokeWidth={1}
+            opacity={0.5}
+          />
+        )}
         {peak.queue > 3 && (
           <circle cx={(peak.t_min / tMax) * W} cy={H - (peak.queue / qMax) * (H - 8)} r={3} fill="#2f55d4" />
         )}

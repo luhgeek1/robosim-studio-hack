@@ -39,6 +39,10 @@ export type LayoutMapProps = {
   legend?: boolean
   /** Sizes the map viewport, e.g. `h-[560px]`. */
   className?: string
+  /** Stretch to the parent's height (the 2D view inside the twin card). */
+  fill?: boolean
+  /** Moves the zoom toolbar when the host puts its own controls in the corner. */
+  toolbarClassName?: string
   /** Overlay in meter coordinates (robots, heat spots); `view.k` is pixels per meter for constant-size marks. */
   children?: ReactNode | ((view: LayoutMapView) => ReactNode)
 }
@@ -53,6 +57,8 @@ export function LayoutMap({
   highlight,
   legend = true,
   className,
+  fill = false,
+  toolbarClassName,
   children,
 }: LayoutMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -71,7 +77,7 @@ export function LayoutMap({
   const barMeters = scaleBarMeters(view.k)
 
   return (
-    <div className="space-y-3">
+    <div className={cn('space-y-3', fill && 'h-full')}>
       <div
         ref={containerRef}
         className={cn(
@@ -99,7 +105,10 @@ export function LayoutMap({
 
         <div
           data-map-control
-          className="absolute top-2 right-2 flex items-center gap-1 rounded-lg border bg-raised p-1 shadow-lg"
+          className={cn(
+            'absolute top-2 right-2 flex items-center gap-1 rounded-lg border bg-raised p-1 shadow-lg',
+            toolbarClassName,
+          )}
         >
           <Tooltip>
             <TooltipTrigger asChild>

@@ -1,18 +1,17 @@
 import { FileSpreadsheet, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { OBJECT_TYPE_LABEL, useProject, useProjectId, useProjectParams, useValidation } from '@/entities/project'
+import { useProject, useProjectId, useProjectParams, useValidation } from '@/entities/project'
 import { useObjectType } from '@/entities/reference'
 import { ParamsEditor } from '@/features/param-edit'
 import { ImportDialog } from '@/features/params-import'
 import { problemText } from '@/shared/api/problem'
 import type { ProjectParam } from '@/shared/api/types'
 import { downloadFile } from '@/shared/lib/download'
-import { formatNumber, formatValue } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Screen } from '@/shared/ui/page'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
-import { Twin } from '@/widgets/twin'
+import { ObjectTwin } from './ObjectTwin'
 import { TrustPanel } from './TrustPanel'
 import { ValidationPanel } from './ValidationPanel'
 
@@ -43,10 +42,6 @@ export function ObjectPage() {
 
   const list = params.data?.params
   const area = numberOf(list, 'robotized_area_m2') ?? numberOf(list, 'area_m2')
-  const slots = numberOf(list, 'pallet_positions')
-  const moves = (numberOf(list, 'pallets_in_per_day') ?? 0) + (numberOf(list, 'pallets_out_per_day') ?? 0)
-  const errors = validation.data?.issues.filter((i) => i.severity === 'error').length ?? 0
-  const isWarehouse = project.object_type === 'warehouse'
 
   return (
     <Screen
@@ -64,7 +59,7 @@ export function ObjectPage() {
         </>
       }
       nextLabel="Начать анализ"
-      nextDisabled={errors > 0}
+      nextDisabled={validation.data ? !validation.data.can_match : false}
     >
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[5fr_7fr]">
         <div className="space-y-6">
@@ -73,43 +68,10 @@ export function ObjectPage() {
         </div>
 
         <div className="card relative h-160 overflow-hidden lg:sticky lg:top-36">
-          {isWarehouse ? (
-            <>
-              <Twin mode="overview" />
-              <div className="pointer-events-none absolute top-4 left-4 z-10 flex items-center gap-2">
-                <span className="rounded-full border border-line bg-white/90 px-2.5 py-1 text-[12.5px] font-medium">
-                  Цифровой двойник
-                </span>
-                <span className="rounded-full bg-white/90 px-2.5 py-1 text-[12px] text-ink-3">
-                  типовая планировка по параметрам
-                </span>
-              </div>
-              {list && (
-                <div className="pointer-events-none absolute right-4 bottom-4 left-4 z-10 flex flex-wrap items-end justify-between gap-3">
-                  <div className="grid grid-cols-3 gap-6 rounded-[12px] border border-line bg-white/90 px-4 py-3 backdrop-blur">
-                    {[
-                      [formatValue(area, 'м²'), 'зона роботизации'],
-                      [formatNumber(slots), 'паллето-мест'],
-                      [formatNumber(moves), 'перемещений в сутки'],
-                    ].map(([v, l]) => (
-                      <div key={l}>
-                        <div className="display num text-[18px]">{v}</div>
-                        <div className="meta">{l}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <span className="text-[12px] text-ink-4">Вращайте сцену мышью</span>
-                </div>
-              )}
-            </>
+          {objectType.data ? (
+            <ObjectTwin projectId={projectId} objectType={objectType.data} area={area} />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-              <div className="h2">{OBJECT_TYPE_LABEL[project.object_type]}</div>
-              <p className="mt-2 max-w-105 text-[14px] leading-relaxed text-ink-3">
-                Для этого типа объекта работают параметры, подбор и аналитическая экономика. Планировка и имитация
-                подключаются следующим этапом.
-              </p>
-            </div>
+            <div className="h-full animate-pulse bg-surface-2" />
           )}
         </div>
       </div>

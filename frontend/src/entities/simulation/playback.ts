@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Layout, SimEvent, SimulationReplay } from '@/shared/api/types'
+import type { LayoutGeometry, SimEvent, SimulationReplay } from '@/shared/api/types'
 
 export type RobotState = 'moving' | 'load' | 'unload' | 'charge' | 'wait' | 'idle' | 'fail'
 
@@ -30,7 +30,7 @@ const STAY_STATE: Partial<Record<SimEvent['type'], RobotState>> = {
 
 // The engine records moves as node paths with departure and arrival times; the player only interpolates them
 // (D-006: the frontend replays backend events and never decides where a robot goes).
-export function buildTracks(replay: SimulationReplay, layout: Layout): RobotTrack[] {
+export function buildTracks(replay: SimulationReplay, layout: LayoutGeometry): RobotTrack[] {
   const nodes = new Map(layout.nodes.map((n) => [n.id, n]))
   const byRobot = new Map<string, SimEvent[]>()
   for (const e of replay.events) {
