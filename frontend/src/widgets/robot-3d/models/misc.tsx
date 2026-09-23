@@ -116,7 +116,7 @@ export function Ugv({ v, accent }: ModelProps) {
         <group key={s} position={[0, trackH / 2, s * (W / 2 - 0.08)]}>
           <RoundedBox args={[L, trackH, 0.16]} radius={trackH * 0.45} smoothness={6} material={M.rubber} />
           {[-0.33, 0, 0.33].map((x) => (
-            <Wheel key={x} r={trackH * 0.3} w={0.17} pos={[x * L, 0, 0]} drive={drive} />
+            <Wheel key={x} r={trackH * 0.3} w={0.22} pos={[x * L, 0, 0]} drive={drive} />
           ))}
         </group>
       ))}
@@ -435,6 +435,9 @@ export function Shuttle({ v, accent }: ModelProps) {
     [],
   )
   const lamp = useGlow('#fff6e0', 1.8)
+  const bodyR = Math.min(0.2, lowH * 0.45)
+  const lampY = wr * 0.8 + lowH - bodyR - 0.05
+  const lampZ = W / 2 - bodyR - W * 0.07 - 0.03
   const tail = useGlow('#ff3b3b', 1.4)
   return (
     <group>
@@ -446,7 +449,7 @@ export function Shuttle({ v, accent }: ModelProps) {
       <group ref={body}>
         <RoundedBox
           args={[L, lowH, W]}
-          radius={Math.min(0.2, lowH * 0.45)}
+          radius={bodyR}
           smoothness={6}
           position={[0, wr * 0.8 + lowH / 2, 0]}
           material={bodyMat}
@@ -468,11 +471,12 @@ export function Shuttle({ v, accent }: ModelProps) {
         <Lidar pos={[-L * 0.04, H + 0.06, 0]} r={0.1} />
         {[-1, 1].map((s) => (
           <group key={s}>
-            <mesh material={lamp} position={[L / 2 - 0.02, wr * 0.8 + lowH * 0.65, s * W * 0.34]}>
-              <boxGeometry args={[0.04, 0.06, W * 0.2]} />
+            {/* Lamps sit just proud of the flat part of the nose and tail; flush faces z-fight. */}
+            <mesh material={lamp} position={[L / 2 + 0.006, lampY, s * lampZ]}>
+              <boxGeometry args={[0.012, 0.06, W * 0.14]} />
             </mesh>
-            <mesh material={tail} position={[-L / 2 + 0.02, wr * 0.8 + lowH * 0.65, s * W * 0.34]}>
-              <boxGeometry args={[0.04, 0.05, W * 0.18]} />
+            <mesh material={tail} position={[-L / 2 - 0.006, lampY, s * lampZ]}>
+              <boxGeometry args={[0.012, 0.05, W * 0.13]} />
             </mesh>
             <Lidar pos={[L / 2 - 0.3, wr * 0.8 + lowH, s * (W / 2 - 0.05)]} r={0.05} />
           </group>
@@ -594,88 +598,89 @@ export function Exo({ v, accent }: ModelProps) {
 
 /* ---------- Neutral: fallback robot for a class that has no model yet ---------- */
 
+// A soft, generic service-robot silhouette: egg body on a low base with a light ring, a visor that looks around.
 export function Neutral({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [800, 600, 1200])
-  const drive = useDrive()
+  const R = Math.min(L, W) * 0.5
   const bot = useRef<G>(null)
   const head = useRef<G>(null)
+  const scan = useRef<G>(null)
   const eyes = useRef<(THREE.Mesh | null)[]>([])
-  const eyeMat = useGlow('#e8fbff', 2.4)
+  const eyeMat = useGlow('#e8fbff', 2.6)
+  const ring = useGlow(accent, 1.6)
+  const beam = useGlow(accent, 2.4)
   useTick((t) => {
-    const x = Math.sin(t * 0.5) * L * 0.4
-    drive.current.odo = x
-    if (bot.current) bot.current.position.x = x
-    if (head.current) head.current.rotation.y = Math.sin(t * 0.8) * 0.5
-    const blink = t % 3.4 < 0.12 ? 0.1 : 1
+    if (bot.current) {
+      bot.current.position.x = Math.sin(t * 0.45) * R * 0.9
+      bot.current.rotation.y = Math.cos(t * 0.45) * 0.25
+      bot.current.position.y = Math.sin(t * 2.1) * 0.004
+    }
+    if (head.current) head.current.rotation.y = Math.sin(t * 0.8) * 0.55
+    if (scan.current) scan.current.rotation.y = t * 3
+    const blink = t % 3.6 < 0.12 ? 0.12 : 1
     eyes.current.forEach((m) => {
       if (m) m.scale.y = blink
     })
+    ring.emissiveIntensity = 1.2 + 0.8 * (0.5 + 0.5 * Math.sin(t * 1.8))
   })
-  const baseH = H * 0.25
-  const bodyH = H * 0.45
-  const bodyMat = paint(accent, 0.35, 0.1, 0.7)
+  // Egg body: radius at height y follows the ellipsoid, so the ring and the visor hug the shell.
+  const cy = H * 0.5
+  const ry = H * 0.36
+  const rx = R * 0.82
+  const shellAt = (y: number) => rx * Math.sqrt(Math.max(0, 1 - ((y - cy) / ry) ** 2))
+  const waistY = H * 0.42
+  const visorY = H * 0.63
+  const visorR = shellAt(visorY) + 0.006
+  const eyeR = visorR + 0.004
   return (
     <group ref={bot}>
-      <BlobShadow w={L * 1.3} d={W * 1.3} />
-      {[-1, 1].map((s) => (
-        <Wheel key={s} r={baseH * 0.35} w={0.06} pos={[0, baseH * 0.35, s * (W / 2 - 0.03)]} drive={drive} />
-      ))}
-      <RoundedBox
-        args={[L, baseH, W]}
-        radius={Math.min(0.1, baseH * 0.45)}
-        smoothness={5}
-        position={[0, baseH * 0.35 + baseH / 2, 0]}
-        material={M.shell}
-      />
-      <mesh material={bodyMat} position={[0, baseH * 0.35 + baseH * 0.3, 0]}>
-        <boxGeometry args={[L * 1.005, baseH * 0.12, W * 1.005]} />
+      <BlobShadow w={R * 2.6} d={R * 2.6} />
+      <mesh material={M.dark} position={[0, H * 0.075, 0]}>
+        <cylinderGeometry args={[R * 0.92, R, H * 0.12, 48]} />
       </mesh>
-      <RoundedBox
-        args={[L * 0.5, bodyH, W * 0.6]}
-        radius={Math.min(0.12, W * 0.2)}
-        smoothness={5}
-        position={[0, baseH * 1.35 + bodyH / 2, 0]}
-        material={M.shell}
-      />
-      <LedStrip
-        size={[0.006, bodyH * 0.5, 0.03]}
-        pos={[L * 0.25 + 0.003, baseH * 1.35 + bodyH / 2, 0]}
-        color={accent}
-        rate={1}
-      />
-      <group ref={head} position={[0, baseH * 1.35 + bodyH + H * 0.13, 0]}>
-        <RoundedBox
-          args={[L * 0.42, H * 0.2, W * 0.55]}
-          radius={Math.min(0.08, H * 0.08)}
-          smoothness={5}
-          material={bodyMat}
-        />
-        <RoundedBox
-          args={[0.02, H * 0.12, W * 0.42]}
-          radius={0.008}
-          smoothness={2}
-          position={[L * 0.21, 0, 0]}
-          material={M.glass}
-        />
-        {[-1, 1].map((s) => (
-          <mesh
-            key={s}
-            ref={(m) => {
-              eyes.current[s > 0 ? 1 : 0] = m
-            }}
-            material={eyeMat}
-            position={[L * 0.222, 0.005, s * W * 0.1]}
-            rotation={[0, Math.PI / 2, 0]}
-          >
-            <circleGeometry args={[Math.min(0.03, W * 0.05), 18]} />
+      <mesh material={ring} position={[0, H * 0.03, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[R * 0.99, 0.01, 8, 64]} />
+      </mesh>
+      <mesh material={M.shell2} position={[0, H * 0.15, 0]}>
+        <cylinderGeometry args={[R * 0.72, R * 0.86, H * 0.05, 48]} />
+      </mesh>
+      <mesh material={M.shell} position={[0, cy, 0]} scale={[rx, ry, rx]}>
+        <sphereGeometry args={[1, 48, 32]} />
+      </mesh>
+      <mesh material={paint(accent, 0.35, 0.1, 0.7)} position={[0, waistY, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[shellAt(waistY) + 0.004, 0.014, 10, 64]} />
+      </mesh>
+      <group ref={head}>
+        <mesh material={M.glass} position={[0, visorY, 0]}>
+          <cylinderGeometry args={[visorR, visorR, H * 0.12, 48, 1, true, Math.PI / 2 - 0.85, 1.7]} />
+        </mesh>
+        {[-1, 1].map((sd, i) => {
+          const ang = Math.PI / 2 + sd * 0.26
+          return (
+            <mesh
+              key={sd}
+              ref={(m) => {
+                eyes.current[i] = m
+              }}
+              material={eyeMat}
+              position={[Math.sin(ang) * eyeR, visorY + H * 0.005, Math.cos(ang) * eyeR]}
+              rotation={[0, ang, 0]}
+            >
+              <boxGeometry args={[R * 0.14, H * 0.045, 0.004]} />
+            </mesh>
+          )
+        })}
+        <mesh material={M.chrome} position={[0, cy + ry - 0.004, 0]}>
+          <cylinderGeometry args={[R * 0.3, R * 0.34, 0.02, 32]} />
+        </mesh>
+        <mesh material={M.glass} position={[0, cy + ry + 0.006, 0]}>
+          <sphereGeometry args={[R * 0.26, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        </mesh>
+        <group ref={scan} position={[0, cy + ry + 0.05, 0]}>
+          <mesh material={beam} position={[R * 0.1, 0, 0]}>
+            <boxGeometry args={[R * 0.16, 0.012, 0.02]} />
           </mesh>
-        ))}
-        <mesh material={M.dark} position={[0, H * 0.14, 0]}>
-          <cylinderGeometry args={[0.008, 0.008, H * 0.08, 8]} />
-        </mesh>
-        <mesh material={eyeMat} position={[0, H * 0.19, 0]}>
-          <sphereGeometry args={[0.02, 12, 10]} />
-        </mesh>
+        </group>
       </group>
     </group>
   )
