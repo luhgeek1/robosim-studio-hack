@@ -1,8 +1,19 @@
 import { useId } from 'react'
-import { motion, useReducedMotion, type Easing } from 'framer-motion'
+import {
+  easeIn,
+  easeOut,
+  motion,
+  useReducedMotion,
+  useTime,
+  useTransform,
+  type EasingFunction,
+  type MotionValue,
+} from 'framer-motion'
+import { PROJECT_STEPS } from '@/entities/project'
 
-const W = 640
+const W = 760
 const FLOOR = 290
+const LANE = FLOOR + 16
 const ROBOT_W = 112
 const WHEEL_R = 10
 const DECK_TOP = FLOOR - 48
@@ -12,12 +23,16 @@ const BOX_DX = 24
 const BOX_REST_Y = DECK_TOP - BOX_H
 const CHUTE_Y = 104
 const PICK_X = 28
-const DROP_X = 404
-const CONVEYOR_X = 498
-const DURATION = 11
+const DROP_X = 560
+const CONVEYOR_X = DROP_X + 94
+const DURATION = 12
+// With reduced motion the scene freezes on this moment of the loop: the robot mid-route with the parcel.
+const STILL = 0.45
+const linear: EasingFunction = (t) => t
 
 // Phases of one loop as fractions of DURATION: enter, load, accelerate, cruise, brake, unload, leave.
 const T = { enter: 0.1, gateOpen: 0.12, land: 0.15, go: 0.22, cruise: 0.27, brake: 0.63, stop: 0.68, unload: 0.71 }
+const REPORT_AT = 0.84
 
 // Accel/brake are half-speed on average, so the cruise speed is chosen to cover the whole route on time.
 const SPEED = (DROP_X - PICK_X) / ((T.cruise - T.go) / 2 + (T.brake - T.cruise) + (T.stop - T.brake) / 2)
@@ -26,7 +41,7 @@ const BRAKE_DX = (SPEED * (T.stop - T.brake)) / 2
 
 const ROBOT_TIMES = [0, T.enter, T.go, T.cruise, T.brake, T.stop, 0.8, 1]
 const ROBOT_X = [-150, PICK_X, PICK_X, PICK_X + ACCEL_DX, DROP_X - BRAKE_DX, DROP_X, DROP_X, W + 40]
-const ROBOT_EASE: Easing[] = ['easeOut', 'linear', 'easeIn', 'linear', 'easeOut', 'linear', 'easeIn']
+const ROBOT_EASE: EasingFunction[] = [easeOut, linear, easeIn, linear, easeOut, linear, easeIn]
 // Wheels turn by the distance travelled, with the same keyframes, so they never slip.
 const WHEEL_ROTATE = ROBOT_X.map((x) => (((x - ROBOT_X[0]) / WHEEL_R) * 180) / Math.PI)
 
@@ -42,60 +57,99 @@ const BOX_X = [
   PICK_X + BOX_DX,
   PICK_X + BOX_DX,
 ]
-const BOX_X_EASE: Easing[] = ['linear', 'easeIn', 'linear', 'easeOut', 'linear', 'easeIn', 'linear', 'linear']
+const BOX_X_EASE = [linear, easeIn, linear, easeOut, linear, easeIn, linear, linear]
 const BOX_Y_TIMES = [0, T.gateOpen, T.land, 0.165, 0.18, 0.905, 0.91, 1]
 const BOX_Y = [CHUTE_Y, CHUTE_Y, BOX_REST_Y, BOX_REST_Y - 5, BOX_REST_Y, BOX_REST_Y, CHUTE_Y - 50, CHUTE_Y]
-const BOX_Y_EASE: Easing[] = ['linear', 'easeIn', 'easeOut', 'easeIn', 'linear', 'linear', 'easeOut']
+const BOX_Y_EASE = [linear, easeIn, easeOut, easeIn, linear, linear, easeOut]
 
-const STEPS = [
-  { x: 150, label: 'Подбор' },
-  { x: 230, label: 'Количество' },
-  { x: 310, label: 'Экономика' },
-  { x: 390, label: 'Имитация' },
-]
-const REPORT_X = 570
+// The lane is the project path: the object is loaded at the chute, the report leaves on the conveyor,
+// and the steps in between light up as the robot drives past them.
+const OBJECT_X = PICK_X + ROBOT_W / 2
+const REPORT_X = CONVEYOR_X + 50
 const cruiseStartCenter = PICK_X + ACCEL_DX + ROBOT_W / 2
+const cruiseEndCenter = DROP_X - BRAKE_DX + ROBOT_W / 2
 const passTime = (x: number) => T.cruise + (x - cruiseStartCenter) / SPEED
+const gap = (cruiseEndCenter - cruiseStartCenter - 40) / (PROJECT_STEPS.length - 3)
+const MARKERS = PROJECT_STEPS.map((step, i) => {
+  if (i === 0) return { label: step.label, x: OBJECT_X, lit: T.land }
+  if (i === PROJECT_STEPS.length - 1) return { label: step.label, x: REPORT_X, lit: REPORT_AT }
+  const x = cruiseStartCenter + 40 + gap * (i - 1)
+  return { label: step.label, x, lit: passTime(x) }
+})
+
+// The progress bar follows the robot with the same keyframes, then runs on to the report with the parcel.
+const PATH_LEN = REPORT_X - OBJECT_X
+const pathScale = (x: number) => Math.min(1, Math.max(0, (x + ROBOT_W / 2 - OBJECT_X) / PATH_LEN))
+const PATH_TIMES = [0, T.go, T.cruise, T.brake, T.stop, REPORT_AT, 0.99, 1]
+const PATH_SCALE = [0, 0, ...ROBOT_X.slice(3, 6).map(pathScale), 1, 1, 0]
+const PATH_EASE = [linear, easeIn, linear, easeOut, easeIn, linear, linear]
 
 const CARDBOARD = { face: '#dcb67f', lid: '#e8c995', tape: '#f0dcb8', edge: '#c49a5c' }
+const STOCK = {
+  box: '#ecdcc0',
+  boxEdge: '#d9c29b',
+  boxTape: '#f5ead6',
+  tote: '#e1e7f7',
+  toteEdge: '#bccaee',
+  beam: '#c7ccd8',
+  upright: '#d6d6d1',
+  hole: '#b9b9b4',
+  pallet: '#d2b48a',
+}
 
+type Stock = ['box' | 'tote', number, number]
+// Rack contents as "kind width×height" per bay: b — carton, t — plastic tote; bays are split by "|".
+const parseBay = (bay: string): Stock[] =>
+  bay
+    .trim()
+    .split(/\s+/)
+    .map((item) => {
+      const [w, h] = item.slice(1).split('x').map(Number)
+      return [item[0] === 't' ? 'tote' : 'box', w, h]
+    })
+const rack = (x: number, code: string, levels: string[], pallet: string) => ({
+  x,
+  code,
+  levels: levels.map((level) => level.split('|').map(parseBay)),
+  pallet: parseBay(pallet),
+})
 const RACKS = [
-  {
-    x: 160,
-    boxes: [
-      [34, 22],
-      [26, 30],
-      [40, 18],
-      [30, 26],
-      [22, 20],
-      [36, 28],
-    ],
-  },
-  {
-    x: 318,
-    boxes: [
-      [28, 26],
-      [38, 20],
-      [24, 30],
-      [32, 22],
-      [40, 26],
-      [26, 18],
-    ],
-  },
+  rack(
+    172,
+    'A-01',
+    ['t24x20 t24x20 | b40x30', 'b22x34 b28x24 | t26x18 t22x18', 't26x20 | b20x18 b28x36'],
+    'b46x22 b46x22',
+  ),
+  rack(
+    330,
+    'A-02',
+    ['b30x34 t22x20 | b24x24 b20x16', 't24x20 t24x20 | t24x20 t24x20', 'b44x28 | b20x38 b24x22'],
+    'b30x24 b30x24 b30x24',
+  ),
+  rack(488, 'A-03', ['b18x22 b30x34 | t40x22', 'b40x26 | t22x20 b22x32', 't24x20 t24x20 | b44x30'], 'b94x26'),
 ]
+const RACK_W = 140
+const RACK_TOP = 96
+const BEAMS = [148, 200, 252]
 
 export function DeliveryScene() {
   const reduce = useReducedMotion()
   const gradientId = useId()
-  const loop = (times: number[], ease: Easing[] | Easing = 'linear') => ({
-    duration: DURATION,
-    times,
-    ease,
-    repeat: Infinity,
-  })
+  // Every moving part reads one shared clock, so the lit steps can never drift away from the robot.
+  const time = useTime()
+  const progress = useTransform(time, (ms) => (reduce ? STILL : (ms / 1000 / DURATION) % 1))
+  const robotX = useTransform(progress, ROBOT_TIMES, ROBOT_X, { ease: ROBOT_EASE })
+  const wheelRotate = useTransform(progress, ROBOT_TIMES, WHEEL_ROTATE, { ease: ROBOT_EASE })
+  const sink = useTransform(progress, [0, T.land, 0.165, 0.18, 1], [0, 0, 2, 0, 0])
+  const boxX = useTransform(progress, BOX_X_TIMES, BOX_X, { ease: BOX_X_EASE })
+  const boxY = useTransform(progress, BOX_Y_TIMES, BOX_Y, { ease: BOX_Y_EASE })
+  const boxOpacity = useTransform(progress, [0, 0.895, 0.9, 0.91, 0.93, 1], [1, 1, 0, 0, 1, 1])
+  const pathScaleX = useTransform(progress, PATH_TIMES, PATH_SCALE, { ease: PATH_EASE })
+  const pathOpacity = useTransform(progress, [0, 0.95, 0.99, 1], [1, 1, 0, 0])
+  const gate = useTransform(progress, [0, T.gateOpen - 0.01, T.gateOpen, 0.2, T.go, 1], [1, 1, 0, 0, 1, 1])
 
   return (
-    <svg viewBox="0 20 640 340" className="h-auto w-full" aria-hidden>
+    <svg viewBox={`0 34 ${W} 334`} className="h-auto w-full" aria-hidden>
       <defs>
         <linearGradient id={gradientId} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0" stopColor="var(--info)" stopOpacity="0.35" />
@@ -104,24 +158,29 @@ export function DeliveryScene() {
       </defs>
 
       {RACKS.map((rack) => (
-        <Rack key={rack.x} x={rack.x} boxes={rack.boxes} />
+        <Rack key={rack.code} {...rack} />
       ))}
 
       <line x1="0" x2={W} y1={FLOOR} y2={FLOOR} stroke="var(--input)" strokeWidth="1.5" />
-      <line x1="0" x2={W} y1={FLOOR + 14} y2={FLOOR + 14} stroke="var(--input)" strokeDasharray="6 8" />
+      <line x1="0" x2={W} y1={LANE} y2={LANE} stroke="var(--input)" strokeDasharray="6 8" />
+      <motion.rect
+        x={OBJECT_X}
+        y={LANE - 1.5}
+        width={PATH_LEN}
+        height="3"
+        rx="1.5"
+        fill="var(--info)"
+        style={{ originX: 0, scaleX: pathScaleX, opacity: pathOpacity }}
+      />
 
-      {STEPS.map((step) => (
-        <Marker key={step.label} x={step.x} label={step.label} lit={passTime(step.x)} animate={!reduce} />
+      {MARKERS.map((marker, i) => (
+        <Marker key={marker.label} index={i} {...marker} progress={progress} />
       ))}
-      <Marker x={REPORT_X} label="Отчёт" lit={0.84} animate={!reduce} />
 
       <g>
-        <text x={PICK_X + BOX_DX + BOX_W / 2} y="30" textAnchor="middle" fontSize="12" fill="var(--muted-foreground)">
-          Ваш объект
-        </text>
-        <rect x={PICK_X + 12} y="36" width={BOX_W + 24} height="6" rx="3" fill="var(--ink-2)" />
-        <rect x={PICK_X + 18} y="42" width="4" height={CHUTE_Y + BOX_H - 42} fill="var(--input)" />
-        <rect x={PICK_X + BOX_DX + BOX_W + 2} y="42" width="4" height={CHUTE_Y + BOX_H - 42} fill="var(--input)" />
+        <rect x={PICK_X + 12} y="40" width={BOX_W + 24} height="6" rx="3" fill="var(--ink-2)" />
+        <rect x={PICK_X + 18} y="46" width="4" height={CHUTE_Y + BOX_H - 46} fill="var(--input)" />
+        <rect x={PICK_X + BOX_DX + BOX_W + 2} y="46" width="4" height={CHUTE_Y + BOX_H - 46} fill="var(--input)" />
         <motion.rect
           x={PICK_X + 22}
           y={CHUTE_Y + BOX_H}
@@ -129,46 +188,26 @@ export function DeliveryScene() {
           height="4"
           rx="2"
           fill="var(--ink-2)"
-          animate={reduce ? undefined : { scaleX: [1, 1, 0, 0, 1, 1] }}
-          transition={loop([0, T.gateOpen - 0.01, T.gateOpen, 0.2, T.go, 1])}
+          style={{ scaleX: gate }}
         />
       </g>
 
       <g>
         <rect x={CONVEYOR_X} y={DECK_TOP + 3} width={W - CONVEYOR_X + 20} height="8" rx="2" fill="var(--ink-2)" />
-        {Array.from({ length: 11 }, (_, i) => (
+        {Array.from({ length: 9 }, (_, i) => (
           <circle key={i} cx={CONVEYOR_X + 8 + i * 14} cy={DECK_TOP + 3} r="3" fill="var(--ink-4)" />
         ))}
         <rect x={CONVEYOR_X + 12} y={DECK_TOP + 11} width="4" height={FLOOR - DECK_TOP - 11} fill="var(--input)" />
-        <rect x={CONVEYOR_X + 112} y={DECK_TOP + 11} width="4" height={FLOOR - DECK_TOP - 11} fill="var(--input)" />
+        <rect x={CONVEYOR_X + 84} y={DECK_TOP + 11} width="4" height={FLOOR - DECK_TOP - 11} fill="var(--input)" />
       </g>
 
-      <motion.g
-        initial={false}
-        animate={reduce ? undefined : { x: ROBOT_X }}
-        transition={loop(ROBOT_TIMES, ROBOT_EASE)}
-        style={reduce ? { x: 200 } : undefined}
-      >
+      <motion.g style={{ x: robotX }}>
         <g transform={`translate(0 ${FLOOR})`}>
-          <Robot
-            gradientId={gradientId}
-            reduce={!!reduce}
-            wheelTransition={loop(ROBOT_TIMES, ROBOT_EASE)}
-            sinkTransition={loop([0, T.land, 0.165, 0.18, 1])}
-          />
+          <Robot gradientId={gradientId} still={!!reduce} wheelRotate={wheelRotate} sink={sink} />
         </g>
       </motion.g>
 
-      <motion.g
-        initial={false}
-        animate={reduce ? undefined : { x: BOX_X, y: BOX_Y, opacity: [1, 1, 0, 0, 1, 1] }}
-        transition={{
-          x: loop(BOX_X_TIMES, BOX_X_EASE),
-          y: loop(BOX_Y_TIMES, BOX_Y_EASE),
-          opacity: loop([0, 0.895, 0.9, 0.91, 0.93, 1]),
-        }}
-        style={reduce ? { x: 200 + BOX_DX, y: BOX_REST_Y } : undefined}
-      >
+      <motion.g style={{ x: boxX, y: boxY, opacity: boxOpacity }}>
         <Parcel />
       </motion.g>
     </svg>
@@ -177,31 +216,31 @@ export function DeliveryScene() {
 
 function Robot({
   gradientId,
-  reduce,
-  wheelTransition,
-  sinkTransition,
+  still,
+  wheelRotate,
+  sink,
 }: {
   gradientId: string
-  reduce: boolean
-  wheelTransition: object
-  sinkTransition: object
+  still: boolean
+  wheelRotate: MotionValue<number>
+  sink: MotionValue<number>
 }) {
   return (
     <>
       <ellipse cx={ROBOT_W / 2} cy="2" rx="52" ry="4" fill="#000" opacity="0.1" />
       {[26, 86].map((cx) => (
-        <motion.g key={cx} animate={reduce ? undefined : { rotate: WHEEL_ROTATE }} transition={wheelTransition}>
+        <motion.g key={cx} style={{ rotate: wheelRotate }}>
           <circle cx={cx} cy={-WHEEL_R} r={WHEEL_R} fill="#2b2b31" stroke="var(--foreground)" strokeWidth="2" />
           <line x1={cx - 6} x2={cx + 6} y1={-WHEEL_R} y2={-WHEEL_R} stroke="var(--ink-4)" strokeWidth="1.5" />
           <line x1={cx} x2={cx} y1={-WHEEL_R - 6} y2={-WHEEL_R + 6} stroke="var(--ink-4)" strokeWidth="1.5" />
           <circle cx={cx} cy={-WHEEL_R} r="2.5" fill="var(--ink-4)" />
         </motion.g>
       ))}
-      <motion.g animate={reduce ? undefined : { y: [0, 0, 2, 0, 0] }} transition={sinkTransition}>
+      <motion.g style={{ y: sink }}>
         <motion.path
           d="M106 -32 L196 -60 L196 -4 Z"
           fill={`url(#${gradientId})`}
-          animate={reduce ? { opacity: 0.6 } : { opacity: [0.15, 0.8, 0.15] }}
+          animate={still ? { opacity: 0.6 } : { opacity: [0.15, 0.8, 0.15] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
         />
         <rect x="2" y="-42" width={ROBOT_W - 4} height="28" rx="9" fill="var(--foreground)" />
@@ -214,7 +253,7 @@ function Robot({
           cy="-32.5"
           r="2.2"
           fill="var(--ok)"
-          animate={reduce ? undefined : { opacity: [1, 0.25, 1] }}
+          animate={still ? undefined : { opacity: [1, 0.25, 1] }}
           transition={{ duration: 1.2, repeat: Infinity }}
         />
       </motion.g>
@@ -235,20 +274,40 @@ function Parcel() {
   )
 }
 
-function Marker({ x, label, lit, animate }: { x: number; label: string; lit: number; animate: boolean }) {
-  const transition = { duration: DURATION, times: [0, lit, lit + 0.01, 0.95, 1], repeat: Infinity }
-  const keys = [0, 0, 1, 1, 0]
-  const y = FLOOR + 14
+function Marker({
+  x,
+  label,
+  lit,
+  index,
+  progress,
+}: {
+  x: number
+  label: string
+  lit: number
+  index: number
+  progress: MotionValue<number>
+}) {
+  const opacity = useTransform(progress, [0, lit, lit + 0.01, 0.95, 1], [0, 0, 1, 1, 0])
+  // Neighbouring labels alternate rows so long step names do not collide.
+  const labelY = LANE + (index % 2 ? 48 : 29)
+  const number = String(index + 1)
   return (
     <g>
-      <circle cx={x} cy={y} r="4" fill="var(--ink-4)" />
-      <text x={x} y={y + 20} textAnchor="middle" fontSize="12" fill="var(--muted-foreground)">
+      <line x1={x} x2={x} y1={LANE + 9} y2={labelY - 12} stroke="var(--border)" />
+      <circle cx={x} cy={LANE} r="8" fill="var(--card)" stroke="var(--input)" />
+      <text x={x} y={LANE + 3.5} textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--muted-foreground)">
+        {number}
+      </text>
+      <text x={x} y={labelY} textAnchor="middle" fontSize="14" fill="var(--muted-foreground)">
         {label}
       </text>
-      <motion.g initial={{ opacity: 0 }} animate={animate ? { opacity: keys } : { opacity: 1 }} transition={transition}>
-        <circle cx={x} cy={y} r="9" fill="var(--info)" opacity="0.15" />
-        <circle cx={x} cy={y} r="4.5" fill="var(--info)" />
-        <text x={x} y={y + 20} textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--foreground)">
+      <motion.g style={{ opacity }}>
+        <circle cx={x} cy={LANE} r="13" fill="var(--info)" opacity="0.15" />
+        <circle cx={x} cy={LANE} r="8" fill="var(--info)" />
+        <text x={x} y={LANE + 3.5} textAnchor="middle" fontSize="10" fontWeight="600" fill="#fff">
+          {number}
+        </text>
+        <text x={x} y={labelY} textAnchor="middle" fontSize="14" fontWeight="600" fill="var(--foreground)">
           {label}
         </text>
       </motion.g>
@@ -256,37 +315,79 @@ function Marker({ x, label, lit, animate }: { x: number; label: string; lit: num
   )
 }
 
-function Rack({ x, boxes }: { x: number; boxes: number[][] }) {
-  const width = 132
-  const shelves = [150, 200, 250]
+function Rack({ x, code, levels, pallet }: { x: number; code: string; levels: Stock[][][]; pallet: Stock[] }) {
+  const inner = x + 6
+  const uprights = [x, x + RACK_W / 2 - 2.5, x + RACK_W - 5]
+  const holes = Array.from({ length: Math.floor((FLOOR - RACK_TOP - 8) / 8) }, (_, i) => RACK_TOP + 6 + i * 8)
   return (
-    <g opacity="0.9">
-      {shelves.map((sy, row) => {
-        let bx = x + 8
+    <g>
+      <rect x={x + RACK_W / 2 - 17} y={RACK_TOP - 18} width="34" height="13" rx="2.5" fill="var(--ink-2)" />
+      <text x={x + RACK_W / 2} y={RACK_TOP - 8.5} textAnchor="middle" fontSize="8.5" fontWeight="600" fill="#fff">
+        {code}
+      </text>
+      <line x1={x + RACK_W / 2} x2={x + RACK_W / 2} y1={RACK_TOP - 5} y2={RACK_TOP} stroke="var(--ink-4)" />
+
+      {levels.map(([left, right], level) => (
+        <g key={level}>
+          <StockRow items={left} left={inner} right={x + RACK_W / 2 - 3} floor={BEAMS[level]} />
+          <StockRow items={right} left={x + RACK_W / 2 + 3} right={x + RACK_W - 6} floor={BEAMS[level]} />
+        </g>
+      ))}
+      <rect x={inner + 4} y={FLOOR - 7} width={RACK_W - 20} height="3" fill={STOCK.pallet} />
+      {[0, 0.5, 1].map((f) => (
+        <rect key={f} x={inner + 4 + f * (RACK_W - 30)} y={FLOOR - 4} width="10" height="4" fill={STOCK.pallet} />
+      ))}
+      <StockRow items={pallet} left={inner + 6} right={x + RACK_W - 12} floor={FLOOR - 7} />
+
+      {uprights.map((ux) => (
+        <g key={ux}>
+          <rect x={ux} y={RACK_TOP} width="5" height={FLOOR - RACK_TOP} fill={STOCK.upright} />
+          {holes.map((hy) => (
+            <rect key={hy} x={ux + 1.75} y={hy} width="1.5" height="3" rx="0.75" fill={STOCK.hole} />
+          ))}
+          <rect x={ux - 2} y={FLOOR - 3} width="9" height="3" rx="1" fill="var(--ink-4)" />
+        </g>
+      ))}
+      {BEAMS.map((by) => (
+        <g key={by}>
+          <rect x={x} y={by} width={RACK_W} height="6" rx="1" fill={STOCK.beam} />
+          <rect x={x} y={by} width={RACK_W} height="1.5" fill="#fff" opacity="0.5" />
+          {[0.2, 0.7].map((f) => (
+            <g key={f}>
+              <rect x={x + f * RACK_W} y={by + 1.5} width="14" height="3.5" rx="0.5" fill="#fff" />
+              <rect x={x + f * RACK_W + 2} y={by + 2.5} width="10" height="1.5" fill="var(--ink-4)" />
+            </g>
+          ))}
+        </g>
+      ))}
+    </g>
+  )
+}
+
+function StockRow({ items, left, right, floor }: { items: Stock[]; left: number; right: number; floor: number }) {
+  const used = items.reduce((sum, [, w]) => sum + w, 0)
+  const spacing = (right - left - used) / (items.length + 1)
+  return (
+    <>
+      {items.map(([kind, w, h], i) => {
+        const sx = left + spacing * (i + 1) + items.slice(0, i).reduce((sum, [, iw]) => sum + iw, 0)
+        const y = floor - h
+        if (kind === 'tote')
+          return (
+            <g key={i}>
+              <rect x={sx} y={y} width={w} height={h} rx="2" fill={STOCK.tote} stroke={STOCK.toteEdge} />
+              <rect x={sx + w * 0.3} y={y + 3} width={w * 0.4} height="3" rx="1.5" fill={STOCK.toteEdge} />
+              <line x1={sx + 2} x2={sx + w - 2} y1={y + h * 0.6} y2={y + h * 0.6} stroke={STOCK.toteEdge} />
+            </g>
+          )
         return (
-          <g key={sy}>
-            {boxes.slice(row * 2, row * 2 + 2).map(([bw, bh], i) => {
-              const rect = (
-                <rect
-                  key={i}
-                  x={bx}
-                  y={sy - bh}
-                  width={bw}
-                  height={bh}
-                  rx="2"
-                  fill="var(--secondary)"
-                  stroke="var(--border)"
-                />
-              )
-              bx += bw + 14 + row * 6
-              return rect
-            })}
-            <rect x={x} y={sy} width={width} height="4" rx="1" fill="var(--input)" />
+          <g key={i}>
+            <rect x={sx} y={y} width={w} height={h} rx="1.5" fill={STOCK.box} stroke={STOCK.boxEdge} />
+            <rect x={sx + w / 2 - 2} y={y + 0.5} width="4" height={h - 1} fill={STOCK.boxTape} />
+            {h > 24 && <rect x={sx + 4} y={y + h - 11} width="9" height="6" rx="1" fill="#fff" opacity="0.9" />}
           </g>
         )
       })}
-      <rect x={x} y="104" width="4" height={FLOOR - 104} fill="var(--input)" />
-      <rect x={x + width - 4} y="104" width="4" height={FLOOR - 104} fill="var(--input)" />
-    </g>
+    </>
   )
 }

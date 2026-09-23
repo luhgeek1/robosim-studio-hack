@@ -81,7 +81,7 @@ export function LoginPage() {
         <motion.section
           layout
           transition={SWAP}
-          className="relative flex min-h-90 flex-col items-center justify-center overflow-hidden bg-surface-2 px-6 py-10 lg:w-1/2 lg:px-12"
+          className="relative flex min-h-90 flex-col items-center justify-center overflow-hidden bg-surface-2 px-6 py-10 lg:w-1/2 lg:px-8"
           style={{
             backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
             backgroundSize: '18px 18px',
@@ -90,7 +90,7 @@ export function LoginPage() {
           <h1 className="display max-w-150 text-center text-[32px] leading-[1.05] tracking-[-0.035em] lg:text-[40px]">
             Стоит ли роботизировать ваш объект?
           </h1>
-          <div className="mt-14 w-full max-w-170 lg:mt-20">
+          <div className="mt-14 w-full max-w-190 lg:mt-20">
             <DeliveryScene />
           </div>
         </motion.section>
