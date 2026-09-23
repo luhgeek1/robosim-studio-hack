@@ -381,7 +381,13 @@ function SpecRow({ row, products }: { row: Row; products: Product[] }) {
         const spec = row.values[product.id]
         const best = row.best_product_id === product.id
         return (
-          <td key={product.id} className={cn('px-5 py-3', best && 'bg-ok-soft')}>
+          <td key={product.id} className="relative px-5 py-3">
+            {best && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-1 rounded-[10px] border-[1.5px] border-ok/70"
+              />
+            )}
             {spec && hasValue(row, product.id) ? (
               <div className="space-y-1">
                 <div
