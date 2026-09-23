@@ -1,11 +1,12 @@
-import { ChevronRight, CircleHelp, Info, Plus } from 'lucide-react'
+import { ArrowUpRight, Plus } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { BADGE_LABEL, PRODUCT_STATUS_LABEL } from '@/entities/catalog'
 import { CANDIDATE_STATUS_LABEL, CRITERION_LABEL, useAddManualCandidate } from '@/entities/matching'
 import { problemText } from '@/shared/api/problem'
 import type { Candidate, Reason } from '@/shared/api/types'
-import { formatNumber, formatPct, formatRub, formatValue, formatYears, isNum } from '@/shared/lib/format'
+import { formatNumber, formatPct, formatRub, formatValue, formatYears, isNum, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import {
   AlertDialog,
@@ -20,15 +21,19 @@ import {
 } from '@/shared/ui/alert-dialog'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
-import { ToneBadge } from '@/shared/ui/tone'
-import { TONE_TEXT } from '@/shared/ui/tone-classes'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
-import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_TONE, STATUS_TONE } from './labels'
+import { SEVERITY_LABEL, SEVERITY_ORDER } from './labels'
+import { RobotPreview } from './RobotPreview'
 
 // Отметки, которые говорят о проверке продукта, а не о его происхождении: «отечественный» и «есть внедрения» есть почти у всех.
 const VERIFIED_BADGES = new Set(['in_registry_719', 'tested_fcbas', 'specs_confirmed'])
+
+const STATUS_DOT: Record<Candidate['status'], string> = {
+  fit: 'bg-ok',
+  check: 'bg-warn',
+  manual: 'bg-info',
+  excluded: 'bg-crit',
+}
 
 type MissingData = Candidate['missing_data'][number]
 
@@ -49,9 +54,153 @@ export function CandidateCard({
 }) {
   const { product, estimate } = candidate
   const verified = (product.badges ?? []).filter((badge) => VERIFIED_BADGES.has(badge))
-  const hasEstimate =
-    estimate && (isNum(estimate.robots_count) || isNum(estimate.capex_rub) || isNum(estimate.payback_years))
-  const byseverity = SEVERITY_ORDER.map((severity) => ({
+  const excluded = candidate.status === 'excluded'
+  const meta = [
+    product.solution_type_name,
+    product.price_from
+      ? `от ${formatRub(product.price_from.amount_rub)}${product.price_from.vat_included ? ' с НДС' : ' без НДС'}`
+      : 'цена не указана',
+    isNum(product.trl) ? `УГТ ${product.trl}` : null,
+    product.status !== 'operation' ? PRODUCT_STATUS_LABEL[product.status] : null,
+  ].filter(Boolean)
+
+  return (
+    <article className="card flex w-full flex-col overflow-hidden">
+      <RobotPreview solutionType={product.solution_type} productId={product.id}>
+        <div className="absolute top-3 left-3 flex items-center gap-1.5">
+          {candidate.rank != null && <Chip strong>№ {candidate.rank}</Chip>}
+          <Chip>
+            <span className={cn('size-1.5 rounded-full', STATUS_DOT[candidate.status])} />
+            {CANDIDATE_STATUS_LABEL[candidate.status]}
+          </Chip>
+        </div>
+        <label
+          className={cn(
+            'absolute top-3 right-3 flex cursor-pointer items-center gap-2 rounded-full bg-white/90 py-1 pr-2.5 pl-2 text-[12px] font-medium transition-colors hover:bg-white',
+            selectDisabled && !selected && 'cursor-not-allowed opacity-60',
+          )}
+        >
+          <Checkbox
+            checked={selected}
+            disabled={selectDisabled && !selected}
+            onCheckedChange={(v) => onSelectedChange(v === true)}
+            aria-label={`Выбрать «${product.name}» для сравнения`}
+          />
+          Сравнить
+        </label>
+      </RobotPreview>
+
+      <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <Link
+              to={`/catalog/${product.id}`}
+              className="line-clamp-2 min-h-[2.75em] text-[17px] leading-snug font-semibold tracking-[-0.01em] transition-colors hover:text-info"
+            >
+              {product.name}
+            </Link>
+            <p className="mt-0.5 truncate text-[13px] text-ink-3">{product.manufacturer?.name}</p>
+          </div>
+          <ScoreButton candidate={candidate} />
+        </div>
+
+        <p className="mt-2 line-clamp-1 text-[12.5px] text-ink-3" title={meta.join(' · ')}>
+          {meta.join(' · ')}
+        </p>
+
+        <dl className="mt-4 grid grid-cols-3 gap-x-4">
+          <Figure
+            value={isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '—'}
+            label={isNum(estimate?.robots_count) ? 'роботов нужно' : 'роботов: не оценено'}
+          />
+          <Figure value={isNum(estimate?.capex_rub) ? formatRub(estimate.capex_rub) : '—'} label="CAPEX" />
+          <Figure
+            value={isNum(estimate?.payback_years) ? formatYears(estimate.payback_years) : '—'}
+            label="окупаемость"
+          />
+        </dl>
+
+        <Verdict candidate={candidate} />
+
+        {verified.length > 0 && (
+          <p className="mt-2 text-[12.5px] text-ok">{verified.map((b) => BADGE_LABEL[b] ?? b).join(' · ')}</p>
+        )}
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+          <WhyPopover candidate={candidate} />
+          {excluded ? (
+            <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} />
+          ) : (
+            <Link
+              to={`/catalog/${product.id}`}
+              className="flex items-center gap-1 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
+            >
+              Карточка <ArrowUpRight className="size-3.5" />
+            </Link>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function Chip({ children, strong }: { children: ReactNode; strong?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium',
+        strong ? 'num bg-ink text-white' : 'bg-white/90 text-ink',
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
+function Figure({ value, label }: { value: ReactNode; label: string }) {
+  // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
+  return (
+    <div className="flex min-w-0 flex-col-reverse">
+      <dt className="mt-0.5 truncate text-[12px] text-ink-3" title={label}>
+        {label}
+      </dt>
+      <dd className="num truncate text-[17px] leading-tight font-semibold tracking-[-0.01em]">{value}</dd>
+    </div>
+  )
+}
+
+/* Одна строка итога проверок: для исключённого — главная блокирующая причина, для «проверить» — чего не хватает. */
+function Verdict({ candidate }: { candidate: Candidate }) {
+  const blocking = candidate.reasons.find((r) => r.severity === 'blocking')
+  const warning = candidate.reasons.find((r) => r.severity === 'warning')
+  const missing = candidate.missing_data?.[0]
+  const line = blocking
+    ? { tone: 'crit', text: blocking.text }
+    : warning
+      ? { tone: 'warn', text: warning.text }
+      : missing
+        ? { tone: 'warn', text: `Нет данных производителя: ${missing.name.toLowerCase()}` }
+        : { tone: 'ok', text: 'Все проверки объекта пройдены' }
+  return (
+    <p
+      className={cn(
+        'mt-4 flex items-start gap-2 border-t border-line pt-3 text-[13px] leading-snug',
+        line.tone === 'crit' ? 'text-crit' : line.tone === 'warn' ? 'text-warn' : 'text-ink-2',
+      )}
+    >
+      <span
+        className={cn(
+          'mt-1.5 size-1.5 shrink-0 rounded-full',
+          line.tone === 'crit' ? 'bg-crit' : line.tone === 'warn' ? 'bg-warn' : 'bg-ok',
+        )}
+      />
+      <span className="line-clamp-2">{line.text}</span>
+    </p>
+  )
+}
+
+function WhyPopover({ candidate }: { candidate: Candidate }) {
+  const bySeverity = SEVERITY_ORDER.map((severity) => ({
     severity,
     reasons: candidate.reasons.filter((r) => r.severity === severity),
   })).filter((g) => g.reasons.length > 0)
@@ -66,115 +215,38 @@ export function CandidateCard({
       .filter((key): key is string => Boolean(key)),
   )
   const unexplained = missing.filter((m) => !explained.has(m.spec_key))
+  const checks = candidate.reasons.length
 
   return (
-    <article className={cn('rounded-lg border bg-surface p-4', candidate.status === 'excluded' && 'opacity-80')}>
-      <div className="flex items-start gap-3">
-        <Checkbox
-          className="mt-1"
-          checked={selected}
-          disabled={selectDisabled && !selected}
-          onCheckedChange={(v) => onSelectedChange(v === true)}
-          aria-label={`Выбрать «${product.name}» для сравнения`}
-        />
-        {candidate.rank != null && (
-          <span className="num mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-ok-soft text-xs font-semibold text-ok">
-            {candidate.rank}
-          </span>
-        )}
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Link to={`/catalog/${product.id}`} className="font-medium hover:text-primary hover:underline">
-              {product.name}
-            </Link>
-            <ToneBadge tone={STATUS_TONE[candidate.status]}>{CANDIDATE_STATUS_LABEL[candidate.status]}</ToneBadge>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {[
-              product.manufacturer?.name,
-              product.solution_type_name,
-              product.price_from
-                ? `от ${formatRub(product.price_from.amount_rub)}${product.price_from.vat_included ? ' с НДС' : ' без НДС'}`
-                : 'цена не указана',
-              isNum(product.trl) ? `УГТ ${product.trl}` : null,
-              product.status !== 'operation' ? PRODUCT_STATUS_LABEL[product.status] : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </div>
-          {verified.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-0.5">
-              {verified.map((badge) => (
-                <ToneBadge key={badge} tone="ok">
-                  {BADGE_LABEL[badge] ?? badge}
-                </ToneBadge>
-              ))}
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="text-[13px] font-medium text-ink-2 underline decoration-line-2 underline-offset-4 transition-colors hover:text-ink hover:decoration-ink-3"
+        >
+          Почему · {checks} {pluralRu(checks, ['проверка', 'проверки', 'проверок'])}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[420px] space-y-3">
+        {bySeverity.map(({ severity, reasons }) => (
+          <div key={severity}>
+            <div
+              className={cn(
+                'text-[12px] font-medium',
+                severity === 'blocking' ? 'text-crit' : severity === 'warning' ? 'text-warn' : 'text-ink-3',
+              )}
+            >
+              {SEVERITY_LABEL[severity]}
             </div>
-          )}
-        </div>
-        <ScoreButton candidate={candidate} />
-      </div>
-
-      {hasEstimate && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 rounded-md bg-raised px-3 py-2 text-xs">
-          <span className="text-muted-foreground">Быстрая оценка:</span>
-          <span>
-            Роботов: <span className="num font-medium">{formatValue(estimate?.robots_count, 'шт')}</span>
-          </span>
-          <span>
-            CAPEX: <span className="num font-medium">{formatRub(estimate?.capex_rub)}</span>
-          </span>
-          <span>
-            Окупаемость: <span className="num font-medium">{formatYears(estimate?.payback_years)}</span>
-          </span>
-          {estimate?.note && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="ml-auto text-muted-foreground hover:text-foreground"
-                  aria-label="Как посчитано"
-                >
-                  <Info className="size-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">{estimate.note}</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      )}
-
-      {byseverity.length > 0 && (
-        <div className="mt-3 space-y-2">
-          {byseverity.map(({ severity, reasons }) =>
-            severity === 'info' ? (
-              <Collapsible key={severity} defaultOpen={byseverity.length === 1 && candidate.status !== 'fit'}>
-                <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                  <ChevronRight className="size-3.5 transition-transform group-data-[state=open]:rotate-90" />
-                  {SEVERITY_LABEL.info} ({reasons.length})
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <ReasonList reasons={reasons} why={why} />
-                </CollapsibleContent>
-              </Collapsible>
-            ) : (
-              <div key={severity}>
-                <div className={cn('text-xs font-medium', TONE_TEXT[SEVERITY_TONE[severity]])}>
-                  {SEVERITY_LABEL[severity]}
-                </div>
-                <ReasonList reasons={reasons} why={why} />
-              </div>
-            ),
-          )}
-        </div>
-      )}
-
-      {unexplained.length > 0 && <MissingList items={unexplained} />}
-
-      {candidate.status === 'excluded' && (
-        <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} />
-      )}
-    </article>
+            <ReasonList reasons={reasons} why={why} />
+          </div>
+        ))}
+        {unexplained.length > 0 && <MissingList items={unexplained} />}
+        {candidate.estimate?.note && (
+          <p className="border-t border-line pt-2 text-[12px] text-ink-3">{candidate.estimate.note}</p>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -182,26 +254,25 @@ function ReasonList({ reasons, why }: { reasons: Reason[]; why: Map<string, stri
   return (
     <ul className="mt-1 space-y-1">
       {reasons.map((reason, i) => {
-        const tone = SEVERITY_TONE[reason.severity]
         const hasValues = reason.required != null || reason.actual != null
         return (
-          <li key={`${reason.code}-${i}`} className="flex gap-2 text-xs">
+          <li key={`${reason.code}-${i}`} className="flex gap-2 text-[12.5px]">
             <span
               className={cn(
                 'mt-1.5 size-1.5 shrink-0 rounded-full',
-                tone === 'crit' ? 'bg-crit' : tone === 'warn' ? 'bg-warn' : 'bg-muted-foreground/50',
+                reason.severity === 'blocking' ? 'bg-crit' : reason.severity === 'warning' ? 'bg-warn' : 'bg-ink-4',
               )}
             />
             <span className="min-w-0">
-              <span className={cn(reason.severity === 'info' && 'text-muted-foreground')}>{reason.text}</span>
+              <span className={cn(reason.severity === 'info' && 'text-ink-3')}>{reason.text}</span>
               {hasValues && (
-                <span className="num ml-1.5 text-muted-foreground">
+                <span className="num ml-1.5 text-ink-3">
                   (требование: {formatReasonValue(reason.required, reason.unit)}; у продукта:{' '}
                   {formatReasonValue(reason.actual, reason.unit)})
                 </span>
               )}
               {reason.spec_key && why.has(reason.spec_key) && reason.severity !== 'info' && (
-                <span className="block text-muted-foreground">Зачем нужно: {why.get(reason.spec_key)}</span>
+                <span className="block text-ink-3">Зачем нужно: {why.get(reason.spec_key)}</span>
               )}
             </span>
           </li>
@@ -213,15 +284,15 @@ function ReasonList({ reasons, why }: { reasons: Reason[]; why: Map<string, stri
 
 function MissingList({ items }: { items: MissingData[] }) {
   return (
-    <div className="mt-3">
-      <div className={cn('text-xs font-medium', TONE_TEXT.warn)}>Не хватает данных производителя</div>
+    <div>
+      <div className="text-[12px] font-medium text-warn">Не хватает данных производителя</div>
       <ul className="mt-1 space-y-1">
         {items.map((m) => (
-          <li key={m.spec_key} className="flex gap-2 text-xs">
+          <li key={m.spec_key} className="flex gap-2 text-[12.5px]">
             <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warn" />
             <span className="min-w-0">
               {m.name}
-              <span className="block text-muted-foreground">Зачем нужно: {m.why_needed}</span>
+              <span className="block text-ink-3">Зачем нужно: {m.why_needed}</span>
             </span>
           </li>
         ))}
@@ -246,8 +317,8 @@ function ManualAdd({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button size="sm" variant="outline" className="mt-3">
-          <Plus /> Всё равно добавить в сравнение
+        <Button size="sm" variant="outline">
+          <Plus /> Всё равно добавить
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -270,7 +341,7 @@ function ManualAdd({
               <span>
                 {r.text}
                 {(r.required != null || r.actual != null) && (
-                  <span className="num ml-1.5 text-muted-foreground">
+                  <span className="num ml-1.5 text-ink-3">
                     (требование: {formatReasonValue(r.required, r.unit)}; у продукта:{' '}
                     {formatReasonValue(r.actual, r.unit)})
                   </span>
@@ -308,8 +379,8 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
   if (!isNum(candidate.score)) {
     return (
       <div className="shrink-0 text-right">
-        <div className="num text-xl font-semibold text-muted-foreground">—</div>
-        <div className="text-[11px] text-muted-foreground">балл</div>
+        <div className="display num text-[24px] text-ink-4">—</div>
+        <div className="text-[11.5px] text-ink-3">балл</div>
       </div>
     )
   }
@@ -319,22 +390,17 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group shrink-0 rounded-lg px-2 py-1 text-right hover:bg-raised"
+          className="group -mt-0.5 -mr-1.5 shrink-0 rounded-lg px-1.5 py-0.5 text-right transition-colors hover:bg-surface-2"
           aria-label="Из чего сложился балл"
         >
-          <div className="num text-xl font-semibold">
-            {formatNumber(candidate.score, 1)}
-            <span className="text-xs font-normal text-muted-foreground"> / 100</span>
-          </div>
-          <div className="flex items-center justify-end gap-1 text-[11px] text-muted-foreground group-hover:text-foreground">
-            <CircleHelp className="size-3" /> из чего балл
-          </div>
+          <div className="display num text-[24px] leading-tight">{formatNumber(candidate.score, 1)}</div>
+          <div className="text-[11.5px] text-ink-3 group-hover:text-ink-2">балл из 100</div>
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[440px]">
         <div className="mb-2 font-medium">Балл {formatNumber(candidate.score, 1)} из 100 — сумма вкладов</div>
         <table className="w-full text-xs">
-          <thead className="text-muted-foreground">
+          <thead className="text-ink-3">
             <tr>
               <th className="pb-1 text-left font-normal">Критерий</th>
               <th className="pb-1 pl-3 text-right font-normal">Вес</th>
@@ -344,10 +410,10 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
           </thead>
           <tbody>
             {breakdown.map((c) => (
-              <tr key={c.criterion} className="border-t align-top">
+              <tr key={c.criterion} className="border-t border-line align-top">
                 <td className="py-1.5 pr-2">
                   <div className="font-medium">{c.name || CRITERION_LABEL[c.criterion] || c.criterion}</div>
-                  <div className="text-muted-foreground">{c.explanation}</div>
+                  <div className="text-ink-3">{c.explanation}</div>
                 </td>
                 <td className="num py-1.5 pl-3 text-right">{formatPct(c.weight, { share: true, digits: 0 })}</td>
                 <td className="num py-1.5 pl-3 text-right">{formatNumber(c.points, 1)}</td>
@@ -356,9 +422,7 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
             ))}
           </tbody>
         </table>
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          Вклад = вес × баллы. Веса меняются кнопкой «Веса критериев».
-        </p>
+        <p className="mt-2 text-[11px] text-ink-3">Вклад = вес × баллы. Веса меняются кнопкой «Веса критериев».</p>
       </PopoverContent>
     </Popover>
   )
