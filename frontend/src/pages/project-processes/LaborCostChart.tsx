@@ -44,16 +44,6 @@ export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
             margin={{ top: 4, right: 150, bottom: 4, left: 6 }}
             barCategoryGap={16}
           >
-            <defs>
-              <linearGradient id="labor-bar" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#e9b25c" />
-                <stop offset="100%" stopColor="var(--warn)" />
-              </linearGradient>
-              <linearGradient id="labor-bar-active" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#d99a3c" />
-                <stop offset="100%" stopColor="#b8740f" />
-              </linearGradient>
-            </defs>
             <XAxis type="number" hide domain={[0, max]} />
             <YAxis
               type="category"
@@ -82,11 +72,11 @@ export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
             />
             <Bar
               dataKey="cost"
-              fill="url(#labor-bar)"
-              radius={999}
-              barSize={14}
-              background={{ fill: 'rgba(0,0,0,0.045)', radius: 999 }}
-              activeBar={{ fill: 'url(#labor-bar-active)' }}
+              fill="var(--warn)"
+              radius={3}
+              barSize={18}
+              background={{ fill: 'rgba(0,0,0,0.045)', radius: 3 }}
+              activeBar={{ fill: '#b8740f' }}
               animationDuration={700}
               animationEasing="ease-out"
               cursor="pointer"
