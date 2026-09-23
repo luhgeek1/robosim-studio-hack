@@ -16,6 +16,7 @@ export const catalogApi = {
     api
       .post<CompareResult>('/catalog/compare', { product_ids: ids, project_id: projectId ?? null })
       .then((r) => r.data),
+  specKeys: () => api.get<Res<'/api/v1/catalog/spec-keys', 'get'>>('/catalog/spec-keys').then((r) => r.data.items),
 }
 
 export const useProducts = (query: CatalogQuery) =>
@@ -41,3 +42,7 @@ export const useCompare = (ids: string[], projectId?: string) =>
     queryFn: () => catalogApi.compare(ids, projectId),
     enabled: ids.length >= 2,
   })
+
+// The spec dictionary names keys that come bare (missing key specs, matching reasons).
+export const useSpecKeys = () =>
+  useQuery({ queryKey: ['catalog', 'spec-keys'], queryFn: catalogApi.specKeys, staleTime: 30 * 60_000 })
