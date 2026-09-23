@@ -49,20 +49,18 @@ const VS_LABEL: Record<string, { text: string; tone: Tone }> = {
   excess: { text: 'имитация выше расчёта', tone: 'accent' },
 }
 
-/* Живые цифры двойника — только из сводки бэкенда; тона зон: очередь приёмки, загрузка флота, станции, доля выполненного. */
+/* Живые цифры двойника — только из сводки бэкенда. Тон зоны — загрузка её ресурса: очередь приёмки к максимуму дня,
+   флот в хранении и на отгрузке, станции отбора (если процесс их использует, иначе тоже флот). */
 function toLive(summary: SimulationSummary): Live {
   const queueMax = Math.max(summary.queue?.max ?? 0, 1)
+  const fleet = summary.utilization.fleet
+  const stations = summary.stations?.count ? (summary.stations.utilization ?? fleet) : fleet
   return {
     throughput: summary.throughput_per_hour,
     queue: summary.queue?.avg ?? 0,
-    utilization: summary.utilization.fleet * 100,
+    utilization: fleet * 100,
     sla: summary.sla.achieved_pct,
-    zones: [
-      Math.min(1, (summary.queue?.avg ?? 0) / queueMax),
-      summary.utilization.fleet,
-      summary.stations?.utilization ?? summary.utilization.fleet,
-      summary.demand_total ? summary.completed / summary.demand_total : 0,
-    ],
+    zones: [Math.min(1, (summary.queue?.avg ?? 0) / queueMax), fleet, stations, fleet],
   }
 }
 
@@ -664,7 +662,7 @@ function ZoneInfo({ index }: { index: number }) {
     0: [`Очередь ${Math.round(queue)} задач`, 'Тон — очередь относительно максимума дня'],
     1: ['Паллетное хранение', 'Тон — загрузка флота по имитации'],
     2: ['Станции комплектации', 'Тон — загрузка станций по имитации'],
-    3: ['Доки отгрузки', 'Тон — доля выполненных задач'],
+    3: ['Доки отгрузки', 'Тон — загрузка флота по имитации'],
   }
   return (
     <div className="mt-3">

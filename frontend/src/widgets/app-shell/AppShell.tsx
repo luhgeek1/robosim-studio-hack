@@ -78,7 +78,7 @@ function ProjectNav({ projectId }: { projectId: string }) {
         className="group -mx-1 flex min-w-0 items-center gap-3 rounded-md px-1 py-1 transition-colors hover:bg-black/[0.04]"
         title="Обзор проекта"
       >
-        <span className="max-w-[260px] truncate text-[14px] font-medium">{project.data?.name ?? '…'}</span>
+        <span className="max-w-48 truncate text-[14px] font-medium">{project.data?.name ?? '…'}</span>
         {score !== undefined && (
           <span className="hidden items-center gap-1.5 whitespace-nowrap text-[12.5px] text-ink-3 2xl:flex">
             <ConfidenceRing value={score * 100} />
@@ -88,14 +88,14 @@ function ProjectNav({ projectId }: { projectId: string }) {
           </span>
         )}
       </Link>
-      <nav className="ml-auto flex items-center gap-0.5" aria-label="Шаги оценки">
+      <nav className="ml-auto flex shrink-0 items-center gap-0.5" aria-label="Шаги оценки">
         {PROJECT_STEPS.map((step, i) => (
           <NavLink
             key={step.id}
             to={`/projects/${projectId}/${step.id}`}
             className={({ isActive }) =>
               cn(
-                'relative h-8 rounded-md px-2.5 text-[13px] font-medium transition-colors',
+                'relative h-8 rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors',
                 isActive ? 'text-ink' : step.soon ? 'text-ink-4' : 'text-ink-3 hover:bg-black/[0.04] hover:text-ink',
               )
             }

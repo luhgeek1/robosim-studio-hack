@@ -64,7 +64,7 @@ export function TrustPanel({ projectId }: { projectId: string }) {
         {list.length === 0 ? (
           <p className="text-muted-foreground">Пропусков и допущений среди важных параметров нет.</p>
         ) : (
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <ul className="space-y-0.5">
             {list.map((item) => (
               <li key={item.key}>
                 <button
