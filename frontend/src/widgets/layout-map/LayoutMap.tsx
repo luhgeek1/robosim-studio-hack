@@ -21,7 +21,7 @@ import {
   type MarkerKind,
 } from './geometry'
 import { MapLegend } from './MapLegend'
-import { useViewport, type LayoutMapView } from './useViewport'
+import { useViewport, type FitPadding, type LayoutMapView } from './useViewport'
 
 export type LayoutHighlight = {
   zones?: string[]
@@ -43,6 +43,10 @@ export type LayoutMapProps = {
   fill?: boolean
   /** Moves the zoom toolbar when the host puts its own controls in the corner. */
   toolbarClassName?: string
+  /** Where the scale bar and the building size sit; a full-bleed host keeps the bottom for its own overlays. */
+  infoCorner?: 'bottom' | 'top-left'
+  /** Free space kept around the building at «Целиком», for hosts that lay their own overlays over the map. */
+  fitPadding?: FitPadding
   /** Overlay in meter coordinates (robots, heat spots); `view.k` is pixels per meter for constant-size marks. */
   children?: ReactNode | ((view: LayoutMapView) => ReactNode)
 }
@@ -59,6 +63,8 @@ export function LayoutMap({
   className,
   fill = false,
   toolbarClassName,
+  infoCorner = 'bottom',
+  fitPadding,
   children,
 }: LayoutMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -73,6 +79,7 @@ export function LayoutMap({
     layout.width_m,
     layout.height_m,
     `${layout.id ?? 'plan'}:${layout.version ?? `${layout.width_m}x${layout.height_m}`}`,
+    fitPadding,
   )
   const barMeters = scaleBarMeters(view.k)
 
@@ -129,12 +136,19 @@ export function LayoutMap({
           </Button>
         </div>
 
-        <div className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-raised/90 px-2 py-1 text-[11px]">
-          <div className="h-1.5 border-x border-b border-foreground" style={{ width: barMeters * view.k }} />
-          <div className="num mt-0.5">{formatNumber(barMeters)} м</div>
-        </div>
-        <div className="num pointer-events-none absolute right-2 bottom-2 rounded-md bg-raised/90 px-2 py-1 text-[11px] text-muted-foreground">
-          Здание {formatNumber(layout.width_m)} × {formatNumber(layout.height_m)} м
+        <div
+          className={cn(
+            'pointer-events-none absolute flex gap-2',
+            infoCorner === 'bottom' ? 'inset-x-2 bottom-2 items-end justify-between' : 'top-4 left-4 items-start',
+          )}
+        >
+          <div className="rounded-md bg-raised/90 px-2 py-1 text-[11px]">
+            <div className="h-1.5 border-x border-b border-foreground" style={{ width: barMeters * view.k }} />
+            <div className="num mt-0.5">{formatNumber(barMeters)} м</div>
+          </div>
+          <div className="num rounded-md bg-raised/90 px-2 py-1 text-[11px] text-muted-foreground">
+            Здание {formatNumber(layout.width_m)} × {formatNumber(layout.height_m)} м
+          </div>
         </div>
       </div>
       {legend && <MapLegend layout={layout} showGraph={graph} />}

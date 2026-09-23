@@ -8,7 +8,7 @@ import { Button } from '@/shared/ui/button'
 import { ErrorBlock, Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { Segmented } from '@/shared/ui/v0'
-import { LayoutMap } from '@/widgets/layout-map'
+import { LayoutMap, type FitPadding } from '@/widgets/layout-map'
 import { Twin, type TwinView } from '@/widgets/twin'
 
 // The twin on «Объект» is the project's own generated layout: the same geometry the route lengths and the simulation
@@ -68,6 +68,10 @@ export function ObjectTwin({ projectId, objectType }: { projectId: string; objec
   )
 }
 
+// The plan fills the card like the 3D scene; at «Целиком» the building stays clear of the switch above
+// and the numbers and toolbar below.
+const PLAN_PAD: FitPadding = { x: 32, top: 76, bottom: 100 }
+
 function LayoutTwin({
   layout,
   rebuilding,
@@ -88,12 +92,20 @@ function LayoutTwin({
 
   return (
     <>
-      {/* The 2D plan is the same map as on «Планировка», framed so the overlays above and below never cover it. */}
+      {/* The 2D plan is the same map as on «Планировка»; like the 3D scene it fills the card under the overlays. */}
       {view === '3d' ? (
         <Twin layout={layout} switcher={false} toolbarPlacement="bottom-right" />
       ) : (
-        <div className="absolute inset-0 bg-surface-2 px-4 pt-16 pb-26">
-          <LayoutMap layout={layout} fill legend={false} className="h-full bg-white" />
+        <div className="absolute inset-0">
+          <LayoutMap
+            layout={layout}
+            fill
+            legend={false}
+            infoCorner="top-left"
+            fitPadding={PLAN_PAD}
+            className="h-full rounded-none border-0"
+            toolbarClassName="top-auto right-4 bottom-4 bg-white/95 shadow-card"
+          />
         </div>
       )}
       <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-[12px] bg-white/90 p-1 shadow-card backdrop-blur">
@@ -149,7 +161,6 @@ function LayoutTwin({
             ))}
           </div>
         )}
-        {view === '2d' && <span className="text-[12px] text-ink-4">Перетаскивайте и масштабируйте план</span>}
       </div>
     </>
   )
