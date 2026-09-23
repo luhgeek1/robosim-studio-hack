@@ -37,7 +37,6 @@ export function ObjectPage() {
       wide
       dense
       title={project.name}
-      lead="Из этих данных считаются подбор, экономика и имитация. Любое число можно исправить — расчёты пересчитаются."
       actions={
         <>
           <Button variant="outline" onClick={() => void downloadTemplate()} disabled={downloading}>
