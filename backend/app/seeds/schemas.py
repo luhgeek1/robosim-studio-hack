@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter, model_validator
 
 from app.domain.catalog import Badge
 from app.domain.common.provenance import ProvenanceStatus, SourceKind
@@ -86,13 +86,25 @@ class DemandSeed(SeedModel):
 
 class RequirementSeed(SeedModel):
     key: str
-    spec: str
-    comparison: Literal["gte", "lte"]
-    required: str
+    kind: Literal["spec", "object"] = "spec"
+    spec: str | None = None
+    comparison: Literal["gte", "lte"] | None = None
+    required: str | None = None
     unit: str | None = None
     solution_types: list[str] = []
     message: str
-    why_needed: str
+    why_needed: str = ""
+    when: str | None = None
+    condition: str | None = None
+    severity: Literal["warning", "blocking"] = "blocking"
+
+    @model_validator(mode="after")
+    def _complete(self) -> "RequirementSeed":
+        if self.kind == "spec" and not (self.spec and self.comparison and self.required):
+            raise ValueError(f"{self.key}: a spec rule needs spec, comparison and required")
+        if self.kind == "object" and not self.condition:
+            raise ValueError(f"{self.key}: an object rule needs a condition")
+        return self
 
 
 class SimulationSeed(SeedModel):
@@ -110,6 +122,12 @@ class SimulationSeed(SeedModel):
 
     def formulas(self) -> dict[str, str]:
         return {k: v for k, v in self.model_dump(exclude={"model"}).items() if v}
+
+
+class CycleExtraSeed(SeedModel):
+    key: str
+    name: str
+    formula: str
 
 
 class ProcessSeed(SeedModel):
@@ -132,6 +150,7 @@ class ProcessSeed(SeedModel):
     labor_release: str | None = None
     labor_release_by_type: dict[str, str] = {}
     simulation: SimulationSeed | None = None
+    cycle_extras: list[CycleExtraSeed] = []
 
 
 class CheckSeed(SeedModel):
@@ -174,6 +193,9 @@ class ObjectTypeSeed(SeedModel):
     checks: list[CheckSeed] = []
     demo_projects: list[DemoProjectSeed] = []
     site_costs: list[SiteCostSeed] = []
+    # Required by ТЗ 3.2.1 but only describe the object (identification, report), each with the reason.
+    # Every other required parameter must reach a formula, a rule, a cost or a check (tested).
+    descriptive_params: dict[str, str] = {}
 
 
 class SourceSeed(SeedModel):

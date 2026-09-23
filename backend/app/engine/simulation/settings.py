@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 from app.engine.simulation.models import SimSettings
 from app.engine.trace import Book
 
@@ -5,9 +7,12 @@ SECONDS_PER_MINUTE = 60.0
 MM_PER_M = 1000.0
 
 
-def settings_from(norms: Book) -> SimSettings:
-    """Simulation settings from the norm registry; the same two-way width rule as the layout generator."""
+def settings_from(norms: Book, params: Mapping[str, float | None] | None = None) -> SimSettings:
+    """Simulation settings from the norm registry; the same two-way width rule as the layout generator,
+    including the pallet length from the object when it is given."""
     value = norms.value
+    pallet_mm = (params or {}).get("pallet_dims_mm_length")
+    loaded_m = pallet_mm / MM_PER_M if pallet_mm else value("layout_loaded_vehicle_width_m")
     return SimSettings(
         warmup_s=value("sim_warmup_min") * SECONDS_PER_MINUTE,
         takeover_wait_s=value("sim_human_takeover_wait_min") * SECONDS_PER_MINUTE,
@@ -17,8 +22,7 @@ def settings_from(norms: Book) -> SimSettings:
         truck_pallets=value("sim_truck_pallets"),
         door_pallets_per_hour=value("layout_dock_pallets_per_door_hour"),
         aisle_capacity=int(value("sim_aisle_capacity_robots")),
-        two_way_width_m=2 * value("layout_loaded_vehicle_width_m")
-        + value("aisle_safety_clearance_mm") / MM_PER_M,
+        two_way_width_m=2 * loaded_m + value("aisle_safety_clearance_mm") / MM_PER_M,
         mtbf_h=value("sim_failure_mtbf_h"),
         repair_s=value("sim_repair_time_min") * SECONDS_PER_MINUTE,
         bottleneck_utilization=value("sim_bottleneck_utilization"),

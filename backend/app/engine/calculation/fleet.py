@@ -105,6 +105,12 @@ def size_item(
         ).as_quantity()
         if all(q.kind == InputKind.NORM for q in inputs):
             ctx.warnings.append(f"{process.name}: длина маршрута по нормативу — нет замера и планировки")
+    extras = tuple(
+        ctx.record_expression(
+            f"{ns}.{extra.key}", extra.name, extra.formula, "с", Section.SIZING
+        ).as_quantity()
+        for extra in process.cycle_extras
+    )
     override = (
         Quantity(
             "throughput_override_per_hour",
@@ -135,6 +141,7 @@ def size_item(
             is_fmr=item.solution_type == FMR_SOLUTION_TYPE,
             render=ctx.tr.render,
             throughput_override=override,
+            extras=extras,
         ),
     )
     ctx.tr.steps.extend(namespaced(step, ns) for step in outcome.trace.steps)

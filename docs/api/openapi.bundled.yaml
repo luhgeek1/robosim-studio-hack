@@ -3170,6 +3170,11 @@ components:
             target_value:
               type: number
               example: 20
+            target_param:
+              type:
+                - string
+                - 'null'
+              description: Параметр объекта, который задаёт цель (норматив доставки); расчёт сравнивает с ним рейс робота
             unit:
               type: string
               example: мин

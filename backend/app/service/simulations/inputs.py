@@ -151,7 +151,8 @@ class InputBuilder:
                 continue
             processes.append(self._process(sizing, definition, model))
             chargers += sizing.chargers
-        return Prepared(processes, skipped, chargers, settings_from(self.snapshot.input.norms))
+        inp = self.snapshot.input
+        return Prepared(processes, skipped, chargers, settings_from(inp.norms, inp.params))
 
 
 def config_from(request: RunRequest, chargers: int) -> SimConfig:

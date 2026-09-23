@@ -64,12 +64,14 @@ class _Sizer:
         distance: Quantity | None,
         is_fmr: bool,
         render: bool = True,
+        extras: tuple[Quantity, ...] = (),
     ) -> None:
         self.demand = demand
         self.specs = specs
         self.norms = norms
         self.distance = distance
         self.is_fmr = is_fmr
+        self.extras = extras
         self.trace = Tracer(render=render)
 
     def peak(self) -> Quantity:
@@ -95,7 +97,7 @@ class _Sizer:
         out.warnings.append("Нет ТТХ по автономности и зарядке — доступность взята по нормативу")
         return norm
 
-    def cycle(self, out: SizingOutcome, extra_s: Quantity | None = None) -> Quantity:
+    def cycle(self, out: SizingOutcome, *extras: Quantity | None) -> Quantity:
         speed = self.specs.get("max_speed_mps")
         factor = self.norms.get("effective_speed_factor")
         distance = self.distance or self.norms.get("transport_default_one_way_distance_m")
@@ -117,9 +119,11 @@ class _Sizer:
             CycleComponent("load", load.name, load.value),
             CycleComponent("unload", unload.name, unload.value),
         ]
-        if extra_s is not None:
-            parts.append(extra_s)
-            out.cycle_components.append(CycleComponent(extra_s.key, extra_s.name, extra_s.value))
+        # The process's own per-trip operations (lift ride, disinfection) come from the reference data.
+        for extra in (*extras, *self.extras):
+            if extra is not None:
+                parts.append(extra)
+                out.cycle_components.append(CycleComponent(extra.key, extra.name, extra.value))
         formula = " + ".join(q.key for q in parts)
         cycle = self.trace.record(
             "cycle_time_s", "Время цикла", sum(q.value for q in parts), "с", formula, parts, Section.SIZING
@@ -324,8 +328,10 @@ def _tow(s: _Sizer, out: SizingOutcome) -> None:
 
 
 def _elevator(s: _Sizer, out: SizingOutcome) -> None:
-    elevator = s.norms.get("elevator_cycle_time_s")
-    s.count(out, s.per_robot(out, _load(s), s.cycle(out, elevator)))
+    """Transport with lifts: the lift ride is one of the process's cycle extras (floors, wait, travel)."""
+    if not s.extras:
+        raise MissingInputError(InputKind.NORM, "cycle_extras")
+    s.count(out, s.per_robot(out, _load(s), s.cycle(out)))
 
 
 def _override(s: _Sizer, out: SizingOutcome, throughput: Quantity) -> None:
@@ -367,6 +373,7 @@ class SizingOptions:
     is_fmr: bool = False
     render: bool = True
     throughput_override: Quantity | None = None
+    extras: tuple[Quantity, ...] = ()
 
 
 def size(
@@ -379,7 +386,7 @@ def size(
     The simulation later checks and refines N (D-007); this is the starting point of that search.
     """
     opts = options or SizingOptions()
-    sizer = _Sizer(demand, specs, norms, opts.distance, opts.is_fmr, opts.render)
+    sizer = _Sizer(demand, specs, norms, opts.distance, opts.is_fmr, opts.render, opts.extras)
     out = SizingOutcome(model=model, trace=sizer.trace)
     try:
         if opts.throughput_override is not None:

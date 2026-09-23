@@ -20,6 +20,7 @@ from app.service.matching.candidates import (
     ProcessSizing,
     build_candidate,
     choose_offer,
+    cycle_extras,
     demand_input,
     route_length,
     specs_by_product,
@@ -245,6 +246,7 @@ class MatchingService:
             norms=analysis.norms,
             distance=route_length(definition, analysis.values),
             spec_keys=keys,
+            extras=cycle_extras(definition, analysis.values) or (),
         )
         return [
             build_candidate(

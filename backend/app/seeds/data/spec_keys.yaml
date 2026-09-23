@@ -230,6 +230,14 @@
   better: lower
   is_key_constraint: true
   solution_types: []
+- key: airside_certified
+  name: Допуск к работе на перроне аэропорта
+  group: applicability
+  unit: null
+  value_type: boolean
+  better: none
+  is_key_constraint: true
+  solution_types: [tow_tractor, autonomous_truck, amr_transport]
 - key: ip_rating
   name: Степень защиты (IP)
   group: technical

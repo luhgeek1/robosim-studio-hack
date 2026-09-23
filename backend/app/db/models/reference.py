@@ -97,6 +97,7 @@ class ProcessDef(UuidPkMixin, Base):
     labor_release: Mapped[str | None] = mapped_column(sa.Text)
     labor_release_by_type: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict, server_default="{}")
     simulation: Mapped[dict[str, str] | None] = mapped_column(JSONB)
+    cycle_extras: Mapped[list[dict[str, str]]] = mapped_column(JSONB, default=list, server_default="[]")
     order: Mapped[int] = mapped_column(sa.Integer, default=0)
 
 

@@ -10,6 +10,7 @@ from app.db.uow import UnitOfWork
 from app.domain.common.provenance import Provenance, PValue
 from app.domain.reference import (
     CrossCheck,
+    CycleExtra,
     DemoProjectRef,
     Industry,
     LaborGroupDef,
@@ -85,6 +86,7 @@ def _process(process: ProcessDef) -> ProcessDefInfo:
         labor_release=process.labor_release,
         labor_release_by_type=process.labor_release_by_type,
         simulation=process.simulation,
+        cycle_extras=[CycleExtra(**item) for item in process.cycle_extras],
     )
 
 

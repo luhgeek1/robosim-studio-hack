@@ -93,21 +93,39 @@ class ProcessDef:
     labor_release: str | None = None
     labor_release_by_type: dict[str, str] = field(default_factory=dict)
     simulation: dict[str, str] | None = None
+    cycle_extras: list["CycleExtra"] = field(default_factory=list)
 
     def release_formula(self, solution_type: str) -> str | None:
         return self.labor_release_by_type.get(solution_type, self.labor_release)
 
 
 @dataclass(frozen=True, slots=True)
-class Requirement:
+class CycleExtra:
+    """Time a robot of the process spends per trip besides driving and handling: a lift ride, disinfection."""
+
     key: str
-    spec: str
-    comparison: str
-    required: str
+    name: str
+    formula: str
+
+
+@dataclass(frozen=True, slots=True)
+class Requirement:
+    """A matching rule. `spec` compares a product characteristic with an object value; `object` checks
+    a condition on the object alone (floor flatness for automated storage) for the listed solution types."""
+
+    key: str
+    spec: str | None
+    comparison: str | None
+    required: str | None
     unit: str | None
     solution_types: list[str]
     message: str
     why_needed: str
+    kind: str = "spec"
+    # Applies only when this holds (a yes/no parameter is 1 or 0): certification only for the apron.
+    when: str | None = None
+    condition: str | None = None
+    severity: str = "blocking"
 
 
 @dataclass(frozen=True, slots=True)

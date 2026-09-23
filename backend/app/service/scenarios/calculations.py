@@ -46,12 +46,27 @@ class Evaluation:
     result: CalculationResult
 
 
+def _lead_targets(snapshot: Snapshot) -> dict[str, float]:
+    """Delivery norms of the object: the process's SLA names the parameter that holds it."""
+    params = snapshot.input.params
+    targets: dict[str, float] = {}
+    for process in snapshot.input.processes:
+        key = (process.sla or {}).get("target_param")
+        value = params.get(key) if key else None
+        if value:
+            targets[process.key] = value
+    return targets
+
+
 def verdict_context(snapshot: Snapshot) -> VerdictContext:
+    params = snapshot.input.params
     return VerdictContext(
         norms=snapshot.input.norms,
         budget_rub=snapshot.budget_rub,
         param_status={key: p.status for key, p in snapshot.param_provenance.items()},
         assumption_norms=snapshot.assumption_norms,
+        charging_power_kw=params.get("charging_power_kw") or params.get("power_kw"),
+        lead_targets=_lead_targets(snapshot),
     )
 
 

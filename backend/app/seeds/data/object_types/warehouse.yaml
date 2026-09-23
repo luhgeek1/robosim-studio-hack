@@ -685,12 +685,13 @@ parameters:
   dataset_row: Тип стеллажной системы
   step: null
   enum_values:
-  - {value: selective_pallet_racking, label: Фронтальные паллетные}
-  - {value: pallet_shuttle, label: Паллетный шаттл (Shuttle)}
-  - {value: autostore, label: Кубическое хранение контейнеров (AutoStore)}
-  - {value: miniload, label: Мини-лоад для коробов и контейнеров (Miniload)}
-  - {value: drive_in, label: Набивные (Drive-in)}
-  - {value: push_back, label: Гравитационные с выталкиванием (Push-back)}
+  # number — стеллажи уже под автоматическое хранение (1) или их придётся менять (0).
+  - {value: selective_pallet_racking, label: Фронтальные паллетные, number: '0'}
+  - {value: pallet_shuttle, label: Паллетный шаттл (Shuttle), number: '1'}
+  - {value: autostore, label: Кубическое хранение контейнеров (AutoStore), number: '1'}
+  - {value: miniload, label: Мини-лоад для коробов и контейнеров (Miniload), number: '1'}
+  - {value: drive_in, label: Набивные (Drive-in), number: '0'}
+  - {value: push_back, label: Гравитационные с выталкиванием (Push-back), number: '0'}
   hint: 'Как хранится товар. От этого зависит, какие роботы подойдут: погрузчики, шаттлы или системы «товар к человеку».'
   example: Фронтальные паллетные
   affects: [high_bay_storage, pallet_transport, order_picking, inventory_count]
@@ -908,7 +909,7 @@ processes:
   demand_params: [pallets_internal_per_day, pallets_in_per_day, pallets_out_per_day, shifts_per_day, shift_hours, peak_factor]
   demand: {per_day: pallets_in_per_day + pallets_out_per_day + pallets_internal_per_day, hours_per_day: shifts_per_day * shift_hours,
     peak_factor: peak_factor}
-  sla: {kind: lead_time, target_value: 20, unit: мин}
+  sla: {kind: lead_time, target_value: 20, unit: мин, target_param: pallet_lead_time_min}
   labor_groups: [forklift_operators]
   labor_allocation: {forklift_operators: 0.7}
   labor_release: labor_release_share_transport
@@ -1075,6 +1076,22 @@ processes:
   sizing_model: station_throughput
   unit_weight: pallet_weight_kg
   requirements:
+  - key: racks_for_automated_storage
+    kind: object
+    condition: storage_type
+    severity: warning
+    solution_types: [asrs_storage]
+    message: Сейчас стеллажи не под автоматическое хранение
+    why_needed: Шаттлу, кубическому хранению и кранам-штабелёрам нужна своя стеллажная система; её замена не входит в цену
+      каталога — уточните у поставщика (параметр «Тип стеллажной системы»)
+  - key: floor_flatness_for_automated_storage
+    kind: object
+    condition: floor_flatness_mm <= high_bay_floor_flatness_max_mm
+    severity: warning
+    solution_types: [asrs_storage]
+    message: Пол ровнее, чем требует автоматическое хранение, не будет
+    why_needed: Отклонение пола больше допустимого для автоматических систем (DIN 15185, FM2) — понадобится шлифовка или
+      выравнивание пола
   - key: payload_vs_pallet
     spec: payload_kg
     comparison: gte
@@ -1238,6 +1255,19 @@ processes:
     message: Робот не рассчитан на такую низкую температуру в зоне работы
     why_needed: 'Нужна минимальная рабочая температура робота: на объекте бывает до {required} °C'
 checks:
+- key: pallet_fits_working_aisle
+  expression: pallet_dims_mm_width + aisle_safety_clearance_mm <= m_to_mm(aisle_width_m)
+  severity: error
+  params: [pallet_dims_mm, aisle_width_m]
+  message: Паллета с зазором безопасности шире рабочего прохода
+  how_to_fix: Проверьте габариты паллеты (Д×Ш×В в миллиметрах) и ширину прохода в метрах
+- key: picker_route_is_walkable
+  expression: pick_route_length_m * picker_productivity_lines_per_hour <= h_to_s(picker_walk_speed_mps)
+  severity: info
+  params: [pick_route_length_m, picker_productivity_lines_per_hour]
+  message: С таким маршрутом на строку отборщик не успел бы сделать заявленную выработку даже без остановок
+  how_to_fix: Если отбор пакетный, маршрут делится между строками — укажите путь на одну строку; иначе проверьте выработку
+    (строк в час) и маршрут (метры на строку, а не за смену)
 - key: robotized_area_within_total
   expression: robotized_area_m2 <= area_m2
   severity: error
@@ -1304,8 +1334,21 @@ site_costs:
   formula: wms_integration_rub
   solution_types: [amr_transport, fmr_forklift, tow_tractor, autonomous_truck, goods_to_person, asrs_storage, sorting_robot,
     pick_assist, piece_picking_arm, palletizing_arm, inventory_robot]
-  note: Датасет склада — WMS есть, учёт в 1С:ERP; роботы получают задания из WMS (ФЦ БАС — интеграция обязательна). Уборщикам
-    интеграция не нужна.
+  note: Роботы получают задания из WMS и учёта (ФЦ БАС — интеграция обязательна). Уборщикам интеграция не нужна.
+- key: capex_wms_implementation
+  kind: capex
+  name: Внедрение WMS (на складе её нет)
+  formula: wms_implementation_rub - has_wms * wms_implementation_rub
+  solution_types: [amr_transport, fmr_forklift, tow_tractor, autonomous_truck, goods_to_person, asrs_storage, sorting_robot,
+    pick_assist, piece_picking_arm, palletizing_arm, inventory_robot]
+  note: Датасет склада — «наличие WMS обязательно для роботизации». Если WMS нет, её внедрение входит в CAPEX; если есть,
+    статья равна нулю.
+- key: capex_g2p_pods
+  kind: capex
+  name: Мобильные стеллажи для «товар к человеку»
+  formula: sku_count / g2p_sku_per_pod * g2p_pod_rub
+  solution_types: [goods_to_person]
+  note: Стеллажи-поды не входят в цену робота подвоза. Их число — число SKU (датасет) на вместимость стеллажа.
 - key: capex_site_preparation
   kind: capex
   name: 'Подготовка площадки: QR-разметка, зоны безопасности, стыки пола'

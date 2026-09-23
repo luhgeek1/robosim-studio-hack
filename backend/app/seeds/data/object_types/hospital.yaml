@@ -749,15 +749,15 @@ parameters:
   default: null
 - key: robot_disinfection
   group: sanitary
-  name: Обеззараживание робота между рейсами
-  type: string
+  name: Обязательное обеззараживание робота после вывоза отходов
+  type: boolean
   unit: null
   required: true
   dataset_row: Обеззараживание робота между рейсами
   step: null
   enum_values: null
-  hint: 'Когда робот обязательно обрабатывается: ультрафиолетом или дезинфицирующим средством. Учитывается в эксплуатационных
-    затратах.'
+  hint: Да — после каждого рейса с отходами робот обрабатывают ультрафиолетом или дезсредством. Добавляет время к рейсу
+    и расходники в эксплуатационные затраты. В датасете — «Обязательно для Б-маршрутов».
   example: Обязательно для Б-маршрутов
   affects: [waste_transport, lab_sample_delivery, meal_delivery]
   order: 51
@@ -842,9 +842,10 @@ parameters:
   dataset_row: Наличие системы управления лифтами (BMS)
   step: null
   enum_values:
-  - {value: 'yes', label: Да}
-  - {value: partial, label: Да (частично)}
-  - {value: 'no', label: Нет}
+  # number — все лифты маршрута управляются через API (1); «частично» считается как «нет»: роботу нужен каждый лифт маршрута.
+  - {value: 'yes', label: Да, number: '1'}
+  - {value: partial, label: Да (частично), number: '0'}
+  - {value: 'no', label: Нет, number: '0'}
   hint: Могут ли роботы сами вызывать лифт через систему управления зданием. Без этого робот не переезжает между этажами.
   example: Да (частично)
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
@@ -968,7 +969,7 @@ processes:
     формуле. Строка датасета проверяется правилом meal_portions_match_beds.'
   demand_params: [feedings_per_day, beds, bed_occupancy_pct, operating_hours_per_day]
   demand: {per_day: beds * bed_occupancy_pct * feedings_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: beds * bed_occupancy_pct / meal_points}
-  sla: {kind: lead_time, target_value: 20, unit: мин}
+  sla: {kind: lead_time, target_value: 20, unit: мин, target_param: meal_delivery_norm_min}
   labor_groups: [kitchen_staff]
   labor_allocation: {kitchen_staff: 1.0}
   labor_release: labor_release_share_transport * meal_transport_share
@@ -1019,6 +1020,10 @@ processes:
     solution_types: []
     message: Робот шумнее, чем допускается в палатах ночью
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
+  cycle_extras:
+  - key: elevator_s
+    name: Поездка на лифте (ожидание, вход, этажи)
+    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: linen_transport
   name: Перевозка белья (чистое и грязное)
   description: Сбор грязного белья из отделений в прачечную и развоз чистого. Цель — «Смен белья в сутки» (linen_changes_per_day)
@@ -1026,7 +1031,7 @@ processes:
   demand_unit: kg
   demand_formula: грязное + чистое бельё, кг/сут; рейсов ≈ кг ÷ масса контейнера
   demand_params: [linen_dirty_kg_per_day, linen_clean_kg_per_day, operating_hours_per_day]
-  demand: {per_day: linen_dirty_kg_per_day + linen_clean_kg_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: linen_container_weight_kg}
+  demand: {per_day: 'max(linen_dirty_kg_per_day + linen_clean_kg_per_day, linen_points * linen_min_visits_per_point_day * linen_container_weight_kg)', hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: linen_container_weight_kg}
   sla: {kind: coverage, target_value: 1.3, unit: раз/сут}
   labor_groups: [laundry_staff]
   labor_allocation: {laundry_staff: 1.0}
@@ -1078,6 +1083,10 @@ processes:
     solution_types: []
     message: Робот шумнее, чем допускается в палатах ночью
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
+  cycle_extras:
+  - key: elevator_s
+    name: Поездка на лифте (ожидание, вход, этажи)
+    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: waste_transport
   name: Вывоз медицинских отходов
   description: Вывоз контейнеров с отходами классов А и Б из отделений; для класса Б — отдельный маршрут и обеззараживание
@@ -1132,6 +1141,13 @@ processes:
     solution_types: []
     message: Робот шумнее, чем допускается в палатах ночью
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
+  cycle_extras:
+  - key: elevator_s
+    name: Поездка на лифте (ожидание, вход, этажи)
+    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+  - key: disinfection_s
+    name: Обеззараживание робота после рейса
+    formula: robot_disinfection * disinfection_time_s
 - key: medication_delivery
   name: Доставка медикаментов и расходников
   description: Доставка собранных заявок из аптеки и расходных материалов в отделения; срочные доставки идут вне очереди.
@@ -1139,7 +1155,7 @@ processes:
   demand_unit: trip
   demand_formula: заявок на медикаменты + рейсов расходных материалов в сутки
   demand_params: [medication_orders_per_day, supply_trips_per_day, operating_hours_per_day]
-  demand: {per_day: medication_orders_per_day + supply_trips_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
+  demand: {per_day: 'max(medication_orders_per_day + supply_trips_per_day, medication_delivery_points * medication_min_rounds_per_point_day)', hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}
@@ -1177,6 +1193,10 @@ processes:
     solution_types: []
     message: Робот шумнее, чем допускается в палатах ночью
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
+  cycle_extras:
+  - key: elevator_s
+    name: Поездка на лифте (ожидание, вход, этажи)
+    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: lab_sample_delivery
   name: Доставка проб в лабораторию
   description: Доставка биоматериалов от мест забора в лабораторию и развоз результатов. Норматив — «Норматив доставки пробы»
@@ -1185,7 +1205,7 @@ processes:
   demand_formula: проб в сутки; рейсы с результатами анализов учитываются отдельно как попутная нагрузка
   demand_params: [lab_samples_per_day, operating_hours_per_day]
   demand: {per_day: lab_samples_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: lab_samples_per_day / lab_results_trips_per_day}
-  sla: {kind: lead_time, target_value: 30, unit: мин}
+  sla: {kind: lead_time, target_value: 30, unit: мин, target_param: lab_delivery_norm_min}
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}
   labor_release: labor_release_share_transport
@@ -1222,6 +1242,10 @@ processes:
     solution_types: []
     message: Робот шумнее, чем допускается в палатах ночью
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
+  cycle_extras:
+  - key: elevator_s
+    name: Поездка на лифте (ожидание, вход, этажи)
+    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: floor_cleaning
   name: Уборка коридоров и холлов
   description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель — норматив «Кратность уборки в сутки»
@@ -1293,16 +1317,24 @@ demo_projects:
 site_costs:
 - key: capex_integration
   kind: capex
-  name: Интеграция с МИС и СКУД
+  name: Интеграция с МИС
   formula: wms_integration_rub
   solution_types: [delivery_robot, amr_transport, tow_tractor]
-  note: Датасет больницы — МИС и СКУД есть; доставщики получают заявки из МИС и проходят двери с контролем доступа.
+  note: Датасет больницы — МИС есть; доставщики получают заявки из МИС.
+- key: capex_access_control
+  kind: capex
+  name: Интеграция роботов со СКУД отделений
+  formula: has_access_control * medication_delivery_points * access_point_integration_rub
+  solution_types: [delivery_robot, amr_transport, tow_tractor]
+  note: Датасет — «интеграция роботов через API дверей»; дверь с контролем доступа на каждую точку доставки (22 по датасету).
+    Если СКУД нет, статья равна нулю.
 - key: capex_elevators
   kind: capex
   name: Интеграция роботов с лифтами
-  formula: elevators * elevator_integration_rub_per_elevator
+  formula: elevators * (elevator_integration_rub_per_elevator - elevator_control * (elevator_integration_rub_per_elevator - elevator_api_connection_rub))
   solution_types: [delivery_robot, amr_transport, tow_tractor]
-  note: 9 этажей и 4 лифта по датасету; BMS лифтов «частично», поэтому IoT-модуль вызова нужен на каждый лифт.
+  note: Лифты управляются через API — подключение программное; иначе (в датасете BMS «частично») IoT-модуль вызова на каждый
+    лифт.
 - key: capex_wifi
   kind: capex
   name: Модернизация Wi-Fi под роботов
@@ -1316,3 +1348,14 @@ site_costs:
   kind: opex
   name: Связь и удалённый доступ вендора
   formula: connectivity_rub_per_year
+- key: opex_disinfection
+  kind: opex
+  name: Расходники на обеззараживание роботов
+  formula: robot_disinfection * waste_points * waste_pickups_per_day * working_days_per_year * disinfection_consumables_rub_per_trip
+  solution_types: [delivery_robot, amr_transport, tow_tractor]
+  note: Датасет — обеззараживание «учитывается в OPEX». Рейсы вывоза отходов — точки сбора × вывозов в сутки × дней в году.
+descriptive_params:
+  facility_type: Тип учреждения по ТЗ 3.2.1 идентифицирует объект в отчёте; модель процессов одна — многопрофильный стационар
+    с койками, питанием, бельём и отходами, поэтому тип не меняет формулы.
+  inpatient_schedule: Режим работы стационара в датасете — строка «24/7/365»; в расчёт он входит числами «Часов работы в сутки»
+    и «Рабочих дней в году», сама строка — для отчёта.

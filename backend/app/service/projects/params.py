@@ -26,8 +26,10 @@ from app.domain.project.models import (
 from app.domain.project.params import build_report, data_quality, field_issues, validate_value
 from app.domain.reference import CrossCheck, ParameterDef
 from app.engine.expressions import MissingValueError, parse
+from app.engine.trace import Book
 from app.service.projects.audit import AuditLog
 from app.service.projects.context import ProjectContext, ProjectLoader
+from app.service.projects.norms import NormLoader
 
 HISTORY_LIMIT = 100
 
@@ -77,8 +79,9 @@ def _invalid(definition: ParameterDef, message: str, code: str | None = None) ->
     )
 
 
-def cross_check_issues(context: ProjectContext) -> list[ValidationIssue]:
-    values = context.numeric()
+def cross_check_issues(context: ProjectContext, norms: Book | None = None) -> list[ValidationIssue]:
+    """Checks compare parameters with norms too (safety clearance, IATA baggage size)."""
+    values = {**({k: q.value for k, q in norms.items.items()} if norms else {}), **context.numeric()}
     names = {p.key: p.definition.name for p in context.params}
     issues: list[ValidationIssue] = []
     for check in context.object_type.checks:
@@ -234,7 +237,8 @@ class ParamsService:
 
     async def validation(self, project_id: UUID) -> ValidationReport:
         context = await self.context(project_id)
-        return build_report(field_issues(context.params), cross_check_issues(context))
+        norms = await NormLoader(self._uow).book(context.project.object_type)
+        return build_report(field_issues(context.params), cross_check_issues(context, norms))
 
     async def data_quality(
         self, project_id: UUID, impact: Mapping[str, str] | None = None

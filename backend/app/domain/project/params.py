@@ -1,5 +1,6 @@
 from collections.abc import Iterable, Mapping, Sequence
 
+from app.core.parsing import parse_dimensions
 from app.domain.common.provenance import Provenance, ProvenanceStatus, Scalar
 from app.domain.project.models import (
     Blocks,
@@ -18,6 +19,7 @@ from app.domain.reference import ParameterDef
 
 PERCENT_UNIT = "%"
 _PERCENT_BASE = 100.0
+DIMENSION_PARTS = ("length", "width", "height")
 _ALL_STAGES = (Blocks.MATCHING, Blocks.CALCULATION, Blocks.SIMULATION, Blocks.REPORT)
 _TRUSTED = frozenset(
     {ProvenanceStatus.USER, ProvenanceStatus.IMPORTED, ProvenanceStatus.CONFIRMED, ProvenanceStatus.DERIVED}
@@ -129,12 +131,43 @@ def resolve_all(
     return [resolve(definition, stored.get(definition.key), mode) for definition in definitions]
 
 
+def _enum_number(definition: ParameterDef, value: Scalar) -> float | None:
+    """A list value takes part in formulas only if the reference data gives it a number (lift API: yes 1)."""
+    item = next((i for i in definition.enum_values if i.get("value") == value), None)
+    number = item.get("number") if item else None
+    return float(number) if number is not None else None
+
+
+_DIMENSION_NAMES = {"length": "длина", "width": "ширина", "height": "высота"}
+
+
+def input_names(params: Iterable[EffectiveParam]) -> list[tuple[str, str, str | None, EffectiveParam]]:
+    """Every name a formula can read, with its label and unit: a dimensions parameter gives three."""
+    names: list[tuple[str, str, str | None, EffectiveParam]] = []
+    for param in params:
+        definition = param.definition
+        if definition.type == "dimensions":
+            for part in DIMENSION_PARTS:
+                label = f"{definition.name} — {_DIMENSION_NAMES[part]}"
+                names.append((f"{param.key}_{part}", label, definition.unit, param))
+        else:
+            names.append((param.key, definition.name, definition.unit, param))
+    return names
+
+
 def numeric_inputs(params: Iterable[EffectiveParam]) -> dict[str, float | None]:
-    """Values for expressions: numbers as is, booleans as 1/0, percent parameters as a fraction."""
+    """Values for expressions: numbers as is, booleans as 1/0, percent parameters as a fraction, list values
+    by their number, dimensions «1200×800×1600» as `<key>_length`, `<key>_width`, `<key>_height` in mm."""
     values: dict[str, float | None] = {}
     for param in params:
         value = param.value
-        if isinstance(value, bool):
+        if param.definition.type == "dimensions":
+            parsed = parse_dimensions(value) if isinstance(value, str) else None
+            for part, number in zip(DIMENSION_PARTS, parsed or (None, None, None), strict=True):
+                values[f"{param.key}_{part}"] = number
+        elif param.definition.type == "enum":
+            values[param.key] = _enum_number(param.definition, value)
+        elif isinstance(value, bool):
             values[param.key] = float(value)
         elif isinstance(value, int | float):
             is_percent = param.definition.unit == PERCENT_UNIT

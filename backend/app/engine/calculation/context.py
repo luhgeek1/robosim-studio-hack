@@ -106,6 +106,9 @@ class Context:
                 names = ", ".join(self.label(n) for n in exc.names)
                 self.warnings.append(f"Статья «{cost.name}» не посчитана: не заданы {names}")
                 continue
+            if value == 0:
+                # A conditional line that does not apply: the WMS exists, there is no access control, etc.
+                continue
             result.append(
                 SiteCost(
                     cost.key,

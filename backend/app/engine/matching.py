@@ -1,3 +1,4 @@
+import ast
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -105,9 +106,48 @@ class CandidateResult:
 
 def _required(requirement: Requirement, values: Mapping[str, float | None]) -> float | None:
     try:
-        return parse(requirement.required).evaluate(values)
+        return parse(requirement.required or "").evaluate(values)
     except (MissingValueError, ExpressionError):
         return None
+
+
+def _holds(source: str, values: Mapping[str, float | None]) -> bool | None:
+    """A condition or a yes/no number (1 — yes); None when the object has not given the values yet."""
+    expression = parse(source)
+    try:
+        if isinstance(expression.tree, ast.Compare):
+            return expression.check(values)
+        return expression.evaluate(values) != 0
+    except MissingValueError:
+        return None
+
+
+def _skipped(result: CandidateResult, requirement: Requirement) -> None:
+    result.reasons.append(
+        Reason(
+            "OBJECT_PARAM_MISSING",
+            f"{requirement.message}: у объекта не задан параметр, проверка пропущена",
+            Severity.INFO,
+            requirement.spec,
+        )
+    )
+
+
+def _check_object(
+    result: CandidateResult, requirement: Requirement, values: Mapping[str, float | None]
+) -> None:
+    """A condition on the object for this type of solution: a failed one is a stated risk or an exclusion."""
+    holds = _holds(requirement.condition or "", values)
+    if holds is None:
+        _skipped(result, requirement)
+        return
+    result.checks_evaluated += 1
+    if holds:
+        result.checks_passed += 1
+        return
+    severity = Severity.BLOCKING if requirement.severity == "blocking" else Severity.WARNING
+    text = f"{requirement.message}. {requirement.why_needed}".strip(". ")
+    result.reasons.append(Reason(requirement.key.upper(), text, severity))
 
 
 def _passes(actual: float, requirement: Requirement, required: float) -> bool:
@@ -118,17 +158,15 @@ def _check_requirement(
     result: CandidateResult, requirement: Requirement, values: Mapping[str, float | None]
 ) -> None:
     candidate = result.candidate
+    if requirement.when is not None and not _holds(requirement.when, values):
+        return
+    if requirement.kind == "object":
+        _check_object(result, requirement, values)
+        return
     required = _required(requirement, values)
     unit = requirement.unit or ""
-    if required is None:
-        result.reasons.append(
-            Reason(
-                "OBJECT_PARAM_MISSING",
-                f"{requirement.message}: у объекта не задан параметр, проверка пропущена",
-                Severity.INFO,
-                requirement.spec,
-            )
-        )
+    if required is None or requirement.spec is None:
+        _skipped(result, requirement)
         return
     fact = candidate.specs.get(requirement.spec)
     name = candidate.spec_names.get(requirement.spec, requirement.spec)

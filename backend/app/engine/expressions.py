@@ -21,10 +21,18 @@ _COMPARE: dict[type[ast.cmpop], Callable[[float, float], bool]] = {
     ast.NotEq: operator.ne,
 }
 # Unit conversions are exact arithmetic, not coefficients, so they may live in code.
-_UNIT_FUNCTIONS: dict[str, float] = {"m_to_mm": 1000.0, "mm_to_m": 0.001, "t_to_kg": 1000.0, "kg_to_t": 0.001}
+UNIT_FUNCTIONS: dict[str, float] = {
+    "m_to_mm": 1000.0,
+    "mm_to_m": 0.001,
+    "t_to_kg": 1000.0,
+    "kg_to_t": 0.001,
+    "min_to_s": 60.0,
+    "h_to_s": 3600.0,
+    "mln": 1_000_000.0,
+}
 # Gain g: the same work needs 1 / (1 + g) of the people, so g / (1 + g) of them are released.
 _TRANSFORMS: dict[str, Callable[[float], float]] = {"gain_to_release": lambda gain: gain / (1 + gain)}
-_FUNCTIONS = frozenset({"min", "max", "coalesce", *_UNIT_FUNCTIONS, *_TRANSFORMS})
+_FUNCTIONS = frozenset({"min", "max", "coalesce", *UNIT_FUNCTIONS, *_TRANSFORMS})
 
 
 class ExpressionError(ValueError):
@@ -149,10 +157,10 @@ def _call(name: str, args: list[ast.expr], values: Mapping[str, float | None]) -
                 missing += exc.names
         raise MissingValueError(missing)
     numbers = [_number(arg, values) for arg in args]
-    if name in _UNIT_FUNCTIONS:
+    if name in UNIT_FUNCTIONS:
         if len(numbers) != 1:
             raise ExpressionError(f"{name}() takes exactly one argument")
-        return numbers[0] * _UNIT_FUNCTIONS[name]
+        return numbers[0] * UNIT_FUNCTIONS[name]
     if name in _TRANSFORMS:
         if len(numbers) != 1:
             raise ExpressionError(f"{name}() takes exactly one argument")
