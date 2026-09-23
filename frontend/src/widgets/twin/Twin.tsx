@@ -1,5 +1,5 @@
-import { Canvas } from '@react-three/fiber'
-import { Suspense, useMemo, useRef, useState } from 'react'
+import { Canvas, useThree } from '@react-three/fiber'
+import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { RobotTrack } from '@/entities/simulation'
 import type { LayoutGeometry, SimulationHeatmap } from '@/shared/api/types'
@@ -10,8 +10,12 @@ import { C } from './palette'
 import { HeatLayer, RobotsLayer } from './Robots2D'
 import { Building, Markers, Racks, RouteLines, Robots3D, sceneFrame, zoneLabels } from './scene3d'
 import { LabelLayer, LabelProjector } from './SceneLabels'
+import { svgToPng } from './snapshot'
 
 export type TwinView = '3d' | '2d'
+
+/** Filled by the twin: renders the current view (2D plan or 3D frame) to PNG for the report (ТЗ 3.7.4). */
+export type TwinCapture = RefObject<(() => Promise<Blob | null>) | null>
 
 export type TwinProps = {
   layout: LayoutGeometry
@@ -22,6 +26,7 @@ export type TwinProps = {
   switcher?: boolean
   selectedRobot?: string | null
   onSelectRobot?: (id: string | null) => void
+  capture?: TwinCapture
   className?: string
 }
 
@@ -34,6 +39,7 @@ export function Twin({
   switcher = true,
   selectedRobot,
   onSelectRobot,
+  capture,
   className = '',
 }: TwinProps) {
   const [view, setView] = useState<TwinView>('3d')
@@ -42,6 +48,19 @@ export function Twin({
   const frame = useMemo(() => sceneFrame(layout), [layout])
   const labels = useMemo(() => zoneLabels(layout, frame), [layout, frame])
   const labelRefs = useRef(new Map<string, HTMLDivElement>())
+  const planRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!capture || view !== '2d') return
+    const shoot = async () => {
+      const svg = planRef.current?.querySelector('svg')
+      return svg ? svgToPng(svg, '#ffffff') : null
+    }
+    capture.current = shoot
+    return () => {
+      if (capture.current === shoot) capture.current = null
+    }
+  }, [capture, view])
   const span = Math.max(frame.w, frame.h)
 
   return (
@@ -61,7 +80,7 @@ export function Twin({
         </div>
       )}
       {view === '2d' ? (
-        <div className="absolute inset-0">
+        <div ref={planRef} className="absolute inset-0">
           <LayoutMap
             layout={layout}
             fill
@@ -120,6 +139,7 @@ export function Twin({
               {tracks && <Robots3D tracks={tracks} frame={frame} selectedId={selectedRobot} onSelect={onSelectRobot} />}
               <MapCamera command={command} extent={{ w: frame.w, h: frame.h }} />
               <LabelProjector labels={labels} refs={labelRefs} />
+              {capture && <FrameCapture capture={capture} />}
             </Suspense>
           </Canvas>
           <LabelLayer labels={labels} refs={labelRefs} />
@@ -127,4 +147,21 @@ export function Twin({
       )}
     </div>
   )
+}
+
+// A WebGL canvas keeps no frame after presenting it, so the snapshot renders one frame and reads it at once.
+function FrameCapture({ capture }: { capture: TwinCapture }) {
+  const { gl, scene, camera } = useThree()
+  useEffect(() => {
+    const shoot = () => {
+      gl.render(scene, camera)
+      return new Promise<Blob | null>((resolve) => gl.domElement.toBlob(resolve, 'image/png'))
+    }
+    capture.current = shoot
+    // The canvas unmounts after the 2D view has mounted: clear only our own capture.
+    return () => {
+      if (capture.current === shoot) capture.current = null
+    }
+  }, [capture, gl, scene, camera])
+  return null
 }

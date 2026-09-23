@@ -46,6 +46,9 @@ export function VerdictPanel({ table }: { table: ComparisonTable }) {
             </ul>
           </div>
         )}
+        <p className="mt-4 text-xs text-muted-foreground">
+          Предварительная оценка — результат требует верификации при обследовании объекта.
+        </p>
       </Section>
 
       <Section title="Рекомендация">

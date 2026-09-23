@@ -1,10 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Sparkles, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Camera, Sparkles, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
 import { useProject, useProjectId } from '@/entities/project'
 import { useObjectType } from '@/entities/reference'
+import { useUploadVisual } from '@/entities/report'
 import { SCENARIO_KIND_LABEL, useCalculation, useScenarios } from '@/entities/scenario'
 import {
   buildTracks,
@@ -25,7 +27,7 @@ import {
   type SimulationSummary,
   type SimulationTimeline,
 } from '@/entities/simulation'
-import { parseApiProblem } from '@/shared/api/problem'
+import { parseApiProblem, problemText } from '@/shared/api/problem'
 import type { Scenario, SizingResult } from '@/shared/api/types'
 import { formatNumber, formatPct, formatRub, formatYears } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
@@ -34,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Toggle } from '@/shared/ui/toggle'
 import { Bar, Dot, KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
-import { Twin } from '@/widgets/twin'
+import { Twin, type TwinCapture } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
 
@@ -232,6 +234,8 @@ function SimulationView({
   const heat = useSimulationHeatmap(runId, ready && heatOn)
   const [error, setError] = useState<string | null>(null)
   const [selectedRobot, setSelectedRobot] = useState<string | null>(null)
+  const capture: TwinCapture = useRef(null)
+  const upload = useUploadVisual(projectId)
 
   useEffect(() => {
     if (!sizing || runId || runs.isPending || start.isPending || error) return
@@ -286,6 +290,29 @@ function SimulationView({
   const variantIds = sizing
     ? variants.filter((s) => s.items.some((i) => i.process_key === sizing.process_key)).map((s) => s.id)
     : []
+
+  // ТЗ 3.7.4: снимок текущего кадра плеера уходит в PDF-отчёт вместе с условиями прогона и моментом времени.
+  const snapshot = async () => {
+    if (!runId || !capture.current || !sizing) return
+    const png = await capture.current()
+    if (!png) {
+      toast.error('Не удалось сделать снимок сцены')
+      return
+    }
+    const conditions = [
+      config.mode === 'peak' ? 'пиковый день' : 'обычный день',
+      config.volume ? '+20 % объёма' : null,
+      config.failure ? 'отказ робота на 2 ч' : null,
+    ].filter(Boolean)
+    const caption = `${config.count} × ${sizing.product_name ?? 'робот'}, ${conditions.join(', ')}, момент ${clock(usePlayback.getState().t)}`
+    upload.mutate(
+      { simulationId: runId, png, caption },
+      {
+        onSuccess: () => toast.success('Снимок добавлен в отчёт'),
+        onError: (e) => toast.error(problemText(e)),
+      },
+    )
+  }
 
   const lead = !sizing ? (
     'В сценарии нет процесса с моделью цикла — имитировать нечего.'
@@ -367,6 +394,15 @@ function SimulationView({
             <Toggle variant="outline" pressed={heatOn} onPressedChange={setHeatOn} disabled={!ready}>
               Заторы
             </Toggle>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!tracks || upload.isPending}
+              onClick={() => void snapshot()}
+              title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
+            >
+              {upload.isPending ? <Spinner /> : <Camera />} Снимок в отчёт
+            </Button>
             <span className="meta ml-auto">
               {reserve > 0
                 ? `В сценарии ${working} + ${reserve} в резерве на отказы и обслуживание`
@@ -391,6 +427,7 @@ function SimulationView({
               {layout ? (
                 <Twin
                   layout={layout}
+                  capture={capture}
                   tracks={tracks}
                   heat={heatOn ? heat.data : null}
                   selectedRobot={selectedRobot}
