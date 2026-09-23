@@ -51,10 +51,14 @@ export function HeaderHighlight({ container }: { container: RefObject<HTMLElemen
     const settle = window.setTimeout(measure, 320)
     const observer = new ResizeObserver(measure)
     observer.observe(root)
+    // Пункты шапки появляются позже неё (раздел «Проекты» — после восстановления сессии): ловим появление метки.
+    const mutations = new MutationObserver(measure)
+    mutations.observe(root, { subtree: true, childList: true, attributeFilter: ['data-header-active'] })
     root.addEventListener('scroll', measure, true)
     return () => {
       window.clearTimeout(settle)
       observer.disconnect()
+      mutations.disconnect()
       root.removeEventListener('scroll', measure, true)
     }
   }, [container, pathname, order])
