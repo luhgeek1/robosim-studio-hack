@@ -1,5 +1,5 @@
-import { Map as MapIcon, RefreshCw, Route, TriangleAlert } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { ChevronDown, Map as MapIcon, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
 import { OBJECT_TYPE_LABEL, useProject, useProjectId } from '@/entities/project'
@@ -7,8 +7,10 @@ import { useObjectType } from '@/entities/reference'
 import { parseApiProblem } from '@/shared/api/problem'
 import type { Layout } from '@/shared/api/types'
 import { formatDateTime, formatNumber, formatValue } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Button } from '@/shared/ui/button'
-import { PageHeader, Section, Stat } from '@/shared/ui/page'
+import { Callout, PageHeader, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
 import { ToneBadge } from '@/shared/ui/tone'
@@ -32,9 +34,8 @@ export function LayoutPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow="Планировка объекта"
         title="Планировка"
-        description="Схема объекта из параметров и нормативов (не CAD). Средние маршруты по графу проходов идут в модель цикла робота и в имитацию."
+        description="Схема из параметров и нормативов, не CAD. Средние маршруты по графу проходов идут в цикл робота и в имитацию."
         actions={
           layout.data &&
           !unsupported && (
@@ -110,7 +111,7 @@ function LayoutView({
   return (
     <>
       {layout.params_changed && (
-        <Banner
+        <Callout
           action={
             canRegenerate && (
               <Button size="sm" variant="outline" onClick={onRegenerate}>
@@ -121,64 +122,52 @@ function LayoutView({
         >
           Параметры объекта менялись после генерации — перегенерируйте планировку, чтобы маршруты соответствовали
           объекту.
-        </Banner>
+        </Callout>
       )}
       {layout.warnings.length > 0 && (
-        <Banner>
+        <Callout>
           <ul className="space-y-0.5">
             {layout.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
-        </Banner>
+        </Callout>
       )}
 
       <Section
         title="Схема"
-        description={
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+        actions={
+          <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             {layout.template && <ToneBadge tone="info">{TEMPLATE_LABEL[layout.template] ?? layout.template}</ToneBadge>}
-            <ToneBadge tone={layout.generated ? 'muted' : 'warn'}>
-              {layout.generated ? 'сгенерирована из параметров' : 'изменена вручную'}
-            </ToneBadge>
-            <span>версия {layout.version}</span>
-            {layout.updated_at && <span>· обновлена {formatDateTime(layout.updated_at)}</span>}
+            {!layout.generated && <ToneBadge tone="warn">изменена вручную</ToneBadge>}
+            {layout.updated_at && <span>обновлена {formatDateTime(layout.updated_at)}</span>}
           </span>
         }
+        bodyClassName="p-3"
       >
         <LayoutMap layout={layout} className="h-[540px]" />
       </Section>
 
       <div className="grid grid-cols-[1fr_1.15fr] gap-6">
-        <Section title="Что вытекает из геометрии" description="Эти значения попадают в расчёт цикла и в имитацию">
-          <div className="grid grid-cols-2 gap-2">
+        <Section
+          title="Что вытекает из геометрии"
+          description="Эти значения идут в расчёт цикла и в имитацию"
+          bodyClassName="p-0"
+        >
+          <StatStrip columns={2} className="rounded-none border-0 md:divide-x-0">
             <Stat label="Паллетомест в стеллажах" value={formatValue(stats.rack_slots_total, 'шт')} />
             <Stat label="Самый узкий проезд" value={formatValue(stats.min_aisle_width_m, 'м')} />
             <Stat
               label="Ворота приёмки / отгрузки"
               value={`${formatNumber(stats.docks_in)} / ${formatNumber(stats.docks_out)}`}
-              hint="шт"
             />
             <Stat label="Станций отбора" value={formatValue(stats.pick_stations, 'шт')} />
             <Stat label="Мобильных стеллажей G2P" value={formatValue(stats.pods, 'шт')} />
             <Stat label="Зарядных мест" value={formatValue(stats.chargers, 'шт')} />
-            <Stat
-              className="col-span-2"
-              label="Граф маршрутов"
-              value={`${formatNumber(stats.nodes)} узлов · ${formatNumber(stats.edges)} рёбер`}
-              hint="включите «Граф маршрутов» на схеме, чтобы увидеть проходы"
-            />
-          </div>
+          </StatStrip>
         </Section>
 
-        <Section
-          title={
-            <span className="inline-flex items-center gap-2">
-              <Route className="size-4" /> Средние маршруты
-            </span>
-          }
-          description="Средние кратчайшие пути по графу, взвешенные по паллетоместам"
-        >
+        <Section title="Средние маршруты" description="Кратчайшие пути по графу, взвешенные по паллетоместам">
           {routes.length ? (
             <Table>
               <TableHeader>
@@ -202,30 +191,32 @@ function LayoutView({
             <p className="text-muted-foreground">Маршруты не рассчитаны.</p>
           )}
           <p className="mt-3 text-xs text-muted-foreground">
-            Эти длины — вход «планировка» в трассе расчёта: по ним считается время цикла робота, а значит и число
-            роботов. Приоритет источников: замер пользователя → планировка → норматив.
+            По этим длинам считается время цикла робота. Приоритет источников: замер пользователя, планировка, норматив.
           </p>
         </Section>
       </div>
 
-      {layout.derivation.length > 0 && (
-        <Section
-          title="Как получена геометрия"
-          description="Каждый размер — формула из параметров объекта и нормативов. Нажмите на строку, чтобы раскрыть."
-        >
-          <DerivationList steps={layout.derivation} />
-        </Section>
-      )}
+      {layout.derivation.length > 0 && <Derivation layout={layout} />}
     </>
   )
 }
 
-function Banner({ children, action }: { children: ReactNode; action?: ReactNode }) {
+function Derivation({ layout }: { layout: Layout }) {
+  const [open, setOpen] = useState(false)
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-warn/25 bg-warn-soft p-4 text-warn">
-      <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-      <div className="min-w-0 flex-1">{children}</div>
-      {action}
-    </div>
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border bg-surface">
+      <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-3 text-left">
+        <div>
+          <div className="text-[15px] font-semibold">Как получена геометрия</div>
+          <div className="text-xs text-muted-foreground">
+            {layout.derivation.length} шагов: каждый размер — формула из параметров объекта и нормативов
+          </div>
+        </div>
+        <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t px-5 pb-3">
+        <DerivationList steps={layout.derivation} />
+      </CollapsibleContent>
+    </Collapsible>
   )
 }

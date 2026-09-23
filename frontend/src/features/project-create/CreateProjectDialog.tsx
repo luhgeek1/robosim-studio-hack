@@ -131,8 +131,8 @@ function Choice({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'flex flex-col items-start gap-1 rounded-lg border bg-card p-3 text-left transition-colors hover:border-primary/40 disabled:opacity-50',
-        active && 'border-primary bg-accent/40 ring-1 ring-primary',
+        'flex flex-col items-start gap-1 rounded-md border bg-raised/40 p-3 text-left transition-colors hover:border-primary/50 disabled:opacity-50',
+        active && 'border-primary bg-accent/60',
       )}
     >
       {children}

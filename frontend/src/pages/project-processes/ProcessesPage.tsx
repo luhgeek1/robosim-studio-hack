@@ -5,7 +5,7 @@ import { useCatalogFacets } from '@/entities/catalog'
 import { useProcesses, useProjectId } from '@/entities/project'
 import { formatNumber, formatRub } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
-import { PageHeader, Section, Stat } from '@/shared/ui/page'
+import { PageHeader, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { LaborCostChart } from './LaborCostChart'
 import { ProcessCard } from './ProcessCard'
@@ -33,9 +33,8 @@ export function ProcessesPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
-        eyebrow="Процессы объекта"
         title="Где деньги"
-        description="Сколько работы в каждом процессе, как она распределена по часам и во что обходится сейчас. Роботизировать стоит в первую очередь то, где крупный ФОТ и высокий пик."
+        description="Спрос, пик и стоимость персонала по процессам. Роботизировать стоит там, где крупный ФОТ и высокий пик."
       />
 
       {processes.isPending && <LoadingBlock rows={4} />}
@@ -43,7 +42,7 @@ export function ProcessesPage() {
 
       {data && (
         <>
-          <div className="grid grid-cols-4 gap-3">
+          <StatStrip columns={4}>
             <Stat
               label="ФОТ по процессам"
               value={formatRub(data.total_labor_cost_rub_year)}
@@ -59,14 +58,14 @@ export function ProcessesPage() {
               value={data.peak_factor !== undefined ? `×${formatNumber(data.peak_factor)}` : '—'}
               hint="пиковый час к среднему"
             />
-            <Stat label="Процессов" value={sorted.length} hint={`из них можно роботизировать: ${robotizable}`} />
-          </div>
+            <Stat label="Процессов" value={sorted.length} hint={`можно роботизировать: ${robotizable}`} />
+          </StatStrip>
 
           {sorted.length === 0 ? (
             <EmptyState title="Процессов нет" description="Для этого типа объекта процессы не заданы." />
           ) : (
             <>
-              <Section title="ФОТ по процессам" description="Годовые затраты на персонал, от крупных к мелким">
+              <Section title="ФОТ по процессам в год">
                 <LaborCostChart processes={sorted} />
               </Section>
 

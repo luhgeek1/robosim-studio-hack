@@ -34,11 +34,23 @@ const BADGE_TONE: Record<Badge, Tone> = {
   has_cases: 'muted',
 }
 
-export function ProductBadges({ badges, className }: { badges: Badge[]; className?: string }) {
-  if (!badges.length) return null
+// «Отечественный» и «есть внедрения» стоят почти у всех продуктов, поэтому в списках показываем только отметки о проверке.
+const VERIFIED_BADGES = new Set<Badge>(['in_registry_719', 'tested_fcbas', 'specs_confirmed'])
+
+export function ProductBadges({
+  badges,
+  className,
+  verifiedOnly,
+}: {
+  badges: Badge[]
+  className?: string
+  verifiedOnly?: boolean
+}) {
+  const shown = verifiedOnly ? badges.filter((badge) => VERIFIED_BADGES.has(badge)) : badges
+  if (!shown.length) return null
   return (
     <div className={cn('flex flex-wrap gap-1', className)}>
-      {badges.map((badge) => (
+      {shown.map((badge) => (
         <ToneBadge key={badge} tone={BADGE_TONE[badge]}>
           {BADGE_LABEL[badge]}
         </ToneBadge>
@@ -92,7 +104,7 @@ export type CatalogLinkState = { catalogSearch?: string; nested?: boolean }
 
 export function ProductMiniCard({ product, state }: { product: Product; state?: CatalogLinkState }) {
   return (
-    <div className="relative space-y-2 rounded-xl border bg-card p-4 transition-colors hover:border-primary/40">
+    <div className="relative space-y-2 rounded-lg border bg-surface p-4 transition-colors hover:border-primary/50">
       <Link
         to={`/catalog/${product.id}`}
         state={state}

@@ -1,4 +1,4 @@
-import { BadgeCheck, ChevronDown, FileText, ShieldAlert, TriangleAlert } from 'lucide-react'
+import { BadgeCheck, ChevronDown, ShieldAlert, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { SOURCE_KIND_LABEL, SourceLink } from '@/entities/provenance'
 import { BAND_LABEL, RISK_SEVERITY_LABEL, VerdictBadge, useNarrative } from '@/entities/scenario'
@@ -6,7 +6,7 @@ import type { CalculationRun, CostBreakdown } from '@/shared/api/types'
 import { formatDateTime, formatNumber, formatPct, formatRub, formatValue, formatYears } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
-import { Section, Stat } from '@/shared/ui/page'
+import { Section, Stat, StatStrip } from '@/shared/ui/page'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import { ToneBadge, type Tone } from '@/shared/ui/tone'
 import { CashflowChart } from './CashflowChart'
@@ -37,7 +37,6 @@ export function CalculationView({
   onTrace: (query: string) => void
 }) {
   const m = run.metrics
-  const interpretation = run.interpretation
   const effectRows: CostRow[] = run.effect_year.items.map((item) => ({
     key: item.key,
     name: item.name,
@@ -50,29 +49,10 @@ export function CalculationView({
 
   return (
     <div className="space-y-6">
-      {!isBaseline && (
-        <div className="rounded-xl border bg-card p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <VerdictBadge verdict={interpretation.verdict} className="h-6 px-2.5 text-sm" />
-            {BAND_LABEL[interpretation.band] && (
-              <span className="text-sm text-muted-foreground">{BAND_LABEL[interpretation.band]}</span>
-            )}
-          </div>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight">{interpretation.headline}</h2>
-          <p className="mt-1 max-w-4xl text-muted-foreground">{interpretation.summary}</p>
-          <div className="mt-4 grid grid-cols-2 gap-6">
-            {interpretation.key_drivers && interpretation.key_drivers.length > 0 && (
-              <List title="Что определяет результат" items={interpretation.key_drivers} />
-            )}
-            {interpretation.caveats && interpretation.caveats.length > 0 && (
-              <List title="Оговорки" items={interpretation.caveats} muted />
-            )}
-          </div>
-        </div>
-      )}
+      {!isBaseline && <VerdictBlock run={run} />}
 
       {isBaseline ? (
-        <div className="grid grid-cols-3 gap-3">
+        <StatStrip columns={3}>
           <Stat label="Затраты «как сейчас»" value={formatRub(m.baseline_cost_rub_year)} hint="в год" />
           <Stat
             label="TCO за горизонт"
@@ -80,9 +60,12 @@ export function CalculationView({
             hint={`${m.horizon_years} лет с индексацией`}
           />
           <Stat label="Ставка дисконтирования" value={formatPct(m.discount_rate_pct)} />
-        </div>
+        </StatStrip>
       ) : (
-        <div className="grid grid-cols-4 gap-3">
+        <StatStrip
+          columns={4}
+          className="md:divide-x-0 md:[&>*:nth-child(-n+4)]:border-b md:[&>*:not(:nth-child(4n+1))]:border-l"
+        >
           <Stat
             label="Окупаемость простая"
             value={formatYears(m.payback_years)}
@@ -111,17 +94,17 @@ export function CalculationView({
             label="Роботов / высвобождено"
             value={`${m.robots_total ?? '—'} / ${formatNumber(m.fte_released, 1)} FTE`}
           />
-        </div>
+        </StatStrip>
       )}
 
       {!isBaseline && <SizingSection sizing={run.sizing} onTrace={onTrace} />}
 
       <Section
         title="Из чего складываются деньги"
-        description="Нажмите на строку — откроется формула, подставленные значения и источники входов."
+        description="Строка раскрывается в формулу, подставленные значения и источники входов"
         actions={
           <button type="button" className="text-sm text-primary hover:underline" onClick={() => onTrace('')}>
-            Полная трасса расчёта →
+            Полная трасса расчёта
           </button>
         }
       >
@@ -178,7 +161,7 @@ export function CalculationView({
           title="Денежный поток"
           description={
             run.cashflow.ramp_up_months
-              ? `Внедрение и разгон до полного эффекта — ${run.cashflow.ramp_up_months} мес.; индексация, замены АКБ и парка учтены помесячно.`
+              ? `Разгон до полного эффекта ${run.cashflow.ramp_up_months} мес.; индексация и замены АКБ учтены помесячно`
               : undefined
           }
         >
@@ -226,22 +209,49 @@ export function CalculationView({
 
       {!isBaseline && run.calibration && <Calibration calibration={run.calibration} />}
 
-      {!isBaseline && <NarrativeSection calculationId={run.id} />}
-
       {run.assumptions_used && run.assumptions_used.length > 0 && <Assumptions norms={run.assumptions_used} />}
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span>Рассчитано {formatDateTime(run.versions.computed_at)}</span>
         <span>за {run.duration_ms ?? '—'} мс</span>
-        <span>версия данных проекта {run.versions.project_version}</span>
+        <span>данные объекта v{run.versions.project_version}</span>
         {run.versions.layout_version != null && <span>планировка v{run.versions.layout_version}</span>}
         <span>каталог {run.versions.catalog_version}</span>
         <span>нормативы {run.versions.norm_set_version}</span>
-        <span>движок {run.versions.engine_version}</span>
-        {run.versions.inputs_hash && (
-          <span className="font-mono">хэш входов {run.versions.inputs_hash.slice(0, 12)}</span>
+      </div>
+    </div>
+  )
+}
+
+/* Вердикт и заключение говорят одно и то же; из заключения берём только следующие шаги. */
+function VerdictBlock({ run }: { run: CalculationRun }) {
+  const interpretation = run.interpretation
+  const narrative = useNarrative(run.id)
+  const nextSteps = narrative.data?.next_steps ?? []
+  const columns = [
+    interpretation.key_drivers?.length ? (
+      <List key="drivers" title="Что определяет результат" items={interpretation.key_drivers} />
+    ) : null,
+    interpretation.caveats?.length ? (
+      <List key="caveats" title="Оговорки" items={interpretation.caveats} muted />
+    ) : null,
+    nextSteps.length ? <List key="next" title="Следующие шаги" items={nextSteps} /> : null,
+  ].filter(Boolean)
+  return (
+    <div className="rounded-lg border border-l-2 border-l-primary bg-surface p-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <VerdictBadge verdict={interpretation.verdict} className="h-6 px-2.5 text-sm" />
+        {BAND_LABEL[interpretation.band] && (
+          <span className="text-sm text-muted-foreground">{BAND_LABEL[interpretation.band]}</span>
         )}
       </div>
+      <h2 className="mt-2 text-xl font-semibold tracking-tight">{interpretation.headline}</h2>
+      <p className="mt-1 max-w-4xl text-muted-foreground">{interpretation.summary}</p>
+      {columns.length > 0 && (
+        <div className="mt-4 grid gap-6" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+          {columns}
+        </div>
+      )}
     </div>
   )
 }
@@ -249,7 +259,7 @@ export function CalculationView({
 function List({ title, items, muted }: { title: string; items: string[]; muted?: boolean }) {
   return (
     <div>
-      <div className="mb-1.5 text-xs font-medium text-muted-foreground">{title}</div>
+      <div className="mb-1.5 text-xs text-muted-foreground">{title}</div>
       <ul className={cn('list-disc space-y-1 pl-4', muted && 'text-muted-foreground')}>
         {items.map((item) => (
           <li key={item}>{item}</li>
@@ -311,41 +321,18 @@ function Calibration({ calibration }: { calibration: NonNullable<CalculationRun[
   )
 }
 
-function NarrativeSection({ calculationId }: { calculationId: string }) {
-  const narrative = useNarrative(calculationId)
-  if (!narrative.data) return null
-  const n = narrative.data
-  return (
-    <Section
-      title="Заключение"
-      actions={
-        <ToneBadge tone="muted">
-          <FileText /> {n.generated_by === 'llm' ? 'ассистент поверх правил' : 'по правилам, без LLM'}
-        </ToneBadge>
-      }
-    >
-      <p className="max-w-4xl">{n.executive_summary}</p>
-      <div className="mt-4 grid grid-cols-3 gap-6">
-        <List title="Главное" items={n.key_findings} />
-        {n.risks_text && n.risks_text.length > 0 && <List title="Риски" items={n.risks_text} />}
-        <List title="Следующие шаги" items={n.next_steps} />
-      </div>
-    </Section>
-  )
-}
-
 function Assumptions({ norms }: { norms: NonNullable<CalculationRun['assumptions_used']> }) {
   const [open, setOpen] = useState(false)
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-xl border bg-card">
-      <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-4 text-left">
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border bg-surface">
+      <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-3 text-left">
         <div>
-          <div className="text-base font-semibold">Нормативы и допущения расчёта ({norms.length})</div>
-          <div className="text-muted-foreground">У каждого — значение, диапазон, источник и обоснование.</div>
+          <div className="text-[15px] font-semibold">Нормативы и допущения расчёта</div>
+          <div className="text-xs text-muted-foreground">{norms.length} значений: у каждого источник и обоснование</div>
         </div>
-        <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
+        <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </CollapsibleTrigger>
-      <CollapsibleContent className="px-5 pb-5">
+      <CollapsibleContent className="border-t px-5 pb-5">
         <table className="w-full text-sm">
           <tbody>
             {norms.map((norm) => (

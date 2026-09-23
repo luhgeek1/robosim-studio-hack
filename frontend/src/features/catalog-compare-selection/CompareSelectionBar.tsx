@@ -10,7 +10,7 @@ export function CompareSelectionBar() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
-      <div className="pointer-events-auto flex w-full max-w-5xl items-center gap-3 rounded-xl border bg-card/95 px-4 py-2.5 shadow-lg backdrop-blur">
+      <div className="pointer-events-auto flex w-full max-w-5xl items-center gap-3 rounded-lg border bg-raised/95 px-4 py-2.5 shadow-xl backdrop-blur">
         <div className="shrink-0 text-xs text-muted-foreground">
           Сравнение
           <div className="num font-medium text-foreground">
@@ -21,7 +21,7 @@ export function CompareSelectionBar() {
           {selection.items.map((item) => (
             <span
               key={item.id}
-              className="inline-flex max-w-56 items-center gap-1 rounded-full border bg-secondary py-0.5 pr-1 pl-2.5 text-xs"
+              className="inline-flex max-w-56 items-center gap-1 rounded-full border bg-surface py-0.5 pr-1 pl-2.5 text-xs"
             >
               <Link to={`/catalog/${item.id}`} className="truncate hover:underline" title={item.name}>
                 {item.name}

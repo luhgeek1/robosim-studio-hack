@@ -3,9 +3,8 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { useProjectId } from '@/entities/project'
 import { SCENARIO_KIND_LABEL, useScenarios, useSensitivity } from '@/entities/scenario'
-import { formatDateTime } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
-import { PageHeader, Section } from '@/shared/ui/page'
+import { Callout, PageHeader, Section } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { ToneBadge } from '@/shared/ui/tone'
@@ -29,9 +28,8 @@ export function RisksPage() {
 
   const header = (
     <PageHeader
-      eyebrow="Риски и обследование"
       title="Насколько устойчив результат"
-      description="Какие параметры сильнее всего меняют окупаемость (ТЗ 3.5.6), как результат распределяется при неопределённости и что замерить на объекте в первую очередь (ТЗ 3.7.5)."
+      description="Что сильнее всего меняет окупаемость, как результат распределяется при неопределённости и что замерить на объекте"
       actions={
         options.length > 0 && (
           <Select value={scenario?.id} onValueChange={setPicked}>
@@ -90,13 +88,18 @@ export function RisksPage() {
       {header}
 
       {scenario.last_calculation?.status === 'stale' && (
-        <div className="flex items-center gap-3 rounded-xl border border-warn/25 bg-warn-soft px-4 py-3 text-warn">
-          <ToneBadge tone="warn">устарел — пересчитайте</ToneBadge>
-          Данные объекта изменились после расчёта сценария «{scenario.name}».
-          <Button asChild size="sm" variant="outline" className="ml-auto">
-            <Link to={`../scenarios/${scenario.id}`}>Открыть сценарий</Link>
-          </Button>
-        </div>
+        <Callout
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link to={`../scenarios/${scenario.id}`}>Открыть сценарий</Link>
+            </Button>
+          }
+        >
+          <ToneBadge tone="warn" className="mr-2">
+            устарел
+          </ToneBadge>
+          Данные объекта изменились после расчёта сценария «{scenario.name}» — пересчитайте его.
+        </Callout>
       )}
 
       <SensitivitySections scenarioId={scenario.id} metric={metric} onMetric={setMetric} />
@@ -137,15 +140,7 @@ function SensitivitySections({
     <>
       <Section
         title="Чувствительность: торнадо"
-        description={
-          <>
-            Каждый параметр по очереди сдвигается к нижней и верхней границе диапазона, остальные остаются как в
-            расчёте. Сверху — параметры с наибольшим влиянием.
-            {tornado.data?.computed_at && (
-              <span className="text-xs"> Рассчитано {formatDateTime(tornado.data.computed_at)}.</span>
-            )}
-          </>
-        }
+        description="Каждый параметр по очереди сдвигается к границам своего диапазона; сверху — с наибольшим влиянием"
         actions={metricSelect}
       >
         {tornado.isPending && <LoadingBlock rows={4} />}
@@ -155,7 +150,7 @@ function SensitivitySections({
 
       <Section
         title="Тепловая карта: ФОТ × объём операций"
-        description={`Одновременное изменение двух главных внешних факторов. Показатель: ${METRIC[metric].label}.`}
+        description={`Два главных внешних фактора меняются одновременно. Показатель: ${METRIC[metric].label}`}
       >
         {heatmap.isPending && <LoadingBlock rows={3} />}
         {heatmap.isError && <ErrorBlock error={heatmap.error} onRetry={() => heatmap.refetch()} />}

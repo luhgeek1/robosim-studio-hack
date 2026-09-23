@@ -14,7 +14,7 @@ import { PageHeader } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { EmptyState, ErrorBlock, Spinner } from '@/shared/ui/states'
-import { CompletenessMeter, PriceFrom, ProductBadges, ProductStatusBadge, TrlBadge } from './parts'
+import { PriceFrom, ProductBadges, ProductStatusBadge, TrlBadge } from './parts'
 
 const PAGE_SIZE = 24
 const ALL = '__all'
@@ -88,25 +88,16 @@ export function CatalogPage() {
   return (
     <div className="mx-auto w-full max-w-[1400px] p-6 pb-28">
       <PageHeader
-        title="Каталог роботизированных решений"
-        description="Решения из каталога организатора и открытых источников: характеристики с источниками, цены, предложения по отраслям. Выберите до 5 решений для сравнения."
-        actions={
-          data && (
-            <div className="text-right text-sm text-muted-foreground">
-              Найдено
-              <div className="num text-2xl font-semibold text-foreground">
-                {formatNumber(data.total)}{' '}
-                <span className="text-base font-normal text-muted-foreground">
-                  {pluralRu(data.total, ['решение', 'решения', 'решений'])}
-                </span>
-              </div>
-            </div>
-          )
+        title="Каталог решений"
+        description={
+          data
+            ? `${formatNumber(data.total)} ${pluralRu(data.total, ['решение', 'решения', 'решений'])} из каталога организатора и открытых источников. До 5 решений можно сравнить бок о бок.`
+            : undefined
         }
       />
 
       <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-6">
-        <aside className="sticky top-20 max-h-[calc(100vh-6rem)] space-y-5 overflow-y-auto rounded-xl border bg-card p-4">
+        <aside className="sticky top-16 max-h-[calc(100vh-5rem)] space-y-5 overflow-y-auto rounded-lg border bg-surface p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Фильтры</h2>
             {activeFilters && (
@@ -203,7 +194,7 @@ export function CatalogPage() {
           {products.isPending && (
             <div className="grid grid-cols-3 gap-3">
               {Array.from({ length: 9 }, (_, i) => (
-                <Skeleton key={i} className="h-60 rounded-xl" />
+                <Skeleton key={i} className="h-52 rounded-lg" />
               ))}
             </div>
           )}
@@ -292,7 +283,7 @@ function SearchBox({ value, onCommit }: { value: string; onCommit: (q: string) =
 function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</div>
+      <div className="text-xs text-muted-foreground">{title}</div>
       {children}
     </div>
   )
@@ -322,8 +313,8 @@ function RadioList({
             aria-checked={active}
             onClick={() => onChange(item.key)}
             className={cn(
-              'flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm hover:bg-muted',
-              active && 'bg-secondary font-medium',
+              'flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm hover:bg-raised',
+              active && 'bg-raised font-medium',
             )}
           >
             <span>{item.name}</span>
@@ -370,7 +361,7 @@ function CheckList({
 
 function ProductCard({ product, catalogSearch }: { product: Product; catalogSearch: string }) {
   return (
-    <div className="relative flex flex-col gap-3 rounded-xl border bg-card p-4 transition-colors hover:border-primary/40">
+    <div className="relative flex flex-col gap-3 rounded-lg border bg-surface p-4 transition-colors hover:border-primary/50">
       <div className="space-y-1">
         <Link
           to={`/catalog/${product.id}`}
@@ -392,19 +383,18 @@ function ProductCard({ product, catalogSearch }: { product: Product; catalogSear
           <ProductStatusBadge status={product.status} />
           <TrlBadge trl={product.trl} />
         </div>
-        <ProductBadges badges={product.badges} />
+        <ProductBadges badges={product.badges} verifiedOnly />
       </div>
       <div className="mt-auto space-y-3">
         <div className="flex items-end justify-between gap-2">
           <PriceFrom price={product.price_from} />
-          {product.offers_count !== undefined && (
+          {product.offers_count !== undefined && product.offers_count > 1 && (
             <span className="text-xs text-muted-foreground">
               <span className="num">{product.offers_count}</span>{' '}
               {pluralRu(product.offers_count, ['предложение', 'предложения', 'предложений'])}
             </span>
           )}
         </div>
-        <CompletenessMeter value={product.completeness} />
         <CompareToggle product={product} className="relative z-10 w-full" />
       </div>
     </div>

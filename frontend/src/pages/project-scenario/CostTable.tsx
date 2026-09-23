@@ -40,7 +40,10 @@ export function CostTable({
           return (
             <Fragment key={row.key}>
               <tr
-                className={cn('cursor-pointer border-t transition-colors hover:bg-muted/50', expanded && 'bg-muted/40')}
+                className={cn(
+                  'cursor-pointer border-t transition-colors hover:bg-raised/60',
+                  expanded && 'bg-raised/60',
+                )}
                 onClick={() => setOpen(expanded ? null : row.key)}
               >
                 <td className="py-2 pr-2 pl-1">
@@ -69,7 +72,7 @@ export function CostTable({
                 </td>
               </tr>
               {expanded && (
-                <tr className="bg-muted/20">
+                <tr className="bg-raised/30">
                   <td colSpan={3} className="px-6 pt-1 pb-4">
                     <Formula formula={row.formula} rendered={row.formulaRendered} inputs={row.inputs} note={row.note} />
                     {row.normKey && (

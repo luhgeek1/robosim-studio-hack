@@ -84,9 +84,7 @@ export function TraceSheet({
           {trace.isError && <ErrorBlock error={trace.error} />}
           {grouped.map(({ section, items }) => (
             <div key={section} className="mb-4">
-              <div className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                {TRACE_SECTION_LABEL[section]}
-              </div>
+              <div className="mb-1 text-xs font-medium text-muted-foreground">{TRACE_SECTION_LABEL[section]}</div>
               <div className="divide-y rounded-lg border">
                 {items.map((item) => {
                   const isOpen = expanded === item.metric_key
@@ -95,8 +93,8 @@ export function TraceSheet({
                       <button
                         type="button"
                         className={cn(
-                          'flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted/50',
-                          isOpen && 'bg-muted/40',
+                          'flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-raised/60',
+                          isOpen && 'bg-raised/60',
                         )}
                         onClick={() => setExpanded(isOpen ? null : item.metric_key)}
                       >
@@ -124,7 +122,7 @@ export function TraceSheet({
                                 <button
                                   key={key}
                                   type="button"
-                                  className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent"
+                                  className="rounded bg-raised px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent"
                                   onClick={() => {
                                     onQueryChange(key)
                                     setExpanded(key)

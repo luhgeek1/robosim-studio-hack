@@ -7,7 +7,7 @@ import { useProjects } from '@/entities/project'
 import { ProvenanceBadge } from '@/entities/provenance'
 import { useSession } from '@/entities/session'
 import { compareSelection, COMPARE_LIMIT } from '@/features/catalog-compare-selection'
-import { CompletenessMeter, PriceFrom, ProductBadges, ProductStatusBadge } from '@/pages/catalog/parts'
+import { PriceFrom, ProductBadges, ProductStatusBadge } from '@/pages/catalog/parts'
 import type { CandidateStatus, CompareResult, Product } from '@/shared/api/types'
 import { formatNumber, formatValue } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
@@ -57,7 +57,7 @@ export function ComparePage() {
   const header = (
     <PageHeader
       title="Сравнение решений"
-      description="Характеристики из карточек каталога, у каждого значения — источник. Подсвечено лучшее значение в строке, если для характеристики понятно, что лучше."
+      description="Характеристики из карточек каталога с источниками; подсвечено лучшее значение в строке"
       actions={
         <Button asChild variant="outline">
           <Link to="/catalog">
@@ -189,7 +189,7 @@ function CompareTable({
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-card">
+      <div className="overflow-x-auto rounded-lg border bg-surface">
         <table className="w-full min-w-[900px] table-fixed border-collapse text-sm">
           <colgroup>
             <col className="w-60" />
@@ -199,7 +199,7 @@ function CompareTable({
           </colgroup>
           <thead>
             <tr className="border-b align-top">
-              <th className="sticky left-0 z-10 bg-card p-3 text-left text-xs font-medium text-muted-foreground">
+              <th className="sticky left-0 z-10 bg-surface p-3 text-left text-xs font-medium text-muted-foreground">
                 Решение
               </th>
               {products.map((product) => (
@@ -243,9 +243,6 @@ function CompareTable({
             <SummaryRow label="Отметки" products={products}>
               {(p) => (p.badges.length ? <ProductBadges badges={p.badges} /> : '—')}
             </SummaryRow>
-            <SummaryRow label="Полнота карточки" products={products}>
-              {(p) => <CompletenessMeter value={p.completeness} label="заполнено ТТХ" />}
-            </SummaryRow>
             {projectId && (
               <SummaryRow label="Совместимость с объектом" products={products}>
                 {(p) => {
@@ -280,8 +277,8 @@ function CompareTable({
 
 function GroupHeader({ cols, children }: { cols: number; children: ReactNode }) {
   return (
-    <tr className="border-b bg-muted/50">
-      <td colSpan={cols} className="px-3 py-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+    <tr className="border-b bg-raised/60">
+      <td colSpan={cols} className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
         {children}
       </td>
     </tr>
@@ -299,7 +296,7 @@ function SummaryRow({
 }) {
   return (
     <tr className="border-b last:border-b-0">
-      <td className="sticky left-0 z-10 bg-card px-3 py-2 text-muted-foreground">{label}</td>
+      <td className="sticky left-0 z-10 bg-surface px-3 py-2 text-muted-foreground">{label}</td>
       {products.map((product) => (
         <td key={product.id} className="border-l px-3 py-2">
           {children(product)}
@@ -314,7 +311,7 @@ function SpecRow({ row, products }: { row: Row; products: Product[] }) {
   const hint = row.better ? BETTER_HINT[row.better] : ''
   return (
     <tr className="border-b align-top last:border-b-0">
-      <td className="sticky left-0 z-10 bg-card px-3 py-2">
+      <td className="sticky left-0 z-10 bg-surface px-3 py-2">
         <div className="flex items-center gap-1.5">
           <span>{row.name}</span>
           {isKey && (

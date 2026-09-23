@@ -11,7 +11,7 @@ export function VerdictPanel({ table }: { table: ComparisonTable }) {
 
   return (
     <div className="grid grid-cols-[1.4fr_1fr] items-start gap-6">
-      <Section>
+      <Section className="border-l-2 border-l-primary">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <VerdictBadge verdict={verdict.verdict} />
           {band && <span className="text-xs text-muted-foreground">{band}</span>}
@@ -21,9 +21,7 @@ export function VerdictPanel({ table }: { table: ComparisonTable }) {
 
         {!!verdict.key_drivers?.length && (
           <div className="mt-4">
-            <div className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Что определяет результат
-            </div>
+            <div className="mb-1 text-xs text-muted-foreground">Что определяет результат</div>
             <ul className="space-y-1">
               {verdict.key_drivers.map((d) => (
                 <li key={d} className="flex gap-2">
@@ -37,7 +35,7 @@ export function VerdictPanel({ table }: { table: ComparisonTable }) {
 
         {!!verdict.caveats?.length && (
           <div className="mt-4">
-            <div className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">Оговорки</div>
+            <div className="mb-1 text-xs text-muted-foreground">Оговорки</div>
             <ul className="space-y-1 text-muted-foreground">
               {verdict.caveats.map((c) => (
                 <li key={c} className="flex gap-2">
@@ -53,7 +51,7 @@ export function VerdictPanel({ table }: { table: ComparisonTable }) {
       <Section title="Рекомендация">
         {recommended ? (
           <div className="space-y-3">
-            <div className="rounded-lg border border-info/20 bg-info-soft p-3">
+            <div className="rounded-md border border-info/30 bg-info-soft p-3">
               <div className="flex items-center gap-1.5 text-xs text-info">
                 <Star className="size-3.5 fill-current" /> Рекомендуемый сценарий
               </div>

@@ -135,8 +135,8 @@ export function RegenerateDialog({
           {generate.error && <ErrorBlock error={generate.error} />}
 
           {layout && (
-            <div className="flex gap-2 rounded-lg border border-warn/25 bg-warn-soft p-3 text-xs text-warn">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <div className="flex gap-2 rounded-md border border-l-2 border-l-warn bg-raised p-3 text-xs text-muted-foreground">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
               <span>
                 Перегенерация повышает версию проекта: маршруты изменятся, и расчёты сценариев станут устаревшими — их
                 нужно будет пересчитать.

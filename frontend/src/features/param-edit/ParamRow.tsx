@@ -38,8 +38,8 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
       id={`param-${param.key}`}
       className={cn(
         'border-l-2 py-3 pr-2 pl-3',
-        check.status === 'error' && 'border-l-crit bg-crit-soft/40',
-        (check.status === 'warning' || check.status === 'missing') && 'border-l-warn bg-warn-soft/30',
+        check.status === 'error' && 'border-l-crit bg-crit-soft/50',
+        (check.status === 'warning' || check.status === 'missing') && 'border-l-warn bg-warn-soft/40',
         !flagged && 'border-l-transparent',
       )}
     >

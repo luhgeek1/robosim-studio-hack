@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, ArrowLeft, ExternalLink, KeyRound } from 'lucide-react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
@@ -6,13 +5,13 @@ import { SPEC_GROUP_LABEL, SPEC_GROUP_ORDER, useProduct } from '@/entities/catal
 import { OBJECT_TYPE_LABEL } from '@/entities/project'
 import { ProvenanceBadge, SOURCE_KIND_LABEL, SourceLink } from '@/entities/provenance'
 import { CompareSelectionBar, CompareToggle } from '@/features/catalog-compare-selection'
-import { CompletenessMeter, PriceFrom, ProductBadges, ProductMiniCard, ProductStatusBadge } from '@/pages/catalog/parts'
+import { PriceFrom, ProductBadges, ProductStatusBadge } from '@/pages/catalog/parts'
 import type { CatalogLinkState } from '@/pages/catalog/parts'
 import { api } from '@/shared/api/client'
 import type { ProductDetail, Res, Spec } from '@/shared/api/types'
-import { formatDate, formatNumber, formatRub, formatValue } from '@/shared/lib/format'
-import { PageHeader, Section } from '@/shared/ui/page'
-import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
+import { formatDate, formatRub, formatValue } from '@/shared/lib/format'
+import { PageHeader, Section, Stat, StatStrip } from '@/shared/ui/page'
+import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
 import { ToneBadge } from '@/shared/ui/tone'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
@@ -65,18 +64,19 @@ function BackLink() {
 }
 
 function ProductView({ product }: { product: ProductDetail }) {
-  const location = useLocation()
-  const state = location.state as CatalogLinkState | null
   const manufacturer = product.manufacturer
   const region = [manufacturer.region, manufacturer.country].filter(Boolean).join(', ')
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow={[product.solution_type_name ?? product.solution_type, product.subtype].filter(Boolean).join(' · ')}
         title={product.name}
         description={
           <span className="inline-flex flex-wrap items-center gap-x-2">
+            <span>
+              {[product.solution_type_name ?? product.solution_type, product.subtype].filter(Boolean).join(', ')}
+            </span>
+            <span aria-hidden>·</span>
             {manufacturer.website ? (
               <a
                 href={manufacturer.website}
@@ -96,27 +96,12 @@ function ProductView({ product }: { product: ProductDetail }) {
         actions={<CompareToggle product={product} size="default" />}
       />
 
-      <div className="grid grid-cols-[minmax(0,1.1fr)_repeat(4,minmax(0,1fr))] gap-3">
-        <Fact label="Цена изделия">
-          <PriceFrom price={product.price_from} className="text-xl" />
-        </Fact>
-        <Fact label="Стадия">
-          <ProductStatusBadge status={product.status} />
-        </Fact>
-        <Fact label="Уровень готовности (УГТ)" hint="по шкале 1–9">
-          <span className="num text-xl font-semibold">{product.trl ?? '—'}</span>
-        </Fact>
-        <Fact label="Потенциал рынка" hint="оценка каталога, 1–5">
-          <span className="num text-xl font-semibold">
-            {product.market_potential !== null && product.market_potential !== undefined
-              ? `${formatNumber(product.market_potential)} из 5`
-              : '—'}
-          </span>
-        </Fact>
-        <Fact label="Карточка">
-          <CompletenessMeter value={product.completeness} />
-        </Fact>
-      </div>
+      <StatStrip columns={4}>
+        <Stat label="Цена изделия" value={<PriceFrom price={product.price_from} />} />
+        <Stat label="Стадия" value={<ProductStatusBadge status={product.status} />} />
+        <Stat label="Уровень готовности" value={product.trl ?? '—'} hint="УГТ по шкале 1–9" />
+        <Stat label="Предложений" value={product.offers.length} hint="по отраслям и сценариям" />
+      </StatStrip>
 
       {(product.badges.length > 0 || (product.object_types?.length ?? 0) > 0) && (
         <div className="flex flex-wrap items-center gap-2">
@@ -151,31 +136,6 @@ function ProductView({ product }: { product: ProductDetail }) {
           <SourcesSection sources={product.sources} />
         </aside>
       </div>
-
-      {(product.similar_products?.length ?? 0) > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold">Похожие решения</h2>
-          <div className="grid grid-cols-4 gap-3">
-            {product.similar_products!.map((similar) => (
-              <ProductMiniCard
-                key={similar.id}
-                product={similar}
-                state={{ catalogSearch: state?.catalogSearch, nested: true }}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
-  )
-}
-
-function Fact({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col justify-between gap-1.5 rounded-xl border bg-card px-4 py-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div>{children}</div>
-      {hint && <div className="text-xs text-muted-foreground">{hint}</div>}
     </div>
   )
 }
@@ -184,11 +144,11 @@ function MissingKeySpecs({ keys }: { keys: string[] }) {
   const dictionary = useSpecKeys()
   const nameOf = (key: string) => dictionary.data?.items.find((item) => item.key === key)?.name ?? key
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-warn/25 bg-warn-soft p-4 text-warn">
-      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+    <div className="flex items-start gap-3 rounded-lg border border-l-2 border-l-warn bg-surface px-4 py-3">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warn" />
       <div className="space-y-1">
         <div className="font-medium">
-          Нет данных по ключевым ТТХ — в подборе решение получит статус «требует проверки»
+          Нет данных по ключевым ТТХ: в подборе решение получит статус «требует проверки»
         </div>
         <div className="flex flex-wrap gap-1">
           {keys.map((key) => (
@@ -221,25 +181,19 @@ function SpecsSection({ specs }: { specs: Spec[] }) {
     <Section
       title="Характеристики"
       description={
-        <span className="inline-flex items-center gap-1.5 text-xs">
-          <KeyRound className="size-3.5 text-primary" /> — ключевое ограничение для подбора. У каждого значения указан
-          источник.
+        <span className="inline-flex items-center gap-1.5">
+          <KeyRound className="size-3.5 text-primary" /> ключевое ограничение для подбора; у каждого значения указан
+          источник
         </span>
       }
     >
       {groups.length === 0 ? (
-        <EmptyState
-          title="Характеристики пока не заполнены"
-          description="В карточке нет ни одной характеристики. В подборе решение может получить статус «требует проверки»."
-          className="py-8"
-        />
+        <p className="text-muted-foreground">Характеристики в карточке не заполнены.</p>
       ) : (
         <div className="space-y-5">
           {groups.map(({ group, items }) => (
             <div key={group}>
-              <div className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                {SPEC_GROUP_LABEL[group]}
-              </div>
+              <div className="mb-1 text-xs font-medium text-muted-foreground">{SPEC_GROUP_LABEL[group]}</div>
               <Table className="table-fixed">
                 <TableBody>
                   {items.map((spec) => (
@@ -273,10 +227,7 @@ function SpecsSection({ specs }: { specs: Spec[] }) {
 
 function OffersSection({ offers }: { offers: ProductDetail['offers'] }) {
   return (
-    <Section
-      title="Предложения"
-      description="Одно решение может предлагаться в разных отраслях и сценариях с разной ценой."
-    >
+    <Section title="Предложения" description="Цена зависит от отрасли и сценария применения">
       {offers.length === 0 ? (
         <div className="text-muted-foreground">Предложений нет</div>
       ) : (
@@ -332,7 +283,7 @@ function CasesSection({ cases }: { cases: ProductDetail['cases'] }) {
     <Section title="Внедрения">
       <div className="space-y-3">
         {cases.map((item, i) => (
-          <div key={i} className="rounded-lg border p-3">
+          <div key={i} className="rounded-md border bg-raised/40 p-3">
             <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="font-medium">{item.customer ?? 'Заказчик не указан'}</span>
               {item.year && <span className="num text-xs text-muted-foreground">{item.year}</span>}
@@ -355,7 +306,7 @@ function CasesSection({ cases }: { cases: ProductDetail['cases'] }) {
 
 function SourcesSection({ sources }: { sources: ProductDetail['sources'] }) {
   return (
-    <Section title="Источники" description="Откуда взяты цена и характеристики.">
+    <Section title="Источники">
       {sources.length === 0 ? (
         <div className="text-muted-foreground">Источники не указаны</div>
       ) : (

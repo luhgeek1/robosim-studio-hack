@@ -82,7 +82,7 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
                       className={cn(
                         'num flex h-10 items-center justify-center rounded-sm border text-sm font-medium',
                         TONE_CLASS[toneOf(metric, v, result.base_value)],
-                        base && 'ring-2 ring-foreground ring-offset-1 ring-offset-card',
+                        base && 'ring-2 ring-foreground ring-offset-2 ring-offset-surface',
                       )}
                     >
                       {formatCompact(metric, v)}

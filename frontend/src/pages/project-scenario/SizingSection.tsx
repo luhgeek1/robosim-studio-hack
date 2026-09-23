@@ -15,8 +15,8 @@ export function SizingSection({ sizing, onTrace }: { sizing: SizingResult[]; onT
   if (sizing.length === 0) return null
   return (
     <Section
-      title="Сколько роботов нужно — паспорт против физики"
-      description="Производительность считается из времени цикла на планировке этого объекта, а не из паспорта. Итоговое N берётся из имитации, когда она есть."
+      title="Сколько роботов нужно: паспорт против физики"
+      description="Производительность считается из времени цикла на планировке объекта, а не из паспорта"
     >
       <div className="space-y-4">
         {sizing.map((s) => (
@@ -32,7 +32,7 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
   const cycleTotal = robot.cycle_components?.reduce((sum, c) => sum + c.seconds, 0) ?? 0
 
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-md border bg-raised/40 p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <div className="font-medium">{sizing.product_name}</div>
@@ -46,13 +46,13 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
           className="text-xs text-primary hover:underline"
           onClick={() => onTrace(sizing.process_key)}
         >
-          Трасса расчёта процесса →
+          Трасса расчёта процесса
         </button>
       </div>
 
       <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Timer className="size-3.5" /> Цикл робота
           </div>
           {robot.cycle_components && robot.cycle_components.length > 0 ? (
@@ -89,7 +89,7 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
         </div>
 
         <div className="space-y-1.5 text-xs">
-          <div className="font-medium text-muted-foreground">Производительность одного робота</div>
+          <div className="text-muted-foreground">Производительность одного робота</div>
           <Row label="По циклу (3600 / цикл)" value={robot.nominal_throughput_per_hour} unit="ед/ч" />
           <Row label="Доступность (зарядка, простои)" value={robot.availability} share />
           <Row label="Целевая загрузка" value={robot.utilization_target} share />
@@ -101,7 +101,7 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Bot className="size-3.5" /> Количество
           </div>
           <div className="flex items-end gap-4">
@@ -162,7 +162,7 @@ function CountCell({ label, value, prefix }: { label: string; value: number | nu
       </TooltipTrigger>
       <TooltipContent>
         {label === 'имитация' && !isNum(value)
-          ? 'Имитация ещё не запускалась — появится с движком DES'
+          ? 'Имитация ещё не запускалась'
           : `${label}: ${isNum(value) ? value : '—'}`}
       </TooltipContent>
     </Tooltip>

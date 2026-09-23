@@ -20,7 +20,7 @@ export function ComparisonGrid({ table }: { table: ComparisonTable }) {
     <Table className="table-fixed">
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-64 align-bottom">Показатель</TableHead>
+          <TableHead className="w-64 pl-5 align-bottom">Показатель</TableHead>
           {table.scenarios.map((s) => (
             <TableHead
               key={s.scenario_id}
@@ -52,7 +52,7 @@ export function ComparisonGrid({ table }: { table: ComparisonTable }) {
           const hint = row.better === 'none' ? null : BETTER_HINT[row.better]
           return (
             <TableRow key={row.metric_key}>
-              <TableCell className="whitespace-normal">
+              <TableCell className="pl-5 whitespace-normal">
                 <div className="font-medium">{row.name}</div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   {row.unit && <span>{row.unit}</span>}

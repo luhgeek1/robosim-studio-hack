@@ -15,7 +15,7 @@ export function DerivationList({ steps }: { steps: LayoutDerivationStep[] }) {
               <span className="num font-medium whitespace-nowrap">{formatValue(step.value, step.unit)}</span>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-3 pb-3 pl-7">
-              <div className="space-y-1 rounded-lg bg-muted/60 p-3 font-mono text-xs leading-relaxed">
+              <div className="space-y-1 rounded-md bg-raised p-3 font-mono text-xs leading-relaxed">
                 <div className="text-muted-foreground">{step.formula}</div>
                 <div className="font-medium text-foreground">{step.formula_rendered}</div>
               </div>

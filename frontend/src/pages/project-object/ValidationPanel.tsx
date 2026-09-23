@@ -31,7 +31,7 @@ export function ValidationPanel({ projectId }: { projectId: string }) {
   ]
 
   return (
-    <Section title="Проверка данных" description="Заполненность, форматы и диапазоны">
+    <Section title="Проверка данных">
       <div className="mb-4 flex flex-wrap gap-2">
         {gates.map((gate) => (
           <ToneBadge key={gate.yes} tone={gate.ok ? 'ok' : 'crit'}>
@@ -55,7 +55,7 @@ export function ValidationPanel({ projectId }: { projectId: string }) {
                 <button
                   type="button"
                   onClick={() => scrollToParam(issue.key)}
-                  className="flex w-full gap-2 rounded-md p-1.5 text-left hover:bg-muted"
+                  className="flex w-full gap-2 rounded-md p-1.5 text-left hover:bg-raised"
                 >
                   <Icon
                     className={cn(

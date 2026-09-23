@@ -13,7 +13,7 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
   return (
     <Section
       title="Что уточнить при обследовании объекта"
-      description="Параметры, которые сильнее всего меняют результат и при этом пока взяты по умолчанию или как допущение. Их стоит замерить в первую очередь — это самый короткий путь к надёжной оценке и пилоту."
+      description="Параметры с наибольшим влиянием, которые пока взяты по умолчанию или как допущение: их стоит замерить первыми"
     >
       {survey.isPending && <LoadingBlock rows={3} />}
       {survey.isError && <ErrorBlock error={survey.error} onRetry={() => survey.refetch()} />}
@@ -28,7 +28,7 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
         <ol className="divide-y">
           {items.map((item) => (
             <li key={item.key} className="grid grid-cols-[2rem_minmax(0,1fr)_14rem] gap-4 py-3">
-              <div className="num flex size-7 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+              <div className="num flex size-7 items-center justify-center rounded-full bg-raised text-sm font-semibold">
                 {item.rank}
               </div>
               <div className="min-w-0 space-y-1">
@@ -50,9 +50,9 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
               <div className="space-y-1 pt-1">
                 <div className="text-xs text-muted-foreground">Влияние на NPV (размах)</div>
                 <div className="num text-sm font-semibold">{formatRub(item.swing)}</div>
-                <div className="h-1.5 rounded-full bg-muted">
+                <div className="h-1.5 rounded-full bg-raised">
                   <div
-                    className="h-full rounded-full bg-info"
+                    className="h-full rounded-full bg-primary"
                     style={{ width: `${maxSwing ? (item.swing / maxSwing) * 100 : 0}%` }}
                   />
                 </div>

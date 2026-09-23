@@ -132,7 +132,7 @@ export function ImportDialog({
               event.preventDefault()
               onFile(event.dataTransfer.files?.[0])
             }}
-            className="flex w-full items-center gap-3 rounded-xl border border-dashed px-4 py-4 text-left hover:bg-muted/50"
+            className="flex w-full items-center gap-3 rounded-lg border border-dashed border-input px-4 py-4 text-left hover:bg-raised/60"
           >
             {parse.isPending ? <Spinner /> : <FileUp className="size-5 text-muted-foreground" />}
             <span className="min-w-0 flex-1">
@@ -149,10 +149,10 @@ export function ImportDialog({
           </button>
 
           {result && result.warnings.length > 0 && (
-            <ul className="space-y-1 rounded-lg border border-warn/25 bg-warn-soft p-3 text-xs text-warn">
+            <ul className="space-y-1 rounded-md border border-l-2 border-l-warn bg-raised p-3 text-xs">
               {result.warnings.map((warning, i) => (
                 <li key={i} className="flex gap-1.5">
-                  <TriangleAlert className="mt-px size-3.5 shrink-0" />
+                  <TriangleAlert className="mt-px size-3.5 shrink-0 text-warn" />
                   {warning}
                 </li>
               ))}
@@ -160,7 +160,7 @@ export function ImportDialog({
           )}
 
           {result && mapped.length === 0 && (
-            <div className="rounded-lg border bg-muted/40 p-4 text-muted-foreground">
+            <div className="rounded-md border bg-raised/40 p-4 text-muted-foreground">
               В файле не нашлось значений, которые можно сопоставить с параметрами объекта. Заполните колонку значений в
               шаблоне Excel или проверьте названия полей.
             </div>

@@ -65,8 +65,8 @@ export function ScenarioEditor({
     <div className="space-y-6">
       {!scenario.is_baseline && (
         <Section
-          title="Состав: процесс → решение → количество"
-          description="Количество по умолчанию считается из времени цикла на планировке; свою цену или производительность можно задать только с причиной (ТЗ 3.5.3–3.5.4)."
+          title="Состав: процесс, решение, количество"
+          description="Количество считается из времени цикла на планировке; своя цена или производительность — только с причиной"
           actions={
             <AddItemDialog
               projectId={projectId}
@@ -264,7 +264,7 @@ function ItemRow({
     item.price_override_rub != null || item.throughput_override_per_hour != null,
   )
   return (
-    <div className="rounded-lg border p-3">
+    <div className="rounded-md border bg-raised/40 p-3">
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="text-xs text-muted-foreground">{processName}</div>
@@ -375,7 +375,7 @@ function NormOverrides({
   return (
     <Section
       title="Переопределение нормативов"
-      description="Любой норматив расчёта можно заменить своим значением с причиной — изменение попадёт в журнал и в трассу."
+      description="Своё значение с причиной попадёт в журнал и в трассу расчёта"
       actions={
         <div className="flex items-center gap-2">
           <Select value={pick} onValueChange={setPick}>

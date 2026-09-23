@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Toolt
 import { useMonteCarlo } from '@/entities/scenario'
 import type { MonteCarloRequest, MonteCarloResult } from '@/shared/api/types'
 import { formatMln, formatNumber, formatPct } from '@/shared/lib/format'
-import { Section, Stat } from '@/shared/ui/page'
+import { Section, Stat, StatStrip } from '@/shared/ui/page'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
 import { METRIC } from './metrics'
@@ -35,7 +35,7 @@ export function MonteCarloPanel({ scenarioId }: { scenarioId: string }) {
   return (
     <Section
       title="Монте-Карло: разброс результата"
-      description={`${formatNumber(RUNS)} случайных сочетаний ключевых параметров в их диапазонах. Аналитический метод; по имитации — после запуска DES.`}
+      description={`${formatNumber(RUNS)} случайных сочетаний ключевых параметров в их диапазонах`}
       actions={
         <ToggleGroup
           type="single"
@@ -68,19 +68,19 @@ function MonteCarloBody({ result, metric }: { result: MonteCarloResult; metric: 
   return (
     <div className="space-y-5">
       {probabilities.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-6">
           {probabilities.map(([key, p]) => (
-            <div key={key} className="rounded-xl border bg-muted/30 px-4 py-3">
-              <div className="num text-3xl font-semibold tracking-tight">
+            <div key={key} className="border-l-2 border-l-primary pl-4">
+              <div className="num text-3xl leading-none font-semibold tracking-tight">
                 {formatPct(p, { share: true, digits: 0 })}
               </div>
-              <div className="text-muted-foreground">вероятность, что {PROBABILITY_LABEL[key] ?? key}</div>
+              <div className="mt-1.5 text-muted-foreground">вероятность, что {PROBABILITY_LABEL[key] ?? key}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-3">
+      <StatStrip columns={4}>
         <Stat
           label={`P10 — ${lowerBetter ? 'оптимистично' : 'осторожно'}`}
           value={fmt(result.p10)}
@@ -95,9 +95,9 @@ function MonteCarloBody({ result, metric }: { result: MonteCarloResult; metric: 
         <Stat
           label="Среднее"
           value={fmt(result.mean)}
-          hint={`${formatNumber(result.n)} прогонов · ${METHOD_LABEL[result.method]}`}
+          hint={`${formatNumber(result.n)} прогонов, ${METHOD_LABEL[result.method]}`}
         />
-      </div>
+      </StatStrip>
 
       <div className="grid grid-cols-[1.4fr_1fr] gap-6">
         <div>

@@ -40,7 +40,10 @@ export function MapLegend({ layout, showGraph }: { layout: Layout; showGraph: bo
       ))}
       {(layout.racks?.length ?? 0) > 0 && (
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-3 w-1.5 rounded-[1px]" style={{ background: 'oklch(0.5 0.05 250 / 0.6)' }} />
+          <span
+            className="inline-block h-3 w-1.5 rounded-[1px]"
+            style={{ background: 'oklch(0.72 0.04 250 / 0.55)' }}
+          />
           Стеллажи
         </span>
       )}

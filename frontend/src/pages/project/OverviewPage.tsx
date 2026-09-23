@@ -1,20 +1,11 @@
-import { ArrowRight, CheckCircle2, CircleDashed, Download, TriangleAlert } from 'lucide-react'
+import { ArrowRight, CheckCircle2, CircleDashed, TriangleAlert } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import {
-  DataQualityBar,
-  PROJECT_STATUS_LABEL,
-  useAudit,
-  useProject,
-  useProjectId,
-  useValidation,
-} from '@/entities/project'
+import { DataQualityBar, useAudit, useProject, useProjectId, useValidation } from '@/entities/project'
 import { VerdictBadge, useScenarios } from '@/entities/scenario'
 import type { AuditEvent } from '@/shared/api/types'
-import { downloadFile } from '@/shared/lib/download'
 import { formatDateTime, formatRub, formatYears } from '@/shared/lib/format'
-import { Button } from '@/shared/ui/button'
-import { PageHeader, Section, Stat } from '@/shared/ui/page'
+import { PageHeader, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { LoadingBlock } from '@/shared/ui/states'
 
 const AUDIT_ACTION_LABEL: Record<AuditEvent['action'], string> = {
@@ -43,33 +34,26 @@ export function OverviewPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
-        eyebrow="Обзор проекта"
-        title={project.name}
-        description="Путь оценки: параметры объекта → где деньги → подбор → планировка → сценарии и расчёт → сравнение и риски."
-        actions={
-          <Button
-            variant="outline"
-            onClick={() => downloadFile(`/projects/${projectId}/export.json`, `project-${projectId}.json`)}
-          >
-            <Download /> Выгрузить JSON
-          </Button>
-        }
-      />
+      <PageHeader title={project.name} />
 
-      <div className="grid grid-cols-4 gap-3">
-        <Stat label="Статус" value={PROJECT_STATUS_LABEL[project.status]} hint={`версия данных ${project.version}`} />
-        <Stat
-          label="Окупаемость рекомендованного сценария"
-          value={metrics ? formatYears(metrics.payback_years) : '—'}
-          hint={metrics ? <VerdictBadge verdict={metrics.verdict} /> : 'нет расчёта'}
-        />
-        <Stat label="CAPEX" value={formatRub(metrics?.capex_rub)} hint="с НДС" />
-        <Stat label="Чистый эффект" value={formatRub(metrics?.effect_rub_year)} hint="в год" />
-      </div>
+      {metrics ? (
+        <StatStrip columns={3}>
+          <Stat
+            label="Окупаемость рекомендованного сценария"
+            value={formatYears(metrics.payback_years)}
+            hint={<VerdictBadge verdict={metrics.verdict} />}
+          />
+          <Stat label="CAPEX" value={formatRub(metrics.capex_rub)} hint="с НДС" />
+          <Stat label="Чистый эффект" value={formatRub(metrics.effect_rub_year)} hint="в год" />
+        </StatStrip>
+      ) : (
+        <p className="text-muted-foreground">
+          Расчёта ещё нет. Пройдите шаги ниже — сценарий из рекомендации подбора считается за секунду.
+        </p>
+      )}
 
       <div className="grid grid-cols-[1.3fr_1fr] gap-6">
-        <Section title="Шаги оценки">
+        <Section title="Шаги оценки" bodyClassName="p-0">
           <ol className="divide-y">
             <StepRow
               to="object"
@@ -88,7 +72,7 @@ export function OverviewPage() {
               to="matching"
               title="Подбор решений"
               state={validation.data?.can_match === false ? 'error' : 'done'}
-              detail="Подходит / требует проверки / не подходит — с причинами"
+              detail="Подходит, требует проверки, не подходит — с причинами"
             />
             <StepRow to="layout" title="Планировка" state="done" detail="Маршруты из геометрии идут в цикл робота" />
             <StepRow
@@ -105,7 +89,7 @@ export function OverviewPage() {
               to="comparison"
               title="Сравнение и вердикт"
               state={calculated.length ? 'done' : 'todo'}
-              detail="Как сейчас / покупка / RaaS / лизинг"
+              detail="Как сейчас, покупка, RaaS, лизинг"
             />
             <StepRow
               to="risks"
@@ -117,27 +101,24 @@ export function OverviewPage() {
         </Section>
 
         <div className="space-y-6">
-          <Section title="Качество данных" description="Откуда взяты параметры объекта">
+          <Section title="Откуда взяты параметры">
             <DataQualityBar summary={project.data_quality} />
-            <Button asChild variant="link" className="mt-2 px-0">
-              <Link to="object">
-                Уточнить параметры <ArrowRight />
-              </Link>
-            </Button>
+            <Link to="object" className="mt-3 inline-flex items-center gap-1 text-primary hover:underline">
+              Уточнить параметры <ArrowRight className="size-3.5" />
+            </Link>
           </Section>
 
-          <Section title="Журнал изменений">
-            {audit.isPending && <LoadingBlock rows={2} />}
+          <Section title="Журнал изменений" bodyClassName="p-0">
+            {audit.isPending && <LoadingBlock rows={2} className="p-4" />}
             {audit.data && (
-              <ul className="max-h-72 space-y-2 overflow-y-auto text-xs">
+              <ul className="max-h-72 divide-y overflow-y-auto text-xs">
                 {audit.data.items.slice(0, 20).map((event) => (
-                  <li key={event.id} className="flex gap-2">
+                  <li key={event.id} className="flex gap-3 px-5 py-2">
                     <span className="num w-28 shrink-0 text-muted-foreground">{formatDateTime(event.at)}</span>
                     <span className="min-w-0">
-                      <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span> ·{' '}
-                      {event.entity}
+                      <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span>{' '}
+                      <span className="text-muted-foreground">{event.entity.split(':')[0]}</span>
                       {event.note && <span className="text-muted-foreground"> — {event.note}</span>}
-                      <div className="text-muted-foreground">{event.actor}</div>
                     </span>
                   </li>
                 ))}
@@ -163,7 +144,7 @@ const STATE_ICON: Record<StepState, ReactNode> = {
 function StepRow({ to, title, detail, state }: { to: string; title: string; detail: string; state: StepState }) {
   return (
     <li>
-      <Link to={to} className="flex items-center gap-3 py-2.5 hover:text-primary">
+      <Link to={to} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-raised">
         {STATE_ICON[state]}
         <span className="flex-1">
           <span className="font-medium">{title}</span>

@@ -35,16 +35,15 @@ export function ObjectPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow={`Объект · ${OBJECT_TYPE_LABEL[project.object_type]}`}
         title="Параметры объекта"
-        description="Всё, что известно об объекте: площади, режим работы, объёмы, персонал. Каждое значение помечено источником — уточните допущения и пропуски, и расчёт станет точнее."
+        description={`${OBJECT_TYPE_LABEL[project.object_type]}. У каждого значения есть источник: уточните допущения и пропуски, и расчёт станет точнее.`}
         actions={
           <>
             <Button variant="outline" onClick={() => void downloadTemplate()} disabled={downloading}>
-              {downloading ? <Spinner /> : <FileSpreadsheet />} Скачать шаблон Excel
+              {downloading ? <Spinner /> : <FileSpreadsheet />} Шаблон Excel
             </Button>
             <Button onClick={() => setImportOpen(true)}>
-              <Upload /> Загрузить Excel/CSV/JSON
+              <Upload /> Загрузить файл
             </Button>
           </>
         }

@@ -75,7 +75,7 @@ export function LayoutMap({
       <div
         ref={containerRef}
         className={cn(
-          'relative h-[520px] cursor-grab touch-none overflow-hidden rounded-lg border bg-muted/40 select-none active:cursor-grabbing',
+          'relative h-[520px] cursor-grab touch-none overflow-hidden rounded-md border bg-canvas select-none active:cursor-grabbing',
           className,
         )}
         {...handlers}
@@ -99,7 +99,7 @@ export function LayoutMap({
 
         <div
           data-map-control
-          className="absolute top-2 right-2 flex items-center gap-1 rounded-lg border bg-card p-1 shadow-sm"
+          className="absolute top-2 right-2 flex items-center gap-1 rounded-lg border bg-raised p-1 shadow-lg"
         >
           <Tooltip>
             <TooltipTrigger asChild>
@@ -120,13 +120,12 @@ export function LayoutMap({
           </Button>
         </div>
 
-        <div className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-card/90 px-2 py-1 text-[11px] shadow-sm">
+        <div className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-raised/90 px-2 py-1 text-[11px]">
           <div className="h-1.5 border-x border-b border-foreground" style={{ width: barMeters * view.k }} />
           <div className="num mt-0.5">{formatNumber(barMeters)} м</div>
         </div>
-        <div className="num pointer-events-none absolute right-2 bottom-2 rounded-md bg-card/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
-          Здание {formatNumber(layout.width_m)} × {formatNumber(layout.height_m)} м · колесо — масштаб, перетаскивание —
-          сдвиг
+        <div className="num pointer-events-none absolute right-2 bottom-2 rounded-md bg-raised/90 px-2 py-1 text-[11px] text-muted-foreground">
+          Здание {formatNumber(layout.width_m)} × {formatNumber(layout.height_m)} м
         </div>
       </div>
       {legend && <MapLegend layout={layout} showGraph={graph} />}
@@ -160,8 +159,8 @@ const StaticLayer = memo(function StaticLayer({ layout, showGraph }: { layout: L
         width={layout.width_m}
         height={layout.height_m}
         fill="var(--card)"
-        stroke="var(--foreground)"
-        strokeWidth={1.5}
+        stroke="var(--muted-foreground)"
+        strokeWidth={1.2}
         {...nonScaling}
       />
       {zones.map(({ zone, d }) => {
@@ -172,9 +171,9 @@ const StaticLayer = memo(function StaticLayer({ layout, showGraph }: { layout: L
             key={zone.id}
             d={d}
             fill={color}
-            fillOpacity={corridor ? 0.12 : 0.2}
+            fillOpacity={corridor ? 0.1 : 0.22}
             stroke={color}
-            strokeOpacity={corridor ? 0.35 : 0.8}
+            strokeOpacity={corridor ? 0.3 : 0.7}
             strokeWidth={1}
             {...nonScaling}
           >
@@ -182,7 +181,7 @@ const StaticLayer = memo(function StaticLayer({ layout, showGraph }: { layout: L
           </path>
         )
       })}
-      {racks && <path d={racks} fill="oklch(0.5 0.05 250)" fillOpacity={0.6} />}
+      {racks && <path d={racks} fill="oklch(0.72 0.04 250)" fillOpacity={0.55} />}
       {graph && (
         <g fill="none" strokeLinecap="round" opacity={0.85}>
           {graph.edges.map(([kind, d]) => (

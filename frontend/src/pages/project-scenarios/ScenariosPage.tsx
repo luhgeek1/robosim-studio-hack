@@ -61,7 +61,7 @@ export function ScenariosPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Сценарии и расчёт"
-        description="База «как сейчас» создаётся автоматически. Сценарий роботизации — набор «процесс → решение → количество» и условия финансирования. Для сравнения нужно не меньше двух сценариев роботизации."
+        description="«Как сейчас» — точка отсчёта. Для сравнения нужны хотя бы два сценария роботизации, например покупка и RaaS."
         actions={
           <>
             <NewScenarioDialog projectId={projectId} />
@@ -74,7 +74,7 @@ export function ScenariosPage() {
       {scenarios.isPending && <LoadingBlock rows={3} />}
       {scenarios.isError && <ErrorBlock error={scenarios.error} onRetry={() => scenarios.refetch()} />}
       {scenarios.data && (
-        <div className="grid gap-3">
+        <div className="divide-y overflow-hidden rounded-lg border bg-surface">
           {scenarios.data.map((scenario) => (
             <ScenarioCard key={scenario.id} projectId={projectId} scenario={scenario} />
           ))}
@@ -112,7 +112,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
   }
 
   return (
-    <div className="relative grid grid-cols-[minmax(0,1.6fr)_minmax(0,2fr)_auto] items-center gap-6 rounded-xl border bg-card px-5 py-4 transition-colors hover:border-primary/40">
+    <div className="relative grid grid-cols-[minmax(0,1.6fr)_minmax(0,2fr)_auto] items-center gap-6 px-5 py-4 transition-colors hover:bg-raised">
       <div className="min-w-0 space-y-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <Link to={href} className="truncate text-base font-medium after:absolute after:inset-0">
@@ -127,7 +127,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <ToneBadge tone={scenario.is_baseline ? 'muted' : 'info'}>{SCENARIO_KIND_LABEL[scenario.kind]}</ToneBadge>
           <span>горизонт {scenario.horizon_years} лет</span>
-          {scenario.overrides.length > 0 && <span>· переопределений нормативов: {scenario.overrides.length}</span>}
+          {scenario.overrides.length > 0 && <span>переопределений нормативов: {scenario.overrides.length}</span>}
         </div>
         {scenario.items.length > 0 && (
           <ul className="space-y-0.5 text-xs text-muted-foreground">

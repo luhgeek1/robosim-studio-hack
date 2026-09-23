@@ -76,7 +76,7 @@ export function ScenarioPage() {
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               aria-label="Название сценария"
-              className="h-auto border-transparent bg-transparent px-0 text-2xl font-semibold tracking-tight shadow-none hover:border-border focus-visible:px-2 md:text-2xl"
+              className="h-auto border-transparent bg-transparent px-0 text-[22px] font-semibold tracking-tight shadow-none hover:border-border focus-visible:px-2 md:text-[22px] dark:bg-transparent"
             />
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <ToneBadge tone={isBaseline ? 'muted' : 'info'}>{SCENARIO_KIND_LABEL[current.kind]}</ToneBadge>
@@ -110,8 +110,8 @@ export function ScenarioPage() {
       </div>
 
       {(dirty || problems.length > 0) && (
-        <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-warn/30 bg-warn-soft px-4 py-2.5 text-sm">
-          <span className="font-medium text-warn">Есть несохранённые изменения</span>
+        <div className="sticky top-14 z-20 flex flex-wrap items-center gap-3 rounded-lg border border-l-2 border-l-warn bg-raised px-4 py-2.5 text-sm shadow-lg">
+          <span className="font-medium">Есть несохранённые изменения</span>
           {problems.length > 0 && <span className="text-warn">{problems[0]}</span>}
           <div className="ml-auto flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => setDraft(toDraft(current))} disabled={busy}>
@@ -136,7 +136,7 @@ export function ScenarioPage() {
               description={
                 isBaseline
                   ? 'Рассчитайте базу — это точка отсчёта для всех сценариев.'
-                  : 'Проверьте состав и условия, затем нажмите «Рассчитать». Расчёт занимает доли секунды.'
+                  : 'Проверьте состав и условия и нажмите «Рассчитать».'
               }
               action={
                 <Button onClick={saveAndCalculate} disabled={busy || problems.length > 0}>

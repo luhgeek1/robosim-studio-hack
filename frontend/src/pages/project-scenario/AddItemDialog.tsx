@@ -49,8 +49,8 @@ export function AddItemDialog({
                   type="button"
                   onClick={() => setProcessKey(p.process_key)}
                   className={cn(
-                    'w-full rounded-md px-2.5 py-2 text-left hover:bg-muted',
-                    p.process_key === current.process_key && 'bg-muted font-medium',
+                    'w-full rounded-md px-2.5 py-2 text-left hover:bg-raised',
+                    p.process_key === current.process_key && 'bg-raised font-medium',
                   )}
                 >
                   <div className="leading-snug">{p.name}</div>
@@ -63,7 +63,7 @@ export function AddItemDialog({
                 <p className="text-muted-foreground">{current.no_fit_message ?? 'Подходящих решений нет.'}</p>
               )}
               {candidates.map((c) => (
-                <div key={c.product.id} className="flex items-center gap-3 rounded-lg border p-3">
+                <div key={c.product.id} className="flex items-center gap-3 rounded-md border p-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{c.product.name}</span>

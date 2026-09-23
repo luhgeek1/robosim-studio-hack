@@ -39,15 +39,17 @@ export function TrustPanel({ projectId }: { projectId: string }) {
   const total = noImpact ? toClarify.filter((i) => i.status !== 'default').length : toClarify.length
 
   return (
-    <Section title="Панель доверия" description="Откуда взяты параметры объекта и что стоит уточнить в первую очередь">
-      <div className="mb-4 flex items-baseline gap-3">
-        <span className="num shrink-0 text-2xl font-semibold tracking-tight whitespace-nowrap">
-          {formatPct(summary.score, { share: true, digits: 0 })}
+    <Section
+      title="Панель доверия"
+      actions={
+        <span className="flex items-baseline gap-2">
+          <span className="num text-xl leading-none font-semibold">
+            {formatPct(summary.score, { share: true, digits: 0 })}
+          </span>
+          <span className="text-xs text-muted-foreground">введено или подтверждено</span>
         </span>
-        <span className="text-xs text-muted-foreground">
-          индекс доверия — взвешенная доля введённых и подтверждённых значений среди влияющих на результат
-        </span>
-      </div>
+      }
+    >
       <DataQualityBar summary={summary} />
 
       <div className="mt-5">
@@ -68,7 +70,7 @@ export function TrustPanel({ projectId }: { projectId: string }) {
                 <button
                   type="button"
                   onClick={() => scrollToParam(item.key)}
-                  className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-muted"
+                  className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-raised"
                   title={item.source_title ? `${item.name} · ${item.source_title}` : item.name}
                 >
                   <span className="min-w-0 flex-1 truncate">{item.name}</span>
@@ -83,8 +85,7 @@ export function TrustPanel({ projectId }: { projectId: string }) {
         )}
         {noImpact && (
           <p className="mt-2 text-xs text-muted-foreground">
-            Оценки влияния параметров на результат пока нет, поэтому порядок такой: сначала «нет данных», затем
-            допущения.
+            Влияние на результат появится после расчёта сценария; пока сначала пропуски, затем допущения.
           </p>
         )}
       </div>

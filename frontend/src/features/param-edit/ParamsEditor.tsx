@@ -66,8 +66,8 @@ export function ParamsEditor({
 
   return (
     <div className="grid grid-cols-[11.5rem_minmax(0,1fr)] items-start gap-6">
-      <nav className="sticky top-20 space-y-3" aria-label="Группы параметров">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Группы</div>
+      <nav className="sticky top-16 space-y-2" aria-label="Группы параметров">
+        <div className="px-2 text-xs text-muted-foreground">Группы</div>
         <ul className="space-y-0.5">
           {views.map((group) => (
             <li key={group.key}>
@@ -77,7 +77,7 @@ export function ParamsEditor({
                 onClick={() =>
                   document.getElementById(`group-${group.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-raised disabled:opacity-40 disabled:hover:bg-transparent"
               >
                 <span className="min-w-0 flex-1 leading-snug">{group.name}</span>
                 {group.issues > 0 && <ToneDot tone="warn" />}
@@ -119,8 +119,8 @@ export function ParamsEditor({
             />
           </div>
           <span className="ml-auto text-xs text-muted-foreground">
-            Показано <span className="num">{shown}</span> из <span className="num">{params.length}</span>. Значение
-            сохраняется при выходе из поля или по Enter, Esc — отмена.
+            <span className="num">{shown}</span> из <span className="num">{params.length}</span> · сохраняется по Enter
+            или при выходе из поля
           </span>
         </div>
 
@@ -134,9 +134,9 @@ export function ParamsEditor({
         {views
           .filter((group) => group.params.length > 0)
           .map((group) => (
-            <section key={group.key} id={`group-${group.key}`} className="scroll-mt-20 rounded-xl border bg-card">
+            <section key={group.key} id={`group-${group.key}`} className="scroll-mt-16 rounded-lg border bg-surface">
               <header className="flex items-baseline justify-between gap-3 border-b px-4 py-3">
-                <h2 className="text-base font-semibold">{group.name}</h2>
+                <h2 className="text-[15px] font-semibold">{group.name}</h2>
                 <span className="text-xs text-muted-foreground">
                   <span className="num">{group.total}</span>{' '}
                   {pluralRu(group.total, ['параметр', 'параметра', 'параметров'])}{' '}
@@ -147,7 +147,7 @@ export function ParamsEditor({
                   )}
                 </span>
               </header>
-              <div className={cn(PARAM_GRID, 'border-b bg-muted/40 py-1.5 pr-2 pl-3.5 text-xs text-muted-foreground')}>
+              <div className={cn(PARAM_GRID, 'border-b bg-raised/60 py-1.5 pr-2 pl-3.5 text-xs text-muted-foreground')}>
                 <span>Параметр</span>
                 <span>Значение</span>
                 <span>Диапазон и пример</span>

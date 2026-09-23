@@ -3,7 +3,6 @@ import { Navigate, useLocation, useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
 import { problemText } from '@/shared/api/problem'
 import { Button } from '@/shared/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Spinner } from '@/shared/ui/states'
@@ -16,6 +15,8 @@ const DEMO_ACCOUNTS = [
   { email: 'admin@roboscope.demo', label: 'Администратор', hint: 'каталог и нормативы' },
   { email: 'vendor@roboscope.demo', label: 'Производитель', hint: 'свои продукты' },
 ]
+
+const STEPS = ['Объект', 'Где деньги', 'Подбор', 'Планировка', 'Расчёт', 'Сравнение', 'Риски']
 
 export function LoginPage() {
   const { status, login, register } = useSession()
@@ -55,16 +56,27 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <div className="grid w-full max-w-4xl gap-6 md:grid-cols-[1.1fr_1fr]">
-        <div className="flex flex-col justify-center space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight">Экспресс-оценка роботизации объекта</h1>
-          <p className="text-base text-muted-foreground">
-            Подбор решений из каталога под параметры склада, аэропорта или больницы, количество роботов из времени цикла
-            на планировке, экономика «как сейчас / покупка / RaaS / лизинг» — и у каждого числа есть формула и источник.
+    <div className="flex flex-1 items-center justify-center px-6 py-10">
+      <div className="grid w-full max-w-5xl gap-10 md:grid-cols-[1.2fr_minmax(0,380px)] md:items-center">
+        <div className="space-y-7">
+          <h1 className="max-w-lg text-[34px] leading-[1.1] font-semibold tracking-tight">
+            Сколько роботов нужно объекту и когда они окупятся
+          </h1>
+          <p className="max-w-lg text-base text-muted-foreground">
+            Каталог решений, подбор под параметры склада, аэропорта или больницы, количество роботов из времени цикла на
+            планировке и экономика «как сейчас / покупка / RaaS / лизинг». У каждого числа есть формула и источник.
           </p>
-          <div className="space-y-2">
-            <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Демо-доступ</div>
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {STEPS.map((step, i) => (
+              <li key={step} className="flex items-center gap-2">
+                <span className="num text-muted-foreground/60">{i + 1}</span>
+                {step}
+                {i < STEPS.length - 1 && <span className="ml-1 h-px w-4 bg-border" aria-hidden />}
+              </li>
+            ))}
+          </ol>
+          <div className="space-y-2 pt-2">
+            <div className="text-xs text-muted-foreground">Демо-доступ для жюри</div>
             <div className="grid gap-2 sm:grid-cols-3">
               {DEMO_ACCOUNTS.map((account) => (
                 <Button
@@ -82,95 +94,90 @@ export function LoginPage() {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Вход в платформу</CardTitle>
-            <CardDescription>Каталог решений доступен без входа.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login">
-              <TabsList className="mb-4 w-full">
-                <TabsTrigger value="login">Вход</TabsTrigger>
-                <TabsTrigger value="register">Регистрация</TabsTrigger>
-              </TabsList>
-              <TabsContent value="login">
-                <form onSubmit={onLogin} className="space-y-3">
-                  <Field id="email" label="Эл. почта">
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      autoComplete="email"
-                      placeholder="name@company.ru"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </Field>
-                  <Field id="password" label="Пароль">
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </Field>
-                  {error && <p className="text-sm text-crit">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={pending}>
-                    {pending && <Spinner />} Войти
-                  </Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="register">
-                <form onSubmit={onRegister} className="space-y-3">
-                  <Field id="r-name" label="Имя">
-                    <Input
-                      id="r-name"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Иван Петров"
-                    />
-                  </Field>
-                  <Field id="r-org" label="Организация (необязательно)">
-                    <Input
-                      id="r-org"
-                      value={organization}
-                      onChange={(e) => setOrganization(e.target.value)}
-                      placeholder="ООО «Логистика»"
-                    />
-                  </Field>
-                  <Field id="r-email" label="Эл. почта">
-                    <Input
-                      id="r-email"
-                      type="email"
-                      required
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </Field>
-                  <Field id="r-password" label="Пароль (не короче 8 символов)">
-                    <Input
-                      id="r-password"
-                      type="password"
-                      required
-                      minLength={8}
-                      autoComplete="new-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </Field>
-                  {error && <p className="text-sm text-crit">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={pending}>
-                    {pending && <Spinner />} Зарегистрироваться
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border bg-surface p-5">
+          <Tabs defaultValue="login">
+            <TabsList className="mb-4 w-full">
+              <TabsTrigger value="login">Вход</TabsTrigger>
+              <TabsTrigger value="register">Регистрация</TabsTrigger>
+            </TabsList>
+            <TabsContent value="login">
+              <form onSubmit={onLogin} className="space-y-3">
+                <Field id="email" label="Эл. почта">
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="name@company.ru"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Field>
+                <Field id="password" label="Пароль">
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </Field>
+                {error && <p className="text-sm text-crit">{error}</p>}
+                <Button type="submit" className="w-full" disabled={pending}>
+                  {pending && <Spinner />} Войти
+                </Button>
+              </form>
+            </TabsContent>
+            <TabsContent value="register">
+              <form onSubmit={onRegister} className="space-y-3">
+                <Field id="r-name" label="Имя">
+                  <Input
+                    id="r-name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Иван Петров"
+                  />
+                </Field>
+                <Field id="r-org" label="Организация (необязательно)">
+                  <Input
+                    id="r-org"
+                    value={organization}
+                    onChange={(e) => setOrganization(e.target.value)}
+                    placeholder="ООО «Логистика»"
+                  />
+                </Field>
+                <Field id="r-email" label="Эл. почта">
+                  <Input
+                    id="r-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Field>
+                <Field id="r-password" label="Пароль (не короче 8 символов)">
+                  <Input
+                    id="r-password"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </Field>
+                {error && <p className="text-sm text-crit">{error}</p>}
+                <Button type="submit" className="w-full" disabled={pending}>
+                  {pending && <Spinner />} Зарегистрироваться
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+          <p className="mt-4 text-xs text-muted-foreground">Каталог решений открыт без входа.</p>
+        </div>
       </div>
     </div>
   )

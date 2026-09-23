@@ -19,9 +19,9 @@ function Soon({
       <PageHeader title={title} description={description} />
       <EmptyState
         icon={icon}
-        title="Экран появится вместе с эндпоинтами бэкенда"
+        title="Экран в работе"
         description={
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-left">
+          <ul className="mt-1 list-disc space-y-1 pl-5">
             {items.map((item) => (
               <li key={item}>{item}</li>
             ))}

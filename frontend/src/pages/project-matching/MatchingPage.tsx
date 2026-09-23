@@ -10,7 +10,7 @@ import { formatDateTime, formatNumber } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
-import { PageHeader, Stat } from '@/shared/ui/page'
+import { PageHeader, Stat, StatStrip } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { ToneBadge, ToneDot } from '@/shared/ui/tone'
 import { CandidateCard } from './CandidateCard'
@@ -38,9 +38,8 @@ export function MatchingPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16">
       <PageHeader
-        eyebrow="Подбор решений"
         title="Подбор решений"
-        description="Для каждого процесса — типы решений и продукты каталога: подходит, требует проверки или не подходит, с причинами и объяснимым баллом."
+        description="По каждому процессу: подходит, требует проверки или не подходит — с причинами и объяснимым баллом."
         actions={
           data && (
             <>
@@ -94,7 +93,7 @@ export function MatchingPage() {
       )}
 
       {compare.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl border bg-card px-4 py-2 shadow-lg">
+        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-raised px-4 py-2 shadow-xl">
           <span className="text-sm">
             Выбрано для сравнения: <span className="num font-medium">{compare.length}</span> из {MAX_COMPARE}
           </span>
@@ -133,7 +132,7 @@ function MatchingView({
 
   return (
     <>
-      <div className="grid grid-cols-4 gap-3">
+      <StatStrip columns={4}>
         <Stat
           label="Подходит"
           value={formatNumber(data.totals?.fit)}
@@ -155,9 +154,9 @@ function MatchingView({
         <Stat
           label="Каталог"
           value={<span className="text-base">версия {data.catalog_version}</span>}
-          hint={`подбор от ${formatDateTime(data.computed_at)} · данные объекта v${data.project_version}`}
+          hint={`подбор от ${formatDateTime(data.computed_at)}, данные объекта v${data.project_version}`}
         />
-      </div>
+      </StatStrip>
 
       {data.processes.length === 0 ? (
         <EmptyState
@@ -166,7 +165,7 @@ function MatchingView({
         />
       ) : (
         <div className="grid grid-cols-[260px_1fr] items-start gap-6">
-          <nav className="sticky top-20 space-y-1" aria-label="Процессы">
+          <nav className="sticky top-16 space-y-1" aria-label="Процессы">
             {data.processes.map((process) => {
               const counts = countByStatus(process.candidates)
               const active = process === selected
@@ -177,7 +176,7 @@ function MatchingView({
                   onClick={() => setParams({ process: process.process_key }, { replace: true })}
                   className={cn(
                     'w-full rounded-lg border px-3 py-2 text-left transition-colors',
-                    active ? 'border-primary/40 bg-card shadow-sm' : 'border-transparent hover:bg-card',
+                    active ? 'border-primary/50 bg-surface' : 'border-transparent hover:bg-surface',
                   )}
                 >
                   <div className="text-sm leading-snug font-medium">{process.name}</div>
@@ -225,7 +224,7 @@ function ProcessView({
   return (
     <div className="min-w-0 space-y-5">
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">{process.name}</h2>
+        <h2 className="text-[17px] font-semibold">{process.name}</h2>
         {process.demand_summary && (
           <p className="text-muted-foreground">
             Спрос: <span className="num">{process.demand_summary}</span>
@@ -237,7 +236,7 @@ function ProcessView({
               key={type.key}
               className={cn(
                 'rounded-lg border px-3 py-1.5 text-xs',
-                type.applicable ? 'bg-card' : 'border-dashed bg-transparent text-muted-foreground',
+                type.applicable ? 'bg-surface' : 'border-dashed bg-transparent text-muted-foreground',
               )}
               title={type.reason ?? undefined}
             >
@@ -255,7 +254,7 @@ function ProcessView({
       </div>
 
       {process.no_fit_message && (
-        <div className="rounded-xl border border-warn/25 bg-warn-soft p-4 text-warn">{process.no_fit_message}</div>
+        <div className="rounded-lg border border-l-2 border-l-warn bg-surface px-4 py-3">{process.no_fit_message}</div>
       )}
 
       {groups.length === 0 && (

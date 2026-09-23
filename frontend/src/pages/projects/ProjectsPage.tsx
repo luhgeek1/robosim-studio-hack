@@ -35,11 +35,7 @@ export function ProjectsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl p-6">
-      <PageHeader
-        title="Проекты"
-        description="Каждый проект — один объект: параметры, подбор решений, сценарии и расчёт. Копия проекта сохраняет сценарии."
-        actions={<CreateProjectDialog trigger={newProject} />}
-      />
+      <PageHeader title="Проекты" actions={<CreateProjectDialog trigger={newProject} />} />
       {projects.isPending && <LoadingBlock rows={4} />}
       {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
       {projects.data && projects.data.items.length === 0 && (
@@ -50,7 +46,7 @@ export function ProjectsPage() {
         />
       )}
       {projects.data && projects.data.items.length > 0 && (
-        <div className="grid gap-3">
+        <div className="divide-y overflow-hidden rounded-lg border bg-surface">
           {projects.data.items.map((project) => (
             <ProjectRow key={project.id} project={project} />
           ))}
@@ -67,7 +63,7 @@ function ProjectRow({ project }: { project: Project }) {
   const metrics = project.headline_metrics
 
   return (
-    <div className="group relative grid grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1.6fr)_auto] items-center gap-6 rounded-xl border bg-card px-5 py-4 transition-colors hover:border-primary/40">
+    <div className="group relative grid grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1.6fr)_auto] items-center gap-6 px-5 py-4 transition-colors hover:bg-raised">
       <div className="min-w-0 space-y-1">
         <Link
           to={`/projects/${project.id}`}
@@ -77,7 +73,6 @@ function ProjectRow({ project }: { project: Project }) {
         </Link>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{OBJECT_TYPE_LABEL[project.object_type]}</span>
-          <span>·</span>
           <span>обновлён {formatDateTime(project.updated_at)}</span>
           {project.is_demo && <ToneBadge tone="info">демо-данные</ToneBadge>}
         </div>

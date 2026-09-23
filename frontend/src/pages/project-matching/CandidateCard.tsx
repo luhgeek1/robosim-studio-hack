@@ -1,4 +1,4 @@
-import { ChevronRight, CircleHelp, FileQuestion, Info } from 'lucide-react'
+import { ChevronRight, CircleHelp, Info } from 'lucide-react'
 import { Link } from 'react-router'
 import { BADGE_LABEL, PRODUCT_STATUS_LABEL } from '@/entities/catalog'
 import { CANDIDATE_STATUS_LABEL, CRITERION_LABEL } from '@/entities/matching'
@@ -13,6 +13,9 @@ import { TONE_TEXT } from '@/shared/ui/tone-classes'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_TONE, STATUS_TONE } from './labels'
 
+// Отметки, которые говорят о проверке продукта, а не о его происхождении: «отечественный» и «есть внедрения» есть почти у всех.
+const VERIFIED_BADGES = new Set(['in_registry_719', 'tested_fcbas', 'specs_confirmed'])
+
 export function CandidateCard({
   candidate,
   selected,
@@ -25,6 +28,7 @@ export function CandidateCard({
   onSelectedChange: (value: boolean) => void
 }) {
   const { product, estimate } = candidate
+  const verified = (product.badges ?? []).filter((badge) => VERIFIED_BADGES.has(badge))
   const hasEstimate =
     estimate && (isNum(estimate.robots_count) || isNum(estimate.capex_rub) || isNum(estimate.payback_years))
   const byseverity = SEVERITY_ORDER.map((severity) => ({
@@ -33,7 +37,7 @@ export function CandidateCard({
   })).filter((g) => g.reasons.length > 0)
 
   return (
-    <article className={cn('rounded-xl border bg-card p-4', candidate.status === 'excluded' && 'bg-card/60')}>
+    <article className={cn('rounded-lg border bg-surface p-4', candidate.status === 'excluded' && 'opacity-80')}>
       <div className="flex items-start gap-3">
         <Checkbox
           className="mt-1"
@@ -67,10 +71,10 @@ export function CandidateCard({
               .filter(Boolean)
               .join(' · ')}
           </div>
-          {(product.badges?.length ?? 0) > 0 && (
+          {verified.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-0.5">
-              {product.badges!.map((badge) => (
-                <ToneBadge key={badge} tone="muted">
+              {verified.map((badge) => (
+                <ToneBadge key={badge} tone="ok">
                   {BADGE_LABEL[badge] ?? badge}
                 </ToneBadge>
               ))}
@@ -81,7 +85,7 @@ export function CandidateCard({
       </div>
 
       {hasEstimate && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg bg-muted/50 px-3 py-2 text-xs">
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 rounded-md bg-raised px-3 py-2 text-xs">
           <span className="text-muted-foreground">Быстрая оценка:</span>
           <span>
             Роботов: <span className="num font-medium">{formatValue(estimate?.robots_count, 'шт')}</span>
@@ -131,22 +135,6 @@ export function CandidateCard({
               </div>
             ),
           )}
-        </div>
-      )}
-
-      {candidate.missing_data.length > 0 && (
-        <div className="mt-3 space-y-1 rounded-lg border border-dashed border-warn/40 px-3 py-2 text-xs">
-          <div className="flex items-center gap-1.5 font-medium text-warn">
-            <FileQuestion className="size-3.5" /> Не хватает данных в карточке продукта
-          </div>
-          <ul className="space-y-0.5">
-            {candidate.missing_data.map((item) => (
-              <li key={item.spec_key}>
-                <span className="font-medium">нет данных: {item.name}</span>
-                <span className="text-muted-foreground"> — {item.why_needed}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
     </article>
@@ -201,7 +189,7 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group shrink-0 rounded-lg px-2 py-1 text-right hover:bg-muted"
+          className="group shrink-0 rounded-lg px-2 py-1 text-right hover:bg-raised"
           aria-label="Из чего сложился балл"
         >
           <div className="num text-xl font-semibold">
