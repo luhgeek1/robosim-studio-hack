@@ -62,18 +62,19 @@ const BOX_Y_TIMES = [0, T.gateOpen, T.land, 0.165, 0.18, 0.905, 0.91, 1]
 const BOX_Y = [CHUTE_Y, CHUTE_Y, BOX_REST_Y, BOX_REST_Y - 5, BOX_REST_Y, BOX_REST_Y, CHUTE_Y - 50, CHUTE_Y]
 const BOX_Y_EASE = [linear, easeIn, easeOut, easeIn, linear, linear, easeOut]
 
-// The lane is the project path: the object is loaded at the chute, the report leaves on the conveyor,
-// and the steps in between light up as the robot drives past them.
+// The lane is a short version of the project path: the object is loaded at the chute, the report leaves
+// on the conveyor, and the key steps in between light up as the robot drives past them.
+const LANE_STEPS = PROJECT_STEPS.filter((step) =>
+  ['object', 'matching', 'scenarios', 'simulation', 'report'].includes(step.id),
+)
 const OBJECT_X = PICK_X + ROBOT_W / 2
 const REPORT_X = CONVEYOR_X + 50
 const cruiseStartCenter = PICK_X + ACCEL_DX + ROBOT_W / 2
-const cruiseEndCenter = DROP_X - BRAKE_DX + ROBOT_W / 2
 const passTime = (x: number) => T.cruise + (x - cruiseStartCenter) / SPEED
-const gap = (cruiseEndCenter - cruiseStartCenter - 40) / (PROJECT_STEPS.length - 3)
-const MARKERS = PROJECT_STEPS.map((step, i) => {
+const MARKERS = LANE_STEPS.map((step, i) => {
   if (i === 0) return { label: step.label, x: OBJECT_X, lit: T.land }
-  if (i === PROJECT_STEPS.length - 1) return { label: step.label, x: REPORT_X, lit: REPORT_AT }
-  const x = cruiseStartCenter + 40 + gap * (i - 1)
+  if (i === LANE_STEPS.length - 1) return { label: step.label, x: REPORT_X, lit: REPORT_AT }
+  const x = OBJECT_X + ((REPORT_X - OBJECT_X) * i) / (LANE_STEPS.length - 1)
   return { label: step.label, x, lit: passTime(x) }
 })
 
@@ -149,7 +150,7 @@ export function DeliveryScene() {
   const gate = useTransform(progress, [0, T.gateOpen - 0.01, T.gateOpen, 0.2, T.go, 1], [1, 1, 0, 0, 1, 1])
 
   return (
-    <svg viewBox={`0 34 ${W} 334`} className="h-auto w-full" aria-hidden>
+    <svg viewBox={`0 34 ${W} 312`} className="h-auto w-full" aria-hidden>
       <defs>
         <linearGradient id={gradientId} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0" stopColor="var(--info)" stopOpacity="0.35" />
@@ -288,12 +289,10 @@ function Marker({
   progress: MotionValue<number>
 }) {
   const opacity = useTransform(progress, [0, lit, lit + 0.01, 0.95, 1], [0, 0, 1, 1, 0])
-  // Neighbouring labels alternate rows so long step names do not collide.
-  const labelY = LANE + (index % 2 ? 48 : 29)
+  const labelY = LANE + 30
   const number = String(index + 1)
   return (
     <g>
-      <line x1={x} x2={x} y1={LANE + 9} y2={labelY - 12} stroke="var(--border)" />
       <circle cx={x} cy={LANE} r="8" fill="var(--card)" stroke="var(--input)" />
       <text x={x} y={LANE + 3.5} textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--muted-foreground)">
         {number}
