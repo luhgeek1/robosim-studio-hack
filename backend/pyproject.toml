@@ -25,6 +25,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "jsonschema>=4.26.0",
     "mypy>=2.3.1",
     "pandas>=3.0.6",
     "pytest>=9.1.1",

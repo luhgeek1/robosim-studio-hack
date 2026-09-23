@@ -1931,8 +1931,10 @@ paths:
                   enum:
                     - simulation_png
                     - simulation_gif
+                    - chart_png
                 caption:
                   type: string
+                  maxLength: 300
       responses:
         '201':
           description: Сохранено
@@ -1940,6 +1942,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VisualUpload'
+        '413':
+          description: Файл больше 10 МБ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '415':
+          description: Принимаются PNG и GIF
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/projects/{project_id}/reports:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -2060,6 +2074,22 @@ paths:
         '200':
           description: Файл в исходном формате
           content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
             application/octet-stream:
               schema:
                 type: string
@@ -3127,7 +3157,9 @@ components:
           description: Человекочитаемая формула спроса
           example: приёмка + отгрузка, палл/сут
         sla:
-          type: object
+          type:
+            - object
+            - 'null'
           properties:
             kind:
               type: string
@@ -3183,7 +3215,9 @@ components:
         category:
           $ref: '#/components/schemas/NormCategory'
         range:
-          type: object
+          type:
+            - object
+            - 'null'
           properties:
             min:
               type: number
@@ -3430,7 +3464,9 @@ components:
             - 'null'
           format: uuid
         headline_metrics:
-          type: object
+          type:
+            - object
+            - 'null'
           description: Короткая сводка для карточки в списке (если есть расчёт).
           properties:
             payback_years:
@@ -3518,23 +3554,34 @@ components:
         demand_unit:
           $ref: '#/components/schemas/DemandUnit'
         demand_per_day:
-          type: number
+          type:
+            - number
+            - 'null'
           example: 100000
+          description: null — не хватает параметров для оценки спроса
         avg_per_hour:
-          type: number
+          type:
+            - number
+            - 'null'
           example: 4545
         peak_per_hour:
-          type: number
+          type:
+            - number
+            - 'null'
           example: 6818
         hourly_profile:
-          type: array
+          type:
+            - array
+            - 'null'
           minItems: 24
           maxItems: 24
           items:
             type: number
           description: Доли суточного объёма по часам (сумма = 1). Источник профиля — допущение с источником.
         profile_provenance:
-          $ref: '#/components/schemas/Provenance'
+          oneOf:
+            - $ref: '#/components/schemas/Provenance'
+            - type: 'null'
         current:
           type: object
           description: Как процесс выполняется сейчас.
@@ -3676,6 +3723,41 @@ components:
         updated_at:
           type: string
           format: date-time
+    LayoutPlan:
+      type: object
+      description: |
+        Геометрия планировки, на которой прошла имитация: прогон хранит свою копию, поэтому реплей показывает
+        ровно ту схему, по которой считался, даже если планировку проекта потом изменили.
+      required:
+        - width_m
+        - height_m
+        - zones
+        - racks
+        - nodes
+        - edges
+      properties:
+        width_m:
+          type: number
+          example: 200
+        height_m:
+          type: number
+          example: 100
+        zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Zone'
+        racks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rack'
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayoutNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayoutEdge'
     LayoutStats:
       type: object
       description: Что вытекает из геометрии — попадает в расчёт цикла и в имитацию.
@@ -3998,7 +4080,9 @@ components:
           items:
             $ref: '#/components/schemas/Norm'
         calibration:
-          type: object
+          type:
+            - object
+            - 'null'
           description: Сверка с методикой ФЦ БАС на их модельном кейсе (если применимо к типу решения).
           properties:
             reference:
@@ -4264,9 +4348,14 @@ components:
               rank:
                 type: integer
               provenance_status:
-                $ref: '#/components/schemas/ProvenanceStatus'
+                oneOf:
+                  - $ref: '#/components/schemas/ProvenanceStatus'
+                  - type: 'null'
+                description: null — группа параметров
         heatmap:
-          type: object
+          type:
+            - object
+            - 'null'
           properties:
             x_key:
               type: string
@@ -4573,7 +4662,9 @@ components:
             queue_max:
               type: integer
             energy_kwh:
-              type: number
+              type:
+                - number
+                - 'null'
         stations:
           type: object
           properties:
@@ -4610,8 +4701,10 @@ components:
               type: string
               example: 'Имитация подтверждает расчёт: 131 палл/ч против 136 (−4 %), SLA выполнен'
         baseline:
-          type: object
-          description: Тот же день ручным процессом (если compare_baseline).
+          type:
+            - object
+            - 'null'
+          description: Тот же день ручным процессом (если compare_baseline); пока не поддерживается — null.
           properties:
             throughput_per_hour:
               type: number
@@ -4660,7 +4753,7 @@ components:
           type: string
           format: uuid
         layout:
-          $ref: '#/components/schemas/Layout'
+          $ref: '#/components/schemas/LayoutPlan'
         robots:
           type: array
           items:
@@ -4677,7 +4770,9 @@ components:
               product_name:
                 type: string
               footprint_m:
-                type: array
+                type:
+                  - array
+                  - 'null'
                 items:
                   type: number
                 description: '[длина, ширина]'
@@ -4803,7 +4898,10 @@ components:
             - $ref: '#/components/schemas/FileRef'
             - type: 'null'
         versions:
-          $ref: '#/components/schemas/VersionStamp'
+          oneOf:
+            - $ref: '#/components/schemas/VersionStamp'
+            - type: 'null'
+          description: null, пока отчёт не собран
         sections:
           type: array
           items:
@@ -5617,11 +5715,17 @@ components:
             - export
             - override
         before:
-          type: object
+          type:
+            - object
+            - 'null'
           additionalProperties: true
+          description: null при создании
         after:
-          type: object
+          type:
+            - object
+            - 'null'
           additionalProperties: true
+          description: null при удалении
         note:
           type:
             - string
@@ -5795,7 +5899,9 @@ components:
           minimum: 0
           maximum: 1
         conflict_with_current:
-          type: object
+          type:
+            - object
+            - 'null'
           description: Если в проекте уже есть другое значение.
           properties:
             current_value:
@@ -6025,7 +6131,9 @@ components:
           type: number
           example: 22
         peak_factor:
-          type: number
+          type:
+            - number
+            - 'null'
           example: 1.5
     FileRef:
       type: object
@@ -6450,7 +6558,9 @@ components:
         name:
           type: string
         demand_summary:
-          type: string
+          type:
+            - string
+            - 'null'
           example: 136 палл/ч в пик, 2 000 палл/сут
         solution_types:
           type: array
@@ -6637,7 +6747,10 @@ components:
                 - integer
                 - 'null'
         candidate_status:
-          $ref: '#/components/schemas/CandidateStatus'
+          oneOf:
+            - $ref: '#/components/schemas/CandidateStatus'
+            - type: 'null'
+          description: null — позиция не из подбора
         notes:
           type:
             - string
@@ -7091,7 +7204,9 @@ components:
               type: number
               description: Доля времени в работе с учётом зарядки и простоев
             utilization_target:
-              type: number
+              type:
+                - number
+                - 'null'
             effective_throughput_per_hour:
               type:
                 - number
@@ -7876,7 +7991,9 @@ components:
               occupancy:
                 type: number
               queue_avg:
-                type: number
+                type:
+                  - number
+                  - 'null'
         nodes:
           type: array
           items:

@@ -185,6 +185,7 @@ components:
     ProjectParam: {$ref: './components/projects.yaml#/ProjectParam'}
     ProcessDemand: {$ref: './components/projects.yaml#/ProcessDemand'}
     Layout: {$ref: './components/projects.yaml#/Layout'}
+    LayoutPlan: {$ref: './components/projects.yaml#/LayoutPlan'}
     LayoutStats: {$ref: './components/projects.yaml#/LayoutStats'}
     LayoutTemplate: {$ref: './components/projects.yaml#/LayoutTemplate'}
     MatchingResult: {$ref: './components/analysis.yaml#/MatchingResult'}

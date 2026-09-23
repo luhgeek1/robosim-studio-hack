@@ -8,24 +8,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.errors import DomainError, ErrorCode
+from app.core.errors import STATUS_TITLES, DomainError, ErrorCode
 
 logger = logging.getLogger(__name__)
-
-_STATUS_TITLES = {
-    400: "Bad Request",
-    401: "Unauthorized",
-    403: "Forbidden",
-    404: "Not Found",
-    405: "Method Not Allowed",
-    409: "Conflict",
-    413: "Payload Too Large",
-    415: "Unsupported Media Type",
-    422: "Unprocessable Entity",
-    429: "Too Many Requests",
-    500: "Internal Server Error",
-    503: "Service Unavailable",
-}
 
 
 def problem_body(
@@ -38,7 +23,7 @@ def problem_body(
 ) -> dict[str, Any]:
     body: dict[str, Any] = {
         "type": "about:blank",
-        "title": _STATUS_TITLES.get(status, "Error"),
+        "title": STATUS_TITLES.get(status, "Error"),
         "status": status,
         "detail": detail,
         "error_code": error_code.value,

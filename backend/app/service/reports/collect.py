@@ -84,6 +84,7 @@ class ReportCollector:
         ]
         scenarios = [await self._scenario(c.scenario, c.stored.run) for c in compared]
         groups = {g.key: g.name for g in object_type.parameter_groups}
+        generated_at = datetime.now(UTC)
         model = ReportModel(
             title=request.title or f"Предварительная оценка роботизации: {project.name}",
             project={
@@ -93,11 +94,12 @@ class ReportCollector:
                 "organization": project.organization,
                 "version": project.version,
             },
-            generated_at=datetime.now(UTC),
+            generated_at=generated_at,
             author=self._user.email,
             versions={
                 **(scenarios[0].result.get("versions", {}) if scenarios else {}),
                 "layout_version": await self._layout_version(project_id),
+                "computed_at": generated_at.isoformat(),
             },
             sections=request.sections or list(ReportSection),
             params=[

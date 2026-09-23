@@ -130,7 +130,7 @@ Report:
     format: {$ref: '#/ReportFormat'}
     status: {$ref: './common.yaml#/JobStatus'}
     file: {oneOf: [{$ref: './common.yaml#/FileRef'}, {type: "null"}]}
-    versions: {$ref: './common.yaml#/VersionStamp'}
+    versions: {oneOf: [{$ref: './common.yaml#/VersionStamp'}, {type: "null"}], description: "null, пока отчёт не собран"}
     sections: {type: array, items: {$ref: '#/ReportSection'}}
     disclaimer: {type: string, example: "Предварительная оценка. Результат требует верификации при обследовании объекта."}
     job_id: {type: [string, "null"], format: uuid, description: "Фоновая задача: прогресс — GET /jobs/{id} или SSE"}

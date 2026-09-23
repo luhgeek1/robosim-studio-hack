@@ -69,7 +69,7 @@ ProcessMatching:
   properties:
     process_key: {type: string}
     name: {type: string}
-    demand_summary: {type: string, example: "136 палл/ч в пик, 2 000 палл/сут"}
+    demand_summary: {type: [string, "null"], example: "136 палл/ч в пик, 2 000 палл/сут"}
     solution_types:
       type: array
       items:
@@ -167,7 +167,7 @@ ScenarioItem:
       type: object
       description: Для goods-to-person — станции отбора.
       properties: {count_mode: {$ref: '#/CountMode'}, count: {type: [integer, "null"]}}
-    candidate_status: {$ref: '#/CandidateStatus'}
+    candidate_status: {oneOf: [{$ref: '#/CandidateStatus'}, {type: "null"}], description: "null — позиция не из подбора"}
     notes: {type: [string, "null"]}
 
 ScenarioItemWrite:
@@ -409,7 +409,7 @@ SizingResult:
         cycle_time_s: {type: [number, "null"], description: "null — у модели нет цикла (площадь, станция) или количество задано вручную"}
         nominal_throughput_per_hour: {type: [number, "null"], description: "3600 / цикл"}
         availability: {type: number, description: "Доля времени в работе с учётом зарядки и простоев"}
-        utilization_target: {type: number}
+        utilization_target: {type: [number, "null"]}
         effective_throughput_per_hour: {type: [number, "null"]}
         vendor_claim_per_hour: {type: [number, "null"], description: "Заявка производителя — для сравнения"}
     count: {$ref: '#/CountResult'}
@@ -457,7 +457,7 @@ CalculationRun:
       description: Все нормативы и допущения, участвовавшие в расчёте — раздел «Допущения» отчёта.
       items: {$ref: './reference.yaml#/Norm'}
     calibration:
-      type: object
+      type: [object, "null"]
       description: Сверка с методикой ФЦ БАС на их модельном кейсе (если применимо к типу решения).
       properties:
         reference: {type: string, example: "ФЦ БАС, сценарий «Складские мобильные роботы», март 2026"}
@@ -621,9 +621,9 @@ SensitivityResult:
           metric_at_high: {type: [number, "null"]}
           swing: {type: number, description: "Размах метрики запроса (metric_at_high − metric_at_low по модулю) в её единицах; для окупаемости годы за горизонтом считаются равными горизонту"}
           rank: {type: integer}
-          provenance_status: {$ref: './common.yaml#/ProvenanceStatus'}
+          provenance_status: {oneOf: [{$ref: './common.yaml#/ProvenanceStatus'}, {type: "null"}], description: "null — группа параметров"}
     heatmap:
-      type: object
+      type: [object, "null"]
       properties:
         x_key: {type: string}
         y_key: {type: string}

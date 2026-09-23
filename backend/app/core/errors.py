@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -28,6 +29,38 @@ class ErrorCode(StrEnum):
     JOB_NOT_READY = "JOB_NOT_READY"
     LLM_UNAVAILABLE = "LLM_UNAVAILABLE"
     DEMO_LIMIT = "DEMO_LIMIT"
+
+
+STATUS_TITLES = {
+    400: "Bad Request",
+    401: "Unauthorized",
+    403: "Forbidden",
+    404: "Not Found",
+    405: "Method Not Allowed",
+    409: "Conflict",
+    413: "Payload Too Large",
+    415: "Unsupported Media Type",
+    422: "Unprocessable Entity",
+    429: "Too Many Requests",
+    500: "Internal Server Error",
+    503: "Service Unavailable",
+}
+
+
+def job_problem(
+    *, status: int, detail: str, error_code: ErrorCode, instance: str, job_id: str
+) -> dict[str, Any]:
+    """The Problem a failed background job stores: the envelope of an HTTP error, keyed by the job."""
+    return {
+        "type": "about:blank",
+        "title": STATUS_TITLES.get(status, "Error"),
+        "status": status,
+        "detail": detail,
+        "error_code": error_code.value,
+        "instance": instance,
+        "timestamp": datetime.now(UTC).isoformat(),
+        "request_id": job_id,
+    }
 
 
 class DomainError(Exception):

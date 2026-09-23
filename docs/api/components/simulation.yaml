@@ -116,7 +116,7 @@ SimulationSummary:
             properties: {edge_id: {type: string}, name: {type: string}, wait_s: {type: number}, share: {type: number}}
     chargers:
       type: object
-      properties: {count: {type: integer}, utilization: {type: number}, queue_max: {type: integer}, energy_kwh: {type: number}}
+      properties: {count: {type: integer}, utilization: {type: number}, queue_max: {type: integer}, energy_kwh: {type: [number, "null"]}}
     stations:
       type: object
       properties: {count: {type: integer}, utilization: {type: number}, queue_max: {type: integer}}
@@ -132,8 +132,8 @@ SimulationSummary:
         verdict: {type: string, enum: [confirmed, shortfall, excess]}
         text: {type: string, example: "Имитация подтверждает расчёт: 131 палл/ч против 136 (−4 %), SLA выполнен"}
     baseline:
-      type: object
-      description: Тот же день ручным процессом (если compare_baseline).
+      type: [object, "null"]
+      description: Тот же день ручным процессом (если compare_baseline); пока не поддерживается — null.
       properties: {throughput_per_hour: {type: number}, sla_achieved_pct: {type: number}, avg_lead_time_min: {type: number}}
     per_process:
       type: array
@@ -240,7 +240,7 @@ SimulationReplay:
   required: [simulation_id, layout, robots, total_seconds, from_s, to_s, events]
   properties:
     simulation_id: {type: string, format: uuid}
-    layout: {$ref: './projects.yaml#/Layout'}
+    layout: {$ref: './projects.yaml#/LayoutPlan'}
     robots:
       type: array
       items:
@@ -250,7 +250,7 @@ SimulationReplay:
           id: {type: string}
           process_key: {type: string}
           product_name: {type: string}
-          footprint_m: {type: array, items: {type: number}, description: "[длина, ширина]"}
+          footprint_m: {type: [array, "null"], items: {type: number}, description: "[длина, ширина]"}
           speed_mps: {type: number}
           home_node: {type: string}
     total_seconds: {type: number}
@@ -284,7 +284,7 @@ SimulationHeatmap:
       type: array
       items:
         type: object
-        properties: {zone_id: {type: string}, occupancy: {type: number}, queue_avg: {type: number}}
+        properties: {zone_id: {type: string}, occupancy: {type: number}, queue_avg: {type: [number, "null"]}}
     nodes:
       type: array
       items:
