@@ -83,6 +83,8 @@ export function Ugv({ v, accent }: ModelProps) {
   const a = L * 0.5
   const b = L * 0.45
   const trackH = H * 0.3
+  // Tracks and the object stand a centimetre off the floor: a rounded bottom resting on it z-fights with the floor fade.
+  const lift0 = 0.012
   const shoulderY = trackH + H * 0.2
   const T = 8
   useTick((t) => {
@@ -104,7 +106,7 @@ export function Ugv({ v, accent }: ModelProps) {
     })
     if (item.current) {
       const held = p > 2.5 && p < 6.6
-      item.current.position.set(held ? tx : L * 0.7, held ? shoulderY + ty - 0.17 : 0.06, 0)
+      item.current.position.set(held ? tx : L * 0.7, held ? shoulderY + ty - 0.17 : 0.06 + lift0, 0)
     }
     if (cam.current) cam.current.rotation.y = Math.sin(t * 0.7) * 0.7
   })
@@ -114,7 +116,7 @@ export function Ugv({ v, accent }: ModelProps) {
     <group position={[-L * 0.2, 0, 0]}>
       <BlobShadow w={L * 1.4} d={W * 1.4} />
       {[-1, 1].map((s) => (
-        <group key={s} position={[0, trackH / 2, s * (W / 2 - 0.08)]}>
+        <group key={s} position={[0, trackH / 2 + lift0, s * (W / 2 - 0.08)]}>
           <RoundedBox args={[L, trackH, 0.16]} radius={trackH * 0.45} smoothness={6} material={M.rubber} />
           {[-0.33, 0, 0.33].map((x) => (
             <Wheel key={x} r={trackH * 0.3} w={0.22} pos={[x * L, 0, 0]} drive={drive} />
@@ -219,7 +221,7 @@ export function RoboCafe({ v, accent }: ModelProps) {
         args={[L, counterY, W]}
         radius={0.08}
         smoothness={4}
-        position={[0, counterY / 2, 0]}
+        position={[0, counterY / 2 + 0.01, 0]}
         material={M.shell}
       />
       <RoundedBox args={[L, 0.3, W]} radius={0.08} smoothness={4} position={[0, H - 0.15, 0]} material={bodyMat} />
@@ -524,7 +526,7 @@ export function Exo({ v, accent }: ModelProps) {
   return (
     <group scale={k}>
       <BlobShadow w={1.4} d={0.9} />
-      <RoundedBox args={[1.5, 0.12, 0.7]} radius={0.04} smoothness={3} position={[0, 0.06, 0]} material={M.dark} />
+      <RoundedBox args={[1.5, 0.12, 0.7]} radius={0.04} smoothness={3} position={[0, 0.07, 0]} material={M.dark} />
       <group position={[0, 0.125, 0]}>
         <Lane drive={drive} length={1.4} width={0.6} />
       </group>
