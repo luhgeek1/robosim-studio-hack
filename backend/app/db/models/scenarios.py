@@ -70,6 +70,7 @@ class ScenarioItem(UuidPkMixin, Base):
         sa.ForeignKey("simulation_runs.id", ondelete="SET NULL", use_alter=True)
     )
     simulated_project_version: Mapped[int | None] = mapped_column(sa.Integer)
+    simulated_basis: Mapped[int | None] = mapped_column(sa.Integer)
     simulation_note: Mapped[str | None] = mapped_column(sa.Text)
 
     scenario: Mapped[Scenario] = relationship(back_populates="items")

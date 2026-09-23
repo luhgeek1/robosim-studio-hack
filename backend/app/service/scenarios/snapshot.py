@@ -232,6 +232,7 @@ class SnapshotBuilder:
             candidate_status=status.value,
             simulated_robots=simulated,
             simulation_id=item.simulation_id if simulated else None,
+            simulated_basis=item.simulated_basis if simulated else None,
         )
 
 

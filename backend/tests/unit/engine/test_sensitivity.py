@@ -1,5 +1,9 @@
+import math
+from dataclasses import replace
+
 import pytest
 
+from app.engine.calculation import calculate
 from app.engine.sensitivity import (
     GROUP_NAMES,
     DriverKind,
@@ -66,3 +70,24 @@ def test_monte_carlo_is_reproducible_with_seed() -> None:
 def test_spearman_detects_monotonic_relation() -> None:
     assert spearman([1, 2, 3, 4], [10, 20, 30, 45]) == pytest.approx(1.0)
     assert spearman([1, 2, 3, 4], [4, 3, 2, 1]) == pytest.approx(-1.0)
+
+
+def test_discount_rate_driver_moves_npv() -> None:
+    rate = norm_driver(INP.norms.get("discount_rate"), 0.1, 0.3)
+    _, items = tornado(INP, [rate], "npv_rub")
+    low, high = items[0].metric_at_low, items[0].metric_at_high
+    assert low is not None
+    assert high is not None
+    assert low > high
+
+
+def test_simulated_fleet_keeps_its_correction_when_inputs_move() -> None:
+    """N_sim = 8 at an analytic 14: slower robots raise the analytic N, and the simulated N follows it."""
+    base = calculate(INP)
+    analytic = base.sizing[0].count.analytic
+    simulated = replace(INP, items=[replace(INP.items[0], simulated_robots=8, simulated_basis=analytic)])
+    same = calculate(simulated).sizing[0].count
+    assert (same.source.value, same.simulated) == ("simulated", 8)
+    slower = calculate(apply(simulated, SPEED, 0.5)).sizing[0].count
+    assert slower.analytic > analytic
+    assert slower.simulated == math.ceil(8 * slower.analytic / analytic)

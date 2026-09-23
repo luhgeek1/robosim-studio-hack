@@ -133,6 +133,8 @@ Report:
     versions: {$ref: './common.yaml#/VersionStamp'}
     sections: {type: array, items: {$ref: '#/ReportSection'}}
     disclaimer: {type: string, example: "Предварительная оценка. Результат требует верификации при обследовании объекта."}
+    job_id: {type: [string, "null"], format: uuid, description: "Фоновая задача: прогресс — GET /jobs/{id} или SSE"}
+    error: {oneOf: [{$ref: './common.yaml#/Problem'}, {type: "null"}]}
     created_at: {type: string, format: date-time}
     finished_at: {type: [string, "null"], format: date-time}
 
@@ -149,7 +151,7 @@ VisualUpload:
     id: {type: string, format: uuid}
     kind: {type: string, enum: [simulation_png, simulation_gif, chart_png]}
     simulation_id: {type: [string, "null"], format: uuid}
-    file: {$ref: './common.yaml#/FileRef'}
+    file: {$ref: './common.yaml#/FileRef', description: "url ведёт на GET /files/{id}; снимок попадает в PDF через visual_ids"}
     caption: {type: [string, "null"]}
 
 # ---------------- Ассистент (LLM) ----------------

@@ -131,4 +131,5 @@ class EconomicsResult:
     overlay: list[CashflowRow]
     ramp_up_months: int
     metrics: Metrics
+    upfront: float = 0.0
     warnings: list[str] = field(default_factory=list)

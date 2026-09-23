@@ -269,5 +269,6 @@ def evaluate(inp: EconomicsInput, tracer: Tracer) -> EconomicsResult:
         overlay=outcome.overlay,
         ramp_up_months=int(inp.norms.value("implementation_months") + inp.norms.value("ramp_up_months")),
         metrics=metrics,
+        upfront=financing.upfront,
         warnings=[*annual.warnings, *outcome.events],
     )

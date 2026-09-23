@@ -276,6 +276,12 @@ class ScenarioService:
                 throughput_override_per_hour=item.throughput_override_per_hour,
                 override_reason=item.override_reason,
                 notes=item.notes,
+                # The fleet is the same whatever the financing: the sweep's answer carries over.
+                simulated_count=item.simulated_count,
+                simulation_id=item.simulation_id,
+                simulated_project_version=item.simulated_project_version,
+                simulated_basis=item.simulated_basis,
+                simulation_note=item.simulation_note,
             )
             for item in source.items
         ]
@@ -443,4 +449,5 @@ def _keep_simulation(old: list[ScenarioItem], new: list[ScenarioItem]) -> None:
             item.simulated_count = source.simulated_count
             item.simulation_id = source.simulation_id
             item.simulated_project_version = source.simulated_project_version
+            item.simulated_basis = source.simulated_basis
             item.simulation_note = source.simulation_note

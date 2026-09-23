@@ -296,6 +296,7 @@ def payload(
             "monthly": serializer.cashflow(economics.monthly),
             "yearly": serializer.cashflow(economics.yearly),
             "ramp_up_months": economics.ramp_up_months,
+            "upfront_rub": economics.upfront,
         },
         "cashflow_overlay": serializer.cashflow(economics.overlay),
         "metrics": asdict(economics.metrics),

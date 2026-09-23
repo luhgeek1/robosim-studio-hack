@@ -11,6 +11,7 @@ from app.api.v1 import (
     params,
     projects,
     reference,
+    reports,
     scenarios,
     simulations,
     system,
@@ -30,3 +31,4 @@ api_router.include_router(scenarios.router)
 api_router.include_router(calculations.router)
 api_router.include_router(analysis.router)
 api_router.include_router(simulations.router)
+api_router.include_router(reports.router)

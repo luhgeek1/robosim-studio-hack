@@ -447,6 +447,7 @@ CalculationRun:
         monthly: {type: array, items: {$ref: '#/CashflowPoint'}}
         yearly: {type: array, items: {$ref: '#/CashflowPoint'}}
         ramp_up_months: {type: integer, description: "Месяцы внедрения и разгона до полного эффекта"}
+        upfront_rub: {type: number, description: "Вложения в момент 0 (свои средства или первый взнос); в monthly они входят в месяц 1"}
     metrics: {$ref: '#/Metrics'}
     interpretation: {$ref: '#/Interpretation'}
     risks: {type: array, items: {$ref: '#/Risk'}}

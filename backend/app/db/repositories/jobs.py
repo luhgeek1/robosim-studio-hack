@@ -1,9 +1,10 @@
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Job
-from app.domain.jobs import JobInfo
+from app.domain.jobs import JobInfo, JobStatus
 
 
 def to_info(job: Job) -> JobInfo:
@@ -31,3 +32,17 @@ class JobRepository:
 
     def add(self, job: Job) -> None:
         self._session.add(job)
+
+    async def latest_sweep(self, scenario_id: UUID) -> Job | None:
+        statement = (
+            select(Job)
+            .where(
+                Job.status == JobStatus.DONE,
+                Job.payload["kind"].astext == "fleet_sweep",
+                Job.payload["scenario_id"].astext == str(scenario_id),
+            )
+            .order_by(Job.finished_at.desc())
+            .limit(1)
+        )
+        job: Job | None = await self._session.scalar(statement)
+        return job

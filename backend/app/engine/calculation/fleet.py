@@ -165,28 +165,21 @@ def resolve_count(
         )
     elif item.simulated_robots:
         share = ctx.books.norms.get("fleet_reserve_share")
-        reserve = math.ceil(item.simulated_robots * share.value)
-        final, source = item.simulated_robots + reserve, CountSource.SIMULATED
-        text = (
-            f"Аналитически {analytic}; имитация подтвердила SLA при {item.simulated_robots}; "
-            f"резерв +{reserve}"
-        )
-        simulated = Quantity(
-            "simulated_robots",
-            "Роботов по имитации (SLA выполнен)",
-            float(item.simulated_robots),
-            "шт",
-            InputKind.SIMULATION,
-        )
+        simulated = _simulated(ctx, ns, item, analytic)
+        count = int(simulated.value)
+        reserve = math.ceil(count * share.value)
+        final, source = count + reserve, CountSource.SIMULATED
+        text = f"Аналитически {analytic}; имитация подтвердила SLA при {count}; резерв +{reserve}"
         ctx.tr.record(
             f"{ns}.robots_total",
             "Роботов в процессе",
             final,
             "шт",
-            f"simulated_robots + ⌈simulated_robots × {share.key}⌉",
+            f"{simulated.key} + ⌈{simulated.key} × {share.key}⌉",
             [simulated, share],
             Section.SIZING,
         )
+        return CountResult(analytic, reserve, final, source, text, count, item.simulation_id)
     else:
         final, source = analytic + reserve, CountSource.ANALYTIC
         text = (
@@ -208,6 +201,34 @@ def resolve_count(
             Section.SIZING,
         )
     return CountResult(analytic, reserve, final, source, text, item.simulated_robots, item.simulation_id)
+
+
+def _simulated(ctx: Context, ns: str, item: ItemInput, analytic: int) -> Quantity:
+    """The sweep's fleet; when inputs move (sensitivity, Monte Carlo) it keeps the simulation's correction
+    to the cycle model: N = ⌈N_sim × N_cycle now / N_cycle at the sweep⌉ — unchanged inputs give N_sim."""
+    simulated = Quantity(
+        "simulated_robots",
+        "Роботов по имитации (SLA выполнен)",
+        float(item.simulated_robots or 0),
+        "шт",
+        InputKind.SIMULATION,
+    )
+    basis = item.simulated_basis
+    if not basis or not analytic or analytic == basis:
+        return simulated
+    at_sweep = Quantity(
+        "simulated_basis", "Роботов по циклу при переборе флота", float(basis), "шт", InputKind.SIMULATION
+    )
+    now = Quantity(f"{ns}.robots_analytic", "Роботов по расчёту", float(analytic), "шт", InputKind.METRIC)
+    return ctx.tr.record(
+        f"{ns}.simulated_robots",
+        "Роботов по имитации с поправкой к текущему расчёту",
+        float(max(1, math.ceil(simulated.value * analytic / basis))),
+        "шт",
+        f"⌈simulated_robots × {now.key} / simulated_basis⌉",
+        [simulated, now, at_sweep],
+        Section.SIZING,
+    ).as_quantity()
 
 
 def build_fleet_item(
@@ -314,7 +335,7 @@ def build_fleet_item(
         price=price,
         robots=robots,
         robots_working=working_q,
-        chargers=Quantity(f"{ns}.chargers", "Зарядных станций", float(chargers), "шт", metric),
+        chargers=chargers,
         stations=Quantity(f"{ns}.stations", "Станций отбора", float(stations or 0), "шт", metric),
         hours_per_day=demand["hours"].as_quantity(),
         coverage=coverage,
@@ -335,7 +356,7 @@ def build_fleet_item(
         outcome=outcome,
         count=count,
         stations=stations,
-        chargers=chargers,
+        chargers=int(chargers.value),
         fleet_per_hour=working * effective if effective else None,
         coverage=coverage.value,
         warnings=warnings,
@@ -355,18 +376,17 @@ def _simulated_robots(count: CountResult) -> Quantity:
 
 def _chargers(
     ctx: Context, ns: str, count: CountResult, outcome: SizingOutcome | None, robots: Quantity
-) -> int:
+) -> Quantity:
     if count.source == CountSource.ANALYTIC and outcome is not None and outcome.chargers is not None:
-        return outcome.chargers
+        return Quantity(f"{ns}.chargers", "Зарядных станций", float(outcome.chargers), "шт", InputKind.METRIC)
     per_charger = ctx.books.norms.get("robots_per_charging_station")
-    return int(
-        ctx.tr.record(
-            f"{ns}.chargers",
-            "Зарядных станций",
-            float(math.ceil(count.final / per_charger.value)),
-            "шт",
-            f"⌈{robots.key} / {per_charger.key}⌉",
-            [robots, per_charger],
-            Section.SIZING,
-        ).value
-    )
+    # A new key: the analytic sizing already recorded «chargers» for its own fleet size.
+    return ctx.tr.record(
+        f"{ns}.chargers_final",
+        "Зарядных станций для итогового парка",
+        float(math.ceil(count.final / per_charger.value)),
+        "шт",
+        f"⌈{robots.key} / {per_charger.key}⌉",
+        [robots, per_charger],
+        Section.SIZING,
+    ).as_quantity()

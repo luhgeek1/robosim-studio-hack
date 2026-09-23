@@ -208,13 +208,17 @@ def test_release_is_capped_by_the_work_itself() -> None:
     assert any("ограничено объёмом работ" in w for w in result.warnings)
 
 
+@pytest.mark.parametrize("simulated", [False, True])
 @pytest.mark.parametrize("kind", list(ScenarioKind))
-def test_every_metric_input_refers_to_an_earlier_step(kind: ScenarioKind) -> None:
+def test_every_metric_input_refers_to_an_earlier_step(kind: ScenarioKind, simulated: bool) -> None:
     """The trace is a graph: the report's live Excel formulas and the UI links follow these references."""
-    result = calculate(scenario(kind))
+    inp = scenario(kind)
+    if simulated and inp.items:
+        inp = replace(inp, items=[replace(inp.items[0], simulated_robots=8, simulated_basis=14)])
     seen: set[str] = set()
-    for step in result.trace:
+    for step in calculate(inp).trace:
         for quantity in step.inputs:
             if quantity.kind == InputKind.METRIC:
                 assert quantity.key in seen, (step.key, quantity.key)
+        assert step.key not in seen, step.key
         seen.add(step.key)
