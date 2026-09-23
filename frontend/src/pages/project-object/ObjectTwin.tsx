@@ -5,6 +5,7 @@ import { parseApiProblem } from '@/shared/api/problem'
 import type { Layout, ObjectType } from '@/shared/api/types'
 import { formatNumber, isNum } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog'
 import { ErrorBlock, Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { Segmented } from '@/shared/ui/v0'
@@ -71,6 +72,59 @@ export function ObjectTwin({ projectId, objectType }: { projectId: string; objec
 // The plan fills the card like the 3D scene; at «Целиком» the building stays clear of the switch above
 // and the numbers and toolbar below.
 const PLAN_PAD: FitPadding = { x: 32, top: 76, bottom: 100 }
+const MODAL_PLAN_PAD: FitPadding = { x: 48, top: 80, bottom: 80 }
+
+// One stage for the card and the full-screen dialog: the 3D scene or the 2D plan under a centered switch.
+// Without `onExpand` (inside the dialog) the toolbars keep their own «?» and «Целиком».
+function TwinStage({
+  layout,
+  view,
+  onViewChange,
+  fitPadding,
+  onExpand,
+  switchId,
+}: {
+  layout: Layout
+  view: TwinView
+  onViewChange: (view: TwinView) => void
+  fitPadding: FitPadding
+  onExpand?: () => void
+  switchId: string
+}) {
+  return (
+    <>
+      {/* The 2D plan is the same map as on «Планировка»; like the 3D scene it fills the stage under the overlays. */}
+      {view === '3d' ? (
+        <Twin layout={layout} switcher={false} toolbarPlacement="bottom-right" onExpand={onExpand} />
+      ) : (
+        <div className="absolute inset-0">
+          <LayoutMap
+            layout={layout}
+            fill
+            legend={false}
+            infoCorner="top-left"
+            fitPadding={fitPadding}
+            onExpand={onExpand}
+            className="h-full rounded-none border-0"
+            toolbarClassName="top-auto right-4 bottom-4 bg-white/95 shadow-card"
+          />
+        </div>
+      )}
+      <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-[12px] bg-white/90 p-1 shadow-card backdrop-blur">
+        <Segmented
+          size="sm"
+          layoutId={switchId}
+          value={view}
+          onChange={onViewChange}
+          options={[
+            { value: '3d', label: <ViewLabel icon={<Rotate3d size={14} />}>3D-двойник</ViewLabel> },
+            { value: '2d', label: <ViewLabel icon={<MapIcon size={14} />}>2D-план</ViewLabel> },
+          ]}
+        />
+      </div>
+    </>
+  )
+}
 
 function LayoutTwin({
   layout,
@@ -90,36 +144,35 @@ function LayoutTwin({
   if (isNum(stats.rack_slots_total)) numbers.push([formatNumber(stats.rack_slots_total), 'паллетомест на схеме'])
   if (isNum(route)) numbers.push([`${formatNumber(route)} м`, 'средний путь от ворот до места'])
 
+  const [expanded, setExpanded] = useState(false)
+
   return (
     <>
-      {/* The 2D plan is the same map as on «Планировка»; like the 3D scene it fills the card under the overlays. */}
-      {view === '3d' ? (
-        <Twin layout={layout} switcher={false} toolbarPlacement="bottom-right" />
-      ) : (
-        <div className="absolute inset-0">
-          <LayoutMap
+      <TwinStage
+        layout={layout}
+        view={view}
+        onViewChange={setView}
+        fitPadding={PLAN_PAD}
+        onExpand={() => setExpanded(true)}
+        switchId="object-twin-view"
+      />
+      <Dialog open={expanded} onOpenChange={setExpanded}>
+        <DialogContent
+          className="block h-[90vh] w-[90vw] max-w-none overflow-hidden p-0 sm:max-w-none"
+          overlayClassName="bg-black/25 supports-backdrop-filter:backdrop-blur-md"
+          // Focusing the first control would pop the route-graph tooltip over the map on open.
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <DialogTitle className="sr-only">Планировка объекта</DialogTitle>
+          <TwinStage
             layout={layout}
-            fill
-            legend={false}
-            infoCorner="top-left"
-            fitPadding={PLAN_PAD}
-            className="h-full rounded-none border-0"
-            toolbarClassName="top-auto right-4 bottom-4 bg-white/95 shadow-card"
+            view={view}
+            onViewChange={setView}
+            fitPadding={MODAL_PLAN_PAD}
+            switchId="object-twin-view-modal"
           />
-        </div>
-      )}
-      <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-[12px] bg-white/90 p-1 shadow-card backdrop-blur">
-        <Segmented
-          size="sm"
-          layoutId="object-twin-view"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: '3d', label: <ViewLabel icon={<Rotate3d size={14} />}>3D-двойник</ViewLabel> },
-            { value: '2d', label: <ViewLabel icon={<MapIcon size={14} />}>2D-план</ViewLabel> },
-          ]}
-        />
-      </div>
+        </DialogContent>
+      </Dialog>
       <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
         {layout.warnings.length > 0 && (
           <Tooltip>

@@ -47,6 +47,8 @@ export type LayoutMapProps = {
   infoCorner?: 'bottom' | 'top-left'
   /** Free space kept around the building at «Целиком», for hosts that lay their own overlays over the map. */
   fitPadding?: FitPadding
+  /** When set, «Целиком» opens the plan full screen instead of fitting it in place. */
+  onExpand?: () => void
   /** Overlay in meter coordinates (robots, heat spots); `view.k` is pixels per meter for constant-size marks. */
   children?: ReactNode | ((view: LayoutMapView) => ReactNode)
 }
@@ -65,6 +67,7 @@ export function LayoutMap({
   toolbarClassName,
   infoCorner = 'bottom',
   fitPadding,
+  onExpand,
   children,
 }: LayoutMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -131,7 +134,7 @@ export function LayoutMap({
           <Button size="icon-sm" variant="ghost" onClick={() => zoomCenter(1 / 1.4)} aria-label="Отдалить">
             <Minus />
           </Button>
-          <Button size="sm" variant="ghost" onClick={fit} aria-label="Показать целиком">
+          <Button size="sm" variant="ghost" onClick={onExpand ?? fit} aria-label="Показать целиком">
             <Maximize2 /> Целиком
           </Button>
         </div>
