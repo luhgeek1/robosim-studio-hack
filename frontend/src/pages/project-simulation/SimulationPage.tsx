@@ -406,7 +406,7 @@ function SimulationView({
                 value={live.throughput}
                 unit="ед/ч"
                 hint={`нужно ${formatNumber(target)}`}
-                tone={live.throughput >= target ? 'neutral' : 'crit'}
+                tone={live.throughput >= target * 0.95 || live.sla >= slaTarget ? 'neutral' : 'crit'}
               />
               <Kpi
                 label="Очередь"
