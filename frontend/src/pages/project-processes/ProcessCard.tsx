@@ -6,7 +6,7 @@ import { useMatching } from '@/entities/matching'
 import { useProjectId } from '@/entities/project'
 import { ProvenanceBadge } from '@/entities/provenance'
 import type { ProcessDemand, ProcessMatching } from '@/shared/api/types'
-import { formatNumber, formatPct, formatRub, pluralRu } from '@/shared/lib/format'
+import { formatNumber, formatPct, formatRub } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { DEMAND_UNIT_LABEL } from './labels'
 
@@ -37,11 +37,6 @@ export function ProcessCard({
                 <span className={cn('size-1.5 rounded-full', process.robotizable ? 'bg-ok' : 'bg-ink-4')} />
                 {process.robotizable ? 'Можно роботизировать' : 'Роботизация не предусмотрена'}
               </span>
-              {solutions.length > 0 && (
-                <span className="truncate">
-                  · {solutions.length} {pluralRu(solutions.length, ['тип решений', 'типа решений', 'типов решений'])}
-                </span>
-              )}
             </p>
           </div>
           <div className="shrink-0 text-right">
