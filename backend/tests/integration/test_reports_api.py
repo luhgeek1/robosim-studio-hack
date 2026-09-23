@@ -161,7 +161,7 @@ async def test_foreign_user_cannot_see_reports_or_files(client: AsyncClient) -> 
     project_id, headers = await _demo(client)
     await _purchase(client, headers, project_id)
     report = await _report(client, headers, project_id, format="json")
-    stranger = bearer((await login(client, "vendor@roboscope.demo"))["access"])
+    stranger = bearer((await login(client, "vendor@robomera.demo"))["access"])
     assert (await client.get(f"/api/v1/reports/{report['id']}", headers=stranger)).status_code in {403, 404}
     download = await client.get(f"/api/v1/reports/{report['id']}/download", headers=stranger)
     assert download.status_code in {403, 404}

@@ -1,4 +1,4 @@
-# RoboScope — что реализовано
+# РобоМера — что реализовано
 
 Живой журнал состояния проекта для команды и AI-агентов. Источник продуктовой истины — `PROJECT_CONTEXT.md`;
 здесь — что из него уже сделано, как устроено и что дальше.
@@ -15,8 +15,8 @@ cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 npm install && npm run dev                               # http://localhost:5173, /api проксируется на :8000
 ```
 
-`docker compose up` поднимает оба сервиса. База — SQLite (`backend/roboscope.db`), PostgreSQL через
-`ROBOSCOPE_DATABASE_URL`. Каталог роботов грузится из `catalog_export_v4.csv` при старте (187 решений).
+`docker compose up` поднимает оба сервиса. База — SQLite (`backend/robomera.db`), PostgreSQL через
+`ROBOMERA_DATABASE_URL`. Каталог роботов грузится из `catalog_export_v4.csv` при старте (187 решений).
 
 ## Статус по функциям PROJECT_CONTEXT §27
 

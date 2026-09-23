@@ -37,7 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await app.state.db.dispose()
 
     app = FastAPI(
-        title="RoboScope API",
+        title="РобоМера API",
         version=settings.app_version,
         description=API_DESCRIPTION,
         lifespan=lifespan,

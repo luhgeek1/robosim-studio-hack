@@ -36,7 +36,7 @@ def team_assumption_source(topic: str) -> SourceSpec:
     return SourceSpec(
         key=f"assumption:{topic}",
         kind=SourceKind.TEAM_ASSUMPTION,
-        title="Допущение команды RoboScope",
+        title="Допущение команды «РобоМера»",
         note="Обоснование — в поле rationale/note значения",
     )
 

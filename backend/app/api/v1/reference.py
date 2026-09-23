@@ -98,7 +98,7 @@ async def list_norm_sets(uow: UowDep) -> NormSetList:
 )
 async def download_template(object_type: Annotated[ObjectTypeKey, Path()], uow: UowDep) -> Response:
     detail = await ReferenceService(uow).object_type(object_type.value)
-    filename = f"roboscope_{object_type.value}_template.xlsx"
+    filename = f"robomera_{object_type.value}_template.xlsx"
     return Response(
         content=build_template(detail),
         media_type=XLSX_MEDIA_TYPE,

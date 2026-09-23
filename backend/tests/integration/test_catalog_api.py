@@ -107,7 +107,7 @@ async def test_spec_keys_dictionary(client: AsyncClient) -> None:
 async def test_compare_shows_compatibility_with_a_project(client: AsyncClient) -> None:
     h1500 = await _find(client, "H1500")
     h2000 = await _find(client, "H2000")
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     payload = {
         "name": "Склад",
         "object_type": "warehouse",

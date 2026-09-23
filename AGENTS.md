@@ -112,5 +112,5 @@ make check         # ruff + mypy + pytest (unit, integration на реальны
 make migration m="add catalog"   # новая миграция (autogenerate + ручная проверка, downgrade обязателен)
 ```
 
-Демо-учётки (пароль `Demo12345!`, задаётся `RS_DEMO_PASSWORD`): `admin@roboscope.demo`, `user@roboscope.demo`,
-`vendor@roboscope.demo`. Фронт: `cd frontend && npm install && npm run dev` (:5173, `/api` проксируется на :8000).
+Демо-учётки (пароль `Demo12345!`, задаётся `RS_DEMO_PASSWORD`): `admin@robomera.demo`, `user@robomera.demo`,
+`vendor@robomera.demo`. Фронт: `cd frontend && npm install && npm run dev` (:5173, `/api` проксируется на :8000).

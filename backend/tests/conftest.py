@@ -18,7 +18,7 @@ from tests.contract_check import violations
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = BACKEND_DIR.parent
 _BASE_DB_URL = os.environ.get(
-    "RS_TEST_DATABASE_URL", "postgresql+asyncpg://roboscope:roboscope@localhost:5432/roboscope_test"
+    "RS_TEST_DATABASE_URL", "postgresql+asyncpg://robomera:robomera@localhost:5432/robomera_test"
 )
 _REDIS_URL = os.environ.get("RS_TEST_REDIS_URL", "redis://localhost:6379/15")
 DEMO_PASSWORD = "Demo12345!"

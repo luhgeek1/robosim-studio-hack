@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 
 async def _scenario(client: AsyncClient) -> tuple[str, str, dict[str, str]]:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     payload = {
         "name": "Склад",
         "object_type": "warehouse",
@@ -140,7 +140,7 @@ async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
 
 
 async def test_simulation_needs_a_layout_and_a_simulatable_process(client: AsyncClient) -> None:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     payload = {
         "name": "Больница",
         "object_type": "hospital",
@@ -164,5 +164,5 @@ async def test_foreign_user_cannot_see_a_run(client: AsyncClient) -> None:
             headers=headers,
         )
     ).json()["id"]
-    stranger = bearer((await login(client, "vendor@roboscope.demo"))["access"])
+    stranger = bearer((await login(client, "vendor@robomera.demo"))["access"])
     assert (await client.get(f"/api/v1/simulations/{run_id}", headers=stranger)).status_code in {403, 404}

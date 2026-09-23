@@ -2,7 +2,7 @@ import { useMemo, useSyncExternalStore } from 'react'
 
 export const COMPARE_LIMIT = 5
 
-const STORAGE_KEY = 'roboscope.compare-selection'
+const STORAGE_KEY = 'robomera.compare-selection'
 
 export type CompareItem = { id: string; name: string }
 

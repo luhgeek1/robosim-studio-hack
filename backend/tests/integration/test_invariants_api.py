@@ -20,7 +20,7 @@ def _numbers(value: Any) -> list[float]:
 
 
 async def _recommended(client: AsyncClient, kind: str) -> tuple[dict[str, Any], dict[str, str]]:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     payload = {"name": kind, "object_type": kind, "init": {"mode": "demo", "demo_key": f"{kind}_demo_01"}}
     project = (await client.post("/api/v1/projects", json=payload, headers=headers)).json()
     scenario = {"name": "Из подбора", "kind": "purchase", "from_recommendation": True}

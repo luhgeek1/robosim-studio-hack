@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 
 async def _demo(client: AsyncClient) -> tuple[str, dict[str, str]]:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     payload = {
         "name": "Склад",
         "object_type": "warehouse",
@@ -206,7 +206,7 @@ async def test_from_recommendation_fills_items(client: AsyncClient) -> None:
 async def test_other_users_cannot_see_scenarios(client: AsyncClient) -> None:
     project_id, headers = await _demo(client)
     scenario = await _purchase(client, headers, project_id)
-    admin = bearer((await login(client, "admin@roboscope.demo"))["access"])
+    admin = bearer((await login(client, "admin@robomera.demo"))["access"])
     response = await client.get(f"/api/v1/scenarios/{scenario['id']}", headers=admin)
     assert response.status_code == 404
 

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export type ProjectTab = { id: string; path: string }
 
-const STORAGE_KEY = 'roboscope.project-tabs'
+const STORAGE_KEY = 'robomera.project-tabs'
 
 function load(): ProjectTab[] {
   try {

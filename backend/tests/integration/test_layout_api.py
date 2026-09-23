@@ -11,7 +11,7 @@ PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 async def _project(
     client: AsyncClient, mode: str = "demo", object_type: str = "warehouse"
 ) -> tuple[str, dict]:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     init = {"mode": mode, "demo_key": f"{object_type}_demo_01"} if mode == "demo" else {"mode": mode}
     payload = {"name": "Объект", "object_type": object_type, "init": init}
     response = await client.post("/api/v1/projects", json=payload, headers=headers)
@@ -171,7 +171,7 @@ async def test_copy_keeps_the_layout_and_other_types_are_not_supported(client: A
 
 async def test_foreign_user_cannot_read_the_layout(client: AsyncClient) -> None:
     project_id, _ = await _project(client)
-    stranger = bearer((await login(client, "vendor@roboscope.demo"))["access"])
+    stranger = bearer((await login(client, "vendor@robomera.demo"))["access"])
     response = await client.get(f"/api/v1/projects/{project_id}/layout", headers=stranger)
     assert response.status_code in {403, 404}
 

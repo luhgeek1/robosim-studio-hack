@@ -1,4 +1,4 @@
-# RoboScope — экспресс-оценка роботизации объекта
+# РобоМера — экспресс-оценка роботизации объекта
 
 Хакатон ЛЦТ 2026, задача №1 (ДПиИР Москвы + АНО «ФЦ БАС»). Каталог роботов → объяснимый подбор под объект →
 количество и экономика (как сейчас / покупка / RaaS) → 2D-имитация, подтверждающая расчёт → отчёт PDF/Excel.
@@ -10,7 +10,7 @@ make up        # docker compose: Postgres, Redis, миграции, API http://l
 make check     # линтеры, типы, тесты, линт контракта
 ```
 
-Демо-учётки (пароль `Demo12345!`): `admin@roboscope.demo`, `user@roboscope.demo`, `vendor@roboscope.demo`.
+Демо-учётки (пароль `Demo12345!`): `admin@robomera.demo`, `user@robomera.demo`, `vendor@robomera.demo`.
 
 ## Где что
 

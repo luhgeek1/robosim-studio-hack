@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 
 async def test_create_list_revoke(client: AsyncClient) -> None:
-    tokens = await login(client, "user@roboscope.demo")
+    tokens = await login(client, "user@robomera.demo")
     headers = bearer(tokens["access"])
 
     created = await client.post(
@@ -27,7 +27,7 @@ async def test_create_list_revoke(client: AsyncClient) -> None:
 
 
 async def test_user_cannot_grant_admin_scope(client: AsyncClient) -> None:
-    tokens = await login(client, "user@roboscope.demo")
+    tokens = await login(client, "user@robomera.demo")
     response = await client.post(
         "/api/v1/me/api-keys",
         json={"name": "x", "scopes": ["catalog:write"]},
@@ -37,7 +37,7 @@ async def test_user_cannot_grant_admin_scope(client: AsyncClient) -> None:
 
 
 async def test_admin_can_grant_catalog_scope(client: AsyncClient) -> None:
-    tokens = await login(client, "admin@roboscope.demo")
+    tokens = await login(client, "admin@robomera.demo")
     response = await client.post(
         "/api/v1/me/api-keys",
         json={"name": "sync", "scopes": ["catalog:write"]},

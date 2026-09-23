@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 
 async def _demo(client: AsyncClient) -> tuple[str, dict[str, str]]:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     payload = {
         "name": "Склад",
         "object_type": "warehouse",

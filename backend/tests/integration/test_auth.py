@@ -29,7 +29,7 @@ async def test_register_duplicate_email_conflicts(client: AsyncClient) -> None:
 
 async def test_web_login_sets_cookies_and_hides_refresh(client: AsyncClient) -> None:
     response = await client.post(
-        "/api/v1/auth/login", json={"email": "user@roboscope.demo", "password": "Demo12345!"}
+        "/api/v1/auth/login", json={"email": "user@robomera.demo", "password": "Demo12345!"}
     )
     assert response.status_code == 200
     assert response.json()["refresh_token"] is None
@@ -39,14 +39,14 @@ async def test_web_login_sets_cookies_and_hides_refresh(client: AsyncClient) -> 
 
 async def test_wrong_password_is_401(client: AsyncClient) -> None:
     response = await client.post(
-        "/api/v1/auth/login", json={"email": "user@roboscope.demo", "password": "wrong-password"}
+        "/api/v1/auth/login", json={"email": "user@robomera.demo", "password": "wrong-password"}
     )
     assert response.status_code == 401
 
 
 async def test_web_refresh_requires_csrf(client: AsyncClient) -> None:
     login_response = await client.post(
-        "/api/v1/auth/login", json={"email": "user@roboscope.demo", "password": "Demo12345!"}
+        "/api/v1/auth/login", json={"email": "user@robomera.demo", "password": "Demo12345!"}
     )
     csrf = login_response.cookies["csrf_token"]  # the client jar keeps refresh_token for /api/v1/auth
 
@@ -59,7 +59,7 @@ async def test_web_refresh_requires_csrf(client: AsyncClient) -> None:
 
 
 async def test_refresh_rotation_rejects_reuse(client: AsyncClient) -> None:
-    tokens = await login(client, "user@roboscope.demo")
+    tokens = await login(client, "user@robomera.demo")
     first = await client.post(
         "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh"]}, headers={"X-Client": "mobile"}
     )
@@ -69,13 +69,13 @@ async def test_refresh_rotation_rejects_reuse(client: AsyncClient) -> None:
 
 
 async def test_access_token_is_not_accepted_as_refresh(client: AsyncClient) -> None:
-    tokens = await login(client, "user@roboscope.demo")
+    tokens = await login(client, "user@robomera.demo")
     response = await client.post("/api/v1/auth/refresh", json={"refresh_token": tokens["access"]})
     assert response.status_code == 401
 
 
 async def test_logout_revokes_refresh(client: AsyncClient) -> None:
-    tokens = await login(client, "user@roboscope.demo")
+    tokens = await login(client, "user@robomera.demo")
     logout = await client.post(
         "/api/v1/auth/logout", json={"refresh_token": tokens["refresh"]}, headers=bearer(tokens["access"])
     )
@@ -85,7 +85,7 @@ async def test_logout_revokes_refresh(client: AsyncClient) -> None:
 
 
 async def test_me_get_and_patch(client: AsyncClient) -> None:
-    tokens = await login(client, "user@roboscope.demo")
+    tokens = await login(client, "user@robomera.demo")
     patched = await client.patch(
         "/api/v1/me", json={"position": "Директор по логистике"}, headers=bearer(tokens["access"])
     )
@@ -101,6 +101,6 @@ async def test_login_rate_limit(settings: Settings) -> None:
     async with app.router.lifespan_context(app):
         await app.state.redis.flushdb()
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
-            payload = {"email": "user@roboscope.demo", "password": "wrong-password"}
+            payload = {"email": "user@robomera.demo", "password": "wrong-password"}
             codes = [(await http.post("/api/v1/auth/login", json=payload)).status_code for _ in range(3)]
     assert codes == [401, 401, 429]

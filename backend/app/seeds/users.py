@@ -5,9 +5,9 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import Role
 
 DEMO_USERS: list[tuple[str, str, Role, str | None]] = [
-    ("admin@roboscope.demo", "Администратор платформы", Role.ADMIN, "АНО «ФЦ БАС»"),
-    ("user@roboscope.demo", "Операционный директор", Role.USER, "ООО «Демо-Логистик»"),
-    ("vendor@roboscope.demo", "Менеджер производителя", Role.VENDOR, None),
+    ("admin@robomera.demo", "Администратор платформы", Role.ADMIN, "АНО «ФЦ БАС»"),
+    ("user@robomera.demo", "Операционный директор", Role.USER, "ООО «Демо-Логистик»"),
+    ("vendor@robomera.demo", "Менеджер производителя", Role.VENDOR, None),
 ]
 
 

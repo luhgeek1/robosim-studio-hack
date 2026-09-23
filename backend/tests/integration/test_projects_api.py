@@ -8,7 +8,7 @@ pytestmark = pytest.mark.integration
 PROJECTS = "/api/v1/projects"
 
 
-async def _auth(client: AsyncClient, email: str = "user@roboscope.demo") -> dict[str, str]:
+async def _auth(client: AsyncClient, email: str = "user@robomera.demo") -> dict[str, str]:
     return bearer((await login(client, email))["access"])
 
 
@@ -49,7 +49,7 @@ async def test_create_list_get_update_delete(client: AsyncClient) -> None:
 async def test_projects_are_isolated_between_users(client: AsyncClient) -> None:
     owner = await _auth(client)
     project = await _demo(client, owner)
-    stranger = await _auth(client, "vendor@roboscope.demo")
+    stranger = await _auth(client, "vendor@robomera.demo")
     assert (await client.get(f"{PROJECTS}/{project['id']}", headers=stranger)).status_code == 404
     assert (await client.get(PROJECTS, headers=stranger)).json()["total"] == 0
 
@@ -146,7 +146,7 @@ async def test_range_warning_and_cross_check(client: AsyncClient) -> None:
 
 
 async def test_negative_physical_value_is_rejected_but_unusual_one_warns(client: AsyncClient) -> None:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     project = await _demo(client, headers)
     url = f"{PROJECTS}/{project['id']}/params/shift_hours"
     negative = await client.patch(url, json={"key": "shift_hours", "value": -5}, headers=headers)

@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: RoboScope API
+  title: РобоМера API
   version: 0.5.1
   license:
     name: MIT

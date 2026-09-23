@@ -15,9 +15,9 @@ import { DeliveryScene } from './DeliveryScene'
 // Demo accounts are part of the submission (ТЗ: демо-учётки для жюри); the password is set by RS_DEMO_PASSWORD on the backend.
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? 'Demo12345!'
 const DEMO_ACCOUNTS = [
-  { email: 'user@roboscope.demo', label: 'Пользователь', hint: 'проекты и расчёты' },
-  { email: 'admin@roboscope.demo', label: 'Администратор', hint: 'каталог и нормативы' },
-  { email: 'vendor@roboscope.demo', label: 'Производитель', hint: 'свои продукты' },
+  { email: 'user@robomera.demo', label: 'Пользователь', hint: 'проекты и расчёты' },
+  { email: 'admin@robomera.demo', label: 'Администратор', hint: 'каталог и нормативы' },
+  { email: 'vendor@robomera.demo', label: 'Производитель', hint: 'свои продукты' },
 ]
 
 type Mode = 'login' | 'register'

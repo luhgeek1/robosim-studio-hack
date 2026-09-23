@@ -1,7 +1,7 @@
 [project]
-name = "roboscope-backend"
+name = "robomera-backend"
 version = "0.1.0"
-description = "RoboScope: express assessment of facility robotization (LCT 2026, task 1)"
+description = "РобоМера: express assessment of facility robotization (LCT 2026, task 1)"
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "alembic>=1.20.0",

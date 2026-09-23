@@ -4,7 +4,7 @@ x-backend: &backend
   env_file: [{path: .env, required: false}]
   environment:
     RS_STAGE: ${RS_STAGE:-dev}
-    RS_DATABASE_URL: postgresql+asyncpg://roboscope:roboscope@db:5432/roboscope
+    RS_DATABASE_URL: postgresql+asyncpg://robomera:robomera@db:5432/robomera
     RS_REDIS_URL: redis://redis:6379/0
     RS_DOCS_ENABLED: ${RS_DOCS_ENABLED:-true}
     RS_JOBS_BACKEND: arq
@@ -15,11 +15,11 @@ x-backend: &backend
 services:
   db:
     image: postgres:17-alpine
-    environment: {POSTGRES_USER: roboscope, POSTGRES_PASSWORD: roboscope, POSTGRES_DB: roboscope}
+    environment: {POSTGRES_USER: robomera, POSTGRES_PASSWORD: robomera, POSTGRES_DB: robomera}
     volumes: [pgdata:/var/lib/postgresql/data]
     ports: ["5432:5432"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U roboscope"]
+      test: ["CMD-SHELL", "pg_isready -U robomera"]
       interval: 3s
       retries: 20
 

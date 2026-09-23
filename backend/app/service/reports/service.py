@@ -52,7 +52,7 @@ def render(model: ReportModel, fmt: ReportFormat) -> bytes:
 
 def filename(project: str, fmt: ReportFormat, at: datetime) -> str:
     safe = "".join(ch if ch.isalnum() else "_" for ch in project).strip("_")[:60] or "project"
-    return f"roboscope_{safe}_{at:%Y%m%d_%H%M}.{fmt.value}"
+    return f"robomera_{safe}_{at:%Y%m%d_%H%M}.{fmt.value}"
 
 
 class ReportService:

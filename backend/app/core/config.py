@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     sql_echo: bool = False
     docs_enabled: bool | None = Field(default=None, description="None = open in dev/test, closed in prod")
 
-    database_url: str = "postgresql+asyncpg://roboscope:roboscope@localhost:5432/roboscope"
+    database_url: str = "postgresql+asyncpg://robomera:robomera@localhost:5432/robomera"
     db_pool_size: int = 10
     redis_url: str = "redis://localhost:6379/0"
 

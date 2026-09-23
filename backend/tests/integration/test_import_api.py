@@ -14,7 +14,7 @@ XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 async def _blank(client: AsyncClient) -> tuple[str, dict[str, str]]:
-    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
     created = await client.post(
         PROJECTS, json={"name": "Импорт", "object_type": "warehouse"}, headers=headers
     )
