@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { LogOut, UserRound } from 'lucide-react'
+import { useRef } from 'react'
 import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -14,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
-import { ProjectTabs, Sections } from './HeaderNav'
+import { HeaderHighlight, ProjectTabs, Sections } from './HeaderNav'
 import { Logo } from './Logo'
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -112,6 +113,7 @@ function StepDock({ projectId }: { projectId: string }) {
 }
 
 export function AppShell() {
+  const headerRow = useRef<HTMLDivElement>(null)
   const { user } = useSession()
   const match = useMatch('/projects/:projectId/*')
   const projectId = match?.params.projectId
@@ -122,7 +124,8 @@ export function AppShell() {
         layoutRoot
         className="fixed inset-x-0 top-0 z-40 h-14 border-b border-line bg-canvas/85 backdrop-blur-md"
       >
-        <div className="mx-auto flex h-full max-w-360 items-center gap-5 px-6">
+        <div ref={headerRow} className="relative mx-auto flex h-full max-w-360 items-center gap-5 px-6">
+          <HeaderHighlight container={headerRow} />
           <Logo />
           <div className="h-5 w-px shrink-0 bg-line-2" />
           <Sections projectId={projectId} />

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion'
 import { Check, HeartPulse, Plane, Plus, Warehouse, X } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useState, type ReactNode, type RefObject } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
 import { OBJECT_TYPE_LABEL, useProject, useProjects } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -17,21 +17,68 @@ const iconOf = (type: string | undefined) => OBJECT_ICON[type as keyof typeof OB
 
 const SPRING: Transition = { type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }
 
-/* Одна подсветка на всю шапку: она перелетает между разделами и вкладками проектов, меняя форму и цвет на лету,
-   поэтому переход «Проекты → вкладка склада» читается как одно движение, а не как два переключения. */
-function HeaderPill({ variant }: { variant: 'section' | 'tab' }) {
+/* Метка активного пункта: саму подсветку рисует HeaderHighlight, который находит метку и едет к ней. */
+function ActiveMark({ variant }: { variant: 'section' | 'tab' }) {
+  return <span data-header-active={variant} className="pointer-events-none absolute inset-0" aria-hidden />
+}
+
+/* Одна подсветка на всю шапку: перелетает между разделами и вкладками проектов, меняя форму и цвет на лету.
+   Координаты считаются относительно контейнера шапки, а не страницы, поэтому прокрутка контента её не сбивает
+   (с общим layoutId framer брал позицию до смены прокрутки, и подсветка прилетала снизу). */
+export function HeaderHighlight({ container }: { container: RefObject<HTMLElement | null> }) {
+  const { pathname } = useLocation()
+  const order = useProjectTabs((s) => s.tabs.map((t) => t.id).join(','))
+  const [box, setBox] = useState<{ x: number; y: number; w: number; h: number; variant: string } | null>(null)
+
+  useLayoutEffect(() => {
+    const root = container.current
+    if (!root) return
+    const measure = () => {
+      const mark = root.querySelector<HTMLElement>('[data-header-active]')
+      if (!mark) return setBox(null)
+      const r = mark.getBoundingClientRect()
+      const c = root.getBoundingClientRect()
+      setBox({
+        x: r.left - c.left,
+        y: r.top - c.top,
+        w: r.width,
+        h: r.height,
+        variant: mark.dataset.headerActive ?? 'section',
+      })
+    }
+    measure()
+    // Вкладка появляется с масштабом — перемеряем, когда анимация входа закончится.
+    const settle = window.setTimeout(measure, 320)
+    const observer = new ResizeObserver(measure)
+    observer.observe(root)
+    root.addEventListener('scroll', measure, true)
+    return () => {
+      window.clearTimeout(settle)
+      observer.disconnect()
+      root.removeEventListener('scroll', measure, true)
+    }
+  }, [container, pathname, order])
+
+  const tab = box?.variant === 'tab'
   return (
     <motion.span
-      layoutId="header-active"
-      className="absolute inset-0 rounded-[10px]"
+      aria-hidden
+      className="pointer-events-none absolute top-0 left-0 rounded-[10px]"
       initial={false}
       animate={
-        variant === 'tab'
+        box
           ? {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: '0 1px 2px rgba(20,20,24,0.06), 0 0 0 1px rgba(231,231,227,1)',
+              x: box.x,
+              y: box.y,
+              width: box.w,
+              height: box.h,
+              opacity: 1,
+              backgroundColor: tab ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,0.06)',
+              boxShadow: tab
+                ? '0 1px 2px rgba(20,20,24,0.06), 0 0 0 1px rgba(231,231,227,1)'
+                : '0 0 0 0 rgba(0,0,0,0), 0 0 0 0 rgba(0,0,0,0)',
             }
-          : { backgroundColor: 'rgba(0,0,0,0.06)', boxShadow: '0 0 0 0 rgba(0,0,0,0), 0 0 0 0 rgba(0,0,0,0)' }
+          : { opacity: 0 }
       }
       transition={SPRING}
     />
@@ -52,7 +99,7 @@ function SectionLink({ to, end, children }: { to: string; end?: boolean; childre
     >
       {({ isActive }) => (
         <>
-          {isActive && <HeaderPill variant="section" />}
+          {isActive && <ActiveMark variant="section" />}
           <span className="relative z-10 flex items-center gap-1.5">{children}</span>
         </>
       )}
@@ -128,7 +175,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
       aria-selected={active}
     >
       {active ? (
-        <HeaderPill variant="tab" />
+        <ActiveMark variant="tab" />
       ) : (
         <span className="absolute inset-0 rounded-[10px] bg-black/4 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.03)] transition-colors group-hover:bg-black/7" />
       )}
