@@ -96,7 +96,7 @@ ProcessDef:
     demand_unit: {$ref: '#/DemandUnit'}
     demand_formula: {type: string, description: "Человекочитаемая формула спроса", example: "приёмка + отгрузка, палл/сут"}
     sla:
-      type: object
+      type: [object, "null"]
       properties:
         kind: {type: string, enum: [lead_time, on_time_share, coverage]}
         target_value: {type: number, example: 20}
@@ -144,7 +144,7 @@ Norm:
     unit: {type: string, example: "доля"}
     category: {$ref: '#/NormCategory'}
     range:
-      type: object
+      type: [object, "null"]
       properties: {min: {type: number, example: 0.7}, max: {type: number, example: 0.85}}
     source: {$ref: './common.yaml#/Source'}
     rationale: {type: string, example: "Лист «Легенда» датасета организатора: загрузка AMR 70–85 %"}

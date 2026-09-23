@@ -243,6 +243,11 @@ def build_fleet_item(
     outcome = size_item(ctx, item, process, demand)
     count = resolve_count(ctx, item, process, outcome)
     warnings = list(outcome.warnings) if outcome else []
+    if item.simulation_outdated:
+        warnings.append(
+            "Число роботов по имитации получено для прежних параметров объекта, поэтому взято по циклу: "
+            "перезапустите перебор флота"
+        )
     effective = outcome.effective_per_hour if outcome else None
     simulated = count.source == CountSource.SIMULATED and bool(count.simulated)
     working: int = (

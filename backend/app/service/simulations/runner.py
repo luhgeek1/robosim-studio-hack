@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from app.core.errors import ErrorCode
+from app.core.errors import ErrorCode, job_problem
 from app.db.models import Job, Scenario, ScenarioItem, SimulationRun
 from app.db.repositories.users import to_current_user
 from app.db.session import Database
@@ -31,14 +31,14 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def _problem(detail: str) -> dict[str, Any]:
-    return {
-        "type": "about:blank",
-        "title": "Simulation failed",
-        "status": 422,
-        "detail": detail,
-        "error_code": ErrorCode.SIMULATION_FAILED.value,
-    }
+def _problem(detail: str, job_id: UUID, run_id: UUID | None) -> dict[str, Any]:
+    return job_problem(
+        status=422,
+        detail=detail,
+        error_code=ErrorCode.SIMULATION_FAILED,
+        instance=f"{API_PREFIX}/simulations/{run_id}" if run_id else f"{API_PREFIX}/jobs/{job_id}",
+        job_id=str(job_id),
+    )
 
 
 def store_result(run: SimulationRun, result: SimResult, duration_ms: int) -> None:
@@ -99,7 +99,7 @@ async def _fail(db: Database, job_id: UUID, run_id: UUID | None, detail: str) ->
         for item in (job, run):
             if item is not None:
                 item.status = JobStatus.FAILED
-                item.error = _problem(detail)
+                item.error = _problem(detail, job_id, run_id)
                 item.finished_at = _now()
         await uow.commit()
 

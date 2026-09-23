@@ -93,7 +93,7 @@ async def test_stress_run_with_failure_and_more_volume(client: AsyncClient) -> N
 
 
 async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
-    _, scenario_id, headers = await _scenario(client)
+    project_id, scenario_id, headers = await _scenario(client)
     before = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
     analytic = before["sizing"][0]["count"]
     response = await client.post(
@@ -131,6 +131,12 @@ async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
     best = (await client.get(f"/api/v1/simulations/{result['simulation_id']}", headers=headers)).json()
     assert best["purpose"] == "sweep"
     assert best["fleet"][0]["count"] == recommended
+
+    param = {"key": "shift_hours", "value": 12}
+    await client.patch(f"/api/v1/projects/{project_id}/params/shift_hours", json=param, headers=headers)
+    moved = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    assert moved["sizing"][0]["count"]["source"] == "analytic"
+    assert any("перезапустите перебор флота" in w for w in moved["warnings"])
 
 
 async def test_simulation_needs_a_layout_and_a_simulatable_process(client: AsyncClient) -> None:

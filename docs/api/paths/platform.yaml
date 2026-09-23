@@ -58,7 +58,14 @@ fileDownload:
     summary: Скачать загруженный файл проекта (снимок имитации, подложка, отчёт)
     parameters: [{name: file_id, in: path, required: true, schema: {type: string, format: uuid}}]
     responses:
-      '200': {description: "Файл в исходном формате", content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+      '200':
+        description: "Файл в исходном формате"
+        content:
+          image/png: {schema: {type: string, format: binary}}
+          image/gif: {schema: {type: string, format: binary}}
+          image/jpeg: {schema: {type: string, format: binary}}
+          application/pdf: {schema: {type: string, format: binary}}
+          application/octet-stream: {schema: {type: string, format: binary}}
       '404': {$ref: '../components/common.yaml#/responses/NotFound'}
 
 # ---------------- Ассистент ----------------

@@ -8,7 +8,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from app.core.errors import ConflictError, ErrorCode, InvalidInputError, NotFoundError
+from app.core.errors import ConflictError, ErrorCode, InvalidInputError, NotFoundError, job_problem
 from app.db.models import Job, Project, Report, StoredFile
 from app.db.repositories.users import to_current_user
 from app.db.session import Database
@@ -140,14 +140,14 @@ class ReportService:
         return stored
 
 
-def _problem(detail: str) -> dict[str, Any]:
-    return {
-        "type": "about:blank",
-        "title": "Report failed",
-        "status": 409,
-        "detail": detail,
-        "error_code": ErrorCode.CONFLICT.value,
-    }
+def _problem(detail: str, job_id: UUID, report_id: UUID) -> dict[str, Any]:
+    return job_problem(
+        status=409,
+        detail=detail,
+        error_code=ErrorCode.CONFLICT,
+        instance=f"{API_PREFIX}/reports/{report_id}",
+        job_id=str(job_id),
+    )
 
 
 async def run_report(db: Database, job_id: UUID) -> None:
@@ -217,6 +217,6 @@ async def _fail(db: Database, job_id: UUID, report_id: UUID, detail: str) -> Non
         for item in (await uow.jobs.get(job_id), await uow.session.get(Report, report_id)):
             if item is not None:
                 item.status = JobStatus.FAILED
-                item.error = _problem(detail)
+                item.error = _problem(detail, job_id, report_id)
                 item.finished_at = datetime.now(UTC)
         await uow.commit()

@@ -6,13 +6,14 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient, Response
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import Settings
 from app.main import create_app
+from tests.contract_check import violations
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = BACKEND_DIR.parent
@@ -21,6 +22,8 @@ _BASE_DB_URL = os.environ.get(
 )
 _REDIS_URL = os.environ.get("RS_TEST_REDIS_URL", "redis://localhost:6379/15")
 DEMO_PASSWORD = "Demo12345!"
+# Every response of the integration tests is checked against docs/api; set to a file path to collect instead.
+_CONTRACT_LOG = os.environ.get("RS_CONTRACT_LOG")
 # Seeded reference data survives between tests; only user-generated tables are truncated.
 SEEDED_TABLES = frozenset(
     {
@@ -94,13 +97,28 @@ async def settings(migrated_db: str) -> Settings:
     return make_settings()
 
 
+def _log_violations(found: list[str]) -> None:
+    with Path(str(_CONTRACT_LOG)).open("a", encoding="utf-8") as log:
+        log.writelines(f"{line}\n" for line in found)
+
+
+async def _check_contract(response: Response) -> None:
+    await response.aread()
+    found = violations(response.request.method, response.request.url.path, response)
+    if found and _CONTRACT_LOG:
+        _log_violations(found)
+    elif found:
+        raise AssertionError("Ответ расходится с docs/api:\n" + "\n".join(found[:10]))
+
+
 @pytest.fixture
 async def client(settings: Settings) -> AsyncIterator[AsyncClient]:
     app = create_app(settings)
     async with app.router.lifespan_context(app):
         await app.state.redis.flushdb()
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as http:
+        hooks = {"response": [_check_contract]}
+        async with AsyncClient(transport=transport, base_url="http://test", event_hooks=hooks) as http:
             yield http
 
 

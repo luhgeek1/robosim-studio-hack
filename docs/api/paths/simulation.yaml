@@ -124,7 +124,9 @@ simulationVisuals:
             required: [file, kind]
             properties:
               file: {type: string, format: binary}
-              kind: {type: string, enum: [simulation_png, simulation_gif]}
-              caption: {type: string}
+              kind: {type: string, enum: [simulation_png, simulation_gif, chart_png]}
+              caption: {type: string, maxLength: 300}
     responses:
       '201': {description: "Сохранено", content: {application/json: {schema: {$ref: '../components/platform.yaml#/VisualUpload'}}}}
+      '413': {description: "Файл больше 10 МБ", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '415': {description: "Принимаются PNG и GIF", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}

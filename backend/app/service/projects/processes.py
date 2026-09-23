@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from app.core.errors import ConflictError, DomainError, ErrorCode
+from app.core.errors import ConflictError, ErrorCode, ParamsInvalidError
 from app.db.repositories.catalog import CatalogRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
@@ -90,7 +90,7 @@ class ProcessService:
             return coefficient
         share = values.get(PAYROLL_SHARE_NORM)
         if share is None:
-            raise DomainError("Не задан коэффициент начислений на ФОТ", error_code=ErrorCode.PARAMS_INVALID)
+            raise ParamsInvalidError("Не задан коэффициент начислений на ФОТ")
         return 1 + share
 
     async def analyse(self, context: ProjectContext) -> ProcessAnalysis:

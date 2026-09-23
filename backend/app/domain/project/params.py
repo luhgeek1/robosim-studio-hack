@@ -69,6 +69,14 @@ def validate_value(definition: ParameterDef, value: Scalar) -> ParamValidation:
         return error
     if isinstance(value, int | float) and not isinstance(value, bool):
         low, high = definition.min, definition.max
+        # The typical range only warns, but a negative count, area or duration is impossible, not unusual.
+        if value < 0 and low is not None and low >= 0:
+            return ParamValidation(
+                ValidationState.ERROR,
+                "NEGATIVE_VALUE",
+                "Значение не может быть отрицательным",
+                f"Введите число от {_format(low)}",
+            )
         if (low is not None and value < low) or (high is not None and value > high):
             unit = f" {definition.unit}" if definition.unit else ""
             bounds = (

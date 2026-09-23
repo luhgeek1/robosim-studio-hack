@@ -36,7 +36,7 @@ Project:
     last_calculation_id: {type: [string, "null"], format: uuid}
     recommended_scenario_id: {type: [string, "null"], format: uuid}
     headline_metrics:
-      type: object
+      type: [object, "null"]
       description: Короткая сводка для карточки в списке (если есть расчёт).
       properties:
         payback_years: {type: [number, "null"]}
@@ -152,7 +152,7 @@ ImportMappedItem:
     status: {$ref: './common.yaml#/ProvenanceStatus'}
     confidence: {type: number, minimum: 0, maximum: 1}
     conflict_with_current:
-      type: object
+      type: [object, "null"]
       description: Если в проекте уже есть другое значение.
       properties:
         current_value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
@@ -252,16 +252,16 @@ ProcessDemand:
     process_key: {type: string, example: "order_picking"}
     name: {type: string, example: "Отбор заказов"}
     demand_unit: {$ref: './reference.yaml#/DemandUnit'}
-    demand_per_day: {type: number, example: 100000}
-    avg_per_hour: {type: number, example: 4545}
-    peak_per_hour: {type: number, example: 6818}
+    demand_per_day: {type: [number, "null"], example: 100000, description: "null — не хватает параметров для оценки спроса"}
+    avg_per_hour: {type: [number, "null"], example: 4545}
+    peak_per_hour: {type: [number, "null"], example: 6818}
     hourly_profile:
-      type: array
+      type: [array, "null"]
       minItems: 24
       maxItems: 24
       items: {type: number}
       description: Доли суточного объёма по часам (сумма = 1). Источник профиля — допущение с источником.
-    profile_provenance: {$ref: './common.yaml#/Provenance'}
+    profile_provenance: {oneOf: [{$ref: './common.yaml#/Provenance'}, {type: "null"}]}
     current:
       type: object
       description: Как процесс выполняется сейчас.
@@ -285,7 +285,7 @@ ProcessDemandList:
     processes: {type: array, items: {$ref: '#/ProcessDemand'}}
     total_labor_cost_rub_year: {type: number}
     working_hours_per_day: {type: number, example: 22}
-    peak_factor: {type: number, example: 1.5}
+    peak_factor: {type: [number, "null"], example: 1.5}
 
 # ---- Планировка (2D-схема) ----
 
@@ -411,6 +411,20 @@ LayoutStats:
     nodes: {type: integer}
     edges: {type: integer}
 
+LayoutPlan:
+  type: object
+  description: |
+    Геометрия планировки, на которой прошла имитация: прогон хранит свою копию, поэтому реплей показывает
+    ровно ту схему, по которой считался, даже если планировку проекта потом изменили.
+  required: [width_m, height_m, zones, racks, nodes, edges]
+  properties:
+    width_m: {type: number, example: 200}
+    height_m: {type: number, example: 100}
+    zones: {type: array, items: {$ref: '#/Zone'}}
+    racks: {type: array, items: {$ref: '#/Rack'}}
+    nodes: {type: array, items: {$ref: '#/LayoutNode'}}
+    edges: {type: array, items: {$ref: '#/LayoutEdge'}}
+
 Layout:
   type: object
   description: |
@@ -482,8 +496,8 @@ AuditEvent:
     actor: {type: string, example: "mark@example.com"}
     entity: {type: string, example: "project_param:aisle_width_m"}
     action: {type: string, enum: [create, update, delete, import, calculate, simulate, export, override]}
-    before: {type: object, additionalProperties: true}
-    after: {type: object, additionalProperties: true}
+    before: {type: [object, "null"], additionalProperties: true, description: "null при создании"}
+    after: {type: [object, "null"], additionalProperties: true, description: "null при удалении"}
     note: {type: [string, "null"]}
 
 AuditList:
