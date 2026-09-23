@@ -11,6 +11,7 @@ const router = createBrowserRouter([
     HydrateFallback: () => null,
     children: [
       { index: true, Component: RootRedirect },
+      { path: 'robots-3d', ...page(() => import('@/pages/robots').then((m) => ({ Component: m.RobotsPage }))) },
       { path: 'login', ...page(() => import('@/pages/login').then((m) => ({ Component: m.LoginPage }))) },
       { path: 'catalog', ...page(() => import('@/pages/catalog').then((m) => ({ Component: m.CatalogPage }))) },
       {

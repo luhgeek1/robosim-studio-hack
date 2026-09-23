@@ -1,0 +1,1 @@
+export { RobotsPage } from './RobotsPage'

@@ -1,0 +1,6 @@
+export { RobotPreview3D } from './RobotPreview3D'
+export { cleanName, kindOf, orderForKind, useCatalogProducts, variantFromProduct } from './catalog'
+export { GROUPS, KINDS } from './kinds'
+export { Studio, type Framing } from './kit'
+export { useGallery, type DragState } from './store'
+export type { Kind, Spec, Variant } from './types'

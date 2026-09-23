@@ -137,6 +137,7 @@ export function Sections({ projectId }: { projectId?: string }) {
       <SectionLink to="/catalog" end>
         Каталог
       </SectionLink>
+      <SectionLink to="/robots-3d">3D-галерея</SectionLink>
       <SectionLink to={compareTo}>
         Сравнение решений
         <AnimatePresence>
