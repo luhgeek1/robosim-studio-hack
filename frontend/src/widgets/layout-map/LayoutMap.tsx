@@ -1,6 +1,6 @@
 import { Maximize2, Minus, Plus, Waypoints } from 'lucide-react'
 import { memo, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { Layout, LayoutNode } from '@/shared/api/types'
+import type { LayoutGeometry, LayoutNode } from '@/shared/api/types'
 import { formatNumber } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
@@ -30,7 +30,7 @@ export type LayoutHighlight = {
 }
 
 export type LayoutMapProps = {
-  layout: Layout
+  layout: LayoutGeometry
   /** Controlled route-graph visibility; omit to let the map toolbar own it. */
   showGraph?: boolean
   defaultShowGraph?: boolean
@@ -66,7 +66,7 @@ export function LayoutMap({
     containerRef,
     layout.width_m,
     layout.height_m,
-    `${layout.id}:${layout.version}`,
+    `${layout.id ?? 'plan'}:${layout.version ?? `${layout.width_m}x${layout.height_m}`}`,
   )
   const barMeters = scaleBarMeters(view.k)
 
@@ -133,7 +133,7 @@ export function LayoutMap({
   )
 }
 
-const StaticLayer = memo(function StaticLayer({ layout, showGraph }: { layout: Layout; showGraph: boolean }) {
+const StaticLayer = memo(function StaticLayer({ layout, showGraph }: { layout: LayoutGeometry; showGraph: boolean }) {
   const zones = useMemo(() => {
     const ordered = [...layout.zones].sort((a, b) => Number(a.kind === 'corridor') - Number(b.kind === 'corridor'))
     return ordered.map((zone) => ({ zone, d: polygonPath(zone.polygon) }))
@@ -231,7 +231,7 @@ function Marker({ node }: { node: LayoutNode & { kind: MarkerKind } }) {
   )
 }
 
-function HighlightLayer({ layout, highlight, k }: { layout: Layout; highlight: LayoutHighlight; k: number }) {
+function HighlightLayer({ layout, highlight, k }: { layout: LayoutGeometry; highlight: LayoutHighlight; k: number }) {
   const zoneIds = useMemo(() => new Set(highlight.zones ?? []), [highlight.zones])
   const nodeIds = useMemo(() => new Set(highlight.nodes ?? []), [highlight.nodes])
   const edgeD = useMemo(() => {
@@ -257,7 +257,7 @@ function HighlightLayer({ layout, highlight, k }: { layout: Layout; highlight: L
 
 const LABEL_CHAR_PX = 6.6
 
-function ZoneLabels({ layout, view }: { layout: Layout; view: LayoutMapView }) {
+function ZoneLabels({ layout, view }: { layout: LayoutGeometry; view: LayoutMapView }) {
   const items = useMemo(
     () =>
       layout.zones

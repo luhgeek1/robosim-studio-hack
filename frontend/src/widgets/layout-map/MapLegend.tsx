@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { Layout, ZoneKind } from '@/shared/api/types'
+import type { LayoutGeometry, ZoneKind } from '@/shared/api/types'
 import {
   EDGE_KIND_LABEL,
   EDGE_STYLE,
@@ -12,7 +12,7 @@ import {
   type MarkerKind,
 } from './geometry'
 
-export function MapLegend({ layout, showGraph }: { layout: Layout; showGraph: boolean }) {
+export function MapLegend({ layout, showGraph }: { layout: LayoutGeometry; showGraph: boolean }) {
   const { zoneKinds, markerKinds, edgeKinds } = useMemo(() => {
     const zones = new Set<ZoneKind>(layout.zones.map((z) => z.kind))
     const nodes = new Set<string>(layout.nodes.map((n) => n.kind))

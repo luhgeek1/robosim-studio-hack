@@ -121,3 +121,12 @@ export type SimEvent = S['SimEvent']
 export type Report = S['Report']
 export type ReportFormat = S['ReportFormat']
 export type ReportSection = S['ReportSection']
+export type LayoutPlan = S['LayoutPlan']
+export type Rack = S['Rack']
+// What the 2D map and the 3D twin draw: the project layout or the copy a simulation run kept (LayoutPlan).
+export type LayoutGeometry = Pick<LayoutPlan, 'width_m' | 'height_m' | 'zones' | 'nodes' | 'edges'> & {
+  racks?: Rack[]
+  id?: string
+  version?: number
+  generator?: Layout['generator']
+}
