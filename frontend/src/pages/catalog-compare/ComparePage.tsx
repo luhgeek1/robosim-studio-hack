@@ -1,5 +1,5 @@
 import { Fragment, useState, type ReactNode } from 'react'
-import { ArrowLeft, Check, GitCompareArrows, KeyRound, Plus, X } from 'lucide-react'
+import { ArrowLeft, Check, GitCompareArrows, KeyRound, Plus, Trophy, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { BADGE_LABEL, SPEC_GROUP_LABEL, SPEC_GROUP_ORDER, useCompare } from '@/entities/catalog'
 import { CANDIDATE_STATUS_LABEL } from '@/entities/matching'
@@ -161,22 +161,6 @@ function differs(row: Row, products: Product[]) {
   return seen.size > 1
 }
 
-/* Лучшее значение присылает сервер; худшее — противоположный край среди числовых значений строки
-   по тому же направлению «лучше — больше/меньше». Ничьи с лучшим не красим. */
-function worstIds(row: Row, products: Product[]) {
-  if (row.better !== 'higher' && row.better !== 'lower') return new Set<string>()
-  const numeric = products.flatMap((p) => {
-    const value = row.values[p.id]?.value
-    return typeof value === 'number' ? [{ id: p.id, value }] : []
-  })
-  if (numeric.length < 2) return new Set<string>()
-  const values = numeric.map((n) => n.value)
-  const edge = row.better === 'higher' ? Math.min(...values) : Math.max(...values)
-  const best = row.better === 'higher' ? Math.max(...values) : Math.min(...values)
-  if (edge === best) return new Set<string>()
-  return new Set(numeric.filter((n) => n.value === edge).map((n) => n.id))
-}
-
 function CompareTable({
   result,
   projectId,
@@ -208,10 +192,7 @@ function CompareTable({
         {fetching && <Spinner className="size-3.5 text-ink-3" />}
         <div className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-ink-3">
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-2.5 rounded-[3px] bg-ok-soft ring-1 ring-ok/55" /> лучшее в строке
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="size-2.5 rounded-[3px] bg-crit-soft ring-1 ring-crit/50" /> худшее
+            <Trophy className="size-3.5 text-ok" /> лучшее значение в строке
           </span>
           <span className="inline-flex items-center gap-1.5">
             <KeyRound className="size-3.5 text-warn" /> ключевое для подбора
@@ -378,7 +359,6 @@ function SummaryRow({
 function SpecRow({ row, products }: { row: Row; products: Product[] }) {
   const isKey = Object.values(row.values).some((spec) => spec?.is_key_constraint)
   const hint = row.better ? BETTER_HINT[row.better] : ''
-  const worst = worstIds(row, products)
   return (
     <tr className="hairline align-top">
       <td className="sticky left-0 z-10 bg-card px-5 py-3">
@@ -400,21 +380,18 @@ function SpecRow({ row, products }: { row: Row; products: Product[] }) {
       {products.map((product) => {
         const spec = row.values[product.id]
         const best = row.best_product_id === product.id
-        const bad = !best && worst.has(product.id)
         return (
-          <td key={product.id} className="px-5 py-3">
+          <td key={product.id} className={cn('px-5 py-3', best && 'bg-ok-soft')}>
             {spec && hasValue(row, product.id) ? (
               <div className="space-y-1">
                 <div
                   className={cn(
-                    'num -mx-2 w-fit max-w-full rounded-md px-2 py-0.5 break-words',
-                    best && 'bg-ok-soft font-semibold text-ok ring-1 ring-ok/55',
-                    bad && 'bg-crit-soft/60 text-crit ring-1 ring-crit/50',
-                    !best && !bad && 'text-ink',
+                    'num flex items-start gap-1.5 break-words',
+                    best ? 'font-semibold text-ok' : 'text-ink',
                   )}
-                  title={best ? 'Лучшее значение в строке' : bad ? 'Худшее значение в строке' : undefined}
                 >
-                  {formatValue(spec.value, spec.unit ?? row.unit)}
+                  {best && <Trophy className="mt-0.5 size-3.5 shrink-0" aria-label="Лучшее значение" />}
+                  <span className="min-w-0">{formatValue(spec.value, spec.unit ?? row.unit)}</span>
                 </div>
                 <SourceMark provenance={spec.provenance} />
               </div>
