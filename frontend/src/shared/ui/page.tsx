@@ -45,6 +45,7 @@ export function Screen({
   nextDisabled = false,
   nextTo,
   dense = false,
+  stepNav = true,
   className,
 }: {
   title: ReactNode
@@ -56,6 +57,8 @@ export function Screen({
   nextLabel?: string
   nextDisabled?: boolean
   nextTo?: string
+  // Страница с собственной прокруткой (сетка подбора) убирает нижние «назад / далее»: шаги есть в плашке сверху.
+  stepNav?: boolean
   className?: string
 }) {
   const navigate = useNavigate()
@@ -75,7 +78,7 @@ export function Screen({
         dense={dense}
       />
       {children}
-      {idx >= 0 && (
+      {idx >= 0 && stepNav && (
         <div className="hairline mt-12 flex items-center justify-between pt-6">
           <Button variant="ghost" onClick={() => navigate(prev ? `${base}/${prev.id}` : base)}>
             <ArrowLeft /> {prev ? prev.label : 'Обзор'}

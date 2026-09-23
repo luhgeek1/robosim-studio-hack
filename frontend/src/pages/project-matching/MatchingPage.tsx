@@ -44,6 +44,8 @@ export function MatchingPage() {
     <Screen
       wide
       dense
+      stepNav={false}
+      className="pb-6"
       title={
         data
           ? fit
