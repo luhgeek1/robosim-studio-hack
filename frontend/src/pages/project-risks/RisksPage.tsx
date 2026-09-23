@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { useProjectId } from '@/entities/project'
 import { SCENARIO_KIND_LABEL, useScenarios, useSensitivity } from '@/entities/scenario'
 import { Button } from '@/shared/ui/button'
-import { Callout, PageHeader, Section } from '@/shared/ui/page'
+import { Callout, Screen, Section } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { ToneBadge } from '@/shared/ui/tone'
@@ -26,43 +26,35 @@ export function RisksPage() {
   const scenario =
     options.find((s) => s.id === picked) ?? options.find((s) => s.is_recommended) ?? options.at(0) ?? null
 
-  const header = (
-    <PageHeader
-      title="Насколько устойчив результат"
-      description="Что сильнее всего меняет окупаемость, как результат распределяется при неопределённости и что замерить на объекте"
-      actions={
-        options.length > 0 && (
-          <Select value={scenario?.id} onValueChange={setPicked}>
-            <SelectTrigger className="min-w-72">
-              <SelectValue placeholder="Сценарий" />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name} · {SCENARIO_KIND_LABEL[s.kind]}
-                  {s.is_recommended && ' · рекомендуем'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
-      }
-    />
+  const lead =
+    'Что сильнее всего меняет окупаемость, как результат распределяется при неопределённости и что замерить на объекте в первую очередь.'
+  const actions = options.length > 0 && (
+    <Select value={scenario?.id} onValueChange={setPicked}>
+      <SelectTrigger className="min-w-72">
+        <SelectValue placeholder="Сценарий" />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            {s.name} · {SCENARIO_KIND_LABEL[s.kind]}
+            {s.is_recommended && ' · рекомендуем'}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 
   if (scenarios.isPending) {
     return (
-      <div className="mx-auto max-w-7xl space-y-6">
-        {header}
-        <LoadingBlock rows={4} />
-      </div>
+      <Screen wide title="Насколько устойчив результат" lead={lead}>
+        <LoadingBlock label="Загружаем сценарии…" />
+      </Screen>
     )
   }
 
   if (scenarios.isError || !scenario) {
     return (
-      <div className="mx-auto max-w-7xl space-y-6">
-        {header}
+      <Screen wide title="Насколько устойчив результат" lead={lead} nextDisabled>
         {scenarios.isError ? (
           <ErrorBlock error={scenarios.error} onRetry={() => scenarios.refetch()} />
         ) : (
@@ -79,33 +71,33 @@ export function RisksPage() {
             }
           />
         )}
-      </div>
+      </Screen>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      {header}
+    <Screen wide title="Насколько устойчив результат" lead={lead} actions={actions} nextLabel="Проверить имитацией">
+      <div className="space-y-6">
+        {scenario.last_calculation?.status === 'stale' && (
+          <Callout
+            action={
+              <Button asChild size="sm" variant="outline">
+                <Link to={`../scenarios/${scenario.id}`}>Открыть сценарий</Link>
+              </Button>
+            }
+          >
+            <ToneBadge tone="warn" className="mr-2">
+              устарел
+            </ToneBadge>
+            Данные объекта изменились после расчёта сценария «{scenario.name}» — пересчитайте его.
+          </Callout>
+        )}
 
-      {scenario.last_calculation?.status === 'stale' && (
-        <Callout
-          action={
-            <Button asChild size="sm" variant="outline">
-              <Link to={`../scenarios/${scenario.id}`}>Открыть сценарий</Link>
-            </Button>
-          }
-        >
-          <ToneBadge tone="warn" className="mr-2">
-            устарел
-          </ToneBadge>
-          Данные объекта изменились после расчёта сценария «{scenario.name}» — пересчитайте его.
-        </Callout>
-      )}
-
-      <SensitivitySections scenarioId={scenario.id} metric={metric} onMetric={setMetric} />
-      <MonteCarloPanel scenarioId={scenario.id} />
-      <SurveyPanel scenarioId={scenario.id} />
-    </div>
+        <SensitivitySections scenarioId={scenario.id} metric={metric} onMetric={setMetric} />
+        <MonteCarloPanel scenarioId={scenario.id} />
+        <SurveyPanel scenarioId={scenario.id} />
+      </div>
+    </Screen>
   )
 }
 

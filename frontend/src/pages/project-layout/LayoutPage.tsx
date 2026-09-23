@@ -10,7 +10,7 @@ import { formatDateTime, formatNumber, formatValue } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Button } from '@/shared/ui/button'
-import { Callout, PageHeader, Section, Stat, StatStrip } from '@/shared/ui/page'
+import { Callout, Screen, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
 import { ToneBadge } from '@/shared/ui/tone'
@@ -31,57 +31,64 @@ export function LayoutPage() {
   const notGenerated = layout.isError && parseApiProblem(layout.error).status === 404
   const openDialog = () => setDialogOpen(true)
 
+  const route = layout.data?.stats.routes?.[0]
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <PageHeader
-        title="Планировка"
-        description="Схема из параметров и нормативов, не CAD. Средние маршруты по графу проходов идут в цикл робота и в имитацию."
-        actions={
-          layout.data &&
-          !unsupported && (
-            <Button variant="outline" onClick={openDialog}>
-              <RefreshCw /> Перегенерировать
-            </Button>
-          )
-        }
-      />
+    <Screen
+      wide
+      title={
+        layout.data
+          ? `Склад ${formatNumber(layout.data.width_m)} × ${formatNumber(layout.data.height_m)} м${route ? `: ${route.name.toLowerCase()} — ${formatNumber(route.value_m)} м` : ''}`
+          : 'Планировка'
+      }
+      lead="Схема построена из параметров и нормативов, это не CAD. Средние маршруты по графу проходов идут в цикл робота и в имитацию, поэтому число роботов зависит от геометрии, а не от паспорта."
+      actions={
+        layout.data &&
+        !unsupported && (
+          <Button variant="outline" onClick={openDialog}>
+            <RefreshCw /> Перегенерировать
+          </Button>
+        )
+      }
+    >
+      <div className="space-y-6">
+        {layout.isPending && <LoadingBlock label="Строим планировку…" />}
 
-      {layout.isPending && <LoadingBlock rows={4} />}
+        {layout.isError &&
+          (unsupported ? (
+            <EmptyState
+              icon={<MapIcon className="size-6" />}
+              title={`Для типа «${project.data ? OBJECT_TYPE_LABEL[project.data.object_type] : 'объект'}» схема пока не строится`}
+              description={
+                <>
+                  Генератор планировки есть только для складов. Для этого объекта длины маршрутов в расчёте берутся из
+                  параметров объекта (ваш замер) или из нормативов — источник каждого значения виден в трассе расчёта
+                  сценария.
+                </>
+              }
+              action={
+                <Button asChild variant="outline">
+                  <Link to={`/projects/${projectId}/object`}>Уточнить параметры объекта</Link>
+                </Button>
+              }
+            />
+          ) : notGenerated ? (
+            <EmptyState
+              icon={<MapIcon className="size-6" />}
+              title="Планировка ещё не сгенерирована"
+              description="Схема строится из площади, высоты потолков, ширины проходов, потоков паллет и строк отбора. Маршруты по ней уточнят число роботов."
+              action={
+                <Button onClick={openDialog} disabled={objectType.isPending}>
+                  <MapIcon /> Сгенерировать
+                </Button>
+              }
+            />
+          ) : (
+            <ErrorBlock error={layout.error} onRetry={() => layout.refetch()} />
+          ))}
 
-      {layout.isError &&
-        (unsupported ? (
-          <EmptyState
-            icon={<MapIcon className="size-6" />}
-            title={`Для типа «${project.data ? OBJECT_TYPE_LABEL[project.data.object_type] : 'объект'}» схема пока не строится`}
-            description={
-              <>
-                Генератор планировки есть только для складов. Для этого объекта длины маршрутов в расчёте берутся из
-                параметров объекта (ваш замер) или из нормативов — источник каждого значения виден в трассе расчёта
-                сценария.
-              </>
-            }
-            action={
-              <Button asChild variant="outline">
-                <Link to={`/projects/${projectId}/object`}>Уточнить параметры объекта</Link>
-              </Button>
-            }
-          />
-        ) : notGenerated ? (
-          <EmptyState
-            icon={<MapIcon className="size-6" />}
-            title="Планировка ещё не сгенерирована"
-            description="Схема строится из площади, высоты потолков, ширины проходов, потоков паллет и строк отбора. Маршруты по ней уточнят число роботов."
-            action={
-              <Button onClick={openDialog} disabled={objectType.isPending}>
-                <MapIcon /> Сгенерировать
-              </Button>
-            }
-          />
-        ) : (
-          <ErrorBlock error={layout.error} onRetry={() => layout.refetch()} />
-        ))}
-
-      {layout.data && <LayoutView layout={layout.data} onRegenerate={openDialog} canRegenerate={!unsupported} />}
+        {layout.data && <LayoutView layout={layout.data} onRegenerate={openDialog} canRegenerate={!unsupported} />}
+      </div>
 
       {dialogOpen && (
         <RegenerateDialog
@@ -92,7 +99,7 @@ export function LayoutPage() {
           onOpenChange={setDialogOpen}
         />
       )}
-    </div>
+    </Screen>
   )
 }
 

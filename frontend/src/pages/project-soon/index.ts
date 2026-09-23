@@ -1,1 +1,1 @@
-export { ReportSoonPage, SimulationSoonPage } from './SoonPages'
+export { ReportSoonPage } from './SoonPages'

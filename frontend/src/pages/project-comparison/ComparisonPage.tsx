@@ -4,7 +4,7 @@ import { useProjectId } from '@/entities/project'
 import { useComparison } from '@/entities/scenario'
 import { parseApiProblem } from '@/shared/api/problem'
 import { Button } from '@/shared/ui/button'
-import { Callout, PageHeader, Section } from '@/shared/ui/page'
+import { Callout, Screen, Section } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { CashflowChart } from './CashflowChart'
 import { ComparisonGrid } from './ComparisonGrid'
@@ -17,34 +17,18 @@ export function ComparisonPage() {
   const comparison = useComparison(projectId)
   const table = comparison.data
 
-  const header = (
-    <PageHeader
-      title="Как сейчас против роботизации"
-      description="Все рассчитанные сценарии в одной таблице; лучшее значение в строке отмечено зелёным"
-      actions={
-        <Button asChild variant="outline">
-          <Link to="../risks">
-            Риски и обследование <ArrowRight />
-          </Link>
-        </Button>
-      }
-    />
-  )
-
   if (comparison.isPending) {
     return (
-      <div className="mx-auto max-w-7xl space-y-6">
-        {header}
-        <LoadingBlock rows={4} />
-      </div>
+      <Screen wide title="Как сейчас против роботизации">
+        <LoadingBlock label="Сравниваем сценарии…" />
+      </Screen>
     )
   }
 
   if (comparison.isError) {
     const noScenarios = parseApiProblem(comparison.error).status === 409
     return (
-      <div className="mx-auto max-w-7xl space-y-6">
-        {header}
+      <Screen wide title="Как сейчас против роботизации" nextDisabled>
         {noScenarios ? (
           <EmptyState
             icon={<Scale className="size-6" />}
@@ -61,7 +45,7 @@ export function ComparisonPage() {
         ) : (
           <ErrorBlock error={comparison.error} onRetry={() => comparison.refetch()} />
         )}
-      </div>
+      </Screen>
     )
   }
 
@@ -69,45 +53,45 @@ export function ComparisonPage() {
   const stale = table!.scenarios.filter((s) => s.status === 'stale').length
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      {header}
+    <Screen wide title={table!.verdict.headline} lead={table!.verdict.summary} nextLabel="Проверить риски">
+      <div className="space-y-6">
+        {(robotized < MIN_ROBOTIZED || stale > 0) && (
+          <Callout
+            action={
+              <Button asChild size="sm" variant="outline">
+                <Link to="../scenarios">К сценариям</Link>
+              </Button>
+            }
+          >
+            <div className="space-y-1">
+              {robotized < MIN_ROBOTIZED && (
+                <div>
+                  Рассчитано сценариев роботизации: {robotized}. Для сравнения нужно не меньше {MIN_ROBOTIZED}, например
+                  покупка и RaaS.
+                </div>
+              )}
+              {stale > 0 && <div>Часть сценариев рассчитана по устаревшим данным объекта — пересчитайте их.</div>}
+            </div>
+          </Callout>
+        )}
 
-      {(robotized < MIN_ROBOTIZED || stale > 0) && (
-        <Callout
-          action={
-            <Button asChild size="sm" variant="outline">
-              <Link to="../scenarios">К сценариям</Link>
-            </Button>
-          }
+        <VerdictPanel table={table!} />
+
+        <Section
+          title="Сводная таблица"
+          description="Суммы с НДС. Название сценария ведёт к расчёту и трассе формул"
+          bodyClassName="p-0"
         >
-          <div className="space-y-1">
-            {robotized < MIN_ROBOTIZED && (
-              <div>
-                Рассчитано сценариев роботизации: {robotized}. Для сравнения нужно не меньше {MIN_ROBOTIZED}, например
-                покупка и RaaS.
-              </div>
-            )}
-            {stale > 0 && <div>Часть сценариев рассчитана по устаревшим данным объекта — пересчитайте их.</div>}
-          </div>
-        </Callout>
-      )}
+          <ComparisonGrid table={table!} />
+        </Section>
 
-      <VerdictPanel table={table!} />
-
-      <Section
-        title="Сводная таблица"
-        description="Суммы с НДС. Название сценария ведёт к расчёту и трассе формул"
-        bodyClassName="p-0"
-      >
-        <ComparisonGrid table={table!} />
-      </Section>
-
-      <Section
-        title="Накопленный денежный поток"
-        description="«Как сейчас» — пунктир; чем выше линия сценария, тем меньше он стоит объекту за горизонт"
-      >
-        <CashflowChart table={table!} />
-      </Section>
-    </div>
+        <Section
+          title="Накопленный денежный поток"
+          description="«Как сейчас» — пунктир; чем выше линия сценария, тем меньше он стоит объекту за горизонт"
+        >
+          <CashflowChart table={table!} />
+        </Section>
+      </div>
+    </Screen>
   )
 }

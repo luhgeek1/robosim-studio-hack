@@ -33,7 +33,7 @@ import {
 } from '@/shared/ui/dropdown-menu'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
-import { PageHeader } from '@/shared/ui/page'
+import { Screen } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { ToneBadge } from '@/shared/ui/tone'
@@ -56,25 +56,32 @@ export function ScenariosPage() {
   }
 
   const robotized = scenarios.data?.filter((s) => !s.is_baseline) ?? []
+  const recommended =
+    robotized.find((s) => s.is_recommended && s.last_calculation) ?? robotized.find((s) => s.last_calculation)
+  const calc = recommended?.last_calculation
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
-        title="Сценарии и расчёт"
-        description="«Как сейчас» — точка отсчёта. Для сравнения нужны хотя бы два сценария роботизации, например покупка и RaaS."
-        actions={
-          <>
-            <NewScenarioDialog projectId={projectId} />
-            <Button onClick={fromRecommendation} disabled={create.isPending}>
-              {create.isPending ? <Spinner /> : <Sparkles />} Из рекомендации подбора
-            </Button>
-          </>
-        }
-      />
-      {scenarios.isPending && <LoadingBlock rows={3} />}
+    <Screen
+      title={
+        calc
+          ? `${recommended!.name}: ${calc.payback_years != null ? `окупается за ${formatYears(calc.payback_years)}` : 'не окупается в горизонте'}`
+          : 'Сколько роботов нужно и что это стоит'
+      }
+      lead="Сценарий — набор «процесс → решение → количество» и условия финансирования. «Как сейчас» — точка отсчёта; для сравнения нужны хотя бы два сценария роботизации, например покупка и RaaS."
+      nextDisabled={!robotized.some((s) => s.last_calculation)}
+      actions={
+        <>
+          <NewScenarioDialog projectId={projectId} />
+          <Button onClick={fromRecommendation} disabled={create.isPending}>
+            {create.isPending ? <Spinner /> : <Sparkles />} Из рекомендации подбора
+          </Button>
+        </>
+      }
+    >
+      {scenarios.isPending && <LoadingBlock label="Загружаем сценарии…" />}
       {scenarios.isError && <ErrorBlock error={scenarios.error} onRetry={() => scenarios.refetch()} />}
       {scenarios.data && (
-        <div className="divide-y overflow-hidden rounded-lg border bg-surface">
+        <div className="card divide-y divide-line overflow-hidden">
           {scenarios.data.map((scenario) => (
             <ScenarioCard key={scenario.id} projectId={projectId} scenario={scenario} />
           ))}
@@ -82,6 +89,7 @@ export function ScenariosPage() {
       )}
       {scenarios.data && robotized.length === 0 && (
         <EmptyState
+          className="mt-6"
           title="Сценариев роботизации пока нет"
           description="Быстрее всего — собрать сценарий из лучших подходящих решений по каждому процессу. Состав потом можно поменять."
           action={
@@ -91,7 +99,7 @@ export function ScenariosPage() {
           }
         />
       )}
-    </div>
+    </Screen>
   )
 }
 

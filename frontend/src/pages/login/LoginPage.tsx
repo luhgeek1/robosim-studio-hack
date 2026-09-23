@@ -16,8 +16,6 @@ const DEMO_ACCOUNTS = [
   { email: 'vendor@roboscope.demo', label: 'Производитель', hint: 'свои продукты' },
 ]
 
-const STEPS = ['Объект', 'Где деньги', 'Подбор', 'Планировка', 'Расчёт', 'Сравнение', 'Риски']
-
 export function LoginPage() {
   const { status, login, register } = useSession()
   const navigate = useNavigate()
@@ -56,45 +54,45 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-10">
-      <div className="grid w-full max-w-5xl gap-10 md:grid-cols-[1.2fr_minmax(0,380px)] md:items-center">
-        <div className="space-y-7">
-          <h1 className="max-w-lg text-[34px] leading-[1.1] font-semibold tracking-tight">
-            Сколько роботов нужно объекту и когда они окупятся
-          </h1>
-          <p className="max-w-lg text-base text-muted-foreground">
-            Каталог решений, подбор под параметры склада, аэропорта или больницы, количество роботов из времени цикла на
-            планировке и экономика «как сейчас / покупка / RaaS / лизинг». У каждого числа есть формула и источник.
-          </p>
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            {STEPS.map((step, i) => (
-              <li key={step} className="flex items-center gap-2">
-                <span className="num text-muted-foreground/60">{i + 1}</span>
-                {step}
-                {i < STEPS.length - 1 && <span className="ml-1 h-px w-4 bg-border" aria-hidden />}
-              </li>
-            ))}
-          </ol>
-          <div className="space-y-2 pt-2">
-            <div className="text-xs text-muted-foreground">Демо-доступ для жюри</div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {DEMO_ACCOUNTS.map((account) => (
-                <Button
-                  key={account.email}
-                  variant="outline"
-                  className="h-auto flex-col items-start gap-0.5 py-2 text-left"
-                  disabled={pending}
-                  onClick={() => void run(() => login({ email: account.email, password: DEMO_PASSWORD }))}
-                >
-                  <span>{account.label}</span>
-                  <span className="text-xs font-normal text-muted-foreground">{account.hint}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
+    <div className="mx-auto w-full max-w-275 px-6 pt-12 pb-16">
+      <div className="mb-10 max-w-180">
+        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Стоит ли роботизировать ваш объект?</h1>
+        <p className="mt-4 text-[16px] leading-relaxed text-ink-2">
+          Загрузите данные склада, аэропорта или больницы — RoboScope приведёт их к единой модели, подберёт роботов из
+          каталога, посчитает количество и экономику и проверит конфигурацию имитацией. У каждого числа есть формула и
+          источник.
+        </p>
+      </div>
 
-        <div className="rounded-lg border bg-surface p-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
+        <section>
+          <div className="h3 mb-3">Демо-доступ для жюри</div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {DEMO_ACCOUNTS.map((account) => (
+              <button
+                key={account.email}
+                type="button"
+                disabled={pending}
+                onClick={() => void run(() => login({ email: account.email, password: DEMO_PASSWORD }))}
+                className="card flex flex-col items-start gap-0.5 px-4 py-3 text-left transition-colors hover:border-line-2 hover:bg-surface-2 disabled:opacity-50"
+              >
+                <span className="text-[14px] font-medium">{account.label}</span>
+                <span className="meta">{account.hint}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-6 rounded-[12px] bg-surface-2 p-5 text-[13.5px] leading-relaxed text-ink-2">
+            <div className="h3 mb-2 text-ink">Как это работает</div>
+            <ol className="list-decimal space-y-1.5 pl-4">
+              <li>Создайте проект и выберите тип объекта — или возьмите демо-склад организатора.</li>
+              <li>Проверьте параметры: подтверждённые взяты из файла, допущения помечены.</li>
+              <li>Посмотрите, где деньги, и подберите роботов под ограничения объекта.</li>
+              <li>Соберите сценарии, сравните покупку и аренду, проверьте флот имитацией.</li>
+            </ol>
+          </div>
+        </section>
+
+        <aside className="card p-5">
           <Tabs defaultValue="login">
             <TabsList className="mb-4 w-full">
               <TabsTrigger value="login">Вход</TabsTrigger>
@@ -176,8 +174,8 @@ export function LoginPage() {
               </form>
             </TabsContent>
           </Tabs>
-          <p className="mt-4 text-xs text-muted-foreground">Каталог решений открыт без входа.</p>
-        </div>
+          <p className="meta mt-4">Каталог решений открыт без входа.</p>
+        </aside>
       </div>
     </div>
   )

@@ -6,11 +6,11 @@ import { useProjectId } from '@/entities/project'
 import { useCreateScenario } from '@/entities/scenario'
 import { parseApiProblem } from '@/shared/api/problem'
 import type { Candidate, CandidateStatus, MatchingResult, ProcessMatching } from '@/shared/api/types'
-import { formatDateTime, formatNumber } from '@/shared/lib/format'
+import { formatDateTime, formatNumber, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
-import { PageHeader, Stat, StatStrip } from '@/shared/ui/page'
+import { Screen, Stat, StatStrip } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { ToneBadge, ToneDot } from '@/shared/ui/tone'
 import { CandidateCard } from './CandidateCard'
@@ -34,36 +34,44 @@ export function MatchingPage() {
 
   const data = matching.data
   const noFit = data ? (data.totals?.fit ?? 0) === 0 : true
+  const fit = data?.totals?.fit ?? 0
+  const total = fit + (data?.totals?.check ?? 0) + (data?.totals?.excluded ?? 0)
+  const best = data?.processes[0]?.candidates.find((c) => c.status === 'fit')
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-16">
-      <PageHeader
-        title="Подбор решений"
-        description="По каждому процессу: подходит, требует проверки или не подходит — с причинами и объяснимым баллом."
-        actions={
-          data && (
-            <>
-              <WeightsPopover
-                projectId={projectId}
-                weights={data.weights}
-                includeRnd={includeRnd}
-                onIncludeRndChange={setIncludeRnd}
-              />
-              <Button
-                variant="outline"
-                onClick={() => run.mutate({ weights: data.weights, include_rnd: includeRnd })}
-                disabled={run.isPending}
-              >
-                {run.isPending ? <Spinner /> : <RotateCw />} Пересчитать
-              </Button>
-              <Button onClick={createFromRecommendation} disabled={createScenario.isPending || noFit}>
-                {createScenario.isPending ? <Spinner /> : <Sparkles />} Создать сценарий из рекомендации
-              </Button>
-            </>
-          )
-        }
-      />
-
+    <Screen
+      wide
+      title={
+        data
+          ? fit
+            ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}${best ? `, лучшее — ${best.product.name}` : ''}`
+            : 'Подходящих решений не найдено'
+          : 'Подбор роботов'
+      }
+      lead="Каталог отфильтрован по ограничениям объекта: тип груза, вес, ширина проходов, пол и зрелость решения. Оставшиеся решения ранжированы по производительности на вашем объекте, стоимости, инфраструктуре, зрелости и качеству данных."
+      actions={
+        data && (
+          <>
+            <WeightsPopover
+              projectId={projectId}
+              weights={data.weights}
+              includeRnd={includeRnd}
+              onIncludeRndChange={setIncludeRnd}
+            />
+            <Button
+              variant="outline"
+              onClick={() => run.mutate({ weights: data.weights, include_rnd: includeRnd })}
+              disabled={run.isPending}
+            >
+              {run.isPending ? <Spinner /> : <RotateCw />} Пересчитать
+            </Button>
+            <Button onClick={createFromRecommendation} disabled={createScenario.isPending || noFit}>
+              {createScenario.isPending ? <Spinner /> : <Sparkles />} Создать сценарий из рекомендации
+            </Button>
+          </>
+        )
+      }
+    >
       {matching.isPending && <LoadingBlock rows={4} />}
       {matching.isError &&
         (parseApiProblem(matching.error).status === 409 ? (
@@ -93,7 +101,7 @@ export function MatchingPage() {
       )}
 
       {compare.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-raised px-4 py-2 shadow-xl">
+        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[14px] border border-line bg-white/95 px-4 py-2 shadow-float backdrop-blur">
           <span className="text-sm">
             Выбрано для сравнения: <span className="num font-medium">{compare.length}</span> из {MAX_COMPARE}
           </span>
@@ -113,7 +121,7 @@ export function MatchingPage() {
           </Button>
         </div>
       )}
-    </div>
+    </Screen>
   )
 }
 
@@ -132,7 +140,7 @@ function MatchingView({
 
   return (
     <>
-      <StatStrip columns={4}>
+      <StatStrip columns={4} className="mb-6">
         <Stat
           label="Подходит"
           value={formatNumber(data.totals?.fit)}

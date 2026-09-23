@@ -64,7 +64,7 @@ const router = createBrowserRouter([
               },
               {
                 path: 'simulation',
-                ...page(() => import('@/pages/project-soon').then((m) => ({ Component: m.SimulationSoonPage }))),
+                ...page(() => import('@/pages/project-simulation').then((m) => ({ Component: m.SimulationPage }))),
               },
               {
                 path: 'report',
