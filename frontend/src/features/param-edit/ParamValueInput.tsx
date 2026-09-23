@@ -10,10 +10,12 @@ export function ParamValueInput({
   param,
   pending,
   onCommit,
+  suffix,
 }: {
   param: ProjectParam
   pending: boolean
   onCommit: (value: ParamValue) => Promise<unknown>
+  suffix?: string | null
 }) {
   const type: ParamType = param.definition?.type ?? 'string'
   const label = `${param.name}${param.unit ? `, ${param.unit}` : ''}`
@@ -56,7 +58,9 @@ export function ParamValueInput({
     )
   }
 
-  return <TextValueInput param={param} type={type} label={label} pending={pending} onCommit={onCommit} />
+  return (
+    <TextValueInput param={param} type={type} label={label} pending={pending} onCommit={onCommit} suffix={suffix} />
+  )
 }
 
 function TextValueInput({
@@ -65,12 +69,14 @@ function TextValueInput({
   label,
   pending,
   onCommit,
+  suffix,
 }: {
   param: ProjectParam
   type: ParamType
   label: string
   pending: boolean
   onCommit: (value: ParamValue) => Promise<unknown>
+  suffix?: string | null
 }) {
   // null means "not editing": the input shows the server value, so a refetch after save never fights the user.
   const [draft, setDraft] = useState<string | null>(null)
@@ -105,27 +111,36 @@ function TextValueInput({
 
   return (
     <div className="space-y-1">
-      <Input
-        value={shown}
-        inputMode={numeric ? 'decimal' : 'text'}
-        placeholder={param.definition?.example ? `напр. ${param.definition.example}` : 'нет данных'}
-        aria-label={label}
-        aria-invalid={error ? true : undefined}
-        disabled={pending}
-        className={cn(numeric && 'num text-right')}
-        onChange={(event) => {
-          setDraft(event.target.value)
-          if (error) setError(null)
-        }}
-        onBlur={() => void commit()}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') event.currentTarget.blur()
-          if (event.key === 'Escape') {
-            setDraft(null)
-            setError(null)
-          }
-        }}
-      />
+      <div className="relative">
+        <Input
+          value={shown}
+          inputMode={numeric ? 'decimal' : 'text'}
+          placeholder={param.definition?.example ? `напр. ${param.definition.example}` : 'нет данных'}
+          aria-label={label}
+          aria-invalid={error ? true : undefined}
+          disabled={pending}
+          className={cn(numeric && 'num text-right')}
+          // Единица стоит внутри поля справа: отступ под её длину, чтобы число не наезжало.
+          style={suffix ? { paddingRight: `calc(${suffix.length * 0.5}rem + 1.25rem)` } : undefined}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            if (error) setError(null)
+          }}
+          onBlur={() => void commit()}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') event.currentTarget.blur()
+            if (event.key === 'Escape') {
+              setDraft(null)
+              setError(null)
+            }
+          }}
+        />
+        {suffix && (
+          <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[12.5px] text-ink-3">
+            {suffix}
+          </span>
+        )}
+      </div>
       {error && <div className="text-xs text-crit">{error}</div>}
     </div>
   )

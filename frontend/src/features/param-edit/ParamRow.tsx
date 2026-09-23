@@ -63,12 +63,8 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
         )}
       </div>
 
-      <div className="flex items-start gap-2.5">
-        <div className="w-60 shrink-0">
-          <ParamValueInput param={param} pending={pending} onCommit={commit} />
-        </div>
-        <span className="mt-2 w-20 shrink-0 text-[12.5px] leading-tight text-ink-3">{param.unit}</span>
-        <span className="mt-1 flex w-14 shrink-0 items-center justify-end">
+      <div className="flex items-start gap-1.5">
+        <span className="mt-1 flex h-6 w-14 shrink-0 items-center justify-end">
           {pending ? (
             <Spinner className="size-3 text-ink-3" />
           ) : (
@@ -93,6 +89,9 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
             </span>
           )}
         </span>
+        <div className="w-50 shrink-0">
+          <ParamValueInput param={param} pending={pending} onCommit={commit} suffix={param.unit} />
+        </div>
       </div>
     </div>
   )
