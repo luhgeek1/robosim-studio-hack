@@ -20,8 +20,21 @@ import { Spinner } from '@/shared/ui/states'
 
 type InitMode = 'demo' | 'blank'
 
-export function CreateProjectDialog({ trigger }: { trigger: ReactNode }) {
-  const [open, setOpen] = useState(false)
+export function CreateProjectDialog({
+  trigger,
+  open: controlledOpen,
+  onOpenChange,
+}: {
+  trigger: ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}) {
+  const [ownOpen, setOwnOpen] = useState(false)
+  const open = controlledOpen ?? ownOpen
+  const setOpen = (next: boolean) => {
+    setOwnOpen(next)
+    onOpenChange?.(next)
+  }
   const navigate = useNavigate()
   const objectTypes = useObjectTypes()
   const create = useCreateProject()

@@ -1,13 +1,9 @@
 import { motion } from 'framer-motion'
-import { HeartPulse, LogOut, Plane, Plus, UserRound, Warehouse, X } from 'lucide-react'
-import { useEffect } from 'react'
-import { Link, NavLink, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
-import { PROJECT_STEPS, useProject } from '@/entities/project'
+import { LogOut, UserRound } from 'lucide-react'
+import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router'
+import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
-import { compareUrl, useCompareSelection } from '@/features/catalog-compare-selection'
-import { parseApiProblem } from '@/shared/api/problem'
 import type { Role } from '@/shared/api/types'
-import { formatPct } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import {
@@ -18,9 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
-import { ConfidenceRing } from '@/shared/ui/v0'
+import { ProjectTabs, Sections } from './HeaderNav'
 import { Logo } from './Logo'
-import { useProjectTabs, type ProjectTab } from './tabs'
 
 const ROLE_LABEL: Record<Role, string> = {
   guest: 'Гость',
@@ -70,128 +65,6 @@ function UserMenu() {
   )
 }
 
-const OBJECT_ICON = { warehouse: Warehouse, airport: Plane, hospital: HeartPulse } as const
-
-/* Вкладка проекта как в браузере: иконка объекта, название, индекс доверия, крестик. Ведёт на последний
-   открытый экран этого проекта. */
-function Tab({ tab, active }: { tab: ProjectTab; active: boolean }) {
-  const project = useProject(tab.id)
-  const navigate = useNavigate()
-  const close = useProjectTabs((s) => s.close)
-  const gone = project.isError && parseApiProblem(project.error).status === 404
-  useEffect(() => {
-    if (gone) close(tab.id)
-  }, [gone, close, tab.id])
-  const score = project.data?.data_quality.score
-  const Icon = OBJECT_ICON[project.data?.object_type as keyof typeof OBJECT_ICON] ?? Warehouse
-  const onClose = () => {
-    const next = close(tab.id)
-    if (active) navigate(next ? next.path : '/projects')
-  }
-  return (
-    <div
-      className={cn(
-        'group relative flex h-9 max-w-64 min-w-36 shrink items-center rounded-[10px] border transition-colors',
-        active
-          ? 'border-line bg-surface shadow-[0_1px_2px_rgba(20,20,24,0.06)]'
-          : 'border-transparent text-ink-3 hover:bg-black/4 hover:text-ink',
-      )}
-    >
-      <Link
-        to={tab.path}
-        className="flex h-full min-w-0 flex-1 items-center gap-2 pr-1 pl-2.5"
-        title={project.data?.name}
-      >
-        <span
-          className={cn(
-            'flex size-6 shrink-0 items-center justify-center rounded-md',
-            active ? 'bg-black/5 text-ink-2' : 'text-ink-4',
-          )}
-        >
-          <Icon size={14} />
-        </span>
-        <span className={cn('truncate text-[13px]', active ? 'font-medium text-ink' : 'font-medium')}>
-          {project.data?.name ?? '…'}
-        </span>
-        {active && score !== undefined && (
-          <span className="hidden shrink-0 items-center gap-1 text-[12px] text-ink-3 2xl:flex">
-            <ConfidenceRing value={score * 100} size={14} />
-            <span className="num">{formatPct(score, { share: true, digits: 0 })}</span>
-          </span>
-        )}
-      </Link>
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label={`Закрыть вкладку «${project.data?.name ?? 'проект'}»`}
-        className={cn(
-          'mr-1.5 flex size-5 shrink-0 items-center justify-center rounded-md text-ink-4 transition-opacity hover:bg-black/8 hover:text-ink',
-          active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
-        )}
-      >
-        <X size={13} />
-      </button>
-    </div>
-  )
-}
-
-function ProjectTabs({ activeId }: { activeId?: string }) {
-  const tabs = useProjectTabs((s) => s.tabs)
-  const visit = useProjectTabs((s) => s.visit)
-  const { pathname } = useLocation()
-  useEffect(() => {
-    if (activeId) visit(activeId, pathname)
-  }, [activeId, pathname, visit])
-  if (!tabs.length) return <div className="min-w-0 flex-1" />
-  return (
-    <div
-      className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
-      role="tablist"
-      aria-label="Открытые проекты"
-    >
-      {tabs.map((tab) => (
-        <Tab key={tab.id} tab={tab} active={tab.id === activeId} />
-      ))}
-      <Link
-        to="/projects"
-        className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-4 transition-colors hover:bg-black/4 hover:text-ink"
-        title="Открыть другой проект"
-        aria-label="Открыть другой проект"
-      >
-        <Plus size={15} />
-      </Link>
-    </div>
-  )
-}
-
-/* Разделы платформы видны всегда: все проекты, каталог и сравнение решений; внутри проекта сравнение сразу
-   проверяет совместимость с его объектом. */
-function Sections({ projectId }: { projectId?: string }) {
-  const { user } = useSession()
-  const selection = useCompareSelection()
-  const compareTo = `${compareUrl(selection.ids)}${projectId ? `&project=${projectId}` : ''}`
-  return (
-    <nav className="flex shrink-0 items-center gap-1" aria-label="Разделы">
-      {user && (
-        <NavLink to="/projects" end className={sectionLink}>
-          Проекты
-        </NavLink>
-      )}
-      <NavLink to="/catalog" end className={sectionLink}>
-        Каталог
-      </NavLink>
-      <NavLink to={compareTo} className={({ isActive }) => cn(sectionLink({ isActive }), 'flex items-center gap-1.5')}>
-        Сравнение решений
-        {selection.items.length > 0 && (
-          <span className="num flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ink px-1 text-[10.5px] text-white">
-            {selection.items.length}
-          </span>
-        )}
-      </NavLink>
-    </nav>
-  )
-}
-
 /* Плашка шагов закреплена под шапкой: контент прокручивается под стеклом, шаги всегда под рукой. */
 function StepDock({ projectId }: { projectId: string }) {
   return (
@@ -232,12 +105,6 @@ function StepDock({ projectId }: { projectId: string }) {
     </div>
   )
 }
-
-const sectionLink = ({ isActive }: { isActive: boolean }) =>
-  cn(
-    'h-8 rounded-md px-3 text-[13px] leading-8 font-medium',
-    isActive ? 'bg-black/6 text-ink' : 'text-ink-3 hover:text-ink',
-  )
 
 export function AppShell() {
   const { user } = useSession()

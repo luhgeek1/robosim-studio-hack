@@ -1,6 +1,6 @@
 import { Copy, HeartPulse, MoreHorizontal, Plane, Plus, Trash2, Warehouse } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import {
   OBJECT_TYPE_LABEL,
   PROJECT_STATUS_LABEL,
@@ -32,6 +32,10 @@ const ICONS: Record<string, ReactNode> = {
 
 export function ProjectsPage() {
   const projects = useProjects()
+  // «Добавить проект» из меню вкладок ведёт сюда с ?new=1 — модалка создания открывается сразу.
+  const [params, setParams] = useSearchParams()
+  const creating = params.get('new') === '1'
+  const setCreating = (next: boolean) => setParams(next ? { new: '1' } : {}, { replace: true })
   const newProject = (
     <Button size="sm">
       <Plus /> Новый проект
@@ -52,7 +56,7 @@ export function ProjectsPage() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <div className="h3">Проекты</div>
-            <CreateProjectDialog trigger={newProject} />
+            <CreateProjectDialog trigger={newProject} open={creating} onOpenChange={setCreating} />
           </div>
           {projects.isPending && <LoadingBlock label="Загружаем проекты…" />}
           {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
