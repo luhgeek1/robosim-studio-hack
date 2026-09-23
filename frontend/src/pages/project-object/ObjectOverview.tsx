@@ -156,14 +156,20 @@ function Readiness({ projectId, params }: { projectId: string; params: ProjectPa
    а какая держится на справочнике и допущениях; клик ведёт к параметру. */
 function ParamMap({ params }: { params: ProjectParam[] }) {
   const [hovered, setHovered] = useState<ProjectParam | null>(null)
+  // Последний наведённый параметр держим отдельно, чтобы подпись не пропадала раньше, чем погаснет.
+  const [last, setLast] = useState<ProjectParam | null>(null)
   const cells = [...params].sort(
     (a, b) => CELL_ORDER.indexOf(a.provenance.status) - CELL_ORDER.indexOf(b.provenance.status),
   )
   const count = (statuses: ProvenanceStatus[]) => params.filter((p) => statuses.includes(p.provenance.status)).length
+  const show = (param: ProjectParam) => {
+    setHovered(param)
+    setLast(param)
+  }
 
   return (
     <div className="mt-7">
-      <div className="flex flex-wrap gap-1" onMouseLeave={() => setHovered(null)}>
+      <div className="flex flex-wrap gap-1" onPointerLeave={() => setHovered(null)}>
         {cells.map((param) => (
           <motion.button
             key={param.key}
@@ -171,8 +177,9 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
             type="button"
             transition={SWAP}
             whileHover={{ scale: 1.25 }}
-            onMouseEnter={() => setHovered(param)}
-            onFocus={() => setHovered(param)}
+            onPointerEnter={() => show(param)}
+            onFocus={() => show(param)}
+            onBlur={() => setHovered(null)}
             onClick={() => scrollToParam(param.key)}
             aria-label={`${param.name}: ${PROVENANCE_LABEL[param.provenance.status].toLowerCase()}`}
             className={cn(
@@ -183,38 +190,36 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
           />
         ))}
       </div>
+      {/* Легенда и подпись наведённого параметра лежат друг на друге и меняются только прозрачностью:
+          без монтирования по ключу подпись не может «застрять», как бы быстро ни двигался курсор. */}
       <div className="relative mt-3 h-5 text-[12.5px]">
-        <AnimatePresence initial={false} mode="wait">
-          {hovered ? (
-            <motion.div
-              key={hovered.key}
-              initial={{ opacity: 0, y: 3 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              className="absolute inset-0 truncate"
-            >
-              <span className="font-medium text-ink">{hovered.name}</span>
-              <span className="text-ink-3"> · {PROVENANCE_LABEL[hovered.provenance.status].toLowerCase()}</span>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="legend"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              className="absolute inset-0 flex gap-4 text-ink-3"
-            >
-              {LEGEND.map((entry) => (
-                <span key={entry.label} className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className={cn('size-2 rounded-[2px]', entry.color)} />
-                  {entry.label} <span className="num text-ink">{count(entry.statuses)}</span>
-                </span>
-              ))}
-            </motion.div>
+        <div
+          className={cn(
+            'absolute inset-0 flex gap-4 text-ink-3 transition-opacity duration-150',
+            hovered ? 'opacity-0' : 'opacity-100',
           )}
-        </AnimatePresence>
+        >
+          {LEGEND.map((entry) => (
+            <span key={entry.label} className="flex items-center gap-1.5 whitespace-nowrap">
+              <span className={cn('size-2 rounded-[2px]', entry.color)} />
+              {entry.label} <span className="num text-ink">{count(entry.statuses)}</span>
+            </span>
+          ))}
+        </div>
+        <div
+          aria-hidden={!hovered}
+          className={cn(
+            'pointer-events-none absolute inset-0 truncate transition-opacity duration-150',
+            hovered ? 'opacity-100' : 'opacity-0',
+          )}
+        >
+          {last && (
+            <>
+              <span className="font-medium text-ink">{last.name}</span>
+              <span className="text-ink-3"> · {PROVENANCE_LABEL[last.provenance.status].toLowerCase()}</span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
