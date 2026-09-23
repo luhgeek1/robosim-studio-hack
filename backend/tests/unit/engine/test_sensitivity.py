@@ -91,3 +91,24 @@ def test_simulated_fleet_keeps_its_correction_when_inputs_move() -> None:
     slower = calculate(apply(simulated, SPEED, 0.5)).sizing[0].count
     assert slower.analytic > analytic
     assert slower.simulated == math.ceil(8 * slower.analytic / analytic)
+
+
+def test_more_volume_brings_the_staff_that_handles_it_today() -> None:
+    """At a fixed headcount extra volume only added robots, and NPV fell as volume grew (heatmap, 23.09)."""
+    volume = percent_driver(
+        Group.OPERATIONS_VOLUME.value,
+        GROUP_NAMES[Group.OPERATIONS_VOLUME],
+        DriverKind.GROUP,
+        None,
+        1.0,
+        -20,
+        20,
+    )
+    more = apply(INP, volume, 1.2)
+    assert more.params["forklift_operators"] == pytest.approx(INP.params["forklift_operators"] * 1.2)
+    assert more.params["pallets_in_per_day"] == pytest.approx(INP.params["pallets_in_per_day"] * 1.2)
+    base, items = tornado(INP, [volume], "effect_rub_year")
+    assert items[0].metric_at_high > base > items[0].metric_at_low
+    # The whole operation scales, so NPV scales with it and keeps its sign.
+    npv, moved = tornado(INP, [volume], "npv_rub")
+    assert moved[0].metric_at_high / npv == pytest.approx(1.2, rel=0.1)

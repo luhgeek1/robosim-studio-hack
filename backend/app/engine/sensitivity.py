@@ -115,6 +115,19 @@ def volume_params(inp: CalculationInput) -> set[str]:
     return keys
 
 
+def staff_params(inp: CalculationInput) -> set[str]:
+    """Headcounts of the staff groups that work in the scenario's processes."""
+    used = {item.process_key for item in inp.items}
+    groups = {g.key: g for g in inp.labor_groups}
+    return {
+        groups[key].headcount_param
+        for process in inp.processes
+        if process.key in used
+        for key in process.labor_allocation
+        if key in groups
+    }
+
+
 def salary_params(inp: CalculationInput) -> set[str]:
     return {group.salary_param for group in inp.labor_groups if group.salary_param}
 
@@ -137,7 +150,9 @@ def apply(inp: CalculationInput, driver: Driver, value: float) -> CalculationInp
     if driver.key == Group.LABOR_COST:
         return _scale_params(inp, salary_params(inp), factor)
     if driver.key == Group.OPERATIONS_VOLUME:
-        return _scale_params(inp, volume_params(inp), factor)
+        # AS-IS has to handle the same volume: without the staff moving too, more work would only add robots,
+        # and the heatmap showed NPV falling as volume grows (people handling +20 % at the same headcount).
+        return _scale_params(inp, volume_params(inp) | staff_params(inp), factor)
     raise KeyError(driver.key)
 
 
