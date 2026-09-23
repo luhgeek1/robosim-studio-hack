@@ -1,1 +1,0 @@
-export { ObjectPage } from './ObjectPage'

@@ -1,0 +1,56 @@
+export type CatalogQuery = {
+  q?: string
+  object_type?: string
+  solution_type?: string[]
+  status?: string[]
+  badge?: string[]
+  industry?: string
+  sort?: string
+  page?: number
+  page_size?: number
+}
+
+// Every project-scoped key starts with ['projects', id], so one invalidation refreshes the whole project after an edit.
+export const qk = {
+  me: ['me'] as const,
+  version: ['version'] as const,
+  objectTypes: ['object-types'] as const,
+  objectType: (key: string) => ['object-types', key] as const,
+  catalog: {
+    products: (query: CatalogQuery) => ['catalog', 'products', query] as const,
+    facets: (objectType?: string) => ['catalog', 'facets', objectType ?? null] as const,
+    product: (id: string) => ['catalog', 'product', id] as const,
+    compare: (ids: string[], projectId?: string) => ['catalog', 'compare', ids, projectId ?? null] as const,
+  },
+  projects: {
+    all: ['projects'] as const,
+    list: ['projects', 'list'] as const,
+    one: (id: string) => ['projects', id] as const,
+    params: (id: string) => ['projects', id, 'params'] as const,
+    validation: (id: string) => ['projects', id, 'validation'] as const,
+    dataQuality: (id: string) => ['projects', id, 'data-quality'] as const,
+    processes: (id: string) => ['projects', id, 'processes'] as const,
+    audit: (id: string) => ['projects', id, 'audit'] as const,
+    layout: (id: string) => ['projects', id, 'layout'] as const,
+    matching: (id: string) => ['projects', id, 'matching'] as const,
+    scenarios: (id: string) => ['projects', id, 'scenarios'] as const,
+    comparison: (id: string) => ['projects', id, 'comparison'] as const,
+  },
+  scenarios: {
+    all: ['scenarios'] as const,
+    one: (id: string) => ['scenarios', id] as const,
+    survey: (id: string) => ['scenarios', id, 'survey'] as const,
+  },
+  simulations: {
+    list: (scenarioId: string) => ['scenarios', scenarioId, 'simulations'] as const,
+    one: (id: string) => ['simulations', id] as const,
+    timeline: (id: string) => ['simulations', id, 'timeline'] as const,
+    replay: (id: string) => ['simulations', id, 'replay'] as const,
+    heatmap: (id: string) => ['simulations', id, 'heatmap'] as const,
+  },
+  calculations: {
+    one: (id: string) => ['calculations', id] as const,
+    trace: (id: string) => ['calculations', id, 'trace'] as const,
+    narrative: (id: string) => ['calculations', id, 'narrative'] as const,
+  },
+}

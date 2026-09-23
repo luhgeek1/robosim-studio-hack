@@ -1,81 +1,70 @@
 import type { ComponentType } from 'react'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
-import { AppShell } from '@/widgets/app-shell'
-import { NotFoundPage, RequireAuth, RootRedirect } from './guards'
+import { AppLayout, ProjectGate, RequireAuth, RootRedirect } from './layout'
 
-const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: loader })
+type Lazy = () => Promise<{ Component: ComponentType }>
+const screen = (load: Lazy) => ({ lazy: load })
 
 const router = createBrowserRouter([
   {
-    Component: AppShell,
+    Component: AppLayout,
     HydrateFallback: () => null,
     children: [
       { index: true, Component: RootRedirect },
-      { path: 'login', ...page(() => import('@/pages/login').then((m) => ({ Component: m.LoginPage }))) },
-      { path: 'catalog', ...page(() => import('@/pages/catalog').then((m) => ({ Component: m.CatalogPage }))) },
+      { path: 'login', ...screen(() => import('@/screens/LoginScreen').then((m) => ({ Component: m.LoginScreen }))) },
+      {
+        path: 'catalog',
+        ...screen(() => import('@/screens/CatalogScreen').then((m) => ({ Component: m.CatalogScreen }))),
+      },
       {
         path: 'catalog/compare',
-        ...page(() => import('@/pages/catalog-compare').then((m) => ({ Component: m.ComparePage }))),
+        ...screen(() => import('@/screens/CompareScreen').then((m) => ({ Component: m.CompareScreen }))),
       },
       {
         path: 'catalog/:productId',
-        ...page(() => import('@/pages/product').then((m) => ({ Component: m.ProductPage }))),
+        ...screen(() => import('@/screens/ProductScreen').then((m) => ({ Component: m.ProductScreen }))),
       },
       {
         Component: RequireAuth,
         children: [
-          { path: 'projects', ...page(() => import('@/pages/projects').then((m) => ({ Component: m.ProjectsPage }))) },
+          {
+            path: 'projects',
+            ...screen(() => import('@/screens/ProjectsScreen').then((m) => ({ Component: m.ProjectsScreen }))),
+          },
           {
             path: 'projects/:projectId',
-            ...page(() => import('@/pages/project').then((m) => ({ Component: m.ProjectLayout }))),
+            Component: ProjectGate,
             children: [
-              { index: true, ...page(() => import('@/pages/project').then((m) => ({ Component: m.OverviewPage }))) },
+              { index: true, element: <Navigate to="object" replace /> },
               {
                 path: 'object',
-                ...page(() => import('@/pages/project-object').then((m) => ({ Component: m.ObjectPage }))),
+                ...screen(() => import('@/screens/ObjectScreen').then((m) => ({ Component: m.ObjectScreen }))),
               },
               {
-                path: 'processes',
-                ...page(() => import('@/pages/project-processes').then((m) => ({ Component: m.ProcessesPage }))),
+                path: 'analysis',
+                ...screen(() => import('@/screens/AnalysisScreen').then((m) => ({ Component: m.AnalysisScreen }))),
               },
               {
-                path: 'matching',
-                ...page(() => import('@/pages/project-matching').then((m) => ({ Component: m.MatchingPage }))),
-              },
-              {
-                path: 'layout',
-                ...page(() => import('@/pages/project-layout').then((m) => ({ Component: m.LayoutPage }))),
-              },
-              {
-                path: 'scenarios',
-                ...page(() => import('@/pages/project-scenarios').then((m) => ({ Component: m.ScenariosPage }))),
-              },
-              {
-                path: 'scenarios/:scenarioId',
-                ...page(() => import('@/pages/project-scenario').then((m) => ({ Component: m.ScenarioPage }))),
-              },
-              {
-                path: 'comparison',
-                ...page(() => import('@/pages/project-comparison').then((m) => ({ Component: m.ComparisonPage }))),
-              },
-              {
-                path: 'risks',
-                ...page(() => import('@/pages/project-risks').then((m) => ({ Component: m.RisksPage }))),
+                path: 'robots',
+                ...screen(() => import('@/screens/RobotsScreen').then((m) => ({ Component: m.RobotsScreen }))),
               },
               {
                 path: 'simulation',
-                ...page(() => import('@/pages/project-soon').then((m) => ({ Component: m.SimulationSoonPage }))),
+                ...screen(() => import('@/screens/SimulationScreen').then((m) => ({ Component: m.SimulationScreen }))),
               },
               {
-                path: 'report',
-                ...page(() => import('@/pages/project-soon').then((m) => ({ Component: m.ReportSoonPage }))),
+                path: 'economics',
+                ...screen(() => import('@/screens/EconomicsScreen').then((m) => ({ Component: m.EconomicsScreen }))),
+              },
+              {
+                path: 'verdict',
+                ...screen(() => import('@/screens/VerdictScreen').then((m) => ({ Component: m.VerdictScreen }))),
               },
             ],
           },
         ],
       },
-      { path: 'home', element: <Navigate to="/" replace /> },
-      { path: '*', Component: NotFoundPage },
+      { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
 ])
