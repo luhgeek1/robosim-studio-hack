@@ -23,4 +23,5 @@ def settings_from(norms: Book) -> SimSettings:
         repair_s=value("sim_repair_time_min") * SECONDS_PER_MINUTE,
         bottleneck_utilization=value("sim_bottleneck_utilization"),
         utilization_target=value("amr_utilization_target"),
+        tow_dispatch_wait_s=value("sim_tow_dispatch_wait_min") * SECONDS_PER_MINUTE,
     )

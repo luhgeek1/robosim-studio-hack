@@ -156,13 +156,17 @@ class Actions:
         task.assigned = self.env.now
         self.emit("task_assigned", robot, task_id=task.id, node=task.origin)
         started = self.env.now
-        if robot.process.model == ProcessModel.TRANSPORT:
-            yield from self._transport(robot, task)
-        else:
+        model = robot.process.model
+        if model == ProcessModel.GOODS_TO_PERSON:
             yield from self._trip(robot, task)
+        else:
+            # A tow train is hitched and unhitched once per trip, as in the cycle formula of the calculation.
+            yield from self._transport(robot, task)
         task.done = self.env.now
-        if robot.process.model == ProcessModel.TRANSPORT:
+        if model == ProcessModel.TRANSPORT:
             self.unit_done(task.process, task.created, by_humans=False)
+        elif model == ProcessModel.TOW_TRAIN:
+            self.line_done(task)
         robot.tasks += 1
         robot.cycles.append(self.env.now - started)
         self.emit("task_done", robot, task_id=task.id, node=robot.node)

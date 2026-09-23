@@ -1496,6 +1496,17 @@ norms:
     affects: [sla]
     editable_by_user: true
     object_types: [warehouse]
+  - key: sim_tow_dispatch_wait_min
+    name: Сколько буксир ждёт полную сцепку, прежде чем уехать неполным
+    value: 10
+    unit: мин
+    category: simulation
+    range: {min: 5, max: 20}
+    source: team
+    rationale: "Беспилотный тягач уходит, когда тележки сцепки заполнены, или по расписанию, если груз копится медленно. Норматив обработки паллеты — 20 минут (параметр склада); половину отдаём на ожидание сцепки, вторая остаётся на рейс и выгрузку. В часы пика сцепка заполняется раньше, и норматив не срабатывает."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
   - key: sim_line_lead_time_min
     name: Норматив выполнения строки отбора
     value: 30

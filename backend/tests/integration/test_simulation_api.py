@@ -166,3 +166,50 @@ async def test_foreign_user_cannot_see_a_run(client: AsyncClient) -> None:
     ).json()["id"]
     stranger = bearer((await login(client, "vendor@roboscope.demo"))["access"])
     assert (await client.get(f"/api/v1/simulations/{run_id}", headers=stranger)).status_code in {403, 404}
+
+
+async def test_tow_train_scenario_is_simulated_and_swept(client: AsyncClient) -> None:
+    """Matching may rank a tow tractor first for pallets; its fleet must be checkable like an AMR's."""
+    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    payload = {
+        "name": "Склад",
+        "object_type": "warehouse",
+        "init": {"mode": "demo", "demo_key": "warehouse_demo_01"},
+    }
+    project = (await client.post("/api/v1/projects", json=payload, headers=headers)).json()
+    body = (await client.get(f"/api/v1/projects/{project['id']}/matching", headers=headers)).json()
+    candidates = next(p for p in body["processes"] if p["process_key"] == "pallet_transport")["candidates"]
+    tractor = next(c for c in candidates if "тягач" in c["product"]["name"].lower())["product"]["id"]
+    scenario = {
+        "name": "Тягач",
+        "kind": "purchase",
+        "items": [{"process_key": "pallet_transport", "product_id": tractor}],
+    }
+    created = await client.post(f"/api/v1/projects/{project['id']}/scenarios", json=scenario, headers=headers)
+    scenario_id = created.json()["id"]
+    calc = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    assert calc["sizing"][0]["product_id"] == tractor
+
+    run_id = (
+        await client.post(
+            f"/api/v1/scenarios/{scenario_id}/simulations", json={"mode": "peak", "seed": 2}, headers=headers
+        )
+    ).json()["id"]
+    run = (await client.get(f"/api/v1/simulations/{run_id}", headers=headers)).json()
+    assert run["status"] == "done", run
+    assert not run["summary"]["skipped_processes"]
+    assert run["summary"]["vs_analytic"] is not None
+
+    job_id = (
+        await client.post(
+            f"/api/v1/scenarios/{scenario_id}/fleet-sweep",
+            json={"process_key": "pallet_transport"},
+            headers=headers,
+        )
+    ).json()["id"]
+    result = (
+        await client.get(f"/api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}", headers=headers)
+    ).json()
+    assert result["recommended_count"] is not None
+    after = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    assert after["sizing"][0]["count"]["source"] == "simulated"
