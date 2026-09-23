@@ -56,57 +56,64 @@ export function CandidateCard({
   const verified = (product.badges ?? []).filter((badge) => VERIFIED_BADGES.has(badge))
   const excluded = candidate.status === 'excluded'
   const meta = [
+    product.manufacturer?.name,
     product.solution_type_name,
-    product.price_from
-      ? `от ${formatRub(product.price_from.amount_rub)}${product.price_from.vat_included ? ' с НДС' : ' без НДС'}`
-      : 'цена не указана',
     isNum(product.trl) ? `УГТ ${product.trl}` : null,
     product.status !== 'operation' ? PRODUCT_STATUS_LABEL[product.status] : null,
   ].filter(Boolean)
 
+  const price = product.price_from
   return (
-    <article className="card flex w-full flex-col overflow-hidden">
-      <RobotPreview solutionType={product.solution_type} productId={product.id}>
-        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-          {candidate.rank != null && <Chip strong>№ {candidate.rank}</Chip>}
-          <Chip>
-            <span className={cn('size-1.5 rounded-full', STATUS_DOT[candidate.status])} />
-            {CANDIDATE_STATUS_LABEL[candidate.status]}
-          </Chip>
-        </div>
-        <label
-          className={cn(
-            'absolute top-3 right-3 flex cursor-pointer items-center gap-2 rounded-full bg-white/90 py-1 pr-2.5 pl-2 text-[12px] font-medium transition-colors hover:bg-white',
-            selectDisabled && !selected && 'cursor-not-allowed opacity-60',
-          )}
-        >
-          <Checkbox
-            checked={selected}
-            disabled={selectDisabled && !selected}
-            onCheckedChange={(v) => onSelectedChange(v === true)}
-            aria-label={`Выбрать «${product.name}» для сравнения`}
-          />
-          Сравнить
-        </label>
-      </RobotPreview>
+    <article className="group card relative aspect-[5/6] w-full overflow-hidden">
+      <RobotPreview solutionType={product.solution_type} productId={product.id} />
 
-      <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
+      <div className="absolute top-4 left-4 flex items-center gap-1.5">
+        {candidate.rank != null && <Chip strong>№ {candidate.rank}</Chip>}
+        <Chip>
+          <span className={cn('size-1.5 rounded-full', STATUS_DOT[candidate.status])} />
+          {CANDIDATE_STATUS_LABEL[candidate.status]}
+        </Chip>
+      </div>
+      <label
+        className={cn(
+          'absolute top-4 right-4 flex cursor-pointer items-center gap-2 rounded-full bg-white/90 py-1 pr-2.5 pl-2 text-[12px] font-medium transition-opacity hover:bg-white',
+          selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100',
+          selectDisabled && !selected && 'cursor-not-allowed',
+        )}
+      >
+        <Checkbox
+          checked={selected}
+          disabled={selectDisabled && !selected}
+          onCheckedChange={(v) => onSelectedChange(v === true)}
+          aria-label={`Выбрать «${product.name}» для сравнения`}
+        />
+        Сравнить
+      </label>
+
+      {/* В покое — только название и цена по краям; при наведении снизу выезжает панель с расчётом и проверками. */}
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0">
+        <div className="min-w-0">
+          <h3 className="line-clamp-2 text-[18px] leading-snug font-semibold tracking-[-0.01em]">{product.name}</h3>
+          <p className="mt-0.5 truncate text-[13px] text-ink-3">{product.manufacturer?.name}</p>
+        </div>
+        <Price price={price} />
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-5 pt-4 pb-5 transition-[translate,box-shadow] group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] duration-300 ease-out group-focus-within:translate-y-0 group-hover:translate-y-0">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <Link
               to={`/catalog/${product.id}`}
-              className="line-clamp-2 min-h-[2.75em] text-[17px] leading-snug font-semibold tracking-[-0.01em] transition-colors hover:text-info"
+              className="line-clamp-2 text-[17px] leading-snug font-semibold tracking-[-0.01em] transition-colors hover:text-info"
             >
               {product.name}
             </Link>
-            <p className="mt-0.5 truncate text-[13px] text-ink-3">{product.manufacturer?.name}</p>
+            <p className="mt-0.5 line-clamp-1 text-[12.5px] text-ink-3" title={meta.join(' · ')}>
+              {meta.join(' · ')}
+            </p>
           </div>
           <ScoreButton candidate={candidate} />
         </div>
-
-        <p className="mt-2 line-clamp-1 text-[12.5px] text-ink-3" title={meta.join(' · ')}>
-          {meta.join(' · ')}
-        </p>
 
         <dl className="mt-4 grid grid-cols-3 gap-x-4">
           <Figure
@@ -121,12 +128,11 @@ export function CandidateCard({
         </dl>
 
         <Verdict candidate={candidate} />
-
         {verified.length > 0 && (
-          <p className="mt-2 text-[12.5px] text-ok">{verified.map((b) => BADGE_LABEL[b] ?? b).join(' · ')}</p>
+          <p className="mt-1.5 text-[12.5px] text-ok">{verified.map((b) => BADGE_LABEL[b] ?? b).join(' · ')}</p>
         )}
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+        <div className="mt-4 flex items-center justify-between gap-2">
           <WhyPopover candidate={candidate} />
           {excluded ? (
             <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} />
@@ -141,6 +147,16 @@ export function CandidateCard({
         </div>
       </div>
     </article>
+  )
+}
+
+function Price({ price }: { price: Candidate['product']['price_from'] }) {
+  if (!price) return <span className="shrink-0 pb-0.5 text-[13px] text-ink-3">цена не указана</span>
+  return (
+    <div className="shrink-0 text-right">
+      <div className="display num text-[22px] leading-tight">{formatRub(price.amount_rub)}</div>
+      <div className="mt-0.5 text-[12px] text-ink-3">от, {price.vat_included ? 'с НДС' : 'без НДС'}</div>
+    </div>
   )
 }
 
