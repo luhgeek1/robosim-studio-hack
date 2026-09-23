@@ -52,8 +52,14 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
       })
     }
     measure()
-    // Вкладка появляется с масштабом — перемеряем, когда анимация входа закончится.
-    const settle = window.setTimeout(measure, 320)
+    // Вкладки въезжают и сдвигаются пружиной — пока она идёт (~0,8 с), перемеряем каждый кадр.
+    const until = performance.now() + 800
+    let frame = 0
+    const follow = () => {
+      measure()
+      if (performance.now() < until) frame = requestAnimationFrame(follow)
+    }
+    frame = requestAnimationFrame(follow)
     const observer = new ResizeObserver(measure)
     observer.observe(root)
     // Пункты шапки появляются позже неё (раздел «Проекты» — после восстановления сессии): ловим появление метки.
@@ -61,7 +67,7 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
     mutations.observe(root, { subtree: true, childList: true, attributeFilter: ['data-header-active'] })
     root.addEventListener('scroll', measure, true)
     return () => {
-      window.clearTimeout(settle)
+      cancelAnimationFrame(frame)
       observer.disconnect()
       mutations.disconnect()
       root.removeEventListener('scroll', measure, true)
@@ -154,10 +160,6 @@ export function Sections({ projectId }: { projectId?: string }) {
 
 /* Вкладка проекта как в браузере: плавно появляется, уезжает при закрытии, соседние сдвигаются следом. */
 function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: string }) {
-  const self = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (active) self.current?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
-  }, [active, order])
   const project = useProject(tab.id)
   const navigate = useNavigate()
   const close = useProjectTabs((s) => s.close)
@@ -173,7 +175,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
   }
   return (
     <motion.div
-      ref={self}
+      data-tab-id={tab.id}
       layout="position"
       // Раскладка анимируется только когда меняется набор вкладок; смена маршрута и прокрутки её не трогает.
       layoutDependency={order}
@@ -231,8 +233,11 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
         onClick={onClose}
         aria-label={`Закрыть вкладку «${project.data?.name ?? 'проект'}»`}
         className={cn(
-          'relative z-10 mr-1.5 flex size-5 shrink-0 items-center justify-center rounded-md text-ink-4 transition-[opacity,background-color,color] hover:bg-black/8 hover:text-ink',
-          active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+          'z-10 flex size-5 shrink-0 items-center justify-center rounded-md text-ink-4 transition-[opacity,background-color,color] hover:bg-black/8 hover:text-ink',
+          // У неактивной вкладки крестик всплывает поверх названия и не отнимает у него место.
+          active
+            ? 'relative mr-1.5'
+            : 'absolute right-1.5 bg-[#ececea] opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
         )}
       >
         <X size={13} />
@@ -337,10 +342,23 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
   useEffect(() => {
     if (activeId) visit(activeId, pathname)
   }, [activeId, pathname, visit])
+  const strip = useRef<HTMLDivElement>(null)
+  // Активная вкладка всегда в видимой части полосы. offsetLeft не учитывает анимационные сдвиги,
+  // поэтому цель прокрутки верна даже пока вкладки ещё едут на места.
+  useLayoutEffect(() => {
+    const el = strip.current
+    const tab = activeId ? el?.querySelector<HTMLElement>(`[data-tab-id="${activeId}"]`) : null
+    if (!el || !tab) return
+    const left = tab.offsetLeft
+    const right = left + tab.offsetWidth
+    if (left < el.scrollLeft) el.scrollTo({ left, behavior: 'smooth' })
+    else if (right > el.scrollLeft + el.clientWidth) el.scrollTo({ left: right - el.clientWidth, behavior: 'smooth' })
+  }, [activeId, order])
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1">
       <div
-        className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
+        ref={strip}
+        className="relative flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
         style={{ flex: tabs.length ? `0 1 ${tabs.length * 228}px` : '0 0 0' }}
         role="tablist"
         aria-label="Открытые проекты"
