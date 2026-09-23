@@ -1,4 +1,5 @@
-import { Fragment, useState, type ReactNode } from 'react'
+import { motion } from 'framer-motion'
+import { useState, type ReactNode } from 'react'
 import { ArrowLeft, Check, GitCompareArrows, KeyRound, Plus, Trophy, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { BADGE_LABEL, SPEC_GROUP_LABEL, SPEC_GROUP_ORDER, useCompare } from '@/entities/catalog'
@@ -9,7 +10,7 @@ import { useSession } from '@/entities/session'
 import { compareSelection, COMPARE_LIMIT } from '@/features/catalog-compare-selection'
 import { ProductStatusMark } from '@/pages/catalog/parts'
 import type { CandidateStatus, CompareResult, Product, Provenance } from '@/shared/api/types'
-import { formatDate, formatNumber, formatRub, formatValue, pluralRu } from '@/shared/lib/format'
+import { formatDate, formatNumber, formatRub, formatValue } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Label } from '@/shared/ui/label'
@@ -161,6 +162,14 @@ function differs(row: Row, products: Product[]) {
   return seen.size > 1
 }
 
+// Цвет решения один на всей странице: полоска на карточке и столбики во всех графиках.
+const PRODUCT_COLORS = ['#3d3d44', '#d18a1f', '#447e4c', '#4f6fae', '#9a5b86']
+
+const shortName = (name: string) => name.split(' (')[0]
+
+const isNumericRow = (row: Row, products: Product[]) =>
+  products.some((p) => typeof row.values[p.id]?.value === 'number')
+
 function CompareTable({
   result,
   projectId,
@@ -176,262 +185,336 @@ function CompareTable({
 }) {
   const [onlyDiff, setOnlyDiff] = useState(false)
   const products = result.products
-  const compatibility = result.compatibility
+  const colors = new Map(products.map((p, i) => [p.id, PRODUCT_COLORS[i % PRODUCT_COLORS.length]]))
   const filledRows = result.rows.filter((row) => products.some((p) => hasValue(row, p.id)))
   const hiddenEmpty = result.rows.length - filledRows.length
   const rows = onlyDiff ? filledRows.filter((row) => differs(row, products)) : filledRows
-  const groups = SPEC_GROUP_ORDER.map((group) => ({ group, rows: rows.filter((r) => r.group === group) })).filter(
-    (g) => g.rows.length > 0,
-  )
-  const cols = products.length + 1
+  // Внутри группы сначала графики, потом текстовые характеристики — сетка не рвётся длинными строками.
+  const groups = SPEC_GROUP_ORDER.map((group) => {
+    const inGroup = rows.filter((r) => r.group === group)
+    return {
+      group,
+      rows: [...inGroup.filter((r) => isNumericRow(r, products)), ...inGroup.filter((r) => !isNumericRow(r, products))],
+    }
+  }).filter((g) => g.rows.length > 0)
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         {picker}
         {fetching && <Spinner className="size-3.5 text-ink-3" />}
-        <div className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-ink-3">
-          <span className="inline-flex items-center gap-1.5">
-            <Trophy className="size-3.5 text-ok" /> лучшее значение в строке
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <KeyRound className="size-3.5 text-warn" /> ключевое для подбора
-          </span>
-          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-2">
-            <Switch checked={onlyDiff} onCheckedChange={setOnlyDiff} />
-            Только различия
-          </label>
-        </div>
+        <label className="ml-auto flex cursor-pointer items-center gap-2 text-[13px] text-ink-2">
+          <Switch checked={onlyDiff} onCheckedChange={setOnlyDiff} />
+          Только различия
+        </label>
       </div>
 
-      <div className="card overflow-hidden">
-        <div className="scroll-thin overflow-x-auto">
-          <table className="w-full min-w-[900px] table-fixed border-collapse text-[13.5px]">
-            <colgroup>
-              <col className="w-64" />
-              {products.map((p) => (
-                <col key={p.id} />
-              ))}
-            </colgroup>
-            <thead>
-              <tr className="align-top">
-                <th className="sticky left-0 z-10 bg-card px-5 pt-4.5 pb-4 text-left align-bottom text-[12.5px] font-normal text-ink-3">
-                  <span className="num text-ink">{products.length}</span>{' '}
-                  {pluralRu(products.length, ['решение', 'решения', 'решений'])}
-                </th>
-                {products.map((product) => (
-                  <th key={product.id} className="group/head px-5 pt-4.5 pb-4 text-left font-normal">
-                    <div className="flex items-start justify-between gap-2">
-                      <div
-                        className="meta min-w-0 truncate"
-                        title={product.solution_type_name ?? product.solution_type}
-                      >
-                        {product.solution_type_name ?? product.solution_type}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onRemove(product.id)}
-                        aria-label={`Убрать «${product.name}» из сравнения`}
-                        title="Убрать из сравнения"
-                        className="-mt-1 -mr-1.5 grid size-6 shrink-0 place-items-center rounded-md text-ink-4 transition-colors hover:bg-black/6 hover:text-ink"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
-                    <Link
-                      to={`/catalog/${product.id}`}
-                      className="mt-0.5 line-clamp-2 text-[15px] leading-snug font-semibold tracking-[-0.01em] hover:underline"
-                    >
-                      {product.name}
-                    </Link>
-                    <div className="mt-0.5 truncate text-[13px] text-ink-3" title={product.manufacturer.name}>
-                      {product.manufacturer.name}
-                    </div>
-                    <div className="num mt-3 text-[17px] leading-tight font-semibold tracking-[-0.01em]">
-                      от {formatRub(product.price_from.amount_rub)}
-                    </div>
-                    <div className="meta">{product.price_from.vat_included === false ? 'без НДС' : 'с НДС'}</div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <GroupHeader cols={cols}>Сводка</GroupHeader>
-              <SummaryRow label="Стадия" products={products}>
-                {(p) => <ProductStatusMark status={p.status} />}
-              </SummaryRow>
-              <SummaryRow label="Уровень готовности (УГТ)" products={products}>
-                {(p) => <span className="num">{p.trl ?? '—'}</span>}
-              </SummaryRow>
-              <SummaryRow label="Предложений в каталоге" products={products}>
-                {(p) => <span className="num">{formatNumber(p.offers_count ?? null)}</span>}
-              </SummaryRow>
-              <SummaryRow label="Отметки" products={products}>
-                {(p) =>
-                  p.badges.length ? (
-                    <ul className="space-y-0.5 text-[12.5px] text-ink-2">
-                      {p.badges.map((badge) => (
-                        <li key={badge} className="flex items-center gap-1.5">
-                          <Check className="size-3.5 shrink-0 text-ok" strokeWidth={2.5} />
-                          {BADGE_LABEL[badge]}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-ink-4">—</span>
-                  )
-                }
-              </SummaryRow>
-              {projectId && (
-                <SummaryRow label="Совместимость с объектом" products={products}>
-                  {(p) => {
-                    const status = compatibility?.[p.id]
-                    if (!status) return <span className="text-ink-4">нет данных</span>
-                    return (
-                      <span className={cn('inline-flex items-center gap-1.5 font-medium', COMPAT_TEXT[status])}>
-                        <span className={cn('size-1.5 rounded-full', COMPAT_DOT[status])} />
-                        {CANDIDATE_STATUS_LABEL[status]}
-                      </span>
-                    )
-                  }}
-                </SummaryRow>
-              )}
+      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
+        {products.map((product) => (
+          <ProductSummary
+            key={product.id}
+            product={product}
+            color={colors.get(product.id)!}
+            compatibility={projectId ? (result.compatibility?.[product.id] ?? null) : undefined}
+            onRemove={() => onRemove(product.id)}
+          />
+        ))}
+      </div>
 
-              {groups.map(({ group, rows: groupRows }) => (
-                <Fragment key={group}>
-                  <GroupHeader cols={cols}>{SPEC_GROUP_LABEL[group]}</GroupHeader>
-                  {groupRows.map((row) => (
-                    <SpecRow key={row.spec_key} row={row} products={products} />
-                  ))}
-                </Fragment>
-              ))}
-              {groups.length === 0 && (
-                <tr>
-                  <td colSpan={cols} className="hairline p-8 text-center text-ink-3">
-                    {onlyDiff ? 'Все заполненные характеристики совпадают' : 'У выбранных решений нет характеристик'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        {hiddenEmpty > 0 && (
-          <div className="hairline bg-surface-2 px-5 py-3 text-[12.5px] text-ink-3">
-            Скрыто характеристик без данных у всех решений: <span className="num text-ink-2">{hiddenEmpty}</span>
+      <div className="mt-10 mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-ink-3">
+        <span className="inline-flex items-center gap-1.5">
+          <Trophy className="size-3.5 text-ok" /> лучшее значение
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <KeyRound className="size-3.5 text-warn" /> ключевое для подбора
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-ok" /> подтверждено
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-warn" /> заявка производителя — источник в подсказке у точки
+        </span>
+      </div>
+
+      {groups.map(({ group, rows: groupRows }) => (
+        <section key={group} className="mb-8">
+          <h2 className="mb-3 text-[15px] font-semibold tracking-[-0.01em]">
+            {SPEC_GROUP_LABEL[group]} <span className="num font-normal text-ink-4">{groupRows.length}</span>
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {groupRows.map((row) =>
+              isNumericRow(row, products) ? (
+                <SpecChart key={row.spec_key} row={row} products={products} colors={colors} />
+              ) : (
+                <SpecText key={row.spec_key} row={row} products={products} colors={colors} />
+              ),
+            )}
           </div>
+        </section>
+      ))}
+      {groups.length === 0 && (
+        <div className="card p-8 text-center text-ink-3">
+          {onlyDiff ? 'Все заполненные характеристики совпадают' : 'У выбранных решений нет характеристик'}
+        </div>
+      )}
+      {hiddenEmpty > 0 && (
+        <p className="meta">
+          Скрыто характеристик без данных у всех решений: <span className="num text-ink-2">{hiddenEmpty}</span>
+        </p>
+      )}
+    </div>
+  )
+}
+
+function ProductSummary({
+  product,
+  color,
+  compatibility,
+  onRemove,
+}: {
+  product: Product
+  color: string
+  compatibility?: CandidateStatus | null
+  onRemove: () => void
+}) {
+  return (
+    <article className="card relative overflow-hidden">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: color }} />
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="meta min-w-0 truncate" title={product.solution_type_name ?? product.solution_type}>
+            {product.solution_type_name ?? product.solution_type}
+          </div>
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Убрать «${product.name}» из сравнения`}
+            title="Убрать из сравнения"
+            className="-mt-1 -mr-1.5 grid size-6 shrink-0 place-items-center rounded-md text-ink-4 transition-colors hover:bg-black/6 hover:text-ink"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+        <Link
+          to={`/catalog/${product.id}`}
+          className="mt-0.5 line-clamp-2 text-[15px] leading-snug font-semibold tracking-[-0.01em] hover:underline"
+          title={product.name}
+        >
+          {product.name}
+        </Link>
+        <div className="mt-0.5 truncate text-[13px] text-ink-3" title={product.manufacturer.name}>
+          {product.manufacturer.name}
+        </div>
+        <div className="num mt-3 text-[19px] leading-tight font-semibold tracking-[-0.01em]">
+          от {formatRub(product.price_from.amount_rub)}
+        </div>
+        <div className="meta">{product.price_from.vat_included === false ? 'без НДС' : 'с НДС'}</div>
+      </div>
+      <dl className="hairline grid grid-cols-[1.5fr_1fr_1fr] gap-x-4 gap-y-3 px-5 py-4 text-[13px]">
+        <Fact label="стадия">
+          <ProductStatusMark status={product.status} />
+        </Fact>
+        <Fact label="УГТ">
+          <span className="num">{product.trl ?? '—'}</span>
+        </Fact>
+        <Fact label="предложений">
+          <span className="num">{formatNumber(product.offers_count ?? null)}</span>
+        </Fact>
+        {compatibility !== undefined && (
+          <Fact label="совместимость с объектом" className="col-span-3">
+            {compatibility ? (
+              <span className={cn('inline-flex items-center gap-1.5 font-medium', COMPAT_TEXT[compatibility])}>
+                <span className={cn('size-1.5 rounded-full', COMPAT_DOT[compatibility])} />
+                {CANDIDATE_STATUS_LABEL[compatibility]}
+              </span>
+            ) : (
+              <span className="text-ink-4">нет данных</span>
+            )}
+          </Fact>
         )}
+      </dl>
+      {product.badges.length > 0 && (
+        <ul className="hairline flex flex-wrap gap-x-3 gap-y-1 px-5 py-3 text-[12.5px] text-ink-2">
+          {product.badges.map((badge) => (
+            <li key={badge} className="inline-flex items-center gap-1">
+              <Check className="size-3.5 shrink-0 text-ok" strokeWidth={2.5} />
+              {BADGE_LABEL[badge]}
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
+  )
+}
+
+function Fact({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+  return (
+    <div className={cn('flex min-w-0 flex-col-reverse', className)}>
+      <dt className="mt-0.5 text-[12px] text-ink-3">{label}</dt>
+      <dd className="min-w-0 truncate">{children}</dd>
+    </div>
+  )
+}
+
+function SpecHead({ row }: { row: Row }) {
+  const isKey = Object.values(row.values).some((spec) => spec?.is_key_constraint)
+  const hint = row.better ? BETTER_HINT[row.better] : ''
+  return (
+    <div className="mb-3.5 flex items-start justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-1.5 text-[13.5px] leading-snug font-medium">
+        <span className="min-w-0">{row.name}</span>
+        {isKey && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <KeyRound className="size-3.5 shrink-0 text-warn" aria-label="Ключевое ограничение для подбора" />
+            </TooltipTrigger>
+            <TooltipContent>Ключевое ограничение для подбора</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+      {(row.unit || hint) && (
+        <span className="shrink-0 pt-px text-[12px] text-ink-4">{[row.unit, hint].filter(Boolean).join(' · ')}</span>
+      )}
+    </div>
+  )
+}
+
+function ProductLabel({ product, color }: { product: Product; color: string }) {
+  return (
+    <span className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-ink-2" title={product.name}>
+      <span className="size-2 shrink-0 rounded-[2px]" style={{ background: color }} />
+      <span className="truncate">{shortName(product.name)}</span>
+    </span>
+  )
+}
+
+/* Числовая характеристика — горизонтальные столбики по решениям от общего нуля, у лучшего кубок. */
+function SpecChart({ row, products, colors }: { row: Row; products: Product[]; colors: Map<string, string> }) {
+  const numbers = products.map((p) => row.values[p.id]?.value).filter((v): v is number => typeof v === 'number')
+  // Шкала от общего нуля: отрицательные значения (температура) уходят влево от нулевой отметки.
+  const lo = Math.min(...numbers, 0)
+  const hi = Math.max(...numbers, 0)
+  const span = hi - lo || 1
+  const zero = (-lo / span) * 100
+  return (
+    <div className="card px-5 pt-4 pb-4.5">
+      <SpecHead row={row} />
+      <div className="space-y-2.5">
+        {products.map((product) => {
+          const spec = row.values[product.id]
+          const value = spec?.value
+          const best = row.best_product_id === product.id
+          return (
+            <div key={product.id} className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-center gap-3">
+              <ProductLabel product={product} color={colors.get(product.id)!} />
+              <div className="flex min-w-0 items-center gap-2.5">
+                {typeof value === 'number' ? (
+                  <>
+                    <div className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-[3px] bg-black/4.5">
+                      {lo < 0 && <span className="absolute inset-y-0 w-px bg-ink-4" style={{ left: `${zero}%` }} />}
+                      <motion.div
+                        className="absolute inset-y-0 rounded-[3px]"
+                        style={{
+                          background: colors.get(product.id),
+                          left: `${value < 0 ? zero - (-value / span) * 100 : zero}%`,
+                        }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.max((Math.abs(value) / span) * 100, value !== 0 ? 2 : 0)}%` }}
+                        transition={{ type: 'spring', stiffness: 140, damping: 24 }}
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        'num flex shrink-0 items-center gap-1 text-[13px]',
+                        best ? 'font-semibold text-ok' : 'text-ink',
+                      )}
+                    >
+                      {best && <Trophy className="size-3.5" aria-label="Лучшее значение" />}
+                      {formatValue(value, spec?.unit ?? row.unit)}
+                      {spec && <SourceMark provenance={spec.provenance} compact />}
+                    </span>
+                  </>
+                ) : spec && hasValue(row, product.id) ? (
+                  <span className="flex min-w-0 items-center gap-1.5 text-[13px]">
+                    <span className="truncate">{formatValue(value ?? null, spec.unit ?? row.unit)}</span>
+                    <SourceMark provenance={spec.provenance} compact />
+                  </span>
+                ) : (
+                  <>
+                    <div className="h-3 flex-1 rounded-[3px] border border-dashed border-line-2" />
+                    <span className="shrink-0 text-[12.5px] text-ink-4">нет данных</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function GroupHeader({ cols, children }: { cols: number; children: ReactNode }) {
+/* Текстовая характеристика — значение каждого решения строкой в той же карточке. */
+function SpecText({ row, products, colors }: { row: Row; products: Product[]; colors: Map<string, string> }) {
   return (
-    <tr>
-      <td colSpan={cols} className="hairline bg-surface-2 px-5 pt-4 pb-2 text-[13px] font-semibold text-ink">
-        {children}
-      </td>
-    </tr>
-  )
-}
-
-function SummaryRow({
-  label,
-  products,
-  children,
-}: {
-  label: string
-  products: Product[]
-  children: (product: Product) => ReactNode
-}) {
-  return (
-    <tr className="hairline align-top">
-      <td className="sticky left-0 z-10 bg-card px-5 py-3 text-ink-2">{label}</td>
-      {products.map((product) => (
-        <td key={product.id} className="px-5 py-3">
-          {children(product)}
-        </td>
-      ))}
-    </tr>
-  )
-}
-
-function SpecRow({ row, products }: { row: Row; products: Product[] }) {
-  const isKey = Object.values(row.values).some((spec) => spec?.is_key_constraint)
-  const hint = row.better ? BETTER_HINT[row.better] : ''
-  return (
-    <tr className="hairline align-top">
-      <td className="sticky left-0 z-10 bg-card px-5 py-3">
-        <div className="flex items-center gap-1.5 text-ink-2">
-          <span>{row.name}</span>
-          {isKey && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <KeyRound className="size-3.5 shrink-0 text-warn" aria-label="Ключевое ограничение для подбора" />
-              </TooltipTrigger>
-              <TooltipContent>Ключевое ограничение для подбора</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-        {(row.unit || hint) && (
-          <div className="mt-0.5 text-[12px] text-ink-4">{[row.unit, hint].filter(Boolean).join(' · ')}</div>
-        )}
-      </td>
-      {products.map((product) => {
-        const spec = row.values[product.id]
-        const best = row.best_product_id === product.id
-        return (
-          <td key={product.id} className="relative px-5 py-3">
-            {best && (
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-1 rounded-[10px] border-[1.5px] border-ok/70"
-              />
-            )}
-            {spec && hasValue(row, product.id) ? (
-              <div className="space-y-1">
-                <div
-                  className={cn(
-                    'num flex items-start gap-1.5 break-words',
-                    best ? 'font-semibold text-ok' : 'text-ink',
-                  )}
-                >
-                  {best && <Trophy className="mt-0.5 size-3.5 shrink-0" aria-label="Лучшее значение" />}
-                  <span className="min-w-0">{formatValue(spec.value, spec.unit ?? row.unit)}</span>
-                </div>
-                <SourceMark provenance={spec.provenance} />
-              </div>
-            ) : (
-              <span className="text-ink-4">нет данных</span>
-            )}
-          </td>
-        )
-      })}
-    </tr>
+    <div className="card px-5 pt-4 pb-4.5">
+      <SpecHead row={row} />
+      <ul className="space-y-2.5">
+        {products.map((product) => {
+          const spec = row.values[product.id]
+          return (
+            <li key={product.id} className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-start gap-3">
+              <span className="pt-px">
+                <ProductLabel product={product} color={colors.get(product.id)!} />
+              </span>
+              {spec && hasValue(row, product.id) ? (
+                <span className="flex min-w-0 items-start gap-1.5 text-[13px] leading-snug">
+                  <span className="min-w-0 break-words">{formatValue(spec.value, spec.unit ?? row.unit)}</span>
+                  <SourceMark provenance={spec.provenance} compact />
+                </span>
+              ) : (
+                <span className="text-[12.5px] text-ink-4">нет данных</span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
 
 const SOURCE_DOT = { ok: 'bg-ok', info: 'bg-info', warn: 'bg-warn', crit: 'bg-crit', muted: 'bg-ink-4' } as const
 
-/* Происхождение значения точкой и подписью вместо плашки: в таблице их десятки. Источник — в подсказке. */
-function SourceMark({ provenance }: { provenance: Provenance }) {
+/* Происхождение значения точкой (в графиках — без подписи) вместо плашки. Источник — в подсказке. */
+function SourceMark({ provenance, compact }: { provenance: Provenance; compact?: boolean }) {
   const tone = PROVENANCE_TONE[provenance.status]
   const source = provenance.source
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className={cn(
-            'inline-flex cursor-help items-center gap-1.5 text-[12px] whitespace-nowrap',
-            tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink-3',
-          )}
-        >
-          <span className={cn('size-1.5 shrink-0 rounded-full', SOURCE_DOT[tone])} />
-          {PROVENANCE_LABEL[provenance.status]}
-        </span>
+        {compact ? (
+          <span
+            className="grid size-4 shrink-0 cursor-help place-items-center"
+            aria-label={PROVENANCE_LABEL[provenance.status]}
+          >
+            <span className={cn('size-1.5 rounded-full', SOURCE_DOT[tone])} />
+          </span>
+        ) : (
+          <span
+            className={cn(
+              'inline-flex cursor-help items-center gap-1.5 text-[12px] whitespace-nowrap',
+              tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink-3',
+            )}
+          >
+            <span className={cn('size-1.5 shrink-0 rounded-full', SOURCE_DOT[tone])} />
+            {PROVENANCE_LABEL[provenance.status]}
+          </span>
+        )}
       </TooltipTrigger>
       <TooltipContent className="max-w-sm space-y-1 text-left">
-        <div className="font-medium">{PROVENANCE_HINT[provenance.status]}</div>
+        <div className="font-medium">
+          {PROVENANCE_LABEL[provenance.status]} — {PROVENANCE_HINT[provenance.status].toLowerCase()}
+        </div>
         {source && (
           <div>
             {SOURCE_KIND_LABEL[source.kind]}: {source.title}
