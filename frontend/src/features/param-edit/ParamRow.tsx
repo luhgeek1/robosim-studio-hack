@@ -7,7 +7,7 @@ import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
-import { displayParamValue, displayRange } from './display'
+import { displayParamValue, displayRange, shortHint } from './display'
 import { ParamHistory } from './ParamHistory'
 import { ParamValueInput } from './ParamValueInput'
 import type { ParamValue } from './parse'
@@ -52,7 +52,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
         {def?.hint && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <p className="mt-0.5 line-clamp-1 cursor-help text-[12.5px] text-ink-3">{def.hint}</p>
+              <p className="mt-0.5 line-clamp-2 cursor-help text-[12.5px] text-ink-3">{shortHint(def.hint)}</p>
             </TooltipTrigger>
             <TooltipContent className="max-w-sm">{def.hint}</TooltipContent>
           </Tooltip>

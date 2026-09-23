@@ -3,12 +3,13 @@ import { Check, ChevronLeft, ChevronRight, CircleAlert, TriangleAlert } from 'lu
 import { useState } from 'react'
 import { useDataQuality, useUpdateParam, useValidation } from '@/entities/project'
 import { PROVENANCE_LABEL } from '@/entities/provenance'
-import { ParamValueInput, displayRange, parseDraft, toDraft } from '@/features/param-edit'
+import { ParamValueInput, displayRange, parseDraft, shortHint, toDraft } from '@/features/param-edit'
 import type { DataQualityReport, ObjectType, ProjectParam, ProvenanceStatus, ValidationIssue } from '@/shared/api/types'
 import { formatNumber, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { ObjectTwin } from './ObjectTwin'
 import { scrollToParam } from './scroll'
 
@@ -299,6 +300,7 @@ function FocusCard({
   const [draft, setDraft] = useState(initial)
   const [error, setError] = useState<string | null>(null)
   const range = displayRange(param)
+  const hint = param.definition?.hint
   const impact = IMPACT_LABEL[item.impact]
   const changed = draft.trim() !== initial.trim()
   const empty = draft.trim() === ''
@@ -321,8 +323,13 @@ function FocusCard({
         <span className="text-ink-3">сейчас {PROVENANCE_LABEL[item.status].toLowerCase()}</span>
       </div>
       <h3 className="mt-1.5 text-[18px] leading-snug font-semibold tracking-[-0.01em]">{param.name}</h3>
-      {param.definition?.hint && (
-        <p className="mt-1 line-clamp-2 text-[13.5px] leading-relaxed text-ink-3">{param.definition.hint}</p>
+      {hint && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="mt-1 line-clamp-2 cursor-help text-[13.5px] leading-relaxed text-ink-3">{shortHint(hint)}</p>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-sm">{hint}</TooltipContent>
+        </Tooltip>
       )}
 
       {textual ? (
