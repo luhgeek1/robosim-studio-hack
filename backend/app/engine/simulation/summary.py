@@ -80,7 +80,7 @@ def _sla(record: SimRecord, inp: SimInput) -> dict[str, Any]:
     on_time = sum(p.on_time for p in record.processes)
     leads = [t for p in record.processes for t in p.lead_times_s]
     return {
-        "kind": "lead_time" if main.model == ProcessModel.TRANSPORT else "on_time_share",
+        "kind": "on_time_share" if main.model == ProcessModel.GOODS_TO_PERSON else "lead_time",
         "target_value": round(main.lead_time_s / SECONDS_PER_MINUTE, 1),
         "target_unit": "мин",
         "target_pct": round(main.target_share * PERCENT, 1),
@@ -208,7 +208,10 @@ def _vs_analytic(record: SimRecord, inp: SimInput, sla: dict[str, Any], note: st
         process = processes[outcome.process_key]
         if not process.analytic_per_robot_h or not outcome.mean_cycle_s:
             continue
-        units = process.lines_per_trip if process.model == ProcessModel.GOODS_TO_PERSON else 1.0
+        units = {
+            ProcessModel.GOODS_TO_PERSON: process.lines_per_trip,
+            ProcessModel.TOW_TRAIN: math.floor(process.units_per_trip),
+        }.get(process.model, 1.0)
         per_robot = (
             SECONDS_PER_HOUR
             / outcome.mean_cycle_s

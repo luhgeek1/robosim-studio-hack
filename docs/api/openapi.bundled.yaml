@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.5.1
+  version: 0.5.2
   license:
     name: MIT
     identifier: MIT
@@ -3170,6 +3170,11 @@ components:
             target_value:
               type: number
               example: 20
+            target_param:
+              type:
+                - string
+                - 'null'
+              description: Параметр объекта, который задаёт цель (норматив доставки); расчёт сравнивает с ним рейс робота
             unit:
               type: string
               example: мин
@@ -6483,7 +6488,7 @@ components:
           example: cost_efficiency
         name:
           type: string
-          example: Стоимость конфигурации
+          example: Экономика решения
         weight:
           type: number
           example: 0.25

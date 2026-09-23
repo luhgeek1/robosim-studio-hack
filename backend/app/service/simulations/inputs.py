@@ -30,7 +30,10 @@ DEFAULT_SEED = 1
 _MODELS = {
     SizingModel.TRANSPORT_CYCLE: ProcessModel.TRANSPORT,
     SizingModel.GOODS_TO_PERSON: ProcessModel.GOODS_TO_PERSON,
+    SizingModel.TOW_TRAIN: ProcessModel.TOW_TRAIN,
 }
+# The reference data describes the flows of a process once; a tow train moves the same pallets as an AMR.
+_FLOWS = {ProcessModel.TOW_TRAIN: ProcessModel.TRANSPORT}
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,6 +128,7 @@ class InputBuilder:
             stations=sizing.stations or 0,
             analytic_robots=sizing.count.analytic,
             analytic_per_robot_h=outcome.effective_per_hour if outcome else None,
+            units_per_trip=_step(self.result, f"{key}.units_per_trip") or 1.0,
         )
 
     def build(self) -> Prepared:
@@ -137,7 +141,7 @@ class InputBuilder:
             spec_model = (definition.simulation or {}).get("model")
             if (
                 model is None
-                or spec_model != model.value
+                or spec_model != _FLOWS.get(model, model).value
                 or sizing.item.specs.optional("max_speed_mps") is None
             ):
                 skipped[definition.key] = (
@@ -147,7 +151,8 @@ class InputBuilder:
                 continue
             processes.append(self._process(sizing, definition, model))
             chargers += sizing.chargers
-        return Prepared(processes, skipped, chargers, settings_from(self.snapshot.input.norms))
+        inp = self.snapshot.input
+        return Prepared(processes, skipped, chargers, settings_from(inp.norms, inp.params))
 
 
 def config_from(request: RunRequest, chargers: int) -> SimConfig:

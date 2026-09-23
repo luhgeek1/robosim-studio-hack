@@ -39,7 +39,17 @@ class Counters:
     on_time_window: int = 0
 
 
-SUPPORTED = frozenset({ProcessModel.TRANSPORT, ProcessModel.GOODS_TO_PERSON})
+SUPPORTED = frozenset({ProcessModel.TRANSPORT, ProcessModel.GOODS_TO_PERSON, ProcessModel.TOW_TRAIN})
+PALLET_MODELS = frozenset({ProcessModel.TRANSPORT, ProcessModel.TOW_TRAIN})
+
+
+@dataclass(slots=True)
+class Train:
+    """Pallets waiting for one tow train: they share the door (or the storage side) and leave together."""
+
+    origin: str
+    dest: str
+    created: list[float]
 
 
 class Model(Actions):
@@ -75,7 +85,11 @@ class Model(Actions):
         self.out_berths = {n.id: simpy.Resource(env, capacity=1) for n in nodes[NodeKind.DOCK_OUT]}
         self.face_picker = Picker(self._stream("slots"), nodes[NodeKind.RACK_FACE])
         self.pod_picker = Picker(self._stream("pods"), nodes[NodeKind.PICKUP])
-        self.networks = {ProcessModel.TRANSPORT: pallet_net, ProcessModel.GOODS_TO_PERSON: full_net}
+        self.networks = {
+            ProcessModel.TRANSPORT: pallet_net,
+            ProcessModel.TOW_TRAIN: pallet_net,
+            ProcessModel.GOODS_TO_PERSON: full_net,
+        }
         self.events: list[SimEvent] = []
         self.edge_traffic: Counter[str] = Counter()
         self.edge_wait: defaultdict[str, float] = defaultdict(float)
@@ -85,6 +99,7 @@ class Model(Actions):
         self.processes = self._processes()
         self.queues: dict[str, list[Task]] = {p.key: [] for p in self.processes}
         self.batches: dict[str, list[float]] = {p.key: [] for p in self.processes}
+        self.trains: dict[tuple[str, str], Train] = {}
         self.tasks: list[Task] = []
         self.robots = self._robots()
         self.homes = {robot.id: robot.node for robot in self.robots}
@@ -126,7 +141,7 @@ class Model(Actions):
                 raise SimulationError(
                     "На планировке нет зоны «товар к человеку»: перегенерируйте её с отбором"
                 )
-            if process.model == ProcessModel.TRANSPORT and not (self.face_picker and self.docks):
+            if process.model in PALLET_MODELS and not (self.face_picker and self.docks):
                 raise SimulationError("На планировке нет ворот или мест хранения для перевозки паллет")
             result.append(process)
             if process.model == ProcessModel.GOODS_TO_PERSON:
@@ -191,31 +206,59 @@ class Model(Actions):
         if robot.wake is not None:
             robot.wake.succeed()
 
+    def _pallet(self, process: SimProcess, origin: str, dest: str, kind: str) -> None:
+        """One pallet to move: its own trip for a transport robot, a place on the next tow train otherwise."""
+        if process.model == ProcessModel.TRANSPORT:
+            self.add_task(process, origin, dest, kind)
+            return
+        self.counters.created += 1
+        # Inbound trains form at their door, outbound ones at the door they go to, internal ones in storage.
+        side = origin if kind == "inbound" else dest if kind == "outbound" else ""
+        train = self.trains.setdefault((process.key, f"{kind}:{side}"), Train(origin, dest, []))
+        train.created.append(self.env.now)
+        if len(train.created) >= max(1, math.floor(process.units_per_trip)):
+            self._dispatch(process, (process.key, f"{kind}:{side}"), kind)
+
+    def _dispatch(self, process: SimProcess, key: tuple[str, str], kind: str) -> None:
+        train = self.trains.pop(key)
+        self.add_task(process, train.origin, train.dest, kind, list(train.created))
+
+    def _departures(self, process: SimProcess) -> Steps:
+        """A slow-filling train leaves on schedule: `sim_tow_dispatch_wait_min` after its first pallet."""
+        wait = self.inp.settings.tow_dispatch_wait_s
+        while wait > 0:
+            yield self.env.timeout(SAMPLE_S)
+            for key, train in list(self.trains.items()):
+                if key[0] == process.key and self.env.now - train.created[0] >= wait:
+                    self._dispatch(process, key, key[1].split(":", 1)[0])
+
     def _sources(self, process: SimProcess) -> None:
         stream = self._stream(f"arrivals-{process.key}")
         arrivals = Arrivals(self.env, stream, process, self.inp.settings, self.inp.config, self.end_s)
         env = self.env
-        if process.model == ProcessModel.TRANSPORT:
+        if process.model in PALLET_MODELS:
             env.process(
                 arrivals.trucks(
                     process.inbound_per_day,
                     self.berths,
-                    lambda door: self.add_task(process, door, self.face_picker.pick(), "inbound"),
+                    lambda door: self._pallet(process, door, self.face_picker.pick(), "inbound"),
                 )
             )
             env.process(
                 arrivals.trucks(
                     process.outbound_per_day,
                     self.out_berths,
-                    lambda door: self.add_task(process, self.face_picker.pick(), door, "outbound"),
+                    lambda door: self._pallet(process, self.face_picker.pick(), door, "outbound"),
                 )
             )
 
             def internal() -> None:
                 origin = self.face_picker.pick()
-                self.add_task(process, origin, self.face_picker.pick(exclude=origin), "internal")
+                self._pallet(process, origin, self.face_picker.pick(exclude=origin), "internal")
 
             env.process(arrivals.poisson(process.internal_per_day, internal))
+            if process.model == ProcessModel.TOW_TRAIN:
+                env.process(self._departures(process))
             return
         batch = max(1, round(process.lines_per_trip))
 

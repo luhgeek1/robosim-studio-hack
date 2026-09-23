@@ -626,29 +626,30 @@ parameters:
   default: null
 - key: access_control
   group: security
-  name: Система контроля доступа (СКУД)
-  type: string
+  name: Есть система контроля доступа (СКУД)
+  type: boolean
   unit: null
   required: true
   dataset_row: Наличие системы контроля доступа (СКУД)
   step: null
   enum_values: null
-  hint: Есть ли СКУД и по какому протоколу. Роботы должны открывать двери и проходить турникеты через СКУД.
+  hint: Есть ли СКУД. Роботы открывают двери и проходят турникеты через неё, поэтому интеграция считается на каждую режимную
+    зону. В датасете — «Да (OSDP)».
   example: Да (OSDP)
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
   order: 41
   default: null
 - key: airside_certification
   group: security
-  name: Требования к допуску техники на перрон
-  type: string
+  name: Нужен допуск техники на перрон (airside)
+  type: boolean
   unit: null
   required: true
   dataset_row: Требования по сертификации оборудования для airside
   step: null
   enum_values: null
-  hint: Какие сертификаты нужны технике для работы на перроне. В датасете указаны EASA и ИКАО; для российских аэропортов требования
-    EASA на практике не применяются — уточните у службы авиабезопасности.
+  hint: Да — роботы на перроне должны иметь допуск; без подтверждённого допуска они получают «требует проверки». В датасете
+    требования указаны как EASA/ИКАО; для российских аэропортов уточните их у службы авиабезопасности.
   example: EASA/ИКАО
   affects: [baggage_handling]
   order: 42
@@ -782,7 +783,7 @@ processes:
   demand_params: [baggage_per_day, operating_hours_per_day, flights_per_day, flights_peak_hour]
   demand: {per_day: baggage_per_day, hours_per_day: operating_hours_per_day, peak_factor: flights_peak_hour * operating_hours_per_day
       / flights_per_day, load_per_trip: tow_train_carts_per_trip * bags_per_cart, trip_tare_kg: tow_train_carts_per_trip * baggage_cart_tare_kg}
-  sla: {kind: lead_time, target_value: 45, unit: мин}
+  sla: {kind: lead_time, target_value: 45, unit: мин, target_param: turnaround_min}
   labor_groups: [ground_staff]
   labor_allocation: {ground_staff: 0.2}
   labor_release: labor_release_share_transport * tow_driving_share
@@ -795,6 +796,24 @@ processes:
   route_length: baggage_route_length_m
   unit_weight: baggage_weight_kg
   requirements:
+  - key: airside_admission
+    spec: airside_certified
+    comparison: gte
+    required: airside_certification
+    when: airside_certification
+    solution_types: [tow_tractor, autonomous_truck, amr_transport]
+    message: Нет подтверждённого допуска к работе на перроне
+    why_needed: Датасет — допуск техники на перрон обязателен (EASA/ИКАО); нужен документ производителя или решение службы
+      авиабезопасности
+  - key: outdoor_protection
+    spec: ip_rating
+    comparison: gte
+    required: outdoor_ip_rating_min
+    when: has_open_air_zones
+    unit: IP
+    solution_types: [tow_tractor, autonomous_truck, amr_transport]
+    message: Степень защиты ниже нужной для работы на улице
+    why_needed: Перрон — открытая зона, нужна защита от пыли и дождя не ниже IP{required}
   - key: towing_vs_baggage_train
     spec: towing_capacity_kg
     comparison: gte
@@ -847,6 +866,7 @@ processes:
   solution_types: [amr_transport, tow_tractor, delivery_robot]
   sizing_model: transport_cycle
   route_length: terminal_route_length_m
+  unit_weight: airport_terminal_cart_weight_kg
   requirements:
   - key: noise_limit
     spec: noise_dba
@@ -932,6 +952,24 @@ processes:
     message: Робот шумнее, чем допускается в зоне работы
     why_needed: 'Нужен уровень шума робота: в зоне допускается не больше {required} дБА, особенно ночью'
 checks:
+- key: pax_year_matches_day
+  expression: pax_per_day * working_days_per_year <= mln(pax_per_year_mln) * cross_check_ratio_max
+  severity: warning
+  params: [pax_per_day, pax_per_year_mln]
+  message: Пассажиров в сутки заметно больше, чем даёт годовой пассажиропоток
+  how_to_fix: Годовой поток — в миллионах пассажиров; суточный — среднее за год, а не пиковый день
+- key: pax_day_matches_year
+  expression: mln(pax_per_year_mln) <= pax_per_day * working_days_per_year * cross_check_ratio_max
+  severity: warning
+  params: [pax_per_day, pax_per_year_mln]
+  message: Годовой пассажиропоток заметно больше, чем даёт суточный
+  how_to_fix: Годовой поток — в миллионах пассажиров; суточный — среднее за год
+- key: bag_within_iata_size
+  expression: baggage_dims_mm_length + baggage_dims_mm_width + baggage_dims_mm_height <= iata_bag_linear_max_mm
+  severity: warning
+  params: [baggage_dims_mm]
+  message: Место багажа больше стандартного по IATA (сумма трёх измерений до 158 см)
+  how_to_fix: Габариты вводятся в миллиметрах, например 750×500×300
 - key: cleaning_area_within_terminal
   expression: cleaning_area_m2 <= terminal_area_m2
   severity: error
@@ -987,10 +1025,17 @@ demo_projects:
 site_costs:
 - key: capex_integration
   kind: capex
-  name: Интеграция с AODB/FIDS и СКУД
+  name: Интеграция с AODB/FIDS
   formula: wms_integration_rub
   solution_types: [tow_tractor, amr_transport, autonomous_truck, sorting_robot, delivery_robot, service_robot]
-  note: Датасет аэропорта — FIDS/AODB есть, СКУД OSDP; тягачи и доставщики получают задания и проходят режимные зоны.
+  note: Датасет аэропорта — FIDS/AODB есть; тягачи и доставщики получают задания из систем аэропорта.
+- key: capex_access_control
+  kind: capex
+  name: Интеграция роботов со СКУД режимных зон
+  formula: access_control * security_zones * access_point_integration_rub
+  solution_types: [tow_tractor, amr_transport, autonomous_truck, delivery_robot, service_robot, cleaning_robot]
+  note: Датасет — «AMR должны интегрироваться со СКУД для прохода через двери», режимных зон 4 (airside, landside, стерильная,
+    перрон). Если СКУД нет, статья равна нулю.
 - key: capex_wifi
   kind: capex
   name: Модернизация Wi-Fi под роботов
@@ -1004,3 +1049,6 @@ site_costs:
   kind: opex
   name: Связь и удалённый доступ вендора
   formula: connectivity_rub_per_year
+descriptive_params:
+  apron_area_m2: Зона операции по ТЗ 3.2.1; процессы перрона (багаж, тележки) считаются по рейсам, багажу и длине маршрута
+    из датасета, а не по площади, поэтому площадь перрона — для описания объекта в отчёте.

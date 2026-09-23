@@ -20,6 +20,7 @@ from app.service.matching.candidates import (
     ProcessSizing,
     build_candidate,
     choose_offer,
+    cycle_extras,
     demand_input,
     route_length,
     specs_by_product,
@@ -200,17 +201,20 @@ class MatchingService:
             if data.product.id in manual_ids:
                 result.status = CandidateStatus.MANUAL
             results.append(result)
-        ordered = rank(results, weights)
         by_id = {data.product.id: data for data in candidates}
+        economics = {
+            r.candidate.product_id: quick_economics(analysis, definition.key, by_id[r.candidate.product_id])
+            for r in results
+            if r.candidate.robots_estimate and r.status != CandidateStatus.EXCLUDED
+        }
+        ordered = rank(results, weights, {pid: e.npv_rub for pid, e in economics.items() if e is not None})
         summaries = await self._summaries([data.product for data in candidates])
         views = [
             CandidateView(
                 by_id[r.candidate.product_id],
                 r,
                 summaries[r.candidate.product_id],
-                quick_economics(analysis, definition.key, by_id[r.candidate.product_id])
-                if r.candidate.robots_estimate and r.status != CandidateStatus.EXCLUDED
-                else None,
+                economics.get(r.candidate.product_id),
             )
             for r in ordered
         ]
@@ -242,6 +246,7 @@ class MatchingService:
             norms=analysis.norms,
             distance=route_length(definition, analysis.values),
             spec_keys=keys,
+            extras=cycle_extras(definition, analysis.values) or (),
         )
         return [
             build_candidate(

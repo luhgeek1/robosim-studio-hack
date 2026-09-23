@@ -12,7 +12,7 @@ from app.db.repositories.reference import ReferenceRepository
 from app.db.repositories.sources import to_source
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import Provenance, ProvenanceStatus, SourceInfo
-from app.domain.project.params import PERCENT_UNIT
+from app.domain.project.params import PERCENT_UNIT, input_names
 from app.domain.reference import ProcessDef
 from app.domain.scenario.models import CountMode, NormOverride
 from app.engine.calculation import CalculationInput, ItemInput, ParamMeta
@@ -69,12 +69,12 @@ class Snapshot:
 
 def param_meta(context: ProjectContext) -> dict[str, ParamMeta]:
     return {
-        p.key: ParamMeta(
-            name=p.definition.name,
-            unit=_SHARE_UNIT if p.definition.unit == PERCENT_UNIT else p.definition.unit,
+        key: ParamMeta(
+            name=name,
+            unit=_SHARE_UNIT if unit == PERCENT_UNIT else unit,
             status=p.provenance.status,
         )
-        for p in context.params
+        for key, name, unit, p in input_names(context.params)
     }
 
 

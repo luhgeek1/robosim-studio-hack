@@ -3,11 +3,13 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from app.engine.expressions import UNIT_FUNCTIONS
+
 Resolver = Callable[[str], tuple[str, float] | None]
 
 _TOKEN = re.compile(r"\s*(?:(\d+(?:\.\d+)?)|([A-Za-z_][A-Za-z0-9_.]*)|(.))")
 _SYMBOLS = {"×": "*", "−": "-", "÷": "/"}
-_UNIT = {"mm_to_m": 0.001, "m_to_mm": 1000.0, "kg_to_t": 0.001, "t_to_kg": 1000.0}
+_UNIT = UNIT_FUNCTIONS
 _FUNCTIONS = frozenset({"min", "max", "coalesce", "gain_to_release", *_UNIT})
 RELATIVE_TOLERANCE = 1e-6
 _BRACKETS: dict[str, tuple[str, str, Callable[[float], float]]] = {

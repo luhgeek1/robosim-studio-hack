@@ -10,6 +10,7 @@ from app.engine.trace import Book, fmt
 
 MLN = 1_000_000
 PERCENT = 100
+SECONDS_PER_MINUTE = 60
 # A vendor claim this many times above the cycle-based throughput is flagged («паспорт против физики»).
 VENDOR_CLAIM_GAP = 3
 _UNVERIFIED = frozenset({ProvenanceStatus.DEFAULT, ProvenanceStatus.ASSUMPTION, ProvenanceStatus.MISSING})
@@ -74,6 +75,10 @@ class VerdictContext:
     budget_rub: float | None
     param_status: Mapping[str, ProvenanceStatus]
     assumption_norms: frozenset[str]
+    # Power the object can give to robot chargers, kW (datasets: warehouse 500, airport 300, hospital 80).
+    charging_power_kw: float | None = None
+    # Delivery norms of the object by process, minutes: a robot trip longer than the norm cannot meet it.
+    lead_targets: Mapping[str, float] = field(default_factory=dict)
 
 
 def mln(value: float) -> str:
@@ -247,7 +252,50 @@ def assess_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
             )
         )
     risks += _item_risks(result)
+    risks += _power_risks(result, ctx)
+    risks += _lead_time_risks(result, ctx)
     return risks
+
+
+def _lead_time_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
+    risks: list[Risk] = []
+    for sizing in result.sizing:
+        target = ctx.lead_targets.get(sizing.item.process_key)
+        cycle = sizing.outcome.cycle_time_s if sizing.outcome else None
+        if target is None or cycle is None or cycle <= target * SECONDS_PER_MINUTE:
+            continue
+        risks.append(
+            Risk(
+                "LEAD_TIME_EXCEEDED",
+                f"Рейс дольше норматива: {sizing.process_name}",
+                RiskSeverity.HIGH,
+                f"Один рейс робота — {fmt(round(cycle / SECONDS_PER_MINUTE, 1))} мин при нормативе "
+                f"{fmt(target)} мин; ожидание в очереди добавит ещё",
+                "Проверить маршрут и лифты; взять более быстрый робот или оставить срочные заявки людям",
+            )
+        )
+    return risks
+
+
+def _power_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
+    per_station = ctx.norms.optional("charger_power_kw")
+    chargers = sum(sizing.chargers for sizing in result.sizing)
+    if ctx.charging_power_kw is None or per_station is None or not chargers:
+        return []
+    needed = chargers * per_station.value
+    if needed <= ctx.charging_power_kw:
+        return []
+    return [
+        Risk(
+            "CHARGING_POWER",
+            "Не хватит мощности на зарядку",
+            RiskSeverity.HIGH,
+            f"{chargers} зарядных станций × {fmt(per_station.value)} кВт = {fmt(round(needed))} кВт "
+            f"при доступных {fmt(ctx.charging_power_kw)} кВт",
+            "Заложить усиление электроснабжения или зарядку по графику; уточнить мощность станций у вендора",
+            ["charging_power_kw", "power_kw", "charger_power_kw"],
+        )
+    ]
 
 
 def _item_risks(result: CalculationResult) -> list[Risk]:

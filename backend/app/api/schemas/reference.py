@@ -49,7 +49,7 @@ class ParameterDef(ApiModel):
                 for name in cls.model_fields
                 if name not in {"default", "enum_values"}
             },
-            enum_values=[EnumValue(**value) for value in item.enum_values],
+            enum_values=[EnumValue(value=v["value"], label=v["label"]) for v in item.enum_values],
             default=PValue.from_domain(item.default) if item.default else None,
         )
 
@@ -65,6 +65,7 @@ class Sla(ApiModel):
     kind: str | None = None
     target_value: float | None = None
     unit: str | None = None
+    target_param: str | None = None
 
 
 class ProcessDef(ApiModel):

@@ -8,6 +8,7 @@ from app.db.models import Industry, ObjectType, ParameterDef, ProcessDef, Soluti
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.layout.models import RouteKey
+from app.domain.project.params import DIMENSION_PARTS
 from app.engine.expressions import ExpressionError, parse
 from app.seeds.dataset import DatasetRow, read_dataset
 from app.seeds.schemas import (
@@ -69,7 +70,12 @@ _TEXT_TYPES = frozenset({"string", "enum", "dimensions"})
 
 
 def dataset_default(param: ParameterSeed, cell: DatasetRow) -> Any:
-    """Text fields keep the cell text («Да (ЕМИАС)»); enums store the value whose label matches the cell."""
+    """Text fields keep the cell text («Да (ЕМИАС)»); enums store the value whose label matches the cell.
+
+    A yes/no parameter whose cell states a requirement instead of «Да» («EASA/ИКАО», «Обязательно для
+    Б-маршрутов») means «yes, required»; the text itself stays in the dataset note of the value."""
+    if param.type == "boolean" and isinstance(cell.value, str):
+        return True
     if param.type not in _TEXT_TYPES:
         return cell.value
     text = (cell.raw_value or "").strip() or None
@@ -157,9 +163,31 @@ def _route_problems(object_type: ObjectTypeSeed, names: set[str]) -> list[str]:
     return problems
 
 
-def _formula_problems(object_type: ObjectTypeSeed, norm_keys: set[str]) -> list[str]:
+def _rule_problems(object_type: ObjectTypeSeed, names: set[str]) -> list[str]:
+    """Matching rules and per-trip operations are formulas too: every name must be a parameter or a norm."""
+    problems: list[str] = []
+    for process in object_type.processes:
+        for rule in process.requirements:
+            for field in ("required", "when", "condition"):
+                if source := getattr(rule, field):
+                    problems += _expression_problems(f"{process.key}.{rule.key}.{field}", source, names)
+        for extra in process.cycle_extras:
+            problems += _expression_problems(f"{process.key}.{extra.key}", extra.formula, names)
+    return problems
+
+
+def _formula_names(object_type: ObjectTypeSeed, norm_keys: set[str]) -> set[str]:
+    """Parameters and norms; a dimensions parameter reads as its length, width and height (mm)."""
     names = {p.key for p in object_type.parameters} | norm_keys
-    problems = _route_problems(object_type, names)
+    for param in object_type.parameters:
+        if param.type == "dimensions":
+            names |= {f"{param.key}_{part}" for part in DIMENSION_PARTS}
+    return names
+
+
+def _formula_problems(object_type: ObjectTypeSeed, norm_keys: set[str]) -> list[str]:
+    names = _formula_names(object_type, norm_keys)
+    problems = _route_problems(object_type, names) + _rule_problems(object_type, names)
     allocated: dict[str, float] = {}
     for process in object_type.processes:
         if process.demand is not None:

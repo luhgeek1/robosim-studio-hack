@@ -59,12 +59,16 @@ def _numeric(param: ParameterDef, raw: Any, warnings: list[str], location: str) 
     return parsed
 
 
-def _boolean(param: ParameterDef, raw: Any, location: str) -> bool:
+def _boolean(param: ParameterDef, raw: Any, warnings: list[str], location: str) -> bool:
     parsed = parse_scalar(raw)
     if isinstance(parsed, bool):
         return parsed
     if isinstance(parsed, int | float) and parsed in _BOOLEAN_NUMBERS:
         return _BOOLEAN_NUMBERS[int(parsed)]
+    if isinstance(parsed, str):
+        # The organizer states a requirement instead of «Да»: «EASA/ИКАО», «Обязательно для Б-маршрутов».
+        warnings.append(f"{location}: «{cell_text(raw)}» понято как «Да» — {param.name}")
+        return True
     raise ValueConversionError(f"{location}: «{cell_text(raw)}» — ожидается «Да» или «Нет» ({param.name})")
 
 
@@ -72,7 +76,7 @@ def convert_value(param: ParameterDef, raw: Any, warnings: list[str], location: 
     if param.type in _NUMERIC_TYPES:
         return _numeric(param, raw, warnings, location)
     if param.type == "boolean":
-        return _boolean(param, raw, location)
+        return _boolean(param, raw, warnings, location)
     return cell_text(raw)
 
 

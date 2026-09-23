@@ -63,6 +63,17 @@ def route_length(process: ProcessDef, values: dict[str, float | None]) -> Quanti
     return Quantity("route_length_m", "Длина маршрута в одну сторону", distance, "м", InputKind.PARAM)
 
 
+def cycle_extras(process: ProcessDef, values: dict[str, float | None]) -> tuple[Quantity, ...] | None:
+    """The process's per-trip operations for the quick estimate; None when the object lacks their inputs."""
+    extras = []
+    for extra in process.cycle_extras:
+        seconds = _expression(extra.formula, values)
+        if seconds is None:
+            return None
+        extras.append(Quantity(extra.key, extra.name, seconds, "с", InputKind.PARAM))
+    return tuple(extras)
+
+
 def spec_book(specs: Sequence[ProductSpec], keys: dict[str, SpecKey]) -> Book:
     return Book.of(
         InputKind.SPEC,
@@ -82,6 +93,7 @@ class ProcessSizing:
     norms: Book
     distance: Quantity | None
     spec_keys: dict[str, SpecKey]
+    extras: tuple[Quantity, ...] = ()
 
 
 def build_candidate(
@@ -97,7 +109,7 @@ def build_candidate(
     outcome = None
     if sizing_model is not None and process.demand is not None:
         is_fmr = product.solution_type == FMR_SOLUTION_TYPE
-        options = SizingOptions(distance=process.distance, is_fmr=is_fmr)
+        options = SizingOptions(distance=process.distance, is_fmr=is_fmr, extras=process.extras)
         outcome = size(sizing_model, process.demand, book, process.norms, options)
     price = offer.price_rub if offer else product.price_from_rub
     robots = outcome.total_robots if outcome else None

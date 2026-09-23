@@ -190,3 +190,41 @@ def test_peak_run_is_fast() -> None:
     started = time.perf_counter()
     run(record_events=True)
     assert time.perf_counter() - started < 3.0
+
+
+# A tow train with four carts on the same route: the cycle model gives four times the AMR rate per robot.
+TOW = replace(
+    PALLETS,
+    model=ProcessModel.TOW_TRAIN,
+    product_name="Тягач",
+    robots=4,
+    units_per_trip=4,
+    analytic_robots=4,
+    analytic_per_robot_h=4 * PALLETS.analytic_per_robot_h,  # type: ignore[operator]
+)
+
+
+def test_tow_train_carries_several_pallets_per_trip_and_matches_its_cycle_model() -> None:
+    result = run(TOW)
+    summary = result.summary
+    assert summary.sla["kind"] == "lead_time"
+    assert summary.sla["achieved_pct"] >= 95
+    trips = sum(r.tasks for r in result.record.robots)
+    assert summary.completed > 2 * trips
+    assert summary.vs_analytic is not None
+    assert summary.vs_analytic.verdict == "confirmed"
+    assert abs(summary.vs_analytic.delta_pct) < 15
+
+
+def test_too_few_tow_trains_are_the_bottleneck() -> None:
+    summary = run(TOW, fleet={"pallet_transport": 2}).summary
+    assert summary.sla["achieved_pct"] < 95
+    assert summary.bottleneck.resource_kind == "fleet"
+
+
+def test_a_slow_filling_train_leaves_on_schedule() -> None:
+    """At night a full train would take hours to fill; the departure norm keeps pallets in the lead time."""
+    quiet = replace(TOW, inbound_per_day=100, outbound_per_day=100)
+    summary = run(quiet, mode=SimMode.NORMAL).summary
+    assert summary.completed_by_humans == 0
+    assert summary.sla["p95_lead_time_min"] <= SETTINGS.tow_dispatch_wait_s / 60 + 10

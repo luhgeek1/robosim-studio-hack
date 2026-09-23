@@ -451,15 +451,81 @@ norms:
     affects: [labor_savings, effect, payback, npv, irr, roi]
     editable_by_user: true
     object_types: [hospital]
-  - key: elevator_cycle_time_s
-    name: Время лифтового цикла робота
-    value: 120
+  - key: elevator_wait_transfer_s
+    name: Ожидание лифта, вход и выход робота
+    value: 75
     unit: с
     category: sizing
-    range: {min: 60, max: 240}
+    range: {min: 40, max: 150}
     source: team
-    rationale: "Ожидание кабины при общем пользовании, вход, проезд в среднем на 4 этажа из 9, выход. Данных в датасете нет, а лифты — главное узкое место больницы (docs/DATA.md). Замеряется при обследовании."
+    rationale: "Лифт общего пользования: робот ждёт кабину, въезжает, выезжает. Вместе с проездом этажей даёт лифтовой цикл; при 9 этажах датасета — 120 с, как прежний норматив. Данных в датасете нет, лифты — главное узкое место больницы; замеряется при обследовании. Если время лифта известно, его задают параметром «Время лифтового цикла»."
     affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: elevator_floor_travel_s
+    name: Проезд лифта на один этаж с попутными остановками
+    value: 10
+    unit: с
+    category: sizing
+    range: {min: 5, max: 20}
+    source: team
+    rationale: "Грузовой лифт 1 м/с проходит этаж 3,5 м за 3–4 с; в больнице кабина останавливается по пути, поэтому с разгоном и остановками — около 10 с на этаж."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: elevator_ride_floor_share
+    name: Средняя поездка на лифте, доля этажности здания
+    value: 0.5
+    unit: доля
+    category: sizing
+    range: {min: 0.3, max: 0.7}
+    source: team
+    rationale: "Пищеблок, прачечная и склад отходов — на нижних этажах, отделения распределены по всему корпусу, поэтому средняя поездка — половина этажности. Этажность берётся из параметров объекта (датасет: 9 этажей)."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: disinfection_time_s
+    name: Обеззараживание робота после рейса
+    value: 300
+    unit: с
+    category: sizing
+    range: {min: 120, max: 600}
+    source: team
+    rationale: "Датасет больницы: обеззараживание робота «обязательно для Б-маршрутов» (отходы класса Б), УФ-модулем или дезсредством. УФ-обработка поверхностей по инструкциям производителей облучателей — 3–5 мин; берём 5 мин на рейс."
+    affects: [robot_count, opex]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: disinfection_consumables_rub_per_trip
+    name: Расходники на обеззараживание робота, на рейс
+    value: 50
+    unit: ₽
+    category: opex
+    range: {min: 20, max: 150}
+    source: team
+    rationale: "Датасет больницы: обеззараживание «учитывается в OPEX». Салфетки и дезсредство на обработку платформы и контейнера — десятки рублей; для УФ-модуля это износ лампы. Берём 50 ₽ с НДС на рейс вывоза отходов."
+    affects: [opex, effect, payback, npv]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: linen_min_visits_per_point_day
+    name: Минимум рейсов на точку сбора белья в сутки
+    value: 2
+    unit: рейсов
+    category: operations
+    range: {min: 1, max: 4}
+    source: team
+    rationale: "Каждое отделение ежедневно сдаёт грязное и получает чистое бельё: минимум два рейса на точку, даже если по массе хватило бы меньшего числа. Точек по датасету 18."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: medication_min_rounds_per_point_day
+    name: Минимум плановых доставок медикаментов на точку в сутки
+    value: 2
+    unit: рейсов
+    category: operations
+    range: {min: 1, max: 4}
+    source: team
+    rationale: "Аптека развозит заявки отделений минимум утром и вечером; срочные доставки идут сверх этого. Точек доставки по датасету 22."
+    affects: [robot_count]
     editable_by_user: true
     object_types: [hospital]
   - key: elevator_robot_capacity_share
@@ -1146,23 +1212,23 @@ norms:
     object_types: [warehouse, airport, hospital]
   - key: matching_weight_performance
     name: "Вес критерия «производительность» в скоринге подбора"
-    value: 0.25
+    value: 0.15
     unit: доля
     category: operations
     range: {min: 0, max: 1}
     source: team
-    rationale: "Сколько роботов нужно под пиковый спрос — главный фактор экономики вместе со стоимостью; равный вес со стоимостью, чтобы не выигрывал дешёвый, но медленный робот. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    rationale: "Сколько роботов нужно под пиковый спрос. Число роботов уже входит в экономику решения (CAPEX, OPEX), поэтому отдельный вес меньше: иначе производительность считается дважды, и тягач, которому нужно мало машин, но который высвобождает только водителей, обгоняет окупаемый AMR. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
     affects: []
     editable_by_user: true
     object_types: [warehouse, airport, hospital]
   - key: matching_weight_cost_efficiency
-    name: "Вес критерия «стоимость конфигурации» в скоринге подбора"
-    value: 0.25
+    name: "Вес критерия «экономика решения» в скоринге подбора"
+    value: 0.35
     unit: доля
     category: operations
     range: {min: 0, max: 1}
     source: team
-    rationale: "CAPEX оборудования = цена × число роботов; вместе с производительностью даёт половину оценки — это то, что заказчик сравнивает первым. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
+    rationale: "NPV покупки решения для процесса за горизонт (CAPEX, OPEX, высвобождение ФОТ, замены): Баллы по месту в списке кандидатов процесса по NPV: лучший — 100, последний — 0, между ними равномерно. Место, а не величина, чтобы один сильно убыточный кандидат не сжимал шкалу и меньший убыток всё равно ранжировался выше. Главный вопрос предынвестиционной оценки (ТЗ 1), поэтому самый большой вес. Без оценки экономики сравнивается CAPEX оборудования. Веса нормируются к сумме 1 и меняются пользователем при пересчёте подбора."
     affects: []
     editable_by_user: true
     object_types: [warehouse, airport, hospital]
@@ -1496,6 +1562,149 @@ norms:
     affects: [sla]
     editable_by_user: true
     object_types: [warehouse]
+  - key: sim_tow_dispatch_wait_min
+    name: Сколько буксир ждёт полную сцепку, прежде чем уехать неполным
+    value: 10
+    unit: мин
+    category: simulation
+    range: {min: 5, max: 20}
+    source: team
+    rationale: "Беспилотный тягач уходит, когда тележки сцепки заполнены, или по расписанию, если груз копится медленно. Норматив обработки паллеты — 20 минут (параметр склада); половину отдаём на ожидание сцепки, вторая остаётся на рейс и выгрузку. В часы пика сцепка заполняется раньше, и норматив не срабатывает."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: wms_implementation_rub
+    name: Внедрение WMS, если на складе её нет
+    value: 6000000
+    unit: ₽
+    category: capex
+    range: {min: 3000000, max: 12000000}
+    source: team
+    rationale: "Датасет склада: «наличие WMS обязательно для роботизации» — роботы получают задания из WMS. Без неё нужна WMS: лицензии тиражной системы для склада 10–20 тыс. м² и внедрение (описание процессов, адресное хранение, интеграция с учётной системой). Берём 6 млн ₽ с НДС как середину диапазона и проверяем у интегратора."
+    affects: [capex, payback, npv, roi]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: access_point_integration_rub
+    name: Интеграция одной точки прохода робота со СКУД
+    value: 250000
+    unit: ₽
+    category: capex
+    range: {min: 100000, max: 500000}
+    source: team
+    rationale: "Датасеты: «AMR должны интегрироваться со СКУД для прохода через двери» (аэропорт), «интеграция роботов через API дверей» (больница). Контроллер или модуль двери, настройка прав робота, работы подрядчика СКУД — на каждую границу режимной зоны (аэропорт) или отделение (больница)."
+    affects: [capex, payback, npv, roi]
+    editable_by_user: true
+    object_types: [airport, hospital]
+  - key: elevator_api_connection_rub
+    name: Подключение робота к лифту через API системы управления
+    value: 150000
+    unit: ₽
+    category: capex
+    range: {min: 50000, max: 300000}
+    source: team
+    rationale: "Если лифты управляются из системы здания (BMS), робота подключают программно: настройка и работы лифтовой организации. Без API нужен IoT-модуль на каждый лифт (норматив интеграции лифта)."
+    affects: [capex, payback, npv, roi]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: outdoor_ip_rating_min
+    name: Минимальная степень защиты робота для открытых зон
+    value: 54
+    unit: IP
+    category: operations
+    range: {min: 54, max: 67}
+    source: team
+    rationale: "Код IP по ГОСТ 14254-2015 (IEC 60529): IP54 — защита от пыли и брызг с любого направления, минимум для работы на улице в дождь. Сравнивается двузначный код IP как число (IP65 ≥ IP54). Датасет аэропорта: перрон — открытая зона с ограничениями по погоде."
+    affects: []
+    editable_by_user: true
+    object_types: [airport]
+  - key: iata_bag_linear_max_mm
+    name: Сумма трёх измерений стандартного места багажа
+    value: 1580
+    unit: мм
+    category: operations
+    range: {min: 1580, max: 1580}
+    source: team
+    rationale: "Общепринятое ограничение IATA для места багажа: сумма длины, ширины и высоты не более 158 см. Используется для проверки введённых габаритов багажа (частая ошибка — сантиметры вместо миллиметров)."
+    affects: []
+    editable_by_user: false
+    object_types: [airport]
+  - key: cross_check_ratio_max
+    name: Допустимое расхождение связанных показателей объекта
+    value: 1.25
+    unit: коэфф.
+    category: operations
+    range: {min: 1.1, max: 1.5}
+    source: team
+    rationale: "Годовой и суточный показатели (пассажиропоток) расходятся из-за сезонности и округлений; расхождение больше 25 % говорит скорее об ошибке ввода или единиц, и пользователь получает предупреждение."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: g2p_sku_per_pod
+    name: SKU на одном мобильном стеллаже «товар к человеку»
+    value: 30
+    unit: SKU
+    category: sizing
+    range: {min: 15, max: 60}
+    source: team
+    rationale: "Стеллаж под робота подвоза стеллажей — 4 стороны по 4–5 полок; при 1–2 SKU на ячейку около 30 SKU на стеллаж. Датасет склада: число SKU влияет на слотирование; число стеллажей = SKU / вместимость."
+    affects: [capex]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: g2p_pod_rub
+    name: Мобильный стеллаж для системы «товар к человеку»
+    value: 45000
+    unit: ₽
+    category: capex
+    range: {min: 25000, max: 80000}
+    source: team
+    rationale: "Стеллажи-поды не входят в цену робота подвоза (каталог — цена робота). Сварная секция с полками и опорами под подъёмник робота — десятки тысяч рублей; берём 45 тыс. ₽ с НДС и проверяем в КП поставщика."
+    affects: [capex, payback, npv, roi]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: picker_walk_speed_mps
+    name: Скорость отборщика с тележкой
+    value: 1.0
+    unit: м/с
+    category: operations
+    range: {min: 0.8, max: 1.3}
+    source: team
+    rationale: "Обычный шаг 1,3 м/с; с тележкой в проходах между стеллажами — около 1 м/с. Проверка согласованности: отборщик не может пройти за час больше, чем позволяет скорость (маршрут на строку × выработка)."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: charger_power_kw
+    name: Мощность одной зарядной станции робота
+    value: 3
+    unit: кВт
+    category: operations
+    range: {min: 1.5, max: 10}
+    source: team
+    rationale: "Зарядные станции складских AMR на 24–48 В и токи 50–60 А — около 2,5–3 кВт; быстрые станции тяжёлых роботов — до 10 кВт. Датасеты задают доступную мощность под зарядку (склад 500, аэропорт 300, больница 80 кВт): мощность всех зарядок сценария сравнивается с ней."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: high_bay_floor_flatness_max_mm
+    name: Допустимое отклонение ровности пола для автоматического хранения
+    value: 2
+    unit: мм/2м
+    category: operations
+    range: {min: 1, max: 3}
+    source: team
+    rationale: "Датасет склада: ровность пола «критична для AutoStore и высотных решений», ориентир DIN 15185 или FM2. Для узкопроходных и автоматических систем обычно требуют не больше ±2 мм на базе 2 м; точное требование — в спецификации поставщика."
+    affects: []
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: airport_terminal_cart_weight_kg
+    name: Масса гружёной тележки или мусорного контейнера в терминале
+    value: 250
+    unit: кг
+    category: sizing
+    range: {min: 100, max: 400}
+    source: team
+    rationale: "Датасет аэропорта даёт рейсы грузовых тележек и контейнеры мусора, но не их массу. Грузовая тележка терминала с расходниками — 150–300 кг, контейнер 1,1 м³ с отходами — до 250 кг; берём 250 кг. По этой массе тягач считает, сколько тележек увезёт за рейс, а AMR проверяется по грузоподъёмности."
+    affects: [robot_count]
+    editable_by_user: true
+    object_types: [airport]
   - key: sim_line_lead_time_min
     name: Норматив выполнения строки отбора
     value: 30

@@ -28,7 +28,7 @@ ScoreComponent:
   required: [criterion, name, weight, points, explanation]
   properties:
     criterion: {type: string, example: "cost_efficiency"}
-    name: {type: string, example: "Стоимость конфигурации"}
+    name: {type: string, example: "Экономика решения"}
     weight: {type: number, example: 0.25}
     points: {type: number, minimum: 0, maximum: 100, description: "Баллы до взвешивания"}
     contribution: {type: number, description: "weight × points"}

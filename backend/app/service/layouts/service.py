@@ -18,6 +18,7 @@ from app.db.repositories.projects import ProjectRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.layout.models import EdgeKind, LayoutTemplate
+from app.domain.project.params import input_names
 from app.engine.layout import Edge, LayoutError, Plan, generate, stats, validate
 from app.engine.trace import Book, InputKind
 from app.service.layouts.mapping import (
@@ -59,7 +60,7 @@ class LayoutView:
 
 
 def param_book(context: ProjectContext) -> Book:
-    names = {p.key: (p.definition.name, p.definition.unit) for p in context.params}
+    names = {key: (name, unit) for key, name, unit, _ in input_names(context.params)}
     return Book.of(
         InputKind.PARAM,
         [(key, names[key][0], value, names[key][1]) for key, value in context.numeric().items()],

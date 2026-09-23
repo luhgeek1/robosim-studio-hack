@@ -28,7 +28,7 @@ def _candidate(process: dict, name_part: str) -> dict:
 async def test_matching_ranks_pallet_robots_with_reasons(client: AsyncClient) -> None:
     project_id, headers = await _demo(client)
     body = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=headers)).json()
-    assert body["weights"]["performance"] == 0.25
+    assert body["weights"]["cost_efficiency"] > body["weights"]["performance"]
     pallets = _process(body, "pallet_transport")
     assert pallets["demand_summary"].startswith("137 палл/ч в пик")
     top = pallets["candidates"][0]
@@ -40,6 +40,12 @@ async def test_matching_ranks_pallet_robots_with_reasons(client: AsyncClient) ->
     assert any(r["code"] == "PAYLOAD_VS_PALLET_OK" for r in h1500["reasons"])
     assert h1500["estimate"]["robots_count"] > 10
     assert h1500["estimate"]["payback_years"] is not None
+    # A tow tractor needs few machines but frees only drivers: it must not outrank an AMR that pays back.
+    tractor = _candidate(pallets, "тягач RoboCV")
+    assert tractor["estimate"]["payback_years"] is None
+    assert h1500["score"] > tractor["score"]
+    economics = next(c for c in h1500["score_breakdown"] if c["criterion"] == "cost_efficiency")
+    assert "NPV" in economics["explanation"]
 
 
 async def test_confirmed_mismatch_is_excluded_with_numbers(client: AsyncClient) -> None:

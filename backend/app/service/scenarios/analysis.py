@@ -6,6 +6,7 @@ from app.db.repositories.scenarios import ScenarioRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.common.provenance import ProvenanceStatus
+from app.domain.project.params import DIMENSION_PARTS
 from app.engine.calculation import CalculationError
 from app.engine.sensitivity import (
     GROUP_NAMES,
@@ -269,7 +270,20 @@ class AnalysisService:
         third = len(moving) / len(IMPACT_LEVELS) if moving else 0
         for position, item in enumerate(moving):
             impact[item.driver.key] = IMPACT_LEVELS[min(len(IMPACT_LEVELS) - 1, int(position // third))]
-        return impact
+        return _fold_dimensions(impact)
+
+
+def _fold_dimensions(impact: dict[str, str]) -> dict[str, str]:
+    """Formulas read «1200×800×1600» by its length, width and height; the panel shows the parameter itself."""
+    folded = dict(impact)
+    for key, level in impact.items():
+        for part in DIMENSION_PARTS:
+            if key.endswith(f"_{part}"):
+                base = key.removesuffix(f"_{part}")
+                current = folded.get(base)
+                if current is None or IMPACT_LEVELS.index(level) < IMPACT_LEVELS.index(current):
+                    folded[base] = level
+    return folded
 
 
 def _recommendation(driver: Driver, snapshot: Snapshot) -> str:

@@ -19,6 +19,7 @@ class Dispatch(StrEnum):
 class ProcessModel(StrEnum):
     TRANSPORT = "transport"
     GOODS_TO_PERSON = "goods_to_person"
+    TOW_TRAIN = "tow_train"
 
 
 class State(StrEnum):
@@ -79,6 +80,7 @@ class SimProcess:
     stations: int = 0
     analytic_robots: int = 0
     analytic_per_robot_h: float | None = None
+    units_per_trip: float = 1.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +100,8 @@ class SimSettings:
     repair_s: float
     bottleneck_utilization: float
     utilization_target: float
+    # Runs stored before tow trains have no such norm; they never simulate a tow train, so 0 is never read.
+    tow_dispatch_wait_s: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)

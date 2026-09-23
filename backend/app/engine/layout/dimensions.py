@@ -358,16 +358,26 @@ class Deriver:
         return aisles, block.value
 
     def vehicle(self) -> tuple[float, float]:
-        width, clearance = (
-            self.inp.norm("layout_loaded_vehicle_width_m"),
-            self.inp.norm("aisle_safety_clearance_mm"),
+        pallet = self.inp.optional("pallet_dims_mm_length")
+        width = (
+            self.rec(
+                "loaded_vehicle_width_m",
+                "Робот с паллетой поперёк проезда (длина паллеты)",
+                pallet.value / MM_PER_M,
+                "м",
+                "mm_to_m(pallet_dims_mm_length)",
+                [pallet],
+            )
+            if pallet is not None
+            else self.inp.norm("layout_loaded_vehicle_width_m")
         )
+        clearance = self.inp.norm("aisle_safety_clearance_mm")
         two_way = self.rec(
             "two_way_min_width_m",
             "Минимальная ширина проезда для разъезда двух роботов",
             2 * width.value + clearance.value / MM_PER_M,
             "м",
-            "2 × layout_loaded_vehicle_width_m + mm_to_m(aisle_safety_clearance_mm)",
+            f"2 × {width.key} + mm_to_m(aisle_safety_clearance_mm)",
             [width, clearance],
         )
         return self.inp.norm("layout_robot_headway_m").value, two_way.value

@@ -1,5 +1,6 @@
 from app.domain.reference.models import (
     CrossCheck,
+    CycleExtra,
     DemoProjectRef,
     Industry,
     LaborGroupDef,
@@ -21,6 +22,7 @@ from app.domain.reference.models import (
 
 __all__ = [
     "CrossCheck",
+    "CycleExtra",
     "DemoProjectRef",
     "Industry",
     "LaborGroupDef",
