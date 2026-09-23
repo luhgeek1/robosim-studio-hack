@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
-import { ChevronRight, HeartPulse, LogOut, Plane, UserRound, Warehouse } from 'lucide-react'
-import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router'
+import { HeartPulse, LogOut, Plane, Plus, UserRound, Warehouse, X } from 'lucide-react'
+import { useEffect } from 'react'
+import { Link, NavLink, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import { PROJECT_STEPS, useProject } from '@/entities/project'
 import { useSession } from '@/entities/session'
 import { compareUrl, useCompareSelection } from '@/features/catalog-compare-selection'
+import { parseApiProblem } from '@/shared/api/problem'
 import type { Role } from '@/shared/api/types'
 import { formatPct } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
@@ -18,6 +20,7 @@ import {
 } from '@/shared/ui/dropdown-menu'
 import { ConfidenceRing } from '@/shared/ui/v0'
 import { Logo } from './Logo'
+import { useProjectTabs, type ProjectTab } from './tabs'
 
 const ROLE_LABEL: Record<Role, string> = {
   guest: 'Гость',
@@ -69,35 +72,95 @@ function UserMenu() {
 
 const OBJECT_ICON = { warehouse: Warehouse, airport: Plane, hospital: HeartPulse } as const
 
-/* Текущий проект — именно кнопка: рамка, иконка объекта, индекс доверия и шеврон; ведёт на обзор проекта. */
-function ProjectButton({ projectId }: { projectId: string }) {
-  const project = useProject(projectId)
+/* Вкладка проекта как в браузере: иконка объекта, название, индекс доверия, крестик. Ведёт на последний
+   открытый экран этого проекта. */
+function Tab({ tab, active }: { tab: ProjectTab; active: boolean }) {
+  const project = useProject(tab.id)
+  const navigate = useNavigate()
+  const close = useProjectTabs((s) => s.close)
+  const gone = project.isError && parseApiProblem(project.error).status === 404
+  useEffect(() => {
+    if (gone) close(tab.id)
+  }, [gone, close, tab.id])
   const score = project.data?.data_quality.score
   const Icon = OBJECT_ICON[project.data?.object_type as keyof typeof OBJECT_ICON] ?? Warehouse
+  const onClose = () => {
+    const next = close(tab.id)
+    if (active) navigate(next ? next.path : '/projects')
+  }
   return (
-    <NavLink
-      to={`/projects/${projectId}`}
-      end
-      title="Обзор проекта"
-      className={({ isActive }) =>
-        cn(
-          'group flex h-9 min-w-0 items-center gap-2.5 rounded-[10px] border border-line bg-surface pr-2 pl-2.5 shadow-[0_1px_2px_rgba(20,20,24,0.06)] transition-colors hover:border-line-2 hover:bg-surface-2',
-          isActive && 'border-ink/25',
-        )
-      }
-    >
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-black/5 text-ink-2">
-        <Icon size={14} />
-      </span>
-      <span className="max-w-80 truncate text-[13.5px] font-medium">{project.data?.name ?? '…'}</span>
-      {score !== undefined && (
-        <span className="hidden items-center gap-1 border-l border-line pl-2.5 text-[12px] whitespace-nowrap text-ink-3 xl:flex">
-          <ConfidenceRing value={score * 100} size={16} />
-          <span className="num font-medium text-ink-2">{formatPct(score, { share: true, digits: 0 })}</span>
-        </span>
+    <div
+      className={cn(
+        'group relative flex h-9 max-w-64 min-w-36 shrink items-center rounded-[10px] border transition-colors',
+        active
+          ? 'border-line bg-surface shadow-[0_1px_2px_rgba(20,20,24,0.06)]'
+          : 'border-transparent text-ink-3 hover:bg-black/4 hover:text-ink',
       )}
-      <ChevronRight size={14} className="shrink-0 text-ink-4 transition-transform group-hover:translate-x-0.5" />
-    </NavLink>
+    >
+      <Link
+        to={tab.path}
+        className="flex h-full min-w-0 flex-1 items-center gap-2 pr-1 pl-2.5"
+        title={project.data?.name}
+      >
+        <span
+          className={cn(
+            'flex size-6 shrink-0 items-center justify-center rounded-md',
+            active ? 'bg-black/5 text-ink-2' : 'text-ink-4',
+          )}
+        >
+          <Icon size={14} />
+        </span>
+        <span className={cn('truncate text-[13px]', active ? 'font-medium text-ink' : 'font-medium')}>
+          {project.data?.name ?? '…'}
+        </span>
+        {active && score !== undefined && (
+          <span className="hidden shrink-0 items-center gap-1 text-[12px] text-ink-3 2xl:flex">
+            <ConfidenceRing value={score * 100} size={14} />
+            <span className="num">{formatPct(score, { share: true, digits: 0 })}</span>
+          </span>
+        )}
+      </Link>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label={`Закрыть вкладку «${project.data?.name ?? 'проект'}»`}
+        className={cn(
+          'mr-1.5 flex size-5 shrink-0 items-center justify-center rounded-md text-ink-4 transition-opacity hover:bg-black/8 hover:text-ink',
+          active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+        )}
+      >
+        <X size={13} />
+      </button>
+    </div>
+  )
+}
+
+function ProjectTabs({ activeId }: { activeId?: string }) {
+  const tabs = useProjectTabs((s) => s.tabs)
+  const visit = useProjectTabs((s) => s.visit)
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (activeId) visit(activeId, pathname)
+  }, [activeId, pathname, visit])
+  if (!tabs.length) return <div className="min-w-0 flex-1" />
+  return (
+    <div
+      className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
+      role="tablist"
+      aria-label="Открытые проекты"
+    >
+      {tabs.map((tab) => (
+        <Tab key={tab.id} tab={tab} active={tab.id === activeId} />
+      ))}
+      <Link
+        to="/projects"
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-ink-4 transition-colors hover:bg-black/4 hover:text-ink"
+        title="Открыть другой проект"
+        aria-label="Открыть другой проект"
+      >
+        <Plus size={15} />
+      </Link>
+    </div>
   )
 }
 
@@ -108,7 +171,7 @@ function Sections({ projectId }: { projectId?: string }) {
   const selection = useCompareSelection()
   const compareTo = `${compareUrl(selection.ids)}${projectId ? `&project=${projectId}` : ''}`
   return (
-    <nav className="flex items-center gap-1" aria-label="Разделы">
+    <nav className="flex shrink-0 items-center gap-1" aria-label="Разделы">
       {user && (
         <NavLink to="/projects" end className={sectionLink}>
           Проекты
@@ -177,6 +240,7 @@ const sectionLink = ({ isActive }: { isActive: boolean }) =>
   )
 
 export function AppShell() {
+  const { user } = useSession()
   const match = useMatch('/projects/:projectId/*')
   const projectId = match?.params.projectId
   return (
@@ -184,15 +248,11 @@ export function AppShell() {
       <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-line bg-canvas/85 backdrop-blur-md">
         <div className="mx-auto flex h-full max-w-360 items-center gap-5 px-6">
           <Logo />
-          <div className="h-5 w-px bg-line-2" />
+          <div className="h-5 w-px shrink-0 bg-line-2" />
           <Sections projectId={projectId} />
-          {projectId && (
-            <>
-              <div className="h-5 w-px bg-line-2" />
-              <ProjectButton projectId={projectId} />
-            </>
-          )}
-          <div className="ml-auto">
+          <div className="h-5 w-px shrink-0 bg-line-2" />
+          {user ? <ProjectTabs activeId={projectId} /> : <div className="min-w-0 flex-1" />}
+          <div className="shrink-0">
             <UserMenu />
           </div>
         </div>
