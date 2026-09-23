@@ -95,7 +95,7 @@ export function DeliveryScene() {
   })
 
   return (
-    <svg viewBox="0 20 640 340" preserveAspectRatio="xMidYMax meet" className="h-full w-full" aria-hidden>
+    <svg viewBox="0 20 640 340" className="h-auto w-full" aria-hidden>
       <defs>
         <linearGradient id={gradientId} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0" stopColor="var(--info)" stopOpacity="0.35" />
@@ -116,7 +116,7 @@ export function DeliveryScene() {
       <Marker x={REPORT_X} label="Отчёт" lit={0.84} animate={!reduce} />
 
       <g>
-        <text x={PICK_X + BOX_DX + BOX_W / 2} y="30" textAnchor="middle" fontSize="11" fill="var(--muted-foreground)">
+        <text x={PICK_X + BOX_DX + BOX_W / 2} y="30" textAnchor="middle" fontSize="12" fill="var(--muted-foreground)">
           Ваш объект
         </text>
         <rect x={PICK_X + 12} y="36" width={BOX_W + 24} height="6" rx="3" fill="var(--ink-2)" />
@@ -242,13 +242,13 @@ function Marker({ x, label, lit, animate }: { x: number; label: string; lit: num
   return (
     <g>
       <circle cx={x} cy={y} r="4" fill="var(--ink-4)" />
-      <text x={x} y={y + 20} textAnchor="middle" fontSize="11" fill="var(--muted-foreground)">
+      <text x={x} y={y + 20} textAnchor="middle" fontSize="12" fill="var(--muted-foreground)">
         {label}
       </text>
       <motion.g initial={{ opacity: 0 }} animate={animate ? { opacity: keys } : { opacity: 1 }} transition={transition}>
         <circle cx={x} cy={y} r="9" fill="var(--info)" opacity="0.15" />
         <circle cx={x} cy={y} r="4.5" fill="var(--info)" />
-        <text x={x} y={y + 20} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--foreground)">
+        <text x={x} y={y + 20} textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--foreground)">
           {label}
         </text>
       </motion.g>
