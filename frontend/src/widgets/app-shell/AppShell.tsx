@@ -66,8 +66,8 @@ function UserMenu() {
   )
 }
 
-/* Внутри проекта верхняя панель — это и есть навигация: название с индексом доверия и нумерованные шаги. */
-function ProjectNav({ projectId }: { projectId: string }) {
+/* В шапке проекта — только название с индексом доверия; шаги вынесены в отдельную стеклянную плашку под ней. */
+function ProjectTitle({ projectId }: { projectId: string }) {
   const project = useProject(projectId)
   const score = project.data?.data_quality.score
   return (
@@ -75,12 +75,12 @@ function ProjectNav({ projectId }: { projectId: string }) {
       <div className="h-5 w-px bg-line-2" />
       <Link
         to={`/projects/${projectId}`}
-        className="group -mx-1 flex min-w-0 items-center gap-3 rounded-md px-1 py-1 transition-colors hover:bg-black/[0.04]"
+        className="-mx-1 flex min-w-0 items-center gap-3 rounded-md px-1 py-1 transition-colors hover:bg-black/4"
         title="Обзор проекта"
       >
-        <span className="max-w-48 truncate text-[14px] font-medium">{project.data?.name ?? '…'}</span>
+        <span className="truncate text-[14px] font-medium">{project.data?.name ?? '…'}</span>
         {score !== undefined && (
-          <span className="hidden items-center gap-1.5 whitespace-nowrap text-[12.5px] text-ink-3 2xl:flex">
+          <span className="hidden items-center gap-1.5 text-[12.5px] whitespace-nowrap text-ink-3 lg:flex">
             <ConfidenceRing value={score * 100} />
             <span>
               доверие <span className="num font-medium text-ink">{formatPct(score, { share: true, digits: 0 })}</span>
@@ -88,15 +88,31 @@ function ProjectNav({ projectId }: { projectId: string }) {
           </span>
         )}
       </Link>
-      <nav className="ml-auto flex shrink-0 items-center gap-0.5" aria-label="Шаги оценки">
+      <Button asChild size="sm" variant="ghost" className="ml-auto text-ink-2">
+        <Link to="/projects">
+          <FolderOpen /> Проекты
+        </Link>
+      </Button>
+    </>
+  )
+}
+
+/* Плашка шагов закреплена под шапкой: контент прокручивается под стеклом, шаги всегда под рукой. */
+function StepDock({ projectId }: { projectId: string }) {
+  return (
+    <div className="pointer-events-none sticky top-14 z-30 flex justify-center px-6 pt-3 pb-1">
+      <nav
+        className="glass pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5"
+        aria-label="Шаги оценки"
+      >
         {PROJECT_STEPS.map((step, i) => (
           <NavLink
             key={step.id}
             to={`/projects/${projectId}/${step.id}`}
             className={({ isActive }) =>
               cn(
-                'relative h-8 rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors',
-                isActive ? 'text-ink' : step.soon ? 'text-ink-4' : 'text-ink-3 hover:bg-black/[0.04] hover:text-ink',
+                'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors',
+                isActive ? 'text-ink' : step.soon ? 'text-ink-4 hover:text-ink-3' : 'text-ink-3 hover:text-ink',
               )
             }
           >
@@ -104,8 +120,8 @@ function ProjectNav({ projectId }: { projectId: string }) {
               <>
                 {isActive && (
                   <motion.span
-                    layoutId="nav-pill"
-                    className="absolute inset-0 rounded-md bg-black/[0.06]"
+                    layoutId="step-pill"
+                    className="absolute inset-0 rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,24,0.08),0_4px_12px_-4px_rgba(20,20,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]"
                     transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                   />
                 )}
@@ -118,14 +134,15 @@ function ProjectNav({ projectId }: { projectId: string }) {
           </NavLink>
         ))}
       </nav>
-      <Button asChild size="sm" variant="ghost" className="text-ink-2">
-        <Link to="/projects">
-          <FolderOpen /> <span className="hidden 2xl:inline">Проекты</span>
-        </Link>
-      </Button>
-    </>
+    </div>
   )
 }
+
+const sectionLink = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    'h-8 rounded-md px-3 text-[13px] leading-8 font-medium',
+    isActive ? 'bg-black/6 text-ink' : 'text-ink-3 hover:text-ink',
+  )
 
 export function AppShell() {
   const { user } = useSession()
@@ -134,34 +151,18 @@ export function AppShell() {
   return (
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-line bg-canvas/85 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-[1440px] items-center gap-5 px-6">
+        <div className="mx-auto flex h-full max-w-360 items-center gap-5 px-6">
           <Logo />
           {projectId ? (
-            <ProjectNav projectId={projectId} />
+            <ProjectTitle projectId={projectId} />
           ) : (
             <nav className="flex items-center gap-1" aria-label="Разделы">
               {user && (
-                <NavLink
-                  to="/projects"
-                  className={({ isActive }) =>
-                    cn(
-                      'h-8 rounded-md px-3 text-[13px] font-medium leading-8',
-                      isActive ? 'bg-black/[0.06] text-ink' : 'text-ink-3 hover:text-ink',
-                    )
-                  }
-                >
+                <NavLink to="/projects" className={sectionLink}>
                   Проекты
                 </NavLink>
               )}
-              <NavLink
-                to="/catalog"
-                className={({ isActive }) =>
-                  cn(
-                    'h-8 rounded-md px-3 text-[13px] font-medium leading-8',
-                    isActive ? 'bg-black/[0.06] text-ink' : 'text-ink-3 hover:text-ink',
-                  )
-                }
-              >
+              <NavLink to="/catalog" className={sectionLink}>
                 Каталог решений
               </NavLink>
             </nav>
@@ -171,6 +172,7 @@ export function AppShell() {
           </div>
         </div>
       </header>
+      {projectId && <StepDock projectId={projectId} />}
       <main className="flex min-h-0 flex-1 flex-col">
         <Outlet />
       </main>

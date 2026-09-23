@@ -66,7 +66,7 @@ export function ParamsEditor({
 
   return (
     <div className="grid grid-cols-[11.5rem_minmax(0,1fr)] items-start gap-6">
-      <nav className="sticky top-16 space-y-2" aria-label="Группы параметров">
+      <nav className="sticky top-36 space-y-2" aria-label="Группы параметров">
         <div className="px-2 text-xs text-muted-foreground">Группы</div>
         <ul className="space-y-0.5">
           {views.map((group) => (
@@ -134,7 +134,7 @@ export function ParamsEditor({
         {views
           .filter((group) => group.params.length > 0)
           .map((group) => (
-            <section key={group.key} id={`group-${group.key}`} className="scroll-mt-16 rounded-lg border bg-surface">
+            <section key={group.key} id={`group-${group.key}`} className="scroll-mt-36 rounded-lg border bg-surface">
               <header className="flex items-baseline justify-between gap-3 border-b px-4 py-3">
                 <h2 className="text-[15px] font-semibold">{group.name}</h2>
                 <span className="text-xs text-muted-foreground">

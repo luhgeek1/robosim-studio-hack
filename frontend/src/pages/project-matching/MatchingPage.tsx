@@ -173,7 +173,7 @@ function MatchingView({
         />
       ) : (
         <div className="grid grid-cols-[260px_1fr] items-start gap-6">
-          <nav className="sticky top-16 space-y-1" aria-label="Процессы">
+          <nav className="sticky top-36 space-y-1" aria-label="Процессы">
             {data.processes.map((process) => {
               const counts = countByStatus(process.candidates)
               const active = process === selected

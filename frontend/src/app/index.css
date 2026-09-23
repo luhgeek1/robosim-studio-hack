@@ -207,6 +207,21 @@
   }
 }
 
+/* «Жидкое стекло»: полупрозрачная подложка с размытием и насыщением того, что под ней, светлый блик по верхней
+   кромке и мягкая тень — плашка читается поверх любого контента, который прокручивается под ней. */
+.glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.72), rgb(255 255 255 / 0.5));
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgb(255 255 255 / 0.75);
+  box-shadow:
+    0 10px 30px -10px rgb(20 20 24 / 0.22),
+    0 1px 2px rgb(20 20 24 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    inset 0 -1px 0 rgb(20 20 24 / 0.05);
+  scrollbar-width: none;
+}
+
 .twin-label {
   pointer-events: none;
   user-select: none;

@@ -72,7 +72,7 @@ export function ObjectPage() {
           <ValidationPanel projectId={projectId} />
         </div>
 
-        <div className="card relative h-160 overflow-hidden lg:sticky lg:top-20">
+        <div className="card relative h-160 overflow-hidden lg:sticky lg:top-36">
           {isWarehouse ? (
             <>
               <Twin mode="overview" />
