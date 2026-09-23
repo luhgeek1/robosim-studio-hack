@@ -132,14 +132,11 @@ export function ParamsEditor({
               </button>
             )}
           </label>
-          <span className="meta ml-auto">
-            {filter !== 'all' || query ? (
-              <>
-                <span className="num">{shown}</span> из <span className="num">{params.length}</span> ·{' '}
-              </>
-            ) : null}
-            сохраняется по Enter или при выходе из поля
-          </span>
+          {(filter !== 'all' || query) && (
+            <span className="meta ml-auto">
+              <span className="num">{shown}</span> из <span className="num">{params.length}</span>
+            </span>
+          )}
         </div>
 
         {shown === 0 && (

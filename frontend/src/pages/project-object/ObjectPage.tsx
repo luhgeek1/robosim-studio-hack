@@ -53,13 +53,7 @@ export function ObjectPage() {
       <ObjectOverview projectId={projectId} objectType={objectType.data} params={params.data?.params} />
 
       <div className="mt-14">
-        <div className="mb-5">
-          <h2 className="h2">Параметры объекта</h2>
-          <p className="mt-1.5 text-[14px] text-ink-3">
-            Значения из файла отмечены как введённые, остальное взято из справочника или принято допущением — у каждого
-            указан источник.
-          </p>
-        </div>
+        <h2 className="h2 mb-5">Параметры объекта</h2>
         {(params.isPending || objectType.isPending) && <LoadingBlock label="Загружаем параметры…" />}
         {params.error && <ErrorBlock error={params.error} onRetry={() => params.refetch()} />}
         {objectType.error && <ErrorBlock error={objectType.error} onRetry={() => objectType.refetch()} />}
