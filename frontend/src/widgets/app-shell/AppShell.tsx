@@ -66,11 +66,14 @@ function UserMenu() {
 }
 
 /* Плашка шагов закреплена под шапкой: контент прокручивается под стеклом, шаги всегда под рукой.
-   layoutRoot у закреплённых шапки и плашки: без него framer считает, что они сдвинулись на величину прокрутки,
-   и подсветка при переходе прилетает снизу. */
+   Шапка и плашка — fixed + layoutRoot, а место в потоке держат распорки той же высоты: framer умеет мерить
+   координаты только для fixed-корней, со sticky подсветка при переходе прилетала снизу на величину прокрутки. */
 function StepDock({ projectId }: { projectId: string }) {
   return (
-    <motion.div layoutRoot className="pointer-events-none sticky top-14 z-30 flex justify-center px-6 pt-3 pb-1">
+    <motion.div
+      layoutRoot
+      className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-6 pt-3 pb-1"
+    >
       <nav
         className="glass pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5"
         aria-label="Шаги оценки"
@@ -114,7 +117,11 @@ export function AppShell() {
   const projectId = match?.params.projectId
   return (
     <div className="flex min-h-full flex-col">
-      <motion.header layoutRoot className="sticky top-0 z-40 h-14 shrink-0 border-b border-line bg-canvas/85 backdrop-blur-md">
+      <div className="h-14 shrink-0" aria-hidden />
+      <motion.header
+        layoutRoot
+        className="fixed inset-x-0 top-0 z-40 h-14 border-b border-line bg-canvas/85 backdrop-blur-md"
+      >
         <div className="mx-auto flex h-full max-w-360 items-center gap-5 px-6">
           <Logo />
           <div className="h-5 w-px shrink-0 bg-line-2" />
@@ -126,7 +133,12 @@ export function AppShell() {
           </div>
         </div>
       </motion.header>
-      {projectId && <StepDock projectId={projectId} />}
+      {projectId && (
+        <>
+          <div className="h-16.5 shrink-0" aria-hidden />
+          <StepDock projectId={projectId} />
+        </>
+      )}
       <main className="flex min-h-0 flex-1 flex-col">
         <Outlet />
       </main>
