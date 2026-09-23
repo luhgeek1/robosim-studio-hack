@@ -62,7 +62,7 @@ export function ScenarioPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div className="mx-auto max-w-300 space-y-5 pb-16 pt-2">
       <div className="space-y-3">
         <Link
           to={`/projects/${projectId}/scenarios`}
@@ -76,7 +76,7 @@ export function ScenarioPage() {
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               aria-label="Название сценария"
-              className="h-auto border-transparent bg-transparent px-0 text-[22px] font-semibold tracking-tight shadow-none hover:border-border focus-visible:px-2 md:text-[22px] dark:bg-transparent"
+              className="h1 h-auto border-transparent bg-transparent px-0 shadow-none hover:border-border focus-visible:px-2 md:text-[34px]"
             />
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <ToneBadge tone={isBaseline ? 'muted' : 'info'}>{SCENARIO_KIND_LABEL[current.kind]}</ToneBadge>
@@ -110,7 +110,7 @@ export function ScenarioPage() {
       </div>
 
       {(dirty || problems.length > 0) && (
-        <div className="sticky top-14 z-20 flex flex-wrap items-center gap-3 rounded-lg border border-l-2 border-l-warn bg-raised px-4 py-2.5 text-sm shadow-lg">
+        <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white/95 px-4 py-2.5 text-sm shadow-float backdrop-blur">
           <span className="font-medium">Есть несохранённые изменения</span>
           {problems.length > 0 && <span className="text-warn">{problems[0]}</span>}
           <div className="ml-auto flex gap-2">
