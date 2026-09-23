@@ -206,3 +206,15 @@ def test_release_is_capped_by_the_work_itself() -> None:
     assert cap.value == pytest.approx(400 * 365 / (3600 / 504.44) / (24 * 365 / 4.2), rel=1e-3)
     assert savings.fte == pytest.approx(cap.value)
     assert any("ограничено объёмом работ" in w for w in result.warnings)
+
+
+@pytest.mark.parametrize("kind", list(ScenarioKind))
+def test_every_metric_input_refers_to_an_earlier_step(kind: ScenarioKind) -> None:
+    """The trace is a graph: the report's live Excel formulas and the UI links follow these references."""
+    result = calculate(scenario(kind))
+    seen: set[str] = set()
+    for step in result.trace:
+        for quantity in step.inputs:
+            if quantity.kind == InputKind.METRIC:
+                assert quantity.key in seen, (step.key, quantity.key)
+        seen.add(step.key)

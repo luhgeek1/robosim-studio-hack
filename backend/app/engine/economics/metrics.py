@@ -32,9 +32,16 @@ def build_metrics(
             [capex, effect_q],
             Section.METRICS,
         )
-    cumulative = _metric(
-        "cumulative_net", "Накопленный чистый поток за горизонт", outcome.cumulative_net, "₽"
-    )
+    horizon = Quantity("horizon_years", "Горизонт расчёта", float(inp.horizon_years), "лет", InputKind.PARAM)
+    cumulative = tracer.record(
+        "cumulative_net",
+        "Накопленный чистый поток за горизонт",
+        outcome.cumulative_net,
+        "₽",
+        "Σ поток_m, m = 0…horizon_years × 12 (помесячный поток, лист «Денежный поток»)",
+        [horizon],
+        Section.CASHFLOW,
+    ).as_quantity()
     roi = roi_pct(outcome.cumulative_net, capex.value) or 0.0
     if capex.value > 0:
         tracer.record(
@@ -46,7 +53,6 @@ def build_metrics(
             [cumulative, capex],
             Section.METRICS,
         )
-    horizon = _metric("horizon_years", "Горизонт расчёта", float(inp.horizon_years), "лет")
     for key, name, value, unit, formula in (
         (
             "npv_rub",

@@ -236,8 +236,10 @@ class CostModel(OpexLines):
     def evaluate(self) -> AnnualCosts:
         baseline = self.baseline()
         if self.kind == ScenarioKind.BASELINE:
-            empty = Breakdown(0.0, [])
-            return AnnualCosts(empty, empty, baseline, [], 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, self.warnings)
+            # «Как сейчас» has no robots: zero totals are still steps, so every later formula has its inputs.
+            capex = Breakdown(self._sum("capex_total", "CAPEX", [], "₽", Section.CAPEX).value, [])
+            opex = Breakdown(self._sum("opex_total", "OPEX роботизации", [], "₽/год", Section.OPEX).value, [])
+            return AnnualCosts(capex, opex, baseline, [], 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, self.warnings)
         hardware_lines, equipment, hardware, robots = self.hardware()
         capex = self.capex(hardware_lines, hardware, robots)
         opex, parts = self.opex(equipment, hardware, robots)

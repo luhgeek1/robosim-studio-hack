@@ -123,6 +123,7 @@ class Context:
     def process_labor(self, process: ProcessDef, payroll: Quantity) -> tuple[Quantity, float]:
         groups = {group.key: group for group in self.inp.labor_groups}
         parts: list[Quantity] = []
+        staff: list[tuple[Quantity, Quantity]] = []
         fte = 0.0
         for key, share in process.labor_allocation.items():
             group = groups[key]
@@ -147,7 +148,17 @@ class Context:
                 Section.BASELINE,
             )
             parts.append(step.as_quantity())
+            staff.append((headcount, allocation))
             fte += headcount.value * share
+        self.tr.record(
+            f"{process.key}.labor_fte",
+            f"Персонал процесса «{process.name}»",
+            fte,
+            "FTE",
+            " + ".join(f"{h.key} × {a.key}" for h, a in staff) or "0",
+            [q for pair in staff for q in pair],
+            Section.BASELINE,
+        )
         total = self.tr.record(
             f"{process.key}.labor_cost",
             f"ФОТ процесса «{process.name}»",

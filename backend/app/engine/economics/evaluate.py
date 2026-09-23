@@ -38,11 +38,24 @@ class _Assembler:
         )
 
     def lease_subject(self) -> float:
+        """Hardware and its delivery are leased; site works, software and commissioning are paid upfront."""
         lines = self.annual.capex.lines
-        delivery = next((line.step.value for line in lines if line.step.key == "capex_delivery"), 0.0)
-        return self.annual.hardware + delivery
+        delivery = next((line.step for line in lines if line.step.key == "capex_delivery"), None)
+        value = self.annual.hardware + (delivery.value if delivery else 0.0)
+        if self.inp.kind == ScenarioKind.LEASE:
+            hardware = _metric("hardware_rub", "Оборудование с зарядками", self.annual.hardware, "₽")
+            self.tr.record(
+                "lease_subject_rub",
+                "Предмет лизинга",
+                value,
+                "₽",
+                "hardware_rub + capex_delivery" if delivery else "hardware_rub",
+                [hardware, *([delivery.as_quantity()] if delivery else [])],
+                Section.CASHFLOW,
+            )
+        return value
 
-    def effect(self, financing: FinancingPlan) -> tuple[Breakdown, float]:
+    def effect(self, financing: FinancingPlan) -> tuple[Breakdown, Quantity | None]:
         lines = list(self.annual.savings)
         savings_total = sum(line.step.value for line in lines)
         savings = self.tr.record(
@@ -69,16 +82,30 @@ class _Assembler:
                 EffectKind.EXTRA_OPEX,
             )
         )
-        interest_year = 0.0
+        interest_year: Quantity | None = None
         if financing.debt:
             years = financing.years_within(self.months)
-            interest = _metric(
+            horizon = Quantity(
+                "horizon_years", "Горизонт расчёта", float(self.inp.horizon_years), "лет", InputKind.PARAM
+            )
+            interest = self.tr.record(
                 "financing_interest_total",
                 "Проценты за срок финансирования",
                 financing.interest_within(self.months),
                 "₽",
-            )
-            term = _metric("financing_years", "Срок финансирования в горизонте", years, "лет")
+                "Σ проценты графика платежей в пределах horizon_years (лист «Денежный поток»)",
+                [horizon],
+                Section.CASHFLOW,
+            ).as_quantity()
+            term = self.tr.record(
+                "financing_years",
+                "Срок финансирования в горизонте",
+                years,
+                "лет",
+                "min(срок финансирования, horizon_years)",
+                [horizon],
+                Section.CASHFLOW,
+            ).as_quantity()
             step = self.tr.record(
                 "effect_financing_cost",
                 f"Обслуживание долга ({financing.label}), в среднем за год",
@@ -88,30 +115,31 @@ class _Assembler:
                 [interest, term],
                 Section.EFFECT,
             )
-            interest_year = -step.value
             lines.append(
                 Line(step, EffectKind.EXTRA_OPEX, note="Доп. 2.1: проценты уменьшают годовой эффект")
             )
+            interest_year = self.tr.record(
+                "interest_year",
+                "Проценты в год",
+                -step.value,
+                "₽/год",
+                "−effect_financing_cost",
+                [step.as_quantity()],
+                Section.EFFECT,
+            ).as_quantity()
+        paid = interest_year.value if interest_year else 0.0
         total = self.tr.record(
             "effect_total",
             "Чистый годовой экономический эффект",
-            savings.value - opex.value - interest_year,
+            savings.value - opex.value - paid,
             "₽/год",
             "labor_savings_total − opex_total" + (" − interest_year" if interest_year else ""),
-            [
-                savings.as_quantity(),
-                opex,
-                *(
-                    [_metric("interest_year", "Проценты в год", interest_year, "₽/год")]
-                    if interest_year
-                    else []
-                ),
-            ],
+            [savings.as_quantity(), opex, *([interest_year] if interest_year else [])],
             Section.EFFECT,
         )
         return Breakdown(total.value, lines), interest_year
 
-    def scenario_cost(self, interest_year: float) -> Breakdown:
+    def scenario_cost(self, interest_year: Quantity | None) -> Breakdown:
         baseline = _metric("baseline_total", "Затраты «как сейчас»", self.annual.baseline.total, "₽/год")
         savings = _metric("labor_savings_total", "Высвобождение ФОТ", self.annual.savings_year, "₽/год")
         lines = [
@@ -143,16 +171,15 @@ class _Assembler:
                 )
             )
         if interest_year:
-            interest = _metric("interest_year", "Проценты в год", interest_year, "₽/год")
             lines.append(
                 Line(
                     self.tr.record(
                         "scenario.financing",
                         "Обслуживание долга",
-                        interest.value,
+                        interest_year.value,
                         "₽/год",
                         "interest_year",
-                        [interest],
+                        [interest_year],
                         Section.EFFECT,
                     )
                 )

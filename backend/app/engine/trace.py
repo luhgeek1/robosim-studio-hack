@@ -100,7 +100,8 @@ def namespaced(step: TraceStep, namespace: str) -> TraceStep:
     """Moves a sub-calculation step (sizing of one process) under `namespace.` so keys stay unique."""
 
     def rename(key: str) -> str:
-        return f"{namespace}.{key}"
+        # Inputs recorded by the caller may already carry the namespace (the route length of the process).
+        return key if key.startswith(f"{namespace}.") else f"{namespace}.{key}"
 
     return replace(
         step,
