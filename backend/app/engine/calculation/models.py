@@ -39,6 +39,8 @@ class ItemInput:
     simulated_robots: int | None = None
     simulation_id: UUID | None = None
     simulated_basis: int | None = None
+    # The sweep ran on an older project version: its N no longer applies, and the user should know why.
+    simulation_outdated: bool = False
 
 
 @dataclass(frozen=True, slots=True)

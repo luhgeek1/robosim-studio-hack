@@ -233,6 +233,9 @@ class SnapshotBuilder:
             simulated_robots=simulated,
             simulation_id=item.simulation_id if simulated else None,
             simulated_basis=item.simulated_basis if simulated else None,
+            simulation_outdated=(
+                item.count_mode == CountMode.AUTO and bool(item.simulated_count) and simulated is None
+            ),
         )
 
 

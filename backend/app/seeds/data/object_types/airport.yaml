@@ -314,7 +314,11 @@ parameters:
   example: 750×500×300
   affects: [baggage_handling]
   order: 20
-  default: null
+  default:
+    value: 750×500×300
+    status: assumption
+    rationale: Габаритов багажа в датасете нет, а ТЗ 3.2.1 их требует. По правилам IATA сумма трёх измерений
+      стандартного места — до 158 см; берём типовой чемодан 75×50×30 см (сумма 155 см).
 - key: bags_per_cart
   group: ramp
   name: Мест багажа на одной тележке

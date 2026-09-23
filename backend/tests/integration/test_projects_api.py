@@ -145,6 +145,18 @@ async def test_range_warning_and_cross_check(client: AsyncClient) -> None:
     assert any(code.startswith("CHECK_") for code in codes)
 
 
+async def test_negative_physical_value_is_rejected_but_unusual_one_warns(client: AsyncClient) -> None:
+    headers = bearer((await login(client, "user@roboscope.demo"))["access"])
+    project = await _demo(client, headers)
+    url = f"{PROJECTS}/{project['id']}/params/shift_hours"
+    negative = await client.patch(url, json={"key": "shift_hours", "value": -5}, headers=headers)
+    assert negative.status_code == 422
+    assert "NEGATIVE_VALUE" in negative.text
+    unusual = await client.patch(url, json={"key": "shift_hours", "value": 2}, headers=headers)
+    assert unusual.status_code == 200
+    assert unusual.json()["validation"]["code"] == "RANGE_EXCEEDED"
+
+
 async def test_processes_show_where_the_money_is(client: AsyncClient) -> None:
     headers = await _auth(client)
     project = await _demo(client, headers)

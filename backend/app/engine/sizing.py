@@ -257,9 +257,27 @@ def _area(s: _Sizer, out: SizingOutcome) -> None:
         [*inputs, availability, hours],
         Section.SIZING,
     )
-    out.effective_per_hour = per_robot.value / hours.value
+    out.effective_per_hour = _effective(
+        s,
+        per_robot.value / hours.value,
+        "effective_per_day / hours_per_day",
+        [per_robot.as_quantity(), hours],
+    )
     demand = _metric("demand_per_day", "Площадь к обработке в сутки", s.demand.demand_per_day, "м²/сут")
     s.count(out, per_robot.as_quantity(), demand)
+
+
+def _effective(s: _Sizer, value: float, formula: str, inputs: list[Quantity]) -> float:
+    """The fleet coverage check reads this step, so every model records it, not only the cycle ones."""
+    return s.trace.record(
+        "effective_per_hour",
+        "Эффективная производительность робота",
+        value,
+        "ед/ч",
+        formula,
+        inputs,
+        Section.SIZING,
+    ).value
 
 
 def _station(s: _Sizer, out: SizingOutcome) -> None:
@@ -313,7 +331,7 @@ def _elevator(s: _Sizer, out: SizingOutcome) -> None:
 def _override(s: _Sizer, out: SizingOutcome, throughput: Quantity) -> None:
     """ТЗ 3.5.3: the user sets robot throughput by hand; the cycle model is skipped, the value is traced."""
     out.warnings.append(f"Производительность робота задана вручную: {throughput.value:g} ед/ч")
-    out.effective_per_hour = throughput.value
+    out.effective_per_hour = _effective(s, throughput.value, throughput.key, [throughput])
     if out.model == SizingModel.AREA_COVERAGE:
         hours = _metric("hours_per_day", "Рабочих часов в сутки", s.demand.hours_per_day, "ч")
         per_day = s.trace.record(
