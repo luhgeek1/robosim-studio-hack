@@ -3,19 +3,19 @@ import { formatPct } from '@/shared/lib/format'
 
 type Row = { hour: string; share: number; aboveAverage: boolean }
 
-// Bars above the flat 1/24 share are the hours that load the process more than an even day would.
-const FLAT_SHARE = 1 / 24
-
 function HourBar(props: BarShapeProps) {
   const row = props.payload as Row
   return <Rectangle {...props} fill={row.aboveAverage ? 'var(--chart-3)' : 'var(--chart-5)'} />
 }
 
 export function HourlyProfileChart({ profile }: { profile: number[] }) {
+  // The even share is taken over the working hours only: against a flat 1/24 every hour of a 12-hour site looks high.
+  const workingHours = profile.filter((share) => share > 0).length
+  const evenShare = workingHours ? 1 / workingHours : 0
   const data: Row[] = profile.map((share, hour) => ({
     hour: String(hour).padStart(2, '0'),
     share,
-    aboveAverage: share > FLAT_SHARE,
+    aboveAverage: share > evenShare * 1.001,
   }))
 
   return (
