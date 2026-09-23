@@ -36,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Toggle } from '@/shared/ui/toggle'
 import { Bar, Dot, KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
-import { Twin, type TwinCapture } from '@/widgets/twin'
+import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
 
@@ -235,6 +235,7 @@ function SimulationView({
   const [error, setError] = useState<string | null>(null)
   const [selectedRobot, setSelectedRobot] = useState<string | null>(null)
   const capture: TwinCapture = useRef(null)
+  const [view, setView] = useState<TwinView>('3d')
   const upload = useUploadVisual(projectId)
 
   useEffect(() => {
@@ -428,6 +429,8 @@ function SimulationView({
                 <Twin
                   layout={layout}
                   capture={capture}
+                  view={view}
+                  onViewChange={setView}
                   tracks={tracks}
                   heat={heatOn ? heat.data : null}
                   selectedRobot={selectedRobot}

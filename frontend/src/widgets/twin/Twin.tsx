@@ -24,6 +24,9 @@ export type TwinProps = {
   heat?: SimulationHeatmap | null
   /** Show the 3D / 2D switch (the 2D plan is what ТЗ 3.6.1 asks for; 3D is the extra view). */
   switcher?: boolean
+  /** Controlled view, so a host that remounts the twin keeps the user's choice. */
+  view?: TwinView
+  onViewChange?: (view: TwinView) => void
   selectedRobot?: string | null
   onSelectRobot?: (id: string | null) => void
   capture?: TwinCapture
@@ -37,12 +40,19 @@ export function Twin({
   tracks,
   heat,
   switcher = true,
+  view: controlledView,
+  onViewChange,
   selectedRobot,
   onSelectRobot,
   capture,
   className = '',
 }: TwinProps) {
-  const [view, setView] = useState<TwinView>('3d')
+  const [ownView, setOwnView] = useState<TwinView>('3d')
+  const view = controlledView ?? ownView
+  const setView = (next: TwinView) => {
+    setOwnView(next)
+    onViewChange?.(next)
+  }
   const [command, setCommand] = useState({ action: 'home' as CameraAction, id: 0 })
   const [routes, setRoutes] = useState(false)
   const frame = useMemo(() => sceneFrame(layout), [layout])
