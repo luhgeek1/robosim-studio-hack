@@ -3,7 +3,13 @@ import type { components, paths } from './schema'
 type S = components['schemas']
 
 type Json<T> = T extends { content: { 'application/json': infer Body } } ? Body : never
-type Success<R> = R extends { 200: infer Ok } ? Ok : R extends { 201: infer Created } ? Created : never
+type Success<R> = R extends { 200: infer Ok }
+  ? Ok
+  : R extends { 201: infer Created }
+    ? Created
+    : R extends { 202: infer Accepted }
+      ? Accepted
+      : never
 type Operation<P extends keyof paths, M extends keyof paths[P]> = paths[P][M]
 
 // Response body of an operation straight from the contract: a drift between the YAML and a screen fails tsc.

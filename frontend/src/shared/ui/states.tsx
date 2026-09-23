@@ -1,20 +1,23 @@
 import type { ReactNode } from 'react'
-import { AlertTriangle, Loader2, RotateCw } from 'lucide-react'
+import { Loader2, RotateCw } from 'lucide-react'
 import { parseApiProblem } from '@/shared/api/problem'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
-import { Skeleton } from './skeleton'
 
 export function Spinner({ className }: { className?: string }) {
   return <Loader2 className={cn('size-4 animate-spin', className)} />
 }
 
-export function LoadingBlock({ rows = 3, className }: { rows?: number; className?: string }) {
+export function LoadingBlock({ label = 'Считаем…', className }: { rows?: number; label?: string; className?: string }) {
   return (
-    <div className={cn('space-y-3', className)}>
-      {Array.from({ length: rows }, (_, i) => (
-        <Skeleton key={i} className="h-14 w-full rounded-lg" />
-      ))}
+    <div
+      className={cn(
+        'flex items-center gap-3 rounded-[12px] border border-dashed border-line px-5 py-8 text-[13.5px] text-ink-3',
+        className,
+      )}
+    >
+      <span className="size-4 animate-spin rounded-full border-2 border-line-2 border-t-ink" />
+      {label}
     </div>
   )
 }
@@ -30,20 +33,18 @@ export function ErrorBlock({
 }) {
   const problem = parseApiProblem(error)
   return (
-    <div className={cn('flex items-start gap-3 rounded-lg border border-l-2 border-l-crit bg-surface p-4', className)}>
-      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-crit" />
-      <div className="min-w-0 flex-1">
-        <div className="font-medium">{problem.detail}</div>
-        {problem.details.length > 0 && (
-          <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
-            {problem.details.slice(0, 5).map((d, i) => (
-              <li key={i}>{d.msg}</li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <div className={cn('rounded-[12px] border border-crit/30 bg-crit-soft/50 px-5 py-4 text-[13.5px]', className)}>
+      <div className="font-medium text-crit">Не удалось получить данные</div>
+      <div className="mt-1 text-ink-2">{problem.detail}</div>
+      {problem.details.length > 0 && (
+        <ul className="mt-1 list-disc pl-4 text-xs text-ink-3">
+          {problem.details.slice(0, 5).map((d, i) => (
+            <li key={i}>{d.msg}</li>
+          ))}
+        </ul>
+      )}
       {onRetry && (
-        <Button size="sm" variant="outline" onClick={onRetry}>
+        <Button size="sm" variant="outline" className="mt-3" onClick={onRetry}>
           <RotateCw /> Повторить
         </Button>
       )}
@@ -67,14 +68,14 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-start gap-1.5 rounded-lg border border-dashed border-input bg-surface/60 px-6 py-8',
+        'flex flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-line px-6 py-10 text-center',
         className,
       )}
     >
-      {icon && <div className="mb-1 text-muted-foreground">{icon}</div>}
-      <div className="text-base font-medium">{title}</div>
-      {description && <div className="max-w-xl text-muted-foreground">{description}</div>}
-      {action && <div className="mt-3">{action}</div>}
+      {icon && <div className="text-ink-3">{icon}</div>}
+      <div className="h3">{title}</div>
+      {description && <div className="max-w-md text-[14px] text-ink-3">{description}</div>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   )
 }

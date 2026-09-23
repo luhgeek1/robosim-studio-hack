@@ -1,24 +1,85 @@
 import type { ReactNode } from 'react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { Link, useMatch, useNavigate } from 'react-router'
+import { PROJECT_STEPS, stepIndex } from '@/entities/project/steps'
 import { cn } from '@/shared/lib/utils'
+import { Button } from './button'
 
 export function PageHeader({
   title,
   description,
   actions,
+  eyebrow,
   className,
 }: {
   title: ReactNode
   description?: ReactNode
   actions?: ReactNode
+  eyebrow?: ReactNode
   className?: string
 }) {
   return (
-    <div className={cn('mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3', className)}>
-      <div className="min-w-0 space-y-1">
-        <h1 className="text-[22px] leading-tight font-semibold tracking-tight">{title}</h1>
-        {description && <p className="max-w-2xl text-muted-foreground">{description}</p>}
+    <div className={cn('mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-4', className)}>
+      <div className="min-w-0 max-w-190">
+        {eyebrow && <div className="meta num mb-2">{eyebrow}</div>}
+        <h1 className="h1">{title}</h1>
+        {description && <p className="mt-3 text-[15.5px] leading-relaxed text-ink-2">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    </div>
+  )
+}
+
+/* Экран шага: «Шаг N из M · вопрос», заголовок-вывод, лид и переходы назад / дальше — каркас прототипа v0. */
+export function Screen({
+  title,
+  lead,
+  children,
+  wide = false,
+  actions,
+  nextLabel,
+  nextDisabled = false,
+  nextTo,
+  className,
+}: {
+  title: ReactNode
+  lead?: ReactNode
+  children: ReactNode
+  wide?: boolean
+  actions?: ReactNode
+  nextLabel?: string
+  nextDisabled?: boolean
+  nextTo?: string
+  className?: string
+}) {
+  const navigate = useNavigate()
+  const match = useMatch('/projects/:projectId/:step/*')
+  const base = `/projects/${match?.params.projectId ?? ''}`
+  const idx = stepIndex(match?.params.step)
+  const step = PROJECT_STEPS[idx]
+  const prev = idx > 0 ? PROJECT_STEPS[idx - 1] : null
+  const next = idx >= 0 ? PROJECT_STEPS.slice(idx + 1).find((s) => !s.soon) : undefined
+  return (
+    <div className={cn('mx-auto w-full pb-16 pt-2', wide ? 'max-w-360' : 'max-w-300', className)}>
+      <PageHeader
+        eyebrow={step ? `Шаг ${idx + 1} из ${PROJECT_STEPS.length} · ${step.question}` : undefined}
+        title={title}
+        description={lead}
+        actions={actions}
+      />
+      {children}
+      {idx >= 0 && (
+        <div className="hairline mt-12 flex items-center justify-between pt-6">
+          <Button variant="ghost" onClick={() => navigate(prev ? `${base}/${prev.id}` : base)}>
+            <ArrowLeft /> {prev ? prev.label : 'Обзор'}
+          </Button>
+          {next && (
+            <Button size="lg" disabled={nextDisabled} onClick={() => navigate(nextTo ?? `${base}/${next.id}`)}>
+              {nextLabel ?? `Далее: ${next.label.toLowerCase()}`} <ArrowRight />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -39,22 +100,21 @@ export function Section({
   bodyClassName?: string
 }) {
   return (
-    <section className={cn('rounded-lg border bg-surface', className)}>
+    <section className={cn('card', className)}>
       {(title || actions) && (
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-3">
+        <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 pb-3">
           <div className="min-w-0 space-y-0.5">
-            {title && <h2 className="text-[15px] font-semibold">{title}</h2>}
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            {title && <h2 className="h3">{title}</h2>}
+            {description && <p className="meta">{description}</p>}
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
       )}
-      <div className={cn('p-5', bodyClassName)}>{children}</div>
+      <div className={cn(title || actions ? 'px-5 pb-5' : 'p-5', bodyClassName)}>{children}</div>
     </section>
   )
 }
 
-/* Строка показаний: числа в одной линейке, разделённые тонкими линиями, а не набор одинаковых коробок. */
 export function StatStrip({
   children,
   columns,
@@ -66,7 +126,7 @@ export function StatStrip({
 }) {
   return (
     <div
-      className={cn('grid divide-y overflow-hidden rounded-lg border bg-surface md:divide-x md:divide-y-0', className)}
+      className={cn('card grid divide-y divide-line overflow-hidden md:divide-x md:divide-y-0', className)}
       style={columns ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : undefined}
     >
       {children}
@@ -88,10 +148,10 @@ export function Stat({
   valueClassName?: string
 }) {
   return (
-    <div className={cn('min-w-0 px-4 py-3', className)}>
-      <div className="truncate text-xs text-muted-foreground">{label}</div>
-      <div className={cn('num mt-1 text-xl leading-none font-semibold tracking-tight', valueClassName)}>{value}</div>
-      {hint && <div className="mt-1.5 truncate text-xs text-muted-foreground">{hint}</div>}
+    <div className={cn('min-w-0 px-5 py-4', className)}>
+      <div className="truncate text-[13px] text-ink-3">{label}</div>
+      <div className={cn('display num mt-1.5 text-[24px]', valueClassName)}>{value}</div>
+      {hint && <div className="meta mt-1 truncate">{hint}</div>}
     </div>
   )
 }
@@ -107,11 +167,23 @@ export function Callout({
   action?: ReactNode
   className?: string
 }) {
-  const border = { warn: 'border-l-warn', crit: 'border-l-crit', info: 'border-l-info' }[tone]
+  const cls = {
+    warn: 'bg-warn-soft text-warn',
+    crit: 'bg-crit-soft text-crit',
+    info: 'bg-accent-soft text-accent-ink',
+  }[tone]
   return (
-    <div className={cn('flex items-start gap-3 rounded-lg border border-l-2 bg-surface px-4 py-3', border, className)}>
+    <div className={cn('flex items-start gap-3 rounded-[12px] px-4 py-3 text-[13.5px]', cls, className)}>
       <div className="min-w-0 flex-1">{children}</div>
       {action}
     </div>
+  )
+}
+
+export function TextLink({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
+  return (
+    <Link to={to} className={cn('text-[13.5px] font-medium text-info hover:underline', className)}>
+      {children}
+    </Link>
   )
 }

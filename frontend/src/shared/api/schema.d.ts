@@ -2339,7 +2339,10 @@ export interface components {
         caveats?: string[]
       }
       verdict: components['schemas']['Interpretation']
-      /** @description Кумулятивные кривые всех сценариев для одного графика. */
+      /**
+       * @description Накопленный денежный поток каждого сценария относительно «как сейчас» по годам, с точки 0 (старт, минус
+       *     первоначальные вложения). База — линия нуля; пересечение нуля — окупаемость. Один график на все сценарии.
+       */
       cashflow_overlay?: {
         [key: string]: components['schemas']['CashflowPoint'][]
       }
@@ -2362,6 +2365,7 @@ export interface components {
         high_input: number
         metric_at_low: number | null
         metric_at_high: number | null
+        /** @description Размах метрики запроса (metric_at_high − metric_at_low по модулю) в её единицах; для окупаемости годы за горизонтом считаются равными горизонту */
         swing: number
         rank: number
         provenance_status?: components['schemas']['ProvenanceStatus']
@@ -2431,6 +2435,14 @@ export interface components {
       layout_id?: string
       layout_version?: number
       seed?: number
+      /**
+       * @description sweep — прогон рекомендованного N, записанный перебором флота
+       * @enum {string}
+       */
+      purpose?: 'run' | 'sweep'
+      /** Format: uuid */
+      job_id?: string | null
+      events_count?: number
       fleet?: {
         process_key?: string
         product_name?: string
@@ -2528,6 +2540,11 @@ export interface components {
         completed?: number
         sla_achieved_pct?: number
         utilization?: number
+      }[]
+      /** @description Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) — их N остаётся по расчёту. */
+      skipped_processes?: {
+        process_key?: string
+        reason?: string
       }[]
     }
     /** @description Всё, что нужно 2D-плееру: планировка, роботы, отрезок журнала событий. */
@@ -3700,7 +3717,7 @@ export interface components {
         status: components['schemas']['ProvenanceStatus']
         current_value?: number | string | null
         unit?: string | null
-        /** @description Размах метрики в торнадо */
+        /** @description Размах NPV, ₽, при изменении входа по его диапазону (норматив) или на ±20 % (параметр объекта) */
         swing: number
         rank: number
         /** @example Замерить фактическое время цикла погрузчика на приёмке за 2 смены */
@@ -3800,8 +3817,8 @@ export interface components {
        */
       record_events: boolean
       /**
-       * @description Прогнать тем же движком ручной процесс для «SLA как сейчас»
-       * @default true
+       * @description Прогнать тем же движком ручной процесс для «SLA как сейчас» — пока не поддерживается, summary.baseline = null
+       * @default false
        */
       compare_baseline: boolean
     }
@@ -3836,27 +3853,48 @@ export interface components {
     /** @description Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость». */
     FleetSweepRequest: {
       process_key: string
-      from_count?: number
-      to_count?: number
+      /** @description Вместе с to_count — полный перебор диапазона вместо поиска */
+      from_count?: number | null
+      to_count?: number | null
       mode?: components['schemas']['SimulationMode']
       seed?: number | null
     }
+    /**
+     * @description Минимальное N, при котором среднее SLA по `sim_replications` прогонам пикового режима не ниже цели.
+     *     Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
+     *     Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
+     */
     FleetSweepResult: {
       process_key: string
       points: {
         count: number
+        /** @description Среднее по повторам */
         sla_achieved_pct: number
+        /** @description Худший повтор */
+        sla_min_pct?: number | null
+        passed?: boolean
+        runs?: number
         utilization: number
         throughput_per_hour: number
         queue_max?: number
         capex_rub?: number | null
         payback_years?: number | null
         /** Format: uuid */
-        simulation_id?: string
+        simulation_id?: string | null
       }[]
-      recommended_count: number
+      /** @description null — даже тройной парк не выполняет SLA: ограничение не в роботах */
+      recommended_count: number | null
+      analytic_count?: number | null
+      target_pct?: number | null
+      /**
+       * Format: uuid
+       * @description Прогон рекомендованного N с журналом для плеера
+       */
+      simulation_id?: string | null
+      /** @description N записано в сценарий */
+      applied?: boolean
       /** @example 12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 % */
-      explanation?: string
+      explanation: string
     }
     TimelinePoint: {
       t_min: number

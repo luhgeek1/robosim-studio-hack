@@ -8,7 +8,8 @@
     ],
     "module": "esnext",
     "types": [
-      "vite/client"
+      "vite/client",
+      "@react-three/fiber"
     ],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
