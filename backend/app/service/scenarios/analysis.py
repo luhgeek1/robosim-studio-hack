@@ -21,7 +21,7 @@ from app.engine.sensitivity import (
     percent_driver,
     tornado,
 )
-from app.engine.trace import InputKind
+from app.engine.trace import InputKind, fmt
 from app.service.scenarios.calculations import CalculationService, Evaluation
 from app.service.scenarios.snapshot import Snapshot
 
@@ -278,8 +278,8 @@ def _recommendation(driver: Driver, snapshot: Snapshot) -> str:
         rationale = (norm.rationale or "").split(". ")[0] if norm else ""
         return (
             f"Проверить на пилоте или у вендора «{driver.name}»: сейчас допущение команды "
-            f"({driver.base:g} {driver.unit or ''}, диапазон {driver.low:g}–{driver.high:g}). "
+            f"({fmt(driver.base)} {driver.unit or ''}, диапазон {fmt(driver.low)}–{fmt(driver.high)}). "
             f"{rationale}".strip()
         )
     status = "значение по умолчанию из демо-набора" if driver.status == "default" else "допущение"
-    return f"Заменить замером «{driver.name}»: сейчас {status} {driver.base:g} {driver.unit or ''}".strip()
+    return f"Заменить замером «{driver.name}»: сейчас {status} {fmt(driver.base)} {driver.unit or ''}".strip()

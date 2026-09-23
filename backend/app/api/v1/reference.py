@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Path, Query, Response
 
 from app.api.deps import UowDep
+from app.api.files import content_disposition
 from app.api.schemas.reference import (
     Industry,
     IndustryList,
@@ -101,5 +102,5 @@ async def download_template(object_type: Annotated[ObjectTypeKey, Path()], uow: 
     return Response(
         content=build_template(detail),
         media_type=XLSX_MEDIA_TYPE,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": content_disposition(filename)},
     )

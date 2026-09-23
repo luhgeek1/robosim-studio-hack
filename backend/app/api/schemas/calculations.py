@@ -74,6 +74,7 @@ class Cashflow(ApiModel):
     monthly: list[CashflowPoint]
     yearly: list[CashflowPoint]
     ramp_up_months: int | None = None
+    upfront_rub: float | None = None
 
 
 class Metrics(ApiModel):

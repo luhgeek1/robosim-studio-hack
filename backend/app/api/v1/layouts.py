@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, File, Form, Path, Response, UploadFile
 
 from app.api.deps import UowDep, require
+from app.api.files import content_disposition
 from app.api.schemas.base import ApiModel
 from app.api.schemas.layouts import Layout, LayoutGenerateRequest, LayoutUpdate
 from app.domain.auth import CurrentUser, Permission
@@ -110,5 +111,5 @@ async def get_background(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep)
     return Response(
         content=stored.data,
         media_type=stored.content_type,
-        headers={"Content-Disposition": f'inline; filename="{stored.filename}"'},
+        headers={"Content-Disposition": content_disposition(stored.filename, inline=True)},
     )

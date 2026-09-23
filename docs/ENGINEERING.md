@@ -76,7 +76,7 @@ backend/
       trace.py              построение CalculationTrace из шагов расчёта
     service/                оркестрация: UoW, репозитории, engine, задачи; возвращают domain DTO
     db/                     models/ (ORM), repositories/ (на агрегат), uow.py, session.py
-    infra/                  llm/ (providers: gemini, openai, rules), files/ (S3 или локально), reports/ (pdf, xlsx, docx), jobs/ (воркер)
+    infra/                  llm/ (providers: gemini, openai, rules), files/ (S3 или локально), reports/ (pdf, xlsx с живыми формулами из трассы, графики, docx — позже), jobs/ (воркер)
     seeds/                  каталог из case/dataset + research/, нормативы v1 с источниками, демо-проекты, планировки
   tests/
     unit/engine/            эталонные числа, калибровка по ФЦ БАС, свойства (N растёт с объёмом и т.п.)

@@ -7,13 +7,18 @@ from arq.connections import RedisSettings, create_pool
 
 from app.core.config import Settings
 from app.db.session import Database
+from app.service.reports.service import run_report
 from app.service.simulations.runner import run_fleet_sweep, run_simulation
 
 logger = logging.getLogger(__name__)
 
 Runner = Callable[[Database, UUID], Awaitable[None]]
 JOB_FUNCTION = "run_job"
-RUNNERS: dict[str, Runner] = {"simulation": run_simulation, "fleet_sweep": run_fleet_sweep}
+RUNNERS: dict[str, Runner] = {
+    "simulation": run_simulation,
+    "fleet_sweep": run_fleet_sweep,
+    "report": run_report,
+}
 
 
 async def execute(db: Database, name: str, job_id: UUID) -> None:

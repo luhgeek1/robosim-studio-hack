@@ -110,8 +110,19 @@ Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль n
 - **Данные — в `entities/*/api.ts`** (запросы и хуки TanStack Query, ключи — `shared/api/keys.ts`); экраны их только
   читают. Рестайл меняет `pages/`, `widgets/`, `shared/ui/` и токены в `app/index.css`, хуки не трогает.
 - Ошибки — один формат `Problem`: `parseApiProblem` / `problemText`; ошибки мутаций показываются тостом глобально.
-- Тема: токены shadcn + свои `ok / warn / crit / info` (`bg-ok-soft text-ok`…), класс `num` — табличные цифры.
+- Тема одна — светлая, из прототипа v0 (`app/index.css`): холст `--canvas`, `.card` с волосяной линией,
+  чернильные кнопки (`--primary` = ink), синий `--info` только для акцента и ссылок, семантика `ok / warn / crit`
+  (`bg-ok-soft text-ok`…); шрифт Onest, JetBrains Mono для формул; классы `.h1 .h2 .h3 .meta .display .num`.
+- Экран шага — `Screen` (`shared/ui/page.tsx`): «Шаг N из 9 · вопрос», заголовок-вывод (не название раздела, а
+  что выяснили: «Подходят 9 решений, лучшее — …»), лид, переходы назад / дальше. Шаги — `entities/project/steps.ts`.
+- Верхняя панель внутри проекта — это навигация: название с индексом доверия и нумерованные шаги (D-020).
+- Примитивы v0 — `shared/ui/v0.tsx`: `Pill`, `Bar`, `Check`, `Dot`, `KpiNumber` (число плавно перетекает),
+  `ConfidenceRing`, `Segmented`. Остальные элементы — shadcn с токенами v0.
+- 3D-двойник — `widgets/twin` (three, @react-three/fiber, drei, zustand): `Twin mode="overview"` на «Объекте»,
+  `mode="sim"` на «Имитации». Сцена типовая, цифры в ней — только из ответов бэкенда (`useTwin.setTarget`).
 - Деньги приходят в рублях, на экране — `formatRub` (млн ₽); формулы и входы — компонент `Formula`.
+- Скрыто до починки бэкенда (см. `STATUS.md`, долг): полнота карточки (100 % при пустых ТТХ) и бейджи «Отечественный»
+  / «Есть внедрения» в списках (стоят у всех), «Потенциал рынка» и «Похожие решения» в карточке продукта.
 
 ## Экраны и эндпоинты
 
@@ -131,7 +142,7 @@ Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль n
 | `…/scenarios/:sid` | Состав, финансирование, горизонт; расчёт: N, CAPEX/OPEX/эффект с формулами, поток, вердикт, риски, калибровка, трасса | `getScenario`, `updateScenario`, `calculateScenario`, `getCalculation`, `getCalculationTrace`, `getCalculationNarrative` | MVP |
 | `…/comparison` | Как сейчас / покупка / RaaS / лизинг, рекомендация, кривые | `getComparison` | MVP |
 | `…/risks` | Торнадо, тепловая карта «ФОТ × объём», Монте-Карло, что замерить | `runSensitivity`, `runMonteCarlo`, `getSurveyPriorities` | MVP |
-| `…/simulation` | 2D-плеер по журналу событий, KPI, перебор флота, узкое место | `/simulations/*`, `fleet-sweep` | ждёт бэкенд (DES) |
+| `…/simulation` | 3D-двойник на сводке прогона: N и режим → запуск, SLA, мощность, очередь, загрузка, таймлайн, «расчёт против имитации», узкое место, перебор флота | `startSimulation`, `getSimulation`, `getSimulationTimeline`, `runFleetSweep`, `getFleetSweepResult` | MVP (2D-плеер по журналу — дальше) |
 | `…/report` | PDF / Excel / DOCX | `/reports/*` | ждёт бэкенд |
 | `/demo`, `/admin` | Демо гостя, админка каталога и нормативов | `/demo/*`, `/admin/*` | ждёт бэкенд |
 

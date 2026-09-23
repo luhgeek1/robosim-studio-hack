@@ -14,6 +14,10 @@ projectReports:
     tags: [reports]
     operationId: createReport
     summary: Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача)
+    description: |
+      Сейчас формируются `pdf` («предТЭО» с графиками, планировкой и имитацией), `xlsx` (входы и живые формулы
+      из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` — 422.
+      Сценарии с устаревшим расчётом пересчитываются.
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/platform.yaml#/ReportRequest'}}}
@@ -44,7 +48,18 @@ reportDownload:
           application/pdf: {schema: {type: string, format: binary}}
           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {schema: {type: string, format: binary}}
           application/vnd.openxmlformats-officedocument.wordprocessingml.document: {schema: {type: string, format: binary}}
+          application/json: {schema: {type: object}}
       '409': {description: "Ещё формируется", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+fileDownload:
+  get:
+    tags: [reports]
+    operationId: downloadFile
+    summary: Скачать загруженный файл проекта (снимок имитации, подложка, отчёт)
+    parameters: [{name: file_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    responses:
+      '200': {description: "Файл в исходном формате", content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
 
 # ---------------- Ассистент ----------------
 

@@ -16,6 +16,7 @@ from app.db.models.reference import (
     Source,
     SpecKey,
 )
+from app.db.models.reports import Report
 from app.db.models.scenarios import CalculationRun, Scenario, ScenarioItem
 from app.db.models.simulations import SimulationRun
 
@@ -43,6 +44,7 @@ __all__ = [
     "ProductSpec",
     "Project",
     "ProjectParam",
+    "Report",
     "Scenario",
     "ScenarioItem",
     "SimulationRun",

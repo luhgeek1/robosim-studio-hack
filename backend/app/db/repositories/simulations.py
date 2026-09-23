@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import defer
 
 from app.db.models import Project, SimulationRun
+from app.domain.jobs import JobStatus
 
 
 class SimulationRepository:
@@ -47,3 +48,14 @@ class SimulationRepository:
 
     async def get(self, run_id: UUID) -> SimulationRun | None:
         return await self._session.get(SimulationRun, run_id)
+
+    async def latest_done(self, scenario_id: UUID) -> SimulationRun | None:
+        statement = (
+            select(SimulationRun)
+            .where(SimulationRun.scenario_id == scenario_id, SimulationRun.status == JobStatus.DONE)
+            .options(defer(SimulationRun.events), defer(SimulationRun.engine_input))
+            .order_by(SimulationRun.created_at.desc())
+            .limit(1)
+        )
+        run: SimulationRun | None = await self._session.scalar(statement)
+        return run

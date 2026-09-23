@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
@@ -18,6 +19,9 @@ from app.engine.simulation.sweep import Sweep, SweepResult
 from app.service.scenarios.calculations import CalculationService
 from app.service.simulations.inputs import load_input
 from app.service.simulations.results import pack_events, robots_json, summary_json, timeline_json
+
+logger = logging.getLogger(__name__)
+CRASHED = "Имитация прервалась из-за внутренней ошибки"
 
 MS_PER_S = 1000
 API_PREFIX = "/api/v1"
@@ -72,6 +76,10 @@ async def run_simulation(db: Database, job_id: UUID) -> None:
         result = await asyncio.to_thread(simulate, inp)
     except SimulationError as exc:
         await _fail(db, job_id, run.id, str(exc))
+        return
+    except Exception:
+        logger.exception("simulation_crashed", extra={"simulation_id": str(run.id)})
+        await _fail(db, job_id, run.id, CRASHED)
         return
     async with UnitOfWork(db.session()) as uow:
         run = await uow.session.get(SimulationRun, run.id)
@@ -147,6 +155,10 @@ async def run_fleet_sweep(db: Database, job_id: UUID) -> None:
         best = await _best_run(result, payload)
     except SimulationError as exc:
         await _fail(db, job_id, None, str(exc))
+        return
+    except Exception:
+        logger.exception("fleet_sweep_crashed", extra={"job_id": str(job_id)})
+        await _fail(db, job_id, None, CRASHED)
         return
     async with UnitOfWork(db.session()) as uow:
         job = await uow.jobs.get(job_id)
@@ -259,6 +271,7 @@ def _apply(
     if item is None or result.recommended_count is None:
         return
     item.simulated_count = result.recommended_count
+    item.simulated_basis = result.analytic_count
     item.simulation_id = run.id if run else None
     item.simulated_project_version = payload["project_version"]
     item.simulation_note = result.explanation

@@ -38,6 +38,7 @@ class ItemInput:
     candidate_status: str | None = None
     simulated_robots: int | None = None
     simulation_id: UUID | None = None
+    simulated_basis: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -124,7 +124,11 @@ def apply(inp: CalculationInput, driver: Driver, value: float) -> CalculationInp
     if driver.kind == DriverKind.NORM:
         items = dict(inp.norms.items)
         items[driver.key] = replace(items[driver.key], value=value)
-        return replace(inp, norms=Book(InputKind.NORM, items))
+        moved = replace(inp, norms=Book(InputKind.NORM, items))
+        # The scenario's discount rate is resolved from the norm once; move it too, or NPV would not react.
+        if inp.discount_rate.key == driver.key:
+            moved = replace(moved, discount_rate=replace(inp.discount_rate, value=value))
+        return moved
     if driver.kind == DriverKind.PARAM:
         return replace(inp, params={**inp.params, driver.key: value})
     factor = value / driver.base if driver.base else 1.0
