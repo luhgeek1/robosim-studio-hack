@@ -1,6 +1,8 @@
 import { Arm, armLayout } from './models/industrial'
 import { Cleaner, Courier, Humanoid, Security, Sweeper } from './models/service'
 import { Asrs, Cube, Inventory, asrsLayout, cubeLayout, inventoryLayout } from './models/storage'
+import { Agro, Marine, PipeCrawler, Roller } from './models/field'
+import { Exo, Neutral, RailRover, RoboCafe, Shuttle, Ugv } from './models/misc'
 import { LightPicking, PICKING_ROWS } from './models/picking'
 import { Drone, Truck, droneLayout } from './models/vehicles'
 import {
@@ -30,6 +32,8 @@ export const GROUPS = [
   'Уборка',
   'Сервис и охрана',
   'Транспорт и БАС',
+  'Отрасли и инфраструктура',
+  'Новые классы',
 ]
 
 export const KINDS: Kind[] = [
@@ -464,4 +468,199 @@ export const KINDS: Kind[] = [
       return { w: s.armL * 2.4, d: s.armL * 2.4, h: s.hover + 0.3 }
     },
   },
+  {
+    id: 'marine',
+    classes: ['marine_robot'],
+    title: 'Морской робот',
+    group: GROUPS[6],
+    accent: '#2f7fd8',
+    does: 'Безэкипажный катер: мониторинг акватории, работы на воде, доставка грузов',
+    shape: 'Длина и ширина корпусов, высота мачты — габариты; скорость кильватерного следа — макс. скорость',
+    anim: 'Идёт по воде с покачиванием, за корпусами пена, вращается антенна радара',
+    variants: [
+      {
+        id: 'sargan',
+        name: 'Сарган',
+        spec: { dims_mm: [3000, 1400, 1100], speed_mps: 2.5 },
+        assumed: ['dims_mm', 'speed_mps'],
+      },
+    ],
+    Model: Marine,
+    bounds: (v) => {
+      const [L, W, H] = mm(v.spec.dims_mm, [3000, 1400, 1100])
+      return { w: L * 1.3, d: W * 1.5, h: H + 0.2 }
+    },
+  },
+  {
+    id: 'agro',
+    classes: ['agro_robot'],
+    title: 'Сельскохозяйственный робот',
+    group: GROUPS[6],
+    accent: '#3c9a5f',
+    does: 'Беспилотный трактор без кабины: обработка почвы, уход за посевами, сбор урожая',
+    shape: 'Корпус, колёса и ширина культиватора — габариты; скорость — макс. скорость',
+    anim: 'Едет над рядами растений, культиватор рыхлит междурядья',
+    variants: [
+      {
+        id: 'agrobot',
+        name: 'Агробот',
+        spec: { dims_mm: [2600, 1500, 1700], speed_mps: 1.6 },
+        assumed: ['dims_mm', 'speed_mps'],
+      },
+    ],
+    Model: Agro,
+    bounds: (v) => {
+      const [L, W, H] = mm(v.spec.dims_mm, [2600, 1500, 1700])
+      return { w: L * 1.35, d: W * 1.3, h: H + 0.1 }
+    },
+  },
+  {
+    id: 'roller',
+    classes: ['construction_robot'],
+    title: 'Строительная и дорожная техника',
+    group: GROUPS[6],
+    accent: '#f2a93b',
+    does: 'Беспилотный каток: уплотняет асфальт по заданной полосе',
+    shape: 'Диаметр вальцов и корпус — габариты; ход за проход — скорость',
+    anim: 'Проходит полосу вперёд и назад, вальцы катятся, мигает маячок',
+    variants: [
+      {
+        id: 'katok',
+        name: 'Беспилотный каток',
+        spec: { dims_mm: [3800, 1700, 2600], speed_mps: 1.2 },
+        assumed: ['dims_mm', 'speed_mps'],
+      },
+    ],
+    Model: Roller,
+    bounds: (v) => {
+      const [L, W, H] = mm(v.spec.dims_mm, [3800, 1700, 2600])
+      return { w: L * 1.1, d: W * 1.2, h: H + 0.1 }
+    },
+  },
+  {
+    id: 'pipe',
+    classes: ['inspection_robot'],
+    title: 'Инспекционный робот',
+    group: GROUPS[6],
+    accent: '#e0533d',
+    does: 'Внутритрубная диагностика: проезжает трубу, осматривает стенки и сварные швы',
+    shape: 'Диаметр трубы и длина модуля — габариты; ход — скорость',
+    anim: 'Едет внутри трубы в разрезе, прижимные колёса катятся, кольцо сканера бежит по стенке',
+    variants: [
+      {
+        id: 'martin',
+        name: 'MARTin',
+        spec: { dims_mm: [600, 250, 250], speed_mps: 0.25 },
+        assumed: ['dims_mm', 'speed_mps'],
+      },
+    ],
+    Model: PipeCrawler,
+    bounds: (v) => {
+      const [L, W, H] = mm(v.spec.dims_mm, [600, 250, 250])
+      const R = Math.max(W, H) * 0.95
+      return { w: L * 2.6, d: R * 2.2, h: R * 2 }
+    },
+  },
+  {
+    id: 'rail',
+    classes: ['railway_robot'],
+    title: 'Робот для железной дороги',
+    group: GROUPS[6],
+    accent: '#f2b441',
+    does: 'Работает у состава: расцепляет вагоны, растормаживает, обслуживает инфраструктуру',
+    shape: 'Корпус ровера — габариты; путь и вагоны — сцена',
+    anim: 'Подъезжает к сцепке, манипулятор поднимает рычаг расцепа и уезжает',
+    variants: [{ id: 'rascep', name: 'Робот-расцепщик', spec: { dims_mm: [1400, 900, 900] }, assumed: ['dims_mm'] }],
+    Model: RailRover,
+    bounds: () => ({ w: 7.5, d: 4.4, h: 3.1 }),
+  },
+  {
+    id: 'exo',
+    classes: ['medical_robot'],
+    title: 'Медицинский робототехнический комплекс',
+    group: GROUPS[6],
+    accent: '#7a5cd6',
+    does: 'Экзоскелет-ортез для реабилитации: приводы тазобедренного и коленного суставов',
+    shape: 'Масштаб — рост пациента по габаритам',
+    anim: 'Шаговый цикл на беговой дорожке: приводы ведут бедро и голень',
+    variants: [{ id: 'ortez', name: 'Ортез-1', spec: { dims_mm: [500, 500, 1750] }, assumed: ['dims_mm'] }],
+    Model: Exo,
+    bounds: (v) => {
+      const k = (v.spec.dims_mm?.[2] ?? 1750) / 1750
+      return { w: 1.5 * k, d: 0.9 * k, h: 1.85 * k }
+    },
+  },
+  {
+    id: 'ugv',
+    classes: ['special_purpose_robot'],
+    title: 'Специальный робот',
+    group: GROUPS[4],
+    accent: '#e0533d',
+    does: 'Гусеничная платформа с манипулятором: спасение, разведка, работа в опасной зоне',
+    shape: 'Гусеницы, корпус и длина манипулятора — габариты',
+    anim: 'Манипулятор опускается, захватывает предмет и поднимает его; камера осматривает сектор',
+    variants: [{ id: 'gumich', name: 'Гумич спасатель', spec: { dims_mm: [1200, 700, 900] }, assumed: ['dims_mm'] }],
+    Model: Ugv,
+    bounds: (v) => {
+      const [L, W, H] = mm(v.spec.dims_mm, [1200, 700, 900])
+      return { w: L * 1.7, d: W * 1.2, h: H + 0.2 }
+    },
+  },
+  {
+    id: 'cafe',
+    classes: ['retail_automation'],
+    title: 'Роботизированная торговля и общепит',
+    group: GROUPS[4],
+    accent: '#7a5cd6',
+    does: 'Робо-кафе и вендинг: манипулятор готовит и выдаёт заказ без персонала',
+    shape: 'Размер киоска — габариты; рука и стойка масштабируются вместе с ним',
+    anim: 'Рука берёт стакан, ставит под раздачу, наливает напиток и выдаёт в окно',
+    variants: [{ id: 'rcafe', name: 'R-Cafe 1.3', spec: { dims_mm: [2000, 1400, 2300] }, assumed: ['dims_mm'] }],
+    Model: RoboCafe,
+    bounds: (v) => {
+      const [L, W, H] = mm(v.spec.dims_mm, [2000, 1400, 2300])
+      return { w: L, d: W, h: H }
+    },
+  },
+  {
+    id: 'shuttle',
+    classes: ['passenger_transport'],
+    title: 'Беспилотный пассажирский транспорт',
+    group: GROUPS[5],
+    accent: '#f2b441',
+    does: 'Возит пассажиров без водителя: такси, трамвай, поезд',
+    shape: 'Длина, ширина и высота кузова — габариты; скорость дорожки — макс. скорость',
+    anim: 'Едет по полосе, лидар на крыше вращается, горят фары',
+    variants: [
+      {
+        id: 'taxi',
+        name: 'Беспилотное такси Яндекс',
+        spec: { dims_mm: [4600, 1900, 1600], speed_mps: 8 },
+        assumed: ['dims_mm', 'speed_mps'],
+      },
+    ],
+    Model: Shuttle,
+    bounds: (v) => {
+      const [L, W, H] = mm(v.spec.dims_mm, [4600, 1900, 1600])
+      return { w: L * 1.1, d: W * 1.2, h: H + 0.15 }
+    },
+  },
 ]
+
+/** Drawn for a product whose class has no model yet — a neutral robot, never an empty card. */
+export const FALLBACK_KIND: Kind = {
+  id: 'neutral',
+  classes: [],
+  title: 'Робот нового класса',
+  group: GROUPS[7],
+  accent: '#8a94a0',
+  does: 'Нейтральная модель для класса, которого ещё нет в галерее: появляется у нового продукта автоматически',
+  shape: 'Корпус — габариты продукта, если они есть в ТТХ',
+  anim: 'Прохаживается, поворачивает голову, моргает',
+  variants: [{ id: 'neutral', name: 'Новый класс', spec: { dims_mm: [800, 600, 1200] }, assumed: ['dims_mm'] }],
+  Model: Neutral,
+  bounds: (v) => {
+    const [L, W, H] = mm(v.spec.dims_mm, [800, 600, 1200])
+    return { w: L * 2, d: W * 1.3, h: H }
+  },
+}

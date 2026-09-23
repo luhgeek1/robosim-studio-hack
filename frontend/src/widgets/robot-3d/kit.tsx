@@ -514,3 +514,86 @@ export function Studio({
     </>
   )
 }
+
+/** Soft-edged floor patch (water, soil, asphalt): an ellipse `w × d` that fades out at the rim. */
+export function FadeDisc({
+  w,
+  d,
+  color,
+  opacity = 1,
+  y = 0.001,
+  order = 0,
+}: {
+  w: number
+  d: number
+  color: string
+  opacity?: number
+  y?: number
+  order?: number
+}) {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]} scale={[w / 2, d / 2, 1]} renderOrder={order}>
+      <circleGeometry args={[1, 48]} />
+      <meshStandardMaterial
+        color={color}
+        roughness={0.85}
+        alphaMap={radialFade()}
+        transparent
+        opacity={opacity}
+        depthWrite={false}
+      />
+    </mesh>
+  )
+}
+
+/** Floor objects (plants, seams, foam) that scroll backwards with the drive and shrink away at both ends. */
+export function Scroller({
+  drive,
+  span,
+  count,
+  lanes,
+  children,
+}: {
+  drive: RefObject<Drive>
+  span: number
+  count: number
+  lanes: number[]
+  children: (i: number) => ReactNode
+}) {
+  const refs = useRef<(THREE.Group | null)[]>([])
+  useFrame(() => {
+    refs.current.forEach((g, k) => {
+      if (!g) return
+      const lane = Math.floor(k / count)
+      const i = k % count
+      const u = (((((i + lane * 0.5) * span) / count - drive.current.odo) % span) + span) % span
+      g.position.x = u - span / 2
+      g.scale.setScalar(Math.max(0.001, Math.min(1, Math.min(u, span - u) / (span * 0.18))))
+    })
+  })
+  return (
+    <>
+      {lanes.flatMap((z, li) =>
+        Array.from({ length: count }, (_, i) => (
+          <group
+            key={`${li}-${i}`}
+            ref={(g) => {
+              refs.current[li * count + i] = g
+            }}
+            position={[0, 0, z]}
+          >
+            {children(i + li * 7)}
+          </group>
+        )),
+      )}
+    </>
+  )
+}
+
+/** Planar two-link IK: shoulder and elbow angles that put the wrist at (r, y) from the shoulder; elbow up. */
+export function ik2(r: number, y: number, a: number, b: number) {
+  const d = Math.min(Math.hypot(r, y), a + b - 1e-3)
+  const e = Math.acos(Math.max(-1, Math.min(1, (d * d - a * a - b * b) / (2 * a * b))))
+  const s = Math.atan2(y, r) + Math.atan2(b * Math.sin(e), a + b * Math.cos(e))
+  return { s, e }
+}

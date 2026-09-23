@@ -1,9 +1,9 @@
 import { Canvas } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import * as THREE from 'three'
 import { useProduct } from '@/entities/catalog'
 import { cn } from '@/shared/lib/utils'
-import { kindOf, variantFromProduct } from './catalog'
+import { modelKindOf, variantFromProduct } from './catalog'
 import { Studio, type Framing } from './kit'
 import type { DragState } from './store'
 
@@ -27,18 +27,15 @@ export function RobotPreview3D({
   productId,
   framing,
   className,
-  fallback,
 }: {
   productId: string
   framing?: Framing
   className?: string
-  /** Shown when the product's class has no model yet. */
-  fallback?: ReactNode
 }) {
   const { ref, near } = useNearViewport<HTMLDivElement>()
   const detail = useProduct(productId)
   const product = detail.data
-  const kind = product ? kindOf(product) : undefined
+  const kind = product ? modelKindOf(product) : undefined
   const variant = useMemo(
     () => (kind && product ? variantFromProduct(kind, product, product) : undefined),
     [kind, product],
@@ -85,7 +82,6 @@ export function RobotPreview3D({
           </Studio>
         </Canvas>
       )}
-      {product && !kind && fallback}
     </div>
   )
 }

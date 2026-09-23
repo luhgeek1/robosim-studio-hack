@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Segmented } from '@/shared/ui/v0'
 import {
   GROUPS,
+  FALLBACK_KIND,
   KINDS,
   Studio,
   cleanName,
@@ -191,7 +192,8 @@ function RobotCard({ kind, products }: { kind: Kind; products: Product[] | undef
 export function RobotsPage() {
   const [group, setGroup] = useState<string>('all')
   const { paused, human, speed, togglePaused, toggleHuman, setSpeed } = useGallery()
-  const kinds = group === 'all' ? KINDS : KINDS.filter((k) => k.group === group)
+  const all = [...KINDS, FALLBACK_KIND]
+  const kinds = group === 'all' ? all : all.filter((k) => k.group === group)
   const catalog = useCatalogProducts()
   const { byKind, unmapped, mapped } = useMemo(() => {
     const byKind = new Map<string, Product[]>()
@@ -205,6 +207,7 @@ export function RobotsPage() {
       } else {
         const u = unmapped.get(p.solution_type) ?? { name: p.solution_type_name ?? p.solution_type, count: 0 }
         unmapped.set(p.solution_type, { ...u, count: u.count + 1 })
+        byKind.set(FALLBACK_KIND.id, [...(byKind.get(FALLBACK_KIND.id) ?? []), p])
       }
     }
     for (const k of KINDS) if (byKind.has(k.id)) byKind.set(k.id, orderForKind(k, byKind.get(k.id)!))
@@ -283,9 +286,9 @@ export function RobotsPage() {
 
       {unmapped.length > 0 && group === 'all' && (
         <div className="mt-10">
-          <h2 className="h3">Классы каталога без 3D-модели</h2>
+          <h2 className="h3">Классы каталога без своей 3D-модели</h2>
           <p className="mt-1 mb-3 text-[13px] text-ink-3">
-            Продукты этих классов пока показываются без модели; одна модель на класс закроет их все сразу.
+            Продукты этих классов рисуются нейтральным роботом; одна модель на класс закроет их все сразу.
           </p>
           <div className="flex flex-wrap gap-1.5">
             {unmapped.map((u) => (

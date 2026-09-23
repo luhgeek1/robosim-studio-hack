@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { catalogApi } from '@/entities/catalog'
 import type { Product, ProductDetail } from '@/shared/api/types'
-import { KINDS } from './kinds'
+import { FALLBACK_KIND, KINDS } from './kinds'
 import type { Kind, Spec, Variant } from './types'
 
 // The whole catalog fits one page (187 products, page limit 200): classes are grouped on the client.
@@ -14,6 +14,9 @@ export const useCatalogProducts = () =>
 
 export const kindOf = (p: Product): Kind | undefined =>
   KINDS.find((k) => k.classes.includes(p.solution_type) && (k.claims?.(p) ?? true))
+
+/** Model for any product: its class model, or the neutral robot when the class is new to the gallery. */
+export const modelKindOf = (p: Product): Kind => kindOf(p) ?? FALLBACK_KIND
 
 export const cleanName = (name: string) => name.replace(/\s*\(грузоподъ[её]мност[^)]*\)/i, '').trim()
 
