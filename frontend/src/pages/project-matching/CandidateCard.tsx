@@ -1,10 +1,24 @@
-import { ChevronRight, CircleHelp, Info } from 'lucide-react'
+import { ChevronRight, CircleHelp, Info, Plus } from 'lucide-react'
 import { Link } from 'react-router'
+import { toast } from 'sonner'
 import { BADGE_LABEL, PRODUCT_STATUS_LABEL } from '@/entities/catalog'
-import { CANDIDATE_STATUS_LABEL, CRITERION_LABEL } from '@/entities/matching'
+import { CANDIDATE_STATUS_LABEL, CRITERION_LABEL, useAddManualCandidate } from '@/entities/matching'
+import { problemText } from '@/shared/api/problem'
 import type { Candidate, Reason } from '@/shared/api/types'
 import { formatNumber, formatPct, formatRub, formatValue, formatYears, isNum } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/shared/ui/alert-dialog'
+import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
@@ -16,12 +30,18 @@ import { SEVERITY_LABEL, SEVERITY_ORDER, SEVERITY_TONE, STATUS_TONE } from './la
 // Отметки, которые говорят о проверке продукта, а не о его происхождении: «отечественный» и «есть внедрения» есть почти у всех.
 const VERIFIED_BADGES = new Set(['in_registry_719', 'tested_fcbas', 'specs_confirmed'])
 
+type MissingData = Candidate['missing_data'][number]
+
 export function CandidateCard({
+  projectId,
+  processKey,
   candidate,
   selected,
   selectDisabled,
   onSelectedChange,
 }: {
+  projectId: string
+  processKey: string
   candidate: Candidate
   selected: boolean
   selectDisabled: boolean
@@ -35,6 +55,17 @@ export function CandidateCard({
     severity,
     reasons: candidate.reasons.filter((r) => r.severity === severity),
   })).filter((g) => g.reasons.length > 0)
+  // ТЗ 3.4.3: каких данных не хватает и зачем они нужны. Пояснение встаёт под причину с тем же ключом ТТХ,
+  // остальные пробелы идут отдельным списком.
+  const missing = candidate.missing_data ?? []
+  const why = new Map(missing.map((m) => [m.spec_key, m.why_needed]))
+  const explained = new Set(
+    candidate.reasons
+      .filter((r) => r.severity !== 'info')
+      .map((r) => r.spec_key)
+      .filter((key): key is string => Boolean(key)),
+  )
+  const unexplained = missing.filter((m) => !explained.has(m.spec_key))
 
   return (
     <article className={cn('rounded-lg border bg-surface p-4', candidate.status === 'excluded' && 'opacity-80')}>
@@ -123,7 +154,7 @@ export function CandidateCard({
                   {SEVERITY_LABEL.info} ({reasons.length})
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <ReasonList reasons={reasons} />
+                  <ReasonList reasons={reasons} why={why} />
                 </CollapsibleContent>
               </Collapsible>
             ) : (
@@ -131,17 +162,23 @@ export function CandidateCard({
                 <div className={cn('text-xs font-medium', TONE_TEXT[SEVERITY_TONE[severity]])}>
                   {SEVERITY_LABEL[severity]}
                 </div>
-                <ReasonList reasons={reasons} />
+                <ReasonList reasons={reasons} why={why} />
               </div>
             ),
           )}
         </div>
       )}
+
+      {unexplained.length > 0 && <MissingList items={unexplained} />}
+
+      {candidate.status === 'excluded' && (
+        <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} />
+      )}
     </article>
   )
 }
 
-function ReasonList({ reasons }: { reasons: Reason[] }) {
+function ReasonList({ reasons, why }: { reasons: Reason[]; why: Map<string, string> }) {
   return (
     <ul className="mt-1 space-y-1">
       {reasons.map((reason, i) => {
@@ -163,11 +200,104 @@ function ReasonList({ reasons }: { reasons: Reason[] }) {
                   {formatReasonValue(reason.actual, reason.unit)})
                 </span>
               )}
+              {reason.spec_key && why.has(reason.spec_key) && reason.severity !== 'info' && (
+                <span className="block text-muted-foreground">Зачем нужно: {why.get(reason.spec_key)}</span>
+              )}
             </span>
           </li>
         )
       })}
     </ul>
+  )
+}
+
+function MissingList({ items }: { items: MissingData[] }) {
+  return (
+    <div className="mt-3">
+      <div className={cn('text-xs font-medium', TONE_TEXT.warn)}>Не хватает данных производителя</div>
+      <ul className="mt-1 space-y-1">
+        {items.map((m) => (
+          <li key={m.spec_key} className="flex gap-2 text-xs">
+            <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warn" />
+            <span className="min-w-0">
+              {m.name}
+              <span className="block text-muted-foreground">Зачем нужно: {m.why_needed}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// ТЗ 3.4.4: решение не прошло жёсткие проверки, но его можно добавить в сравнение — после показа всех причин.
+function ManualAdd({
+  projectId,
+  processKey,
+  candidate,
+}: {
+  projectId: string
+  processKey: string
+  candidate: Candidate
+}) {
+  const add = useAddManualCandidate(projectId)
+  const blocking = candidate.reasons.filter((r) => r.severity === 'blocking')
+  const warnings = candidate.reasons.filter((r) => r.severity === 'warning')
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="outline" className="mt-3">
+          <Plus /> Всё равно добавить в сравнение
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Добавить «{candidate.product.name}» вручную?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Решение не прошло жёсткие проверки объекта. В сравнении оно останется с пометкой «добавлен вручную» и с
+            причинами исключения.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <ul className="space-y-1.5 text-sm">
+          {[...blocking, ...warnings].map((r, i) => (
+            <li key={`${r.code}-${i}`} className="flex gap-2">
+              <span
+                className={cn(
+                  'mt-1.5 size-1.5 shrink-0 rounded-full',
+                  r.severity === 'blocking' ? 'bg-crit' : 'bg-warn',
+                )}
+              />
+              <span>
+                {r.text}
+                {(r.required != null || r.actual != null) && (
+                  <span className="num ml-1.5 text-muted-foreground">
+                    (требование: {formatReasonValue(r.required, r.unit)}; у продукта:{' '}
+                    {formatReasonValue(r.actual, r.unit)})
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Отмена</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={add.isPending}
+            onClick={() =>
+              add.mutate(
+                { process_key: processKey, product_id: candidate.product.id, offer_id: candidate.offer_id ?? null },
+                {
+                  onSuccess: () => toast.success('Решение добавлено в подбор с пометкой «добавлен вручную»'),
+                  onError: (error) => toast.error(problemText(error)),
+                },
+              )
+            }
+          >
+            Добавить с предупреждением
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 
