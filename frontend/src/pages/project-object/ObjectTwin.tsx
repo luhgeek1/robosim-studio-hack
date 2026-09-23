@@ -1,5 +1,5 @@
 import { AlertTriangle, Box, Map as MapIcon, Maximize2, RefreshCw, Rotate3d } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useGenerateLayout, useLayout } from '@/entities/layout'
 import { parseApiProblem } from '@/shared/api/problem'
 import type { Layout, ObjectType } from '@/shared/api/types'
@@ -73,6 +73,8 @@ export function ObjectTwin({ projectId, objectType }: { projectId: string; objec
 // and the numbers and toolbar below.
 const PLAN_PAD: FitPadding = { x: 32, top: 76, bottom: 100 }
 const MODAL_PLAN_PAD: FitPadding = { x: 48, top: 80, bottom: 80 }
+// A bit longer than the dialog's open/close animation (duration-100).
+const HANDOVER_MS = 150
 
 // One stage for the card and the full-screen dialog: the 3D scene or the 2D plan under a centered switch.
 function TwinStage({
@@ -141,10 +143,25 @@ function LayoutTwin({
   if (isNum(route)) numbers.push([`${formatNumber(route)} м`, 'средний путь от ворот до места'])
 
   const [expanded, setExpanded] = useState(false)
+  // Only one live scene at a time: two WebGL canvases with thousands of racks stutter. The card drops its scene
+  // at once, the dialog builds its own after the open animation, and back again on close.
+  const [host, setHost] = useState<'card' | 'dialog'>('card')
+  useEffect(() => {
+    const timer = setTimeout(() => setHost(expanded ? 'dialog' : 'card'), HANDOVER_MS)
+    return () => clearTimeout(timer)
+  }, [expanded])
 
   return (
     <>
-      <TwinStage layout={layout} view={view} onViewChange={setView} fitPadding={PLAN_PAD} switchId="object-twin-view" />
+      {!expanded && host === 'card' && (
+        <TwinStage
+          layout={layout}
+          view={view}
+          onViewChange={setView}
+          fitPadding={PLAN_PAD}
+          switchId="object-twin-view"
+        />
+      )}
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent
           className="block h-[90vh] w-[90vw] max-w-none overflow-hidden p-0 sm:max-w-none"
@@ -153,13 +170,19 @@ function LayoutTwin({
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogTitle className="sr-only">Планировка объекта</DialogTitle>
-          <TwinStage
-            layout={layout}
-            view={view}
-            onViewChange={setView}
-            fitPadding={MODAL_PLAN_PAD}
-            switchId="object-twin-view-modal"
-          />
+          {host === 'dialog' ? (
+            <TwinStage
+              layout={layout}
+              view={view}
+              onViewChange={setView}
+              fitPadding={MODAL_PLAN_PAD}
+              switchId="object-twin-view-modal"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-surface-2">
+              <Spinner />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">

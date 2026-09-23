@@ -122,6 +122,8 @@ export function Twin({
           <Canvas
             shadows={{ type: THREE.PCFSoftShadowMap }}
             dpr={[1, 1.75]}
+            // Layout size, not the transformed box: inside a dialog that opens with a zoom the canvas would stay at 95 %.
+            resize={{ offsetSize: true }}
             camera={{ position: [span * 0.5, span * 0.8, span], fov: 38, near: 0.5, far: span * 12 }}
             gl={{ antialias: true, powerPreference: 'high-performance' }}
             onCreated={({ gl, scene }) => {
