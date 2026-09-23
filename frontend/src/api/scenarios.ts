@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { qk } from '@/api/keys'
 import type {
@@ -73,6 +73,17 @@ export const useCalculation = (id: string | null | undefined) =>
     staleTime: Infinity,
   })
 
+// One query per calculation id, sharing the cache with useCalculation (a comparison column per scenario).
+export const useCalculations = (ids: (string | null | undefined)[]) =>
+  useQueries({
+    queries: ids.map((id) => ({
+      queryKey: qk.calculations.one(id ?? ''),
+      queryFn: () => scenarioApi.calculation(id!),
+      enabled: Boolean(id),
+      staleTime: Infinity,
+    })),
+  })
+
 export const useTrace = (id: string | null | undefined, enabled = true) =>
   useQuery({
     queryKey: qk.calculations.trace(id ?? ''),
@@ -89,11 +100,11 @@ export const useNarrative = (id: string | null | undefined) =>
     staleTime: Infinity,
   })
 
-export const useComparison = (projectId: string) =>
+export const useComparison = (projectId: string, enabled = true) =>
   useQuery({
     queryKey: qk.projects.comparison(projectId),
     queryFn: () => scenarioApi.comparison(projectId),
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectId) && enabled,
     retry: false,
   })
 

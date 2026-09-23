@@ -34,9 +34,10 @@ const VARIANT_NAME: Record<Exclude<ScenarioKind, 'baseline'>, string> = {
 
 // One click builds the whole comparison: main scenario from the recommendation, its RaaS and leasing copies,
 // all calculated. Calculation takes tens of milliseconds, so the user sees a filled table right away.
-export function useBuildStory(projectId: string) {
+export function useBuildStory(projectId: string, { silent = false }: { silent?: boolean } = {}) {
   const queryClient = useQueryClient()
   return useMutation({
+    meta: { silent },
     mutationFn: async ({ variants = ['raas', 'lease'] }: { variants?: ('raas' | 'lease')[] } = {}) => {
       const existing = await scenarioApi.list(projectId)
       let main = pickMain(existing)
