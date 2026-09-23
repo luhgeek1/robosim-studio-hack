@@ -15,7 +15,7 @@
 (`engine/economics`, `engine/calculation`, трасса, чувствительность, калибровка по ФЦ БАС) и планировка;
 дальше — симуляция по порядку из `docs/STATUS.md`. MVP фронта готов на живых эндпоинтах (D-018, `docs/FRONTEND.md`).
 Решения — `docs/DECISIONS.md` (D-003…D-018).
-Прототип v0 не развиваем: его доменную логику переносим из `legacy/backend-v0/` с переработкой.
+Прототип v0 не развиваем; его бэкенд удалён 23.09 (код — в теге `v0-prototype`).
 
 ## Обязательный ритуал каждой сессии
 
@@ -64,7 +64,6 @@ research/              результаты исследований: сцена
 backend/               новый бэкенд: FastAPI + Postgres + Alembic + Redis/arq, uv; структура — docs/ENGINEERING.md §3
 frontend/              новый фронт: Vite + React 19 + shadcn + TanStack Query; экраны и эндпоинты — docs/FRONTEND.md
 legacy/frontend-v0/    фронт прототипа v0 (в .gitignore, донор стилей; 3D-карта — тег v0-twin-3d)
-legacy/backend-v0/     бэкенд прототипа v0 — только донор логики при переносе; удалить до сдачи (весь v0 — тег v0-prototype)
 template/              старый проект команды, основа нового каркаса (в .gitignore, свои секреты — не коммитить)
 ```
 
