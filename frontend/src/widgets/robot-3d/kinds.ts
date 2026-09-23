@@ -656,8 +656,13 @@ export const FALLBACK_KIND: Kind = {
   accent: '#8a94a0',
   does: 'Нейтральная модель для класса, которого ещё нет в галерее: появляется у нового продукта автоматически',
   shape: 'Корпус — габариты продукта, если они есть в ТТХ',
-  anim: 'Прохаживается, поворачивает голову, моргает',
-  variants: [{ id: 'neutral', name: 'Новый класс', spec: { dims_mm: [800, 600, 1200] }, assumed: ['dims_mm'] }],
+  anim: 'A — едет, ядро модуля вращается; B — едет вприпрыжку, смотрит и моргает; C — оглядывается визором',
+  // Three candidate designs to choose from; after the choice only one stays.
+  variants: [
+    { id: 'neutral-a', name: 'A · Платформа', spec: { dims_mm: [1000, 700, 900] }, assumed: ['dims_mm'] },
+    { id: 'neutral-b', name: 'B · Помощник', spec: { dims_mm: [700, 600, 900] }, assumed: ['dims_mm'] },
+    { id: 'neutral-c', name: 'C · Капсула', spec: { dims_mm: [800, 600, 1200] }, assumed: ['dims_mm'] },
+  ],
   Model: Neutral,
   bounds: (v) => {
     const [L, W, H] = mm(v.spec.dims_mm, [800, 600, 1200])

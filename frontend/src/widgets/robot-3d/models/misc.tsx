@@ -18,6 +18,7 @@ import {
   useTick,
 } from '../kit'
 import { mm, type ModelProps } from '../types'
+import { AmrBody } from './warehouse'
 
 type G = THREE.Group
 
@@ -599,7 +600,7 @@ export function Exo({ v, accent }: ModelProps) {
 /* ---------- Neutral: fallback robot for a class that has no model yet ---------- */
 
 // A soft, generic service-robot silhouette: egg body on a low base with a light ring, a visor that looks around.
-export function Neutral({ v, accent }: ModelProps) {
+function NeutralCapsule({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [800, 600, 1200])
   const R = Math.min(L, W) * 0.5
   const bot = useRef<G>(null)
@@ -684,4 +685,188 @@ export function Neutral({ v, accent }: ModelProps) {
       </group>
     </group>
   )
+}
+
+/* Variant A: a universal mobile platform carrying a glass «function module» with a glowing core. */
+function NeutralPlatform({ v, accent }: ModelProps) {
+  const [L, W, H] = mm(v.spec.dims_mm, [1000, 700, 900])
+  const baseH = Math.min(0.32, H * 0.3)
+  const drive = useDrive()
+  const core = useRef<THREE.Mesh>(null)
+  const coreMat = useGlow(accent, 1.4)
+  const T = 9
+  const P = (1.2 * 6) / 1.5
+  useTick((t) => {
+    const c = Math.floor(t / T)
+    drive.current.odo = c * P + P * seg(t % T, 0.5, 6.5)
+    if (core.current) {
+      core.current.rotation.y = t * 0.8
+      core.current.rotation.x = t * 0.5
+      core.current.position.y = Math.sin(t * 1.6) * 0.02
+    }
+    coreMat.emissiveIntensity = 1.1 + 0.7 * (0.5 + 0.5 * Math.sin(t * 2.2))
+  })
+  const glass = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: '#dcebf5',
+        transparent: true,
+        opacity: 0.28,
+        roughness: 0.05,
+        clearcoat: 1,
+        depthWrite: false,
+      }),
+    [],
+  )
+  const modH = H - baseH - 0.08
+  const midY = baseH + 0.04 + modH / 2
+  return (
+    <group>
+      <Lane drive={drive} length={Math.max(L, 1) * 3.6} width={W * 1.8} />
+      <BlobShadow w={L * 1.3} d={W * 1.35} />
+      <AmrBody L={L} W={W} H={baseH} accent={accent} />
+      <RoundedBox
+        args={[L * 0.84, 0.04, W * 0.84]}
+        radius={0.015}
+        smoothness={2}
+        position={[0, baseH + 0.02, 0]}
+        material={M.dark}
+      />
+      {[-1, 1].flatMap((sx) =>
+        [-1, 1].map((sz) => (
+          <mesh key={`${sx}${sz}`} material={M.dark} position={[sx * L * 0.37, midY, sz * W * 0.37]}>
+            <boxGeometry args={[0.035, modH, 0.035]} />
+          </mesh>
+        )),
+      )}
+      <RoundedBox
+        args={[L * 0.8, 0.05, W * 0.8]}
+        radius={0.02}
+        smoothness={2}
+        position={[0, H - 0.025, 0]}
+        material={M.shell2}
+      />
+      <mesh material={glass} position={[0, midY, 0]}>
+        <boxGeometry args={[L * 0.7, modH * 0.96, W * 0.7]} />
+      </mesh>
+      <group position={[0, midY, 0]}>
+        <mesh ref={core} material={coreMat}>
+          <icosahedronGeometry args={[Math.min(L, W, modH) * 0.2, 0]} />
+        </mesh>
+      </group>
+      <Lidar pos={[L * 0.28, H, 0]} r={0.06} />
+      <LedStrip size={[L * 0.6, 0.02, 0.006]} pos={[0, H - 0.025, W * 0.4 + 0.004]} color={accent} rate={1.2} />
+    </group>
+  )
+}
+
+/* Variant B: a friendly boxy helper on wheels with a face screen. */
+function NeutralBuddy({ v, accent }: ModelProps) {
+  const [L, W, H] = mm(v.spec.dims_mm, [700, 600, 900])
+  const wr = H * 0.09
+  const drive = useDrive()
+  const body = useRef<G>(null)
+  const look = useRef<G>(null)
+  const antenna = useRef<G>(null)
+  const eyes = useRef<(THREE.Mesh | null)[]>([])
+  const eyeMat = useGlow('#8ff0ff', 2.6)
+  const T = 8
+  const P = (1.0 * 5) / 1.5
+  useTick((t) => {
+    const c = Math.floor(t / T)
+    const p = t % T
+    drive.current.odo = c * P + P * seg(p, 0.5, 5.5)
+    const moving = seg(p, 0.5, 1.2) - seg(p, 4.8, 5.5)
+    if (body.current) body.current.position.y = Math.abs(Math.sin(t * 7)) * 0.012 * moving
+    if (look.current) look.current.position.z = Math.sin(t * 0.9) * W * 0.06 * (1 - moving)
+    if (antenna.current) antenna.current.rotation.x = Math.sin(t * 6) * 0.12 * (0.3 + moving)
+    const blink = t % 3.1 < 0.12 ? 0.12 : 1
+    eyes.current.forEach((m) => {
+      if (m) m.scale.y = blink
+    })
+  })
+  const bodyY = wr * 1.5
+  const bodyH = H - bodyY - 0.12
+  const r = Math.min(L, W, bodyH) * 0.2
+  const bodyMat = paint(accent, 0.35, 0.1, 0.7)
+  return (
+    <group>
+      <Lane drive={drive} length={Math.max(L, 1) * 4} width={W * 2} />
+      <BlobShadow w={L * 1.3} d={W * 1.35} />
+      {[-1, 1].flatMap((sx) =>
+        [-1, 1].map((sz) => (
+          <Wheel
+            key={`${sx}${sz}`}
+            r={wr}
+            w={0.06}
+            pos={[sx * L * 0.32, wr, sz * (W / 2 - 0.02)]}
+            drive={drive}
+            hub={accent}
+          />
+        )),
+      )}
+      <group ref={body}>
+        <RoundedBox
+          args={[L * 0.96, 0.06, W * 0.9]}
+          radius={0.025}
+          smoothness={2}
+          position={[0, bodyY - 0.01, 0]}
+          material={M.dark}
+        />
+        <RoundedBox
+          args={[L, bodyH, W]}
+          radius={r}
+          smoothness={6}
+          position={[0, bodyY + bodyH / 2, 0]}
+          material={M.shell}
+        />
+        <RoundedBox
+          args={[L * 1.004, bodyH * 0.12, W * 1.004]}
+          radius={Math.min(r, bodyH * 0.05)}
+          smoothness={3}
+          position={[0, bodyY + bodyH * 0.1, 0]}
+          material={bodyMat}
+        />
+        <RoundedBox
+          args={[0.02, bodyH * 0.42, W - r * 2]}
+          radius={0.008}
+          smoothness={3}
+          position={[L / 2 + 0.004, bodyY + bodyH * 0.6, 0]}
+          material={M.glass}
+        />
+        <group ref={look} position={[L / 2 + 0.016, bodyY + bodyH * 0.63, 0]}>
+          {[-1, 1].map((sd, i) => (
+            <mesh
+              key={sd}
+              ref={(m) => {
+                eyes.current[i] = m
+              }}
+              material={eyeMat}
+              position={[0, 0, sd * W * 0.14]}
+            >
+              <boxGeometry args={[0.006, bodyH * 0.13, W * 0.1]} />
+            </mesh>
+          ))}
+          <mesh material={eyeMat} position={[0, -bodyH * 0.12, 0]}>
+            <boxGeometry args={[0.006, bodyH * 0.025, W * 0.16]} />
+          </mesh>
+        </group>
+        <group ref={antenna} position={[-L * 0.15, bodyY + bodyH, 0]}>
+          <mesh material={M.dark} position={[0, 0.07, 0]}>
+            <cylinderGeometry args={[0.007, 0.009, 0.14, 8]} />
+          </mesh>
+          <mesh material={eyeMat} position={[0, 0.15, 0]}>
+            <sphereGeometry args={[0.025, 14, 10]} />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  )
+}
+
+/** Neutral robot: the design is picked by the gallery variant; catalog products get the first one. */
+export function Neutral(props: ModelProps) {
+  if (props.v.id === 'neutral-b') return <NeutralBuddy {...props} />
+  if (props.v.id === 'neutral-c') return <NeutralCapsule {...props} />
+  return <NeutralPlatform {...props} />
 }
