@@ -244,7 +244,7 @@ function Focus({ projectId, queue, params }: { projectId: string; queue: Item[];
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-16">
       <div className="mb-3 flex items-center justify-between gap-3">
         <span className="text-[13px] text-ink-2">Уточните главное</span>
         <span className="flex items-center gap-1">
