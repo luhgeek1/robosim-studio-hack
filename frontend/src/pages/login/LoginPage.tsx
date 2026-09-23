@@ -1,12 +1,16 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { LayoutGroup, motion, type Transition } from 'framer-motion'
+import { ArrowRight } from 'lucide-react'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
+import { cn } from '@/shared/lib/utils'
 import { problemText } from '@/shared/api/problem'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Spinner } from '@/shared/ui/states'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
+import { DeliveryScene } from './DeliveryScene'
 
 // Demo accounts are part of the submission (ТЗ: демо-учётки для жюри); the password is set by RS_DEMO_PASSWORD on the backend.
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? 'Demo12345!'
@@ -15,6 +19,14 @@ const DEMO_ACCOUNTS = [
   { email: 'admin@roboscope.demo', label: 'Администратор', hint: 'каталог и нормативы' },
   { email: 'vendor@roboscope.demo', label: 'Производитель', hint: 'свои продукты' },
 ]
+
+type Mode = 'login' | 'register'
+const SWAP: Transition = { type: 'spring', stiffness: 170, damping: 26, mass: 1 }
+const FADE = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.25, delay: 0.1 },
+}
 
 export function LoginPage() {
   const { status, login, register } = useSession()
@@ -27,6 +39,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [organization, setOrganization] = useState('')
+  const [mode, setMode] = useState<Mode>('login')
 
   if (status === 'authenticated') return <Navigate to={from} replace />
 
@@ -43,6 +56,11 @@ export function LoginPage() {
     }
   }
 
+  const switchMode = (next: Mode) => {
+    setError(null)
+    setMode(next)
+  }
+
   const onLogin = (e: FormEvent) => {
     e.preventDefault()
     void run(() => login({ email, password }))
@@ -54,52 +72,52 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-275 px-6 pt-12 pb-16">
-      <div className="mb-10 max-w-180">
-        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Стоит ли роботизировать ваш объект?</h1>
-        <p className="mt-4 text-[16px] leading-relaxed text-ink-2">
-          Загрузите данные склада, аэропорта или больницы — RoboScope приведёт их к единой модели, подберёт роботов из
-          каталога, посчитает количество и экономику и проверит конфигурацию имитацией. У каждого числа есть формула и
-          источник.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
-        <section>
-          <div className="h3 mb-3">Демо-доступ для жюри</div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {DEMO_ACCOUNTS.map((account) => (
-              <button
-                key={account.email}
-                type="button"
-                disabled={pending}
-                onClick={() => void run(() => login({ email: account.email, password: DEMO_PASSWORD }))}
-                className="card flex flex-col items-start gap-0.5 px-4 py-3 text-left transition-colors hover:border-line-2 hover:bg-surface-2 disabled:opacity-50"
-              >
-                <span className="text-[14px] font-medium">{account.label}</span>
-                <span className="meta">{account.hint}</span>
-              </button>
-            ))}
+    <LayoutGroup>
+      <div
+        className={cn(
+          'mx-auto flex w-full max-w-310 flex-1 flex-col-reverse gap-4 px-4 py-4 lg:gap-5 lg:px-6 lg:py-6',
+          mode === 'login' ? 'lg:flex-row' : 'lg:flex-row-reverse',
+        )}
+      >
+        <motion.section
+          layout
+          transition={SWAP}
+          className="card relative flex min-h-105 flex-1 flex-col overflow-hidden bg-surface-2 lg:min-h-150"
+          style={{
+            backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
+            backgroundSize: '18px 18px',
+          }}
+        >
+          <div className="relative px-8 pt-8 lg:px-10 lg:pt-10">
+            <h1 className="display max-w-140 text-[34px] leading-[1.05] tracking-[-0.035em] lg:text-[40px]">
+              Стоит ли роботизировать ваш объект?
+            </h1>
+            <p className="mt-3 max-w-130 text-[15px] leading-relaxed text-ink-2">
+              RoboScope подберёт роботов из каталога, посчитает количество и экономику и проверит конфигурацию
+              имитацией. У каждого числа есть формула и источник.
+            </p>
           </div>
-          <div className="mt-6 rounded-[12px] bg-surface-2 p-5 text-[13.5px] leading-relaxed text-ink-2">
-            <div className="h3 mb-2 text-ink">Как это работает</div>
-            <ol className="list-decimal space-y-1.5 pl-4">
-              <li>Создайте проект и выберите тип объекта — или возьмите демо-склад организатора.</li>
-              <li>Проверьте параметры: подтверждённые взяты из файла, допущения помечены.</li>
-              <li>Посмотрите, где деньги, и подберите роботов под ограничения объекта.</li>
-              <li>Соберите сценарии, сравните покупку и аренду, проверьте флот имитацией.</li>
-            </ol>
+          <div className="relative min-h-0 flex-1 px-4 pb-4">
+            <DeliveryScene />
           </div>
-        </section>
+        </motion.section>
 
-        <aside className="card p-5">
-          <Tabs defaultValue="login">
+        <motion.aside
+          layout
+          transition={SWAP}
+          className="card flex w-full shrink-0 flex-col justify-center p-6 lg:w-105 lg:p-8"
+        >
+          <div className="h2 mb-1">{mode === 'login' ? 'Вход' : 'Регистрация'}</div>
+          <p className="meta mb-5">
+            {mode === 'login' ? 'Продолжите работу с проектами.' : 'Создайте учётную запись для своих проектов.'}
+          </p>
+          <Tabs value={mode} onValueChange={(v) => switchMode(v as Mode)}>
             <TabsList className="mb-4 w-full">
               <TabsTrigger value="login">Вход</TabsTrigger>
               <TabsTrigger value="register">Регистрация</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
-              <form onSubmit={onLogin} className="space-y-3">
+              <motion.form {...FADE} onSubmit={onLogin} className="space-y-3">
                 <Field id="email" label="Эл. почта">
                   <Input
                     id="email"
@@ -125,10 +143,10 @@ export function LoginPage() {
                 <Button type="submit" className="w-full" disabled={pending}>
                   {pending && <Spinner />} Войти
                 </Button>
-              </form>
+              </motion.form>
             </TabsContent>
             <TabsContent value="register">
-              <form onSubmit={onRegister} className="space-y-3">
+              <motion.form {...FADE} onSubmit={onRegister} className="space-y-3">
                 <Field id="r-name" label="Имя">
                   <Input
                     id="r-name"
@@ -152,6 +170,7 @@ export function LoginPage() {
                     type="email"
                     required
                     autoComplete="email"
+                    placeholder="name@company.ru"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -171,13 +190,41 @@ export function LoginPage() {
                 <Button type="submit" className="w-full" disabled={pending}>
                   {pending && <Spinner />} Зарегистрироваться
                 </Button>
-              </form>
+              </motion.form>
             </TabsContent>
           </Tabs>
-          <p className="meta mt-4">Каталог решений открыт без входа.</p>
-        </aside>
+
+          {mode === 'login' && (
+            <div className="hairline mt-6 pt-5">
+              <div className="h3 mb-2 text-[14px]">Демо-доступ для жюри</div>
+              <div className="space-y-1.5">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    disabled={pending}
+                    onClick={() => void run(() => login({ email: account.email, password: DEMO_PASSWORD }))}
+                    className="group flex w-full items-center justify-between gap-3 rounded-[10px] border border-line px-3 py-2 text-left transition-colors hover:border-line-2 hover:bg-surface-2 disabled:opacity-50"
+                  >
+                    <span className="text-[13.5px] font-medium">{account.label}</span>
+                    <span className="meta flex items-center gap-1">
+                      {account.hint}
+                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <p className="meta mt-4">
+            <Link to="/catalog" className="underline-offset-2 hover:text-ink hover:underline">
+              Каталог решений
+            </Link>{' '}
+            открыт без входа.
+          </p>
+        </motion.aside>
       </div>
-    </div>
+    </LayoutGroup>
   )
 }
 
