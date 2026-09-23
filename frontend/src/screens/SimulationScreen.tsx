@@ -19,6 +19,7 @@ import type { SimulationRun } from '@/api/types'
 import { Screen } from '@/components/Screen'
 import { PlayerBar, usePlaybackDriver } from '@/components/simulation/PlayerBar'
 import { SimAside, slaTone } from '@/components/simulation/SimAside'
+import { SimulatableSwap } from '@/components/simulation/SimulatableSwap'
 import { SweepPanel } from '@/components/simulation/SweepPanel'
 import { Empty, ErrorState, Loading } from '@/components/States'
 import { Button, Dot, Pill, Segmented, Select } from '@/components/ui'
@@ -287,6 +288,19 @@ export function SimulationScreen() {
           Перебор флота прогонит один и тот же пиковый день для разного числа роботов и запишет минимальное, при котором
           SLA выполняется, в сценарий.
         </Empty>
+      )}
+      {processKey && !runId && (
+        <SimulatableSwap
+          projectId={projectId}
+          scenario={scenario}
+          processKey={processKey}
+          busy={busy || sweep.isPending}
+          onSwapped={() => {
+            sweep.reset()
+            start.reset()
+            void runSweep()
+          }}
+        />
       )}
       {(sweep.error || start.error) && (
         <div className="mb-4 space-y-2">
