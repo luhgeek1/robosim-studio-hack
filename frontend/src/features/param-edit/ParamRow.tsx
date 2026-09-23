@@ -1,13 +1,12 @@
 import { RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { useResetParam, useUpdateParam } from '@/entities/project'
-import { ProvenanceMark } from '@/entities/provenance'
 import type { ProjectParam } from '@/shared/api/types'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
-import { displayParamValue, displayRange, shortHint } from './display'
+import { displayParamValue, shortHint } from './display'
 import { ParamHistory } from './ParamHistory'
 import { ParamValueInput } from './ParamValueInput'
 import type { ParamValue } from './parse'
@@ -19,7 +18,6 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
   const reset = useResetParam(projectId)
   const pending = update.isPending || reset.isPending
   const def = param.definition
-  const range = displayRange(param)
   const check = param.validation
   const flagged = check.status !== 'ok'
   const error = check.status === 'error'
@@ -35,7 +33,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
   return (
     <div
       id={`param-${param.key}`}
-      className="group/row grid scroll-mt-48 grid-cols-[minmax(0,1fr)_18rem_11.5rem] items-start gap-x-6 px-6 py-3.5 transition-colors hover:bg-surface-2/70"
+      className="group/row grid scroll-mt-48 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6 px-6 py-3.5 transition-colors hover:bg-surface-2/70"
     >
       <div className="min-w-0 pt-1">
         <div className="flex items-center gap-2 text-[14px] font-medium">
@@ -66,42 +64,35 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
       </div>
 
       <div className="flex items-start gap-2.5">
-        <div className="min-w-0 flex-1">
+        <div className="w-60 shrink-0">
           <ParamValueInput param={param} pending={pending} onCommit={commit} />
         </div>
         <span className="mt-2 w-20 shrink-0 text-[12.5px] leading-tight text-ink-3">{param.unit}</span>
-      </div>
-
-      <div className="min-w-0 pt-1">
-        <div className="flex items-center gap-1">
-          <ProvenanceMark provenance={param.provenance} />
-          {pending && <Spinner className="size-3 text-ink-3" />}
-          <span className="ml-auto flex items-center opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
-            {param.history_count > 0 && <ParamHistory projectId={projectId} param={param} />}
-            {RESETTABLE.has(param.provenance.status) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-ink-3"
-                    disabled={pending}
-                    onClick={doReset}
-                    aria-label="Сбросить к значению по умолчанию"
-                  >
-                    <RotateCcw />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Сбросить к значению по умолчанию</TooltipContent>
-              </Tooltip>
-            )}
-          </span>
-        </div>
-        {range && (
-          <div className="num mt-1 truncate text-[12px] text-ink-4" title={`Типичный диапазон: ${range}`}>
-            обычно {range}
-          </div>
-        )}
+        <span className="mt-1 flex w-14 shrink-0 items-center justify-end">
+          {pending ? (
+            <Spinner className="size-3 text-ink-3" />
+          ) : (
+            <span className="flex items-center opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
+              {param.history_count > 0 && <ParamHistory projectId={projectId} param={param} />}
+              {RESETTABLE.has(param.provenance.status) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-ink-3"
+                      onClick={doReset}
+                      aria-label="Сбросить к значению по умолчанию"
+                    >
+                      <RotateCcw />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Сбросить к значению по умолчанию</TooltipContent>
+                </Tooltip>
+              )}
+            </span>
+          )}
+        </span>
       </div>
     </div>
   )

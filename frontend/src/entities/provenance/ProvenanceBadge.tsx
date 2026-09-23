@@ -1,8 +1,7 @@
 import { ExternalLink } from 'lucide-react'
 import type { Provenance, ProvenanceStatus } from '@/shared/api/types'
 import { formatDate } from '@/shared/lib/format'
-import { cn } from '@/shared/lib/utils'
-import { ToneBadge, type Tone } from '@/shared/ui/tone'
+import { ToneBadge } from '@/shared/ui/tone'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { PROVENANCE_HINT, PROVENANCE_LABEL, PROVENANCE_TONE, SOURCE_KIND_LABEL } from './labels'
 
@@ -23,37 +22,6 @@ export function ProvenanceBadge({
         <ToneBadge tone={PROVENANCE_TONE[current]} className={className}>
           {PROVENANCE_LABEL[current]}
         </ToneBadge>
-      </TooltipTrigger>
-      <ProvenanceTip status={current} provenance={provenance} />
-    </Tooltip>
-  )
-}
-
-const DOT: Record<Tone, string> = {
-  ok: 'bg-ok',
-  info: 'bg-info',
-  warn: 'bg-warn',
-  crit: 'bg-crit',
-  muted: 'bg-ink-4',
-}
-
-/* Тихая версия бейджа для длинных списков: точка и подпись без плашки, та же подсказка об источнике. */
-export function ProvenanceMark({ provenance, className }: { provenance: Provenance; className?: string }) {
-  const current = provenance.status
-  const tone = PROVENANCE_TONE[current]
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          className={cn(
-            'inline-flex cursor-help items-center gap-1.5 text-[12.5px] whitespace-nowrap',
-            tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink-3',
-            className,
-          )}
-        >
-          <span className={cn('size-1.5 shrink-0 rounded-full', DOT[tone])} />
-          {PROVENANCE_LABEL[current]}
-        </span>
       </TooltipTrigger>
       <ProvenanceTip status={current} provenance={provenance} />
     </Tooltip>

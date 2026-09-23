@@ -1,3 +1,3 @@
 export * from './labels'
-export { ProvenanceBadge, ProvenanceMark, SourceLink } from './ProvenanceBadge'
+export { ProvenanceBadge, SourceLink } from './ProvenanceBadge'
 export { Formula } from './Formula'
