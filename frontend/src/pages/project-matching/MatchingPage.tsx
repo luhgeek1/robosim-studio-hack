@@ -243,7 +243,7 @@ function ProcessView({
       {shown.length === 0 ? (
         <EmptyState title="Кандидатов нет" description="В каталоге нет продуктов для этого процесса и типа объекта." />
       ) : (
-        <motion.div layout className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+        <motion.div layout className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence initial={false} mode="popLayout">
             {shown.map((candidate, i) => (
               <motion.div

@@ -93,7 +93,7 @@ export function CandidateCard({
       {/* В покое — только название и цена по краям; при наведении снизу выезжает панель с расчётом и проверками. */}
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0">
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-[18px] leading-snug font-semibold tracking-[-0.01em]">{product.name}</h3>
+          <h3 className="line-clamp-2 text-[17px] leading-snug font-semibold tracking-[-0.01em]">{product.name}</h3>
           <p className="mt-0.5 truncate text-[13px] text-ink-3">{product.manufacturer?.name}</p>
         </div>
         <Price price={price} />
@@ -154,7 +154,7 @@ function Price({ price }: { price: Candidate['product']['price_from'] }) {
   if (!price) return <span className="shrink-0 pb-0.5 text-[13px] text-ink-3">цена не указана</span>
   return (
     <div className="shrink-0 text-right">
-      <div className="display num text-[22px] leading-tight">{formatRub(price.amount_rub)}</div>
+      <div className="display num text-[20px] leading-tight">{formatRub(price.amount_rub)}</div>
       <div className="mt-0.5 text-[12px] text-ink-3">от, {price.vat_included ? 'с НДС' : 'без НДС'}</div>
     </div>
   )
