@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { GitCompareArrows, RotateCw, Sparkles, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useMatching, useRunMatching } from '@/entities/matching'
 import { useProjectId } from '@/entities/project'
@@ -44,8 +44,6 @@ export function MatchingPage() {
     <Screen
       wide
       dense
-      stepNav={false}
-      className="pb-6"
       title={
         data
           ? fit
@@ -214,7 +212,6 @@ function ProcessView({
 }) {
   const counts = countByStatus(process.candidates)
   const [filter, setFilter] = useState<Filter>('all')
-  const [scroller, height] = useFillViewport()
   const ordered = STATUS_ORDER.flatMap((status) => process.candidates.filter((c) => c.status === status))
   const shown = filter === 'all' ? ordered : ordered.filter((c) => c.status === filter)
 
@@ -243,80 +240,36 @@ function ProcessView({
         </p>
       )}
 
-      <motion.div
-        layoutScroll
-        ref={scroller}
-        style={height ? { height } : undefined}
-        className="-mx-2 overflow-y-auto overscroll-contain px-2 pt-0.5 pb-2 [scrollbar-width:thin]"
-      >
-        {shown.length === 0 ? (
-          <EmptyState
-            title="Кандидатов нет"
-            description="В каталоге нет продуктов для этого процесса и типа объекта."
-          />
-        ) : (
-          <motion.div layout className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
-            <AnimatePresence initial={false} mode="popLayout">
-              {shown.map((candidate, i) => (
-                <motion.div
-                  key={candidate.offer_id ?? candidate.product.id}
-                  layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 30, delay: Math.min(i, 8) * 0.02 }}
-                  className="flex"
-                >
-                  <CandidateCard
-                    projectId={projectId}
-                    processKey={process.process_key}
-                    candidate={candidate}
-                    selected={compare.includes(candidate.product.id)}
-                    selectDisabled={compare.length >= MAX_COMPARE}
-                    onSelectedChange={(on) => onToggleCompare(candidate.product.id, on)}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </motion.div>
+      {shown.length === 0 ? (
+        <EmptyState title="Кандидатов нет" description="В каталоге нет продуктов для этого процесса и типа объекта." />
+      ) : (
+        <motion.div layout className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+          <AnimatePresence initial={false} mode="popLayout">
+            {shown.map((candidate, i) => (
+              <motion.div
+                key={candidate.offer_id ?? candidate.product.id}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 30, delay: Math.min(i, 8) * 0.02 }}
+                className="flex"
+              >
+                <CandidateCard
+                  projectId={projectId}
+                  processKey={process.process_key}
+                  candidate={candidate}
+                  selected={compare.includes(candidate.product.id)}
+                  selectDisabled={compare.length >= MAX_COMPARE}
+                  onSelectedChange={(on) => onToggleCompare(candidate.product.id, on)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
     </div>
   )
-}
-
-/* Сетка роботов прокручивается сама, а страница стоит на месте: высота сетки — окно минус всё, что над ней
-   и под ней (шапка, заголовок, фильтр, кнопки шагов). Если окно слишком низкое, сетка не сжимается меньше
-   MIN_GRID и прокручивается уже вся страница. */
-const MIN_GRID = 320
-
-function useFillViewport() {
-  const [node, setNode] = useState<HTMLDivElement | null>(null)
-  const [height, setHeight] = useState<number | null>(null)
-  useEffect(() => {
-    if (!node) return
-    let frame = 0
-    const measure = () => {
-      frame = 0
-      const top = node.getBoundingClientRect().top + window.scrollY
-      const below = document.documentElement.scrollHeight - (top + node.offsetHeight)
-      const next = Math.max(MIN_GRID, Math.floor(window.innerHeight - top - below))
-      setHeight((prev) => (prev === next ? prev : next))
-    }
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(measure)
-    }
-    measure()
-    const observer = new ResizeObserver(schedule)
-    observer.observe(document.body)
-    window.addEventListener('resize', schedule)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', schedule)
-      if (frame) cancelAnimationFrame(frame)
-    }
-  }, [node])
-  return [setNode, height] as const
 }
 
 const FILTER_LABEL: Record<CandidateStatus, string> = {
