@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Check, ChevronLeft, ChevronRight, Search, SearchX, X } from 'lucide-react'
+import { Check, Search, SearchX, X } from 'lucide-react'
 import { useLocation, useSearchParams } from 'react-router'
-import { useCatalogFacets, useProducts } from '@/entities/catalog'
+import { useCatalogFacets, useInfiniteProducts } from '@/entities/catalog'
 import { CompareSelectionBar, CompareToggle, useCompareSelection } from '@/features/catalog-compare-selection'
 import type { CatalogQuery } from '@/shared/api/keys'
 import type { Product } from '@/shared/api/types'
@@ -29,7 +29,7 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 
 const LIST_KEYS = ['solution_type', 'status', 'badge'] as const
 type ListKey = (typeof LIST_KEYS)[number]
-type ScalarKey = 'q' | 'object_type' | 'industry' | 'sort' | 'page'
+type ScalarKey = 'q' | 'object_type' | 'industry' | 'sort'
 
 const readList = (params: URLSearchParams, key: ListKey) => params.get(key)?.split(',').filter(Boolean) ?? []
 
@@ -37,7 +37,7 @@ export function CatalogPage() {
   const location = useLocation()
   const [params, setParams] = useSearchParams()
 
-  const query: CatalogQuery = {
+  const query: Omit<CatalogQuery, 'page'> = {
     q: params.get('q') ?? undefined,
     object_type: params.get('object_type') ?? undefined,
     industry: params.get('industry') ?? undefined,
@@ -45,11 +45,10 @@ export function CatalogPage() {
     status: readList(params, 'status'),
     badge: readList(params, 'badge'),
     sort: params.get('sort') ?? 'relevance',
-    page: Math.max(1, Number(params.get('page')) || 1),
     page_size: PAGE_SIZE,
   }
 
-  const products = useProducts(query)
+  const products = useInfiniteProducts(query)
   const facets = useCatalogFacets(query.object_type)
 
   const update = (patch: Partial<Record<ScalarKey | ListKey, string | string[] | null>>) => {
@@ -61,7 +60,8 @@ export function CatalogPage() {
           if (text) next.set(key, text)
           else next.delete(key)
         }
-        if (!('page' in patch)) next.delete('page')
+        // Ссылки со старой постраничной навигацией: номер страницы больше ничего не значит.
+        next.delete('page')
         return next
       },
       { replace: true },
@@ -76,12 +76,8 @@ export function CatalogPage() {
   const activeFilters =
     Boolean(query.q || query.object_type || query.industry) || LIST_KEYS.some((key) => readList(params, key).length > 0)
 
-  const data = products.data
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1
-  const goToPage = (page: number) => {
-    update({ page: page > 1 ? String(page) : null })
-    window.scrollTo({ top: 0 })
-  }
+  const pages = products.data?.pages
+  const data = pages ? { total: pages[0]?.total ?? 0, items: pages.flatMap((p) => p.items) } : undefined
 
   const resetAll = () =>
     update({ q: null, object_type: null, industry: null, solution_type: null, status: null, badge: null })
@@ -221,14 +217,11 @@ export function CatalogPage() {
                   <ProductCard key={product.id} product={product} catalogSearch={location.search} />
                 ))}
               </div>
-              <Pagination
-                page={data.page}
-                totalPages={totalPages}
+              <LoadMore
                 total={data.total}
-                pageSize={data.page_size}
-                shown={data.items.length}
-                fetching={products.isFetching}
-                onPage={goToPage}
+                hasMore={products.hasNextPage}
+                loading={products.isFetchingNextPage}
+                onMore={() => void products.fetchNextPage()}
               />
             </>
           )}
@@ -376,54 +369,38 @@ function ProductCard({ product, catalogSearch }: { product: Product; catalogSear
   )
 }
 
-function Pagination({
-  page,
-  totalPages,
+/* Конец ленты: пока есть что грузить, невидимая метка за экран до низа просит следующую порцию. */
+function LoadMore({
   total,
-  pageSize,
-  shown,
-  fetching,
-  onPage,
+  hasMore,
+  loading,
+  onMore,
 }: {
-  page: number
-  totalPages: number
   total: number
-  pageSize: number
-  shown: number
-  fetching: boolean
-  onPage: (page: number) => void
+  hasMore: boolean
+  loading: boolean
+  onMore: () => void
 }) {
-  const from = (page - 1) * pageSize + 1
+  const [marker, setMarker] = useState<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!marker || !hasMore || loading) return
+    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && onMore(), {
+      rootMargin: '900px 0px',
+    })
+    observer.observe(marker)
+    return () => observer.disconnect()
+  }, [marker, hasMore, loading, onMore])
+
   return (
-    <div className="mt-6 flex items-center justify-between gap-3 text-[13px] text-ink-3">
-      <span className="num flex items-center gap-2">
-        {from}–{from + shown - 1} из {formatNumber(total)}
-        {fetching && <Spinner className="size-3.5" />}
-      </span>
-      {totalPages > 1 && (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={page <= 1}
-            onClick={() => onPage(page - 1)}
-            aria-label="Назад"
-          >
-            <ChevronLeft />
-          </Button>
-          <span className="num px-2 text-ink-2">
-            {page} <span className="text-ink-4">/</span> {totalPages}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={page >= totalPages}
-            onClick={() => onPage(page + 1)}
-            aria-label="Вперёд"
-          >
-            <ChevronRight />
-          </Button>
-        </div>
+    <div ref={setMarker} className="mt-8 flex h-10 items-center justify-center text-[13px] text-ink-3">
+      {hasMore ? (
+        <span className="flex items-center gap-2">
+          <Spinner className="size-3.5" /> Загружаем ещё
+        </span>
+      ) : (
+        <span className="num">
+          Показаны все {formatNumber(total)} {pluralRu(total, ['решение', 'решения', 'решений'])}
+        </span>
       )}
     </div>
   )

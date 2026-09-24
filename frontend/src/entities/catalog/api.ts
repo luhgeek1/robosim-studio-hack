@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { api } from '@/shared/api/client'
 import { qk, type CatalogQuery } from '@/shared/api/keys'
 import type { CompareResult, Res } from '@/shared/api/types'
@@ -22,6 +22,16 @@ export const useProducts = (query: CatalogQuery) =>
   useQuery({
     queryKey: qk.catalog.products(query),
     queryFn: () => catalogApi.products(query),
+    placeholderData: keepPreviousData,
+  })
+
+// Каталог листается бесконечной лентой: страницы API подгружаются по мере прокрутки, фильтры сбрасывают ленту.
+export const useInfiniteProducts = (query: Omit<CatalogQuery, 'page'>) =>
+  useInfiniteQuery({
+    queryKey: [...qk.catalog.products(query), 'infinite'],
+    queryFn: ({ pageParam }) => catalogApi.products({ ...query, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page * last.page_size < last.total ? last.page + 1 : undefined),
     placeholderData: keepPreviousData,
   })
 
