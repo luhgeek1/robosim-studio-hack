@@ -1,16 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Check, ChevronLeft, ChevronRight, Search, SearchX, X } from 'lucide-react'
-import { Link, useLocation, useSearchParams } from 'react-router'
+import { useLocation, useSearchParams } from 'react-router'
 import { useCatalogFacets, useProducts } from '@/entities/catalog'
-import { CompareSelectionBar, CompareToggle } from '@/features/catalog-compare-selection'
+import { CompareSelectionBar, CompareToggle, useCompareSelection } from '@/features/catalog-compare-selection'
 import type { CatalogQuery } from '@/shared/api/keys'
 import type { Product } from '@/shared/api/types'
-import { formatNumber, formatRub, pluralRu } from '@/shared/lib/format'
+import { formatNumber, formatPct, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { EmptyState, ErrorBlock, Spinner } from '@/shared/ui/states'
+import { CardChip, CardFigures, RobotCard } from '@/widgets/robot-card'
 import { ProductStatusMark, VerifiedMarks } from './parts'
 
 const PAGE_SIZE = 24
@@ -190,7 +191,7 @@ export function CatalogPage() {
           {products.isPending && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 9 }, (_, i) => (
-                <Skeleton key={i} className="h-56 rounded-[14px]" />
+                <Skeleton key={i} className="aspect-[5/6] rounded-[14px]" />
               ))}
             </div>
           )}
@@ -337,47 +338,41 @@ function OptionList({
 }
 
 function ProductCard({ product, catalogSearch }: { product: Product; catalogSearch: string }) {
+  const selection = useCompareSelection()
   const offers = product.offers_count ?? 0
+  const type = product.solution_type_name ?? product.solution_type
   return (
-    <article className="card group relative flex flex-col transition-[border-color,box-shadow] hover:border-ink/15 hover:shadow-card">
-      <div className="flex-1 px-5 pt-4.5 pb-4">
-        <div className="meta truncate" title={product.solution_type_name ?? product.solution_type}>
-          {product.solution_type_name ?? product.solution_type}
-        </div>
-        <Link
-          to={`/catalog/${product.id}`}
-          state={{ catalogSearch }}
-          className="mt-1 line-clamp-2 text-[15.5px] leading-snug font-semibold tracking-[-0.01em] after:absolute after:inset-0"
-          title={product.name}
-        >
-          {product.name}
-        </Link>
-        <div className="mt-0.5 truncate text-[13px] text-ink-3" title={product.manufacturer.name}>
-          {product.manufacturer.name}
-        </div>
-        <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-ink-2">
+    <RobotCard
+      productId={product.id}
+      solutionType={product.solution_type}
+      name={product.name}
+      to={`/catalog/${product.id}`}
+      linkState={{ catalogSearch }}
+      subtitle={product.manufacturer.name}
+      price={product.price_from}
+      chips={
+        <CardChip>
           <ProductStatusMark status={product.status} />
-          {product.trl != null && (
-            <span className="text-ink-3" title="Уровень готовности технологии по каталогу организатора (1–9)">
-              УГТ <span className="num text-ink">{product.trl}</span>
-            </span>
-          )}
-        </div>
-        <VerifiedMarks badges={product.badges} className="mt-2" />
-      </div>
-      <div className="hairline flex items-end justify-between gap-3 px-5 py-3.5">
-        <div className="min-w-0">
-          <div className="num text-[17px] leading-tight font-semibold tracking-[-0.01em]">
-            от {formatRub(product.price_from.amount_rub)}
-          </div>
-          <div className="meta mt-0.5 truncate">
-            {product.price_from.vat_included === false ? 'без НДС' : 'с НДС'}
-            {offers > 1 && ` · ${offers} ${pluralRu(offers, ['предложение', 'предложения', 'предложений'])}`}
-          </div>
-        </div>
-        <CompareToggle product={product} className="relative z-10 shrink-0" />
-      </div>
-    </article>
+        </CardChip>
+      }
+      corner={<CompareToggle product={product} className="h-7 rounded-full" />}
+      cornerPinned={selection.has(product.id)}
+      details={
+        <>
+          <p className="-mt-1.5 mb-2.5 truncate text-[12.5px] text-ink-3" title={type}>
+            {type}
+          </p>
+          <CardFigures
+            items={[
+              { value: product.trl ?? '—', label: 'УГТ из 9' },
+              { value: formatPct(product.completeness, { share: true, digits: 0 }), label: 'полнота данных' },
+              { value: formatNumber(offers), label: pluralRu(offers, ['предложение', 'предложения', 'предложений']) },
+            ]}
+          />
+          <VerifiedMarks badges={product.badges} className="mt-2.5" />
+        </>
+      }
+    />
   )
 }
 

@@ -1,8 +1,7 @@
 import { Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router'
 import { toast } from 'sonner'
-import { BADGE_LABEL, PRODUCT_STATUS_LABEL } from '@/entities/catalog'
+import { BADGE_LABEL } from '@/entities/catalog'
 import { CANDIDATE_STATUS_LABEL, CRITERION_LABEL, useAddManualCandidate } from '@/entities/matching'
 import { problemText } from '@/shared/api/problem'
 import type { Candidate, Reason } from '@/shared/api/types'
@@ -22,8 +21,8 @@ import {
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
+import { CardChip, CardFigures, RobotCard } from '@/widgets/robot-card'
 import { SEVERITY_LABEL, SEVERITY_ORDER } from './labels'
-import { RobotPreview } from './RobotPreview'
 
 // Отметки, которые говорят о проверке продукта, а не о его происхождении: «отечественный» и «есть внедрения» есть почти у всех.
 const VERIFIED_BADGES = new Set(['in_registry_719', 'tested_fcbas', 'specs_confirmed'])
@@ -55,121 +54,69 @@ export function CandidateCard({
   const { product, estimate } = candidate
   const verified = (product.badges ?? []).filter((badge) => VERIFIED_BADGES.has(badge))
   const excluded = candidate.status === 'excluded'
-  const meta = [
-    product.manufacturer?.name,
-    product.solution_type_name,
-    isNum(product.trl) ? `УГТ ${product.trl}` : null,
-    product.status !== 'operation' ? PRODUCT_STATUS_LABEL[product.status] : null,
-  ].filter(Boolean)
 
-  const price = product.price_from
   return (
-    <article className="group card relative aspect-[5/6] w-full overflow-hidden">
-      <RobotPreview solutionType={product.solution_type} productId={product.id} />
-
-      <div className="absolute top-4 left-4 flex items-center gap-1.5">
-        {candidate.rank != null && <Chip strong>№ {candidate.rank}</Chip>}
-        {/* Плашка статуса открывает причины (ТЗ 3.4.3); у исключённого там же ручное добавление (ТЗ 3.4.4). */}
-        <WhyPopover
-          candidate={candidate}
-          verified={verified.map((b) => BADGE_LABEL[b] ?? b)}
-          action={excluded ? <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} /> : null}
+    <RobotCard
+      productId={product.id}
+      solutionType={product.solution_type}
+      name={product.name}
+      to={`/catalog/${product.id}`}
+      subtitle={product.manufacturer?.name}
+      price={product.price_from}
+      chips={
+        <>
+          {candidate.rank != null && <CardChip strong>№ {candidate.rank}</CardChip>}
+          {/* Плашка статуса открывает причины (ТЗ 3.4.3); у исключённого там же ручное добавление (ТЗ 3.4.4). */}
+          <WhyPopover
+            candidate={candidate}
+            verified={verified.map((b) => BADGE_LABEL[b] ?? b)}
+            action={excluded ? <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} /> : null}
+          >
+            <button
+              type="button"
+              title="Почему такой статус"
+              className="flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink transition-colors hover:bg-white"
+            >
+              <span className={cn('size-1.5 rounded-full', STATUS_DOT[candidate.status])} />
+              {CANDIDATE_STATUS_LABEL[candidate.status]}
+            </button>
+          </WhyPopover>
+        </>
+      }
+      corner={
+        <label
+          className={cn(
+            'flex cursor-pointer items-center gap-2 rounded-full bg-white/90 py-1 pr-2.5 pl-2 text-[12px] font-medium transition-colors hover:bg-white',
+            selectDisabled && !selected && 'cursor-not-allowed',
+          )}
         >
-          <button
-            type="button"
-            title="Почему такой статус"
-            className="flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink transition-colors hover:bg-white"
-          >
-            <span className={cn('size-1.5 rounded-full', STATUS_DOT[candidate.status])} />
-            {CANDIDATE_STATUS_LABEL[candidate.status]}
-          </button>
-        </WhyPopover>
-      </div>
-      <label
-        className={cn(
-          'absolute top-4 right-4 flex cursor-pointer items-center gap-2 rounded-full bg-white/90 py-1 pr-2.5 pl-2 text-[12px] font-medium transition-opacity hover:bg-white',
-          selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100',
-          selectDisabled && !selected && 'cursor-not-allowed',
-        )}
-      >
-        <Checkbox
-          checked={selected}
-          disabled={selectDisabled && !selected}
-          onCheckedChange={(v) => onSelectedChange(v === true)}
-          aria-label={`Выбрать «${product.name}» для сравнения`}
+          <Checkbox
+            checked={selected}
+            disabled={selectDisabled && !selected}
+            onCheckedChange={(v) => onSelectedChange(v === true)}
+            aria-label={`Выбрать «${product.name}» для сравнения`}
+          />
+          Сравнить
+        </label>
+      }
+      cornerPinned={selected}
+      aside={<ScoreButton candidate={candidate} />}
+      details={
+        <CardFigures
+          items={[
+            {
+              value: isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '—',
+              label: isNum(estimate?.robots_count) ? 'роботов нужно' : 'роботов: не оценено',
+            },
+            { value: isNum(estimate?.capex_rub) ? formatRub(estimate.capex_rub) : '—', label: 'CAPEX' },
+            {
+              value: isNum(estimate?.payback_years) ? formatYears(estimate.payback_years) : '—',
+              label: 'окупаемость',
+            },
+          ]}
         />
-        Сравнить
-      </label>
-
-      {/* В покое — только название и цена по краям; при наведении снизу выезжает панель с расчётом и проверками. */}
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0">
-        <div className="min-w-0">
-          <h3 className="line-clamp-2 text-[17px] leading-snug font-semibold tracking-[-0.01em]">{product.name}</h3>
-          <p className="mt-0.5 truncate text-[13px] text-ink-3">{product.manufacturer?.name}</p>
-        </div>
-        <Price price={price} />
-      </div>
-
-      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-4 pt-3 pb-3.5 transition-[translate,box-shadow] group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] duration-300 ease-out group-focus-within:translate-y-0 group-hover:translate-y-0">
-        <div className="flex items-center justify-between gap-3">
-          <Link
-            to={`/catalog/${product.id}`}
-            title={[product.name, ...meta].join(' · ')}
-            className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] transition-colors hover:text-info"
-          >
-            {product.name}
-          </Link>
-          <ScoreButton candidate={candidate} />
-        </div>
-
-        <dl className="mt-2.5 grid grid-cols-3 gap-x-3">
-          <Figure
-            value={isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '—'}
-            label={isNum(estimate?.robots_count) ? 'роботов нужно' : 'роботов: не оценено'}
-          />
-          <Figure value={isNum(estimate?.capex_rub) ? formatRub(estimate.capex_rub) : '—'} label="CAPEX" />
-          <Figure
-            value={isNum(estimate?.payback_years) ? formatYears(estimate.payback_years) : '—'}
-            label="окупаемость"
-          />
-        </dl>
-      </div>
-    </article>
-  )
-}
-
-function Price({ price }: { price: Candidate['product']['price_from'] }) {
-  if (!price) return <span className="shrink-0 pb-0.5 text-[13px] text-ink-3">цена не указана</span>
-  return (
-    <div className="shrink-0 text-right">
-      <div className="display num text-[20px] leading-tight">{formatRub(price.amount_rub)}</div>
-      <div className="mt-0.5 text-[12px] text-ink-3">от, {price.vat_included ? 'с НДС' : 'без НДС'}</div>
-    </div>
-  )
-}
-
-function Chip({ children, strong }: { children: ReactNode; strong?: boolean }) {
-  return (
-    <span
-      className={cn(
-        'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium',
-        strong ? 'num bg-ink text-white' : 'bg-white/90 text-ink',
-      )}
-    >
-      {children}
-    </span>
-  )
-}
-
-function Figure({ value, label }: { value: ReactNode; label: string }) {
-  // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
-  return (
-    <div className="flex min-w-0 flex-col-reverse">
-      <dt className="truncate text-[11.5px] text-ink-3" title={label}>
-        {label}
-      </dt>
-      <dd className="num truncate text-[15px] leading-tight font-semibold tracking-[-0.01em]">{value}</dd>
-    </div>
+      }
+    />
   )
 }
 

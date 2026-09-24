@@ -10,7 +10,7 @@ import { useSession } from '@/entities/session'
 import { compareSelection, COMPARE_LIMIT } from '@/features/catalog-compare-selection'
 import { ProductStatusMark } from '@/pages/catalog/parts'
 import type { CandidateStatus, CompareResult, Product, Provenance } from '@/shared/api/types'
-import { formatDate, formatNumber, formatRub, formatValue } from '@/shared/lib/format'
+import { formatDate, formatNumber, formatValue, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Label } from '@/shared/ui/label'
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Switch } from '@/shared/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
+import { CardChip, CardFigures, RobotCard } from '@/widgets/robot-card'
 
 type Row = CompareResult['rows'][number]
 
@@ -277,82 +278,74 @@ function ProductSummary({
   compatibility?: CandidateStatus | null
   onRemove: () => void
 }) {
+  const offers = product.offers_count ?? 0
+  const type = product.solution_type_name ?? product.solution_type
   return (
-    <article className="card relative overflow-hidden">
-      <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: color }} />
-      <div className="px-5 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="meta min-w-0 truncate" title={product.solution_type_name ?? product.solution_type}>
-            {product.solution_type_name ?? product.solution_type}
-          </div>
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label={`Убрать «${product.name}» из сравнения`}
-            title="Убрать из сравнения"
-            className="-mt-1 -mr-1.5 grid size-6 shrink-0 place-items-center rounded-md text-ink-4 transition-colors hover:bg-black/6 hover:text-ink"
-          >
-            <X className="size-3.5" />
-          </button>
-        </div>
-        <Link
-          to={`/catalog/${product.id}`}
-          className="mt-0.5 line-clamp-2 text-[15px] leading-snug font-semibold tracking-[-0.01em] hover:underline"
-          title={product.name}
+    <RobotCard
+      productId={product.id}
+      solutionType={product.solution_type}
+      name={product.name}
+      to={`/catalog/${product.id}`}
+      subtitle={product.manufacturer.name}
+      price={product.price_from}
+      // Цвет продукта — тот же, что у его столбиков на графиках ниже.
+      accent={color}
+      chips={
+        <>
+          <CardChip>
+            <ProductStatusMark status={product.status} />
+          </CardChip>
+          {compatibility && (
+            <CardChip>
+              <span className={cn('size-1.5 rounded-full', COMPAT_DOT[compatibility])} />
+              <span className={COMPAT_TEXT[compatibility]}>{CANDIDATE_STATUS_LABEL[compatibility]}</span>
+            </CardChip>
+          )}
+        </>
+      }
+      corner={
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Убрать «${product.name}» из сравнения`}
+          title="Убрать из сравнения"
+          className="grid size-7 place-items-center rounded-full bg-white/90 text-ink-3 transition-colors hover:bg-white hover:text-ink"
         >
-          {product.name}
-        </Link>
-        <div className="mt-0.5 truncate text-[13px] text-ink-3" title={product.manufacturer.name}>
-          {product.manufacturer.name}
-        </div>
-        <div className="num mt-3 text-[19px] leading-tight font-semibold tracking-[-0.01em]">
-          от {formatRub(product.price_from.amount_rub)}
-        </div>
-        <div className="meta">{product.price_from.vat_included === false ? 'без НДС' : 'с НДС'}</div>
-      </div>
-      <dl className="hairline grid grid-cols-[1.5fr_1fr_1fr] gap-x-4 gap-y-3 px-5 py-4 text-[13px]">
-        <Fact label="стадия">
-          <ProductStatusMark status={product.status} />
-        </Fact>
-        <Fact label="УГТ">
-          <span className="num">{product.trl ?? '—'}</span>
-        </Fact>
-        <Fact label="предложений">
-          <span className="num">{formatNumber(product.offers_count ?? null)}</span>
-        </Fact>
-        {compatibility !== undefined && (
-          <Fact label="совместимость с объектом" className="col-span-3">
-            {compatibility ? (
-              <span className={cn('inline-flex items-center gap-1.5 font-medium', COMPAT_TEXT[compatibility])}>
-                <span className={cn('size-1.5 rounded-full', COMPAT_DOT[compatibility])} />
-                {CANDIDATE_STATUS_LABEL[compatibility]}
-              </span>
-            ) : (
-              <span className="text-ink-4">нет данных</span>
-            )}
-          </Fact>
-        )}
-      </dl>
-      {product.badges.length > 0 && (
-        <ul className="hairline flex flex-wrap gap-x-3 gap-y-1 px-5 py-3 text-[12.5px] text-ink-2">
-          {product.badges.map((badge) => (
-            <li key={badge} className="inline-flex items-center gap-1">
-              <Check className="size-3.5 shrink-0 text-ok" strokeWidth={2.5} />
-              {BADGE_LABEL[badge]}
-            </li>
-          ))}
-        </ul>
-      )}
-    </article>
-  )
-}
-
-function Fact({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return (
-    <div className={cn('flex min-w-0 flex-col-reverse', className)}>
-      <dt className="mt-0.5 text-[12px] text-ink-3">{label}</dt>
-      <dd className="min-w-0 truncate">{children}</dd>
-    </div>
+          <X className="size-3.5" />
+        </button>
+      }
+      details={
+        <>
+          <p className="-mt-1.5 mb-2.5 truncate text-[12.5px] text-ink-3" title={type}>
+            {type}
+          </p>
+          <CardFigures
+            items={[
+              { value: product.trl ?? '—', label: 'УГТ из 9' },
+              { value: formatNumber(offers), label: pluralRu(offers, ['предложение', 'предложения', 'предложений']) },
+              ...(compatibility !== undefined
+                ? [
+                    {
+                      value: compatibility ? CANDIDATE_STATUS_LABEL[compatibility].toLowerCase() : 'нет данных',
+                      label: 'с объектом',
+                    },
+                  ]
+                : []),
+            ]}
+          />
+          {product.badges.length > 0 && (
+            <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-ink-2">
+              {product.badges.map((badge) => (
+                <li key={badge} className="inline-flex items-center gap-1">
+                  <Check className="size-3.5 shrink-0 text-ok" strokeWidth={2.5} />
+                  {BADGE_LABEL[badge]}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      }
+    />
   )
 }
 
