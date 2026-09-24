@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
 import { AppShell } from '@/widgets/app-shell'
-import { NotFoundPage, RequireAuth, RootRedirect } from './guards'
+import { NotFoundPage, RequireAdmin, RequireAuth, RootRedirect } from './guards'
 
 const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: loader })
 
@@ -11,8 +11,16 @@ const router = createBrowserRouter([
     HydrateFallback: () => null,
     children: [
       { index: true, Component: RootRedirect },
-      { path: 'robots', ...page(() => import('@/pages/robot-lab/RobotLab').then((m) => ({ Component: m.RobotLab }))) },
-      { path: 'robots-3d', ...page(() => import('@/pages/robots').then((m) => ({ Component: m.RobotsPage }))) },
+      {
+        Component: RequireAdmin,
+        children: [
+          {
+            path: 'robots',
+            ...page(() => import('@/pages/robot-lab/RobotLab').then((m) => ({ Component: m.RobotLab }))),
+          },
+          { path: 'robots-3d', ...page(() => import('@/pages/robots').then((m) => ({ Component: m.RobotsPage }))) },
+        ],
+      },
       { path: 'login', ...page(() => import('@/pages/login').then((m) => ({ Component: m.LoginPage }))) },
       { path: 'catalog', ...page(() => import('@/pages/catalog').then((m) => ({ Component: m.CatalogPage }))) },
       {

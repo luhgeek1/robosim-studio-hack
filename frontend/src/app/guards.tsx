@@ -11,6 +11,15 @@ export function RequireAuth() {
   return <Outlet />
 }
 
+export function RequireAdmin() {
+  const { status, user } = useSession()
+  const location = useLocation()
+  if (status === 'restoring') return <LoadingBlock className="p-8" />
+  if (status === 'guest') return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  if (user?.role !== 'admin') return <Navigate to="/" replace />
+  return <Outlet />
+}
+
 export function RootRedirect() {
   const { status } = useSession()
   if (status === 'restoring') return <LoadingBlock className="p-8" />

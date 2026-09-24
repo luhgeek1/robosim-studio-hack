@@ -137,10 +137,15 @@ export function Sections({ projectId }: { projectId?: string }) {
       <SectionLink to="/catalog" end>
         Каталог
       </SectionLink>
-      <SectionLink to="/robots">
-        3D-роботы <span className="text-[9px] uppercase text-ink-4">лаб</span>
-      </SectionLink>
-      <SectionLink to="/robots-3d">3D-галерея</SectionLink>
+      {/* 3D-лаборатория и галерея — рабочие инструменты команды, обычному пользователю не показываем. */}
+      {user?.role === 'admin' && (
+        <>
+          <SectionLink to="/robots">
+            3D-роботы <span className="text-[9px] uppercase text-ink-4">лаб</span>
+          </SectionLink>
+          <SectionLink to="/robots-3d">3D-галерея</SectionLink>
+        </>
+      )}
       <SectionLink to={compareTo}>
         Сравнение решений
         <AnimatePresence>
