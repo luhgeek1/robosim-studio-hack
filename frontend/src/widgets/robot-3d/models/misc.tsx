@@ -866,9 +866,130 @@ function NeutralBuddy({ v, accent }: ModelProps) {
   )
 }
 
+/* Variant D: a hovering droid — tapered body, a separate floating head with glowing eyes, fin arms. */
+function NeutralHover({ v, accent }: ModelProps) {
+  const [L, W, H] = mm(v.spec.dims_mm, [700, 700, 1300])
+  const R = Math.min(L, W) * 0.42
+  const hover = H * 0.12
+  const bodyH = H * 0.5
+  const gap = H * 0.035
+  const headRy = H * 0.14
+  const headY = hover + bodyH + gap + headRy
+  const bot = useRef<G>(null)
+  const head = useRef<G>(null)
+  const arms = useRef<(G | null)[]>([])
+  const eyes = useRef<(THREE.Mesh | null)[]>([])
+  const glowDisc = useRef<THREE.Mesh>(null)
+  const eyeMat = useGlow('#3aa0ff', 2.8)
+  const under = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: '#7cc4ff', transparent: true, opacity: 0.35, depthWrite: false }),
+    [],
+  )
+  // Body profile: a rounded shoulder that tapers to a soft point near the floor.
+  const body = useMemo(() => {
+    const pts: THREE.Vector2[] = []
+    const n = 24
+    for (let i = 0; i <= n; i++) {
+      const u = i / n
+      const r =
+        R *
+        Math.pow(Math.sin((Math.PI / 2) * u), 0.55) *
+        (u > 0.92 ? Math.sqrt(1 - ((u - 0.92) / 0.08) ** 2) * 0.98 + 0.02 : 1)
+      pts.push(new THREE.Vector2(Math.max(0.001, r), u * bodyH))
+    }
+    pts.push(new THREE.Vector2(0.001, bodyH))
+    return new THREE.LatheGeometry(pts, 48)
+  }, [R, bodyH])
+  useTick((t) => {
+    const bob = Math.sin(t * 1.5) * H * 0.02
+    if (bot.current) {
+      bot.current.position.set(Math.sin(t * 0.35) * R * 0.8, bob, 0)
+      bot.current.rotation.y = Math.sin(t * 0.35 + 1.2) * 0.3
+    }
+    if (head.current) {
+      head.current.position.y = headY + Math.sin(t * 1.5 + 0.6) * H * 0.008
+      head.current.rotation.y = Math.sin(t * 0.7) * 0.5
+      head.current.rotation.z = Math.sin(t * 0.5) * 0.12
+    }
+    arms.current.forEach((g, i) => {
+      if (g) g.rotation.x = (i ? 1 : -1) * (0.12 + Math.sin(t * 1.1 + i) * 0.08)
+    })
+    const blink = t % 3.3 < 0.12 ? 0.1 : 1
+    eyes.current.forEach((m) => {
+      if (m) m.scale.y = blink
+    })
+    if (glowDisc.current) {
+      glowDisc.current.scale.setScalar(1 - bob * 2)
+      under.opacity = 0.28 + 0.1 * Math.sin(t * 3)
+    }
+  })
+  const faceR = [R * 0.86, headRy, R * 0.86] as const
+  return (
+    <group>
+      <BlobShadow w={R * 2.2} d={R * 2.2} opacity={0.25} />
+      <mesh ref={glowDisc} material={under} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]} renderOrder={3}>
+        <circleGeometry args={[R * 0.5, 32]} />
+      </mesh>
+      <group ref={bot}>
+        <mesh geometry={body} material={M.shell} position={[0, hover, 0]} />
+        <mesh
+          material={paint(accent, 0.3, 0.1, 0.8)}
+          position={[0, hover + bodyH * 0.985, 0]}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <torusGeometry args={[R * 0.97, 0.01, 8, 64]} />
+        </mesh>
+        {[-1, 1].map((sd, i) => (
+          <group
+            key={sd}
+            ref={(g) => {
+              arms.current[i] = g
+            }}
+            position={[0, hover + bodyH * 0.92, sd * (R + H * 0.05)]}
+          >
+            <mesh material={M.shell} position={[0, -bodyH * 0.36, 0]} scale={[R * 0.22, bodyH * 0.4, R * 0.08]}>
+              <sphereGeometry args={[1, 24, 16]} />
+            </mesh>
+          </group>
+        ))}
+        <group ref={head} position={[0, headY, 0]}>
+          <mesh material={M.shell} scale={faceR}>
+            <sphereGeometry args={[1, 40, 24]} />
+          </mesh>
+          {/* Face: a dark shell over the front half of the head. */}
+          <mesh material={M.glass} scale={[faceR[0] * 1.015, faceR[1] * 1.015, faceR[2] * 1.015]}>
+            <sphereGeometry args={[1, 40, 24, Math.PI * 0.58, Math.PI * 0.84, Math.PI * 0.2, Math.PI * 0.62]} />
+          </mesh>
+          {[-1, 1].map((sd, i) => {
+            const az = Math.PI / 2 + sd * 0.34
+            const el = Math.PI * 0.46
+            const x = Math.sin(el) * Math.sin(az) * faceR[0] * 1.03
+            const y = Math.cos(el) * faceR[1] * 1.03
+            const z = Math.sin(el) * Math.cos(az) * faceR[2] * 1.03
+            return (
+              <mesh
+                key={sd}
+                ref={(m) => {
+                  eyes.current[i] = m
+                }}
+                material={eyeMat}
+                position={[x, y, z]}
+                rotation={[0, az, sd * 0.12]}
+              >
+                <circleGeometry args={[R * 0.16, 28]} />
+              </mesh>
+            )
+          })}
+        </group>
+      </group>
+    </group>
+  )
+}
+
 /** Neutral robot: the design is picked by the gallery variant; catalog products get the first one. */
 export function Neutral(props: ModelProps) {
   if (props.v.id === 'neutral-b') return <NeutralBuddy {...props} />
   if (props.v.id === 'neutral-c') return <NeutralCapsule {...props} />
+  if (props.v.id === 'neutral-d') return <NeutralHover {...props} />
   return <NeutralPlatform {...props} />
 }
