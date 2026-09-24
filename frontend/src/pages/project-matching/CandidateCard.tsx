@@ -1,4 +1,4 @@
-import { ArrowUpRight, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -69,10 +69,21 @@ export function CandidateCard({
 
       <div className="absolute top-4 left-4 flex items-center gap-1.5">
         {candidate.rank != null && <Chip strong>№ {candidate.rank}</Chip>}
-        <Chip>
-          <span className={cn('size-1.5 rounded-full', STATUS_DOT[candidate.status])} />
-          {CANDIDATE_STATUS_LABEL[candidate.status]}
-        </Chip>
+        {/* Плашка статуса открывает причины (ТЗ 3.4.3); у исключённого там же ручное добавление (ТЗ 3.4.4). */}
+        <WhyPopover
+          candidate={candidate}
+          verified={verified.map((b) => BADGE_LABEL[b] ?? b)}
+          action={excluded ? <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} /> : null}
+        >
+          <button
+            type="button"
+            title="Почему такой статус"
+            className="flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink transition-colors hover:bg-white"
+          >
+            <span className={cn('size-1.5 rounded-full', STATUS_DOT[candidate.status])} />
+            {CANDIDATE_STATUS_LABEL[candidate.status]}
+          </button>
+        </WhyPopover>
       </div>
       <label
         className={cn(
@@ -122,22 +133,6 @@ export function CandidateCard({
             label="окупаемость"
           />
         </dl>
-
-        <Verdict candidate={candidate} extra={verified.map((b) => BADGE_LABEL[b] ?? b).join(' · ')} />
-
-        <div className="mt-2.5 flex items-center justify-between gap-2">
-          <WhyPopover candidate={candidate} />
-          {excluded ? (
-            <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} />
-          ) : (
-            <Link
-              to={`/catalog/${product.id}`}
-              className="flex items-center gap-1 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
-            >
-              Карточка <ArrowUpRight className="size-3.5" />
-            </Link>
-          )}
-        </div>
       </div>
     </article>
   )
@@ -178,39 +173,17 @@ function Figure({ value, label }: { value: ReactNode; label: string }) {
   )
 }
 
-/* Одна строка итога проверок: для исключённого — главная блокирующая причина, для «проверить» — чего не хватает. */
-function Verdict({ candidate, extra }: { candidate: Candidate; extra?: string }) {
-  const blocking = candidate.reasons.find((r) => r.severity === 'blocking')
-  const warning = candidate.reasons.find((r) => r.severity === 'warning')
-  const missing = candidate.missing_data?.[0]
-  const line = blocking
-    ? { tone: 'crit', text: blocking.text }
-    : warning
-      ? { tone: 'warn', text: warning.text }
-      : missing
-        ? { tone: 'warn', text: `Нет данных производителя: ${missing.name.toLowerCase()}` }
-        : { tone: 'ok', text: extra ? `Все проверки пройдены · ${extra}` : 'Все проверки объекта пройдены' }
-  return (
-    <p
-      className={cn(
-        'mt-2.5 flex items-start gap-2 border-t border-line pt-2.5 text-[12.5px] leading-snug',
-        line.tone === 'crit' ? 'text-crit' : line.tone === 'warn' ? 'text-warn' : 'text-ink-2',
-      )}
-    >
-      <span
-        className={cn(
-          'mt-1.5 size-1.5 shrink-0 rounded-full',
-          line.tone === 'crit' ? 'bg-crit' : line.tone === 'warn' ? 'bg-warn' : 'bg-ok',
-        )}
-      />
-      <span className="truncate" title={line.text}>
-        {line.text}
-      </span>
-    </p>
-  )
-}
-
-function WhyPopover({ candidate }: { candidate: Candidate }) {
+function WhyPopover({
+  candidate,
+  verified,
+  action,
+  children,
+}: {
+  candidate: Candidate
+  verified: string[]
+  action: ReactNode
+  children: ReactNode
+}) {
   const bySeverity = SEVERITY_ORDER.map((severity) => ({
     severity,
     reasons: candidate.reasons.filter((r) => r.severity === severity),
@@ -230,15 +203,14 @@ function WhyPopover({ candidate }: { candidate: Candidate }) {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="text-[13px] font-medium text-ink-2 underline decoration-line-2 underline-offset-4 transition-colors hover:text-ink hover:decoration-ink-3"
-        >
-          Почему · {checks} {pluralRu(checks, ['проверка', 'проверки', 'проверок'])}
-        </button>
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent align="start" className="w-[420px] space-y-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="font-medium">
+            {checks} {pluralRu(checks, ['проверка', 'проверки', 'проверок'])} объекта
+          </span>
+          {verified.length > 0 && <span className="text-[12px] text-ok">{verified.join(' · ')}</span>}
+        </div>
         {bySeverity.map(({ severity, reasons }) => (
           <div key={severity}>
             <div
@@ -256,6 +228,7 @@ function WhyPopover({ candidate }: { candidate: Candidate }) {
         {candidate.estimate?.note && (
           <p className="border-t border-line pt-2 text-[12px] text-ink-3">{candidate.estimate.note}</p>
         )}
+        {action}
       </PopoverContent>
     </Popover>
   )
