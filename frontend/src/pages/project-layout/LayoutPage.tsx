@@ -96,7 +96,7 @@ export function LayoutPage() {
       {data && (
         <>
           <PlanOverview layout={data} onRegenerate={unsupported ? undefined : openDialog} />
-          {data.derivation.length > 0 && <Derivation steps={data.derivation} />}
+          {data.derivation.length > 0 && <Derivation layout={data} projectName={project.data?.name ?? 'Проект'} />}
         </>
       )}
 

@@ -22,6 +22,7 @@
     "axios": "^1.20.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "docx": "^9.7.2",
     "framer-motion": "^13.4.1",
     "lucide-react": "^1.47.0",
     "radix-ui": "^1.6.7",

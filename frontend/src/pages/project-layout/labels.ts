@@ -17,7 +17,7 @@ export const TEMPLATE_HINT: Record<string, string> = {
 export const DERIVATION_INPUT_KIND_LABEL: Record<DerivationInput['kind'], string> = {
   param: 'параметр объекта',
   norm: 'норматив',
-  metric: 'из шага выше',
+  metric: 'промежуточный итог',
 }
 
 // Where each route length goes: the warehouse cycle formulas read `layout_route_<key>_m` (seeds, warehouse.yaml).
@@ -36,27 +36,3 @@ export const ROUTE_ENDPOINT: Record<LayoutRoute['key'], [string, string]> = {
   pod_to_station: ['стеллаж G2P', 'станция отбора'],
   storage_to_charger: ['место хранения', 'зарядка'],
 }
-
-// Derivation steps grouped by what they size; a key the generator adds later lands in «Прочее».
-export const DERIVATION_GROUPS: { title: string; keys: string[] }[] = [
-  { title: 'Здание', keys: ['building_width_m', 'building_depth_m'] },
-  {
-    title: 'Стеллажи',
-    keys: [
-      'rack_levels',
-      'storage_band_depth_m',
-      'cross_aisles',
-      'rack_run_length_m',
-      'bays_per_run',
-      'slots_per_aisle',
-      'aisles_needed',
-      'rack_module_width_m',
-      'storage_block_width_m',
-    ],
-  },
-  {
-    title: 'Ворота',
-    keys: ['pallets_in_per_day_peak_per_hour', 'docks_in', 'pallets_out_per_day_peak_per_hour', 'docks_out'],
-  },
-  { title: 'Отбор и проезды', keys: ['order_lines_per_day_peak_per_hour', 'pick_stations', 'two_way_min_width_m'] },
-]
