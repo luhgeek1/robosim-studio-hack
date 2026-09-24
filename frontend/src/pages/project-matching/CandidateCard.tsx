@@ -99,23 +99,19 @@ export function CandidateCard({
         <Price price={price} />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-5 pt-4 pb-5 transition-[translate,box-shadow] group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] duration-300 ease-out group-focus-within:translate-y-0 group-hover:translate-y-0">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <Link
-              to={`/catalog/${product.id}`}
-              className="line-clamp-2 text-[17px] leading-snug font-semibold tracking-[-0.01em] transition-colors hover:text-info"
-            >
-              {product.name}
-            </Link>
-            <p className="mt-0.5 line-clamp-1 text-[12.5px] text-ink-3" title={meta.join(' · ')}>
-              {meta.join(' · ')}
-            </p>
-          </div>
+      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-4 pt-3 pb-3.5 transition-[translate,box-shadow] group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] duration-300 ease-out group-focus-within:translate-y-0 group-hover:translate-y-0">
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            to={`/catalog/${product.id}`}
+            title={[product.name, ...meta].join(' · ')}
+            className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] transition-colors hover:text-info"
+          >
+            {product.name}
+          </Link>
           <ScoreButton candidate={candidate} />
         </div>
 
-        <dl className="mt-4 grid grid-cols-3 gap-x-4">
+        <dl className="mt-2.5 grid grid-cols-3 gap-x-3">
           <Figure
             value={isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '—'}
             label={isNum(estimate?.robots_count) ? 'роботов нужно' : 'роботов: не оценено'}
@@ -127,12 +123,9 @@ export function CandidateCard({
           />
         </dl>
 
-        <Verdict candidate={candidate} />
-        {verified.length > 0 && (
-          <p className="mt-1.5 text-[12.5px] text-ok">{verified.map((b) => BADGE_LABEL[b] ?? b).join(' · ')}</p>
-        )}
+        <Verdict candidate={candidate} extra={verified.map((b) => BADGE_LABEL[b] ?? b).join(' · ')} />
 
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="mt-2.5 flex items-center justify-between gap-2">
           <WhyPopover candidate={candidate} />
           {excluded ? (
             <ManualAdd projectId={projectId} processKey={processKey} candidate={candidate} />
@@ -177,16 +170,16 @@ function Figure({ value, label }: { value: ReactNode; label: string }) {
   // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
   return (
     <div className="flex min-w-0 flex-col-reverse">
-      <dt className="mt-0.5 truncate text-[12px] text-ink-3" title={label}>
+      <dt className="truncate text-[11.5px] text-ink-3" title={label}>
         {label}
       </dt>
-      <dd className="num truncate text-[17px] leading-tight font-semibold tracking-[-0.01em]">{value}</dd>
+      <dd className="num truncate text-[15px] leading-tight font-semibold tracking-[-0.01em]">{value}</dd>
     </div>
   )
 }
 
 /* Одна строка итога проверок: для исключённого — главная блокирующая причина, для «проверить» — чего не хватает. */
-function Verdict({ candidate }: { candidate: Candidate }) {
+function Verdict({ candidate, extra }: { candidate: Candidate; extra?: string }) {
   const blocking = candidate.reasons.find((r) => r.severity === 'blocking')
   const warning = candidate.reasons.find((r) => r.severity === 'warning')
   const missing = candidate.missing_data?.[0]
@@ -196,11 +189,11 @@ function Verdict({ candidate }: { candidate: Candidate }) {
       ? { tone: 'warn', text: warning.text }
       : missing
         ? { tone: 'warn', text: `Нет данных производителя: ${missing.name.toLowerCase()}` }
-        : { tone: 'ok', text: 'Все проверки объекта пройдены' }
+        : { tone: 'ok', text: extra ? `Все проверки пройдены · ${extra}` : 'Все проверки объекта пройдены' }
   return (
     <p
       className={cn(
-        'mt-4 flex items-start gap-2 border-t border-line pt-3 text-[13px] leading-snug',
+        'mt-2.5 flex items-start gap-2 border-t border-line pt-2.5 text-[12.5px] leading-snug',
         line.tone === 'crit' ? 'text-crit' : line.tone === 'warn' ? 'text-warn' : 'text-ink-2',
       )}
     >
@@ -210,7 +203,9 @@ function Verdict({ candidate }: { candidate: Candidate }) {
           line.tone === 'crit' ? 'bg-crit' : line.tone === 'warn' ? 'bg-warn' : 'bg-ok',
         )}
       />
-      <span className="line-clamp-2">{line.text}</span>
+      <span className="truncate" title={line.text}>
+        {line.text}
+      </span>
     </p>
   )
 }
@@ -395,8 +390,8 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
   if (!isNum(candidate.score)) {
     return (
       <div className="shrink-0 text-right">
-        <div className="display num text-[24px] text-ink-4">—</div>
-        <div className="text-[11.5px] text-ink-3">балл</div>
+        <div className="display num text-[19px] leading-tight text-ink-4">—</div>
+        <div className="text-[11px] text-ink-3">балл</div>
       </div>
     )
   }
@@ -406,11 +401,11 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group -mt-0.5 -mr-1.5 shrink-0 rounded-lg px-1.5 py-0.5 text-right transition-colors hover:bg-surface-2"
+          className="group/score -mt-0.5 -mr-1.5 shrink-0 rounded-lg px-1.5 py-0.5 text-right transition-colors hover:bg-surface-2"
           aria-label="Из чего сложился балл"
         >
-          <div className="display num text-[24px] leading-tight">{formatNumber(candidate.score, 1)}</div>
-          <div className="text-[11.5px] text-ink-3 group-hover:text-ink-2">балл из 100</div>
+          <div className="display num text-[19px] leading-tight">{formatNumber(candidate.score, 1)}</div>
+          <div className="text-[11px] text-ink-3 group-hover/score:text-ink-2">балл</div>
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[440px]">
