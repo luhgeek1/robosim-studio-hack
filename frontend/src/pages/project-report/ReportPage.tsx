@@ -62,10 +62,7 @@ export function ReportPage() {
     )
 
   return (
-    <Screen
-      title={comparison.data?.verdict.headline ?? 'Отчёт для инвесткомитета'}
-      lead="Отчёт собирается из тех же расчётов, что и экраны: устаревшие сценарии пересчитываются при сборке, числа в PDF, Excel и JSON совпадают."
-    >
+    <Screen title={comparison.data?.verdict.headline ?? 'Отчёт для инвесткомитета'}>
       <div className="space-y-6">
         <Callout tone="info">{DISCLAIMER}</Callout>
         {noCalculations && (
