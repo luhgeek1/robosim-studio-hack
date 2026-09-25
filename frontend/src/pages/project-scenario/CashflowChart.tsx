@@ -95,11 +95,11 @@ export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; mo
           <Bar dataKey="capex" stackId="flow" fill="var(--chart-4)" />
           <Bar dataKey="opex" stackId="flow" fill="var(--chart-3)" />
           {hasFinancing && <Bar dataKey="financing" stackId="flow" fill="var(--chart-5)" />}
-          <Line dataKey="cumulative" type="monotone" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
+          <Line dataKey="cumulative" type="monotone" stroke="var(--foreground)" strokeWidth={2} dot={false} />
           <Line
             dataKey="discounted"
             type="monotone"
-            stroke="var(--chart-1)"
+            stroke="var(--foreground)"
             strokeDasharray="4 4"
             strokeWidth={1.5}
             dot={false}

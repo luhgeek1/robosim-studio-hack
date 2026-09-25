@@ -1,14 +1,13 @@
-import { BadgeCheck, ChevronDown, ShieldAlert, TriangleAlert } from 'lucide-react'
+import { ChevronDown, ShieldAlert, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { SOURCE_KIND_LABEL, SourceLink } from '@/entities/provenance'
-import { BAND_LABEL, RISK_SEVERITY_LABEL, VerdictBadge, useNarrative } from '@/entities/scenario'
+import { BAND_LABEL, RISK_SEVERITY_LABEL, VERDICT_LABEL, useNarrative, type Verdict } from '@/entities/scenario'
 import type { CalculationRun, CostBreakdown } from '@/shared/api/types'
 import { formatDateTime, formatNumber, formatPct, formatRub, formatValue, formatYears } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Section, Stat, StatStrip } from '@/shared/ui/page'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
-import { ToneBadge, type Tone } from '@/shared/ui/tone'
+import { Segmented } from '@/shared/ui/v0'
 import { CashflowChart } from './CashflowChart'
 import { CostTable, type CostRow } from './CostTable'
 import { SizingSection } from './SizingSection'
@@ -25,7 +24,7 @@ const toRows = (breakdown: CostBreakdown | undefined): CostRow[] =>
     normKey: item.norm_key,
   }))
 
-const SEVERITY_TONE: Record<'low' | 'medium' | 'high', Tone> = { low: 'muted', medium: 'warn', high: 'crit' }
+const SEVERITY_DOT: Record<'low' | 'medium' | 'high', string> = { low: 'bg-ink-4', medium: 'bg-warn', high: 'bg-crit' }
 
 export function CalculationView({
   run,
@@ -66,16 +65,13 @@ export function CalculationView({
           columns={4}
           className="md:divide-x-0 md:[&>*:nth-child(-n+4)]:border-b md:[&>*:not(:nth-child(4n+1))]:border-l"
         >
-          <Stat
-            label="Окупаемость простая"
-            value={formatYears(m.payback_years)}
-            hint={`дисконтированная: ${formatYears(m.discounted_payback_years)}`}
-          />
           <Stat label="CAPEX" value={formatRub(m.capex_rub)} hint="с НДС" />
+          <Stat label="OPEX роботизации" value={formatRub(m.opex_rub_year)} hint="в год" />
           <Stat
             label="Чистый эффект"
             value={formatRub(m.effect_rub_year)}
-            hint={`OPEX роботизации ${formatRub(m.opex_rub_year)} в год`}
+            valueClassName="text-ok"
+            hint="в год, после OPEX"
           />
           <Stat
             label="NPV"
@@ -103,57 +99,16 @@ export function CalculationView({
         title="Из чего складываются деньги"
         description="Строка раскрывается в формулу, подставленные значения и источники входов"
         actions={
-          <button type="button" className="text-sm text-primary hover:underline" onClick={() => onTrace('')}>
+          <button
+            type="button"
+            className="text-[13px] font-medium text-ink-3 transition-colors hover:text-ink"
+            onClick={() => onTrace('')}
+          >
             Полная трасса расчёта
           </button>
         }
       >
-        <Tabs defaultValue={isBaseline ? 'baseline' : 'capex'}>
-          <TabsList>
-            {!isBaseline && <TabsTrigger value="capex">CAPEX</TabsTrigger>}
-            {!isBaseline && <TabsTrigger value="opex">OPEX в год</TabsTrigger>}
-            {!isBaseline && <TabsTrigger value="effect">Эффект в год</TabsTrigger>}
-            <TabsTrigger value="baseline">Как сейчас</TabsTrigger>
-            {!isBaseline && run.scenario_cost_year && <TabsTrigger value="after">После роботизации</TabsTrigger>}
-          </TabsList>
-          <TabsContent value="capex">
-            <CostTable rows={toRows(run.capex)} total={run.capex.total_rub} totalLabel="CAPEX, с НДС" />
-          </TabsContent>
-          <TabsContent value="opex">
-            <CostTable
-              rows={toRows(run.opex_year)}
-              total={run.opex_year.total_rub}
-              totalLabel="OPEX роботизации"
-              unitSuffix="/год"
-            />
-          </TabsContent>
-          <TabsContent value="effect">
-            <CostTable
-              rows={effectRows}
-              total={run.effect_year.total_rub_year}
-              totalLabel="Чистый эффект"
-              unitSuffix="/год"
-            />
-          </TabsContent>
-          <TabsContent value="baseline">
-            <CostTable
-              rows={toRows(run.baseline_cost_year)}
-              total={run.baseline_cost_year.total_rub}
-              totalLabel="Затраты «как сейчас»"
-              unitSuffix="/год"
-            />
-          </TabsContent>
-          {run.scenario_cost_year && (
-            <TabsContent value="after">
-              <CostTable
-                rows={toRows(run.scenario_cost_year)}
-                total={run.scenario_cost_year.total_rub}
-                totalLabel="Затраты после роботизации"
-                unitSuffix="/год"
-              />
-            </TabsContent>
-          )}
-        </Tabs>
+        <CostTabs run={run} isBaseline={isBaseline} effectRows={effectRows} />
       </Section>
 
       {!isBaseline && (
@@ -184,7 +139,10 @@ export function CalculationView({
                     <div className="space-y-0.5">
                       <div className="flex flex-wrap items-center gap-2 font-medium">
                         {risk.title}
-                        <ToneBadge tone={SEVERITY_TONE[risk.severity]}>{RISK_SEVERITY_LABEL[risk.severity]}</ToneBadge>
+                        <span className="flex items-center gap-1.5 text-[12px] font-normal text-ink-3">
+                          <span className={cn('size-1.5 rounded-full', SEVERITY_DOT[risk.severity])} />
+                          {RISK_SEVERITY_LABEL[risk.severity]}
+                        </span>
                       </div>
                       <div className="text-muted-foreground">{risk.description}</div>
                       {risk.mitigation && <div className="text-xs">Что сделать: {risk.mitigation}</div>}
@@ -223,48 +181,140 @@ export function CalculationView({
   )
 }
 
+const VERDICT_DOT: Record<Verdict, string> = {
+  attractive: 'bg-ok',
+  reasonable: 'bg-ink',
+  questionable: 'bg-warn',
+  not_recommended: 'bg-crit',
+  insufficient_data: 'bg-ink-4',
+  baseline: 'bg-ink-4',
+}
+
 /* Вердикт и заключение говорят одно и то же; из заключения берём только следующие шаги. */
 function VerdictBlock({ run }: { run: CalculationRun }) {
   const interpretation = run.interpretation
   const narrative = useNarrative(run.id)
   const nextSteps = narrative.data?.next_steps ?? []
+  const verdict = interpretation.verdict as Verdict
+  const m = run.metrics
   const columns = [
     interpretation.key_drivers?.length ? (
-      <List key="drivers" title="Что определяет результат" items={interpretation.key_drivers} />
+      <List key="drivers" title="Что определяет результат" items={interpretation.key_drivers} dot="bg-ink" />
     ) : null,
     interpretation.caveats?.length ? (
-      <List key="caveats" title="Оговорки" items={interpretation.caveats} muted />
+      <List key="caveats" title="Оговорки" items={interpretation.caveats} dot="bg-ink-4" muted />
     ) : null,
-    nextSteps.length ? <List key="next" title="Следующие шаги" items={nextSteps} /> : null,
+    nextSteps.length ? <List key="next" title="Следующие шаги" items={nextSteps} dot="bg-warn" /> : null,
   ].filter(Boolean)
   return (
-    <div className="rounded-lg border border-l-2 border-l-primary bg-surface p-5">
-      <div className="flex flex-wrap items-center gap-2">
-        <VerdictBadge verdict={interpretation.verdict} className="h-6 px-2.5 text-sm" />
-        {BAND_LABEL[interpretation.band] && (
-          <span className="text-sm text-muted-foreground">{BAND_LABEL[interpretation.band]}</span>
-        )}
+    <section className="card overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="min-w-0 px-7 py-6">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
+            <span className="flex items-center gap-1.5 font-medium text-ink">
+              <span className={cn('size-2 rounded-full', VERDICT_DOT[verdict] ?? 'bg-ink-4')} />
+              {VERDICT_LABEL[verdict] ?? interpretation.verdict}
+            </span>
+            {BAND_LABEL[interpretation.band] && <span className="text-ink-3">{BAND_LABEL[interpretation.band]}</span>}
+          </div>
+          <h2 className="h2 mt-3">{interpretation.headline}</h2>
+          <p className="mt-2 max-w-3xl text-[14px] leading-relaxed text-ink-3">{interpretation.summary}</p>
+        </div>
+        <div className="flex flex-col justify-center border-t border-line bg-surface-2 px-7 py-6 lg:border-t-0 lg:border-l">
+          <div className="display num text-[44px]">{formatYears(m.payback_years)}</div>
+          <div className="meta mt-1.5">до окупаемости</div>
+          <div className="mt-4 text-[13px] text-ink-2">
+            дисконтированная <span className="num font-medium text-ink">{formatYears(m.discounted_payback_years)}</span>
+          </div>
+        </div>
       </div>
-      <h2 className="mt-2 text-xl font-semibold tracking-tight">{interpretation.headline}</h2>
-      <p className="mt-1 max-w-4xl text-muted-foreground">{interpretation.summary}</p>
       {columns.length > 0 && (
-        <div className="mt-4 grid gap-6" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+        <div
+          className="grid gap-8 border-t border-line px-7 py-6"
+          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+        >
           {columns}
         </div>
       )}
+    </section>
+  )
+}
+
+function List({ title, items, dot, muted }: { title: string; items: string[]; dot: string; muted?: boolean }) {
+  return (
+    <div>
+      <div className="mb-2.5 text-[13px] text-ink-2">{title}</div>
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li key={item} className={cn('flex gap-2.5 text-[13.5px] leading-snug', muted ? 'text-ink-3' : 'text-ink')}>
+            <span className={cn('mt-1.75 size-1.5 shrink-0 rounded-full', dot)} />
+            <span className="min-w-0">{item}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
 
-function List({ title, items, muted }: { title: string; items: string[]; muted?: boolean }) {
+type CostTab = 'capex' | 'opex' | 'effect' | 'baseline' | 'after'
+
+function CostTabs({
+  run,
+  isBaseline,
+  effectRows,
+}: {
+  run: CalculationRun
+  isBaseline: boolean
+  effectRows: CostRow[]
+}) {
+  const [tab, setTab] = useState<CostTab>(isBaseline ? 'baseline' : 'capex')
+  const options: { value: CostTab; label: string }[] = [
+    ...(isBaseline
+      ? []
+      : ([
+          { value: 'capex', label: 'CAPEX' },
+          { value: 'opex', label: 'OPEX в год' },
+          { value: 'effect', label: 'Эффект в год' },
+        ] as const)),
+    { value: 'baseline', label: 'Как сейчас' },
+    ...(!isBaseline && run.scenario_cost_year ? [{ value: 'after' as const, label: 'После роботизации' }] : []),
+  ]
   return (
-    <div>
-      <div className="mb-1.5 text-xs text-muted-foreground">{title}</div>
-      <ul className={cn('list-disc space-y-1 pl-4', muted && 'text-muted-foreground')}>
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
+    <div className="space-y-3">
+      <Segmented layoutId="cost-tab" size="sm" value={tab} onChange={setTab} options={options} />
+      {tab === 'capex' && <CostTable rows={toRows(run.capex)} total={run.capex.total_rub} totalLabel="CAPEX, с НДС" />}
+      {tab === 'opex' && (
+        <CostTable
+          rows={toRows(run.opex_year)}
+          total={run.opex_year.total_rub}
+          totalLabel="OPEX роботизации"
+          unitSuffix="/год"
+        />
+      )}
+      {tab === 'effect' && (
+        <CostTable
+          rows={effectRows}
+          total={run.effect_year.total_rub_year}
+          totalLabel="Чистый эффект"
+          unitSuffix="/год"
+        />
+      )}
+      {tab === 'baseline' && (
+        <CostTable
+          rows={toRows(run.baseline_cost_year)}
+          total={run.baseline_cost_year.total_rub}
+          totalLabel="Затраты «как сейчас»"
+          unitSuffix="/год"
+        />
+      )}
+      {tab === 'after' && run.scenario_cost_year && (
+        <CostTable
+          rows={toRows(run.scenario_cost_year)}
+          total={run.scenario_cost_year.total_rub}
+          totalLabel="Затраты после роботизации"
+          unitSuffix="/год"
+        />
+      )}
     </div>
   )
 }
@@ -277,9 +327,10 @@ function Calibration({ calibration }: { calibration: NonNullable<CalculationRun[
       description={calibration.reference}
       actions={
         ok == null ? null : (
-          <ToneBadge tone={ok ? 'ok' : 'warn'}>
-            <BadgeCheck /> {ok ? 'в допуске' : 'расхождение разложено по статьям'}
-          </ToneBadge>
+          <span className={cn('flex items-center gap-1.5 text-[12.5px] font-medium', ok ? 'text-ok' : 'text-warn')}>
+            <span className={cn('size-1.5 rounded-full', ok ? 'bg-ok' : 'bg-warn')} />
+            {ok ? 'в допуске' : 'расхождение разложено по статьям'}
+          </span>
         )
       }
     >

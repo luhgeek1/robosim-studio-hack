@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select'
-import { ToneBadge } from '@/shared/ui/tone'
 import { AddItemDialog } from './AddItemDialog'
 import type { Draft, ItemDraft } from './draft'
 import { NumberField } from './NumberField'
@@ -276,8 +275,8 @@ function ItemRow({
           </Link>
           <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>цена за единицу {formatRub(item.price_override_rub ?? item.price_rub)}</span>
-            {item.price_override_rub != null && <ToneBadge tone="warn">своя цена</ToneBadge>}
-            {item.candidate_status === 'check' && <ToneBadge tone="warn">требует проверки ТТХ</ToneBadge>}
+            {item.price_override_rub != null && <WarnMark>своя цена</WarnMark>}
+            {item.candidate_status === 'check' && <WarnMark>требует проверки ТТХ</WarnMark>}
             {item.count_result && (
               <span>
                 в последнем расчёте: {item.count_result.final} шт. ({item.count_result.analytic} по циклу + резерв{' '}
@@ -484,5 +483,14 @@ function Field({ label, children, className }: { label: string; children: ReactN
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
+  )
+}
+
+function WarnMark({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-warn">
+      <span className="size-1.5 rounded-full bg-warn" />
+      {children}
+    </span>
   )
 }

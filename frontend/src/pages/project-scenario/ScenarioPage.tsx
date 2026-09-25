@@ -1,4 +1,4 @@
-import { ArrowLeft, Calculator, ListTree, RotateCcw, Save } from 'lucide-react'
+import { ArrowLeft, Calculator, ListTree, RotateCcw, Save, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useProject, useProjectId } from '@/entities/project'
@@ -7,8 +7,7 @@ import { formatDateTime } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
-import { ToneBadge } from '@/shared/ui/tone'
+import { Segmented } from '@/shared/ui/v0'
 import { CalculationView } from './CalculationView'
 import { draftProblems, sameDraft, toDraft, toUpdate, type Draft } from './draft'
 import { ScenarioEditor } from './ScenarioEditor'
@@ -78,20 +77,25 @@ export function ScenarioPage() {
               aria-label="Название сценария"
               className="h1 h-auto border-transparent bg-transparent px-0 shadow-none hover:border-border focus-visible:px-2 md:text-[34px]"
             />
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <ToneBadge tone={isBaseline ? 'muted' : 'info'}>{SCENARIO_KIND_LABEL[current.kind]}</ToneBadge>
-              {current.is_recommended && <ToneBadge tone="ok">рекомендован</ToneBadge>}
-              {current.last_calculation ? (
-                <span>
-                  рассчитан {formatDateTime(current.last_calculation.computed_at)}
-                  {stale && (
-                    <ToneBadge tone="warn" className="ml-2">
-                      устарел — данные менялись
-                    </ToneBadge>
-                  )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-ink-3">
+              <span className="flex items-center gap-1.5 font-medium text-ink-2">
+                <span className="size-1.5 rounded-full bg-ink-4" />
+                {SCENARIO_KIND_LABEL[current.kind]}
+              </span>
+              {current.is_recommended && (
+                <span className="flex items-center gap-1 font-medium text-ink">
+                  <Star size={12} className="fill-warn text-warn" /> рекомендуем
                 </span>
+              )}
+              {current.last_calculation ? (
+                <span className="num">рассчитан {formatDateTime(current.last_calculation.computed_at)}</span>
               ) : (
                 <span>ещё не рассчитан</span>
+              )}
+              {stale && (
+                <span className="flex items-center gap-1.5 text-warn">
+                  <span className="size-1.5 rounded-full bg-warn" /> данные менялись после расчёта
+                </span>
               )}
             </div>
           </div>
@@ -124,12 +128,17 @@ export function ScenarioPage() {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="result">Результат расчёта</TabsTrigger>
-          <TabsTrigger value="config">{isBaseline ? 'Условия' : 'Состав и условия'}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="result" className="pt-3">
+      <Segmented
+        layoutId="scenario-tab"
+        value={activeTab}
+        onChange={setTab}
+        options={[
+          { value: 'result', label: 'Результат расчёта' },
+          { value: 'config', label: isBaseline ? 'Условия' : 'Состав и условия' },
+        ]}
+      />
+      {activeTab === 'result' && (
+        <div className="pt-1">
           {!calculationId && (
             <EmptyState
               title="Сценарий ещё не рассчитан"
@@ -148,8 +157,10 @@ export function ScenarioPage() {
           {calculation.isPending && calculationId && <LoadingBlock rows={4} />}
           {calculation.isError && <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} />}
           {calculation.data && <CalculationView run={calculation.data} isBaseline={isBaseline} onTrace={openTrace} />}
-        </TabsContent>
-        <TabsContent value="config" className="pt-3">
+        </div>
+      )}
+      {activeTab === 'config' && (
+        <div className="pt-1">
           <ScenarioEditor
             projectId={projectId}
             objectType={project.object_type}
@@ -157,8 +168,8 @@ export function ScenarioPage() {
             draft={draft}
             onChange={setDraft}
           />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       {calculationId && (
         <TraceSheet

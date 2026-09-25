@@ -2,7 +2,7 @@ import { Bot, Timer } from 'lucide-react'
 import type { SizingResult } from '@/shared/api/types'
 import { formatNumber, formatPct, isNum } from '@/shared/lib/format'
 import { Section } from '@/shared/ui/page'
-import { ToneBadge } from '@/shared/ui/tone'
+import { cn } from '@/shared/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
 const COUNT_SOURCE_LABEL = {
@@ -43,7 +43,7 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
         </div>
         <button
           type="button"
-          className="text-xs text-primary hover:underline"
+          className="text-xs font-medium text-ink-3 transition-colors hover:text-ink"
           onClick={() => onTrace(sizing.process_key)}
         >
           Трасса расчёта процесса
@@ -61,7 +61,7 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
                 {robot.cycle_components.map((c, i) => (
                   <div
                     key={c.key}
-                    className={['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5'][i % 5]}
+                    className={['bg-ink', 'bg-warn', 'bg-ok', 'bg-ink-4', 'bg-crit'][i % 5]}
                     style={{ width: `${(c.seconds / (cycleTotal || 1)) * 100}%` }}
                   />
                 ))}
@@ -113,12 +113,18 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
               <div className="text-xs text-muted-foreground">итого</div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            <ToneBadge tone={count.source === 'simulated' ? 'ok' : count.source === 'manual' ? 'warn' : 'info'}>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-3">
+            <span className="flex items-center gap-1.5 font-medium text-ink-2">
+              <span
+                className={cn(
+                  'size-1.5 rounded-full',
+                  count.source === 'simulated' ? 'bg-ok' : count.source === 'manual' ? 'bg-warn' : 'bg-ink',
+                )}
+              />
               {COUNT_SOURCE_LABEL[count.source]}
-            </ToneBadge>
-            <ToneBadge tone="muted">зарядок: {sizing.chargers_count}</ToneBadge>
-            {isNum(sizing.stations_count) && <ToneBadge tone="muted">станций: {sizing.stations_count}</ToneBadge>}
+            </span>
+            <span className="num">зарядок: {sizing.chargers_count}</span>
+            {isNum(sizing.stations_count) && <span className="num">станций: {sizing.stations_count}</span>}
           </div>
           {count.explanation && <p className="text-xs text-muted-foreground">{count.explanation}</p>}
         </div>
