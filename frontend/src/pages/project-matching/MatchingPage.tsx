@@ -37,9 +37,6 @@ export function MatchingPage() {
   const noFit = data ? (data.totals?.fit ?? 0) === 0 : true
   const fit = data?.totals?.fit ?? 0
   const total = fit + (data?.totals?.check ?? 0) + (data?.totals?.excluded ?? 0)
-  // «Лучшее» — первое место по баллу в первом процессе подбора; процесс называем, чтобы заголовок не обобщал.
-  const firstProcess = data?.processes.find((p) => p.candidates.some((c) => c.status === 'fit'))
-  const best = firstProcess?.candidates.find((c) => c.status === 'fit')
 
   return (
     <Screen
@@ -48,7 +45,7 @@ export function MatchingPage() {
       title={
         data
           ? fit
-            ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}${best && firstProcess ? `, лучшее в процессе «${firstProcess.name.split(' (')[0]}» — ${best.product.name}` : ''}`
+            ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}`
             : 'Подходящих решений не найдено'
           : 'Подбор роботов'
       }
