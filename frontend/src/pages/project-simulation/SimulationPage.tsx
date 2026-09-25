@@ -35,7 +35,7 @@ import { Callout, Screen } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Toggle } from '@/shared/ui/toggle'
-import { Bar, Dot, KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
+import { Bar, KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
@@ -53,7 +53,6 @@ type RunConfig = { count: number; mode: Mode; volume: boolean; failure: boolean 
 function slaTone(sla: number, target: number): Tone {
   return sla >= target ? 'ok' : sla >= target - 7 ? 'warn' : 'crit'
 }
-const SLA_LABEL: Record<string, string> = { ok: 'SLA выполняется', warn: 'SLA под угрозой', crit: 'SLA не выполняется' }
 const VS_LABEL: Record<string, { text: string; tone: Tone }> = {
   confirmed: { text: 'имитация подтверждает расчёт', tone: 'ok' },
   shortfall: { text: 'имитация ниже расчёта', tone: 'warn' },
@@ -200,7 +199,6 @@ function SimulationView({
     calculation.data?.sizing[0]
   // Имитация проверяет рабочий парк: N по перебору флота или по циклу. Резерв на отказы в неё не входит.
   const working = sizing ? (sizing.count.simulated ?? sizing.count.analytic) : 0
-  const reserve = sizing?.count.reserve ?? 0
   const [draft, setDraft] = useState<Omit<RunConfig, 'count'> & { count: number | null }>({
     count: null,
     mode: 'peak',
@@ -276,8 +274,6 @@ function SimulationView({
     change(next)
   }
 
-  const lastSweep = useLastSweep(scenario.id, sizing?.process_key).data ?? undefined
-  const sweepPoint = run.data?.purpose === 'sweep' ? lastSweep?.points.find((p) => p.count === config.count) : undefined
   const layout = replay.data?.layout ?? projectLayout.data
   const busy = !summary && (start.isPending || (run.data && !isFinal(run.data.status)) || (runId === null && !error))
   const failed = run.data?.status === 'failed' ? (run.data.error?.detail ?? 'Прогон завершился с ошибкой') : null
@@ -286,8 +282,6 @@ function SimulationView({
       ? sizing.demand_peak_per_hour
       : (sizing.demand_avg_per_hour ?? sizing.demand_peak_per_hour)
     : 0
-  const headlineSla = sweepPoint?.sla_achieved_pct ?? summary?.sla.achieved_pct
-  const tone = summary && headlineSla != null ? slaTone(headlineSla, summary.sla.target_pct) : 'neutral'
   const variantIds = sizing
     ? variants.filter((s) => s.items.some((i) => i.process_key === sizing.process_key)).map((s) => s.id)
     : []
@@ -336,17 +330,6 @@ function SimulationView({
       title={
         <>
           {config.count} × {sizing?.product_name ?? '…'}
-          {summary && headlineSla != null && (
-            <span className="ml-3 align-middle">
-              <Pill tone={tone} className="!h-7 !px-2.5 !text-[13px]">
-                <Dot tone={tone} pulse={tone !== 'ok'} />
-                {SLA_LABEL[tone]}
-                {sweepPoint
-                  ? ` · ${formatNumber(sweepPoint.sla_achieved_pct, 1)} % в среднем по ${sweepPoint.runs} прогонам`
-                  : ''}
-              </Pill>
-            </span>
-          )}
         </>
       }
       lead={lead}
@@ -404,11 +387,6 @@ function SimulationView({
             >
               {upload.isPending ? <Spinner /> : <Camera />} Снимок в отчёт
             </Button>
-            <span className="meta ml-auto">
-              {reserve > 0
-                ? `В сценарии ${working} + ${reserve} в резерве на отказы и обслуживание`
-                : `В сценарии ${working} роботов`}
-            </span>
           </div>
 
           {error && (
