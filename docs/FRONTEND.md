@@ -121,7 +121,7 @@ Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль n
 |---|---|---|---|
 | `/login` | Вход, регистрация, кнопки демо-учёток | `login`, `register`, `refreshTokens`, `getMe` | MVP |
 | `/catalog` | Каталог (гость): поиск, фильтры, сортировка, выбор в сравнение | `listProducts`, `getCatalogFacets` | MVP |
-| `/catalog/:productId` | Карточка: ТТХ по 6 группам с бейджами, предложения, внедрения, источники | `getProduct` | MVP |
+| `/catalog/:productId` | Страница робота: большая 3D-сцена (вращение, человек для масштаба), паспорт ключевых ТТХ, ТТХ по группам с источником у точки, цены по отраслям, внедрения, достоверность данных, похожие решения. Открывается кликом по карточке в каталоге, сравнении и подборе; «назад» ведёт туда, откуда пришли | `getProduct` | MVP |
 | `/catalog/compare` | Сравнение 2–5 продуктов, лучшее значение подсвечено | `compareProducts` | MVP |
 | `/projects` | Проекты: сводка, создать (пустой / демо), копировать, удалить | `listProjects`, `createProject`, `copyProject`, `deleteProject`, `listObjectTypes` | MVP |
 | `/projects/:id` | Обзор: итоги рекомендованного сценария, панель доверия, журнал (шаги — в верхней панели) | `getProject`, `getProjectDataQuality`, `listProjectAudit` | MVP |
