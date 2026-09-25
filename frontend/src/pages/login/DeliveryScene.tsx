@@ -15,7 +15,7 @@ const W = 760
 const FLOOR = 290
 const LANE = FLOOR + 16
 const ROBOT_W = 112
-const WHEEL_R = 10
+const WHEEL_R = 7
 const DECK_TOP = FLOOR - 48
 const BOX_W = 64
 const BOX_H = 48
@@ -85,6 +85,16 @@ const PATH_TIMES = [0, T.go, T.cruise, T.brake, T.stop, REPORT_AT, 0.99, 1]
 const PATH_SCALE = [0, 0, ...ROBOT_X.slice(3, 6).map(pathScale), 1, 1, 0]
 const PATH_EASE = [linear, easeIn, linear, easeOut, easeIn, linear, linear]
 
+// The same loader AMR as in the 3D twin (widgets/twin/RobotMesh): teal hull, light deck, dark front sensor, green light.
+const AMR = {
+  hullTop: '#3592b4',
+  hullBottom: '#1f6883',
+  deck: '#e9edf9',
+  deckEdge: '#cbd3e6',
+  sensor: '#111318',
+  light: '#35c27a',
+  wheel: '#1c2227',
+}
 const CARDBOARD = { face: '#dcb67f', lid: '#e8c995', tape: '#f0dcb8', edge: '#c49a5c' }
 const STOCK = {
   box: '#ecdcc0',
@@ -226,37 +236,50 @@ function Robot({
   wheelRotate: MotionValue<number>
   sink: MotionValue<number>
 }) {
+  const hullId = `${gradientId}-hull`
   return (
     <>
-      <ellipse cx={ROBOT_W / 2} cy="2" rx="52" ry="4" fill="#000" opacity="0.1" />
-      {[26, 86].map((cx) => (
+      <defs>
+        <linearGradient id={hullId} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor={AMR.hullTop} />
+          <stop offset="1" stopColor={AMR.hullBottom} />
+        </linearGradient>
+      </defs>
+      <ellipse cx={ROBOT_W / 2} cy="2" rx="52" ry="4" fill="#000" opacity="0.12" />
+      {/* Drive wheels sit under the hull skirt, as on a real AMR; only their lower half shows. */}
+      {[24, 88].map((cx) => (
         <motion.g key={cx} style={{ rotate: wheelRotate }}>
-          <circle cx={cx} cy={-WHEEL_R} r={WHEEL_R} fill="#2b2b31" stroke="var(--foreground)" strokeWidth="2" />
-          <line x1={cx - 6} x2={cx + 6} y1={-WHEEL_R} y2={-WHEEL_R} stroke="var(--ink-4)" strokeWidth="1.5" />
-          <line x1={cx} x2={cx} y1={-WHEEL_R - 6} y2={-WHEEL_R + 6} stroke="var(--ink-4)" strokeWidth="1.5" />
-          <circle cx={cx} cy={-WHEEL_R} r="2.5" fill="var(--ink-4)" />
+          <circle cx={cx} cy={-WHEEL_R} r={WHEEL_R} fill={AMR.wheel} />
+          <line x1={cx - 4.5} x2={cx + 4.5} y1={-WHEEL_R} y2={-WHEEL_R} stroke="#5b6670" strokeWidth="1.5" />
+          <line x1={cx} x2={cx} y1={-WHEEL_R - 4.5} y2={-WHEEL_R + 4.5} stroke="#5b6670" strokeWidth="1.5" />
         </motion.g>
       ))}
       <motion.g style={{ y: sink }}>
         <motion.path
-          d="M106 -32 L196 -60 L196 -4 Z"
+          d="M110 -27 L196 -55 L196 1 Z"
           fill={`url(#${gradientId})`}
           animate={still ? { opacity: 0.6 } : { opacity: [0.15, 0.8, 0.15] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <rect x="2" y="-42" width={ROBOT_W - 4} height="28" rx="9" fill="var(--foreground)" />
-        <rect x="2" y="-21" width={ROBOT_W - 4} height="2" fill="#fff" opacity="0.08" />
-        <rect x="12" y="-48" width="88" height="7" rx="3.5" fill="var(--ink-2)" />
-        <rect x="20" y="-34" width="30" height="3" rx="1.5" fill="var(--info)" />
-        <rect x="101" y="-37" width="6" height="10" rx="2" fill="var(--info)" />
+        <rect x="2" y="-42" width={ROBOT_W - 4} height="34" rx="10" fill={`url(#${hullId})`} />
+        <rect x="12" y="-40" width={ROBOT_W - 24} height="1.5" rx="0.75" fill="#fff" opacity="0.3" />
+        <rect x="16" y="-27" width="34" height="3" rx="1.5" fill="#fff" opacity="0.35" />
+        {[64, 69, 74].map((vx) => (
+          <rect key={vx} x={vx} y="-30" width="2" height="9" rx="1" fill={AMR.hullBottom} />
+        ))}
+        <rect x="106" y="-33" width="5" height="13" rx="1.5" fill={AMR.sensor} />
+        <rect x="107.5" y="-30" width="2" height="4" rx="1" fill="#6ea8ff" opacity="0.8" />
+        <rect x="7" y="-48" width="98" height="7" rx="2" fill={AMR.deck} stroke={AMR.deckEdge} />
         <motion.circle
-          cx="62"
-          cy="-32.5"
-          r="2.2"
-          fill="var(--ok)"
-          animate={still ? undefined : { opacity: [1, 0.25, 1] }}
+          cx="13"
+          cy="-51"
+          r="6"
+          fill={AMR.light}
+          opacity="0.25"
+          animate={still ? undefined : { opacity: [0.35, 0, 0.35] }}
           transition={{ duration: 1.2, repeat: Infinity }}
         />
+        <circle cx="13" cy="-51" r="3" fill={AMR.light} />
       </motion.g>
     </>
   )
