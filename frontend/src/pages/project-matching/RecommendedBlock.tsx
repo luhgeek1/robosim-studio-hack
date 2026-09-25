@@ -79,7 +79,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
   const verdict = calc?.verdict && calc.verdict in VERDICT_LABEL ? (calc.verdict as Verdict) : null
 
   return (
-    <section className="card mb-8 overflow-hidden">
+    <section className="card mx-auto mb-8 max-w-[880px] overflow-hidden">
       <header className="flex items-baseline justify-between gap-4 border-b border-line px-6 py-4">
         <div className="flex min-w-0 items-baseline gap-3">
           <h2 className="h2">Рекомендуем</h2>
@@ -95,7 +95,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
         )}
       </header>
 
-      <div className={cn('grid', calc && 'lg:grid-cols-[minmax(0,1fr)_260px]')}>
+      <div className={cn('grid', calc && 'md:grid-cols-[minmax(0,1fr)_240px]')}>
         <ul className="divide-y divide-line">
           {picks.map((pick) => (
             <PickRow key={pick.key} pick={pick} />
@@ -103,7 +103,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
         </ul>
 
         {calc && (
-          <aside className="flex flex-col gap-3 border-t border-line bg-canvas/50 px-6 py-5 lg:border-t-0 lg:border-l">
+          <aside className="flex flex-col gap-3 border-t border-line bg-canvas/50 px-6 py-5 md:border-t-0 md:border-l">
             <Metric label="окупаемость" value={formatYears(calc.payback_years)}>
               {verdict && (
                 <span className="inline-flex items-center gap-1.5">
@@ -117,7 +117,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
             {calc.status === 'stale' && (
               <p className="mt-auto flex items-center gap-1.5 text-[12px] text-warn">
                 <span className="size-1.5 shrink-0 rounded-full bg-warn" />
-                Данные изменились — пересчитайте
+                Нужен пересчёт
               </p>
             )}
           </aside>
