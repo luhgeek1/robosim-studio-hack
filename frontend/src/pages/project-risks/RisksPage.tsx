@@ -46,7 +46,7 @@ export function RisksPage() {
 
   if (scenarios.isPending) {
     return (
-      <Screen wide title="Насколько устойчив результат" lead={lead}>
+      <Screen title="Насколько устойчив результат" lead={lead}>
         <LoadingBlock label="Загружаем сценарии…" />
       </Screen>
     )
@@ -54,7 +54,7 @@ export function RisksPage() {
 
   if (scenarios.isError || !scenario) {
     return (
-      <Screen wide title="Насколько устойчив результат" lead={lead} nextDisabled>
+      <Screen title="Насколько устойчив результат" lead={lead} nextDisabled>
         {scenarios.isError ? (
           <ErrorBlock error={scenarios.error} onRetry={() => scenarios.refetch()} />
         ) : (
@@ -76,7 +76,7 @@ export function RisksPage() {
   }
 
   return (
-    <Screen wide title="Насколько устойчив результат" lead={lead} actions={actions} nextLabel="Проверить имитацией">
+    <Screen title="Насколько устойчив результат" lead={lead} actions={actions} nextLabel="Проверить имитацией">
       <div className="space-y-6">
         {scenario.last_calculation?.status === 'stale' && (
           <Callout

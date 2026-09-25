@@ -46,7 +46,6 @@ export function LayoutPage() {
 
   return (
     <Screen
-      wide
       dense
       title={
         data
