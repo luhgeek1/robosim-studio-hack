@@ -84,7 +84,6 @@ export function ScenariosPage() {
           ? `${recommended!.name}: ${calc.payback_years != null ? `окупается за ${formatYears(calc.payback_years)}` : 'не окупается в горизонте'}`
           : 'Сколько роботов нужно и что это стоит'
       }
-      wide
       dense
       nextDisabled={!robotized.some((s) => s.last_calculation)}
       actions={
