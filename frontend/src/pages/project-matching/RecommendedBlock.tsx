@@ -18,6 +18,8 @@ type Pick = {
   reserve: number
   source: string
   unitPrice?: number | null
+  // No cycle model for this solution type yet: the count is unknown rather than zero.
+  unknown?: boolean
 }
 
 const VERDICT_DOT: Record<(typeof VERDICT_TONE)[Verdict], string> = {
@@ -72,7 +74,8 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
         processName: shortName(process.name),
         working: best.estimate?.robots_count ?? 0,
         reserve: 0,
-        source: 'оценка по циклу',
+        source: best.estimate?.robots_count ? 'оценка по циклу' : 'нет оценки по циклу',
+        unknown: !best.estimate?.robots_count,
         unitPrice: best.product.price_from?.amount_rub,
       },
     ]
@@ -86,12 +89,19 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
   const stale = calc?.status === 'stale'
 
   return (
-    <section className="card mx-auto mb-10 max-w-[1080px] overflow-hidden">
-      <ul className="divide-y divide-line">
-        {picks.map((pick, i) => (
-          <PickHero key={pick.key} pick={pick} first={i === 0} />
-        ))}
-      </ul>
+    <section className={cn('card mx-auto mb-10 overflow-hidden', picks.length === 1 && 'max-w-[1080px]')}>
+      {picks.length === 1 ? (
+        <ul>
+          <PickHero pick={picks[0]} first />
+        </ul>
+      ) : (
+        // Several robots stand in one row; past what fits, the row scrolls sideways instead of stacking.
+        <ul className="scroll-thin flex divide-x divide-line overflow-x-auto">
+          {picks.map((pick, i) => (
+            <PickCard key={pick.key} pick={pick} first={i === 0} />
+          ))}
+        </ul>
+      )}
 
       {(calc || scenario) && (
         <footer className="grid grid-cols-2 items-center gap-x-8 gap-y-5 border-t border-line bg-surface-2 px-8 py-5 md:grid-cols-[repeat(3,auto)_1fr]">
@@ -156,9 +166,13 @@ function PickHero({ pick, first }: { pick: Pick; first: boolean }) {
 
         <div className="mt-auto pt-8">
           <div className="flex items-end gap-3">
-            <span className="display num text-[76px]">{formatNumber(count)}</span>
+            <span className="display num text-[76px]">{pick.unknown ? '—' : formatNumber(count)}</span>
             <span className="pb-2 leading-tight">
-              <span className="block text-[15px] font-semibold">{pluralRu(count, ['робот', 'робота', 'роботов'])}</span>
+              {!pick.unknown && (
+                <span className="block text-[15px] font-semibold">
+                  {pluralRu(count, ['робот', 'робота', 'роботов'])}
+                </span>
+              )}
               <span className="meta">{pick.source}</span>
             </span>
           </div>
@@ -166,6 +180,53 @@ function PickHero({ pick, first }: { pick: Pick; first: boolean }) {
         </div>
 
         <dl className="mt-6 grid grid-cols-2 gap-6 border-t border-line pt-5">
+          <Fact label="за единицу" value={isNum(pick.unitPrice) ? formatRub(pick.unitPrice) : '—'} />
+          <Fact label="весь парк" value={total ? formatRub(total) : '—'} />
+        </dl>
+      </div>
+    </li>
+  )
+}
+
+/* The same robot as the hero, narrow enough to stand next to the others in one row. */
+function PickCard({ pick, first }: { pick: Pick; first: boolean }) {
+  const product = useProduct(pick.productId).data
+  const count = pick.working + pick.reserve
+  const total = isNum(pick.unitPrice) && count ? pick.unitPrice * count : null
+
+  return (
+    <li className="flex min-w-72 flex-1 basis-0 flex-col">
+      <div className="relative h-60 border-b border-line">
+        <RobotStage productId={pick.productId} solutionType={product?.solution_type ?? ''} />
+        <div className="pointer-events-none absolute top-4 right-4 left-4 flex flex-wrap items-center gap-1.5">
+          {first && <CardChip strong>Рекомендуем</CardChip>}
+          <CardChip>{pick.processName}</CardChip>
+        </div>
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-6">
+        <Link
+          to={`/catalog/${pick.productId}`}
+          className="truncate text-[20px] font-semibold tracking-[-0.02em] transition-colors hover:text-ink-2"
+          title={pick.name}
+        >
+          {pick.name}
+        </Link>
+        <p className="meta mt-1 truncate">
+          {[product?.manufacturer?.name, product?.solution_type_name].filter(Boolean).join(' · ') || ' '}
+        </p>
+
+        <div className="mt-auto flex items-end gap-2.5 pt-6">
+          <span className="display num text-[44px]">{pick.unknown ? '—' : formatNumber(count)}</span>
+          <span className="pb-1 leading-tight">
+            {!pick.unknown && (
+              <span className="block text-[14px] font-semibold">{pluralRu(count, ['робот', 'робота', 'роботов'])}</span>
+            )}
+            <span className="meta">{pick.source}</span>
+          </span>
+        </div>
+
+        <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-4">
           <Fact label="за единицу" value={isNum(pick.unitPrice) ? formatRub(pick.unitPrice) : '—'} />
           <Fact label="весь парк" value={total ? formatRub(total) : '—'} />
         </dl>
