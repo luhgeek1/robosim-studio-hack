@@ -288,6 +288,8 @@ function ProductSummary({
       to={`/catalog/${product.id}`}
       subtitle={product.manufacturer.name}
       price={product.price_from}
+      // Высота постоянная: при 2 решениях в колонке пропорция 5:6 из каталога даёт карточку выше экрана.
+      className="aspect-auto h-85"
       // Цвет продукта — тот же, что у его столбиков на графиках ниже.
       accent={color}
       chips={
