@@ -49,8 +49,8 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
           name: shortName(item.product_name ?? 'Решение'),
           processName: processName.get(item.process_key) ?? item.process_key,
           count: result?.final ?? item.count_manual ?? 0,
-          countNote: result
-            ? `${isNum(result.simulated) ? `${formatNumber(result.simulated)} по имитации` : `${formatNumber(result.analytic)} по расчёту цикла`}${result.reserve ? ` + ${formatNumber(result.reserve)} в резерв` : ''}`
+          countNote: result?.reserve
+            ? `${formatNumber(isNum(result.simulated) ? result.simulated : result.analytic)} + ${formatNumber(result.reserve)} резерв`
             : undefined,
           unitPrice: item.price_override_rub ?? item.price_rub,
         }
@@ -66,7 +66,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
         name: shortName(best.product.name),
         processName: shortName(process.name),
         count: best.estimate?.robots_count ?? 0,
-        countNote: best.estimate ? 'оценка по циклу, точнее — в имитации' : undefined,
+        countNote: best.estimate ? 'оценка по циклу' : undefined,
         unitPrice: best.product.price_from?.amount_rub,
       },
     ]
@@ -80,53 +80,49 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
 
   return (
     <section className="card mb-8 overflow-hidden">
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 px-7 pt-6 pb-5">
-        <div className="min-w-0">
+      <header className="flex items-baseline justify-between gap-4 border-b border-line px-6 py-4">
+        <div className="flex min-w-0 items-baseline gap-3">
           <h2 className="h2">Рекомендуем</h2>
-          <p className="mt-1 text-[13.5px] text-ink-3">
-            {fromScenario.length && scenario
-              ? `Состав сценария «${scenario.name}» — тот же, что на обзоре проекта`
-              : 'Лучший подходящий кандидат в каждом процессе — сценарий ещё не создан'}
-          </p>
+          {!fromScenario.length && <span className="meta truncate">лучший кандидат в каждом процессе</span>}
         </div>
-        <div className="flex items-end gap-8">
-          {calc && (
-            <>
-              <Metric value={formatYears(calc.payback_years)} label="окупаемость">
-                {verdict && (
-                  <>
-                    <span className={cn('size-1.5 rounded-full', VERDICT_DOT[VERDICT_TONE[verdict]])} />
-                    {VERDICT_LABEL[verdict].toLowerCase()}
-                  </>
-                )}
-              </Metric>
-              <Metric value={formatRub(calc.capex_rub)} label="вложения, с НДС" />
-              <Metric value={formatRub(calc.effect_rub_year)} label="эффект в год" />
-            </>
-          )}
-          {fromScenario.length > 0 && scenario && (
-            <Link
-              to={`/projects/${projectId}/scenarios/${scenario.id}`}
-              className="group flex items-center gap-1 pb-1 text-[13px] font-medium text-ink-3 transition-colors hover:text-ink"
-            >
-              Сценарий <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          )}
-        </div>
+        {fromScenario.length > 0 && scenario && (
+          <Link
+            to={`/projects/${projectId}/scenarios/${scenario.id}`}
+            className="group flex shrink-0 items-center gap-1 text-[13px] font-medium text-ink-3 transition-colors hover:text-ink"
+          >
+            Сценарий <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        )}
+      </header>
+
+      <div className={cn('grid', calc && 'lg:grid-cols-[minmax(0,1fr)_260px]')}>
+        <ul className="divide-y divide-line">
+          {picks.map((pick) => (
+            <PickRow key={pick.key} pick={pick} />
+          ))}
+        </ul>
+
+        {calc && (
+          <aside className="flex flex-col gap-3 border-t border-line bg-canvas/50 px-6 py-5 lg:border-t-0 lg:border-l">
+            <Metric label="окупаемость" value={formatYears(calc.payback_years)}>
+              {verdict && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className={cn('size-1.5 rounded-full', VERDICT_DOT[VERDICT_TONE[verdict]])} />
+                  {VERDICT_LABEL[verdict].toLowerCase()}
+                </span>
+              )}
+            </Metric>
+            <Metric label="вложения, с НДС" value={formatRub(calc.capex_rub)} />
+            <Metric label="эффект в год" value={formatRub(calc.effect_rub_year)} />
+            {calc.status === 'stale' && (
+              <p className="mt-auto flex items-center gap-1.5 text-[12px] text-warn">
+                <span className="size-1.5 shrink-0 rounded-full bg-warn" />
+                Данные изменились — пересчитайте
+              </p>
+            )}
+          </aside>
+        )}
       </div>
-
-      {calc?.status === 'stale' && (
-        <p className="mx-7 mb-4 flex items-center gap-2 text-[12.5px] text-warn">
-          <span className="size-1.5 rounded-full bg-warn" />
-          Данные менялись после расчёта — пересчитайте сценарий, состав может измениться
-        </p>
-      )}
-
-      <ul className={cn('grid border-t border-line', picks.length > 1 && 'lg:grid-cols-2 lg:divide-x lg:divide-line')}>
-        {picks.map((pick) => (
-          <PickRow key={pick.key} pick={pick} />
-        ))}
-      </ul>
     </section>
   )
 }
@@ -136,35 +132,25 @@ function PickRow({ pick }: { pick: Pick }) {
   const total = isNum(pick.unitPrice) && pick.count ? pick.unitPrice * pick.count : null
 
   return (
-    <li className="flex min-w-0 gap-6 px-7 py-6">
-      <div className="relative h-44 w-60 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(ellipse_at_50%_60%,#ffffff_0%,var(--card)_45%,var(--canvas)_100%)] ring-1 ring-line">
+    <li className="flex min-w-0 items-center gap-5 px-6 py-4">
+      <div className="relative h-28 w-40 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(ellipse_at_50%_60%,#ffffff_0%,var(--card)_45%,var(--canvas)_100%)] ring-1 ring-line">
         <RobotPreview3D productId={pick.productId} framing={{ scale: 1.25, lower: 0.08 }} />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="truncate text-[18px] font-semibold tracking-[-0.015em]">{pick.name}</div>
-            <div className="truncate text-[13px] text-ink-3">
-              {[product?.manufacturer?.name, product?.solution_type_name].filter(Boolean).join(' · ')}
-            </div>
-          </div>
-          <div className="shrink-0 text-right">
-            <div className="display num text-[34px]">×{formatNumber(pick.count)}</div>
-            <div className="meta">{pluralRu(pick.count, ['робот', 'робота', 'роботов'])}</div>
-          </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[17px] font-semibold tracking-[-0.015em]">{pick.name}</div>
+        <div className="truncate text-[13px] text-ink-3">
+          {[pick.processName, product?.manufacturer?.name].filter(Boolean).join(' · ')}
         </div>
+        <div className="num mt-2.5 truncate text-[13px] text-ink-2">
+          {isNum(pick.unitPrice) ? `${formatRub(pick.unitPrice)} за шт.` : 'цена не указана'}
+          {total && <span className="text-ink-3"> · парк {formatRub(total)}</span>}
+        </div>
+      </div>
 
-        {product?.short_description && (
-          <p className="mt-2 line-clamp-2 text-[13.5px] leading-relaxed text-ink-2">{product.short_description}</p>
-        )}
-
-        <dl className="mt-auto grid max-w-2xl grid-cols-3 gap-4 pt-4">
-          <Fact label="процесс" value={pick.processName} />
-          <Fact label="за единицу" value={isNum(pick.unitPrice) ? formatRub(pick.unitPrice) : '—'} />
-          <Fact label="весь парк" value={total ? formatRub(total) : '—'} />
-        </dl>
-        {pick.countNote && <div className="meta mt-2">{pick.countNote}</div>}
+      <div className="shrink-0 text-right">
+        <div className="display num text-[30px] leading-none">×{formatNumber(pick.count)}</div>
+        <div className="meta mt-1.5">{pick.countNote ?? pluralRu(pick.count, ['робот', 'робота', 'роботов'])}</div>
       </div>
     </li>
   )
@@ -172,26 +158,12 @@ function PickRow({ pick }: { pick: Pick }) {
 
 function Metric({ value, label, children }: { value: string; label: string; children?: ReactNode }) {
   return (
-    <div className="text-right whitespace-nowrap">
-      <div className="num text-[20px] leading-tight font-semibold tracking-[-0.015em]">{value}</div>
-      <div className="meta mt-0.5 inline-flex items-center gap-1.5">
-        {label}
-        {children && (
-          <>
-            <span>·</span>
-            <span className="inline-flex items-center gap-1.5 text-ink-2">{children}</span>
-          </>
-        )}
+    <div className="flex items-baseline justify-between gap-4 whitespace-nowrap">
+      <div className="meta">{label}</div>
+      <div className="text-right">
+        <div className="num text-[16px] font-semibold tracking-[-0.01em]">{value}</div>
+        {children && <div className="meta text-ink-2">{children}</div>}
       </div>
-    </div>
-  )
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex min-w-0 flex-col-reverse">
-      <dt className="truncate text-[12px] text-ink-3">{label}</dt>
-      <dd className="num truncate text-[14.5px] font-medium">{value}</dd>
     </div>
   )
 }
