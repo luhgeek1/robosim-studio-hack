@@ -18,6 +18,9 @@ export const METRIC: Record<
   tco_rub: { label: 'TCO за горизонт', short: 'TCO', format: (v) => formatRub(v) },
 }
 
+// Seed 1, как в отчёте (D-021): вероятности на экране и в PDF совпадают и не плывут от захода к заходу.
+export const MC_REQUEST = { n: 2000, method: 'analytic', seed: 1 } as const
+
 export const METRIC_KEYS = Object.keys(METRIC) as Metric[]
 
 // Heatmap cells are small: show payback in years and money in millions without units (the legend carries them).

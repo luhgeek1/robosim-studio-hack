@@ -1,22 +1,34 @@
-import { ClipboardList, Ruler } from 'lucide-react'
+import { ChevronDown, ClipboardList } from 'lucide-react'
+import { useState } from 'react'
 import { ProvenanceBadge } from '@/entities/provenance'
 import { useSurvey } from '@/entities/scenario'
 import { formatRub, formatValue } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 import { Section } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 
+// The head of the list is what a survey visit can realistically cover; the tail stays one click away.
+const SHOWN = 5
+
 export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
   const survey = useSurvey(scenarioId)
+  const [all, setAll] = useState(false)
   const items = [...(survey.data?.items ?? [])].sort((a, b) => a.rank - b.rank)
   const maxSwing = Math.max(...items.map((i) => i.swing), 0)
+  const shown = all ? items : items.slice(0, SHOWN)
 
   return (
     <Section
-      title="Что уточнить при обследовании объекта"
-      description="Параметры с наибольшим влиянием, которые пока взяты по умолчанию или как допущение: их стоит замерить первыми"
+      title="Что замерить на объекте первым"
+      description="Самые влиятельные параметры, которые пока взяты по умолчанию или как допущение"
+      bodyClassName="p-0"
     >
-      {survey.isPending && <LoadingBlock rows={3} />}
-      {survey.isError && <ErrorBlock error={survey.error} onRetry={() => survey.refetch()} />}
+      {survey.isPending && <LoadingBlock rows={3} className="mx-5 mb-5" />}
+      {survey.isError && (
+        <div className="px-5 pb-5">
+          <ErrorBlock error={survey.error} onRetry={() => survey.refetch()} />
+        </div>
+      )}
       {survey.data && !items.length && (
         <EmptyState
           icon={<ClipboardList className="size-6" />}
@@ -25,41 +37,53 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
         />
       )}
       {items.length > 0 && (
-        <ol className="divide-y">
-          {items.map((item) => (
-            <li key={item.key} className="grid grid-cols-[2rem_minmax(0,1fr)_14rem] gap-4 py-3">
-              <div className="num flex size-7 items-center justify-center rounded-full bg-raised text-sm font-semibold">
-                {item.rank}
-              </div>
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{item.name}</span>
-                  <ProvenanceBadge status={item.status} />
-                  <span className="num text-muted-foreground">
-                    сейчас: {formatValue(item.current_value, item.unit)}
-                  </span>
-                </div>
-                <p>{item.recommendation}</p>
-                {item.how_to_measure && (
-                  <p className="flex gap-1.5 text-muted-foreground">
-                    <Ruler className="mt-0.5 size-3.5 shrink-0" />
-                    <span>Как замерить: {item.how_to_measure}</span>
+        <>
+          <ol className="hairline divide-y divide-line">
+            {shown.map((item) => (
+              <li key={item.key} className="grid grid-cols-[1.75rem_minmax(0,1fr)_11rem] items-start gap-4 px-5 py-4">
+                <span className="num flex size-7 items-center justify-center rounded-full bg-black/5 text-[12.5px] font-semibold">
+                  {item.rank}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-[14px] font-medium">{item.name}</span>
+                    <ProvenanceBadge status={item.status} />
+                  </div>
+                  <p
+                    className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-3"
+                    title={item.how_to_measure ? undefined : item.recommendation}
+                  >
+                    <span className="num text-ink-2">сейчас {formatValue(item.current_value, item.unit)}</span>
+                    {' · '}
+                    {item.how_to_measure ?? item.recommendation}
                   </p>
-                )}
-              </div>
-              <div className="space-y-1 pt-1">
-                <div className="text-xs text-muted-foreground">Влияние на NPV (размах)</div>
-                <div className="num text-sm font-semibold">{formatRub(item.swing)}</div>
-                <div className="h-1.5 rounded-full bg-raised">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${maxSwing ? (item.swing / maxSwing) * 100 : 0}%` }}
-                  />
                 </div>
-              </div>
-            </li>
-          ))}
-        </ol>
+                <div className="pt-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-[11.5px] text-ink-3">размах NPV</span>
+                    <span className="num text-[13px] font-semibold">{formatRub(item.swing)}</span>
+                  </div>
+                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-black/5">
+                    <div
+                      className="h-full rounded-full bg-ink"
+                      style={{ width: `${maxSwing ? (item.swing / maxSwing) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+          {items.length > SHOWN && (
+            <button
+              type="button"
+              onClick={() => setAll((v) => !v)}
+              className="hairline flex w-full items-center justify-center gap-1.5 py-3 text-[13px] font-medium text-ink-3 transition-colors hover:text-ink"
+            >
+              {all ? 'Свернуть' : `Показать все ${items.length}`}
+              <ChevronDown size={14} className={cn('transition-transform', all && 'rotate-180')} />
+            </button>
+          )}
+        </>
       )}
     </Section>
   )

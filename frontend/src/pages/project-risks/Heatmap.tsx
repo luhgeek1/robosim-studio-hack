@@ -54,7 +54,7 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
   const ys = hm?.y_values ?? []
   const z = hm?.z ?? []
   if (!hm || !xs.length || !ys.length) {
-    return <div className="text-muted-foreground">Сервер не вернул сетку для этой пары параметров.</div>
+    return <div className="text-ink-3">Сервер не вернул сетку для этой пары параметров.</div>
   }
   const nameOf = (key?: string) =>
     result.items.find((i) => i.key === key)?.name ?? (key ? (AXIS_FALLBACK[key] ?? key) : '')
@@ -64,9 +64,7 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
     <div className="space-y-3">
       <div className="flex gap-2">
         <div className="flex w-6 shrink-0 items-center justify-center">
-          <span className="-rotate-90 text-xs whitespace-nowrap text-muted-foreground">
-            {nameOf(hm.y_key)}, % от текущего
-          </span>
+          <span className="-rotate-90 text-xs whitespace-nowrap text-ink-3">{nameOf(hm.y_key)}, % от текущего</span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="grid gap-0.5" style={{ gridTemplateColumns: `3.5rem repeat(${xs.length}, minmax(0, 1fr))` }}>
@@ -80,9 +78,9 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
                       key={xi}
                       title={`${nameOf(hm.x_key)}: ${asPct(x)}; ${nameOf(hm.y_key)}: ${asPct(y)} → ${METRIC[metric].short}: ${METRIC[metric].format(v)}`}
                       className={cn(
-                        'num flex h-10 items-center justify-center rounded-sm border text-sm font-medium',
+                        'num flex h-10 items-center justify-center rounded-md text-[13px] font-medium',
                         TONE_CLASS[toneOf(metric, v, result.base_value)],
-                        base && 'ring-2 ring-foreground ring-offset-2 ring-offset-surface',
+                        base && 'ring-2 ring-ink ring-offset-2 ring-offset-surface',
                       )}
                     >
                       {formatCompact(metric, v)}
@@ -93,28 +91,28 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
             ))}
             <div />
             {xs.map((x, xi) => (
-              <div key={xi} className="num pt-1 text-center text-xs text-muted-foreground">
+              <div key={xi} className="num pt-1 text-center text-xs text-ink-3">
                 {asPct(x)}
               </div>
             ))}
           </div>
-          <div className="mt-1 pl-14 text-center text-xs text-muted-foreground">{nameOf(hm.x_key)}, % от текущего</div>
+          <div className="mt-1 pl-14 text-center text-xs text-ink-3">{nameOf(hm.x_key)}, % от текущего</div>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+      <div className="meta flex flex-wrap items-center gap-3">
         <span>
           В ячейках — {METRIC[metric].short}, {COMPACT_UNIT[metric]}
           {metric === 'payback_years' && ' (∞ — не окупается в горизонте)'}.
         </span>
         {LEGEND[metric].map((l) => (
           <span key={l.text} className="flex items-center gap-1">
-            <span className={cn('inline-block size-3 rounded-sm border', TONE_CLASS[l.tone])} />
+            <span className={cn('inline-block size-3 rounded-[4px]', TONE_CLASS[l.tone])} />
             {l.text}
           </span>
         ))}
         <span className="flex items-center gap-1">
-          <span className="inline-block size-3 rounded-sm ring-2 ring-foreground" />
+          <span className="inline-block size-3 rounded-[4px] ring-2 ring-ink" />
           текущие значения
         </span>
       </div>
@@ -125,7 +123,7 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
 function Row({ y, children }: { y: number; children: ReactNode }) {
   return (
     <>
-      <div className="num flex items-center justify-end pr-2 text-xs text-muted-foreground">{asPct(y)}</div>
+      <div className="num flex items-center justify-end pr-2 text-xs text-ink-3">{asPct(y)}</div>
       {children}
     </>
   )

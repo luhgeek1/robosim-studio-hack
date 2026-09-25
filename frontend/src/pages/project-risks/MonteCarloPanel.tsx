@@ -2,22 +2,15 @@ import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useMonteCarlo } from '@/entities/scenario'
 import type { MonteCarloRequest, MonteCarloResult } from '@/shared/api/types'
-import { formatMln, formatNumber, formatPct } from '@/shared/lib/format'
-import { Section, Stat, StatStrip } from '@/shared/ui/page'
+import { formatMln, formatNumber } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
-import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
-import { METRIC } from './metrics'
+import { Segmented } from '@/shared/ui/v0'
+import { MC_REQUEST, METRIC } from './metrics'
 
 type McMetric = MonteCarloRequest['metric']
 
 const MC_METRICS: McMetric[] = ['payback_years', 'npv_rub', 'roi_pct']
-const RUNS = 2000
-
-const PROBABILITY_LABEL: Record<string, string> = {
-  payback_le_3y: 'окупится быстрее 3 лет',
-  payback_le_5y: 'окупится быстрее 5 лет',
-  npv_positive: 'NPV будет положительным',
-}
 
 const METHOD_LABEL: Record<MonteCarloResult['method'], string> = {
   analytic: 'аналитический метод',
@@ -25,95 +18,84 @@ const METHOD_LABEL: Record<MonteCarloResult['method'], string> = {
   des: 'дискретно-событийная имитация',
 }
 
-const POS_COLOR = 'var(--chart-3)'
-const NEG_COLOR = 'var(--chart-1)'
+const POS_COLOR = 'var(--foreground)'
+const NEG_COLOR = 'var(--ink-4)'
 
 export function MonteCarloPanel({ scenarioId }: { scenarioId: string }) {
   const [metric, setMetric] = useState<McMetric>('payback_years')
-  // Seed 1, как в отчёте (D-021): вероятности на экране и в PDF совпадают и не плывут от захода к заходу.
-  const mc = useMonteCarlo(scenarioId, { n: RUNS, metric, method: 'analytic', seed: 1 })
+  const mc = useMonteCarlo(scenarioId, { ...MC_REQUEST, metric })
 
   return (
-    <Section
-      title="Монте-Карло: разброс результата"
-      description={`${formatNumber(RUNS)} случайных сочетаний ключевых параметров в их диапазонах`}
-      actions={
-        <ToggleGroup
-          type="single"
-          variant="outline"
+    <article className="card overflow-hidden">
+      <header className="flex flex-wrap items-start justify-between gap-4 px-6 pt-5 pb-4">
+        <div className="min-w-0">
+          <h2 className="h3 text-[18px]">Разброс результата</h2>
+          <p className="meta mt-1">
+            {formatNumber(MC_REQUEST.n)} случайных сочетаний ключевых параметров в пределах их диапазонов
+          </p>
+        </div>
+        <Segmented
+          layoutId="risks-mc-metric"
           size="sm"
-          spacing={0}
           value={metric}
-          onValueChange={(v) => v && setMetric(v as McMetric)}
-        >
-          {MC_METRICS.map((m) => (
-            <ToggleGroupItem key={m} value={m}>
-              {METRIC[m].label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      }
-    >
-      {mc.isPending && <LoadingBlock rows={3} />}
-      {mc.isError && <ErrorBlock error={mc.error} onRetry={() => mc.refetch()} />}
+          onChange={setMetric}
+          options={MC_METRICS.map((m) => ({ value: m, label: METRIC[m].short, hint: METRIC[m].label }))}
+        />
+      </header>
+      {mc.isPending && <LoadingBlock rows={3} className="px-6 pb-6" />}
+      {mc.isError && (
+        <div className="px-6 pb-6">
+          <ErrorBlock error={mc.error} onRetry={() => mc.refetch()} />
+        </div>
+      )}
       {mc.data && <MonteCarloBody result={mc.data} metric={metric} />}
-    </Section>
+    </article>
   )
 }
 
 function MonteCarloBody({ result, metric }: { result: MonteCarloResult; metric: McMetric }) {
   const fmt = METRIC[metric].format
-  const probabilities = Object.entries(result.probability ?? {})
   const lowerBetter = metric === 'payback_years'
 
   return (
-    <div className="space-y-5">
-      {probabilities.length > 0 && (
-        <div className="grid grid-cols-3 gap-6">
-          {probabilities.map(([key, p]) => (
-            <div key={key} className="border-l-2 border-l-primary pl-4">
-              <div className="num text-3xl leading-none font-semibold tracking-tight">
-                {formatPct(p, { share: true, digits: 0 })}
-              </div>
-              <div className="mt-1.5 text-muted-foreground">вероятность, что {PROBABILITY_LABEL[key] ?? key}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <StatStrip columns={4}>
-        <Stat
-          label={`P10 — ${lowerBetter ? 'оптимистично' : 'осторожно'}`}
-          value={fmt(result.p10)}
-          hint="10 % прогонов ниже"
-        />
-        <Stat label="P50 — медиана" value={fmt(result.p50)} hint="половина прогонов ниже" />
-        <Stat
-          label={`P90 — ${lowerBetter ? 'осторожно' : 'оптимистично'}`}
-          value={fmt(result.p90)}
-          hint="10 % прогонов выше"
-        />
-        <Stat
-          label="Среднее"
-          value={fmt(result.mean)}
-          hint={`${formatNumber(result.n)} прогонов, ${METHOD_LABEL[result.method]}`}
-        />
-      </StatStrip>
-
-      <div className="grid grid-cols-[1.4fr_1fr] gap-6">
-        <div>
-          <div className="mb-2 text-sm font-medium">Распределение: {METRIC[metric].label}</div>
+    <div className="hairline grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className="px-6 py-5">
+        <dl className="grid grid-cols-3 gap-6">
+          <Figure value={fmt(result.p10)} label={`P10 · ${lowerBetter ? 'удачный' : 'осторожный'} исход`} />
+          <Figure value={fmt(result.p50)} label="P50 · медиана" strong />
+          <Figure value={fmt(result.p90)} label={`P90 · ${lowerBetter ? 'осторожный' : 'удачный'} исход`} />
+        </dl>
+        <div className="mt-4">
           <Histogram result={result} metric={metric} />
         </div>
-        <div>
-          <div className="mb-1 text-sm font-medium">Что сильнее всего двигает результат</div>
-          <p className="mb-3 text-xs text-muted-foreground">
-            Корреляция параметра с результатом по прогонам: справа — рост параметра увеличивает показатель, слева —
-            уменьшает.
-          </p>
-          <Drivers result={result} />
-        </div>
+        <p className="meta mt-1">
+          {formatNumber(result.n)} прогонов, {METHOD_LABEL[result.method]}; среднее — {fmt(result.mean)}
+        </p>
       </div>
+
+      <div className="border-t border-line bg-surface-2/60 px-6 py-5 lg:border-t-0 lg:border-l">
+        <div className="text-[13px] text-ink-2">Что двигает результат</div>
+        <p className="meta mt-1 mb-4">
+          Связь параметра с показателем по прогонам: вправо — рост параметра увеличивает показатель, влево — уменьшает
+        </p>
+        <Drivers result={result} />
+      </div>
+    </div>
+  )
+}
+
+function Figure({ value, label, strong }: { value: string; label: string; strong?: boolean }) {
+  return (
+    <div className="flex min-w-0 flex-col-reverse">
+      <dt className="mt-0.5 truncate text-[12.5px] text-ink-3">{label}</dt>
+      <dd
+        className={cn(
+          'num leading-tight font-semibold tracking-[-0.01em]',
+          strong ? 'text-[22px]' : 'text-[19px] text-ink-2',
+        )}
+      >
+        {value}
+      </dd>
     </div>
   )
 }
@@ -127,7 +109,7 @@ function Histogram({ result, metric }: { result: MonteCarloResult; metric: McMet
   const axisUnit = { payback_years: 'лет', npv_rub: 'млн ₽', roi_pct: '%' }[metric]
 
   return (
-    <div className="h-64">
+    <div className="h-56">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 16, right: 12, left: 0, bottom: 16 }} barCategoryGap={1}>
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
@@ -158,16 +140,16 @@ function Histogram({ result, metric }: { result: MonteCarloResult; metric: McMet
               const row = payload?.[0]?.payload as (typeof data)[number] | undefined
               if (!active || !row) return null
               return (
-                <div className="rounded-lg border bg-popover px-3 py-2 text-xs shadow-md">
-                  <div className="font-medium">
+                <div className="rounded-[10px] bg-ink px-3 py-2 text-[12px] text-white shadow-float">
+                  <div className="num font-medium">
                     {fmt(row.lo)} — {fmt(row.hi)}
                   </div>
-                  <div className="num text-muted-foreground">прогонов: {formatNumber(row.count)}</div>
+                  <div className="num text-white/70">прогонов: {formatNumber(row.count)}</div>
                 </div>
               )
             }}
           />
-          <Bar dataKey="count" fill="var(--chart-1)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+          <Bar dataKey="count" fill="var(--ink-4)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
           {(['p10', 'p50', 'p90'] as const).map((k) => (
             <ReferenceLine
               key={k}
@@ -185,30 +167,30 @@ function Histogram({ result, metric }: { result: MonteCarloResult; metric: McMet
 
 function Drivers({ result }: { result: MonteCarloResult }) {
   const drivers = result.top_drivers ?? []
-  if (!drivers.length) return <div className="text-muted-foreground">Сервер не вернул факторы.</div>
+  if (!drivers.length) return <div className="meta">Сервер не вернул факторы.</div>
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-2.5">
       {drivers.map((d, i) => {
         const c = d.correlation ?? 0
         const width = Math.min(Math.abs(c), 1) * 50
         return (
-          <li key={d.key ?? i} className="grid grid-cols-[minmax(0,1fr)_7rem_3rem] items-center gap-2">
-            <span className="truncate text-sm" title={d.name}>
+          <li key={d.key ?? i} className="grid grid-cols-[minmax(0,1fr)_6rem_2.5rem] items-center gap-3">
+            <span className="truncate text-[13px] text-ink-2" title={d.name}>
               {d.name ?? d.key}
             </span>
-            <span className="relative h-2.5 rounded-sm bg-muted">
-              <span className="absolute inset-y-0 left-1/2 w-px bg-foreground/50" />
+            <span className="relative h-1.5 rounded-full bg-black/5">
+              <span className="absolute -inset-y-1 left-1/2 w-px bg-ink-4" />
               <span
                 className="absolute inset-y-0"
                 style={{
                   left: c >= 0 ? '50%' : `${50 - width}%`,
                   width: `${width}%`,
                   background: c >= 0 ? POS_COLOR : NEG_COLOR,
-                  borderRadius: c >= 0 ? '0 3px 3px 0' : '3px 0 0 3px',
+                  borderRadius: c >= 0 ? '0 999px 999px 0' : '999px 0 0 999px',
                 }}
               />
             </span>
-            <span className="num text-right text-xs">
+            <span className="num text-right text-[12px] text-ink-3">
               {c > 0 ? '+' : c < 0 ? '−' : ''}
               {formatNumber(Math.abs(c), 2)}
             </span>

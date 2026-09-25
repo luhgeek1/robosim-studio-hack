@@ -2,14 +2,17 @@ import { ArrowRight, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useProjectId } from '@/entities/project'
-import { SCENARIO_KIND_LABEL, useScenarios, useSensitivity } from '@/entities/scenario'
+import { SCENARIO_KIND_LABEL, useMonteCarlo, useScenarios, useSensitivity } from '@/entities/scenario'
+import type { MonteCarloResult } from '@/shared/api/types'
+import { formatNumber, formatPct, formatYears, isNum } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
-import { Callout, Screen, Section } from '@/shared/ui/page'
+import { Callout, Screen, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { ToneBadge } from '@/shared/ui/tone'
+import { Segmented } from '@/shared/ui/v0'
 import { Heatmap } from './Heatmap'
-import { METRIC, METRIC_KEYS, type Metric } from './metrics'
+import { MC_REQUEST, METRIC, METRIC_KEYS, type Metric } from './metrics'
 import { MonteCarloPanel } from './MonteCarloPanel'
 import { SurveyPanel } from './SurveyPanel'
 import { Tornado } from './Tornado'
@@ -26,8 +29,13 @@ export function RisksPage() {
   const scenario =
     options.find((s) => s.id === picked) ?? options.find((s) => s.is_recommended) ?? options.at(0) ?? null
 
-  const lead =
-    'Что сильнее всего меняет окупаемость, как результат распределяется при неопределённости и что замерить на объекте в первую очередь.'
+  // Same request as the panel's default view, so the title and the panel share one cached run.
+  const mc = useMonteCarlo(scenario?.id, { ...MC_REQUEST, metric: 'payback_years' })
+  const probability = mc.data?.probability ?? {}
+  const title = isNum(probability.payback_le_5y)
+    ? `В ${formatPct(probability.payback_le_5y, { share: true, digits: 0 })} случаев окупится быстрее 5 лет`
+    : 'Насколько устойчив результат'
+  const lead = 'Разброс результата, что сильнее всего его двигает и какие данные объекта замерить первыми.'
   const actions = options.length > 0 && (
     <Select value={scenario?.id} onValueChange={setPicked}>
       <SelectTrigger className="min-w-72">
@@ -76,7 +84,7 @@ export function RisksPage() {
   }
 
   return (
-    <Screen title="Насколько устойчив результат" lead={lead} actions={actions} nextLabel="Проверить имитацией">
+    <Screen title={title} lead={lead} actions={actions} nextLabel="Проверить имитацией">
       <div className="space-y-6">
         {scenario.last_calculation?.status === 'stale' && (
           <Callout
@@ -93,8 +101,9 @@ export function RisksPage() {
           </Callout>
         )}
 
-        <SensitivitySections scenarioId={scenario.id} metric={metric} onMetric={setMetric} />
+        {mc.data && <Odds result={mc.data} />}
         <MonteCarloPanel scenarioId={scenario.id} />
+        <SensitivitySections scenarioId={scenario.id} metric={metric} onMetric={setMetric} />
         <SurveyPanel scenarioId={scenario.id} />
       </div>
     </Screen>
@@ -113,27 +122,22 @@ function SensitivitySections({
   const tornado = useSensitivity(scenarioId, { metric })
   const heatmap = useSensitivity(scenarioId, { metric, heatmap: HEATMAP })
 
-  const metricSelect = (
-    <Select value={metric} onValueChange={(v) => onMetric(v as Metric)}>
-      <SelectTrigger className="min-w-56">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {METRIC_KEYS.map((m) => (
-          <SelectItem key={m} value={m}>
-            {METRIC[m].label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+  const metricSwitch = (
+    <Segmented
+      layoutId="risks-metric"
+      size="sm"
+      value={metric}
+      onChange={onMetric}
+      options={METRIC_KEYS.map((m) => ({ value: m, label: METRIC[m].short, hint: METRIC[m].label }))}
+    />
   )
 
   return (
     <>
       <Section
-        title="Чувствительность: торнадо"
-        description="Каждый параметр по очереди сдвигается к границам своего диапазона; сверху — с наибольшим влиянием"
-        actions={metricSelect}
+        title="Что сильнее всего меняет результат"
+        description="Каждый параметр по очереди сдвигается к границам диапазона; сверху — самый влиятельный"
+        actions={metricSwitch}
       >
         {tornado.isPending && <LoadingBlock rows={4} />}
         {tornado.isError && <ErrorBlock error={tornado.error} onRetry={() => tornado.refetch()} />}
@@ -141,13 +145,30 @@ function SensitivitySections({
       </Section>
 
       <Section
-        title="Тепловая карта: ФОТ × объём операций"
-        description={`Два главных внешних фактора меняются одновременно. Показатель: ${METRIC[metric].label}`}
+        title="Если зарплаты и объёмы изменятся вместе"
+        description={`${METRIC[metric].label} при одновременном сдвиге ФОТ и объёма операций`}
       >
         {heatmap.isPending && <LoadingBlock rows={3} />}
         {heatmap.isError && <ErrorBlock error={heatmap.error} onRetry={() => heatmap.refetch()} />}
         {heatmap.data && <Heatmap result={heatmap.data} metric={metric} />}
       </Section>
     </>
+  )
+}
+
+function Odds({ result }: { result: MonteCarloResult }) {
+  const p = result.probability ?? {}
+  const share = (v: number | undefined) => (isNum(v) ? formatPct(v, { share: true, digits: 0 }) : '—')
+  return (
+    <StatStrip columns={4}>
+      <Stat label="Окупится до 3 лет" value={share(p.payback_le_3y)} hint="вероятность" />
+      <Stat label="Окупится до 5 лет" value={share(p.payback_le_5y)} hint="вероятность" />
+      <Stat label="NPV больше нуля" value={share(p.npv_positive)} hint="вероятность" />
+      <Stat
+        label="Окупаемость, P10–P90"
+        value={`${formatNumber(result.p10, 1)}–${formatYears(result.p90)}`}
+        hint={`медиана ${formatYears(result.p50)}`}
+      />
+    </StatStrip>
   )
 }

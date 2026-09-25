@@ -1,7 +1,6 @@
 import { ProvenanceBadge } from '@/entities/provenance'
 import type { SensitivityResult } from '@/shared/api/types'
 import { formatNumber, formatPct, isNum } from '@/shared/lib/format'
-import { ToneBadge } from '@/shared/ui/tone'
 import { METRIC, type Metric } from './metrics'
 
 type Item = SensitivityResult['items'][number]
@@ -13,8 +12,8 @@ const KIND_LABEL: Record<NonNullable<Item['kind']>, string> = {
   group: 'группа',
 }
 
-const LOW_COLOR = 'var(--chart-1)'
-const HIGH_COLOR = 'var(--chart-3)'
+const LOW_COLOR = 'var(--ink-4)'
+const HIGH_COLOR = 'var(--foreground)'
 // Leaves room for the value labels outside the bar ends.
 const PAD_SHARE = 0.22
 
@@ -51,17 +50,17 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+      <div className="meta flex flex-wrap items-center gap-4">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-4 rounded-sm" style={{ background: LOW_COLOR }} />
+          <span className="inline-block h-2 w-4 rounded-full" style={{ background: LOW_COLOR }} />
           нижняя граница параметра
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-4 rounded-sm" style={{ background: HIGH_COLOR }} />
+          <span className="inline-block h-2 w-4 rounded-full" style={{ background: HIGH_COLOR }} />
           верхняя граница параметра
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-0.5 bg-foreground" />
+          <span className="inline-block h-3 w-px bg-ink-3" />
           базовое значение
         </span>
       </div>
@@ -70,7 +69,7 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
         <div />
         <div className="relative h-6">
           <div
-            className="num absolute bottom-1 -translate-x-1/2 rounded bg-foreground px-1.5 text-xs whitespace-nowrap text-background"
+            className="num absolute bottom-1 -translate-x-1/2 rounded-full bg-ink px-2 py-0.5 text-[11.5px] font-medium whitespace-nowrap text-white"
             style={{ left: `${basePos * 100}%` }}
           >
             база: {fmt(result.base_value)}
@@ -98,17 +97,17 @@ function TornadoRow({
 }) {
   return (
     <>
-      <div className="min-w-0 border-t py-2">
-        <div className="text-sm leading-snug font-medium">{item.name}</div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-          {item.kind && <ToneBadge tone="muted">{KIND_LABEL[item.kind]}</ToneBadge>}
+      <div className="min-w-0 border-t border-line py-3">
+        <div className="text-[13.5px] leading-snug font-medium">{item.name}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-3">
           <ProvenanceBadge status={item.provenance_status} />
           <span className="num">{rangeText(item)}</span>
+          {item.kind && <span>· {KIND_LABEL[item.kind]}</span>}
         </div>
       </div>
-      <div className="relative border-t">
-        <div className="absolute inset-y-0 w-px bg-foreground/70" style={{ left: `${basePos * 100}%` }} />
-        <div className="flex h-full flex-col justify-center gap-1 py-2">
+      <div className="relative border-t border-line">
+        <div className="absolute inset-y-0 w-px bg-ink-3" style={{ left: `${basePos * 100}%` }} />
+        <div className="flex h-full flex-col justify-center gap-1.5 py-3">
           <Bar value={item.metric_at_low} color={LOW_COLOR} pos={pos} basePos={basePos} fmt={fmt} />
           <Bar value={item.metric_at_high} color={HIGH_COLOR} pos={pos} basePos={basePos} fmt={fmt} />
         </div>
@@ -135,19 +134,19 @@ function Bar({
   const width = Math.abs(end - basePos)
   const toRight = end >= basePos
   return (
-    <div className="relative h-3">
+    <div className="relative h-2.5">
       <div
         className="absolute inset-y-0"
         style={{
           left: `${left * 100}%`,
           width: `max(${width * 100}%, 2px)`,
           background: color,
-          borderRadius: toRight ? '0 4px 4px 0' : '4px 0 0 4px',
+          borderRadius: toRight ? '0 999px 999px 0' : '999px 0 0 999px',
           opacity: value === null ? 0.45 : 1,
         }}
       />
       <span
-        className="num absolute top-1/2 -translate-y-1/2 text-xs whitespace-nowrap"
+        className="num absolute top-1/2 -translate-y-1/2 text-[11.5px] whitespace-nowrap text-ink-2"
         style={toRight ? { left: `calc(${end * 100}% + 4px)` } : { right: `calc(${(1 - end) * 100}% + 4px)` }}
       >
         {fmt(value)}
