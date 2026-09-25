@@ -34,7 +34,6 @@ export function ObjectPage() {
 
   return (
     <Screen
-      wide
       dense
       title={project.name}
       actions={

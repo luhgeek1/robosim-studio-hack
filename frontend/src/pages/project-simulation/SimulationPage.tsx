@@ -107,14 +107,14 @@ export function SimulationPage() {
 
   if (scenarios.isPending || objectType.isPending) {
     return (
-      <Screen wide title="Справятся ли роботы">
+      <Screen title="Справятся ли роботы">
         <LoadingBlock label="Загружаем сценарии…" />
       </Screen>
     )
   }
   if (objectType.data && objectType.data.depth !== 'full') {
     return (
-      <Screen wide title="Имитация для этого типа объекта — следующим этапом">
+      <Screen title="Имитация для этого типа объекта — следующим этапом">
         <EmptyState
           title="Число роботов посчитано по времени цикла"
           description="Дискретно-событийная имитация сейчас построена для склада (D-005). Для аэропорта и больницы количество роботов берётся из расчёта по времени цикла с резервом — его видно в сценариях и сравнении."
@@ -125,7 +125,6 @@ export function SimulationPage() {
   if (scenarios.isError || !scenario) {
     return (
       <Screen
-        wide
         title="Справятся ли роботы"
         lead="Имитация проверяет число роботов из расчёта на графе планировки: заторы, зарядка, SLA."
       >
@@ -326,7 +325,6 @@ function SimulationView({
 
   return (
     <Screen
-      wide
       title={
         <>
           {config.count} × {sizing?.product_name ?? '…'}
