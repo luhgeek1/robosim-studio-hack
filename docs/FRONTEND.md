@@ -124,7 +124,7 @@ Vite + React 19 + TypeScript strict, Tailwind 4 + shadcn/ui (radix, стиль n
 | `/catalog/:productId` | Карточка: ТТХ по 6 группам с бейджами, предложения, внедрения, источники | `getProduct` | MVP |
 | `/catalog/compare` | Сравнение 2–5 продуктов, лучшее значение подсвечено | `compareProducts` | MVP |
 | `/projects` | Проекты: сводка, создать (пустой / демо), копировать, удалить | `listProjects`, `createProject`, `copyProject`, `deleteProject`, `listObjectTypes` | MVP |
-| `/projects/:id` | Обзор: статус, панель доверия, путь по шагам, журнал | `getProject`, `getProjectDataQuality`, `listProjectAudit` | MVP |
+| `/projects/:id` | Обзор: итоги рекомендованного сценария, панель доверия, журнал (шаги — в верхней панели) | `getProject`, `getProjectDataQuality`, `listProjectAudit` | MVP |
 | `…/object` | Параметры по группам: правка, валидация, импорт Excel, шаблон; двойник на планировке проекта (построить, перестроить после правки параметров); «далее» по `can_match` | `listProjectParams`, `updateProjectParam`, `resetProjectParam`, `getProjectValidation`, `importProjectParamsFile`, `applyImport`, `downloadImportTemplate`, `getLayout`, `generateLayout` | MVP |
 | `…/processes` | «Где деньги»: спрос, пик, ФОТ по процессам, часовой профиль | `getProjectProcesses` | MVP |
 | `…/matching` | Подбор по процессам: подходит / проверить / исключено, причины, недостающие данные и зачем они нужны, скоринг, веса, ручное добавление исключённого с показом причин | `getMatching`, `runMatching`, `addManualCandidate` | MVP |
