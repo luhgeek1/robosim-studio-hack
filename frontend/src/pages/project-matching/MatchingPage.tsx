@@ -15,6 +15,7 @@ import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/state
 import { Segmented } from '@/shared/ui/v0'
 import { CandidateCard } from './CandidateCard'
 import { MAX_COMPARE, STATUS_ORDER } from './labels'
+import { RecommendedBlock } from './RecommendedBlock'
 import { WeightsPopover } from './WeightsPopover'
 
 export function MatchingPage() {
@@ -89,6 +90,9 @@ export function MatchingPage() {
         ) : (
           <ErrorBlock error={matching.error} onRetry={() => matching.refetch()} />
         ))}
+
+      {data && <RecommendedBlock projectId={projectId} matching={data} />}
+      {data && <h2 className="h2 mb-5">Все кандидаты</h2>}
 
       {data && (
         <MatchingView
