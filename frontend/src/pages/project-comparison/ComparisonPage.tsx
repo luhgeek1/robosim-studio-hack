@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ArrowRight, Layers, Scale } from 'lucide-react'
 import { Link } from 'react-router'
 import { useProjectId } from '@/entities/project'
@@ -10,7 +11,7 @@ import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/state
 import { CashflowChart } from './CashflowChart'
 import { ComparisonGrid } from './ComparisonGrid'
 import { ScenarioCards } from './ScenarioCards'
-import { VerdictPanel } from './VerdictPanel'
+import { WhySheet } from './WhySheet'
 
 const MIN_ROBOTIZED = 2
 
@@ -18,6 +19,7 @@ export function ComparisonPage() {
   const projectId = useProjectId()
   const comparison = useComparison(projectId)
   const buildSet = useBuildComparisonSet(projectId)
+  const [whyOpen, setWhyOpen] = useState(false)
   const table = comparison.data
   const buildSetButton = (size?: 'sm') => (
     <Button size={size} onClick={() => buildSet.mutate()} disabled={buildSet.isPending}>
@@ -111,9 +113,8 @@ export function ComparisonPage() {
           </StatStrip>
         )}
 
-        <ScenarioCards table={table!} />
-
-        <VerdictPanel table={table!} />
+        <ScenarioCards table={table!} onExplain={() => setWhyOpen(true)} />
+        <WhySheet table={table!} open={whyOpen} onOpenChange={setWhyOpen} />
 
         <Section
           title="Накопленный денежный поток"

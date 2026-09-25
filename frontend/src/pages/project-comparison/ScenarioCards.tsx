@@ -1,4 +1,4 @@
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, Info } from 'lucide-react'
 import { Link } from 'react-router'
 import { SCENARIO_KIND_LABEL } from '@/entities/scenario'
 import type { ComparisonTable } from '@/shared/api/types'
@@ -9,7 +9,7 @@ type Scenario = ComparisonTable['scenarios'][number]
 
 /* One card per scenario: payback up top, then the saving over the horizon against «как сейчас» as a bar
    scaled to the best saving — the eye finds the winner before reading any number. */
-export function ScenarioCards({ table }: { table: ComparisonTable }) {
+export function ScenarioCards({ table, onExplain }: { table: ComparisonTable; onExplain: () => void }) {
   const recommendedId = table.recommendation?.scenario_id ?? null
   const saving = (s: Scenario) =>
     isNum(s.metrics.tco_baseline_rub) && isNum(s.metrics.tco_rub)
@@ -29,6 +29,7 @@ export function ScenarioCards({ table }: { table: ComparisonTable }) {
             recommended={s.scenario_id === recommendedId}
             saving={saving(s)}
             maxSaving={maxSaving}
+            onExplain={onExplain}
           />
         ),
       )}
@@ -41,27 +42,39 @@ function ScenarioCard({
   recommended,
   saving,
   maxSaving,
+  onExplain,
 }: {
   scenario: Scenario
   recommended: boolean
   saving: number | null
   maxSaving: number
+  onExplain: () => void
 }) {
   const m = s.metrics
   const share = saving && maxSaving ? Math.max(saving, 0) / maxSaving : 0
 
   return (
-    <Link
-      to={`../scenarios/${s.scenario_id}`}
+    // Вся карточка ведёт к расчёту через растянутую ссылку в заголовке — так внутри может жить кнопка «почему».
+    <div
       className={cn(
-        'group card flex flex-col p-5 transition-shadow hover:shadow-[0_8px_28px_-14px_rgba(20,20,24,0.25)]',
+        'group card relative flex flex-col p-5 transition-shadow hover:shadow-[0_8px_28px_-14px_rgba(20,20,24,0.25)]',
         recommended && 'border-ink ring-1 ring-ink',
       )}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="meta">{SCENARIO_KIND_LABEL[s.kind]}</span>
         {recommended ? (
-          <span className="rounded-full bg-ink px-2.5 py-0.5 text-[11.5px] font-medium text-white">Рекомендуем</span>
+          <button
+            type="button"
+            onClick={onExplain}
+            title="Почему рекомендуем этот вариант"
+            className="relative z-10 flex items-center gap-1.5 rounded-full bg-ink py-0.5 pr-1 pl-2.5 text-[11.5px] font-medium text-white transition-colors hover:bg-ink-2"
+          >
+            Рекомендуем
+            <span className="flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-px">
+              <Info className="size-3" /> почему
+            </span>
+          </button>
         ) : s.status === 'stale' ? (
           <span className="flex items-center gap-1.5 text-[12px] text-warn">
             <span className="size-1.5 rounded-full bg-warn" /> устарел
@@ -70,7 +83,11 @@ function ScenarioCard({
           <ArrowUpRight size={16} className="text-ink-4 transition-colors group-hover:text-ink" />
         )}
       </div>
-      <h3 className="h3 mt-1 line-clamp-2 min-h-[2.6em]">{s.name}</h3>
+      <h3 className="h3 mt-1 line-clamp-2 min-h-[2.6em]">
+        <Link to={`../scenarios/${s.scenario_id}`} className="after:absolute after:inset-0 after:rounded-[14px]">
+          {s.name}
+        </Link>
+      </h3>
 
       <div className="mt-5">
         <div className={cn('display num text-[32px]', !isNum(m.payback_years) && 'text-crit')}>
@@ -99,7 +116,7 @@ function ScenarioCard({
         <Fact label="эффект в год" value={formatRub(m.effect_rub_year)} />
         <Fact label="NPV" value={formatRub(m.npv_rub)} tone={isNum(m.npv_rub) && m.npv_rub < 0 ? 'crit' : undefined} />
       </dl>
-    </Link>
+    </div>
   )
 }
 
