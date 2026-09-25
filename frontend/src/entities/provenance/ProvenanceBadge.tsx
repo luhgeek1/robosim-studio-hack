@@ -1,9 +1,26 @@
 import { ExternalLink } from 'lucide-react'
 import type { Provenance, ProvenanceStatus } from '@/shared/api/types'
 import { formatDate } from '@/shared/lib/format'
-import { ToneBadge } from '@/shared/ui/tone'
+import { cn } from '@/shared/lib/utils'
+import type { Tone } from '@/shared/ui/tone-classes'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { PROVENANCE_HINT, PROVENANCE_LABEL, PROVENANCE_TONE, SOURCE_KIND_LABEL } from './labels'
+
+// A dot and a word instead of a pill: the value's origin reads at a glance without a coloured block next to it.
+const BADGE_DOT: Record<Tone, string> = {
+  ok: 'bg-ok',
+  info: 'bg-ink',
+  warn: 'bg-warn',
+  crit: 'bg-crit',
+  muted: 'bg-ink-4',
+}
+const BADGE_TEXT: Record<Tone, string> = {
+  ok: 'text-ok',
+  info: 'text-ink-2',
+  warn: 'text-warn',
+  crit: 'text-crit',
+  muted: 'text-ink-3',
+}
 
 export function ProvenanceBadge({
   provenance,
@@ -16,12 +33,20 @@ export function ProvenanceBadge({
 }) {
   const current = provenance?.status ?? status
   if (!current) return null
+  const tone = PROVENANCE_TONE[current]
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <ToneBadge tone={PROVENANCE_TONE[current]} className={className}>
+        <span
+          className={cn(
+            'inline-flex shrink-0 cursor-help items-center gap-1.5 text-[12px] font-medium whitespace-nowrap',
+            BADGE_TEXT[tone],
+            className,
+          )}
+        >
+          <span className={cn('size-1.5 shrink-0 rounded-full', BADGE_DOT[tone])} />
           {PROVENANCE_LABEL[current]}
-        </ToneBadge>
+        </span>
       </TooltipTrigger>
       <ProvenanceTip status={current} provenance={provenance} />
     </Tooltip>
