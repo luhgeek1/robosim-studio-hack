@@ -128,8 +128,9 @@ export function CompletenessMeter({
   )
 }
 
-// nested marks a product opened from another product page, where history back would not lead to the catalog.
-export type CatalogLinkState = { catalogSearch?: string; nested?: boolean }
+// nested marks a product opened from another product page, where history back would not lead to the catalog;
+// back sends the product page's back link somewhere other than the catalog (the comparison, for one).
+export type CatalogLinkState = { catalogSearch?: string; nested?: boolean; back?: { to: string; label: string } }
 
 export function ProductMiniCard({ product, state }: { product: Product; state?: CatalogLinkState }) {
   return (

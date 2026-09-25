@@ -49,3 +49,6 @@ export const SOURCE_KIND_LABEL: Record<Source['kind'], string> = {
   llm_extracted: 'Извлечено ассистентом',
   simulation: 'Имитация',
 }
+
+// Происхождение точкой: цвет по тону статуса.
+export const SOURCE_DOT = { ok: 'bg-ok', info: 'bg-info', warn: 'bg-warn', crit: 'bg-crit', muted: 'bg-ink-4' } as const

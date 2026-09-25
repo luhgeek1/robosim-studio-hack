@@ -1,16 +1,16 @@
 import { motion } from 'framer-motion'
 import { useState, type ReactNode } from 'react'
 import { ArrowLeft, Check, GitCompareArrows, KeyRound, Plus, Trophy, X } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useLocation, useSearchParams } from 'react-router'
 import { BADGE_LABEL, SPEC_GROUP_LABEL, SPEC_GROUP_ORDER, useCompare } from '@/entities/catalog'
 import { CANDIDATE_STATUS_LABEL } from '@/entities/matching'
 import { useProjects } from '@/entities/project'
-import { PROVENANCE_HINT, PROVENANCE_LABEL, PROVENANCE_TONE, SOURCE_KIND_LABEL } from '@/entities/provenance'
+import { SourceMark } from '@/entities/provenance'
 import { useSession } from '@/entities/session'
 import { compareSelection, COMPARE_LIMIT } from '@/features/catalog-compare-selection'
-import { ProductStatusMark } from '@/pages/catalog/parts'
-import type { CandidateStatus, CompareResult, Product, Provenance } from '@/shared/api/types'
-import { formatDate, formatNumber, formatValue, pluralRu } from '@/shared/lib/format'
+import { ProductStatusMark, type CatalogLinkState } from '@/pages/catalog/parts'
+import type { CandidateStatus, CompareResult, Product } from '@/shared/api/types'
+import { formatNumber, formatValue, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Label } from '@/shared/ui/label'
@@ -278,6 +278,7 @@ function ProductSummary({
   compatibility?: CandidateStatus | null
   onRemove: () => void
 }) {
+  const location = useLocation()
   const offers = product.offers_count ?? 0
   const type = product.solution_type_name ?? product.solution_type
   return (
@@ -286,6 +287,9 @@ function ProductSummary({
       solutionType={product.solution_type}
       name={product.name}
       to={`/catalog/${product.id}`}
+      linkState={
+        { back: { to: `${location.pathname}${location.search}`, label: 'К сравнению' } } satisfies CatalogLinkState
+      }
       subtitle={product.manufacturer.name}
       price={product.price_from}
       // Высота постоянная: при 2 решениях в колонке пропорция 5:6 из каталога даёт карточку выше экрана.
@@ -475,49 +479,5 @@ function SpecText({ row, products, colors }: { row: Row; products: Product[]; co
         })}
       </ul>
     </div>
-  )
-}
-
-const SOURCE_DOT = { ok: 'bg-ok', info: 'bg-info', warn: 'bg-warn', crit: 'bg-crit', muted: 'bg-ink-4' } as const
-
-/* Происхождение значения точкой (в графиках — без подписи) вместо плашки. Источник — в подсказке. */
-function SourceMark({ provenance, compact }: { provenance: Provenance; compact?: boolean }) {
-  const tone = PROVENANCE_TONE[provenance.status]
-  const source = provenance.source
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        {compact ? (
-          <span
-            className="grid size-4 shrink-0 cursor-help place-items-center"
-            aria-label={PROVENANCE_LABEL[provenance.status]}
-          >
-            <span className={cn('size-1.5 rounded-full', SOURCE_DOT[tone])} />
-          </span>
-        ) : (
-          <span
-            className={cn(
-              'inline-flex cursor-help items-center gap-1.5 text-[12px] whitespace-nowrap',
-              tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink-3',
-            )}
-          >
-            <span className={cn('size-1.5 shrink-0 rounded-full', SOURCE_DOT[tone])} />
-            {PROVENANCE_LABEL[provenance.status]}
-          </span>
-        )}
-      </TooltipTrigger>
-      <TooltipContent className="max-w-sm space-y-1 text-left">
-        <div className="font-medium">
-          {PROVENANCE_LABEL[provenance.status]} — {PROVENANCE_HINT[provenance.status].toLowerCase()}
-        </div>
-        {source && (
-          <div>
-            {SOURCE_KIND_LABEL[source.kind]}: {source.title}
-            {source.retrieved_at && <span className="opacity-70"> · {formatDate(source.retrieved_at)}</span>}
-          </div>
-        )}
-        {provenance.note && <div className="opacity-80">{provenance.note}</div>}
-      </TooltipContent>
-    </Tooltip>
   )
 }

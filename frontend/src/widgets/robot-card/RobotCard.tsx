@@ -1,12 +1,13 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router'
+import { useRef, type MouseEvent, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router'
 import type { Product } from '@/shared/api/types'
 import { formatRub } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { RobotPreview3D } from '@/widgets/robot-3d'
 
 /* Карточка робота для подбора, каталога и сравнения: 3D-модель на всю карточку, сверху плашки, снизу название
-   и цена по краям. При наведении снизу выезжает белая панель с цифрами — в покое карточка остаётся чистой. */
+   и цена по краям. При наведении снизу выезжает белая панель с цифрами — в покое карточка остаётся чистой.
+   Клик в любом месте открывает страницу робота; поворот модели перетаскиванием переходом не считается. */
 export function RobotCard({
   productId,
   solutionType,
@@ -39,9 +40,23 @@ export function RobotCard({
   details?: ReactNode
   className?: string
 }) {
+  const navigate = useNavigate()
+  const press = useRef<{ x: number; y: number } | null>(null)
+  const open = (e: MouseEvent<HTMLElement>) => {
+    const start = press.current
+    press.current = null
+    if ((e.target as HTMLElement).closest('a, button, input, label, [role="button"]')) return
+    if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) return
+    navigate(to, { state: linkState })
+  }
+
   return (
-    <article className={cn('group card relative aspect-[5/6] w-full overflow-hidden', className)}>
-      <RobotStage productId={productId} solutionType={solutionType} />
+    <article
+      className={cn('group card relative aspect-[5/6] w-full cursor-pointer overflow-hidden', className)}
+      onPointerDownCapture={(e) => (press.current = { x: e.clientX, y: e.clientY })}
+      onClick={open}
+    >
+      <RobotStage productId={productId} solutionType={solutionType} className="cursor-pointer" />
       {accent && <span aria-hidden className="absolute inset-x-0 top-0 z-10 h-1" style={{ background: accent }} />}
 
       {chips && <div className="absolute top-4 left-4 flex items-center gap-1.5">{chips}</div>}
@@ -83,7 +98,15 @@ export function RobotCard({
 }
 
 /* Сцена под моделью: мягкий свет сверху и модель класса решения, форма — по ТТХ продукта (widgets/robot-3d). */
-export function RobotStage({ productId, solutionType }: { productId: string; solutionType: string }) {
+export function RobotStage({
+  productId,
+  solutionType,
+  className,
+}: {
+  productId: string
+  solutionType: string
+  className?: string
+}) {
   return (
     <div className="absolute inset-0 bg-surface-2" data-solution-type={solutionType} data-product-id={productId}>
       <div
@@ -91,7 +114,7 @@ export function RobotStage({ productId, solutionType }: { productId: string; sol
         style={{ background: 'radial-gradient(110% 80% at 50% 38%, #ffffff 0%, #f1f4f6 60%, #e9edf0 100%)' }}
         aria-hidden
       />
-      <RobotPreview3D productId={productId} framing={{ scale: 1.3, lower: 0.12 }} />
+      <RobotPreview3D productId={productId} framing={{ scale: 1.3, lower: 0.12 }} className={className} />
     </div>
   )
 }
