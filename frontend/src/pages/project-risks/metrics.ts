@@ -5,17 +5,19 @@ export type Metric = SensitivityRequest['metric']
 
 export const METRIC: Record<
   Metric,
-  { label: string; short: string; format: (v: number | null | undefined) => string }
+  // better: какое направление метрики хорошо для объекта — им красится торнадо (лучше / хуже базы).
+  { label: string; short: string; better: 'lower' | 'higher'; format: (v: number | null | undefined) => string }
 > = {
-  payback_years: { label: 'Срок окупаемости', short: 'окупаемость', format: (v) => formatYears(v) },
-  npv_rub: { label: 'NPV', short: 'NPV', format: (v) => formatRub(v) },
-  roi_pct: { label: 'ROI за горизонт', short: 'ROI', format: (v) => formatPct(v) },
+  payback_years: { label: 'Срок окупаемости', short: 'окупаемость', better: 'lower', format: (v) => formatYears(v) },
+  npv_rub: { label: 'NPV', short: 'NPV', better: 'higher', format: (v) => formatRub(v) },
+  roi_pct: { label: 'ROI за горизонт', short: 'ROI', better: 'higher', format: (v) => formatPct(v) },
   effect_rub_year: {
     label: 'Чистый годовой эффект',
     short: 'эффект',
+    better: 'higher',
     format: (v) => (isNum(v) ? `${formatRub(v)}/год` : '—'),
   },
-  tco_rub: { label: 'TCO за горизонт', short: 'TCO', format: (v) => formatRub(v) },
+  tco_rub: { label: 'TCO за горизонт', short: 'TCO', better: 'lower', format: (v) => formatRub(v) },
 }
 
 // Seed 1, как в отчёте (D-021): вероятности на экране и в PDF совпадают и не плывут от захода к заходу.
