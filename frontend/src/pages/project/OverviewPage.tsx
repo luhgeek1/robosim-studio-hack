@@ -39,11 +39,11 @@ export function OverviewPage() {
   return (
     // The panel sits in the middle of the space under the header, however tall the window is.
     <div className="flex flex-1 items-center justify-center pt-4 pb-10">
-      <div className="card w-full max-w-6xl p-8 shadow-card">
-        <h1 className="h1">{project.name}</h1>
+      <div className="card w-full max-w-6xl p-5 shadow-card sm:p-8">
+        <h1 className="h1 text-[26px] sm:text-[34px]">{project.name}</h1>
 
         {metrics ? (
-          <div className="mt-7 grid grid-cols-3 divide-x divide-line rounded-xl bg-surface-2 ring-1 ring-line">
+          <div className="mt-7 grid grid-cols-1 divide-y divide-line rounded-xl bg-surface-2 ring-1 ring-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Figure label="Окупаемость рекомендованного сценария" value={formatYears(metrics.payback_years)}>
               {verdict && (
                 <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
@@ -65,24 +65,27 @@ export function OverviewPage() {
           </p>
         )}
 
-        <div className="mt-6 grid grid-cols-2 items-stretch gap-6">
+        <div className="mt-6 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
           <Solution projectId={projectId} scenarioId={project.recommended_scenario_id} />
 
-          <Panel title="Журнал изменений">
+          <Panel title="Журнал изменений" fill>
             {audit.isPending && <LoadingBlock rows={2} />}
             {audit.data && (
-              <ul className="-mx-2 max-h-72 divide-y divide-line overflow-y-auto text-[12.5px]">
-                {audit.data.items.slice(0, 20).map((event) => (
-                  <li key={event.id} className="flex gap-3 px-2 py-2 first:pt-0">
-                    <span className="num w-32 shrink-0 text-ink-3">{formatDateTime(event.at)}</span>
-                    <span className="min-w-0">
-                      <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span>{' '}
-                      <span className="text-ink-3">{event.entity.split(':')[0]}</span>
-                      {event.note && <span className="text-ink-3"> — {event.note}</span>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              // The list does not add to the row's height: the solution panel sets it and the journal scrolls in it.
+              <div className="relative min-h-40 flex-1 lg:min-h-0">
+                <ul className="scroll-thin absolute inset-0 -mx-2 divide-y divide-line overflow-y-auto text-[12.5px]">
+                  {audit.data.items.slice(0, 20).map((event) => (
+                    <li key={event.id} className="flex gap-3 px-2 py-2 first:pt-0">
+                      <span className="num shrink-0 whitespace-nowrap text-ink-3">{formatDateTime(event.at)}</span>
+                      <span className="min-w-0">
+                        <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span>{' '}
+                        <span className="text-ink-3">{event.entity.split(':')[0]}</span>
+                        {event.note && <span className="text-ink-3"> — {event.note}</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </Panel>
         </div>
@@ -134,9 +137,9 @@ function Solution({ projectId, scenarioId }: { projectId: string; scenarioId?: s
             const result = item.count_result
             const price = item.price_override_rub ?? item.price_rub
             return (
-              <li key={item.id} className="flex items-center gap-5">
+              <li key={item.id} className="flex flex-wrap items-center gap-x-5 gap-y-3">
                 {item.product_id && (
-                  <span className="relative h-28 w-36 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(ellipse_at_50%_60%,#ffffff_0%,var(--card)_45%,var(--canvas)_100%)] ring-1 ring-line">
+                  <span className="relative h-28 w-full shrink-0 overflow-hidden rounded-xl sm:w-36 bg-[radial-gradient(ellipse_at_50%_60%,#ffffff_0%,var(--card)_45%,var(--canvas)_100%)] ring-1 ring-line">
                     <RobotPreview3D productId={item.product_id} framing={{ scale: 1.2, lower: 0.08 }} />
                   </span>
                 )}
@@ -175,9 +178,19 @@ function Solution({ projectId, scenarioId }: { projectId: string; scenarioId?: s
   )
 }
 
-function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+function Panel({
+  title,
+  action,
+  fill = false,
+  children,
+}: {
+  title: string
+  action?: ReactNode
+  fill?: boolean
+  children: ReactNode
+}) {
   return (
-    <section className="h-full rounded-xl bg-surface-2 px-5 py-5 ring-1 ring-line">
+    <section className={cn('rounded-xl bg-surface-2 px-5 py-5 ring-1 ring-line', fill && 'flex flex-col')}>
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="h3">{title}</h2>
         {action}
