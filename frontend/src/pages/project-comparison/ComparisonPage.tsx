@@ -4,10 +4,12 @@ import { useProjectId } from '@/entities/project'
 import { useBuildComparisonSet, useComparison } from '@/entities/scenario'
 import { parseApiProblem } from '@/shared/api/problem'
 import { Button } from '@/shared/ui/button'
-import { Callout, Screen, Section } from '@/shared/ui/page'
+import { formatPct, formatRub, formatYears, isNum, pluralRu } from '@/shared/lib/format'
+import { Callout, Screen, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { CashflowChart } from './CashflowChart'
 import { ComparisonGrid } from './ComparisonGrid'
+import { ScenarioCards } from './ScenarioCards'
 import { VerdictPanel } from './VerdictPanel'
 
 const MIN_ROBOTIZED = 2
@@ -25,7 +27,7 @@ export function ComparisonPage() {
 
   if (comparison.isPending) {
     return (
-      <Screen wide title="Как сейчас против роботизации">
+      <Screen title="Как сейчас против роботизации">
         <LoadingBlock label="Сравниваем сценарии…" />
       </Screen>
     )
@@ -34,7 +36,7 @@ export function ComparisonPage() {
   if (comparison.isError) {
     const noScenarios = parseApiProblem(comparison.error).status === 409
     return (
-      <Screen wide title="Как сейчас против роботизации" nextDisabled>
+      <Screen title="Как сейчас против роботизации" nextDisabled>
         {noScenarios ? (
           <EmptyState
             icon={<Scale className="size-6" />}
@@ -60,9 +62,18 @@ export function ComparisonPage() {
 
   const robotized = table!.scenarios.filter((s) => s.kind !== 'baseline').length
   const stale = table!.scenarios.filter((s) => s.status === 'stale').length
+  const best =
+    table!.scenarios.find((s) => s.scenario_id === table!.recommendation?.scenario_id) ??
+    table!.scenarios.find((s) => s.kind !== 'baseline')
+  const m = best?.metrics
+  const horizon = m?.horizon_years ?? 5
 
   return (
-    <Screen wide title={table!.verdict.headline} lead={table!.verdict.summary} nextLabel="Проверить риски">
+    <Screen
+      title={table!.verdict.headline}
+      lead={`Сравнили ${robotized} ${pluralRu(robotized, ['вариант', 'варианта', 'вариантов'])} роботизации с «как сейчас» на горизонте ${horizon} лет.${best && table!.recommendation ? ` Лучший — «${best.name}».` : ''}`}
+      nextLabel="Проверить риски"
+    >
       <div className="space-y-6">
         {(robotized < MIN_ROBOTIZED || stale > 0) && (
           <Callout
@@ -88,7 +99,33 @@ export function ComparisonPage() {
           </Callout>
         )}
 
+        {m && (
+          <StatStrip columns={4}>
+            <Stat
+              label="Окупаемость"
+              value={isNum(m.payback_years) ? formatYears(m.payback_years) : 'не окупается'}
+              hint={`с дисконтом — ${isNum(m.discounted_payback_years) ? formatYears(m.discounted_payback_years) : 'нет'}`}
+            />
+            <Stat label="Вложения" value={formatRub(m.capex_rub)} hint="CAPEX, с НДС" />
+            <Stat label="Эффект в год" value={formatRub(m.effect_rub_year)} hint="минус затраты на роботов" />
+            <Stat
+              label="NPV"
+              value={formatRub(m.npv_rub)}
+              hint={`ставка ${formatPct(m.discount_rate_pct, { digits: 0 })}${isNum(m.irr_pct) ? ` · IRR ${formatPct(m.irr_pct, { digits: 0 })}` : ''}`}
+            />
+          </StatStrip>
+        )}
+
+        <ScenarioCards table={table!} />
+
         <VerdictPanel table={table!} />
+
+        <Section
+          title="Накопленный денежный поток"
+          description="«Как сейчас» — пунктир; чем выше линия сценария, тем меньше он стоит объекту за горизонт"
+        >
+          <CashflowChart table={table!} />
+        </Section>
 
         <Section
           title="Сводная таблица"
@@ -96,13 +133,6 @@ export function ComparisonPage() {
           bodyClassName="p-0"
         >
           <ComparisonGrid table={table!} />
-        </Section>
-
-        <Section
-          title="Накопленный денежный поток"
-          description="«Как сейчас» — пунктир; чем выше линия сценария, тем меньше он стоит объекту за горизонт"
-        >
-          <CashflowChart table={table!} />
         </Section>
       </div>
     </Screen>

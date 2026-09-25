@@ -1,96 +1,87 @@
-import { ArrowRight, Info, Star, TriangleAlert } from 'lucide-react'
-import { Link } from 'react-router'
-import { BAND_LABEL, SCENARIO_KIND_LABEL, VerdictBadge } from '@/entities/scenario'
+import { TriangleAlert } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { BAND_LABEL, VerdictBadge } from '@/entities/scenario'
 import type { ComparisonTable } from '@/shared/api/types'
-import { Section } from '@/shared/ui/page'
 
+/* Why the recommended option wins: the rationale and the drivers on the left, the caveats aside —
+   the same two-column card as a process on «Где деньги». */
 export function VerdictPanel({ table }: { table: ComparisonTable }) {
   const { verdict, recommendation } = table
   const recommended = table.scenarios.find((s) => s.scenario_id === recommendation?.scenario_id)
   const band = BAND_LABEL[verdict.band]
+  const caveats = [...(verdict.caveats ?? []), ...(recommendation?.caveats ?? [])]
 
   return (
-    <div className="grid grid-cols-[1.4fr_1fr] items-start gap-6">
-      <Section className="border-l-2 border-l-primary">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
+    <article className="card overflow-hidden">
+      <header className="flex flex-wrap items-center justify-between gap-3 px-6 pt-5 pb-4">
+        <h2 className="h3 text-[18px]">{recommended ? `Почему «${recommended.name}»` : 'Рекомендовать нечего'}</h2>
+        <div className="flex items-center gap-2">
+          {band && <span className="meta">{band}</span>}
           <VerdictBadge verdict={verdict.verdict} />
-          {band && <span className="text-xs text-muted-foreground">{band}</span>}
         </div>
-        <h2 className="text-lg leading-snug font-semibold">{verdict.headline}</h2>
-        <p className="mt-2 text-muted-foreground">{verdict.summary}</p>
+      </header>
 
-        {!!verdict.key_drivers?.length && (
-          <div className="mt-4">
-            <div className="mb-1 text-xs text-muted-foreground">Что определяет результат</div>
-            <ul className="space-y-1">
-              {verdict.key_drivers.map((d) => (
-                <li key={d} className="flex gap-2">
-                  <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-info" />
-                  <span>{d}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {!!verdict.caveats?.length && (
-          <div className="mt-4">
-            <div className="mb-1 text-xs text-muted-foreground">Оговорки</div>
-            <ul className="space-y-1 text-muted-foreground">
-              {verdict.caveats.map((c) => (
-                <li key={c} className="flex gap-2">
-                  <Info className="mt-0.5 size-3.5 shrink-0" />
-                  <span>{c}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <p className="mt-4 text-xs text-muted-foreground">
-          Предварительная оценка — результат требует верификации при обследовании объекта.
-        </p>
-      </Section>
-
-      <Section title="Рекомендация">
-        {recommended ? (
-          <div className="space-y-3">
-            <div className="rounded-md border border-info/30 bg-info-soft p-3">
-              <div className="flex items-center gap-1.5 text-xs text-info">
-                <Star className="size-3.5 fill-current" /> Рекомендуемый сценарий
-              </div>
-              <Link
-                to={`../scenarios/${recommended.scenario_id}`}
-                className="mt-1 block text-base font-semibold hover:underline"
-              >
-                {recommended.name}
-              </Link>
-              <div className="text-xs text-muted-foreground">{SCENARIO_KIND_LABEL[recommended.kind]}</div>
-            </div>
-            {!!recommendation?.rationale?.length && (
-              <ul className="list-disc space-y-1 pl-4">
+      <div className="hairline grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <div className="space-y-6 px-6 py-5">
+          {recommended ? (
+            !!recommendation?.rationale?.length && (
+              <Block title="Чем лучше остальных">
                 {recommendation.rationale.map((r) => (
-                  <li key={r}>{r}</li>
+                  <Item key={r} marker={<span className="mt-2 size-1.5 shrink-0 rounded-full bg-ink" />}>
+                    <span className="text-ink">{r}</span>
+                  </Item>
                 ))}
-              </ul>
-            )}
-          </div>
-        ) : (
-          <div className="flex gap-2 text-muted-foreground">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
-            Ни один сценарий роботизации не окупается в горизонте расчёта — рекомендовать нечего.
-          </div>
-        )}
-        {!!recommendation?.caveats?.length && (
-          <ul className="mt-3 space-y-1 text-muted-foreground">
-            {recommendation.caveats.map((c) => (
-              <li key={c} className="flex gap-2">
-                <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-warn" />
-                <span>{c}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+              </Block>
+            )
+          ) : (
+            <p className="flex gap-2 text-[13.5px] text-ink-2">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
+              Ни один сценарий роботизации не окупается в горизонте расчёта.
+            </p>
+          )}
+
+          {!!verdict.key_drivers?.length && (
+            <Block title="Что определяет результат">
+              {verdict.key_drivers.map((d, i) => (
+                <Item key={d} marker={<span className="num w-4 shrink-0 text-[12.5px] text-ink-4">{i + 1}</span>}>
+                  {d}
+                </Item>
+              ))}
+            </Block>
+          )}
+        </div>
+
+        <div className="flex flex-col border-t border-line bg-surface-2/60 px-6 py-5 lg:border-t-0 lg:border-l">
+          {caveats.length > 0 && (
+            <Block title="Оговорки">
+              {caveats.map((c) => (
+                <Item key={c} marker={<span className="mt-2 size-1 shrink-0 rounded-full bg-ink-4" />}>
+                  <span className="text-ink-3">{c}</span>
+                </Item>
+              ))}
+            </Block>
+          )}
+          <p className="meta mt-auto pt-5">Предварительная оценка — требует верификации при обследовании объекта.</p>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function Block({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <div className="mb-2.5 text-[13px] text-ink-2">{title}</div>
+      <ul className="space-y-2">{children}</ul>
     </div>
+  )
+}
+
+function Item({ marker, children }: { marker: ReactNode; children: ReactNode }) {
+  return (
+    <li className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink-2">
+      {marker}
+      <span className="min-w-0">{children}</span>
+    </li>
   )
 }

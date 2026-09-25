@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check, Star } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check } from 'lucide-react'
 import { Link } from 'react-router'
 import { SCENARIO_KIND_LABEL } from '@/entities/scenario'
 import type { ComparisonTable } from '@/shared/api/types'
@@ -14,7 +14,7 @@ const BETTER_HINT = {
 
 export function ComparisonGrid({ table }: { table: ComparisonTable }) {
   const recommendedId = table.recommendation?.scenario_id ?? null
-  const highlight = (id: string) => id === recommendedId && 'bg-info-soft/60'
+  const highlight = (id: string) => id === recommendedId && 'bg-surface-2'
 
   return (
     <Table className="table-fixed">
@@ -28,9 +28,9 @@ export function ComparisonGrid({ table }: { table: ComparisonTable }) {
             >
               <div className="flex flex-wrap items-center gap-1">
                 {s.scenario_id === recommendedId && (
-                  <ToneBadge tone="info">
-                    <Star className="fill-current" /> рекомендуем
-                  </ToneBadge>
+                  <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] font-medium text-white">
+                    рекомендуем
+                  </span>
                 )}
                 {s.status === 'stale' && <ToneBadge tone="warn">устарел — пересчитайте</ToneBadge>}
               </div>
