@@ -1,18 +1,22 @@
-import { Copy, Layers, MoreHorizontal, Plus, Sparkles, Star, Trash2 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ArrowRight, Copy, Layers, MoreHorizontal, Plus, RefreshCw, Sparkles, Star, Trash2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useProjectId } from '@/entities/project'
 import {
   SCENARIO_KIND_LABEL,
-  VerdictBadge,
+  VERDICT_LABEL,
   useBuildComparisonSet,
+  useCalculate,
   useCopyScenario,
   useCreateScenario,
   useDeleteScenario,
   useScenarios,
+  type Verdict,
 } from '@/entities/scenario'
 import type { Scenario, ScenarioKind } from '@/shared/api/types'
-import { formatRub, formatYears } from '@/shared/lib/format'
+import { formatNumber, formatRub, formatYears, isNum, pluralRu } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { ConfirmDialog } from '@/shared/ui/confirm'
 import {
@@ -37,7 +41,7 @@ import { Label } from '@/shared/ui/label'
 import { Screen } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
-import { ToneBadge } from '@/shared/ui/tone'
+import { RobotPreview3D } from '@/widgets/robot-3d'
 
 const ROBOTIZED_KINDS: ScenarioKind[] = ['purchase', 'raas', 'lease']
 
@@ -80,7 +84,8 @@ export function ScenariosPage() {
           ? `${recommended!.name}: ${calc.payback_years != null ? `окупается за ${formatYears(calc.payback_years)}` : 'не окупается в горизонте'}`
           : 'Сколько роботов нужно и что это стоит'
       }
-      lead="Сценарий — набор «процесс → решение → количество» и условия финансирования. «Как сейчас» — точка отсчёта; для сравнения нужны хотя бы два сценария роботизации, например покупка и RaaS."
+      wide
+      dense
       nextDisabled={!robotized.some((s) => s.last_calculation)}
       actions={
         <>
@@ -98,11 +103,20 @@ export function ScenariosPage() {
       {scenarios.isPending && <LoadingBlock label="Загружаем сценарии…" />}
       {scenarios.isError && <ErrorBlock error={scenarios.error} onRetry={() => scenarios.refetch()} />}
       {scenarios.data && (
-        <div className="card divide-y divide-line overflow-hidden">
-          {scenarios.data.map((scenario) => (
-            <ScenarioCard key={scenario.id} projectId={projectId} scenario={scenario} />
-          ))}
-        </div>
+        <>
+          {scenarios.data
+            .filter((s) => s.is_baseline)
+            .map((scenario) => (
+              <BaselineStrip key={scenario.id} projectId={projectId} scenario={scenario} />
+            ))}
+          {robotized.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {robotized.map((scenario) => (
+                <ScenarioCard key={scenario.id} projectId={projectId} scenario={scenario} />
+              ))}
+            </div>
+          )}
+        </>
       )}
       {scenarios.data && robotized.length === 0 && (
         <EmptyState
@@ -123,12 +137,57 @@ export function ScenariosPage() {
   )
 }
 
+const VERDICT_DOT: Record<Verdict, string> = {
+  attractive: 'bg-ok',
+  reasonable: 'bg-ink',
+  questionable: 'bg-warn',
+  not_recommended: 'bg-crit',
+  insufficient_data: 'bg-ink-4',
+  baseline: 'bg-ink-4',
+}
+
+const verdictOf = (v: string | null | undefined): Verdict | null => (v && v in VERDICT_LABEL ? (v as Verdict) : null)
+
+/* The starting point: nothing is bought, today's staff costs stay — every variant is measured against it. */
+function BaselineStrip({ projectId, scenario }: { projectId: string; scenario: Scenario }) {
+  const calc = scenario.last_calculation
+  return (
+    <Link
+      to={`/projects/${projectId}/scenarios/${scenario.id}`}
+      className="group mb-4 flex items-center justify-between gap-6 rounded-[14px] bg-surface-2 px-6 py-4 ring-1 ring-line transition-colors hover:bg-card"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span className="size-2 shrink-0 rounded-full bg-ink-4" />
+        <span className="min-w-0">
+          <span className="block text-[15px] font-medium">{scenario.name}</span>
+          <span className="block text-[12.5px] text-ink-3">
+            Точка отсчёта: ничего не покупаем, затраты на персонал остаются · горизонт {scenario.horizon_years}{' '}
+            {pluralRu(scenario.horizon_years, ['год', 'года', 'лет'])}
+          </span>
+        </span>
+      </span>
+      <span className="flex shrink-0 items-center gap-4 text-[12.5px]">
+        {calc?.status === 'stale' && <StaleMark />}
+        <ArrowRight size={15} className="text-ink-3 transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </Link>
+  )
+}
+
 function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Scenario }) {
   const navigate = useNavigate()
   const copy = useCopyScenario(projectId)
   const remove = useDeleteScenario(projectId)
+  const calculate = useCalculate(projectId, scenario.id)
   const calc = scenario.last_calculation
+  const verdict = verdictOf(calc?.verdict)
   const href = `/projects/${projectId}/scenarios/${scenario.id}`
+  const lead = scenario.items.find((i) => i.product_id)
+  const fleet = scenario.items.reduce((sum, i) => sum + (i.count_result?.final ?? i.count_manual ?? 0), 0)
+  const horizon = scenario.horizon_years
+  const payback = calc?.payback_years
+  const scale = Math.max(horizon, isNum(payback) ? payback : 0) * 1.08
+  const stale = calc?.status === 'stale'
 
   const copyAs = async (kind: ScenarioKind) => {
     const created = await copy.mutateAsync({
@@ -140,108 +199,176 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
   }
 
   return (
-    <div className="relative grid grid-cols-[minmax(0,1.6fr)_minmax(0,2fr)_auto] items-center gap-6 px-5 py-4 transition-colors hover:bg-raised">
-      <div className="min-w-0 space-y-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Link to={href} className="truncate text-base font-medium after:absolute after:inset-0">
-            {scenario.name}
-          </Link>
+    <article className="card group relative flex flex-col overflow-hidden transition-shadow hover:shadow-card">
+      <div className="relative h-44 border-b border-line bg-[radial-gradient(ellipse_at_50%_65%,#ffffff_0%,var(--surface-2)_55%,var(--canvas)_100%)]">
+        {lead?.product_id ? (
+          <RobotPreview3D productId={lead.product_id} framing={{ scale: 1.2, lower: 0.06 }} />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center text-[13px] text-ink-4">Состав не задан</div>
+        )}
+        <div className="pointer-events-none absolute top-4 left-4 flex items-center gap-2">
+          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink-2 shadow-card backdrop-blur">
+            {SCENARIO_KIND_LABEL[scenario.kind]}
+          </span>
           {scenario.is_recommended && (
-            <ToneBadge tone="ok">
-              <Star /> рекомендован
-            </ToneBadge>
+            <span className="flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink shadow-card backdrop-blur">
+              <Star size={12} className="fill-warn text-warn" /> рекомендуем
+            </span>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <ToneBadge tone={scenario.is_baseline ? 'muted' : 'info'}>{SCENARIO_KIND_LABEL[scenario.kind]}</ToneBadge>
-          <span>горизонт {scenario.horizon_years} лет</span>
-          {scenario.overrides.length > 0 && <span>переопределений нормативов: {scenario.overrides.length}</span>}
+        <div className="absolute top-3 right-3 z-10">
+          <ScenarioMenu scenario={scenario} onCopy={copyAs} onDelete={() => remove.mutateAsync(scenario.id)} />
         </div>
-        {scenario.items.length > 0 && (
-          <ul className="space-y-0.5 text-xs text-muted-foreground">
-            {scenario.items.map((item) => (
-              <li key={item.id} className="truncate">
-                {item.product_name}
-                {item.count_result
-                  ? ` × ${item.count_result.final}`
-                  : item.count_mode === 'manual' && item.count_manual
-                    ? ` × ${item.count_manual}`
-                    : ''}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
-      <div className="text-xs">
+      <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
+        <Link to={href} className="truncate text-[16px] font-semibold tracking-[-0.015em] after:absolute after:inset-0">
+          {scenario.name}
+        </Link>
+        <div className="mt-0.5 truncate text-[12.5px] text-ink-3">
+          {scenario.items.length
+            ? scenario.items
+                .map(
+                  (i) =>
+                    `${formatNumber(i.count_result?.final ?? i.count_manual ?? 0)} × ${shortName(i.product_name ?? 'решение')}`,
+                )
+                .join(', ')
+            : 'добавьте решения в сценарий'}
+          {fleet > 0 && scenario.items.length > 1 && ` · всего ${formatNumber(fleet)}`}
+        </div>
+
         {calc ? (
-          <div className="grid grid-cols-4 gap-3">
-            <Cell label="Окупаемость" value={scenario.is_baseline ? '—' : formatYears(calc.payback_years)} />
-            <Cell label="CAPEX" value={formatRub(calc.capex_rub)} />
-            <Cell label="NPV" value={formatRub(calc.npv_rub)} />
-            <div className="space-y-1">
-              <div className="text-muted-foreground">Итог</div>
-              {calc.status === 'stale' ? (
-                <ToneBadge tone="warn">устарел</ToneBadge>
-              ) : (
-                <VerdictBadge verdict={calc.verdict} />
+          <>
+            <div className="mt-5 flex items-end justify-between gap-3">
+              <div>
+                <div className="display num text-[32px]">{isNum(payback) ? formatYears(payback) : 'не окупается'}</div>
+                <div className="meta mt-1">окупаемость</div>
+              </div>
+              {verdict && (
+                <span className="flex items-center gap-1.5 pb-1 text-[12.5px] font-medium text-ink-2">
+                  <span className={cn('size-1.5 rounded-full', VERDICT_DOT[verdict])} />
+                  {VERDICT_LABEL[verdict]}
+                </span>
               )}
             </div>
-          </div>
+            {/* Payback against the horizon: a bar that stops before the tick pays back in time. */}
+            <div className="relative mt-3 h-1.5 rounded-full bg-black/5" title={`Горизонт расчёта — ${horizon} лет`}>
+              {isNum(payback) && (
+                <motion.div
+                  className={cn('h-full rounded-full', verdict ? VERDICT_DOT[verdict] : 'bg-ink')}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(payback / scale) * 100}%` }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+                />
+              )}
+              <span
+                className="absolute -top-1 -bottom-1 w-px bg-ink-4"
+                style={{ left: `${(horizon / scale) * 100}%` }}
+              />
+            </div>
+            <div className="meta mt-1.5 flex justify-end">
+              горизонт {horizon} {pluralRu(horizon, ['год', 'года', 'лет'])}
+            </div>
+
+            <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-line pt-4">
+              <Cell label="CAPEX" value={formatRub(calc.capex_rub)} />
+              <Cell label="эффект в год" value={formatRub(calc.effect_rub_year)} tone="ok" />
+              <Cell
+                label={`NPV за ${horizon} ${pluralRu(horizon, ['год', 'года', 'лет'])}`}
+                value={formatRub(calc.npv_rub)}
+                tone={isNum(calc.npv_rub) && calc.npv_rub < 0 ? 'crit' : undefined}
+              />
+            </dl>
+          </>
         ) : (
-          <span className="text-muted-foreground">Не рассчитан</span>
+          <p className="mt-5 text-[13.5px] text-ink-3">Сценарий ещё не рассчитан.</p>
+        )}
+
+        {(stale || !calc) && scenario.items.length > 0 && (
+          <div className="relative z-10 mt-4 flex items-center justify-between gap-3">
+            {stale ? <StaleMark /> : <span />}
+            <Button size="sm" variant="outline" onClick={() => calculate.mutate()} disabled={calculate.isPending}>
+              {calculate.isPending ? <Spinner /> : <RefreshCw />} {calc ? 'Пересчитать' : 'Рассчитать'}
+            </Button>
+          </div>
         )}
       </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative z-10" aria-label="Действия со сценарием">
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          {!scenario.is_baseline && (
-            <>
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Копия с тем же составом
-              </DropdownMenuLabel>
-              {ROBOTIZED_KINDS.map((kind) => (
-                <DropdownMenuItem key={kind} onSelect={() => copyAs(kind)}>
-                  <Copy /> как «{SCENARIO_KIND_LABEL[kind]}»
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <ConfirmDialog
-                title={`Удалить сценарий «${scenario.name}»?`}
-                description="Сценарий и его расчёты будут удалены."
-                onConfirm={() => remove.mutateAsync(scenario.id)}
-                trigger={
-                  <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
-                    <Trash2 /> Удалить
-                  </DropdownMenuItem>
-                }
-              />
-            </>
-          )}
-          {scenario.is_baseline && (
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-              Базовый сценарий — точка отсчёта, его нельзя удалить
-            </DropdownMenuLabel>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    </article>
   )
 }
 
-function Cell({ label, value }: { label: string; value: string }) {
+function StaleMark() {
   return (
-    <div className="space-y-1">
-      <div className="text-muted-foreground">{label}</div>
-      <div className="num font-medium">{value}</div>
+    <span className="flex items-center gap-1.5 text-[12.5px] text-warn">
+      <span className="size-1.5 rounded-full bg-warn" /> данные менялись после расчёта
+    </span>
+  )
+}
+
+function ScenarioMenu({
+  scenario,
+  onCopy,
+  onDelete,
+}: {
+  scenario: Scenario
+  onCopy: (kind: ScenarioKind) => void
+  onDelete: () => Promise<unknown>
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="bg-white/90 shadow-card backdrop-blur hover:bg-white"
+          aria-label="Действия со сценарием"
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+          Копия с тем же составом
+        </DropdownMenuLabel>
+        {ROBOTIZED_KINDS.map((kind) => (
+          <DropdownMenuItem key={kind} onSelect={() => onCopy(kind)}>
+            <Copy /> как «{SCENARIO_KIND_LABEL[kind]}»
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <ConfirmDialog
+          title={`Удалить сценарий «${scenario.name}»?`}
+          description="Сценарий и его расчёты будут удалены."
+          onConfirm={onDelete}
+          trigger={
+            <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
+              <Trash2 /> Удалить
+            </DropdownMenuItem>
+          }
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function Cell({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'crit' }) {
+  return (
+    <div className="flex min-w-0 flex-col-reverse">
+      <dt className="mt-0.5 truncate text-[12px] text-ink-3">{label}</dt>
+      <dd
+        className={cn(
+          'num truncate text-[15px] font-semibold tracking-[-0.01em]',
+          tone === 'ok' && 'text-ok',
+          tone === 'crit' && 'text-crit',
+        )}
+      >
+        {value}
+      </dd>
     </div>
   )
 }
+
+const shortName = (name: string) => name.split(' (')[0]
 
 function NewScenarioDialog({ projectId }: { projectId: string }) {
   const [open, setOpen] = useState(false)
