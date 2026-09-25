@@ -1,10 +1,10 @@
 import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { DataQualityBar, useAudit, useProject, useProjectId } from '@/entities/project'
-import { VERDICT_LABEL, VERDICT_TONE, type Verdict } from '@/entities/scenario'
+import { useAudit, useProcesses, useProject, useProjectId } from '@/entities/project'
+import { VERDICT_LABEL, VERDICT_TONE, pickMainScenario, useScenarios, type Verdict } from '@/entities/scenario'
 import type { AuditEvent } from '@/shared/api/types'
-import { formatDateTime, formatRub, formatYears } from '@/shared/lib/format'
+import { formatDateTime, formatNumber, formatRub, formatYears, isNum } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { LoadingBlock } from '@/shared/ui/states'
 
@@ -64,16 +64,8 @@ export function OverviewPage() {
           </p>
         )}
 
-        <div className="mt-6 grid grid-cols-2 items-start gap-6">
-          <Panel title="Откуда взяты параметры">
-            <DataQualityBar summary={project.data_quality} />
-            <Link
-              to="object"
-              className="group mt-4 inline-flex items-center gap-1 text-[13.5px] font-medium text-ink transition-colors hover:text-ink-2"
-            >
-              Уточнить параметры <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </Panel>
+        <div className="mt-6 grid grid-cols-2 items-stretch gap-6">
+          <Solution projectId={projectId} scenarioId={project.recommended_scenario_id} />
 
           <Panel title="Журнал изменений">
             {audit.isPending && <LoadingBlock rows={2} />}
@@ -108,10 +100,80 @@ function Figure({ label, value, children }: { label: string; value: string; chil
   )
 }
 
-function Panel({ title, children }: { title: string; children: ReactNode }) {
+/* What the recommendation actually buys: which robots, how many and for which process — the first thing
+   an operations director asks after the payback. */
+function Solution({ projectId, scenarioId }: { projectId: string; scenarioId?: string | null }) {
+  const scenarios = useScenarios(projectId)
+  const processes = useProcesses(projectId)
+  const scenario = scenarios.data?.find((s) => s.id === scenarioId) ?? pickMainScenario(scenarios.data)
+  const processName = new Map((processes.data?.processes ?? []).map((p) => [p.process_key, p.name.split(' (')[0]]))
+
   return (
-    <section className="rounded-xl bg-surface-2 px-5 py-5 ring-1 ring-line">
-      <h2 className="h3 mb-4">{title}</h2>
+    <Panel
+      title="Рекомендуемое решение"
+      action={
+        scenario && (
+          <Link
+            to={`scenarios/${scenario.id}`}
+            className="group inline-flex items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink"
+          >
+            Сценарий <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        )
+      }
+    >
+      {scenarios.isPending && <LoadingBlock rows={2} />}
+      {scenarios.data && !scenario?.items.length && (
+        <p className="text-[13.5px] text-ink-3">Появится после подбора роботов и расчёта сценария.</p>
+      )}
+      {scenario && scenario.items.length > 0 && (
+        <ul className="space-y-4">
+          {scenario.items.map((item) => {
+            const count = item.count_result?.final ?? item.count_manual ?? 0
+            const result = item.count_result
+            const price = item.price_override_rub ?? item.price_rub
+            return (
+              <li key={item.id} className="flex items-center gap-4">
+                <span className="display num w-14 shrink-0 text-[34px]">{formatNumber(count)}</span>
+                <span className="min-w-0">
+                  <span className="block truncate text-[15px] font-semibold tracking-[-0.01em]">
+                    {(item.product_name ?? 'Решение').split(' (')[0]}
+                  </span>
+                  <span className="block truncate text-[12.5px] text-ink-3">
+                    {processName.get(item.process_key) ?? item.process_key}
+                    {isNum(price) && ` · ${formatRub(price)} за единицу`}
+                  </span>
+                  {result && (
+                    <span className="block truncate text-[12.5px] text-ink-3">
+                      {isNum(result.simulated)
+                        ? `${formatNumber(result.simulated)} по имитации`
+                        : `${formatNumber(result.analytic)} по расчёту цикла`}
+                      {result.reserve ? ` + ${formatNumber(result.reserve)} в резерв` : ''}
+                    </span>
+                  )}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {scenario?.last_calculation?.status === 'stale' && (
+        <p className="mt-4 flex items-center gap-2 text-[12.5px] text-warn">
+          <span className="size-1.5 rounded-full bg-warn" />
+          Данные менялись после расчёта — пересчитайте сценарий
+        </p>
+      )}
+    </Panel>
+  )
+}
+
+function Panel({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="h-full rounded-xl bg-surface-2 px-5 py-5 ring-1 ring-line">
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h2 className="h3">{title}</h2>
+        {action}
+      </div>
       {children}
     </section>
   )
