@@ -140,7 +140,7 @@ function LayoutTwin({
   const route = stats.avg_route_m?.dock_in_to_storage
   const numbers: [string, string][] = []
   if (isNum(stats.rack_slots_total)) numbers.push([formatNumber(stats.rack_slots_total), 'паллетомест на схеме'])
-  if (isNum(route)) numbers.push([`${formatNumber(route)} м`, 'средний путь от ворот до места'])
+  if (isNum(route)) numbers.push([`${formatNumber(route)} м`, 'путь от ворот до места'])
 
   const [expanded, setExpanded] = useState(false)
   // Only one live scene at a time: two WebGL canvases with thousands of racks stutter. The card drops its scene
@@ -224,18 +224,17 @@ function LayoutTwin({
         )}
         {error && <div className="max-w-90 rounded-[12px] bg-white p-4 shadow-card">{error}</div>}
       </div>
-      <div className="pointer-events-none absolute right-4 bottom-4 left-4 z-10 flex flex-wrap items-end justify-between gap-3">
-        {numbers.length > 0 && (
-          <div className="flex gap-6 rounded-[12px] border border-line bg-white/90 px-4 py-3 backdrop-blur">
-            {numbers.map(([value, label]) => (
-              <div key={label}>
-                <div className="display num text-[18px]">{value}</div>
-                <div className="meta">{label}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* A narrow column, so the map toolbar in the opposite corner never runs into it. */}
+      {numbers.length > 0 && (
+        <div className="pointer-events-none absolute bottom-4 left-4 z-10 flex flex-col gap-2.5 rounded-[12px] border border-line bg-white/90 px-4 py-3 backdrop-blur">
+          {numbers.map(([value, label]) => (
+            <div key={label}>
+              <div className="display num text-[17px]">{value}</div>
+              <div className="meta">{label}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   )
 }

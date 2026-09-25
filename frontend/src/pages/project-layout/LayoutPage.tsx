@@ -229,7 +229,8 @@ function PlanStage({
         {(view) => <FocusLayer layout={layout} k={view.k} route={example} spotlight={figure?.spotlight} />}
       </LayoutMap>
 
-      <div className="pointer-events-none absolute top-4 left-1/2 z-10 -translate-x-1/2">
+      {/* Under the scale and size labels of the top-left corner: a centred caption runs into them on a narrow map. */}
+      <div className="pointer-events-none absolute top-15 left-4 z-10">
         <AnimatePresence mode="wait" initial={false}>
           {caption && (
             <motion.div

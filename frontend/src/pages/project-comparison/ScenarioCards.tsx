@@ -111,7 +111,7 @@ function ScenarioCard({
         </div>
       </div>
 
-      <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-line pt-4">
+      <dl className="mt-5 space-y-1.5 border-t border-line pt-4">
         <Fact label="вложения" value={formatRub(m.capex_rub)} />
         <Fact label="эффект в год" value={formatRub(m.effect_rub_year)} />
         <Fact label="NPV" value={formatRub(m.npv_rub)} tone={isNum(m.npv_rub) && m.npv_rub < 0 ? 'crit' : undefined} />
@@ -142,7 +142,7 @@ function BaselineCard({ scenario: s }: { scenario: Scenario }) {
         Ручной труд без роботов. С ним сравниваются затраты, эффект и окупаемость каждого варианта.
       </p>
 
-      <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-line pt-4">
+      <dl className="mt-auto space-y-1.5 border-t border-line pt-4">
         <Fact label={`TCO за ${m.horizon_years ?? 5} лет`} value={formatRub(m.tco_rub)} />
         <Fact label="ставка дисконта" value={isNum(m.discount_rate_pct) ? `${m.discount_rate_pct} %` : '—'} />
       </dl>
@@ -150,11 +150,17 @@ function BaselineCard({ scenario: s }: { scenario: Scenario }) {
   )
 }
 
+// Label and value on one line: three money figures side by side get cut off in a narrow card.
 function Fact({ label, value, tone }: { label: string; value: string; tone?: 'crit' }) {
   return (
-    <div className="flex min-w-0 flex-col-reverse">
-      <dt className="truncate text-[11.5px] text-ink-3">{label}</dt>
-      <dd className={cn('num truncate text-[14px] font-semibold tracking-[-0.01em]', tone === 'crit' && 'text-crit')}>
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="min-w-0 truncate text-[12.5px] text-ink-3">{label}</dt>
+      <dd
+        className={cn(
+          'num text-[14px] font-semibold whitespace-nowrap tracking-[-0.01em]',
+          tone === 'crit' && 'text-crit',
+        )}
+      >
         {value}
       </dd>
     </div>
