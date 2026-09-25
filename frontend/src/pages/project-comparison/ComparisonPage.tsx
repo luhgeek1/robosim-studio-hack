@@ -4,7 +4,7 @@ import { useProjectId } from '@/entities/project'
 import { useBuildComparisonSet, useComparison } from '@/entities/scenario'
 import { parseApiProblem } from '@/shared/api/problem'
 import { Button } from '@/shared/ui/button'
-import { formatPct, formatRub, formatYears, isNum, pluralRu } from '@/shared/lib/format'
+import { formatPct, formatRub, formatYears, isNum } from '@/shared/lib/format'
 import { Callout, Screen, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { CashflowChart } from './CashflowChart'
@@ -66,14 +66,9 @@ export function ComparisonPage() {
     table!.scenarios.find((s) => s.scenario_id === table!.recommendation?.scenario_id) ??
     table!.scenarios.find((s) => s.kind !== 'baseline')
   const m = best?.metrics
-  const horizon = m?.horizon_years ?? 5
 
   return (
-    <Screen
-      title={table!.verdict.headline}
-      lead={`Сравнили ${robotized} ${pluralRu(robotized, ['вариант', 'варианта', 'вариантов'])} роботизации с «как сейчас» на горизонте ${horizon} лет.${best && table!.recommendation ? ` Лучший — «${best.name}».` : ''}`}
-      nextLabel="Проверить риски"
-    >
+    <Screen title={table!.verdict.headline} nextLabel="Проверить риски">
       <div className="space-y-6">
         {(robotized < MIN_ROBOTIZED || stale > 0) && (
           <Callout
