@@ -7,6 +7,7 @@ import type { AuditEvent } from '@/shared/api/types'
 import { formatDateTime, formatNumber, formatRub, formatYears, isNum } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { LoadingBlock } from '@/shared/ui/states'
+import { RobotPreview3D } from '@/widgets/robot-3d'
 
 const AUDIT_ACTION_LABEL: Record<AuditEvent['action'], string> = {
   create: 'создание',
@@ -133,16 +134,23 @@ function Solution({ projectId, scenarioId }: { projectId: string; scenarioId?: s
             const result = item.count_result
             const price = item.price_override_rub ?? item.price_rub
             return (
-              <li key={item.id} className="flex items-center gap-4">
-                <span className="display num w-14 shrink-0 text-[34px]">{formatNumber(count)}</span>
+              <li key={item.id} className="flex items-center gap-5">
+                {item.product_id && (
+                  <span className="relative h-28 w-36 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(ellipse_at_50%_60%,#ffffff_0%,var(--card)_45%,var(--canvas)_100%)] ring-1 ring-line">
+                    <RobotPreview3D productId={item.product_id} framing={{ scale: 1.2, lower: 0.08 }} />
+                  </span>
+                )}
+                <span className="display num shrink-0 text-[34px]">{formatNumber(count)}</span>
                 <span className="min-w-0">
                   <span className="block truncate text-[15px] font-semibold tracking-[-0.01em]">
                     {(item.product_name ?? 'Решение').split(' (')[0]}
                   </span>
                   <span className="block truncate text-[12.5px] text-ink-3">
                     {processName.get(item.process_key) ?? item.process_key}
-                    {isNum(price) && ` · ${formatRub(price)} за единицу`}
                   </span>
+                  {isNum(price) && (
+                    <span className="block truncate text-[12.5px] text-ink-3">{formatRub(price)} за единицу</span>
+                  )}
                   {result && (
                     <span className="block truncate text-[12.5px] text-ink-3">
                       {isNum(result.simulated)
