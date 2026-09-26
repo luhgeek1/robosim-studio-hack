@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { GitCompareArrows, RotateCw, Sparkles, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useMatching, useRunMatching } from '@/entities/matching'
 import { useProjectId } from '@/entities/project'
@@ -157,35 +157,11 @@ function MatchingView({
 
   return (
     <div className="grid grid-cols-[15rem_minmax(0,1fr)] items-start gap-8">
-      <nav className="sticky top-40 space-y-0.5" aria-label="Процессы">
-        {data.processes.map((process) => {
-          const active = process === selected
-          const fit = process.candidates.filter((c) => c.status === 'fit').length
-          return (
-            <button
-              key={process.process_key}
-              type="button"
-              onClick={() => setParams({ process: process.process_key }, { replace: true })}
-              className={cn(
-                'relative flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-[13.5px] transition-colors',
-                active ? 'text-ink' : 'text-ink-3 hover:text-ink',
-              )}
-            >
-              {active && (
-                <motion.span
-                  layoutId="matching-process"
-                  className="absolute inset-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(20,20,24,0.04)]"
-                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                />
-              )}
-              <span className="relative min-w-0 flex-1 leading-snug">{shortName(process.name)}</span>
-              <span className={cn('num relative text-[12px] leading-snug', fit ? 'text-ok' : 'text-ink-4')}>
-                {fit}/{process.candidates.length}
-              </span>
-            </button>
-          )
-        })}
-      </nav>
+      <ProcessNav
+        processes={data.processes}
+        selectedKey={selected?.process_key}
+        onSelect={(key) => setParams({ process: key }, { replace: true })}
+      />
 
       {selected && (
         <ProcessView
@@ -270,6 +246,92 @@ function ProcessView({
         </motion.div>
       )}
     </div>
+  )
+}
+
+// Slightly shorter than the highlight's glide: the heavy candidate grid swaps in once the eye has followed it.
+const SWAP_DELAY_MS = 200
+
+/* The highlight is one element moved by a CSS transform, so the compositor keeps it smooth even while the next
+   process's grid (3D previews included) mounts; the switch itself is deferred until the glide is mostly done. */
+function ProcessNav({
+  processes,
+  selectedKey,
+  onSelect,
+}: {
+  processes: ProcessMatching[]
+  selectedKey?: string
+  onSelect: (key: string) => void
+}) {
+  const [active, setActive] = useState(selectedKey)
+  const [synced, setSynced] = useState(selectedKey)
+  const [box, setBox] = useState<{ top: number; height: number } | null>(null)
+  const [, startTransition] = useTransition()
+  const refs = useRef(new Map<string, HTMLButtonElement>())
+  const timer = useRef<number | undefined>(undefined)
+
+  // The URL wins when it changes from outside (back button, a link from «Где деньги»).
+  if (selectedKey !== synced) {
+    setSynced(selectedKey)
+    setActive(selectedKey)
+  }
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = active ? refs.current.get(active) : undefined
+      setBox(el ? { top: el.offsetTop, height: el.offsetHeight } : null)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    refs.current.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [active, processes])
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  const pick = (key: string) => {
+    setActive(key)
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => startTransition(() => onSelect(key)), SWAP_DELAY_MS)
+  }
+
+  return (
+    <nav className="sticky top-40" aria-label="Процессы">
+      <div className="relative flex flex-col gap-0.5">
+        {box && (
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(20,20,24,0.04)] transition-[transform,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+            style={{ transform: `translateY(${box.top}px)`, height: box.height }}
+          />
+        )}
+        {processes.map((process) => {
+          const on = process.process_key === active
+          const fit = process.candidates.filter((c) => c.status === 'fit').length
+          return (
+            <button
+              key={process.process_key}
+              ref={(el) => {
+                if (el) refs.current.set(process.process_key, el)
+                else refs.current.delete(process.process_key)
+              }}
+              type="button"
+              aria-current={on ? 'true' : undefined}
+              onClick={() => pick(process.process_key)}
+              className={cn(
+                'relative flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-[13.5px] transition-colors duration-200',
+                on ? 'text-ink' : 'text-ink-3 hover:text-ink',
+              )}
+            >
+              <span className="relative min-w-0 flex-1 leading-snug">{shortName(process.name)}</span>
+              <span className={cn('num relative text-[12px] leading-snug', fit ? 'text-ok' : 'text-ink-4')}>
+                {fit}/{process.candidates.length}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </nav>
   )
 }
 
