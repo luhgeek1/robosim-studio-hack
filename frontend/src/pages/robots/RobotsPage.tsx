@@ -218,7 +218,7 @@ export function RobotsPage() {
   if (catalog.isPending) return <LoadingBlock label="Загружаем каталог…" />
   if (catalog.isError) return <ErrorBlock error={catalog.error} onRetry={() => catalog.refetch()} />
   return (
-    <div className="mx-auto w-full max-w-360 px-6 pt-12 pb-28">
+    <div className="mx-auto w-full max-w-360 px-4 pt-7 sm:px-6 sm:pt-12 pb-28">
       <div className="mb-2 flex items-baseline gap-3">
         <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Роботы в 3D</h1>
         <span className="display num text-[28px] text-ink-4">{KINDS.length}</span>

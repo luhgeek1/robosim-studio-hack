@@ -71,10 +71,7 @@ export function CalculationView({
           <Stat label="Ставка дисконтирования" value={formatPct(m.discount_rate_pct)} />
         </StatStrip>
       ) : (
-        <StatStrip
-          columns={4}
-          className="md:divide-x-0 md:[&>*:nth-child(-n+4)]:border-b md:[&>*:not(:nth-child(4n+1))]:border-l"
-        >
+        <StatStrip columns={4}>
           <Stat label="CAPEX" value={formatRub(m.capex_rub)} hint="с НДС" />
           <Stat label="OPEX роботизации" value={formatRub(m.opex_rub_year)} hint="в год" />
           <Stat

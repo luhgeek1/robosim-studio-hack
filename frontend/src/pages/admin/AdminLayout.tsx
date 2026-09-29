@@ -19,7 +19,7 @@ export function AdminLayout() {
   const version = useSystemVersion()
 
   return (
-    <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-20">
+    <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-12 pb-20">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Админ-панель</h1>
         {version.data && (

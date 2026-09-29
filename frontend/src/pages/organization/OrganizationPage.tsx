@@ -27,7 +27,7 @@ export function OrganizationPage() {
   const { organizationId = '' } = useParams()
   const organization = useOrganization(organizationId)
   return (
-    <div className="mx-auto w-full max-w-215 px-6 pt-12 pb-16">
+    <div className="mx-auto w-full max-w-215 px-4 pt-7 sm:px-6 sm:pt-12 pb-16">
       {organization.isPending && <LoadingBlock label="Загружаем организацию…" />}
       {organization.isError && <ErrorBlock error={organization.error} onRetry={() => organization.refetch()} />}
       {organization.data && <Organization org={organization.data} />}

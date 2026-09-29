@@ -205,6 +205,15 @@
     line-height: 1.3;
     font-weight: 600;
   }
+  @media (max-width: 639px) {
+    .h1 {
+      font-size: 27px;
+      letter-spacing: -0.028em;
+    }
+    .h2 {
+      font-size: 19px;
+    }
+  }
   .meta {
     font-size: 12.5px;
     color: var(--muted-foreground);

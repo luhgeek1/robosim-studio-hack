@@ -87,7 +87,7 @@ export function ComparePage() {
 
   if (ids.length < 2) {
     return (
-      <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-16">
+      <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-12 pb-16">
         {header}
         <EmptyState
           icon={<GitCompareArrows className="size-6" />}
@@ -104,7 +104,7 @@ export function ComparePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-16">
+    <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-12 pb-16">
       {header}
       {compare.isPending && <LoadingBlock rows={6} />}
       {compare.isError && <ErrorBlock error={compare.error} onRetry={() => compare.refetch()} />}

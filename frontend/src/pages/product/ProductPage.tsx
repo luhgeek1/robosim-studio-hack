@@ -66,7 +66,7 @@ export function ProductPage() {
   }, [productId])
 
   return (
-    <div className="mx-auto w-full max-w-360 px-6 pt-6 pb-28">
+    <div className="mx-auto w-full max-w-360 px-4 pt-6 pb-28 sm:px-6">
       <BackLink />
       {product.isPending && <HeroSkeleton />}
       {product.isError && <ErrorBlock error={product.error} onRetry={() => product.refetch()} />}

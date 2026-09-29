@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
-import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { NavLink, Outlet, useLocation, useMatch } from 'react-router'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
-import { HeaderHighlight, ProjectTabs, Sections } from './HeaderNav'
+import { HeaderHighlight, MobileNav, ProjectTabs, Sections } from './HeaderNav'
 import { Logo } from './Logo'
 import { Notifications } from './Notifications'
 import { WorkspaceMenu } from './WorkspaceMenu'
@@ -59,8 +59,17 @@ function StepDock({ projectId }: { projectId: string }) {
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
   const hidden = scrolled && !pulled && !hovered && !focused
+  const { pathname } = useLocation()
+  const nav = useRef<HTMLElement>(null)
+  // На узком экране плашка прокручивается вбок — активный шаг держим в видимой части.
+  useEffect(() => {
+    const el = nav.current
+    const active = el?.querySelector<HTMLElement>('a[aria-current="page"]')
+    if (!el || !active) return
+    el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' })
+  }, [pathname])
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-6">
+    <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-3 sm:px-6">
       <div
         className="pointer-events-auto max-w-full pt-3 pb-2"
         onMouseEnter={() => setHovered(true)}
@@ -73,9 +82,10 @@ function StepDock({ projectId }: { projectId: string }) {
         }}
       >
         <nav
+          ref={nav}
           className={cn(
             // Плашка чаще появляется поверх прокрученного контента: без размытия цифры и 3D-карточки лезут сквозь подписи.
-            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
+            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
             // Выезжает с замедлением, уезжает с разгоном: так движение читается целиком, а не вспышкой в первом кадре.
             'transition-[translate,opacity] duration-320 ease-[cubic-bezier(0.33,1,0.68,1)] motion-reduce:transition-none',
             // Уход — с короткой задержкой: курсор, проскочивший мимо края, не заставляет плашку дёргаться.
@@ -132,13 +142,26 @@ export function AppShell() {
         layoutRoot
         className="fixed inset-x-0 top-0 z-40 h-14 border-b border-line bg-canvas/85 backdrop-blur-md"
       >
-        <div ref={setHeaderRow} className="relative mx-auto flex h-full max-w-360 items-center gap-5 px-6">
+        <div
+          ref={setHeaderRow}
+          className="relative mx-auto flex h-full max-w-360 items-center gap-2 px-3 sm:px-4 lg:gap-5 lg:px-6"
+        >
           <HeaderHighlight container={headerRow} />
+          <div className="lg:hidden">
+            <MobileNav projectId={projectId} />
+          </div>
           <Logo />
-          <div className="h-5 w-px shrink-0 bg-line-2" />
-          <Sections projectId={projectId} />
-          <div className="h-5 w-px shrink-0 bg-line-2" />
-          {user ? <ProjectTabs activeId={projectId} /> : <div className="min-w-0 flex-1" />}
+          <div className="hidden h-5 w-px shrink-0 bg-line-2 lg:block" />
+          <div className="hidden lg:contents">
+            <Sections projectId={projectId} />
+            <div className="h-5 w-px shrink-0 bg-line-2" />
+          </div>
+          {user ? (
+            <div className="hidden min-w-0 flex-1 lg:flex">
+              <ProjectTabs activeId={projectId} />
+            </div>
+          ) : null}
+          <div className={cn('min-w-0 flex-1', user && 'lg:hidden')} />
           <div className="flex shrink-0 items-center gap-1">
             <Notifications />
             <WorkspaceMenu />

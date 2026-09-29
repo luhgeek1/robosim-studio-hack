@@ -58,7 +58,7 @@ export function WorkbenchFrame({
         'flex flex-col bg-card',
         inFlow
           ? // Под шапкой, поверх распорки плашки шагов (66 px) и верхнего отступа страницы проекта (20 px).
-            '-mx-6 -mt-[5.375rem] h-[calc(100dvh-3.5rem)] shrink-0 border-b border-line'
+            '-mx-4 -mt-[5.375rem] sm:-mx-6 h-[calc(100dvh-3.5rem)] shrink-0 border-b border-line'
           : 'fixed inset-x-0 top-14 bottom-0 z-20',
       )}
       style={{ '--dock-half': `${dockHalf}px` } as CSSProperties}

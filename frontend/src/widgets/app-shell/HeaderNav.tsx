@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useIsPresent, type Transition } from 'framer-motion'
-import { Check, HeartPulse, Plane, Plus, Warehouse, X } from 'lucide-react'
+import { Check, HeartPulse, Menu, Plane, Plus, Warehouse, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
 import { OBJECT_TYPE_LABEL, useProject, useProjects } from '@/entities/project'
@@ -9,6 +9,7 @@ import { parseApiProblem } from '@/shared/api/problem'
 import { formatDateTime, formatPct } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/shared/ui/sheet'
 import { ConfidenceRing } from '@/shared/ui/v0'
 import { useProjectTabs, type ProjectTab } from './tabs'
 
@@ -291,7 +292,7 @@ function AddProjectMenu({ openIds, order }: { openIds: Set<string>; order: strin
       <PopoverContent
         align="start"
         sideOffset={8}
-        className="w-80 gap-0 overflow-hidden rounded-[14px] p-0 shadow-float"
+        className="w-80 max-w-[calc(100vw-1.5rem)] gap-0 overflow-hidden rounded-[14px] p-0 shadow-float"
       >
         <div className="px-4 pt-3.5 pb-2">
           <div className="text-[13.5px] font-semibold">Открыть проект</div>
@@ -400,5 +401,128 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
       </div>
       <AddProjectMenu openIds={new Set(tabs.map((t) => t.id))} order={`${order}|${width}`} />
     </div>
+  )
+}
+
+function MobileLink({ to, end, onGo, children }: { to: string; end?: boolean; onGo: () => void; children: ReactNode }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onGo}
+      className={({ isActive }) =>
+        cn(
+          'flex h-11 items-center gap-2 rounded-[10px] px-3 text-[15px] font-medium transition-colors',
+          isActive ? 'bg-black/6 text-ink' : 'text-ink-2 hover:bg-black/4',
+        )
+      }
+    >
+      {children}
+    </NavLink>
+  )
+}
+
+function MobileTab({ tab, active, onGo }: { tab: ProjectTab; active: boolean; onGo: () => void }) {
+  const project = useProject(tab.id)
+  const navigate = useNavigate()
+  const close = useProjectTabs((s) => s.close)
+  return (
+    <div className={cn('flex items-center rounded-[10px]', active ? 'bg-white shadow-card' : 'hover:bg-black/4')}>
+      <Link to={tab.path} onClick={onGo} className="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 px-3">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-black/5 text-ink-2">
+          {objectIcon(project.data?.object_type, 14)}
+        </span>
+        <span className="truncate text-[14px] font-medium">{project.data?.name ?? '…'}</span>
+      </Link>
+      <button
+        type="button"
+        onClick={() => {
+          const next = close(tab.id)
+          if (active) {
+            onGo()
+            navigate(next ? next.path : '/projects')
+          }
+        }}
+        aria-label={`Закрыть вкладку «${project.data?.name ?? 'проект'}»`}
+        className="mr-1 flex size-9 shrink-0 items-center justify-center rounded-md text-ink-4 hover:bg-black/6 hover:text-ink"
+      >
+        <X size={15} />
+      </button>
+    </div>
+  )
+}
+
+/* На узком экране разделы и открытые проекты не помещаются в шапку — они уезжают в выдвижное меню. */
+export function MobileNav({ projectId }: { projectId?: string }) {
+  const [open, setOpen] = useState(false)
+  const { user } = useSession()
+  const selection = useCompareSelection()
+  const tabs = useProjectTabs((s) => s.tabs)
+  const navigate = useNavigate()
+  const compareTo = `${compareUrl(selection.ids)}${projectId ? `&project=${projectId}` : ''}`
+  const go = () => setOpen(false)
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button
+          type="button"
+          className="flex size-9 shrink-0 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-black/5 hover:text-ink"
+          aria-label="Меню"
+        >
+          <Menu size={19} />
+        </button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[min(20rem,86vw)] gap-0 bg-canvas p-0">
+        <div className="flex h-14 shrink-0 items-center border-b border-line px-4">
+          <SheetTitle className="text-[15px] font-semibold">Меню</SheetTitle>
+          <SheetDescription className="sr-only">Разделы платформы и открытые проекты</SheetDescription>
+        </div>
+        <div className="scroll-thin flex-1 overflow-y-auto p-3">
+          <nav className="space-y-0.5" aria-label="Разделы">
+            {user && (
+              <MobileLink to="/projects" end onGo={go}>
+                Проекты
+              </MobileLink>
+            )}
+            <MobileLink to="/catalog" end onGo={go}>
+              Каталог
+            </MobileLink>
+            {user?.role === 'admin' && (
+              <MobileLink to="/admin" onGo={go}>
+                Админ-панель
+              </MobileLink>
+            )}
+            <MobileLink to={compareTo} onGo={go}>
+              Сравнение решений
+              {selection.items.length > 0 && (
+                <span className="num flex h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1.5 text-[11px] text-white">
+                  {selection.items.length}
+                </span>
+              )}
+            </MobileLink>
+          </nav>
+          {user && (
+            <div className="mt-5">
+              <div className="hud mb-2 px-3">Открытые проекты</div>
+              <div className="space-y-1">
+                {tabs.map((tab) => (
+                  <MobileTab key={tab.id} tab={tab} active={tab.id === projectId} onGo={go} />
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    go()
+                    navigate('/projects?new=1')
+                  }}
+                  className="flex h-11 w-full items-center gap-2 rounded-[10px] px-3 text-[14px] font-medium text-ink-2 hover:bg-black/4"
+                >
+                  <Plus size={16} /> Новый проект
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

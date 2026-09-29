@@ -83,7 +83,7 @@ export function CatalogPage() {
     update({ q: null, object_type: null, industry: null, solution_type: null, status: null, badge: null })
 
   return (
-    <div className="mx-auto w-full max-w-360 px-6 pt-12 pb-28">
+    <div className="mx-auto w-full max-w-360 px-4 pt-7 sm:px-6 sm:pt-12 pb-28">
       <div className="mb-8 flex items-baseline gap-3">
         <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Каталог решений</h1>
         {data && <span className="display num text-[28px] text-ink-4">{formatNumber(data.total)}</span>}
