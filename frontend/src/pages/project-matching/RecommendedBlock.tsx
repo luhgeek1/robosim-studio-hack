@@ -96,7 +96,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
   const stale = calc?.status === 'stale'
 
   return (
-    <section className={cn('card mx-auto mb-10 overflow-hidden', picks.length === 1 && 'max-w-[1080px]')}>
+    <section className="card mb-10 overflow-hidden">
       {picks.length === 1 ? (
         <ul>
           <PickHero pick={picks[0]} first />
