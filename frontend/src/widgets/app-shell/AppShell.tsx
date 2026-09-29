@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import { useEffect, useState, useSyncExternalStore } from 'react'
-import { NavLink, Outlet, useMatch } from 'react-router'
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react'
+import { NavLink, Outlet, useLocation, useMatch } from 'react-router'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
@@ -120,6 +120,11 @@ export function AppShell() {
   const { user } = useSession()
   const match = useMatch('/projects/:projectId/*')
   const projectId = match?.params.projectId
+  const { pathname } = useLocation()
+  // Каждый экран открывается сверху: положение прокрутки предыдущего не переносится на следующий.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [pathname])
   return (
     <div className="flex min-h-full flex-col">
       <div className="h-14 shrink-0" aria-hidden />

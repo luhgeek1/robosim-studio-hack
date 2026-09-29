@@ -1,4 +1,4 @@
-import { ArrowLeft, Calculator, ListTree, RotateCcw, Save, Star } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Calculator, ListTree, RotateCcw, Save, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useProject, useProjectId } from '@/entities/project'
@@ -60,6 +60,14 @@ export function ScenarioPage() {
     setTraceOpen(true)
   }
 
+  const nextButton = (
+    <Button asChild variant="ghost">
+      <Link to={`/projects/${projectId}/comparison`}>
+        Далее: сравнение <ArrowRight />
+      </Link>
+    </Button>
+  )
+
   return (
     <div className="mx-auto max-w-300 space-y-5 pb-16 pt-2">
       <div className="space-y-3">
@@ -115,6 +123,7 @@ export function ScenarioPage() {
                     ? 'Пересчитать'
                     : 'Рассчитать'}
             </Button>
+            {nextButton}
           </div>
         </div>
       </div>
@@ -182,6 +191,19 @@ export function ScenarioPage() {
           />
         </div>
       )}
+
+      <div className="hairline mt-12 flex items-center justify-between pt-6">
+        <Button asChild variant="ghost">
+          <Link to={`/projects/${projectId}/scenarios`}>
+            <ArrowLeft /> Все сценарии
+          </Link>
+        </Button>
+        <Button asChild variant="ghost" size="lg">
+          <Link to={`/projects/${projectId}/comparison`}>
+            Далее: сравнение <ArrowRight />
+          </Link>
+        </Button>
+      </div>
 
       {calculationId && (
         <TraceSheet
