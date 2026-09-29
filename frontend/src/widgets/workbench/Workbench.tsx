@@ -126,3 +126,54 @@ export function StatusBar({
     </footer>
   )
 }
+
+export type SideTab = { key: string; label: string; content: ReactNode }
+
+/* Вкладки боковой панели как в VS Code: одна тема на экране вместо длинной ленты разделов. */
+export function SideTabs({ tabs }: { tabs: SideTab[] }) {
+  const [active, setActive] = useState(tabs[0]?.key)
+  const current = tabs.find((t) => t.key === active) ?? tabs[0]
+  return (
+    <>
+      <div className="flex h-10 shrink-0 items-end gap-1 border-b border-line px-2" role="tablist">
+        {tabs.map((tab) => {
+          const on = tab.key === current?.key
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setActive(tab.key)}
+              className={cn(
+                'relative h-9 rounded-t-[8px] px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                on ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
+              )}
+            >
+              {tab.label}
+              {on && (
+                <motion.span
+                  layoutId="side-tab"
+                  className="absolute inset-x-1.5 -bottom-px h-0.5 rounded-full bg-ink"
+                  transition={{ type: 'spring', stiffness: 520, damping: 42 }}
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={current?.key}
+          role="tabpanel"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.08 } }}
+          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {current?.content}
+        </motion.div>
+      </AnimatePresence>
+    </>
+  )
+}
