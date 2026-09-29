@@ -39,6 +39,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { KpiNumber, Pill, type Tone } from '@/shared/ui/v0'
+import { PulseDot } from '@/shared/ui/kinetics'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { Conditions } from './Conditions'
@@ -367,14 +368,9 @@ function SimulationView({
 
   return (
     <Screen
-      wide
       dense
       title={title}
-      lead={
-        !sizing
-          ? 'В сценарии нет процесса с моделью цикла — имитировать нечего.'
-          : 'Песочница: смена на планировке — каждый робот, заторы и зарядка. Меняйте условия, парк проверяется сразу.'
-      }
+      lead={!sizing ? 'В сценарии нет процесса с моделью цикла — имитировать нечего.' : undefined}
       actions={
         <>
           {picker && <div className="w-64 max-sm:w-full">{picker}</div>}
@@ -393,23 +389,24 @@ function SimulationView({
       {calculation.isError && <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} />}
       {sizing && (
         <div className="space-y-4">
-          <Conditions
-            config={config}
-            counts={counts}
-            working={working}
-            sizing={sizing}
-            whatIf={whatIf}
-            processes={checkable.map((s) => ({
-              key: s.process_key,
-              label: s.product_name?.split(' (')[0] ?? s.process_key,
-            }))}
-            onProcess={pickProcess}
-            onChange={change}
-          />
-
           <section className="card overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem]">
-              <div className="relative h-[min(600px,calc(100svh-320px))] min-h-105">
+            <Conditions
+              config={config}
+              counts={counts}
+              working={working}
+              sizing={sizing}
+              whatIf={whatIf}
+              processes={checkable.map((s) => ({
+                key: s.process_key,
+                label: s.product_name?.split(' (')[0] ?? s.process_key,
+              }))}
+              onProcess={pickProcess}
+              onChange={change}
+            />
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem]">
+              {/* Карта — иллюстрация прогона, а не главный экран: высота ограничена, чтобы вывод и ответы
+                  колонки были видны вместе с ней. */}
+              <div className="relative min-h-80 lg:min-h-[min(440px,calc(100svh-450px))]">
                 {(error || replay.isError) && (
                   <div className="absolute inset-x-3 top-16 z-20 space-y-2">
                     {error && (
@@ -497,7 +494,6 @@ function SimulationView({
                 summary={summary}
                 timeline={timeline.data}
                 sweepPoint={sweepPoint}
-                target={target}
                 failed={failed}
               />
             </div>
@@ -513,7 +509,7 @@ function SimulationView({
             </div>
           </section>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <div className="space-y-4">
             <FleetDecision
               projectId={projectId}
               scenarioId={scenario.id}
@@ -522,8 +518,10 @@ function SimulationView({
               last={lastSweep}
               shownCount={config.mode === 'peak' && !config.volume && !config.failure ? config.count : null}
               onOpen={(count, id) => open({ count, mode: 'peak', volume: false, failure: false }, id)}
+              summary={summary}
+              target={target}
             />
-            <div className="space-y-4">
+            <>
               <StressChecks
                 processKey={sizing.process_key}
                 fleet={fleet}
@@ -536,7 +534,7 @@ function SimulationView({
                 onOpen={(c, id) => open(c, id)}
               />
               {summary && <BusyShare summary={summary} />}
-            </div>
+            </>
           </div>
         </div>
       )}
@@ -552,10 +550,25 @@ const FRESH = { count: null, mode: 'peak', volume: false, failure: false } as co
 }
 
 // Проверки устойчивости парка из расчёта: объём выше плана, отказ робота и оба сразу — в пиковые часы.
-const CHECKS: { key: string; title: string; config: Pick<RunConfig, 'volume' | 'failure'> }[] = [
-  { key: 'volume', title: 'Объём на 20 % выше', config: { volume: true, failure: false } },
-  { key: 'failure', title: 'Робот встал на 2 часа', config: { volume: false, failure: true } },
-  { key: 'both', title: 'Оба сразу', config: { volume: true, failure: true } },
+const CHECKS: { key: string; title: string; note: string; config: Pick<RunConfig, 'volume' | 'failure'> }[] = [
+  {
+    key: 'volume',
+    title: 'Объём на 20 % выше',
+    note: 'поток задач на пятую часть больше плана',
+    config: { volume: true, failure: false },
+  },
+  {
+    key: 'failure',
+    title: 'Робот встал на 2 часа',
+    note: 'один робот выходит из строя в начале смены',
+    config: { volume: false, failure: true },
+  },
+  {
+    key: 'both',
+    title: 'Оба сразу',
+    note: 'больше задач и отказ робота в одну смену',
+    config: { volume: true, failure: true },
+  },
 ]
 
 // Доля в срок того процесса, чей парк на экране: в прогоне сценария рядом едут и другие типы роботов со своим SLA.
@@ -582,7 +595,6 @@ function RunAside({
   summary,
   timeline,
   sweepPoint,
-  target,
   failed,
 }: {
   processKey: string
@@ -590,7 +602,6 @@ function RunAside({
   summary: SimulationSummary | null
   timeline?: SimulationTimeline
   sweepPoint?: FleetSweepResult['points'][number]
-  target: number
   failed: string | null
 }) {
   const bucket = usePlayback((s) => Math.floor(s.t / 30))
@@ -607,7 +618,6 @@ function RunAside({
   const sla = processSla(summary, processKey)
   const tone = slaTone(sla, slaTarget)
   const queue = now?.queue ?? 0
-  const vs = summary.vs_analytic
   const bottleneck = summary.bottleneck && summary.bottleneck.resource_kind !== 'none' ? summary.bottleneck : null
   const worst = summary.congestion?.top_edges?.[0]
 
@@ -687,28 +697,6 @@ function RunAside({
           </div>
         )}
       </div>
-
-      <div className="px-5 py-3.5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="hud">Расчёт против имитации</span>
-          <Hint>
-            <p>
-              Мощность того же парка при одинаковом запасе (целевая загрузка), без запаса она выше; нужно{' '}
-              {formatNumber(target)} ед/ч.
-            </p>
-            {vs.text && <p>{vs.text}</p>}
-            {summary.completed_by_humans ? (
-              <p>Задач ушло людям после превышения норматива ожидания: {summary.completed_by_humans}</p>
-            ) : null}
-          </Hint>
-        </div>
-        <div className="num mt-1 text-[14px] text-ink">
-          {formatNumber(vs.analytic_throughput_per_hour)} → {formatNumber(vs.sim_throughput_per_hour)} ед/ч
-        </div>
-        <div className="mt-1.5">
-          <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
-        </div>
-      </div>
     </aside>
   )
 }
@@ -777,18 +765,19 @@ function StressChecks({
       description={`весь парк сценария: ${fleet} ${pluralRu(fleet, ['робот', 'робота', 'роботов'])}${reserve ? ` с резервом ${reserve}` : ''}, пиковые часы`}
       actions={
         missing ? (
-          <Button size="sm" variant="outline" disabled={pending} onClick={onRun}>
+          <Button size="sm" disabled={pending} onClick={onRun}>
             {pending ? <Spinner /> : <Sparkles />} Прогнать проверки
           </Button>
         ) : undefined
       }
     >
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {items.map((item) => (
           <StressCard
             key={item.key}
             processKey={processKey}
             title={item.title}
+            note={item.note}
             id={item.id}
             target={target}
             active={configKey(item.config) === current}
@@ -803,6 +792,7 @@ function StressChecks({
 function StressCard({
   processKey,
   title,
+  note,
   id,
   target,
   active,
@@ -810,6 +800,7 @@ function StressCard({
 }: {
   processKey: string
   title: string
+  note: string
   id: string | undefined
   target: number | null
   active: boolean
@@ -826,26 +817,40 @@ function StressCard({
       type="button"
       disabled={!summary}
       onClick={onOpen}
+      title={summary ? 'Открыть этот прогон на карте' : undefined}
       className={cn(
-        'flex min-w-0 flex-col items-start rounded-[10px] border px-3 py-2.5 text-left transition-colors',
-        active ? 'border-ink bg-white' : 'border-line bg-surface-2 enabled:hover:border-line-2 enabled:hover:bg-white',
+        'flex min-w-0 flex-col items-start rounded-[12px] border px-4 py-3.5 text-left transition-colors',
+        holds === true && 'border-ok/30 bg-ok-soft/40',
+        holds === false && 'border-crit/30 bg-crit-soft/40',
+        holds === null && 'border-line bg-surface-2',
+        active && 'ring-2 ring-ink ring-offset-2 ring-offset-card',
+        summary && 'enabled:hover:brightness-[0.98]',
       )}
     >
-      <span className="truncate text-[12.5px] text-ink-2">{title}</span>
-      {summary && sla != null ? (
-        <>
-          <span className={cn('text-[15px] font-semibold', holds ? 'text-ok' : 'text-crit')}>
-            {holds ? 'держит' : 'не держит'}
+      <span className="text-[14px] font-semibold">{title}</span>
+      <span className="meta">{note}</span>
+      <span className="mt-3 block min-h-12">
+        {summary && sla != null ? (
+          <>
+            <span className={cn('hud block', holds ? 'text-ok' : 'text-crit')}>{holds ? 'держит' : 'не держит'}</span>
+            <span className="display num text-[28px] leading-none">
+              {formatNumber(sla, sla >= 99 ? 1 : 0)}
+              <span className="text-[14px] font-normal tracking-normal text-ink-3"> % в срок</span>
+            </span>
+          </>
+        ) : running ? (
+          <span className="flex items-center gap-2 text-[13px] text-ink-2">
+            <PulseDot /> считаем
+            {run.data && run.data.progress > 0 && (
+              <span className="num text-ink-3">{Math.round(run.data.progress * 100)} %</span>
+            )}
           </span>
-          <span className="num text-[12px] text-ink-3">SLA {formatNumber(sla, sla >= 99 ? 1 : 0)} %</span>
-        </>
-      ) : running ? (
-        <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-ink-3">
-          <Spinner /> считаем…
-        </span>
-      ) : (
-        <span className="mt-0.5 text-[13px] text-ink-4">{run.data?.status === 'failed' ? 'ошибка' : 'не прогнан'}</span>
-      )}
+        ) : (
+          <span className="text-[13px] text-ink-3">
+            {run.data?.status === 'failed' ? 'прогон не удался' : 'не проверено'}
+          </span>
+        )}
+      </span>
     </button>
   )
 }
@@ -860,6 +865,8 @@ function FleetDecision({
   last,
   shownCount,
   onOpen,
+  summary,
+  target,
 }: {
   projectId: string
   scenarioId: string
@@ -868,6 +875,8 @@ function FleetDecision({
   last: FleetSweepResult | undefined
   shownCount: number | null
   onOpen: (count: number, simulationId: string | null) => void
+  summary: SimulationSummary | null
+  target: number
 }) {
   const sweep = useFleetSweep(projectId, scenarioId, variantIds)
   const source = useCountSource(projectId, scenarioId)
@@ -912,7 +921,7 @@ function FleetDecision({
               </p>
             </Hint>
           )}
-          <Button size="sm" variant={result ? 'outline' : 'default'} disabled={busy} onClick={run}>
+          <Button size="sm" disabled={busy} onClick={run}>
             {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
             {sweep.isPending
               ? variantIds.length
@@ -940,7 +949,7 @@ function FleetDecision({
               <FleetTile title="По имитации" fleet={simulated} active={usingSimulation} />
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 className="w-full"
                 disabled={busy}
                 title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
@@ -956,7 +965,37 @@ function FleetDecision({
         </div>
       )}
       {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
+      {summary && <VsLine summary={summary} target={target} />}
     </Section>
+  )
+}
+
+/* Сверка производительности парка: формула цикла против имитации того же прогона. */
+function VsLine({ summary, target }: { summary: SimulationSummary; target: number }) {
+  const vs = summary.vs_analytic
+  return (
+    <div className="-mx-5 -mb-5 mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-surface-2 px-5 py-3 text-[13px]">
+      <span className="hud">Расчёт против имитации</span>
+      <span className="num">
+        <span className="font-semibold">{formatNumber(vs.analytic_throughput_per_hour)}</span>{' '}
+        <span className="text-ink-3">ед/ч по формуле</span>
+      </span>
+      <span className="num">
+        <span className="font-semibold">{formatNumber(vs.sim_throughput_per_hour)}</span>{' '}
+        <span className="text-ink-3">ед/ч в имитации</span>
+      </span>
+      <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
+      <Hint>
+        <p>
+          Мощность того же парка при одинаковом запасе (целевая загрузка), без запаса она выше; нужно{' '}
+          {formatNumber(target)} ед/ч.
+        </p>
+        {vs.text && <p>{vs.text}</p>}
+        {summary.completed_by_humans ? (
+          <p>Задач ушло людям после превышения норматива ожидания: {summary.completed_by_humans}</p>
+        ) : null}
+      </Hint>
+    </div>
   )
 }
 
@@ -998,7 +1037,7 @@ function SweepBars({
               <motion.span
                 className={cn(
                   'w-full max-w-12 rounded-t-[4px] transition-opacity group-hover:opacity-80',
-                  chosen ? 'bg-signal' : p.passed ? 'bg-ink' : 'bg-ink/20',
+                  chosen ? 'bg-signal' : p.passed ? 'bg-ink' : 'bg-crit/70',
                   p.count === shownCount && 'ring-2 ring-info ring-offset-2 ring-offset-card',
                 )}
                 initial={{ height: 0 }}
@@ -1018,14 +1057,34 @@ function SweepBars({
                 p.count === result.recommended_count ? 'font-extrabold text-ink' : 'text-ink-2',
               )}
             >
-              {p.count}
+              {p.count} роб.
             </div>
-            <div className="num truncate text-[11px] text-ink-4">{p.passed ? formatYears(p.payback_years) : '—'}</div>
+            <div className={cn('num truncate text-[11px]', p.passed ? 'text-ink-3' : 'text-crit')}>
+              {p.passed ? formatYears(p.payback_years) : 'не держит'}
+            </div>
           </div>
         ))}
       </div>
-      <p className="meta mt-2">Число роботов · окупаемость сценария; высота — худший из прогонов пика</p>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
+        <Legend color="bg-signal" text="принятое N" />
+        <Legend color="bg-ink" text="держит срок" />
+        <Legend color="bg-crit/70" text="не держит" />
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 border-t border-dashed border-signal/60" />
+          цель {formatNumber(result.target_pct)} %
+        </span>
+        <span>высота — худший из прогонов пика, под числом — окупаемость</span>
+      </div>
     </div>
+  )
+}
+
+function Legend({ color, text }: { color: string; text: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={cn('size-2.5 rounded-[3px]', color)} />
+      {text}
+    </span>
   )
 }
 
