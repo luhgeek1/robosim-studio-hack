@@ -1,5 +1,5 @@
 import { Pause, Play, RotateCcw } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { SPEEDS, usePlayback } from '@/entities/simulation'
 import { Button } from '@/shared/ui/button'
 import { cn } from '@/shared/lib/utils'
@@ -27,7 +27,7 @@ export function usePlaybackDriver() {
 }
 
 // ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения — первая строка нижней панели, под картой.
-export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
+export function PlayerBar({ disabled = false, backdrop }: { disabled?: boolean; backdrop?: ReactNode }) {
   const playing = usePlayback((s) => s.playing)
   const speed = usePlayback((s) => s.speed)
   const total = usePlayback((s) => s.total)
@@ -46,16 +46,20 @@ export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
       <Button variant="ghost" size="icon-sm" className="max-lg:size-9" onClick={() => setT(0)} aria-label="С начала">
         <RotateCcw />
       </Button>
-      <input
-        type="range"
-        min={0}
-        max={Math.max(1, total)}
-        step={1}
-        value={t}
-        onChange={(e) => setT(Number(e.target.value))}
-        className="h-1 min-w-24 flex-1 cursor-pointer accent-ink max-lg:h-6"
-        aria-label="Время имитации"
-      />
+      {/* За шкалой — очередь задач за прогон: видно, куда перемотать, чтобы увидеть пик. */}
+      <div className="relative flex h-8 min-w-24 flex-1 items-center">
+        {backdrop && <div className="pointer-events-none absolute inset-x-0 inset-y-0.5">{backdrop}</div>}
+        <input
+          type="range"
+          min={0}
+          max={Math.max(1, total)}
+          step={1}
+          value={t}
+          onChange={(e) => setT(Number(e.target.value))}
+          className="relative h-1 w-full cursor-pointer accent-ink max-lg:h-6"
+          aria-label="Время имитации"
+        />
+      </div>
       <span className="num w-23 shrink-0 text-center font-mono text-[12px] text-ink-2 max-sm:w-auto">
         {clock(t)} / {clock(total)}
       </span>

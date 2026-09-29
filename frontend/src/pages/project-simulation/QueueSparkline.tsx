@@ -50,3 +50,30 @@ export function QueueSparkline({
     </div>
   )
 }
+
+/* Очередь как фон шкалы плеера: без подписей, на всю высоту; видно, где в прогоне был пик. */
+export function QueueBackdrop({ points }: { points: SimulationTimeline['points'] }) {
+  if (points.length < 2) return null
+  const W = 1000
+  const H = 100
+  const tMax = Math.max(...points.map((p) => p.t_min), 1)
+  const qMax = Math.max(5, ...points.map((p) => p.queue))
+  const path = points
+    .map(
+      (p, i) => `${i === 0 ? 'M' : 'L'}${((p.t_min / tMax) * W).toFixed(1)},${(H - (p.queue / qMax) * H).toFixed(1)}`,
+    )
+    .join(' ')
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-full w-full" aria-hidden>
+      <path d={`${path} L${W},${H} L0,${H} Z`} fill="var(--info)" opacity={0.14} />
+      <path
+        d={path}
+        fill="none"
+        stroke="var(--info)"
+        strokeWidth={1.5}
+        opacity={0.5}
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+}
