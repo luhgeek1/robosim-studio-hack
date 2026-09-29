@@ -1,11 +1,13 @@
-import { Copy, HeartPulse, MoreHorizontal, Plane, Plus, Trash2, Warehouse } from 'lucide-react'
+import { ArrowRightLeft, Copy, HeartPulse, MoreHorizontal, Plane, Plus, Trash2, Users, Warehouse } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { OBJECT_TYPE_LABEL, useCopyProject, useDeleteProject, useProjects } from '@/entities/project'
+import { toast } from 'sonner'
+import { quoted, useWorkspace } from '@/entities/organization'
+import { OBJECT_TYPE_LABEL, useCopyProject, useDeleteProject, useMoveProject, useProjects } from '@/entities/project'
 import { VerdictBadge } from '@/entities/scenario'
 import { CreateProjectDialog } from '@/features/project-create'
 import type { Project } from '@/shared/api/types'
-import { formatDateTime, formatPct, formatRub, formatYears } from '@/shared/lib/format'
+import { formatDateTime, formatPct, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { ConfirmDialog } from '@/shared/ui/confirm'
@@ -14,6 +16,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
@@ -27,6 +32,7 @@ const ICONS: Record<string, ReactNode> = {
 
 export function ProjectsPage() {
   const projects = useProjects()
+  const { organization } = useWorkspace()
   // «Добавить проект» из меню вкладок ведёт сюда с ?new=1 — модалка создания открывается сразу.
   const [params, setParams] = useSearchParams()
   const creating = params.get('new') === '1'
@@ -40,7 +46,29 @@ export function ProjectsPage() {
   return (
     <div className="mx-auto w-full max-w-275 px-6 pt-12 pb-16">
       <div className="mb-6 flex items-end justify-between gap-4">
-        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Проекты</h1>
+        <div className="min-w-0">
+          <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Проекты</h1>
+          {/* Чьи это проекты: переключатель рабочих областей — в меню профиля. */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[14px] text-ink-3">
+            {organization ? (
+              <>
+                <span>
+                  Организация <span className="font-medium text-ink-2">{quoted(organization.name)}</span> · общие для{' '}
+                  {organization.members_count}{' '}
+                  {pluralRu(organization.members_count, ['участник', 'участника', 'участников'])}
+                </span>
+                <Link
+                  to={`/organizations/${organization.id}`}
+                  className="inline-flex items-center gap-1 font-medium text-ink-2 hover:text-ink"
+                >
+                  <Users size={14} /> Участники
+                </Link>
+              </>
+            ) : (
+              <span>Личное пространство — проекты видны только вам</span>
+            )}
+          </div>
+        </div>
         <CreateProjectDialog trigger={newProject} open={creating} onOpenChange={setCreating} />
       </div>
 
@@ -49,7 +77,9 @@ export function ProjectsPage() {
         {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
         {projects.data && projects.data.items.length === 0 && (
           <div className="rounded-[12px] border border-dashed border-line px-5 py-10 text-center text-[14px] text-ink-3">
-            Проектов пока нет. Создайте первый — демо-склад организатора считается за минуту.
+            {organization
+              ? 'В организации пока нет проектов. Создайте первый или перенесите сюда личный — через меню «…» у проекта.'
+              : 'Проектов пока нет. Создайте первый — демо-склад организатора считается за минуту.'}
           </div>
         )}
         {projects.data && projects.data.items.length > 0 && (
@@ -125,6 +155,7 @@ function ProjectRow({ project }: { project: Project }) {
           >
             <Copy /> Дублировать
           </DropdownMenuItem>
+          <MoveTo project={project} />
           <DropdownMenuSeparator />
           <ConfirmDialog
             title={`Удалить «${project.name}»?`}
@@ -139,6 +170,37 @@ function ProjectRow({ project }: { project: Project }) {
         </DropdownMenuContent>
       </DropdownMenu>
     </li>
+  )
+}
+
+/* Перенос между рабочими областями: личный проект — в организацию (его увидят участники) и обратно. */
+function MoveTo({ project }: { project: Project }) {
+  const { organizations } = useWorkspace()
+  const move = useMoveProject()
+  const targets = [
+    { id: null, name: 'Личное пространство' },
+    ...organizations.map((o) => ({ id: o.id as string | null, name: o.name })),
+  ].filter((t) => t.id !== (project.organization_id ?? null))
+  if (!organizations.length) return null
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <ArrowRightLeft /> Перенести в…
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="min-w-52">
+        {targets.map((target) => (
+          <DropdownMenuItem
+            key={target.id ?? 'personal'}
+            onSelect={async () => {
+              await move.mutateAsync({ id: project.id, organizationId: target.id })
+              toast.success(`«${project.name}» перенесён: ${target.name}`)
+            }}
+          >
+            {target.id ? quoted(target.name) : target.name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   )
 }
 

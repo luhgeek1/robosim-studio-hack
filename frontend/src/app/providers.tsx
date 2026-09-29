@@ -6,7 +6,6 @@ import { problemText } from '@/shared/api/problem'
 import { Toaster } from '@/shared/ui/sonner'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
-// Mutations surface their errors as toasts unless a screen handles them itself (meta.silent).
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 30_000, refetchOnWindowFocus: false, retry: 1 },

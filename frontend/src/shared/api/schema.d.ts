@@ -217,6 +217,162 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/me/invitations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Приглашения в организации, ждущие ответа */
+    get: operations['listMyInvitations']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/me/invitations/{invitation_id}/accept': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        invitation_id: string
+      }
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Принять приглашение — стать участником организации */
+    post: operations['acceptInvitation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/me/invitations/{invitation_id}/decline': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        invitation_id: string
+      }
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Отклонить приглашение */
+    post: operations['declineInvitation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/organizations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Организации пользователя */
+    get: operations['listOrganizations']
+    put?: never
+    /** Создать организацию (создатель — владелец) */
+    post: operations['createOrganization']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/organizations/{organization_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+      }
+      cookie?: never
+    }
+    /** Организация: участники и ожидающие приглашения */
+    get: operations['getOrganization']
+    put?: never
+    post?: never
+    /** Удалить организацию вместе с её проектами (владелец) */
+    delete: operations['deleteOrganization']
+    options?: never
+    head?: never
+    /** Переименовать организацию (владелец) */
+    patch: operations['updateOrganization']
+    trace?: never
+  }
+  '/api/v1/organizations/{organization_id}/invitations': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+      }
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Пригласить пользователя по email (владелец)
+     * @description Приглашение появляется у адресата в уведомлениях; незарегистрированный адрес увидит его после регистрации.
+     */
+    post: operations['inviteToOrganization']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/organizations/{organization_id}/invitations/{invitation_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+        invitation_id: string
+      }
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Отозвать приглашение (владелец) */
+    delete: operations['revokeOrganizationInvitation']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/organizations/{organization_id}/members/{user_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+        user_id: string
+      }
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Исключить участника (владелец) или выйти из организации (свой user_id) */
+    delete: operations['removeOrganizationMember']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/object-types': {
     parameters: {
       query?: never
@@ -431,7 +587,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Проекты пользователя */
+    /** Проекты рабочей области — личные или организации */
     get: operations['listProjects']
     put?: never
     /** Создать проект (пустой, из демо-данных или копией) */
@@ -459,7 +615,7 @@ export interface paths {
     delete: operations['deleteProject']
     options?: never
     head?: never
-    /** Переименовать, заметки, теги, статус */
+    /** Переименовать, заметки, теги, статус, перенос в другую рабочую область */
     patch: operations['updateProject']
     trace?: never
   }
@@ -2016,8 +2172,16 @@ export interface components {
       status: components['schemas']['ProjectStatus']
       /** @description Растёт при изменении параметров и планировки; расчёты ссылаются на версию */
       version: number
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @description Автор проекта
+       */
       owner_id: string
+      /**
+       * Format: uuid
+       * @description Организация, чьим участникам виден проект; null — личный проект автора.
+       */
+      organization_id?: string | null
       organization?: string | null
       notes?: string | null
       tags?: string[]
@@ -2692,6 +2856,62 @@ export interface components {
       /** @default true */
       is_active: boolean
     }
+    /** @description Организация глазами текущего пользователя — с его ролью. */
+    Organization: {
+      /** Format: uuid */
+      id: string
+      /** @example ООО «Логистика Север» */
+      name: string
+      role: components['schemas']['OrganizationRole']
+      members_count: number
+      projects_count: number
+      /** Format: date-time */
+      created_at: string
+    }
+    OrganizationDetail: components['schemas']['Organization'] & {
+      members: components['schemas']['OrganizationMember'][]
+      /** @description Приглашения, ждущие ответа. */
+      invitations: components['schemas']['OrganizationInvitation'][]
+    }
+    OrganizationMember: {
+      /** Format: uuid */
+      user_id: string
+      /** Format: email */
+      email: string
+      name: string
+      role: components['schemas']['OrganizationRole']
+      /** Format: date-time */
+      joined_at: string
+    }
+    /** @description Исходящее приглашение. Если адрес ещё не зарегистрирован, приглашение увидят после регистрации. */
+    OrganizationInvitation: {
+      /** Format: uuid */
+      id: string
+      /** Format: email */
+      email: string
+      status: components['schemas']['InvitationStatus']
+      /** Format: date-time */
+      created_at: string
+      invited_by_name?: string | null
+      invitee_registered: boolean
+    }
+    /**
+     * @description owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
+     * @enum {string}
+     */
+    OrganizationRole: 'owner' | 'member'
+    /** @description Приглашение на email текущего пользователя, ждущее ответа. */
+    IncomingInvitation: {
+      /** Format: uuid */
+      id: string
+      /** Format: uuid */
+      organization_id: string
+      organization_name: string
+      invited_by_name?: string | null
+      invited_by_email?: string | null
+      /** Format: date-time */
+      created_at: string
+    }
     Health: {
       /** @enum {string} */
       status: 'ok' | 'degraded' | 'down'
@@ -2772,6 +2992,21 @@ export interface components {
     ApiKeyCreated: components['schemas']['ApiKey'] & {
       /** @description Показывается один раз */
       secret: string
+    }
+    IncomingInvitationList: {
+      items: components['schemas']['IncomingInvitation'][]
+    }
+    OrganizationList: {
+      items: components['schemas']['Organization'][]
+    }
+    OrganizationWrite: {
+      name: string
+    }
+    /** @enum {string} */
+    InvitationStatus: 'pending' | 'accepted' | 'declined' | 'revoked'
+    InvitationCreate: {
+      /** Format: email */
+      email: string
     }
     /**
      * @description warehouse — склад (в полной глубине), airport, hospital — параметры и подбор; custom — свой объект.
@@ -2997,6 +3232,11 @@ export interface components {
         /** Format: uuid */
         source_project_id?: string | null
       }
+      /**
+       * Format: uuid
+       * @description Создать в организации (нужно быть её участником); без значения — личный проект. Копия остаётся в рабочей области исходного проекта.
+       */
+      organization_id?: string | null
       notes?: string | null
       tags?: string[]
     }
@@ -3006,6 +3246,11 @@ export interface components {
       tags?: string[]
       /** @enum {string} */
       status?: 'draft' | 'ready' | 'archived'
+      /**
+       * Format: uuid
+       * @description Перенести в организацию или (null) в личное пространство — может автор или владелец организации.
+       */
+      organization_id?: string | null
     }
     AuditEvent: {
       /** Format: uuid */
@@ -4520,6 +4765,7 @@ export interface components {
     JobId: string
     /** @description web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле. */
     XClient: 'web' | 'mobile'
+    OrganizationId: string
     Page: number
     PageSize: number
     ProductId: string
@@ -4873,6 +5119,265 @@ export interface operations {
       404: components['responses']['NotFound']
     }
   }
+  listMyInvitations: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['IncomingInvitationList']
+        }
+      }
+      401: components['responses']['Unauthorized']
+    }
+  }
+  acceptInvitation: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        invitation_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Organization']
+        }
+      }
+      404: components['responses']['NotFound']
+    }
+  }
+  declineInvitation: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        invitation_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Отклонено */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      404: components['responses']['NotFound']
+    }
+  }
+  listOrganizations: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OrganizationList']
+        }
+      }
+      401: components['responses']['Unauthorized']
+    }
+  }
+  createOrganization: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OrganizationWrite']
+      }
+    }
+    responses: {
+      /** @description Создана */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Organization']
+        }
+      }
+      422: components['responses']['ValidationError']
+    }
+  }
+  getOrganization: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OrganizationDetail']
+        }
+      }
+      404: components['responses']['NotFound']
+    }
+  }
+  deleteOrganization: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Удалена */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      403: components['responses']['Forbidden']
+      404: components['responses']['NotFound']
+    }
+  }
+  updateOrganization: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OrganizationWrite']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Organization']
+        }
+      }
+      403: components['responses']['Forbidden']
+      404: components['responses']['NotFound']
+    }
+  }
+  inviteToOrganization: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InvitationCreate']
+      }
+    }
+    responses: {
+      /** @description Отправлено */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OrganizationInvitation']
+        }
+      }
+      403: components['responses']['Forbidden']
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+    }
+  }
+  revokeOrganizationInvitation: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+        invitation_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Отозвано */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      404: components['responses']['NotFound']
+    }
+  }
+  removeOrganizationMember: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        organization_id: components['parameters']['OrganizationId']
+        user_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Исключён */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      403: components['responses']['Forbidden']
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+    }
+  }
   listObjectTypes: {
     parameters: {
       query?: never
@@ -5177,6 +5682,8 @@ export interface operations {
   listProjects: {
     parameters: {
       query?: {
+        /** @description Организация; без значения — личные проекты пользователя */
+        organization_id?: string
         page?: components['parameters']['Page']
         page_size?: components['parameters']['PageSize']
         q?: string

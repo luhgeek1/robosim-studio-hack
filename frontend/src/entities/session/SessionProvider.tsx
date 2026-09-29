@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useWorkspaceStore } from '@/entities/organization/workspace'
 import { refreshAccessToken, setAccessToken, setUnauthorizedHandler } from '@/shared/api/client'
 import type { LoginRequest, RegisterRequest, TokenPair, User } from '@/shared/api/types'
 import { sessionApi } from './api'
@@ -15,18 +16,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setAccessToken(null)
     setUser(null)
     setStatus('guest')
-    queryClient.removeQueries({ queryKey: ['projects'] })
-    queryClient.removeQueries({ queryKey: ['scenarios'] })
-    queryClient.removeQueries({ queryKey: ['calculations'] })
+    // Кэш целиком: организации, уведомления и админские данные прошлой учётки не должны достаться следующей.
+    queryClient.clear()
   }, [queryClient])
 
-  const accept = useCallback(async (pair: TokenPair) => {
-    setAccessToken(pair.access_token)
-    const me = pair.user ?? (await sessionApi.me())
+  const enter = useCallback((me: User) => {
+    // Рабочая область и вкладки переключаются на этого пользователя до первого рендера под ним.
+    useWorkspaceStore.getState().own(me.id)
     setUser(me)
     setStatus('authenticated')
     return me
   }, [])
+
+  const accept = useCallback(
+    async (pair: TokenPair) => {
+      setAccessToken(pair.access_token)
+      return enter(pair.user ?? (await sessionApi.me()))
+    },
+    [enter],
+  )
 
   useEffect(() => {
     setUnauthorizedHandler(clear)
@@ -39,11 +47,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     refreshAccessToken()
       .then(async (token) => {
         if (!token) return clear()
-        setUser(await sessionApi.me())
-        setStatus('authenticated')
+        enter(await sessionApi.me())
       })
       .catch(clear)
-  }, [clear])
+  }, [clear, enter])
 
   const value = useMemo<Session>(
     () => ({

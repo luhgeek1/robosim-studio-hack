@@ -1,11 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useWorkspaceId } from '@/entities/organization'
 import { api } from '@/shared/api/client'
 import { qk } from '@/shared/api/keys'
 import { useInvalidateProject } from '@/shared/api/invalidate'
 import type { ImportApply, ImportResult, ParamUpsert, ProjectCreate, ProjectUpdate, Res } from '@/shared/api/types'
 
 export const projectApi = {
-  list: () => api.get<Res<'/api/v1/projects', 'get'>>('/projects', { params: { page_size: 200 } }).then((r) => r.data),
+  list: (organizationId: string | null) =>
+    api
+      .get<Res<'/api/v1/projects', 'get'>>('/projects', {
+        params: { page_size: 200, organization_id: organizationId ?? undefined },
+      })
+      .then((r) => r.data),
   get: (id: string) => api.get<Res<'/api/v1/projects/{project_id}', 'get'>>(`/projects/${id}`).then((r) => r.data),
   create: (body: ProjectCreate) => api.post<Res<'/api/v1/projects', 'post'>>('/projects', body).then((r) => r.data),
   update: (id: string, body: ProjectUpdate) =>
@@ -55,7 +61,10 @@ export const projectApi = {
       .then((r) => r.data),
 }
 
-export const useProjects = () => useQuery({ queryKey: qk.projects.list, queryFn: projectApi.list })
+export function useProjects() {
+  const workspaceId = useWorkspaceId()
+  return useQuery({ queryKey: qk.projects.listIn(workspaceId), queryFn: () => projectApi.list(workspaceId) })
+}
 
 export const useProject = (id: string) => useQuery({ queryKey: qk.projects.one(id), queryFn: () => projectApi.get(id) })
 
@@ -85,7 +94,16 @@ export function useCreateProject() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: projectApi.create,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.projects.list }),
+    onSuccess: (_, body) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.projects.list }),
+        ...(body.organization_id
+          ? [
+              queryClient.invalidateQueries({ queryKey: qk.organizations.list }),
+              queryClient.invalidateQueries({ queryKey: qk.organizations.one(body.organization_id) }),
+            ]
+          : []),
+      ]),
   })
 }
 
@@ -93,15 +111,48 @@ export function useCopyProject() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, name }: { id: string; name?: string }) => projectApi.copy(id, name),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.projects.list }),
+    onSuccess: (project) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.projects.list }),
+        ...(project.organization_id
+          ? [
+              queryClient.invalidateQueries({ queryKey: qk.organizations.list }),
+              queryClient.invalidateQueries({ queryKey: qk.organizations.one(project.organization_id) }),
+            ]
+          : []),
+      ]),
   })
 }
 
 export function useDeleteProject() {
   const queryClient = useQueryClient()
+  const workspaceId = useWorkspaceId()
   return useMutation({
     mutationFn: projectApi.remove,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.projects.list }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.projects.list }),
+        queryClient.invalidateQueries({ queryKey: qk.organizations.list }),
+        ...(workspaceId ? [queryClient.invalidateQueries({ queryKey: qk.organizations.one(workspaceId) })] : []),
+      ]),
+  })
+}
+
+// Перенос между личным пространством и организациями: проект уходит из одного списка и появляется в другом.
+export function useMoveProject() {
+  const queryClient = useQueryClient()
+  const workspaceId = useWorkspaceId()
+  return useMutation({
+    mutationFn: ({ id, organizationId }: { id: string; organizationId: string | null }) =>
+      projectApi.update(id, { organization_id: organizationId }),
+    onSuccess: (_, { organizationId }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: qk.projects.all }),
+        queryClient.invalidateQueries({ queryKey: qk.organizations.list }),
+        ...[workspaceId, organizationId]
+          .filter((id): id is string => !!id)
+          .map((id) => queryClient.invalidateQueries({ queryKey: qk.organizations.one(id) })),
+      ]),
   })
 }
 

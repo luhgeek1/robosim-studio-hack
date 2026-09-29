@@ -25,6 +25,8 @@ export const qk = {
   projects: {
     all: ['projects'] as const,
     list: ['projects', 'list'] as const,
+    // Рабочая область — часть ключа: переключение показывает свой список, не перезаписывая чужой кэш.
+    listIn: (workspaceId: string | null) => ['projects', 'list', workspaceId ?? 'personal'] as const,
     one: (id: string) => ['projects', id] as const,
     params: (id: string) => ['projects', id, 'params'] as const,
     validation: (id: string) => ['projects', id, 'validation'] as const,
@@ -53,6 +55,12 @@ export const qk = {
     specKeys: ['reference', 'spec-keys'] as const,
     normSets: ['reference', 'norm-sets'] as const,
     norms: (version?: string) => ['reference', 'norms', version ?? null] as const,
+  },
+  organizations: {
+    all: ['organizations'] as const,
+    list: ['organizations', 'list'] as const,
+    one: (id: string) => ['organizations', id] as const,
+    invitations: ['organizations', 'invitations'] as const,
   },
   calculations: {
     one: (id: string) => ['calculations', id] as const,

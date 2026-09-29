@@ -5,6 +5,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
 import { problemText } from '@/shared/api/problem'
+import type { User } from '@/shared/api/types'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
@@ -31,10 +32,12 @@ const FADE = {
 }
 
 export function LoginPage() {
-  const { status, login, register } = useSession()
+  const { status, user, login, register } = useSession()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from ?? '/projects'
+  const back = location.state as { from?: string; userId?: string | null } | null
+  // Возвращаем на прежнюю страницу только её владельца: другой учётке прошлый проект чужой.
+  const target = (me: User) => (back?.from && (!back.userId || back.userId === me.id) ? back.from : '/projects')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [email, setEmail] = useState('')
@@ -43,14 +46,13 @@ export function LoginPage() {
   const [organization, setOrganization] = useState('')
   const [mode, setMode] = useState<Mode>('login')
 
-  if (status === 'authenticated') return <Navigate to={from} replace />
+  if (status === 'authenticated' && user) return <Navigate to={target(user)} replace />
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (action: () => Promise<User>) => {
     setPending(true)
     setError(null)
     try {
-      await action()
-      navigate(from, { replace: true })
+      navigate(target(await action()), { replace: true })
     } catch (e) {
       setError(problemText(e))
     } finally {

@@ -53,6 +53,10 @@ const router = createBrowserRouter([
                 ...page(() => import('@/pages/projects').then((m) => ({ Component: m.ProjectsPage }))),
               },
               {
+                path: 'organizations/:organizationId',
+                ...page(() => import('@/pages/organization').then((m) => ({ Component: m.OrganizationPage }))),
+              },
+              {
                 path: 'projects/:projectId',
                 ...page(() => import('@/pages/project').then((m) => ({ Component: m.ProjectLayout }))),
                 children: [

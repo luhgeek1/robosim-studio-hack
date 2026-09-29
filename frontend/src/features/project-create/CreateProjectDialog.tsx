@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
+import { quoted, useWorkspace } from '@/entities/organization'
 import { OBJECT_TYPE_LABEL, useCreateProject } from '@/entities/project'
 import { useObjectTypes } from '@/entities/reference'
 import type { ObjectTypeKey } from '@/shared/api/types'
@@ -38,6 +39,7 @@ export function CreateProjectDialog({
   const navigate = useNavigate()
   const objectTypes = useObjectTypes()
   const create = useCreateProject()
+  const workspace = useWorkspace()
   const [objectType, setObjectType] = useState<ObjectTypeKey>('warehouse')
   const [preferredMode, setMode] = useState<InitMode>('demo')
   const [name, setName] = useState('')
@@ -53,6 +55,7 @@ export function CreateProjectDialog({
       name: name.trim() || (mode === 'demo' && demo ? demo.name : `Новый объект: ${OBJECT_TYPE_LABEL[objectType]}`),
       object_type: objectType,
       init: mode === 'demo' && demo ? { mode: 'demo', demo_key: demo.key } : { mode: 'blank' },
+      organization_id: workspace.id,
     })
     setOpen(false)
     navigate(`/projects/${project.id}`)
@@ -67,6 +70,9 @@ export function CreateProjectDialog({
             <DialogTitle>Новый проект оценки</DialogTitle>
             <DialogDescription>
               Выберите тип объекта и чем заполнить параметры. Всё можно поменять позже.
+              {workspace.organization && (
+                <> Проект появится в организации {quoted(workspace.organization.name)} — его увидят все участники.</>
+              )}
             </DialogDescription>
           </DialogHeader>
 
