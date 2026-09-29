@@ -38,7 +38,7 @@ export function SpecsEditor({ product }: { product: ProductDetail }) {
   const upsert = useUpsertSpecs()
   const [edits, setEdits] = useState<Record<string, Edit>>({})
   const [onlyMissing, setOnlyMissing] = useState(false)
-  const [source, setSource] = useState({ title: '', url: '', date: new Date().toISOString().slice(0, 10) })
+  const [source, setSource] = useState(() => ({ title: '', url: '', date: new Date().toISOString().slice(0, 10) }))
 
   const current = useMemo(() => new Map([...product.specs].reverse().map((s) => [s.key, s])), [product.specs])
   const missing = new Set(product.missing_key_specs ?? [])
