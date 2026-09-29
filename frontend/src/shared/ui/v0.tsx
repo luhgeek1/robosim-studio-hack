@@ -186,7 +186,7 @@ export function Segmented<T extends string | number>({
             disabled={o.disabled}
             onClick={() => onChange(o.value)}
             className={cn(
-              'relative shrink-0 rounded-[8px] px-3 font-medium transition-colors sm:px-3.5 duration-150 disabled:opacity-40',
+              'relative shrink-0 rounded-[8px] px-2.5 font-medium transition-colors sm:px-3.5 duration-150 disabled:opacity-40',
               h,
               active ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
             )}
