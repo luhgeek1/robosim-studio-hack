@@ -314,7 +314,8 @@ class MatchingService:
         context = await self._loader.context(self._user, project_id)
         if process_key not in {p.key for p in context.object_type.processes}:
             raise NotFoundError("Процесс не найден у этого типа объекта")
-        if await self._catalog.get(product_id) is None:
+        product = await self._catalog.get(product_id)
+        if product is None or product.hidden_at is not None:
             raise NotFoundError("Продукт не найден")
         if await self._repo.manual_one(project_id, process_key, product_id) is None:
             self._repo.add(

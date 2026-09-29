@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Any
 
 import sqlalchemy as sa
@@ -46,6 +47,8 @@ class Product(UuidPkMixin, TimestampMixin, Base):
     offers_count: Mapped[int] = mapped_column(sa.Integer, default=0)
     # False once an admin edits the card: seeds then stop overwriting it.
     managed_by_seed: Mapped[bool] = mapped_column(sa.Boolean, default=True, server_default=sa.true())
+    # Soft delete: old calculations still reference the product, so its card must stay readable.
+    hidden_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     search: Mapped[Any] = mapped_column(
         TSVECTOR,
         sa.Computed(

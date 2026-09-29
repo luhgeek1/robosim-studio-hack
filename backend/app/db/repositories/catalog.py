@@ -32,7 +32,11 @@ def _ts_query(text: str) -> Any:
     return func.websearch_to_tsquery("russian", text)
 
 
+VISIBLE = Product.hidden_at.is_(None)
+
+
 def _apply_filters(statement: Select[Any], query: ProductQuery) -> Select[Any]:
+    statement = statement.where(VISIBLE)
     if query.q:
         pattern = f"%{query.q.strip()}%"
         statement = statement.where(Product.search.op("@@")(_ts_query(query.q)) | Product.name.ilike(pattern))
@@ -107,7 +111,7 @@ class CatalogRepository:
     async def similar(self, product: Product, limit: int) -> Sequence[Product]:
         statement = (
             select(Product)
-            .where(Product.solution_type == product.solution_type, Product.id != product.id)
+            .where(Product.solution_type == product.solution_type, Product.id != product.id, VISIBLE)
             .order_by(Product.completeness.desc(), Product.name)
             .limit(limit)
         )
@@ -169,7 +173,7 @@ class CatalogRepository:
 
     async def products_per_process(self, object_type: str) -> dict[str, int]:
         process = func.unnest(Product.processes).label("process")
-        base = select(process).where(literal(object_type) == any_(Product.object_types)).subquery()
+        base = select(process).where(literal(object_type) == any_(Product.object_types), VISIBLE).subquery()
         statement = select(base.c.process, func.count()).group_by(base.c.process)
         return dict((await self._session.execute(statement)).tuples().all())
 
@@ -179,6 +183,7 @@ class CatalogRepository:
             .where(
                 literal(object_type) == any_(Product.object_types),
                 literal(process_key) == any_(Product.processes),
+                VISIBLE,
             )
             .order_by(Product.name)
         )
