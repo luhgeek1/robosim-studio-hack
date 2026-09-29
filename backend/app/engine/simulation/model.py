@@ -28,6 +28,7 @@ from app.engine.simulation.network import Network, Segment
 from app.engine.simulation.resources import Tracked, tracked
 
 SAMPLE_S = 60.0
+SECONDS_PER_MINUTE = 60.0
 
 
 @dataclass(slots=True)
@@ -158,9 +159,7 @@ class Model(Actions):
         for process in self.processes:
             count = self.inp.config.fleet.get(process.key, process.robots)
             for i in range(count):
-                threshold = self.inp.settings.charge_threshold
-                # Batteries start evenly spread between the threshold and full, as in a fleet mid-shift.
-                battery = 1 - (1 - threshold) * i / max(1, count)
+                battery, on_charger = self._start_battery(process, i / max(1, count))
                 robot = Robot(
                     id=f"R{len(robots) + 1:02d}",
                     process=process,
@@ -168,9 +167,26 @@ class Model(Actions):
                     node=homes[len(robots) % len(homes)],
                     battery=battery,
                     next_failure=self.next_failure_gap(),
+                    charging_at_start=on_charger,
                 )
                 robots.append(robot)
         return robots
+
+    def _start_battery(self, process: SimProcess, phase: float) -> tuple[float, bool]:
+        """A fleet mid-day, not a fleet fresh off the chargers: robots are spread evenly over one
+        work-and-charge cycle (drain from full to the threshold, then charge back). The share on the
+        charger at the start is charge / (work + charge) — the availability the cycle model assumes."""
+        threshold = self.inp.settings.charge_threshold
+        spec = process.robot
+        if not spec.runtime_h or not spec.charge_min:
+            return 1 - (1 - threshold) * phase, False
+        work = spec.runtime_h * SECONDS_PER_HOUR * (1 - threshold)
+        charge = spec.charge_min * SECONDS_PER_MINUTE * (1 - threshold)
+        at = phase * (work + charge)
+        if at < work:
+            return 1 - (1 - threshold) * at / work, False
+        # On the charger: the battery left to fill sets the remaining charging time.
+        return threshold + (1 - threshold) * (at - work) / charge, True
 
     def process_stations(self, process_key: str) -> list[Tracked]:
         return list(self.stations.values())

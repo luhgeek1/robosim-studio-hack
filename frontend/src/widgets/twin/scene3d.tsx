@@ -260,7 +260,11 @@ export function RouteLines({
 }) {
   const geometry = useMemo(() => {
     const nodes = new Map(layout.nodes.map((n) => [n.id, n]))
-    const intensity = new Map((heat?.edges ?? []).map((e) => [e.edge_id, e.intensity ?? 0]))
+    // Same reading as the 2D layer: colour by waiting (a jam), edges without waiting stay cold however busy.
+    const maxWait = Math.max(0, ...(heat?.edges ?? []).map((e) => e.wait_s ?? 0))
+    const intensity = new Map(
+      (heat?.edges ?? []).map((e) => [e.edge_id, Math.max(0.03, maxWait ? (e.wait_s ?? 0) / maxWait : 0)]),
+    )
     const positions: number[] = []
     const colors: number[] = []
     const cold = new THREE.Color(C.route)
@@ -272,7 +276,7 @@ export function RouteLines({
       const b = nodes.get(e.to)
       if (!a || !b) continue
       const v = intensity.get(e.id) ?? 0
-      if (heat && v <= 0.02) continue
+      if (heat && !intensity.has(e.id)) continue
       positions.push(frame.x(a.x), 0.07, frame.z(a.y), frame.x(b.x), 0.07, frame.z(b.y))
       if (heat)
         tmp

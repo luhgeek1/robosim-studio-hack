@@ -7,6 +7,7 @@ from app.engine.layout.dimensions import Dims
 from app.engine.layout.models import LayoutError, Plan
 
 HALF = 0.5
+CHARGER_ROWS = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -244,10 +245,17 @@ class WarehouseDrawer:
         zone = self.b.zone(
             ZoneKind.CHARGING, "Зарядка роботов", (x0, band[0], x0 + width, band[1]), capacity=d.chargers
         )
-        pitch = width / d.chargers
+        # Two rows across the depth of the staging band: the places keep their pitch inside the zone
+        # instead of one row squeezed edge to edge.
+        rows = CHARGER_ROWS if d.chargers >= CHARGER_ROWS * CHARGER_ROWS else 1
+        per_row = -(-d.chargers // rows)
+        pitch = width / per_row
+        depth = band[1] - band[0]
         for k in range(d.chargers):
-            x = x0 + (k + HALF) * pitch
-            node = self.b.node(x, y, NodeKind.CHARGER, zone=zone, capacity=1, label=f"Зарядка {k + 1}")
+            row, col = divmod(k, per_row)
+            x = x0 + (col + HALF) * pitch
+            row_y = y if rows == 1 else band[0] + depth * (row + 1) / (rows + 1)
+            node = self.b.node(x, row_y, NodeKind.CHARGER, zone=zone, capacity=1, label=f"Зарядка {k + 1}")
             self.b.edge(node, aisle.stop(x), d.main, EdgeKind.CORRIDOR)
 
     def _packing(self, aisle: Aisle, x0: float, x1: float, band: tuple[float, float]) -> None:

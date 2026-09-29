@@ -49,6 +49,8 @@ export type LayoutMapProps = {
   fitPadding?: FitPadding
   /** Overlay in meter coordinates (robots, heat spots); `view.k` is pixels per meter for constant-size marks. */
   children?: ReactNode | ((view: LayoutMapView) => ReactNode)
+  /** More map layers next to «Граф маршрутов» (the simulation's congestion layer). */
+  toolbarExtra?: ReactNode
 }
 
 const nonScaling = { vectorEffect: 'non-scaling-stroke' } as const
@@ -66,6 +68,7 @@ export function LayoutMap({
   infoCorner = 'bottom',
   fitPadding,
   children,
+  toolbarExtra,
 }: LayoutMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [ownGraph, setOwnGraph] = useState(defaultShowGraph)
@@ -117,9 +120,16 @@ export function LayoutMap({
             toolbarClassName,
           )}
         >
+          {toolbarExtra}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Toggle size="sm" pressed={graph} onPressedChange={setGraph} aria-label="Граф маршрутов">
+              <Toggle
+                size="sm"
+                variant="outline"
+                pressed={graph}
+                onPressedChange={setGraph}
+                aria-label="Граф маршрутов"
+              >
                 <Waypoints /> Граф маршрутов
               </Toggle>
             </TooltipTrigger>
@@ -279,6 +289,8 @@ function HighlightLayer({ layout, highlight, k }: { layout: LayoutGeometry; high
 }
 
 const LABEL_CHAR_PX = 6.6
+const LABEL_TOP_MIN_PX = 44
+const LABEL_TOP_OFFSET_PX = 10
 
 function ZoneLabels({ layout, view }: { layout: LayoutGeometry; view: LayoutMapView }) {
   const items = useMemo(
@@ -295,6 +307,11 @@ function ZoneLabels({ layout, view }: { layout: LayoutGeometry; view: LayoutMapV
         const heightPx = item.size[1] * view.k
         if (heightPx < 14 || widthPx < 36) return null
         const fits = item.name.length * LABEL_CHAR_PX < widthPx - 8
+        // Docks, chargers and stations sit on the zone's middle line: a tall zone takes its name at the top.
+        const top = heightPx >= LABEL_TOP_MIN_PX
+        const y = top
+          ? (item.center[1] - item.size[1] / 2) * view.k + view.ty + LABEL_TOP_OFFSET_PX
+          : item.center[1] * view.k + view.ty
         const text = fits
           ? item.name
           : `${item.name.slice(0, Math.max(3, Math.floor((widthPx - 8) / LABEL_CHAR_PX) - 1))}…`
@@ -302,7 +319,7 @@ function ZoneLabels({ layout, view }: { layout: LayoutGeometry; view: LayoutMapV
           <text
             key={item.id}
             x={item.center[0] * view.k + view.tx}
-            y={item.center[1] * view.k + view.ty}
+            y={y}
             fill="var(--foreground)"
             stroke="var(--card)"
             strokeWidth={3}

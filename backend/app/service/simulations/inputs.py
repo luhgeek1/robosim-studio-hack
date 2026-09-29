@@ -19,10 +19,12 @@ from app.engine.simulation import (
     SimSettings,
     settings_from,
 )
+from app.engine.trace import Book
 from app.service.layouts.mapping import edge_from, node_from, rack_from, zone_from
 from app.service.scenarios.snapshot import Snapshot
 
 SECONDS_PER_MINUTE = 60.0
+MINUTES_PER_HOUR = 60.0
 SECONDS_PER_HOUR = 3600.0
 MM_PER_M = 1000.0
 FMR_SOLUTION_TYPE = "fmr_forklift"
@@ -89,6 +91,19 @@ class InputBuilder:
         except (MissingValueError, ExpressionError):
             return 0.0
 
+    @staticmethod
+    def _charge_min(specs: Book, norms: Book) -> float | None:
+        """The vendor's charging time; without it the cycle model's assumption — availability
+        `analytic_availability_default` = runtime / (runtime + charge) — not a robot that never charges."""
+        charge = specs.optional("charging_time_min")
+        if charge is not None:
+            return charge.value
+        runtime = specs.optional("runtime_h")
+        if runtime is None:
+            return None
+        availability = norms.value("analytic_availability_default")
+        return runtime.value * MINUTES_PER_HOUR * (1 - availability) / availability
+
     def _robot(self, sizing: ItemSizing) -> RobotSpec:
         specs, norms = sizing.item.specs, self.snapshot.input.norms
         length, width = specs.optional("length_mm"), specs.optional("width_mm")
@@ -100,7 +115,7 @@ class InputBuilder:
             if sizing.item.solution_type == FMR_SOLUTION_TYPE
             else 0.0,
             runtime_h=runtime.value if (runtime := specs.optional("runtime_h")) else None,
-            charge_min=charge.value if (charge := specs.optional("charging_time_min")) else None,
+            charge_min=self._charge_min(specs, norms),
             footprint_m=(length.value / MM_PER_M, width.value / MM_PER_M) if length and width else None,
         )
 

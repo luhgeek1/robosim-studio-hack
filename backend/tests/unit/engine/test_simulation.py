@@ -20,6 +20,7 @@ from app.engine.simulation import (
     settings_from,
     simulate,
 )
+from app.engine.simulation.model import Model
 from app.engine.simulation.sweep import Sweep
 from app.engine.trace import Book, InputKind
 from app.seeds.schemas import load_norm_set
@@ -231,3 +232,16 @@ def test_a_slow_filling_train_leaves_on_schedule() -> None:
     summary = run(quiet, mode=SimMode.NORMAL).summary
     assert summary.completed_by_humans == 0
     assert summary.sla["p95_lead_time_min"] <= SETTINGS.tow_dispatch_wait_s / 60 + 10
+
+
+def test_fleet_starts_mid_day_with_a_share_on_chargers() -> None:
+    """Charge / (work + charge) of the fleet is on the chargers at the start, as mid-day (D-029)."""
+    plan, prepared = layout()
+    process = replace(PALLETS, robot=replace(PALLETS.robot, runtime_h=6.0, charge_min=120.0), robots=10)
+    inp = SimInput(plan, (process,), SETTINGS, SimConfig(mode=SimMode.PEAK, seed=1))
+    model = Model(inp, prepared.pallet_net, prepared.full_net, prepared.segments)
+    # Work 6 h × 0.8 and charge 2 h × 0.8 of battery: a quarter of the cycle is charging — 2 of 10 robots.
+    assert sum(r.charging_at_start for r in model.robots) == 2
+    assert all(SETTINGS.charge_threshold <= r.battery <= 1 for r in model.robots)
+    result = simulate(inp, prepared)
+    assert sum(r.charges for r in result.record.robots) >= 2

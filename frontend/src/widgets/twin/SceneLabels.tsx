@@ -17,7 +17,7 @@ export function LabelLayer({ labels, refs }: { labels: SceneLabel[]; refs: Label
             if (el) refs.current.set(label.id, el)
             else refs.current.delete(label.id)
           }}
-          className="absolute top-0 left-0 rounded-full border border-line bg-white/95 px-2.5 py-1 text-[12px] font-medium whitespace-nowrap text-ink shadow-[0_1px_2px_rgba(0,0,0,0.06)] select-none"
+          className="absolute top-0 left-0 rounded-full bg-white/75 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-ink-2 select-none"
           style={{ visibility: 'hidden' }}
         >
           {label.name}

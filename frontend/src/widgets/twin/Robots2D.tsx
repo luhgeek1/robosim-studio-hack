@@ -4,16 +4,26 @@ import type { LayoutGeometry, SimulationHeatmap } from '@/shared/api/types'
 
 const nonScaling = { vectorEffect: 'non-scaling-stroke' } as const
 
-const BODY: Record<Pose['state'], string> = {
+export const BODY: Record<Pose['state'], string> = {
   moving: '#287d9c',
-  load: '#287d9c',
-  unload: '#287d9c',
+  load: '#8a5cd6',
+  unload: '#8a5cd6',
   idle: '#9aa3ad',
   charge: 'var(--warn)',
   wait: 'var(--crit)',
-  fail: 'var(--crit)',
+  fail: '#5b1a14',
 }
-const LOADED = '#1d3fb5'
+export const LOADED = '#1d3fb5'
+
+// What a colour means on the plan: the legend under the map reads this list.
+export const ROBOT_LEGEND: [string, string][] = [
+  [BODY.moving, 'едет пустым'],
+  [LOADED, 'везёт паллету'],
+  [BODY.load, 'берёт или ставит паллету'],
+  [BODY.idle, 'свободен, ждёт задачу'],
+  [BODY.wait, 'ждёт в заторе'],
+  [BODY.charge, 'на зарядке'],
+]
 
 // Robots on the 2D plan read the same playback clock as the 3D twin and are moved outside React, once per frame.
 export function RobotsLayer({
@@ -39,8 +49,7 @@ export function RobotsLayer({
         const pose = poseAt(track, t, headings.current.get(track.id) ?? 0)
         headings.current.set(track.id, pose.heading)
         el.setAttribute('transform', `translate(${pose.x} ${pose.y}) rotate(${(pose.heading * 180) / Math.PI})`)
-        const moving = pose.state === 'moving' || pose.state === 'load' || pose.state === 'unload'
-        el.firstElementChild?.setAttribute('fill', moving && pose.loaded ? LOADED : BODY[pose.state])
+        el.firstElementChild?.setAttribute('fill', pose.state === 'moving' && pose.loaded ? LOADED : BODY[pose.state])
       }
       frame = requestAnimationFrame(draw)
     }
@@ -71,26 +80,43 @@ export function RobotsLayer({
   )
 }
 
-// Congestion from the run's heatmap: edge width and colour follow the backend intensity (share of waiting time).
+export type HeatEdge = { id: string; traffic: number; wait: number }
+
+// Flow and congestion: width follows the number of passes, colour follows waiting — an edge many robots
+// crossed without stopping is busy, not jammed.
+export function heatStyle(edge: HeatEdge, maxTraffic: number, maxWait: number) {
+  const flow = maxTraffic ? edge.traffic / maxTraffic : 0
+  const jam = maxWait ? edge.wait / maxWait : 0
+  return {
+    color: edge.wait > 0 ? (jam > 0.35 ? 'var(--crit)' : 'var(--warn)') : '#287d9c',
+    width: 1.5 + flow * 5,
+    opacity: 0.35 + Math.max(flow, jam) * 0.6,
+  }
+}
+
 export const HeatLayer = memo(function HeatLayer({
   layout,
   heat,
+  onPick,
 }: {
   layout: LayoutGeometry
   heat: SimulationHeatmap
+  onPick?: (edge: HeatEdge) => void
 }) {
   const lines = useMemo(() => {
     const nodes = new Map(layout.nodes.map((n) => [n.id, n]))
     const edges = new Map(layout.edges.map((e) => [e.id, e]))
+    const maxTraffic = Math.max(1, ...heat.edges.map((e) => e.traffic ?? 0))
+    const maxWait = Math.max(0, ...heat.edges.map((e) => e.wait_s ?? 0))
     return heat.edges
-      .filter((e) => (e.intensity ?? 0) > 0.02)
+      .filter((e) => (e.traffic ?? 0) / maxTraffic > 0.02 || (e.wait_s ?? 0) > 0)
       .map((h) => {
         const edge = edges.get(h.edge_id)
         const a = edge && nodes.get(edge.from)
         const b = edge && nodes.get(edge.to)
         if (!a || !b) return null
-        const v = h.intensity ?? 0
-        return { id: h.edge_id, a, b, v, wait: h.wait_s, traffic: h.traffic }
+        const item: HeatEdge = { id: h.edge_id, traffic: h.traffic ?? 0, wait: h.wait_s ?? 0 }
+        return { item, a, b, style: heatStyle(item, maxTraffic, maxWait) }
       })
       .filter((x) => x !== null)
   }, [layout, heat])
@@ -98,19 +124,29 @@ export const HeatLayer = memo(function HeatLayer({
     <g strokeLinecap="round" fill="none">
       {lines.map((l) => (
         <line
-          key={l.id}
+          key={l.item.id}
           x1={l.a.x}
           y1={l.a.y}
           x2={l.b.x}
           y2={l.b.y}
-          stroke={l.v > 0.6 ? 'var(--crit)' : l.v > 0.3 ? 'var(--warn)' : '#287d9c'}
-          strokeOpacity={0.35 + l.v * 0.65}
-          strokeWidth={1.5 + l.v * 5}
+          stroke={l.style.color}
+          strokeOpacity={l.style.opacity}
+          strokeWidth={l.style.width}
+          className="cursor-pointer"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => onPick?.(l.item)}
           {...nonScaling}
         >
-          <title>{`Проездов: ${l.traffic}, ожидание ${Math.round(l.wait)} с`}</title>
+          <title>{heatText(l.item)}</title>
         </line>
       ))}
     </g>
   )
 })
+
+export function heatText(edge: HeatEdge): string {
+  const passes = `Проездов за прогон: ${edge.traffic}`
+  if (edge.wait <= 0) return `${passes}. Роботы здесь не ждали: участок загружен, но затора нет`
+  const perPass = edge.traffic ? edge.wait / edge.traffic : 0
+  return `${passes}. Роботы ждали здесь ${Math.round(edge.wait)} с суммарно, ≈${perPass.toFixed(1)} с на проезд`
+}

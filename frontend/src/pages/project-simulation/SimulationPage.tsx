@@ -248,8 +248,8 @@ function SimulationView({
   const ready = Boolean(summary)
   const replay = useSimulationReplay(runId, ready)
   const timeline = useSimulationTimeline(runId, ready)
-  const [heatOn, setHeatOn] = useState(false)
-  const heat = useSimulationHeatmap(runId, ready && heatOn)
+  // Flow and congestion is a layer of the map (the map's own toolbar), not a run condition.
+  const heat = useSimulationHeatmap(runId, ready)
   const [error, setError] = useState<string | null>(null)
   const [selectedRobot, setSelectedRobot] = useState<string | null>(null)
   const capture: TwinCapture = useRef(null)
@@ -399,7 +399,7 @@ function SimulationView({
                   view={view}
                   onViewChange={setView}
                   tracks={tracks}
-                  heat={heatOn ? heat.data : null}
+                  heat={heat.data ?? null}
                   selectedRobot={selectedRobot}
                   onSelectRobot={setSelectedRobot}
                 />
@@ -483,16 +483,6 @@ function SimulationView({
                 <span className="min-w-0 flex-1 truncate text-[12px] text-info" title={whatIf ?? undefined}>
                   {whatIf}
                 </span>
-                <Toggle
-                  size="sm"
-                  variant="outline"
-                  pressed={heatOn}
-                  onPressedChange={setHeatOn}
-                  disabled={!ready}
-                  className="h-7"
-                >
-                  Заторы
-                </Toggle>
                 <Button
                   variant="outline"
                   size="sm"
@@ -1047,7 +1037,7 @@ function WhyDifferent({
         <span className="font-medium text-ink">Имитация</span>: {best.count} роботов реально везут{' '}
         {formatNumber(perRobot, 1)} ед/ч каждый при загрузке {formatPct(best.utilization, { share: true, digits: 0 })}
         {fewer
-          ? ' — в пиковые часы они не простаивают на зарядке, берут ближайшую задачу, а норматив срока позволяет короткой очереди рассосаться.'
+          ? ' — часть парка так же стоит на зарядке, но робот берёт ближайшую задачу вместо пустого возврата, работает без запаса 20 %, а короткая очередь укладывается в норматив срока.'
           : ' — заторы в проходах, очереди у ворот и зарядка съедают часть производительности.'}
       </p>
     </div>

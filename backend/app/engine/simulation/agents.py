@@ -52,6 +52,8 @@ class Robot:
     distance_m: float = 0.0
     charges: int = 0
     cycles: list[float] = field(default_factory=list)
+    # Starts the run on the charger: in a fleet mid-day a share of the robots is charging (steady state).
+    charging_at_start: bool = False
 
     @property
     def idle(self) -> bool:
