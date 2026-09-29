@@ -325,6 +325,7 @@ function SimulationView({
 
   return (
     <Screen
+      wide
       title={
         <>
           {config.count} × {sizing?.product_name ?? '…'}
@@ -397,8 +398,9 @@ function SimulationView({
             </Callout>
           )}
 
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]">
-            <div className="card relative h-[min(640px,calc(100vh-230px))] min-h-110 overflow-hidden">
+          {/* Слева — ход прогона, по центру — карта, справа — что прогон значит для расчёта. */}
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-[300px_minmax(0,1fr)_320px]">
+            <div className="card relative h-[min(640px,calc(100vh-230px))] min-h-110 overflow-hidden lg:col-span-2 xl:order-2 xl:col-span-1">
               {layout ? (
                 <Twin
                   layout={layout}
@@ -473,13 +475,12 @@ function SimulationView({
               {tracks && <PlayerBar />}
             </div>
 
-            <aside className="card scroll-thin flex h-[min(640px,calc(100vh-230px))] min-h-110 flex-col overflow-y-auto">
+            <aside className="card scroll-thin flex h-[min(640px,calc(100vh-230px))] min-h-110 flex-col overflow-y-auto xl:order-1">
               {summary && run.data ? (
-                <RunAside
+                <RunLive
                   run={run.data}
                   summary={summary}
                   timeline={timeline.data}
-                  target={target}
                   sweepPoint={
                     run.data.purpose === 'sweep'
                       ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id)
@@ -491,6 +492,10 @@ function SimulationView({
                   {failed ?? 'Показатели появятся, когда прогон завершится.'}
                 </div>
               )}
+            </aside>
+
+            <aside className="card scroll-thin flex h-[min(640px,calc(100vh-230px))] min-h-110 flex-col overflow-y-auto xl:order-3">
+              {summary && <RunCheck summary={summary} target={target} />}
               <FleetSweep
                 projectId={projectId}
                 scenarioId={scenario.id}
@@ -517,17 +522,15 @@ function pointAt(points: SimulationTimeline['points'], t: number) {
   return found
 }
 
-function RunAside({
+function RunLive({
   run,
   summary,
   timeline,
-  target,
   sweepPoint,
 }: {
   run: SimulationRun
   summary: SimulationSummary
   timeline?: SimulationTimeline
-  target: number
   sweepPoint?: FleetSweepResult['points'][number]
 }) {
   const bucket = usePlayback((s) => Math.floor(s.t / 30))
@@ -535,7 +538,6 @@ function RunAside({
   const now = points.length ? pointAt(points, bucket * 30) : undefined
   const slaTarget = summary.sla.target_pct
   const tone = slaTone(summary.sla.achieved_pct, slaTarget)
-  const vs = summary.vs_analytic
   const byState = Object.entries(summary.utilization.by_state ?? {}).filter(([, v]) => (v ?? 0) > 0.001)
   const queue = now?.queue ?? 0
 
@@ -593,7 +595,7 @@ function RunAside({
       <div className="p-5">
         {points.length > 1 && (
           <>
-            <div className="mb-1 flex items-baseline justify-between">
+            <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3">
               <span className="text-[13px] text-ink-2">Очередь задач за прогон</span>
               <span className="meta">по событиям имитации</span>
             </div>
@@ -602,7 +604,7 @@ function RunAside({
         )}
         {byState.length > 0 && (
           <div className="mt-5">
-            <div className="mb-2 flex items-baseline justify-between">
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
               <span className="h3">Чем заняты роботы</span>
               <span className="meta">доля времени за прогон</span>
             </div>
@@ -633,9 +635,16 @@ function RunAside({
           </div>
         )}
       </div>
+    </>
+  )
+}
 
-      <div className="border-y border-line bg-surface-2 p-5">
-        <div className="flex items-center justify-between gap-2">
+function RunCheck({ summary, target }: { summary: SimulationSummary; target: number }) {
+  const vs = summary.vs_analytic
+  return (
+    <>
+      <div className="border-b border-line bg-surface-2 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="h3">Расчёт против имитации</span>
           <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
         </div>
