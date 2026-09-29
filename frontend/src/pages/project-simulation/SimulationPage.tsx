@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Camera, Sparkles, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Camera, Info, Sparkles, X } from 'lucide-react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
@@ -32,12 +32,14 @@ import {
 import { parseApiProblem, problemText } from '@/shared/api/problem'
 import type { Scenario, SizingResult } from '@/shared/api/types'
 import { formatDate, formatNumber, formatPct, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Callout, Screen } from '@/shared/ui/page'
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Toggle } from '@/shared/ui/toggle'
-import { Bar, KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
+import { KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
@@ -68,6 +70,16 @@ const STATE_LABEL: Record<string, string> = {
   waiting: 'ожидание в заторе',
   idle: 'простой',
   failed: 'отказ',
+}
+// Цвета долей «Чем заняты роботы»: полезная работа — оттенки чернил, простой — предупреждение, затор и отказ — тревога.
+const STATE_COLOR: Record<string, string> = {
+  moving: 'bg-ink-2',
+  loading: 'bg-ink-3',
+  unloading: 'bg-ink-4',
+  charging: 'bg-info',
+  waiting: 'bg-crit',
+  idle: 'bg-warn',
+  failed: 'bg-crit/60',
 }
 const POSE_LABEL: Record<string, string> = {
   moving: 'в пути',
@@ -206,6 +218,7 @@ function SimulationView({
   // или заданный вручную.
   const working = sizing ? workingCount(sizing) : 0
   const lastSweep = useLastSweep(scenario.id, sizing?.process_key).data ?? undefined
+  const stage = useStageHeight()
   const [draft, setDraft] = useState<Omit<RunConfig, 'count'> & { count: number | null }>({
     count: null,
     mode: 'peak',
@@ -326,6 +339,7 @@ function SimulationView({
   return (
     <Screen
       wide
+      dense
       title={
         <>
           {config.count} × {sizing?.product_name ?? '…'}
@@ -399,8 +413,12 @@ function SimulationView({
           )}
 
           {/* Слева — ход прогона, по центру — карта, справа — что прогон значит для расчёта. */}
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-[300px_minmax(0,1fr)_320px]">
-            <div className="card relative h-[min(640px,calc(100vh-230px))] min-h-110 overflow-hidden lg:col-span-2 xl:order-2 xl:col-span-1">
+          <div
+            ref={stage.ref}
+            style={{ '--stage-h': stage.height ? `${stage.height}px` : undefined } as CSSProperties}
+            className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:h-(--stage-h) xl:grid-cols-[300px_minmax(0,1fr)_320px]"
+          >
+            <div className={cn(STAGE_CARD, 'relative overflow-hidden lg:col-span-2 xl:order-2 xl:col-span-1')}>
               {layout ? (
                 <Twin
                   layout={layout}
@@ -475,7 +493,7 @@ function SimulationView({
               {tracks && <PlayerBar />}
             </div>
 
-            <aside className="card scroll-thin flex h-[min(640px,calc(100vh-230px))] min-h-110 flex-col overflow-y-auto xl:order-1">
+            <aside className={cn(STAGE_CARD, 'scroll-thin flex flex-col overflow-y-auto xl:order-1')}>
               {summary && run.data ? (
                 <RunLive
                   run={run.data}
@@ -494,7 +512,7 @@ function SimulationView({
               )}
             </aside>
 
-            <aside className="card scroll-thin flex h-[min(640px,calc(100vh-230px))] min-h-110 flex-col overflow-y-auto xl:order-3">
+            <aside className={cn(STAGE_CARD, 'scroll-thin flex flex-col overflow-y-auto xl:order-3')}>
               {summary && <RunCheck summary={summary} target={target} />}
               <FleetSweep
                 projectId={projectId}
@@ -511,6 +529,35 @@ function SimulationView({
       )}
     </Screen>
   )
+}
+
+const STAGE_CARD = 'card h-[min(640px,calc(100vh-230px))] min-h-110 xl:h-full xl:min-h-0'
+// Нижний отступ сцены от края окна и минимальная высота, ниже которой колонки уже не читаются.
+const STAGE_GAP_PX = 16
+const STAGE_MIN_PX = 440
+
+/* Сцена тянется до низа окна: карта и обе колонки помещаются в экран без прокрутки страницы. */
+function useStageHeight() {
+  // Callback-ref: сетка сцены монтируется только после загрузки расчёта.
+  const [el, ref] = useState<HTMLDivElement | null>(null)
+  const [height, setHeight] = useState<number>()
+  useLayoutEffect(() => {
+    if (!el) return
+    const fit = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY
+      setHeight(Math.max(STAGE_MIN_PX, Math.round(window.innerHeight - top - STAGE_GAP_PX)))
+    }
+    fit()
+    // Над сценой появляются и исчезают подсказки и ошибки — они сдвигают её верх.
+    const observer = new ResizeObserver(fit)
+    if (el.parentElement) observer.observe(el.parentElement)
+    window.addEventListener('resize', fit)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', fit)
+    }
+  }, [el])
+  return { ref, height }
 }
 
 function pointAt(points: SimulationTimeline['points'], t: number) {
@@ -540,23 +587,35 @@ function RunLive({
   const tone = slaTone(summary.sla.achieved_pct, slaTarget)
   const byState = Object.entries(summary.utilization.by_state ?? {}).filter(([, v]) => (v ?? 0) > 0.001)
   const queue = now?.queue ?? 0
+  const topEdges = summary.congestion?.top_edges?.slice(0, 3) ?? []
 
   return (
     <>
-      <div className="p-5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-[13px] text-ink-2">Задачи в срок · SLA</span>
+      <div className="px-4 pt-3.5 pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1 text-[13px] text-ink-2">
+            Задачи в срок · SLA
+            {run.purpose === 'sweep' && (
+              <Hint>
+                Один из {sweepPoint?.runs ?? 'нескольких'} прогонов перебора флота
+                {sweepPoint
+                  ? `: в среднем ${formatNumber(sweepPoint.sla_achieved_pct, 1)} %, худший ${formatNumber(sweepPoint.sla_min_pct ?? sweepPoint.sla_achieved_pct, 1)} %`
+                  : ''}
+                . Число роботов принято, только если SLA держат все прогоны.
+              </Hint>
+            )}
+          </span>
           <span className="meta">цель {formatNumber(slaTarget)} %</span>
         </div>
-        <div className="mt-1 flex items-baseline gap-2">
+        <div className="flex items-baseline gap-1.5">
           <KpiNumber
             value={summary.sla.achieved_pct}
             digits={summary.sla.achieved_pct >= 99 ? 1 : 0}
-            className={`display text-[44px] ${tone === 'ok' ? 'text-ink' : tone === 'warn' ? 'text-warn' : 'text-crit'}`}
+            className={`display text-[34px] ${tone === 'ok' ? 'text-ink' : tone === 'warn' ? 'text-warn' : 'text-crit'}`}
           />
-          <span className="display text-[22px] text-ink-3">%</span>
+          <span className="display text-[18px] text-ink-3">%</span>
         </div>
-        <div className="relative mt-2 h-2 w-full rounded-full bg-black/6">
+        <div className="relative mt-1 h-1.5 w-full rounded-full bg-black/6">
           <motion.div
             className={`h-full rounded-full ${tone === 'ok' ? 'bg-ink' : tone === 'warn' ? 'bg-warn' : 'bg-crit'}`}
             initial={false}
@@ -564,24 +623,15 @@ function RunLive({
             transition={{ type: 'spring', stiffness: 120, damping: 24 }}
           />
           <span
-            className="absolute -top-1 h-4 w-px bg-ink-2"
+            className="absolute -top-1 h-3.5 w-px bg-ink-2"
             style={{ left: `${slaTarget}%` }}
             title={`Цель ${slaTarget} %`}
           />
         </div>
         {summary.sla.target_value != null && (
-          <p className="meta mt-2">
-            в срок — не дольше {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} от появления
-            задачи; в среднем {formatNumber(summary.sla.avg_lead_time_min, 1)} мин
-          </p>
-        )}
-        {run.purpose === 'sweep' && (
-          <p className="meta mt-1">
-            Один из {sweepPoint?.runs ?? 'нескольких'} прогонов перебора флота
-            {sweepPoint
-              ? `: в среднем ${formatNumber(sweepPoint.sla_achieved_pct, 1)} %, худший ${formatNumber(sweepPoint.sla_min_pct ?? sweepPoint.sla_achieved_pct, 1)} %`
-              : ''}
-            . Число роботов принято, только если SLA держат все прогоны.
+          <p className="meta mt-1.5">
+            в срок — до {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} · в среднем{' '}
+            {formatNumber(summary.sla.avg_lead_time_min, 1)} мин
           </p>
         )}
       </div>
@@ -589,100 +639,126 @@ function RunLive({
       <div className="grid grid-cols-3 divide-x divide-line border-y border-line">
         <Kpi label="Выполнено" value={now?.done ?? 0} unit={`из ${formatNumber(now?.demand_cum ?? 0)}`} />
         <Kpi label="Очередь" value={queue} unit="задач" tone={queue > 15 ? 'crit' : queue > 6 ? 'warn' : 'neutral'} />
-        <Kpi label="Загрузка парка" value={(now?.utilization ?? 0) * 100} unit="%" />
+        <Kpi label="Загрузка" value={(now?.utilization ?? 0) * 100} unit="%" />
       </div>
 
-      <div className="p-5">
-        {points.length > 1 && (
-          <>
-            <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3">
-              <span className="text-[13px] text-ink-2">Очередь задач за прогон</span>
-              <span className="meta">по событиям имитации</span>
-            </div>
-            <QueueSparkline points={points} cursorMin={(bucket * 30) / 60} />
-          </>
-        )}
-        {byState.length > 0 && (
-          <div className="mt-5">
-            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
-              <span className="h3">Чем заняты роботы</span>
-              <span className="meta">доля времени за прогон</span>
-            </div>
-            <ul className="space-y-2">
-              {byState.map(([k, v]) => (
-                <li key={k}>
-                  <div className="mb-1 flex items-center justify-between text-[13px]">
-                    <span className="text-ink-2">{STATE_LABEL[k] ?? k}</span>
-                    <span className="num text-ink-2">{formatPct(v ?? 0, { share: true, digits: 0 })}</span>
-                  </div>
-                  <Bar
-                    value={(v ?? 0) * 100}
-                    tone={k === 'waiting' || k === 'failed' ? 'crit' : k === 'idle' ? 'warn' : 'neutral'}
-                    height={5}
-                  />
-                </li>
-              ))}
-            </ul>
-            {summary.congestion?.top_edges && summary.congestion.top_edges.length > 0 && (
-              <p className="meta mt-2">
-                Больше всего ждут:{' '}
-                {summary.congestion.top_edges
-                  .slice(0, 3)
-                  .map((e) => `${e.name ?? e.edge_id} (${Math.round(e.wait_s ?? 0)} с)`)
-                  .join(', ')}
-              </p>
-            )}
+      {points.length > 1 && (
+        <div className="px-4 pt-3 pb-2.5">
+          <div className="mb-1 text-[13px] text-ink-2" title="По событиям имитации">
+            Очередь задач за прогон
           </div>
-        )}
-      </div>
+          <QueueSparkline points={points} cursorMin={(bucket * 30) / 60} height={44} />
+        </div>
+      )}
+
+      {byState.length > 0 && (
+        <div className="border-t border-line px-4 pt-3 pb-3.5">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <span className="text-[13px] font-medium text-ink">Чем заняты роботы</span>
+            <span className="meta">доля времени</span>
+          </div>
+          <div className="flex h-2 w-full overflow-hidden rounded-full bg-black/6">
+            {byState.map(([k, v]) => (
+              <motion.div
+                key={k}
+                className={STATE_COLOR[k] ?? 'bg-ink-4'}
+                initial={false}
+                animate={{ width: `${(v ?? 0) * 100}%` }}
+                transition={{ type: 'spring', stiffness: 120, damping: 24 }}
+              />
+            ))}
+          </div>
+          <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[12.5px]">
+            {byState.map(([k, v]) => (
+              <li key={k} className="flex items-center gap-1.5">
+                <span className={cn('size-2 shrink-0 rounded-full', STATE_COLOR[k] ?? 'bg-ink-4')} />
+                <span className="min-w-0 truncate text-ink-2" title={STATE_LABEL[k] ?? k}>
+                  {STATE_LABEL[k] ?? k}
+                </span>
+                <span className="num ml-auto shrink-0 whitespace-nowrap text-ink-2">
+                  {formatPct(v ?? 0, { share: true, digits: 0 })}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {topEdges.length > 0 && (
+            <p
+              className="meta mt-2 line-clamp-2"
+              title={topEdges.map((e) => `${e.name ?? e.edge_id} (${Math.round(e.wait_s ?? 0)} с)`).join(', ')}
+            >
+              Больше всего ждут:{' '}
+              {topEdges.map((e) => `${e.name ?? e.edge_id} (${Math.round(e.wait_s ?? 0)} с)`).join(', ')}
+            </p>
+          )}
+        </div>
+      )}
     </>
   )
 }
 
 function RunCheck({ summary, target }: { summary: SimulationSummary; target: number }) {
   const vs = summary.vs_analytic
+  const bottleneck = summary.bottleneck && summary.bottleneck.resource_kind !== 'none' ? summary.bottleneck : null
   return (
-    <>
-      <div className="border-b border-line bg-surface-2 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="h3">Расчёт против имитации</span>
-          <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div>
-            <div className="display num text-[22px]">{formatNumber(vs.analytic_throughput_per_hour)}</div>
-            <div className="meta">ед/ч — цикл формулы</div>
-          </div>
-          <div>
-            <div className="display num text-[22px]">{formatNumber(vs.sim_throughput_per_hour)}</div>
-            <div className="meta">ед/ч — средний цикл имитации ({formatPct(vs.delta_pct, { digits: 0 })})</div>
-          </div>
-        </div>
-        <p className="meta mt-2">
-          Мощность того же парка при одинаковом запасе (целевая загрузка), без запаса она выше; нужно в пик{' '}
-          {formatNumber(target)} ед/ч.
-        </p>
-        {vs.text && <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{vs.text}</p>}
-        {summary.bottleneck && summary.bottleneck.resource_kind !== 'none' && (
-          <div className="mt-3 rounded-[10px] bg-white p-3 text-[13px] leading-relaxed">
-            <div className="font-medium text-ink">
-              Узкое место: {summary.bottleneck.resource_name ?? summary.bottleneck.resource_kind}
-              {summary.bottleneck.utilization != null &&
-                ` · загрузка ${formatPct(summary.bottleneck.utilization, { share: true, digits: 0 })}`}
-            </div>
-            <div className="text-ink-2">{summary.bottleneck.explanation}</div>
-            {summary.bottleneck.suggestion && (
-              <div className="mt-1 text-ink-3">Что сделать: {summary.bottleneck.suggestion}</div>
-            )}
-          </div>
-        )}
-        {summary.completed_by_humans ? (
-          <p className="meta mt-2">
-            Задач ушло людям после превышения норматива ожидания: {summary.completed_by_humans}
+    <div className="border-b border-line bg-surface-2 px-4 pt-3.5 pb-3">
+      <div className="flex items-center gap-1">
+        <span className="text-[14px] font-medium text-ink">Расчёт против имитации</span>
+        <Hint>
+          <p>
+            Мощность того же парка при одинаковом запасе (целевая загрузка), без запаса она выше; нужно в пик{' '}
+            {formatNumber(target)} ед/ч.
           </p>
-        ) : null}
+          {vs.text && <p>{vs.text}</p>}
+          {summary.completed_by_humans ? (
+            <p>Задач ушло людям после превышения норматива ожидания: {summary.completed_by_humans}</p>
+          ) : null}
+        </Hint>
       </div>
-    </>
+      <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
+      <div className="mt-2 grid grid-cols-2 gap-3">
+        <div>
+          <div className="display num text-[20px]">{formatNumber(vs.analytic_throughput_per_hour)}</div>
+          <div className="meta" title="Цикл формулы">
+            ед/ч формула
+          </div>
+        </div>
+        <div>
+          <div className="display num text-[20px]">{formatNumber(vs.sim_throughput_per_hour)}</div>
+          <div className="meta whitespace-nowrap" title="Средний цикл имитации">
+            ед/ч имитация · {formatPct(vs.delta_pct, { digits: 0 })}
+          </div>
+        </div>
+      </div>
+      {bottleneck && (
+        <div className="mt-2 flex items-center gap-1 rounded-[8px] bg-white px-2.5 py-1.5 text-[12.5px]">
+          <span className="min-w-0 truncate font-medium text-ink">
+            Узкое место: {bottleneck.resource_name ?? bottleneck.resource_kind}
+            {bottleneck.utilization != null && ` · ${formatPct(bottleneck.utilization, { share: true, digits: 0 })}`}
+          </span>
+          <Hint>
+            <p>{bottleneck.explanation}</p>
+            {bottleneck.suggestion && <p>Что сделать: {bottleneck.suggestion}</p>}
+          </Hint>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* Пояснение по клику: в колонках имитации текст не должен съедать высоту, но остаётся под рукой. */
+function Hint({ children }: { children: ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        className="inline-flex shrink-0 text-ink-4 transition-colors hover:text-ink"
+        aria-label="Пояснение"
+      >
+        <Info size={14} />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80 space-y-2 text-[13px] leading-relaxed text-ink-2">
+        {children}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -761,8 +837,22 @@ function FleetSweep({
     )
 
   return (
-    <div className="p-5">
-      <span className="h3">Сколько роботов нужно на самом деле</span>
+    <div className="px-4 pt-3.5 pb-4">
+      <div className="flex items-center gap-1">
+        <span className="text-[14px] font-medium text-ink">Сколько роботов нужно на самом деле</span>
+        {result && (
+          <Hint>
+            {formula && simulated && best && (
+              <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
+            )}
+            <p className="text-ink-3">{result.explanation}</p>
+            <p className="text-ink-3">
+              Цель — {formatNumber(result.target_pct)} % задач в срок в каждом из прогонов. Окупаемость — сценария с
+              этим N и резервом. {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
+            </p>
+          </Hint>
+        )}
+      </div>
       {!result ? (
         <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
           Формула цикла дала {count.analytic} {pluralRu(count.analytic, ['робота', 'роботов', 'роботов'])} с запасами.
@@ -772,19 +862,15 @@ function FleetSweep({
       ) : (
         <>
           {formula && simulated && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <FleetTile title="По формуле цикла" fleet={formula} active={usingFormula} />
               <FleetTile title="По имитации" fleet={simulated} active={usingSimulation} />
             </div>
           )}
-          {formula && simulated && best && (
-            <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
-          )}
-          <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">{result.explanation}</p>
         </>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2.5 flex flex-wrap gap-2">
         <Button size="sm" variant={result ? 'outline' : 'default'} disabled={busy} onClick={run}>
           {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
           {sweep.isPending
@@ -800,31 +886,32 @@ function FleetSweep({
             size="sm"
             variant="ghost"
             disabled={busy}
+            title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
             onClick={() =>
               source.mutate({ processKey: sizing.process_key, manual: usingSimulation ? formula.total : null })
             }
           >
             {source.isPending && <Spinner />}
-            {usingSimulation ? `Считать по формуле (${formula.total})` : `Считать по имитации (${simulated.total})`}
+            {usingSimulation ? `По формуле (${formula.total})` : `По имитации (${simulated.total})`}
           </Button>
         )}
       </div>
       {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
 
       {result && (
-        <div className="mt-4">
+        <div className="mt-3">
           <table className="w-full text-[12.5px]">
             <thead className="text-ink-3">
               <tr>
-                <th className="py-1 text-left font-normal">N</th>
-                <th className="py-1 text-right font-normal" title="Среднее по прогонам пика">
+                <th className="py-0.5 text-left font-normal">N</th>
+                <th className="py-0.5 text-right font-normal" title="Среднее по прогонам пика">
                   SLA
                 </th>
-                <th className="py-1 text-right font-normal" title="Худший из прогонов: он решает, принят ли парк">
+                <th className="py-0.5 text-right font-normal" title="Худший из прогонов: он решает, принят ли парк">
                   худший
                 </th>
-                <th className="py-1 text-right font-normal">загрузка</th>
-                <th className="py-1 text-right font-normal" title="Сценарий с этим N и резервом">
+                <th className="py-0.5 text-right font-normal">загрузка</th>
+                <th className="py-0.5 text-right font-normal" title="Сценарий с этим N и резервом">
                   окупаемость
                 </th>
               </tr>
@@ -835,7 +922,7 @@ function FleetSweep({
                   key={p.count}
                   className={`${p.count === result.recommended_count ? 'font-semibold' : ''} ${p.count === shownCount ? 'bg-info-soft' : ''}`}
                 >
-                  <td className="py-1">
+                  <td className="py-0.5">
                     <button
                       type="button"
                       className="num hover:text-info"
@@ -845,22 +932,18 @@ function FleetSweep({
                       {p.count}
                     </button>
                   </td>
-                  <td className="num py-1 text-right">{formatPct(p.sla_achieved_pct, { digits: 0 })}</td>
-                  <td className={`num py-1 text-right ${p.passed ? 'text-ok' : 'text-crit'}`}>
+                  <td className="num py-0.5 text-right">{formatPct(p.sla_achieved_pct, { digits: 0 })}</td>
+                  <td className={`num py-0.5 text-right ${p.passed ? 'text-ok' : 'text-crit'}`}>
                     {formatPct(p.sla_min_pct ?? p.sla_achieved_pct, { digits: 0 })}
                   </td>
-                  <td className="num py-1 text-right">{formatPct(p.utilization, { share: true, digits: 0 })}</td>
-                  <td className="num py-1 text-right" title={p.passed ? undefined : 'Парк не держит SLA'}>
+                  <td className="num py-0.5 text-right">{formatPct(p.utilization, { share: true, digits: 0 })}</td>
+                  <td className="num py-0.5 text-right" title={p.passed ? undefined : 'Парк не держит SLA'}>
                     {p.passed ? formatYears(p.payback_years) : '—'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="meta mt-2">
-            Цель — {formatNumber(result.target_pct)} % задач в срок в каждом из прогонов. Окупаемость — сценария с этим
-            N и резервом. {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
-          </p>
         </div>
       )}
     </div>
@@ -869,17 +952,18 @@ function FleetSweep({
 
 function FleetTile({ title, fleet, active }: { title: string; fleet: FleetEconomics; active: boolean }) {
   return (
-    <div className={`rounded-[10px] border p-3 ${active ? 'border-ink bg-white' : 'border-line bg-surface-2'}`}>
-      <div className="flex items-baseline justify-between gap-1 text-[12px]">
-        <span className="text-ink-2">{title}</span>
-        {active && <span className="font-medium text-ok">в расчёте</span>}
+    <div className={`rounded-[10px] border px-2.5 py-2 ${active ? 'border-ink bg-white' : 'border-line bg-surface-2'}`}>
+      <div className="truncate text-[12px] text-ink-2">{title}</div>
+      <div className="flex items-baseline gap-1.5">
+        <span className="display num text-[20px]">{fleet.total}</span>
+        <span className="num text-[11.5px] text-ink-3" title={`${fleet.working} в работе + ${fleet.reserve} в резерве`}>
+          {fleet.working} + {fleet.reserve} рез.
+        </span>
       </div>
-      <div className="display num mt-1 text-[22px]">{fleet.total}</div>
-      <div className="num text-[11.5px] text-ink-3">
-        {fleet.working} в работе + {fleet.reserve} резерв
+      <div className="num truncate text-[11.5px] text-ink-2">
+        {formatYears(fleet.payback_years)} · {formatRub(fleet.capex_rub)}
       </div>
-      <div className="num mt-1.5 text-[12px] text-ink-2">окупаемость {formatYears(fleet.payback_years)}</div>
-      <div className="num text-[12px] text-ink-2">CAPEX {formatRub(fleet.capex_rub)}</div>
+      {active && <div className="text-[11.5px] font-medium text-ok">в расчёте</div>}
     </div>
   )
 }
@@ -898,16 +982,12 @@ function WhyDifferent({
 }) {
   const { robot } = sizing
   if (formula.working === simulated.working) {
-    return (
-      <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
-        Имитация подтвердила формулу: {simulated.working} роботов держат SLA во всех прогонах пика.
-      </p>
-    )
+    return <p>Имитация подтвердила формулу: {simulated.working} роботов держат SLA во всех прогонах пика.</p>
   }
   const perRobot = best.throughput_per_hour / Math.max(1, best.count)
   const fewer = simulated.working < formula.working
   return (
-    <div className="mt-3 space-y-1.5 text-[13px] leading-relaxed text-ink-2">
+    <div className="space-y-1.5">
       <p>
         <span className="font-medium text-ink">Формула</span> считает один робот за{' '}
         {formatNumber(robot.effective_throughput_per_hour, 1)} ед/ч:{' '}
@@ -979,11 +1059,11 @@ function RobotCard({
 function Kpi({ label, value, unit, tone = 'neutral' }: { label: string; value: number; unit: string; tone?: Tone }) {
   const c = tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink'
   return (
-    <div className="px-4 py-4">
-      <div className="text-[12.5px] text-ink-3">{label}</div>
-      <div className="mt-1 flex items-baseline gap-1 whitespace-nowrap">
-        <KpiNumber value={value} className={`display text-[24px] ${c}`} />
-        <span className="text-[12px] text-ink-3">{unit}</span>
+    <div className="min-w-0 px-3 py-2.5">
+      <div className="truncate text-[12px] text-ink-3">{label}</div>
+      <div className="flex items-baseline gap-1 whitespace-nowrap">
+        <KpiNumber value={value} className={`display text-[20px] ${c}`} />
+        <span className="text-[11.5px] text-ink-3">{unit}</span>
       </div>
     </div>
   )

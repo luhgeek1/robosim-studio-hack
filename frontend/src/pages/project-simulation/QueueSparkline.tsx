@@ -1,10 +1,18 @@
 import type { SimulationTimeline } from '@/entities/simulation'
 
 /* Длина очереди по таймлайну прогона: одна линия, один пик. */
-export function QueueSparkline({ points, cursorMin }: { points: SimulationTimeline['points']; cursorMin?: number }) {
+export function QueueSparkline({
+  points,
+  cursorMin,
+  height = 64,
+}: {
+  points: SimulationTimeline['points']
+  cursorMin?: number
+  height?: number
+}) {
   if (!points.length) return null
   const W = 320
-  const H = 64
+  const H = height
   const tMax = Math.max(...points.map((p) => p.t_min), 1)
   const qMax = Math.max(5, ...points.map((p) => p.queue))
   const pts = points.map((p) => [(p.t_min / tMax) * W, H - (p.queue / qMax) * (H - 8)] as const)
