@@ -62,7 +62,7 @@ export function RobotsLayer({
           onClick={() => onSelect?.(selected === track.id ? null : track.id)}
         >
           <circle r={r} fill={BODY.idle} stroke="#ffffff" strokeWidth={1.5} {...nonScaling} />
-          <path d={`M${r * 0.2} ${-r * 0.55}L${r * 1.6} 0L${r * 0.2} ${r * 0.55}z`} fill="#17171a" opacity={0.7} />
+          <path d={`M${r * 0.2} ${-r * 0.55}L${r * 1.6} 0L${r * 0.2} ${r * 0.55}z`} fill="#141413" opacity={0.7} />
           {selected === track.id && <circle r={r * 2} fill="none" stroke="#1d3fb5" strokeWidth={2} {...nonScaling} />}
           <title>{`${track.id} · ${track.productName}`}</title>
         </g>

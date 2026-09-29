@@ -24,7 +24,7 @@ const DEMO_ACCOUNTS = [
 type Mode = 'login' | 'register'
 const SWAP: Transition = { type: 'spring', stiffness: 170, damping: 26, mass: 1 }
 // Auth fields are the only thing on this half, so they are larger and more contrasted than the in-app inputs.
-const FIELD = 'h-12 rounded-[10px] bg-card px-4 text-[15px]! shadow-[0_1px_2px_rgba(20,20,24,0.04)]'
+const FIELD = 'h-12 rounded-[10px] bg-card px-4 text-[15px]! shadow-[0_1px_2px_rgba(20,20,19,0.04)]'
 const FADE = {
   initial: { opacity: 0, y: 6 },
   animate: { opacity: 1, y: 0 },

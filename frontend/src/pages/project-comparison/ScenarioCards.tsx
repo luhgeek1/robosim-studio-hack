@@ -57,7 +57,7 @@ function ScenarioCard({
     // Вся карточка ведёт к расчёту через растянутую ссылку в заголовке — так внутри может жить кнопка «почему».
     <div
       className={cn(
-        'group card relative flex flex-col p-5 transition-shadow hover:shadow-[0_8px_28px_-14px_rgba(20,20,24,0.25)]',
+        'group card relative flex flex-col p-5 transition-shadow hover:shadow-[0_8px_28px_-14px_rgba(20,20,19,0.25)]',
         recommended && 'border-ink ring-1 ring-ink',
       )}
     >

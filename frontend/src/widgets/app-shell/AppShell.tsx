@@ -50,7 +50,7 @@ function StepDock({ projectId }: { projectId: string }) {
           )}
           aria-label="Шаги оценки"
         >
-          <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,24,0.08),0_4px_12px_-4px_rgba(20,20,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
+          <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,19,0.08),0_4px_12px_-4px_rgba(20,20,19,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
           {PROJECT_STEPS.map((step, i) => (
             <NavLink
               key={step.id}

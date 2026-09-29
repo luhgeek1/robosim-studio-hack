@@ -94,7 +94,7 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
               opacity: 1,
               backgroundColor: tab ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,0.06)',
               boxShadow: tab
-                ? '0 1px 2px rgba(20,20,24,0.06), 0 0 0 1px rgba(231,231,227,1)'
+                ? '0 1px 2px rgba(20,20,19,0.06), 0 0 0 1px rgba(230,223,216,1)'
                 : '0 0 0 0 rgba(0,0,0,0), 0 0 0 0 rgba(0,0,0,0)',
             }
           : { opacity: 0 }
@@ -202,7 +202,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
       ) : active ? (
         // Закрытая активная вкладка сразу отдаёт метку, и подсветка летит к новой цели, а не ждёт конца исчезновения;
         // свой белый фон вкладка рисует сама и гаснет вместе с ним.
-        <span className="absolute inset-0 rounded-[10px] bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(231,231,227,1)]" />
+        <span className="absolute inset-0 rounded-[10px] bg-white shadow-[0_1px_2px_rgba(20,20,19,0.06),0_0_0_1px_rgba(230,223,216,1)]" />
       ) : (
         <span className="absolute inset-0 rounded-[10px] bg-black/4 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.03)] transition-colors group-hover:bg-black/7" />
       )}
@@ -247,7 +247,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
           // У неактивной вкладки крестик всплывает поверх названия и не отнимает у него место.
           active
             ? 'relative mr-1.5'
-            : 'absolute right-1.5 bg-[#ececea] opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+            : 'absolute right-1.5 bg-[#ede8df] opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
         )}
       >
         <X size={13} />
@@ -333,7 +333,7 @@ function AddProjectMenu({ openIds, order }: { openIds: Set<string>; order: strin
               setOpen(false)
               navigate('/projects?new=1')
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-ink px-3 py-2.5 text-[13.5px] font-medium text-white transition-colors hover:bg-[#2a2a2f]"
+            className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-ink px-3 py-2.5 text-[13.5px] font-medium text-white transition-colors hover:bg-[#2b2a27]"
           >
             <Plus size={15} /> Добавить проект
           </button>

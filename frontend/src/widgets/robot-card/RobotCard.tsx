@@ -79,7 +79,7 @@ export function RobotCard({
         <CardPrice price={price} />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-4 pt-3 pb-3.5 transition-[translate,box-shadow] duration-300 ease-out group-focus-within:translate-y-0 group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)] group-hover:translate-y-0 group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,24,0.18)]">
+      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-4 pt-3 pb-3.5 transition-[translate,box-shadow] duration-300 ease-out group-focus-within:translate-y-0 group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)] group-hover:translate-y-0 group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)]">
         <div className="flex items-center justify-between gap-3">
           <Link
             to={to}

@@ -326,7 +326,7 @@ function ProcessNav({
         {box && (
           <span
             aria-hidden
-            className="absolute inset-x-0 top-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(20,20,24,0.04)] transition-[transform,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+            className="absolute inset-x-0 top-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,19,0.06),0_0_0_1px_rgba(20,20,19,0.04)] transition-[transform,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
             style={{ transform: `translateY(${box.top}px)`, height: box.height }}
           />
         )}

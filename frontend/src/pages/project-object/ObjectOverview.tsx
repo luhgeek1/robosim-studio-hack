@@ -358,7 +358,7 @@ function FocusCard({
                 if (error) setError(null)
               }}
               className={cn(
-                'h-12 w-full rounded-lg bg-card px-4 text-[17px] shadow-[0_1px_2px_rgba(20,20,24,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-[15px] placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80',
+                'h-12 w-full rounded-lg bg-card px-4 text-[17px] shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-[15px] placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80',
                 type !== 'string' && 'num',
                 param.unit && 'pr-24',
                 error && 'ring-crit',

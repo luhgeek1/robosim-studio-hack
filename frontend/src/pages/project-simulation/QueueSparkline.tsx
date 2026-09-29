@@ -23,7 +23,7 @@ export function QueueSparkline({ points, cursorMin }: { points: SimulationTimeli
             x2={Math.min(W, (cursorMin / tMax) * W)}
             y1={0}
             y2={H}
-            stroke="#17171a"
+            stroke="#141413"
             strokeWidth={1}
             opacity={0.5}
           />
