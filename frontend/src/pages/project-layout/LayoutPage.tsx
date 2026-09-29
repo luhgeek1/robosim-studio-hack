@@ -43,14 +43,23 @@ export function LayoutPage() {
   const openDialog = () => setDialogOpen(true)
 
   const data = layout.data
-  const route = data?.stats.routes?.find((r) => r.key === 'dock_in_to_storage')
+  const routes = data?.stats.routes ?? []
+  const route = routes.find((r) => r.key === 'dock_in_to_storage') ?? routes[0]
+  const routePhrase = route
+    ? route.key === 'dock_in_to_storage'
+      ? 'от ворот до места хранения'
+      : route.name.toLowerCase()
+    : ''
+  const noun = project.data
+    ? (TITLE_NOUN[project.data.object_type] ?? OBJECT_TYPE_LABEL[project.data.object_type])
+    : 'Объект'
 
   return (
     <Screen
       dense
       title={
         data
-          ? `Склад ${formatNumber(data.width_m)} × ${formatNumber(data.height_m)} м${route ? `: от ворот до места хранения в среднем ${formatNumber(route.value_m)} м` : ''}`
+          ? `${noun} ${formatNumber(data.width_m)} × ${formatNumber(data.height_m)} м${route ? `: ${routePhrase} в среднем ${formatNumber(route.value_m)} м` : ''}`
           : 'Планировка'
       }
       actions={
@@ -74,8 +83,8 @@ export function LayoutPage() {
               </Button>
             }
           >
-            Генератор планировки есть только для складов. Длины маршрутов расчёт берёт из параметров объекта (ваш замер)
-            или из нормативов — источник каждого значения виден в трассе расчёта сценария.
+            Генератор планировки есть для складов, больниц и аэропортов. Длины маршрутов расчёт берёт из параметров
+            объекта (ваш замер) или из нормативов — источник каждого значения виден в трассе расчёта сценария.
           </Placeholder>
         ) : notGenerated ? (
           <Placeholder
@@ -86,8 +95,8 @@ export function LayoutPage() {
               </Button>
             }
           >
-            Схема соберётся из площади, высоты потолков, ширины проходов, потоков паллет и строк отбора. Маршруты по ней
-            уточнят число роботов.
+            Схема соберётся из параметров объекта: площади, проходов и потоков грузов. Маршруты по ней уточнят число
+            роботов.
           </Placeholder>
         ) : (
           <ErrorBlock error={layout.error} onRetry={() => layout.refetch()} />
@@ -156,8 +165,11 @@ function PlanOverview({ layout, onRegenerate }: { layout: Layout; onRegenerate?:
       </div>
 
       <div
-        className="relative grid grid-cols-3 border-t border-line md:grid-cols-(--cols) md:divide-x md:divide-line"
-        style={{ '--cols': `repeat(${figures.length}, minmax(0, 1fr))` } as CSSProperties}
+        className={cn(
+          'relative grid grid-cols-3 md:grid-cols-(--cols) md:divide-x md:divide-line',
+          figures.length > 0 && 'border-t border-line',
+        )}
+        style={{ '--cols': `repeat(${Math.max(figures.length, 1)}, minmax(0, 1fr))` } as CSSProperties}
       >
         <SlideHighlight className="z-10 bg-warn" transition={SPRING} />
         {figures.map((figure) => (
@@ -204,9 +216,9 @@ function PlanStage({
     <>
       <span className="text-white/60">Пример пути</span>
       <span className="font-medium">
-        {example?.from.label ?? capitalize(ROUTE_ENDPOINT[route.key][0])}
+        {example?.from.label ?? capitalize(ROUTE_ENDPOINT[route.key]?.[0] ?? 'начало')}
         <ArrowRight size={13} className="mx-1.5 inline -translate-y-px text-white/60" />
-        {example?.to.label ?? ROUTE_ENDPOINT[route.key][1]}
+        {example?.to.label ?? ROUTE_ENDPOINT[route.key]?.[1] ?? 'конец'}
       </span>
       {example && <span className="num text-[#f3c77a]">{formatNumber(example.length, 1)} м</span>}
     </>
@@ -297,7 +309,7 @@ function RoutesPanel({
           <SlideHighlight className="rounded-lg bg-surface-2 ring-1 ring-line" transition={SPRING} />
           {routes.map((route) => {
             const on = route.key === active
-            const [from, to] = ROUTE_ENDPOINT[route.key]
+            const [from, to] = ROUTE_ENDPOINT[route.key] ?? [route.name, '']
             const pairs = `${formatNumber(route.pairs)} ${pluralRu(route.pairs, ['пара', 'пары', 'пар'])}`
             return (
               <li key={route.key}>
@@ -309,13 +321,13 @@ function RoutesPanel({
                     'relative w-full rounded-lg px-2.5 py-1.5 text-left transition-colors',
                     on ? 'text-ink' : 'text-ink-2 hover:bg-surface-2',
                   )}
-                  title={`${route.name}: ${ROUTE_USE[route.key]}, ${pairs}`}
+                  title={`${route.name}: ${ROUTE_USE[route.key] ?? 'справочно'}, ${pairs}`}
                 >
                   {on && <SlideMark />}
                   <span className="relative flex items-baseline justify-between gap-3">
                     <span className="min-w-0 truncate text-[13px]">
                       {capitalize(from)}
-                      <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
+                      {to && <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />}
                       {to}
                     </span>
                     <span className="num shrink-0 text-[14px] font-semibold text-ink">
@@ -434,7 +446,7 @@ function buildFigures(layout: Layout): Figure[] {
       spotlight: { zones: ['storage'], racks: true },
     })
   }
-  if (isNum(stats.docks_in) || isNum(stats.docks_out)) {
+  if ((stats.docks_in ?? 0) > 0 || (stats.docks_out ?? 0) > 0) {
     figures.push({
       key: 'docks',
       value: `${formatNumber(stats.docks_in ?? 0)} / ${formatNumber(stats.docks_out ?? 0)}`,
@@ -466,6 +478,7 @@ function buildFigures(layout: Layout): Figure[] {
       spotlight: { zones: ['charging'], nodes: ['charger'] },
     })
   }
+  figures.push(...serviceFigures(layout))
   const narrow = stats.min_aisle_width_m
   if (isNum(narrow)) {
     figures.push({
@@ -484,6 +497,39 @@ function buildFigures(layout: Layout): Figure[] {
   }
   return figures
 }
+
+/* Plans without racks (hospital, airport): figures counted from the geometry itself. */
+function serviceFigures(layout: Layout): Figure[] {
+  const count = (kind: string) => layout.zones.filter((z) => z.kind === kind).length
+  const nodesOf = (kind: string) => layout.nodes.filter((n) => n.kind === kind)
+  const figures: Figure[] = []
+  const add = (key: string, n: number, forms: [string, string, string], spotlight: Spotlight) => {
+    if (n > 0) figures.push({ key, value: formatNumber(n), label: pluralRu(n, forms), spotlight })
+  }
+
+  add('wards', count('ward'), ['отделение', 'отделения', 'отделений'], { zones: ['ward'], nodes: ['dropoff'] })
+  const services = nodesOf('pickup').filter((n) => SERVICE_ZONES.has(zoneKind(layout, n.zone_id)))
+  add('services', services.length, ['служебная точка', 'служебные точки', 'служебных точек'], {
+    zones: ['kitchen', 'laundry', 'pharmacy', 'lab', 'waste'],
+    nodes: ['pickup'],
+  })
+  const lifts = nodesOf('elevator').reduce((max, n) => Math.max(max, isNum(n.capacity) ? n.capacity : 0), 0)
+  add('lifts', lifts, ['лифт', 'лифта', 'лифтов'], { zones: ['elevator'], nodes: ['elevator'] })
+
+  const stands = layout.zones.filter(
+    (z) => z.kind === 'apron' && layout.nodes.some((n) => n.zone_id === z.id && n.kind === 'dropoff'),
+  ).length
+  add('stands', stands, ['стоянка ВС', 'стоянки ВС', 'стоянок ВС'], { zones: ['apron'], nodes: ['dropoff'] })
+  add('gates', count('gate'), ['выход терминала', 'выхода терминала', 'выходов терминала'], {
+    zones: ['gate'],
+    nodes: ['pickup'],
+  })
+  return figures
+}
+
+const SERVICE_ZONES = new Set(['kitchen', 'laundry', 'pharmacy', 'lab', 'waste'])
+const zoneKind = (layout: Layout, zoneId: string | null | undefined) =>
+  layout.zones.find((z) => z.id === zoneId)?.kind ?? ''
 
 function buildChecks(layout: Layout): Check[] {
   const checks: Check[] = []
@@ -533,7 +579,9 @@ const SHORT_DATE = new Intl.DateTimeFormat('ru-RU', {
   minute: '2-digit',
 })
 
-const AISLE_KINDS = new Set(['main_aisle', 'rack_aisle'])
+const AISLE_KINDS = new Set(['main_aisle', 'rack_aisle', 'corridor'])
+
+const TITLE_NOUN: Partial<Record<string, string>> = { warehouse: 'Склад', hospital: 'Больница', airport: 'Аэропорт' }
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 

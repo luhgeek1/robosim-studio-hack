@@ -82,6 +82,8 @@ function MarkerSwatch({ kind }: { kind: MarkerKind }) {
         <circle cx={6} cy={6} r={5} fill={fill} />
       ) : kind === 'charger' ? (
         <path d="M6 0.5L11.5 6L6 11.5L0.5 6Z" fill={fill} />
+      ) : kind === 'pickup' ? (
+        <path d="M6 0.5L11.5 11H0.5Z" fill={fill} />
       ) : (
         <rect x={1} y={1} width={10} height={10} rx={1.5} fill={fill} />
       )}

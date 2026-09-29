@@ -19,7 +19,7 @@ const SWAP: Transition = { type: 'spring', stiffness: 170, damping: 26, mass: 1 
 
 /* Главные цифры объекта для полосы паспорта. Для типов объекта без этих ключей берём первые обязательные числа. */
 const PASSPORT: { key: string; label: string }[] = [
-  { key: 'area_m2', label: 'площадь склада, м²' },
+  { key: 'area_m2', label: 'площадь объекта, м²' },
   { key: 'robotized_area_m2', label: 'зона роботов, м²' },
   { key: 'staff_total', label: 'сотрудников' },
   { key: 'pallet_positions', label: 'паллетомест' },

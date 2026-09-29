@@ -31,7 +31,21 @@ const ZONE_FILL: Partial<Record<ZoneKind, string>> = {
   storage: '#e9eef1',
   office: '#ececec',
   obstacle: '#d9d9d9',
+  kitchen: '#f5e2d0',
+  laundry: '#d6ebf2',
+  pharmacy: '#d7eedd',
+  lab: '#eadcf2',
+  ward: '#dde6f4',
+  waste: '#e6e0cc',
+  elevator: '#d5d3dc',
+  gate: '#f3d9df',
+  apron: '#dedfd6',
+  terminal: '#d3dbf0',
 }
+
+// three.js does not parse oklch(), so the marker pads carry hex twins of MARKER_COLOR from the 2D map.
+const PAD_COLOR = { elevator: '#8d8a9c', pickup: '#6fbf95', dropoff: '#5fb3c4', parking: '#8a8a86' } as const
+const PAD_KINDS: readonly string[] = Object.keys(PAD_COLOR)
 
 const genParam = (layout: LayoutGeometry, key: string) => layout.generator?.params?.[key]
 
@@ -207,6 +221,8 @@ export function Markers({ layout, frame }: { layout: LayoutGeometry; frame: Scen
   const docks = layout.nodes.filter((n) => n.kind === 'dock_in' || n.kind === 'dock_out')
   const chargers = layout.nodes.filter((n) => n.kind === 'charger')
   const stations = layout.nodes.filter((n) => n.kind === 'pick_station')
+  const pads = layout.nodes.filter((n) => PAD_KINDS.includes(n.kind))
+  const hasRacks = (layout.racks?.length ?? 0) > 0
   return (
     <group>
       {docks.map((n) => (
@@ -215,12 +231,29 @@ export function Markers({ layout, frame }: { layout: LayoutGeometry; frame: Scen
             <planeGeometry args={[3.2, 3.2]} />
             <meshStandardMaterial color={n.kind === 'dock_in' ? '#bfdad5' : '#c4d4e7'} />
           </mesh>
-          <mesh position={[0, 0.4, 0]} castShadow>
-            <boxGeometry args={[1.2, 0.8, 1.0]} />
-            <meshStandardMaterial color={C.pallet} roughness={0.9} />
-          </mesh>
+          {hasRacks && (
+            <mesh position={[0, 0.4, 0]} castShadow>
+              <boxGeometry args={[1.2, 0.8, 1.0]} />
+              <meshStandardMaterial color={C.pallet} roughness={0.9} />
+            </mesh>
+          )}
         </group>
       ))}
+      {pads.map((n) => {
+        const color = PAD_COLOR[n.kind as keyof typeof PAD_COLOR]
+        return (
+          <group key={n.id} position={[frame.x(n.x), 0, frame.z(n.y)]}>
+            <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[n.kind === 'elevator' ? 2.4 : 1.8, n.kind === 'elevator' ? 2.4 : 1.8]} />
+              <meshStandardMaterial color={color} />
+            </mesh>
+            <mesh position={[0, n.kind === 'elevator' ? 0.6 : 0.2, 0]} castShadow>
+              <boxGeometry args={n.kind === 'elevator' ? [1.6, 1.2, 0.2] : [0.6, 0.4, 0.6]} />
+              <meshStandardMaterial color={color} roughness={0.7} />
+            </mesh>
+          </group>
+        )
+      })}
       {chargers.map((n) => (
         <group key={n.id} position={[frame.x(n.x), 0, frame.z(n.y)]}>
           <mesh position={[0, 0.6, 0]} castShadow>

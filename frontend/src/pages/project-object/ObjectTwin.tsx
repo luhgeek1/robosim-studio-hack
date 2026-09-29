@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useGenerateLayout, useLayout } from '@/entities/layout'
 import { parseApiProblem } from '@/shared/api/problem'
 import type { Layout, ObjectType } from '@/shared/api/types'
-import { formatNumber, isNum } from '@/shared/lib/format'
+import { formatNumber, isNum, pluralRu } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog'
 import { ErrorBlock, Spinner } from '@/shared/ui/states'
@@ -46,8 +46,8 @@ export function ObjectTwin({ projectId, objectType }: { projectId: string; objec
           </>
         }
       >
-        Типовая планировка склада соберётся из параметров объекта: площадь, высота потолков, паллетоместа и ворота. Из
-        неё расчёт возьмёт длины маршрутов, а имитация — граф проездов.
+        Типовая планировка соберётся из параметров объекта: площадь, потоки грузов, точки выдачи и ворота. Из неё расчёт
+        возьмёт длины маршрутов, а имитация — граф проездов.
       </Placeholder>
     )
   }
@@ -138,6 +138,13 @@ function LayoutTwin({
   const numbers: [string, string][] = []
   if (isNum(stats.rack_slots_total)) numbers.push([formatNumber(stats.rack_slots_total), 'паллетомест на схеме'])
   if (isNum(route)) numbers.push([`${formatNumber(route)} м`, 'путь от ворот до места'])
+  else if (stats.routes?.[0])
+    numbers.push([`${formatNumber(stats.routes[0].value_m)} м`, stats.routes[0].name.toLowerCase()])
+  if (!isNum(stats.rack_slots_total)) {
+    const dropoffs = layout.nodes.filter((n) => n.kind === 'dropoff').length
+    if (dropoffs > 0)
+      numbers.push([formatNumber(dropoffs), pluralRu(dropoffs, ['точка выдачи', 'точки выдачи', 'точек выдачи'])])
+  }
 
   const [expanded, setExpanded] = useState(false)
   // Only one live scene at a time: two WebGL canvases with thousands of racks stutter. The card drops its scene

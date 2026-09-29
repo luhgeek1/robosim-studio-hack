@@ -253,6 +253,10 @@ function Marker({ node }: { node: LayoutNode & { kind: MarkerKind } }) {
         {...common}
       />
     )
+  } else if (node.kind === 'pickup') {
+    shape = <path d={`M${node.x} ${node.y - h * 1.2}l${h * 1.1} ${h * 2.2}h${-h * 2.2}z`} {...common} />
+  } else if (node.kind === 'parking') {
+    shape = <rect x={node.x - h * 0.8} y={node.y - h * 0.8} width={s * 0.8} height={s * 0.8} rx={0.2} {...common} />
   } else {
     shape = <rect x={node.x - h} y={node.y - h} width={s} height={s} rx={0.3} {...common} />
   }

@@ -146,7 +146,10 @@ export async function derivationDocument(layout: Layout, projectName: string): P
                   spacing: { before: 240 },
                   children: [text('Средние маршруты')],
                 }),
-                para([text('Кратчайшие пути по графу, взвешенные по паллетоместам.', { muted: true, size: 20 })], 80),
+                para(
+                  [text('Кратчайшие пути по графу проездов, усреднённые по парам точек.', { muted: true, size: 20 })],
+                  80,
+                ),
                 table(['Маршрут', 'Длина, м', 'Пар усреднено'], routes, [60, 20, 20], [1, 2]),
               ]
             : []),

@@ -40,16 +40,16 @@ export const ZONE_COLOR: Record<ZoneKind, string> = {
   charging: hue(90, 0.14, 0.72),
   corridor: hue(0, 0, 0.7),
   station: hue(300, 0.16, 0.55),
-  elevator: hue(220, 0.08),
+  elevator: hue(285, 0.04, 0.5),
   kitchen: hue(30),
-  laundry: hue(210),
+  laundry: hue(205, 0.12, 0.72),
   pharmacy: hue(160),
   lab: hue(280),
-  ward: hue(240),
+  ward: hue(235, 0.09, 0.74),
   waste: hue(70, 0.1, 0.55),
-  gate: hue(20),
-  apron: hue(0, 0, 0.6),
-  terminal: hue(230),
+  gate: hue(350, 0.14, 0.64),
+  apron: hue(100, 0.03, 0.48),
+  terminal: hue(258, 0.14, 0.5),
   obstacle: hue(0, 0, 0.45),
   office: hue(260, 0.04),
 }
@@ -72,7 +72,16 @@ export const EDGE_STYLE: Record<EdgeKind, { color: string; width: number; dash?:
   ramp: { color: 'var(--chart-3)', width: 1.2, dash: '4 2' },
 }
 
-export const MARKER_KINDS = ['dock_in', 'dock_out', 'pick_station', 'charger', 'dropoff', 'elevator'] as const
+export const MARKER_KINDS = [
+  'dock_in',
+  'dock_out',
+  'pick_station',
+  'charger',
+  'dropoff',
+  'elevator',
+  'pickup',
+  'parking',
+] as const
 export type MarkerKind = (typeof MARKER_KINDS)[number]
 
 export const MARKER_LABEL: Record<MarkerKind, string> = {
@@ -82,6 +91,8 @@ export const MARKER_LABEL: Record<MarkerKind, string> = {
   charger: 'Зарядная станция',
   dropoff: 'Точка сдачи',
   elevator: 'Лифт',
+  pickup: 'Точка забора',
+  parking: 'Стоянка',
 }
 
 export const MARKER_COLOR: Record<MarkerKind, string> = {
@@ -91,6 +102,8 @@ export const MARKER_COLOR: Record<MarkerKind, string> = {
   charger: 'oklch(0.7 0.16 85)',
   dropoff: ZONE_COLOR.packing,
   elevator: ZONE_COLOR.elevator,
+  pickup: ZONE_COLOR.receiving,
+  parking: ZONE_COLOR.obstacle,
 }
 
 export const isMarkerKind = (kind: NodeKind): kind is MarkerKind => (MARKER_KINDS as readonly string[]).includes(kind)

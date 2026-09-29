@@ -2453,10 +2453,13 @@ export interface components {
     }
     /**
      * @description warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
-     *     warehouse_flow_through — приёмка и отгрузка на противоположных фасадах.
+     *     warehouse_flow_through — приёмка и отгрузка на противоположных фасадах;
+     *     hospital_floor — больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
+     *     и типовой этаж отделений;
+     *     airport_apron — аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
      * @enum {string}
      */
-    LayoutTemplate: 'warehouse_u_flow' | 'warehouse_flow_through'
+    LayoutTemplate: 'warehouse_u_flow' | 'warehouse_flow_through' | 'hospital_floor' | 'airport_apron'
     MatchingResult: {
       /** Format: uuid */
       project_id: string
@@ -3672,11 +3675,19 @@ export interface components {
     }
     LayoutRoute: {
       /** @enum {string} */
-      key: 'dock_in_to_storage' | 'storage_to_dock_out' | 'storage_to_storage' | 'pod_to_station' | 'storage_to_charger'
+      key:
+        | 'dock_in_to_storage'
+        | 'storage_to_dock_out'
+        | 'storage_to_storage'
+        | 'pod_to_station'
+        | 'storage_to_charger'
+        | 'service_to_ward'
+        | 'sorting_to_stand'
+        | 'terminal_to_hub'
       /** @example Ворота приёмки → место хранения */
       name: string
       /**
-       * @description Среднее кратчайших путей по графу, взвешенное по паллетоместам
+       * @description Среднее кратчайших путей по графу, взвешенное по вместимости точек (паллетоместа, точки выдачи); поездка на лифте в длину не входит
        * @example 91.1
        */
       value_m: number

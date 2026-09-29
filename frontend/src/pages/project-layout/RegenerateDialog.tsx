@@ -24,6 +24,12 @@ const OVERRIDES: { key: OverrideKey; label: string; unit: string; min: number; s
   { key: 'cross_aisles', label: 'Поперечных проездов', unit: 'шт', min: 0, step: 1, integer: true },
 ]
 
+const isWarehouse = (template: string) => template.startsWith('warehouse_')
+
+function overridesFor(template: string) {
+  return isWarehouse(template) ? OVERRIDES : OVERRIDES.filter(({ key }) => key === 'chargers')
+}
+
 function currentValue(layout: Layout | undefined, key: OverrideKey): number | undefined {
   if (!layout) return undefined
   const override = layout.generator?.overrides?.[key]
@@ -52,7 +58,8 @@ export function RegenerateDialog({
     Object.fromEntries(Object.entries(layout?.generator?.overrides ?? {}).map(([key, value]) => [key, String(value)])),
   )
 
-  const invalid = OVERRIDES.filter(({ key, min, integer }) => {
+  const overrides = overridesFor(template)
+  const invalid = overrides.filter(({ key, min, integer }) => {
     const raw = values[key]?.trim()
     if (!raw) return false
     const n = Number(raw.replace(',', '.'))
@@ -60,14 +67,10 @@ export function RegenerateDialog({
   })
 
   const submit = () => {
-    const overrides: Record<string, number> = {}
-    for (const { key } of OVERRIDES) {
+    const body: LayoutGenerateRequest = { template: (template || null) as LayoutTemplate | null, overrides: {} }
+    for (const { key } of overrides) {
       const raw = values[key]?.trim()
-      if (raw) overrides[key] = Number(raw.replace(',', '.'))
-    }
-    const body: LayoutGenerateRequest = {
-      template: (template || null) as LayoutTemplate | null,
-      overrides,
+      if (raw) body.overrides![key] = Number(raw.replace(',', '.'))
     }
     generate.mutate(body, {
       onSuccess: () => {
@@ -99,7 +102,7 @@ export function RegenerateDialog({
           <div>
             <div className="mb-2.5 text-[13px] text-ink-2">Уточнить генератор</div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {OVERRIDES.map(({ key, label, unit, min, step, integer }) => {
+              {overrides.map(({ key, label, unit, min, step, integer }) => {
                 const current = currentValue(layout, key)
                 const bad = invalid.some((o) => o.key === key)
                 return (
@@ -172,19 +175,22 @@ function TemplateCard({ template, active, onSelect }: { template: string; active
     >
       <svg viewBox="0 0 160 76" className="w-full" aria-hidden>
         <rect x="6" y="6" width="148" height="64" rx="6" fill="var(--card)" stroke="var(--input)" />
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <rect
-            key={i}
-            x={38 + i * 12}
-            y={through ? 24 : 16}
-            width="5"
-            height="28"
-            rx="1"
-            fill="var(--ink-4)"
-            opacity="0.5"
-          />
-        ))}
-        {through ? (
+        {template === 'hospital_floor' && <HospitalThumb />}
+        {template === 'airport_apron' && <AirportThumb />}
+        {isWarehouse(template) &&
+          [0, 1, 2, 3, 4, 5, 6].map((i) => (
+            <rect
+              key={i}
+              x={38 + i * 12}
+              y={through ? 24 : 16}
+              width="5"
+              height="28"
+              rx="1"
+              fill="var(--ink-4)"
+              opacity="0.5"
+            />
+          ))}
+        {!isWarehouse(template) ? null : through ? (
           <>
             <Gates x={22} y={70} color={ZONE_COLOR.receiving} />
             <Gates x={112} y={6} color={ZONE_COLOR.shipping} />
@@ -232,6 +238,39 @@ function TemplateCard({ template, active, onSelect }: { template: string; active
         <p className="mt-0.5 text-[12.5px] leading-snug text-ink-3">{TEMPLATE_HINT[template]}</p>
       )}
     </button>
+  )
+}
+
+function HospitalThumb() {
+  return (
+    <g>
+      <rect x="14" y="14" width="50" height="48" rx="3" fill={ZONE_COLOR.kitchen} opacity="0.35" />
+      <rect x="72" y="30" width="16" height="16" rx="2" fill={ZONE_COLOR.elevator} opacity="0.8" />
+      {[0, 1, 2, 3].map((i) => (
+        <rect
+          key={i}
+          x={98 + (i % 2) * 28}
+          y={14 + Math.floor(i / 2) * 26}
+          width="24"
+          height="22"
+          rx="2"
+          fill={ZONE_COLOR.ward}
+          opacity="0.45"
+        />
+      ))}
+    </g>
+  )
+}
+
+function AirportThumb() {
+  return (
+    <g>
+      <rect x="14" y="14" width="132" height="12" rx="2" fill={ZONE_COLOR.terminal} opacity="0.5" />
+      <rect x="14" y="30" width="132" height="34" rx="2" fill={ZONE_COLOR.apron} opacity="0.25" />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <rect key={i} x={22 + i * 25} y={40} width="16" height="14" rx="2" fill={ZONE_COLOR.apron} opacity="0.7" />
+      ))}
+    </g>
   )
 }
 
