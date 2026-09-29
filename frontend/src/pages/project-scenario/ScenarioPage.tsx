@@ -61,7 +61,7 @@ export function ScenarioPage() {
   }
 
   const nextButton = (
-    <Button asChild variant="outline">
+    <Button asChild variant="ghost">
       <Link to={`/projects/${projectId}/comparison`}>
         Далее: сравнение <ArrowRight />
       </Link>
@@ -198,7 +198,7 @@ export function ScenarioPage() {
             <ArrowLeft /> Все сценарии
           </Link>
         </Button>
-        <Button asChild size="lg">
+        <Button asChild variant="ghost" size="lg">
           <Link to={`/projects/${projectId}/comparison`}>
             Далее: сравнение <ArrowRight />
           </Link>
