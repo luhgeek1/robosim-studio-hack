@@ -17,7 +17,10 @@ export function MapCamera({
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
   const { camera, size } = useThree()
   const viewport = useRef(size)
-  viewport.current = size
+
+  useEffect(() => {
+    viewport.current = size
+  }, [size])
 
   useEffect(() => {
     const orbit = controls.current

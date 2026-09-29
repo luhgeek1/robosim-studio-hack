@@ -390,7 +390,7 @@ export function Cube({ v, accent }: ModelProps) {
       for (let j = 0; j < nz; j++)
         for (let l = 0; l < layers; l++)
           out.push({
-            p: [colX(i), l * binH + binH / 2 + 0.02, colZ(j)],
+            p: [(i - (nx - 1) / 2) * cx, l * binH + binH / 2 + 0.02, (j - (nz - 1) / 2) * cz],
             s: [cx * 0.88, binH * 0.92, cz * 0.86],
             c: ['#3f6fc9', '#2f5aa8', '#4a7bd6', '#f2b441'][Math.floor(hash(i, j, l) * 3.3)],
           })
@@ -508,11 +508,19 @@ export function Inventory({ v, accent }: ModelProps) {
       for (let k = 0; k < rows; k++) {
         const row = c % 2 ? rows - 1 - k : k
         const move = k === 0 && c > 0 ? Math.max(0.9, (pitchX * 1.5) / speed) : 0.7
-        stops.push({ col: c, row, x: colX(c), y: rowY(row), start: t, arrive: t + move, done: t + move + 1.3 })
+        stops.push({
+          col: c,
+          row,
+          x: (c - (cols - 1) / 2) * pitchX,
+          y: 0.62 + row * pitchY,
+          start: t,
+          arrive: t + move,
+          done: t + move + 1.3,
+        })
         t += move + 1.3 + 0.25
       }
     return { stops, T: t + 2.2 }
-  }, [rows, cols, speed])
+  }, [rows, cols, pitchX, pitchY, speed])
 
   const robot = useRef<G>(null)
   const head = useRef<G>(null)

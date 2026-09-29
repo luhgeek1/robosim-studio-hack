@@ -390,7 +390,7 @@ export function Cartons({
         const z = -d / 2 + cd * (j + 0.5)
         const y = lh * (l + 0.5)
         items.push(
-          <group key={k} position={[x, y, z]}>
+          <group key={`${l}-${i}-${j}`} position={[x, y, z]}>
             <mesh material={paint(CARTONS[k % CARTONS.length], 0.82, 0, 0)} castShadow>
               <boxGeometry args={[cw * 0.97, lh * 0.97, cd * 0.97]} />
             </mesh>

@@ -14,6 +14,10 @@ import { useProjectTabs, type ProjectTab } from './tabs'
 
 const OBJECT_ICON = { warehouse: Warehouse, airport: Plane, hospital: HeartPulse } as const
 const iconOf = (type: string | undefined) => OBJECT_ICON[type as keyof typeof OBJECT_ICON] ?? Warehouse
+const objectIcon = (type: string | undefined, size: number) => {
+  const Icon = iconOf(type)
+  return <Icon size={size} />
+}
 
 const SPRING: Transition = { type: 'spring', stiffness: 520, damping: 42, mass: 0.8 }
 
@@ -171,7 +175,6 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
     if (gone) close(tab.id)
   }, [gone, close, tab.id])
   const score = project.data?.data_quality.score
-  const Icon = iconOf(project.data?.object_type)
   const onClose = () => {
     const next = close(tab.id)
     if (active) navigate(next ? next.path : '/projects')
@@ -214,7 +217,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
             active ? 'bg-black/5 text-ink-2' : 'text-ink-3',
           )}
         >
-          <Icon size={14} />
+          {objectIcon(project.data?.object_type, 14)}
         </span>
         <span className={cn('truncate text-[13px] font-medium', active && 'text-ink')}>
           {project.data?.name ?? '…'}
@@ -298,7 +301,6 @@ function AddProjectMenu({ openIds, order }: { openIds: Set<string>; order: strin
           {projects.isPending && <div className="meta px-2.5 py-3">Загружаем проекты…</div>}
           {projects.data && items.length === 0 && <div className="meta px-2.5 py-3">Проектов пока нет</div>}
           {items.map((project, i) => {
-            const Icon = iconOf(project.object_type)
             const isOpen = openIds.has(project.id)
             return (
               <motion.button
@@ -311,7 +313,7 @@ function AddProjectMenu({ openIds, order }: { openIds: Set<string>; order: strin
                 className="flex w-full items-center gap-3 rounded-[10px] px-2.5 py-2 text-left transition-colors hover:bg-black/4"
               >
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-black/5 text-ink-2">
-                  <Icon size={15} />
+                  {objectIcon(project.object_type, 15)}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13.5px] font-medium">{project.name}</span>

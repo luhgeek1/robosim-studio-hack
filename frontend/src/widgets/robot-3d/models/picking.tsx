@@ -2,7 +2,6 @@ import { RoundedBox } from '@react-three/drei'
 import { useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { useTick } from '../kit'
-import type { ModelProps } from '../types'
 
 // «Световой отбор» from the robot-lab tab, carried over as approved: same blocks, colours and cycle.
 
@@ -103,7 +102,7 @@ function PickingCell({ index, clock, count }: { index: number; clock: RefObject<
 
 export const PICKING_ROWS = 3
 
-export function LightPicking(_: ModelProps) {
+export function LightPicking() {
   const clock = useRef(0)
   const rows = PICKING_ROWS
   const height = rows * 0.56 + 0.43
