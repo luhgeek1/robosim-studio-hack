@@ -124,9 +124,9 @@ function StepNav({
         <ArrowLeft /> {prev}
       </Button>
       {next && (
-        // Сверху — такая же тихая кнопка, как «назад»; главная тёмная остаётся в конце шага.
+        // Такая же тихая кнопка, как «назад»: главные действия шага — в его заголовке и контенте.
         <Button
-          variant={compact ? 'ghost' : 'default'}
+          variant="ghost"
           size={compact ? 'default' : 'lg'}
           className={cn(compact && '-mr-2.5')}
           disabled={nextDisabled}
