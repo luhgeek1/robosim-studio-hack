@@ -38,12 +38,13 @@ import { Callout, Screen } from '@/shared/ui/page'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
-import { Toggle } from '@/shared/ui/toggle'
-import { KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
+import { KpiNumber, Pill, type Tone } from '@/shared/ui/v0'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
+import { Conditions } from './Conditions'
+import { COUNT_HINT, type RunConfig } from './runConfig'
 import { QueueSparkline } from './QueueSparkline'
-import { PaneSection, PaneTitle, StatusBar, WorkbenchFrame, WorkbenchGrid, type Panels } from '@/widgets/workbench'
+import { PaneSection, SideTabs, StatusBar, WorkbenchFrame, WorkbenchGrid, type Panels } from '@/widgets/workbench'
 
 const SEED = SWEEP_SEED
 // Стресс-тесты шага «Имитация» из docs/PRODUCT.md: +20 % объёма и отказ одного робота на 2 часа в начале смены.
@@ -51,9 +52,6 @@ const STRESS = {
   volumeMultiplier: 1.2,
   failure: { robot_index: 0, at_hour: 1, duration_hours: 2 },
 } as const
-
-type Mode = 'peak' | 'normal'
-type RunConfig = { count: number; mode: Mode; volume: boolean; failure: boolean }
 
 function slaTone(sla: number, target: number): Tone {
   return sla >= target ? 'ok' : sla >= target - 7 ? 'warn' : 'crit'
@@ -255,7 +253,7 @@ function SimulationView({
   const capture: TwinCapture = useRef(null)
   const [view, setView] = useState<TwinView>('3d')
   const upload = useUploadVisual(projectId)
-  const [panels, setPanels] = useState<Panels>({ left: true, right: true, bottom: true })
+  const [panels, setPanels] = useState<Panels>({ left: false, right: true, bottom: true })
 
   useEffect(() => {
     if (!sizing || runId || runs.isPending || start.isPending || error) return
@@ -339,6 +337,18 @@ function SimulationView({
       ? undefined
       : 'Имитация прогонит день на планировке объекта и проверит, успевает ли парк выполнять задачи в срок.'
 
+  const sweepPoint =
+    run.data?.purpose === 'sweep' ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id) : undefined
+  const sweepProps = {
+    projectId,
+    scenarioId: scenario.id,
+    variantIds,
+    sizing: sizing!,
+    last: lastSweep,
+    shownCount: config.count,
+    onOpen: openRun,
+  }
+
   return (
     <WorkbenchFrame
       projectId={projectId}
@@ -356,27 +366,7 @@ function SimulationView({
           panels={panels}
           leftWidth={LEFT_W}
           rightWidth={RIGHT_W}
-          left={
-            <>
-              <PaneTitle>Прогон</PaneTitle>
-              {summary && run.data ? (
-                <RunLive
-                  run={run.data}
-                  summary={summary}
-                  timeline={timeline.data}
-                  sweepPoint={
-                    run.data.purpose === 'sweep'
-                      ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id)
-                      : undefined
-                  }
-                />
-              ) : (
-                <div className="flex flex-1 items-center justify-center p-6 text-center text-[13px] text-ink-3">
-                  {failed ?? 'Показатели появятся, когда прогон завершится.'}
-                </div>
-              )}
-            </>
-          }
+          left={null}
           center={
             <>
               {(error || replay.isError) && (
@@ -459,99 +449,82 @@ function SimulationView({
             </>
           }
           right={
-            <>
-              <PaneTitle>Решение для расчёта</PaneTitle>
-              <FleetSweep
-                projectId={projectId}
-                scenarioId={scenario.id}
-                variantIds={variantIds}
-                sizing={sizing}
-                last={lastSweep}
-                shownCount={config.count}
-                onOpen={openRun}
-              />
-              {summary && <RunCheck summary={summary} target={target} />}
-            </>
+            <SideTabs
+              tabs={[
+                {
+                  key: 'summary',
+                  label: 'Итог',
+                  content: (
+                    <>
+                      {summary && run.data && (
+                        <RunLive
+                          run={run.data}
+                          summary={summary}
+                          timeline={timeline.data}
+                          sweepPoint={sweepPoint}
+                          parts={['sla']}
+                        />
+                      )}
+                      <FleetSweep {...sweepProps} part="decision" />
+                    </>
+                  ),
+                },
+                {
+                  key: 'run',
+                  label: 'Прогон',
+                  content:
+                    summary && run.data ? (
+                      <RunLive
+                        run={run.data}
+                        summary={summary}
+                        timeline={timeline.data}
+                        sweepPoint={sweepPoint}
+                        parts={['moment', 'queue', 'states']}
+                      />
+                    ) : (
+                      <NoRun text={failed} />
+                    ),
+                },
+                { key: 'fleet', label: 'Перебор', content: <FleetSweep {...sweepProps} part="table" /> },
+                {
+                  key: 'waits',
+                  label: 'Узкие места',
+                  content:
+                    summary && run.data ? (
+                      <>
+                        <RunCheck summary={summary} target={target} />
+                        <RunLive run={run.data} summary={summary} timeline={timeline.data} parts={['waits']} />
+                      </>
+                    ) : (
+                      <NoRun text={failed} />
+                    ),
+                },
+              ]}
+            />
           }
           bottom={
-            <div className="flex flex-col">
-              <div className="flex h-9 items-center gap-4 border-b border-line pr-2 pl-3.5">
-                <span className="hud relative flex h-full shrink-0 items-center text-ink">
-                  Условия прогона
-                  <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ink" />
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[12px] text-info" title={whatIf ?? undefined}>
-                  {whatIf}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!tracks || upload.isPending}
-                  onClick={() => void snapshot()}
-                  title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
-                >
-                  {upload.isPending ? <Spinner /> : <Camera />} <span className="max-sm:sr-only">Снимок в отчёт</span>
-                </Button>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-3.5 py-2">
-                <Control label="Роботов">
-                  <Segmented
-                    size="sm"
-                    value={config.count}
-                    onChange={(count) => change({ count })}
-                    options={counts.map((n) => ({
-                      value: n,
-                      label: n === working ? `${n} ●` : String(n),
-                      hint: n === working ? COUNT_HINT[sizing.count.source] : undefined,
-                    }))}
-                  />
-                </Control>
-                <Control label="Режим">
-                  <Segmented
-                    size="sm"
-                    value={config.mode}
-                    onChange={(mode) => change({ mode })}
-                    options={[
-                      {
-                        value: 'peak',
-                        label: 'Пик',
-                        hint: `Пиковые часы: ${formatNumber(sizing.demand_peak_per_hour)} ед/ч без передышки, как в переборе флота`,
-                      },
-                      {
-                        value: 'normal',
-                        label: 'Сутки',
-                        hint: `Обычный день, сутки: ${formatNumber(sizing.demand_avg_per_hour)} ед/ч в среднем, пик в середине смены`,
-                      },
-                    ]}
-                  />
-                </Control>
-                <Control label="Стресс">
-                  <div className="flex gap-1.5">
-                    <Toggle
-                      size="sm"
-                      variant="outline"
-                      pressed={config.volume}
-                      onPressedChange={(volume) => change({ volume })}
-                      title="Стресс-тест: объём задач на 20 % больше"
-                    >
-                      +20 %
-                    </Toggle>
-                    <Toggle
-                      size="sm"
-                      variant="outline"
-                      pressed={config.failure}
-                      onPressedChange={(failure) => change({ failure })}
-                      title="Стресс-тест: один робот выходит из строя на 2 часа"
-                    >
-                      Отказ 2 ч
-                    </Toggle>
-                  </div>
-                </Control>
-              </div>
-              {/* На узком экране плеер сразу под сценой: условия прогона меняют реже, чем двигают время. */}
-              <div className="px-3.5 py-2 max-lg:order-first max-lg:border-b max-lg:border-line">
+            <div className="flex items-center gap-3 px-3.5 py-2">
+              <div className="min-w-0 flex-1">
                 <PlayerBar disabled={!tracks} />
               </div>
+              <span className="h-6 w-px shrink-0 bg-line" />
+              <Conditions
+                config={config}
+                counts={counts}
+                working={working}
+                sizing={sizing}
+                whatIf={whatIf}
+                onChange={change}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!tracks || upload.isPending}
+                onClick={() => void snapshot()}
+                title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
+              >
+                {upload.isPending ? <Spinner /> : <Camera />} Снимок
+              </Button>
             </div>
           }
           status={
@@ -580,7 +553,8 @@ function SimulationView({
               ]}
               panels={panels}
               onToggle={(key) => setPanels((p) => ({ ...p, [key]: !p[key] }))}
-              labels={{ left: 'Панель прогона', bottom: 'Условия прогона', right: 'Решение для расчёта' }}
+              labels={{ left: 'Панель прогона', bottom: 'Плеер и условия', right: 'Итог и детали' }}
+              toggles={['bottom', 'right']}
             />
           }
         />
@@ -589,8 +563,8 @@ function SimulationView({
   )
 }
 
-const LEFT_W = 272
-const RIGHT_W = 316
+const LEFT_W = 0
+const RIGHT_W = 336
 
 function pointAt(points: SimulationTimeline['points'], t: number) {
   let found = points[0]
@@ -601,17 +575,22 @@ function pointAt(points: SimulationTimeline['points'], t: number) {
   return found
 }
 
+type RunPart = 'sla' | 'moment' | 'queue' | 'states' | 'waits'
+
 function RunLive({
   run,
   summary,
   timeline,
   sweepPoint,
+  parts,
 }: {
   run: SimulationRun
   summary: SimulationSummary
   timeline?: SimulationTimeline
   sweepPoint?: FleetSweepResult['points'][number]
+  parts: RunPart[]
 }) {
+  const has = (part: RunPart) => parts.includes(part)
   const bucket = usePlayback((s) => Math.floor(s.t / 30))
   const points = timeline?.points ?? []
   const now = points.length ? pointAt(points, bucket * 30) : undefined
@@ -623,67 +602,76 @@ function RunLive({
 
   return (
     <>
-      <PaneSection
-        title="Задачи в срок · SLA"
-        aside={
-          run.purpose === 'sweep' ? (
-            <Hint>
-              Один из {sweepPoint?.runs ?? 'нескольких'} прогонов перебора флота
-              {sweepPoint
-                ? `: в среднем ${formatNumber(sweepPoint.sla_achieved_pct, 1)} %, худший ${formatNumber(sweepPoint.sla_min_pct ?? sweepPoint.sla_achieved_pct, 1)} %`
-                : ''}
-              . Число роботов принято, только если SLA держат все прогоны.
-            </Hint>
-          ) : undefined
-        }
-      >
-        <div className="flex items-baseline justify-between gap-2">
-          <div className="flex items-baseline gap-1">
-            <KpiNumber
-              value={summary.sla.achieved_pct}
-              digits={summary.sla.achieved_pct >= 99 ? 1 : 0}
-              className={`display text-[38px] ${tone === 'ok' ? 'text-ink' : tone === 'warn' ? 'text-warn' : 'text-crit'}`}
-            />
-            <span className="display text-[18px] text-ink-3">%</span>
+      {has('sla') && (
+        <PaneSection
+          title="Задачи в срок · SLA"
+          aside={
+            run.purpose === 'sweep' ? (
+              <Hint>
+                Один из {sweepPoint?.runs ?? 'нескольких'} прогонов перебора флота
+                {sweepPoint
+                  ? `: в среднем ${formatNumber(sweepPoint.sla_achieved_pct, 1)} %, худший ${formatNumber(sweepPoint.sla_min_pct ?? sweepPoint.sla_achieved_pct, 1)} %`
+                  : ''}
+                . Число роботов принято, только если SLA держат все прогоны.
+              </Hint>
+            ) : undefined
+          }
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="flex items-baseline gap-1">
+              <KpiNumber
+                value={summary.sla.achieved_pct}
+                digits={summary.sla.achieved_pct >= 99 ? 1 : 0}
+                className={`display text-[38px] ${tone === 'ok' ? 'text-ink' : tone === 'warn' ? 'text-warn' : 'text-crit'}`}
+              />
+              <span className="display text-[18px] text-ink-3">%</span>
+            </div>
+            <span className="meta">цель {formatNumber(slaTarget)} %</span>
           </div>
-          <span className="meta">цель {formatNumber(slaTarget)} %</span>
-        </div>
-        <div className="relative mt-1.5 h-1.5 w-full rounded-full bg-black/6">
-          <motion.div
-            className={`h-full rounded-full ${tone === 'ok' ? 'bg-ink' : tone === 'warn' ? 'bg-warn' : 'bg-crit'}`}
-            initial={false}
-            animate={{ width: `${Math.max(0, Math.min(100, summary.sla.achieved_pct))}%` }}
-            transition={{ type: 'spring', stiffness: 120, damping: 24 }}
-          />
-          <span
-            className="absolute -top-1 h-3.5 w-px bg-signal"
-            style={{ left: `${slaTarget}%` }}
-            title={`Цель ${slaTarget} %`}
-          />
-        </div>
-        {summary.sla.target_value != null && (
-          <p className="meta mt-2">
-            в срок — до {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} · в среднем{' '}
-            {formatNumber(summary.sla.avg_lead_time_min, 1)} мин
-          </p>
-        )}
-      </PaneSection>
+          <div className="relative mt-1.5 h-1.5 w-full rounded-full bg-black/6">
+            <motion.div
+              className={`h-full rounded-full ${tone === 'ok' ? 'bg-ink' : tone === 'warn' ? 'bg-warn' : 'bg-crit'}`}
+              initial={false}
+              animate={{ width: `${Math.max(0, Math.min(100, summary.sla.achieved_pct))}%` }}
+              transition={{ type: 'spring', stiffness: 120, damping: 24 }}
+            />
+            <span
+              className="absolute -top-1 h-3.5 w-px bg-signal"
+              style={{ left: `${slaTarget}%` }}
+              title={`Цель ${slaTarget} %`}
+            />
+          </div>
+          {summary.sla.target_value != null && (
+            <p className="meta mt-2">
+              в срок — до {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} · в среднем{' '}
+              {formatNumber(summary.sla.avg_lead_time_min, 1)} мин
+            </p>
+          )}
+        </PaneSection>
+      )}
 
-      <PaneSection title="В момент плеера">
-        <div className="-mx-3.5 grid grid-cols-3 divide-x divide-line border-y border-line bg-card">
-          <Kpi label="Готово" value={now?.done ?? 0} unit={`/ ${formatNumber(now?.demand_cum ?? 0)}`} />
-          <Kpi label="Очередь" value={queue} unit="зад." tone={queue > 15 ? 'crit' : queue > 6 ? 'warn' : 'neutral'} />
-          <Kpi label="Загрузка" value={(now?.utilization ?? 0) * 100} unit="%" />
-        </div>
-      </PaneSection>
+      {has('moment') && (
+        <PaneSection title="В момент плеера">
+          <div className="-mx-3.5 grid grid-cols-3 divide-x divide-line border-y border-line bg-card">
+            <Kpi label="Готово" value={now?.done ?? 0} unit={`/ ${formatNumber(now?.demand_cum ?? 0)}`} />
+            <Kpi
+              label="Очередь"
+              value={queue}
+              unit="зад."
+              tone={queue > 15 ? 'crit' : queue > 6 ? 'warn' : 'neutral'}
+            />
+            <Kpi label="Загрузка" value={(now?.utilization ?? 0) * 100} unit="%" />
+          </div>
+        </PaneSection>
+      )}
 
-      {points.length > 1 && (
+      {has('queue') && points.length > 1 && (
         <PaneSection title="Очередь за прогон">
           <QueueSparkline points={points} cursorMin={(bucket * 30) / 60} height={48} />
         </PaneSection>
       )}
 
-      {byState.length > 0 && (
+      {has('states') && byState.length > 0 && (
         <PaneSection title="Чем заняты роботы" aside={<span className="meta">доля времени</span>}>
           <div className="flex h-2 w-full overflow-hidden rounded-full bg-black/6">
             {byState.map(([k, v]) => (
@@ -708,7 +696,7 @@ function RunLive({
         </PaneSection>
       )}
 
-      {topEdges.length > 0 && (
+      {has('waits') && topEdges.length > 0 && (
         <PaneSection title="Где ждут дольше всего">
           <ul className="space-y-1 text-[12.5px]">
             {topEdges.map((e) => (
@@ -791,12 +779,6 @@ function Hint({ children }: { children: ReactNode }) {
   )
 }
 
-const COUNT_HINT: Record<SizingResult['count']['source'], string> = {
-  simulated: 'в расчёте, проверено имитацией',
-  analytic: 'в расчёте, по формуле цикла',
-  manual: 'в расчёте, задано вручную',
-}
-
 // Рабочий парк сценария без резерва: по перебору флота, по формуле цикла или заданный вручную.
 function workingCount(sizing: SizingResult): number {
   const { count } = sizing
@@ -818,12 +800,11 @@ function whatIfText(sizing: SizingResult, config: RunConfig, working: number): s
   return `Проверка «что если» (${changes.join(', ')}) — сценарий не меняется: в расчёте ${working} ${pluralRu(working, ['робот', 'робота', 'роботов'])} в работе + резерв ${sizing.count.reserve}, ${COUNT_HINT[sizing.count.source]}`
 }
 
-function Control({ label, children }: { label: string; children: ReactNode }) {
+function NoRun({ text }: { text: string | null }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="hud">{label}</span>
-      {children}
-    </div>
+    <p className="px-3.5 py-8 text-center text-[13px] text-ink-3">
+      {text ?? 'Показатели появятся, когда прогон завершится.'}
+    </p>
   )
 }
 
@@ -847,6 +828,7 @@ function FleetSweep({
   last,
   shownCount,
   onOpen,
+  part,
 }: {
   projectId: string
   scenarioId: string
@@ -855,6 +837,7 @@ function FleetSweep({
   last: FleetSweepResult | undefined
   shownCount: number
   onOpen: (count: number, simulationId: string | null) => void
+  part: 'decision' | 'table'
 }) {
   const sweep = useFleetSweep(projectId, scenarioId, variantIds)
   const source = useCountSource(projectId, scenarioId)
@@ -879,68 +862,75 @@ function FleetSweep({
 
   return (
     <>
-      <PaneSection
-        title="Сколько роботов нужно"
-        aside={
-          result ? (
-            <Hint>
-              {formula && simulated && best && (
-                <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
-              )}
-              <p className="text-ink-3">{result.explanation}</p>
-              <p className="text-ink-3">
-                Цель — {formatNumber(result.target_pct)} % задач в срок в каждом из прогонов. Окупаемость — сценария с
-                этим N и резервом. {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
-              </p>
-            </Hint>
-          ) : undefined
-        }
-      >
-        {!result ? (
-          <p className="text-[13px] leading-relaxed text-ink-2">
-            Формула цикла дала {count.analytic} {pluralRu(count.analytic, ['робота', 'роботов', 'роботов'])} с запасами.
-            Перебор прогонит одни и те же пиковые часы на планировке для разного N и найдёт минимальное, при котором SLA
-            держат все прогоны. Найденное число запишется в сценарий, экономика пересчитается.
-          </p>
-        ) : (
-          formula &&
-          simulated && (
-            <div className="grid grid-cols-2 gap-2">
-              <FleetTile title="По формуле цикла" fleet={formula} active={usingFormula} />
-              <FleetTile title="По имитации" fleet={simulated} active={usingSimulation} />
-            </div>
-          )
-        )}
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <Button size="sm" variant={result ? 'outline' : 'default'} disabled={busy} onClick={run}>
-            {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
-            {sweep.isPending
-              ? variantIds.length
-                ? 'Перебираем для всех вариантов…'
-                : 'Перебираем флот…'
-              : result
-                ? 'Перепроверить'
-                : 'Подобрать N имитацией'}
-          </Button>
-          {formula && simulated && (
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={busy}
-              title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
-              onClick={() =>
-                source.mutate({ processKey: sizing.process_key, manual: usingSimulation ? formula.total : null })
-              }
-            >
-              {source.isPending && <Spinner />}
-              {usingSimulation ? `По формуле (${formula.total})` : `По имитации (${simulated.total})`}
-            </Button>
+      {part === 'decision' && (
+        <PaneSection
+          title="Сколько роботов нужно"
+          aside={
+            result ? (
+              <Hint>
+                {formula && simulated && best && (
+                  <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
+                )}
+                <p className="text-ink-3">{result.explanation}</p>
+                <p className="text-ink-3">
+                  Цель — {formatNumber(result.target_pct)} % задач в срок в каждом из прогонов. Окупаемость — сценария с
+                  этим N и резервом. {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
+                </p>
+              </Hint>
+            ) : undefined
+          }
+        >
+          {!result ? (
+            <p className="text-[13px] leading-relaxed text-ink-2">
+              Формула цикла дала {count.analytic} {pluralRu(count.analytic, ['робота', 'роботов', 'роботов'])} с
+              запасами. Перебор прогонит одни и те же пиковые часы на планировке для разного N и найдёт минимальное, при
+              котором SLA держат все прогоны. Найденное число запишется в сценарий, экономика пересчитается.
+            </p>
+          ) : (
+            formula &&
+            simulated && (
+              <div className="grid grid-cols-2 gap-2">
+                <FleetTile title="По формуле цикла" fleet={formula} active={usingFormula} />
+                <FleetTile title="По имитации" fleet={simulated} active={usingSimulation} />
+              </div>
+            )
           )}
-        </div>
-        {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
-      </PaneSection>
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <Button size="sm" variant={result ? 'outline' : 'default'} disabled={busy} onClick={run}>
+              {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
+              {sweep.isPending
+                ? variantIds.length
+                  ? 'Перебираем для всех вариантов…'
+                  : 'Перебираем флот…'
+                : result
+                  ? 'Перепроверить'
+                  : 'Подобрать N имитацией'}
+            </Button>
+            {formula && simulated && (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
+                onClick={() =>
+                  source.mutate({ processKey: sizing.process_key, manual: usingSimulation ? formula.total : null })
+                }
+              >
+                {source.isPending && <Spinner />}
+                {usingSimulation ? `По формуле (${formula.total})` : `По имитации (${simulated.total})`}
+              </Button>
+            )}
+          </div>
+          {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
+        </PaneSection>
+      )}
 
-      {result && (
+      {part === 'table' && !result && (
+        <p className="px-3.5 py-6 text-center text-[13px] text-ink-3">
+          Перебора ещё не было. Запустите его на вкладке «Итог» — «Подобрать N имитацией».
+        </p>
+      )}
+      {part === 'table' && result && (
         <PaneSection title="Перебор флота" aside={<span className="meta">клик — открыть прогон</span>}>
           <table className="w-full text-[12.5px]">
             <thead className="text-ink-3">
@@ -1072,7 +1062,7 @@ function RobotCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.18 }}
-      className="absolute top-28 right-3 z-10 w-65 max-w-[calc(100%-1.5rem)] rounded-[12px] sm:top-16 sm:right-4 border border-line bg-white/95 p-4 shadow-card backdrop-blur"
+      className="absolute top-16 right-4 z-10 w-65 rounded-[12px] border border-line bg-white/95 p-4 shadow-card backdrop-blur"
     >
       <div className="flex items-start justify-between">
         <div>
