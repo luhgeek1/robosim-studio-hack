@@ -2,6 +2,7 @@ import heapq
 import math
 from collections import defaultdict
 from collections.abc import Callable, Iterable
+from dataclasses import replace
 
 from app.domain.layout.models import EdgeKind, NodeKind, RouteKey, ZoneKind
 from app.engine.layout.models import Edge, LayoutError, LayoutStats, Node, Plan, RouteStat
@@ -17,6 +18,18 @@ _ROUTE_NAMES = {
     RouteKey.STORAGE_TO_STORAGE: "Между местами хранения",
     RouteKey.POD_TO_STATION: "Стеллаж G2P → ближайшая станция отбора",
     RouteKey.STORAGE_TO_CHARGER: "Место хранения → ближайшая зарядка",
+    RouteKey.SERVICE_TO_WARD: "Служба → точка выдачи в отделении (без поездки на лифте)",
+    RouteKey.SORTING_TO_STAND: "Сортировка багажа → стоянка ВС",
+    RouteKey.TERMINAL_TO_HUB: "Выход на посадку → накопитель тележек и отходов",
+}
+# Service routes: from the pickup points of the source zones to the drop-off points of the target zones.
+_SERVICE_ROUTES = {
+    RouteKey.SERVICE_TO_WARD: (
+        frozenset({ZoneKind.KITCHEN, ZoneKind.LAUNDRY, ZoneKind.PHARMACY, ZoneKind.LAB, ZoneKind.WASTE}),
+        frozenset({ZoneKind.WARD}),
+    ),
+    RouteKey.SORTING_TO_STAND: (frozenset({ZoneKind.BUFFER}), frozenset({ZoneKind.APRON})),
+    RouteKey.TERMINAL_TO_HUB: (frozenset({ZoneKind.GATE}), frozenset({ZoneKind.WASTE})),
 }
 
 
@@ -137,11 +150,32 @@ def routes(plan: Plan) -> dict[RouteKey, RouteStat]:
         ),
         RouteKey.STORAGE_TO_CHARGER: _nearest(pallets, _of_kind(plan, NodeKind.CHARGER), faces),
     }
+    found.update(_service_routes(plan))
     return {
         key: RouteStat(key, _ROUTE_NAMES[key], round(value[0], 1), value[1])
         for key, value in found.items()
         if value is not None
     }
+
+
+def in_zones(plan: Plan, kinds: frozenset[ZoneKind], node_kind: NodeKind) -> list[Node]:
+    zones = {zone.id for zone in plan.zones if zone.kind in kinds}
+    return [node for node in plan.nodes if node.kind == node_kind and node.zone_id in zones]
+
+
+def _service_routes(plan: Plan) -> dict[RouteKey, tuple[float, int] | None]:
+    """A lift ride is timed by the lift formula, not by metres: the hop between floors counts as zero."""
+    flat = replace(
+        plan,
+        edges=tuple(replace(e, length_m=0.0) if e.kind == EdgeKind.ELEVATOR_LINK else e for e in plan.edges),
+    )
+    graph = Graph(flat)
+    found: dict[RouteKey, tuple[float, int] | None] = {}
+    for key, (sources, targets) in _SERVICE_ROUTES.items():
+        origins = in_zones(plan, sources, NodeKind.PICKUP)
+        ends = in_zones(plan, targets, NodeKind.DROPOFF)
+        found[key] = _between(graph, origins, ends, to_origin=False) if origins and ends else None
+    return found
 
 
 def stats(plan: Plan) -> LayoutStats:

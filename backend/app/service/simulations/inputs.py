@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from typing import Any
 
 from app.domain.reference import ProcessDef, SizingModel
@@ -33,6 +33,8 @@ _MODELS = {
     SizingModel.TRANSPORT_CYCLE: ProcessModel.TRANSPORT,
     SizingModel.GOODS_TO_PERSON: ProcessModel.GOODS_TO_PERSON,
     SizingModel.TOW_TRAIN: ProcessModel.TOW_TRAIN,
+    # A lift trip is a transport trip whose route passes the lift hall of the plan.
+    SizingModel.ELEVATOR_CYCLE: ProcessModel.TRANSPORT,
 }
 # The reference data describes the flows of a process once; a tow train moves the same pallets as an AMR.
 _FLOWS = {ProcessModel.TOW_TRAIN: ProcessModel.TRANSPORT}
@@ -124,11 +126,29 @@ class InputBuilder:
         own = sizing.item.specs.optional("station_throughput_lines_h")
         return own.value if own is not None else self._value(spec.get("station_lines_per_hour"))
 
+    def _service(self, key: str, spec: dict[str, Any], model: ProcessModel) -> dict[str, Any]:
+        """Hospital and airport flows: point to point between zones; a transport trip carries the process's
+        load per trip, so the demand turns into trips; a tow train gathers single units."""
+        if not spec.get("sources"):
+            return {}
+        load = (
+            _step(self.result, f"{key}.units_per_trip") or _step(self.result, f"{key}.load_per_trip") or 1.0
+        )
+        per_day = _step(self.result, f"{key}.demand_per_day") or 0.0
+        return {
+            "sources": tuple(spec["sources"].split(",")),
+            "destinations": tuple(spec["destinations"].split(",")),
+            "ride_s": self._value(spec.get("ride_s")),
+            "units_per_trip": load,
+            "internal_per_day": per_day / load if model == ProcessModel.TRANSPORT else per_day,
+        }
+
     def _process(self, sizing: ItemSizing, definition: ProcessDef, model: ProcessModel) -> SimProcess:
         spec = definition.simulation or {}
         key = definition.key
         outcome = sizing.outcome
-        return SimProcess(
+        service = self._service(key, spec, model)
+        process = SimProcess(
             key=key,
             name=definition.name,
             model=model,
@@ -150,6 +170,7 @@ class InputBuilder:
             analytic_per_robot_h=outcome.effective_per_hour if outcome else None,
             units_per_trip=_step(self.result, f"{key}.units_per_trip") or 1.0,
         )
+        return replace(process, **service) if service else process
 
     def build(self) -> Prepared:
         processes: list[SimProcess] = []
@@ -225,6 +246,8 @@ def load_input(data: dict[str, Any]) -> SimInput:
                         else None,
                     }
                 ),
+                "sources": tuple(p.get("sources", ())),
+                "destinations": tuple(p.get("destinations", ())),
             }
         )
         for p in data["processes"]

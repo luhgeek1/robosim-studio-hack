@@ -81,6 +81,10 @@ class SimProcess:
     analytic_robots: int = 0
     analytic_per_robot_h: float | None = None
     units_per_trip: float = 1.0
+    # Service flows (hospital, airport): trips from points of the source zones to points of the target zones.
+    sources: tuple[str, ...] = ()
+    destinations: tuple[str, ...] = ()
+    ride_s: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)

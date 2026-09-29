@@ -122,6 +122,8 @@ class Sweep:
             if process.model == ProcessModel.GOODS_TO_PERSON
             else process.inbound_per_day + process.outbound_per_day + process.internal_per_day
         )
+        if process.sources and process.model == ProcessModel.TRANSPORT:
+            per_day *= process.units_per_trip
         peak = per_day / process.hours_per_day * process.peak_factor * config.volume_multiplier
         # The comparison applies the utilization target like the cycle model; the search wants raw capacity.
         per_robot = comparison.sim_throughput_per_hour / analytic / self.inp.settings.utilization_target

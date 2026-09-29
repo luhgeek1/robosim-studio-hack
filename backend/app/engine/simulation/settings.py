@@ -7,6 +7,11 @@ SECONDS_PER_MINUTE = 60.0
 MM_PER_M = 1000.0
 
 
+def _optional(norms: Book, key: str) -> float:
+    quantity = norms.optional(key)
+    return quantity.value if quantity is not None else 0.0
+
+
 def settings_from(norms: Book, params: Mapping[str, float | None] | None = None) -> SimSettings:
     """Simulation settings from the norm registry; the same two-way width rule as the layout generator,
     including the pallet length from the object when it is given."""
@@ -19,8 +24,9 @@ def settings_from(norms: Book, params: Mapping[str, float | None] | None = None)
         charge_threshold=value("sim_charge_threshold_share"),
         peak_window_h=value("sim_peak_window_hours"),
         peak_duration_h=value("sim_peak_duration_hours"),
-        truck_pallets=value("sim_truck_pallets"),
-        door_pallets_per_hour=value("layout_dock_pallets_per_door_hour"),
+        # Trucks at dock doors exist only in a warehouse; other objects have no such norms and no such flow.
+        truck_pallets=_optional(norms, "sim_truck_pallets"),
+        door_pallets_per_hour=_optional(norms, "layout_dock_pallets_per_door_hour"),
         aisle_capacity=int(value("sim_aisle_capacity_robots")),
         two_way_width_m=2 * loaded_m + value("aisle_safety_clearance_mm") / MM_PER_M,
         mtbf_h=value("sim_failure_mtbf_h"),

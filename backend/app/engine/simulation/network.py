@@ -34,6 +34,10 @@ class Segment:
     edges: frozenset[str]
 
 
+def lift_id(edge_id: str) -> str:
+    return f"lift:{edge_id}"
+
+
 def narrow_segments(plan: Plan, two_way_width_m: float) -> list[Segment]:
     """Rack-aisle edges too narrow for two robots, joined through rack faces into one-robot segments.
 
@@ -91,6 +95,10 @@ class Network:
             if not edge.one_way:
                 self.adjacency[edge.target].append((edge.source, edge.length_m, edge.id))
         self.segment_of = {edge_id: s.id for s in segments for edge_id in s.edges}
+        # A lift hop is a chunk of its own: the robot waits for the lift and rides, it does not drive.
+        self.segment_of.update(
+            {edge.id: lift_id(edge.id) for edge in plan.edges if edge.kind == EdgeKind.ELEVATOR_LINK}
+        )
         self.lengths = {edge.id: edge.length_m for edge in plan.edges}
         self._trees: dict[str, Tree] = {}
         self._routes: dict[tuple[str, str], Route] = {}

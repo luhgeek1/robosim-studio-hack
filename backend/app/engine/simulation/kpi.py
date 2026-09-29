@@ -82,7 +82,7 @@ def record(model: Model) -> SimRecord:
             states[state.value] = states.get(state.value, 0.0) + seconds
     resources = [
         resource.load(duration, model.end_s)
-        for group in (model.segments, model.docks, model.stations, model.chargers)
+        for group in (model.segments, model.docks, model.stations, model.chargers, model.lifts)
         for resource in group.values()
     ]
     robots = [

@@ -245,3 +245,100 @@ def test_fleet_starts_mid_day_with_a_share_on_chargers() -> None:
     assert all(SETTINGS.charge_threshold <= r.battery <= 1 for r in model.robots)
     result = simulate(inp, prepared)
     assert sum(r.charges for r in result.record.robots) >= 2
+
+
+def _hospital() -> tuple[Plan, Prepared]:
+    values = {
+        "floors": 9.0,
+        "elevators": 1.0,
+        "corridor_width_m": 2.4,
+        "kitchen_to_ward_distance_m": 180.0,
+        "meal_points": 18.0,
+    }
+    plan = generate(
+        LayoutTemplate.HOSPITAL_FLOOR,
+        Book.of(InputKind.PARAM, [(k, k, v, None) for k, v in values.items()]),
+        NORMS,
+    ).plan
+    return plan, prepare(plan, SETTINGS.two_way_width_m)
+
+
+MEALS = SimProcess(
+    key="meal_delivery",
+    name="Доставка питания",
+    model=ProcessModel.TRANSPORT,
+    product_name="Курьер",
+    robots=3,
+    robot=RobotSpec(speed_mps=0.72, load_s=30, unload_s=30),
+    hours_per_day=24,
+    peak_factor=2,
+    lead_time_s=20 * 60,
+    target_share=0.95,
+    internal_per_day=54,
+    units_per_trip=30,
+    analytic_robots=3,
+    analytic_per_robot_h=100,
+    sources=("kitchen",),
+    destinations=("ward",),
+    ride_s=120,
+)
+
+
+def test_hospital_trips_ride_the_lift_and_carry_the_load_per_trip() -> None:
+    plan, prepared = _hospital()
+    result = simulate(SimInput(plan, (MEALS,), SETTINGS, SimConfig(mode=SimMode.PEAK, seed=3)), prepared)
+    lifts = {n.id for n in plan.nodes if n.kind == NodeKind.ELEVATOR}
+    assert any(set(e.path) & lifts for e in result.record.events if e.type == "move")
+    comparison = result.summary.vs_analytic
+    assert comparison is not None
+    # A trip carries 30 portions: the simulated rate is in portions, like the cycle model's.
+    assert comparison.sim_throughput_per_hour == pytest.approx(
+        comparison.analytic_throughput_per_hour, rel=0.25
+    )
+
+
+def test_one_lift_for_a_busy_flow_is_the_bottleneck() -> None:
+    plan, prepared = _hospital()
+    busy = replace(MEALS, robots=12, internal_per_day=700, ride_s=240)
+    result = simulate(SimInput(plan, (busy,), SETTINGS, SimConfig(mode=SimMode.PEAK, seed=3)), prepared)
+    assert result.summary.bottleneck.resource_kind == "elevator"
+    assert any(e.reason == "elevator_busy" for e in result.record.events if e.type == "wait")
+
+
+def test_airport_baggage_trains_run_from_sorting_to_the_stands() -> None:
+    values = {
+        "gates": 20.0,
+        "terminals": 2.0,
+        "baggage_carousels": 8.0,
+        "baggage_route_length_m": 300.0,
+    }
+    plan = generate(
+        LayoutTemplate.AIRPORT_APRON,
+        Book.of(InputKind.PARAM, [(k, k, v, None) for k, v in values.items()]),
+        NORMS,
+    ).plan
+    bags = SimProcess(
+        key="baggage_handling",
+        name="Багаж",
+        model=ProcessModel.TOW_TRAIN,
+        product_name="Тягач",
+        robots=8,
+        robot=RobotSpec(speed_mps=2.0, load_s=30, unload_s=30),
+        hours_per_day=24,
+        peak_factor=2,
+        lead_time_s=45 * 60,
+        target_share=0.95,
+        internal_per_day=35_000,
+        units_per_trip=120,
+        analytic_robots=8,
+        analytic_per_robot_h=400,
+        sources=("buffer",),
+        destinations=("apron",),
+    )
+    result = simulate(
+        SimInput(plan, (bags,), SETTINGS, SimConfig(mode=SimMode.PEAK, seed=3)),
+        prepare(plan, SETTINGS.two_way_width_m),
+    )
+    stands = {n.id for n in plan.nodes if n.kind == NodeKind.DROPOFF}
+    assert any(e.node in stands for e in result.record.events if e.type == "unload")
+    assert result.summary.vs_analytic is not None

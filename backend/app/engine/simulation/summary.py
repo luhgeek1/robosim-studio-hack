@@ -171,6 +171,10 @@ _ADVICE = {
         "{name} занята {u} времени, очередь на зарядку до {q} роботов",
         "Добавить зарядную станцию",
     ),
+    ResourceKind.ELEVATOR: (
+        "{name} заняты роботами {u} времени, в очереди к лифтам до {q} роботов",
+        "Выделить роботам грузовой лифт или развести рейсы по времени — новые роботы будут ждать лифт",
+    ),
 }
 
 
@@ -211,7 +215,7 @@ def _vs_analytic(record: SimRecord, inp: SimInput, sla: dict[str, Any], note: st
         units = {
             ProcessModel.GOODS_TO_PERSON: process.lines_per_trip,
             ProcessModel.TOW_TRAIN: math.floor(process.units_per_trip),
-        }.get(process.model, 1.0)
+        }.get(process.model, process.units_per_trip if process.sources else 1.0)
         per_robot = (
             SECONDS_PER_HOUR
             / outcome.mean_cycle_s

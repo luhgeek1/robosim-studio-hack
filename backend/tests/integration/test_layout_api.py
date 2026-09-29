@@ -155,7 +155,7 @@ async def test_background_upload_and_download(client: AsyncClient) -> None:
     assert downloaded.headers["content-type"] == "image/png"
 
 
-async def test_copy_keeps_the_layout_and_other_types_are_not_supported(client: AsyncClient) -> None:
+async def test_copy_keeps_the_layout_and_each_type_takes_its_own_templates(client: AsyncClient) -> None:
     project_id, headers = await _project(client)
     copy = await client.post(f"/api/v1/projects/{project_id}/copy", json={"name": "Копия"}, headers=headers)
     assert copy.status_code == 201, copy.text
@@ -165,8 +165,14 @@ async def test_copy_keeps_the_layout_and_other_types_are_not_supported(client: A
 
     hospital_id, _ = await _project(client, object_type="hospital")
     response = await client.post(f"/api/v1/projects/{hospital_id}/layout/generate", headers=headers)
-    assert response.status_code == 409
-    assert response.json()["error_code"] == "OBJECT_TYPE_NOT_SUPPORTED"
+    assert response.status_code == 200, response.text
+    assert response.json()["template"] == "hospital_floor"
+    wrong = await client.post(
+        f"/api/v1/projects/{hospital_id}/layout/generate",
+        json={"template": "warehouse_u_flow"},
+        headers=headers,
+    )
+    assert wrong.status_code == 422, wrong.text
 
 
 async def test_foreign_user_cannot_read_the_layout(client: AsyncClient) -> None:

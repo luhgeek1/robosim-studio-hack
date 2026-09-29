@@ -4,6 +4,8 @@ from enum import StrEnum
 class LayoutTemplate(StrEnum):
     WAREHOUSE_U_FLOW = "warehouse_u_flow"
     WAREHOUSE_FLOW_THROUGH = "warehouse_flow_through"
+    HOSPITAL_FLOOR = "hospital_floor"
+    AIRPORT_APRON = "airport_apron"
 
 
 class ZoneKind(StrEnum):
@@ -65,6 +67,9 @@ class RouteKey(StrEnum):
     STORAGE_TO_STORAGE = "storage_to_storage"
     POD_TO_STATION = "pod_to_station"
     STORAGE_TO_CHARGER = "storage_to_charger"
+    SERVICE_TO_WARD = "service_to_ward"
+    SORTING_TO_STAND = "sorting_to_stand"
+    TERMINAL_TO_HUB = "terminal_to_hub"
 
     @property
     def param_key(self) -> str:

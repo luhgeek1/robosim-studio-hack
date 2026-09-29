@@ -48,6 +48,7 @@
 
 | Сущность | Статусы | Как показывать |
 |---|---|---|
+| 2026-09-29 | 0.7.1 | `LayoutTemplate`: добавлены `hospital_floor` и `airport_apron` (D-034); у больницы и аэропорта генерация планировки больше не отвечает 409 `OBJECT_TYPE_NOT_SUPPORTED`. `LayoutRoute.key`: добавлены `service_to_ward`, `sorting_to_stand`, `terminal_to_hub`; поездка на лифте в метры маршрута не входит. `ResourceKind.elevator` теперь приходит в узких местах имитации |
 | Кандидат подбора | `fit` / `check` / `excluded` / `manual` | «Подходит» / «Требует проверки» / «Не подходит» / «Добавлено вручную» + причины |
 | Расчёт | `fresh` / `stale` | «Актуален» / «Параметры изменились — пересчитать» |
 | Задача | `queued` / `running` / `done` / `failed` / `cancelled` | прогресс-бар со `stage`, SSE |

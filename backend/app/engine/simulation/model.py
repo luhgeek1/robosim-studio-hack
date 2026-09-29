@@ -7,8 +7,9 @@ from typing import Any
 
 import simpy
 
-from app.domain.layout.models import NodeKind
+from app.domain.layout.models import EdgeKind, NodeKind, ZoneKind
 from app.engine.layout import Node
+from app.engine.layout.graph import in_zones
 from app.engine.simulation.actions import SECONDS_PER_HOUR, Actions, Steps
 from app.engine.simulation.agents import Robot, Task
 from app.engine.simulation.arrivals import Arrivals, Picker
@@ -24,7 +25,7 @@ from app.engine.simulation.models import (
     State,
     TimelinePoint,
 )
-from app.engine.simulation.network import Network, Segment
+from app.engine.simulation.network import Network, Segment, lift_id
 from app.engine.simulation.resources import Tracked, tracked
 
 SAMPLE_S = 60.0
@@ -81,7 +82,9 @@ class Model(Actions):
         self.docks = self._tracked(nodes[NodeKind.DOCK_IN] + nodes[NodeKind.DOCK_OUT], ResourceKind.DOCK)
         self.station_pool = self._tracked(nodes[NodeKind.PICK_STATION], ResourceKind.PICK_STATION)
         self.chargers = self._chargers(nodes[NodeKind.CHARGER])
+        self.lifts = self._lifts()
         self.stations: dict[str, Tracked] = {}
+        self.points: dict[str, tuple[Picker, Picker]] = {}
         self.berths = {n.id: simpy.Resource(env, capacity=1) for n in nodes[NodeKind.DOCK_IN]}
         self.out_berths = {n.id: simpy.Resource(env, capacity=1) for n in nodes[NodeKind.DOCK_OUT]}
         self.face_picker = Picker(self._stream("slots"), nodes[NodeKind.RACK_FACE])
@@ -123,6 +126,35 @@ class Model(Actions):
         capacity = max(1, math.ceil(wanted / len(nodes))) if wanted and nodes else 1
         return {n.id: tracked(self.env, ResourceKind.CHARGER, n.id, n.label or n.id, capacity) for n in nodes}
 
+    def _lifts(self) -> dict[str, Tracked]:
+        """One shared resource per lift hop; its capacity is the lifts of the hall (the node capacity)."""
+        nodes = {n.id: n for n in self.inp.plan.nodes}
+        result: dict[str, Tracked] = {}
+        for edge in self.inp.plan.edges:
+            if edge.kind != EdgeKind.ELEVATOR_LINK:
+                continue
+            ends = [nodes[edge.source], nodes[edge.target]]
+            capacity = min(n.capacity or 1 for n in ends)
+            result[lift_id(edge.id)] = tracked(
+                self.env, ResourceKind.ELEVATOR, edge.id, f"Лифты ({capacity} шт.)", capacity
+            )
+        return result
+
+    def _service_points(self, process: SimProcess) -> tuple[Picker, Picker]:
+        plan = self.inp.plan
+
+        def points(kinds: tuple[str, ...], stream: str) -> Picker:
+            zones = frozenset(ZoneKind(k) for k in kinds)
+            nodes = in_zones(plan, zones, NodeKind.PICKUP) + in_zones(plan, zones, NodeKind.DROPOFF)
+            if not nodes:
+                raise SimulationError(
+                    f"«{process.name}»: на планировке нет точек в зонах {', '.join(kinds)}"
+                    " — перегенерируйте её"
+                )
+            return Picker(self._stream(f"{stream}-{process.key}"), nodes)
+
+        return points(process.sources, "origins"), points(process.destinations, "targets")
+
     def _exits(self, segments: list[Segment]) -> dict[str, list[str]]:
         edges = {e.id: e for e in self.inp.plan.edges}
         result: dict[str, list[str]] = {}
@@ -142,7 +174,9 @@ class Model(Actions):
                 raise SimulationError(
                     "На планировке нет зоны «товар к человеку»: перегенерируйте её с отбором"
                 )
-            if process.model in PALLET_MODELS and not (self.face_picker and self.docks):
+            if process.sources:
+                self.points[process.key] = self._service_points(process)
+            elif process.model in PALLET_MODELS and not (self.face_picker and self.docks):
                 raise SimulationError("На планировке нет ворот или мест хранения для перевозки паллет")
             result.append(process)
             if process.model == ProcessModel.GOODS_TO_PERSON:
@@ -252,6 +286,9 @@ class Model(Actions):
         stream = self._stream(f"arrivals-{process.key}")
         arrivals = Arrivals(self.env, stream, process, self.inp.settings, self.inp.config, self.end_s)
         env = self.env
+        if process.sources:
+            self._service_flow(process, arrivals)
+            return
         if process.model in PALLET_MODELS:
             env.process(
                 arrivals.trucks(
@@ -288,6 +325,25 @@ class Model(Actions):
                 pending.clear()
 
         env.process(arrivals.poisson(process.lines_per_day, line))
+
+    def _service_flow(self, process: SimProcess, arrivals: Arrivals) -> None:
+        """Transport: one trip per arrival (the demand is in trips). Tow train: units join the train
+        to their destination, which leaves full or on schedule."""
+        origins, targets = self.points[process.key]
+        if process.model == ProcessModel.TRANSPORT:
+
+            def trip() -> None:
+                origin = origins.pick()
+                self.add_task(process, origin, targets.pick(exclude=origin), "delivery")
+
+            self.env.process(arrivals.poisson(process.internal_per_day, trip))
+            return
+
+        def unit() -> None:
+            self._pallet(process, origins.pick(), targets.pick(), "outbound")
+
+        self.env.process(arrivals.poisson(process.internal_per_day, unit))
+        self.env.process(self._departures(process))
 
     def _robot(self, robot: Robot) -> Steps:
         while True:

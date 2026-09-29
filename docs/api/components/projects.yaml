@@ -368,16 +368,19 @@ LayoutTemplate:
   type: string
   description: |
     warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
-    warehouse_flow_through — приёмка и отгрузка на противоположных фасадах.
-  enum: [warehouse_u_flow, warehouse_flow_through]
+    warehouse_flow_through — приёмка и отгрузка на противоположных фасадах;
+    hospital_floor — больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
+    и типовой этаж отделений;
+    airport_apron — аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
+  enum: [warehouse_u_flow, warehouse_flow_through, hospital_floor, airport_apron]
 
 LayoutRoute:
   type: object
   required: [key, name, value_m, pairs]
   properties:
-    key: {type: string, enum: [dock_in_to_storage, storage_to_dock_out, storage_to_storage, pod_to_station, storage_to_charger]}
+    key: {type: string, enum: [dock_in_to_storage, storage_to_dock_out, storage_to_storage, pod_to_station, storage_to_charger, service_to_ward, sorting_to_stand, terminal_to_hub]}
     name: {type: string, example: "Ворота приёмки → место хранения"}
-    value_m: {type: number, example: 91.1, description: "Среднее кратчайших путей по графу, взвешенное по паллетоместам"}
+    value_m: {type: number, example: 91.1, description: "Среднее кратчайших путей по графу, взвешенное по вместимости точек (паллетоместа, точки выдачи); поездка на лифте в длину не входит"}
     pairs: {type: integer, description: "Сколько пар «откуда → куда» усреднено"}
 
 LayoutDerivationStep:

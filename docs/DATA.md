@@ -339,3 +339,21 @@
 
 Пробел данных: массы грузовой тележки и контейнера мусора в терминале нет — допущение
 `airport_terminal_cart_weight_kg` = 250 кг; без него тягачи для этого процесса не считались вовсе.
+
+## Схемы больницы и аэропорта (29.09, D-034)
+
+Новые нормативы (`norms_v1.yaml`, у каждого — обоснование):
+- `layout_hospital_room_depth_m` = 6 м — глубина помещения от коридора (палата при шаге каркаса 6 м, СП 158.13330.2014).
+- `layout_hospital_room_frontage_m` = 36 м — длина отделения вдоль коридора (палатная секция до 30 коек).
+- `layout_airport_stand_frontage_m` = 45 м — стоянка ВС кода C (размах до 36 м + зазоры, ИКАО Прил. 14).
+- `layout_airport_stand_depth_m` = 45 м, `layout_airport_road_width_m` = 8 м, `layout_airport_terminal_depth_m` = 30 м,
+  `layout_airport_makeup_pitch_m` = 12 м (сцепка из 3 тележек).
+- `sim_service_trip_lead_time_min` = 60 мин — срок плановой перевозки без своего норматива (бельё, отходы, лекарства,
+  тележки терминала).
+Нормативы имитации и схемы склада, которые читает общий код (`layout_robot_headway_m`, `layout_loaded_vehicle_width_m`,
+`layout_default_charger_slots`, `sim_peak_*`, `sim_charge_threshold_share`, `sim_human_takeover_wait_min`,
+`sim_tow_dispatch_wait_min`, `sim_bottleneck_utilization`), теперь действуют и для больницы с аэропортом.
+Фуры у ворот (`sim_truck_pallets`, `layout_dock_pallets_per_door_hour`) остаются только складскими.
+Ловушка: рекомендация подбора для демо-больницы и демо-аэропорта берёт только уборку — у доставки и багажа NPV
+отрицательный. Чтобы увидеть имитацию, добавьте доставку или багаж в сценарий из подбора и выберите его на шаге «Имитация».
+
