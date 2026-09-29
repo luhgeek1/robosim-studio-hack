@@ -100,9 +100,9 @@ def _lift_cycle(floors: float) -> float:
 
 
 def test_the_lift_ride_grows_with_the_floors() -> None:
-    """Nine floors of the dataset give the former 120 s lift cycle; each extra floor adds half a ride."""
+    """Nine floors give a 120 s ride each way; each extra floor adds half a ride up and back."""
     nine, eighteen = _lift_cycle(9), _lift_cycle(18)
-    assert eighteen - nine == pytest.approx(9 * 0.5 * 10)
+    assert eighteen - nine == pytest.approx(2 * 9 * 0.5 * 10)
 
 
 def _references(object_type: ObjectTypeSeed) -> str:

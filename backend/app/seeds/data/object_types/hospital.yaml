@@ -1022,8 +1022,8 @@ processes:
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
   cycle_extras:
   - key: elevator_s
-    name: Поездка на лифте (ожидание, вход, этажи)
-    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    name: Поездки на лифте туда и обратно (ожидание, вход, этажи)
+    formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: linen_transport
   name: Перевозка белья (чистое и грязное)
   description: Сбор грязного белья из отделений в прачечную и развоз чистого. Цель — «Смен белья в сутки» (linen_changes_per_day)
@@ -1085,8 +1085,8 @@ processes:
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
   cycle_extras:
   - key: elevator_s
-    name: Поездка на лифте (ожидание, вход, этажи)
-    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    name: Поездки на лифте туда и обратно (ожидание, вход, этажи)
+    formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: waste_transport
   name: Вывоз медицинских отходов
   description: Вывоз контейнеров с отходами классов А и Б из отделений; для класса Б — отдельный маршрут и обеззараживание
@@ -1143,8 +1143,8 @@ processes:
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
   cycle_extras:
   - key: elevator_s
-    name: Поездка на лифте (ожидание, вход, этажи)
-    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    name: Поездки на лифте туда и обратно (ожидание, вход, этажи)
+    formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
   - key: disinfection_s
     name: Обеззараживание робота после рейса
     formula: robot_disinfection * disinfection_time_s
@@ -1195,8 +1195,8 @@ processes:
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
   cycle_extras:
   - key: elevator_s
-    name: Поездка на лифте (ожидание, вход, этажи)
-    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    name: Поездки на лифте туда и обратно (ожидание, вход, этажи)
+    formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: lab_sample_delivery
   name: Доставка проб в лабораторию
   description: Доставка биоматериалов от мест забора в лабораторию и развоз результатов. Норматив — «Норматив доставки пробы»
@@ -1244,8 +1244,8 @@ processes:
     why_needed: 'Нужен уровень шума робота: ночью в палатах допускается не больше {required} дБА'
   cycle_extras:
   - key: elevator_s
-    name: Поездка на лифте (ожидание, вход, этажи)
-    formula: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    name: Поездки на лифте туда и обратно (ожидание, вход, этажи)
+    formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: floor_cleaning
   name: Уборка коридоров и холлов
   description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель — норматив «Кратность уборки в сутки»

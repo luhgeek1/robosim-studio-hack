@@ -11,8 +11,6 @@ from app.engine.trace import Book, fmt
 MLN = 1_000_000
 PERCENT = 100
 SECONDS_PER_MINUTE = 60
-# A vendor claim this many times above the cycle-based throughput is flagged («паспорт против физики»).
-VENDOR_CLAIM_GAP = 3
 _UNVERIFIED = frozenset({ProvenanceStatus.DEFAULT, ProvenanceStatus.ASSUMPTION, ProvenanceStatus.MISSING})
 
 
@@ -251,7 +249,7 @@ def assess_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
                 ["discount_rate"],
             )
         )
-    risks += _item_risks(result)
+    risks += _item_risks(result, ctx)
     risks += _power_risks(result, ctx)
     risks += _lead_time_risks(result, ctx)
     return risks
@@ -298,7 +296,7 @@ def _power_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
     ]
 
 
-def _item_risks(result: CalculationResult) -> list[Risk]:
+def _item_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
     risks: list[Risk] = []
     for sizing in result.sizing:
         item, name = sizing.item, sizing.process_name
@@ -359,7 +357,7 @@ def _item_risks(result: CalculationResult) -> list[Risk]:
             claim
             and outcome
             and outcome.effective_per_hour
-            and claim.value > VENDOR_CLAIM_GAP * outcome.effective_per_hour
+            and claim.value > ctx.norms.value("vendor_claim_gap_factor") * outcome.effective_per_hour
         ):
             risks.append(
                 Risk(

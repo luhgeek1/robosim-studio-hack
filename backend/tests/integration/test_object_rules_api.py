@@ -125,8 +125,9 @@ async def test_airport_access_control_costs_per_zone(client: AsyncClient) -> Non
 async def test_hospital_lifts_floors_and_disinfection(client: AsyncClient) -> None:
     project_id, headers = await _demo(client, "hospital")
     meals = await _calculate(client, headers, project_id, "meal_delivery", "H1500")
-    lift = "Поездка на лифте (ожидание, вход, этажи)"
-    assert _cycle(meals)[lift] == pytest.approx(120)
+    lift = "Поездки на лифте туда и обратно (ожидание, вход, этажи)"
+    # One ride up with the load and one back down: 2 × 120 s at the dataset's nine floors.
+    assert _cycle(meals)[lift] == pytest.approx(240)
     capex = _capex(meals)
     assert capex["capex_elevators"] == pytest.approx(4 * 800_000)
     assert capex["capex_access_control"] == pytest.approx(22 * 250_000)
@@ -137,7 +138,7 @@ async def test_hospital_lifts_floors_and_disinfection(client: AsyncClient) -> No
     await _set(client, headers, project_id, "elevator_control", "yes")
     await _set(client, headers, project_id, "robot_disinfection", False)
     meals = await _calculate(client, headers, project_id, "meal_delivery", "H1500")
-    assert _cycle(meals)[lift] == pytest.approx(165)
+    assert _cycle(meals)[lift] == pytest.approx(330)
     assert _capex(meals)["capex_elevators"] == pytest.approx(4 * 150_000)
     waste = _cycle(await _calculate(client, headers, project_id, "waste_transport", "H1500"))
     assert waste.get("Обеззараживание робота после рейса", 0) == 0

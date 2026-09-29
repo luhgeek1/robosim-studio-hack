@@ -5,7 +5,7 @@ import pytest
 
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.reference import Requirement
-from app.engine.matching import CandidateInput, CandidateStatus, SpecFact, evaluate, rank
+from app.engine.matching import CandidateInput, CandidateStatus, SpecFact, _economics, evaluate, rank
 
 PAYLOAD = Requirement(
     key="payload_vs_pallet",
@@ -127,3 +127,12 @@ def test_ranking_is_explainable() -> None:
     assert cost.points == pytest.approx(50)
     assert sum(c.weight for c in ordered[0].breakdown) == pytest.approx(1)
     assert ordered[0].score == pytest.approx(sum(c.contribution for c in ordered[0].breakdown), abs=0.1)
+
+
+def test_equal_npvs_share_a_place_and_the_score_stays_in_range() -> None:
+    results = [
+        evaluate(product(name, payload_kg=1500), [PAYLOAD], VALUES, include_rnd=False) for name in "ABCD"
+    ]
+    npv = dict(zip((r.candidate.product_id for r in results), (10e6, 5e6, 5e6, 1e6), strict=True))
+    points = [_economics(r.candidate, results, npv)[0] for r in results]
+    assert points == pytest.approx([100, 50, 50, 0])

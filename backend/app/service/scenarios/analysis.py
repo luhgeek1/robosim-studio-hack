@@ -26,7 +26,6 @@ from app.engine.trace import InputKind, fmt
 from app.service.scenarios.calculations import CalculationService, Evaluation
 from app.service.scenarios.snapshot import Snapshot
 
-DEFAULT_SWING_PCT = 20.0
 SURVEY_LIMIT = 10
 SURVEY_METRIC = "npv_rub"
 IMPACT_LEVELS = ("high", "medium", "low")
@@ -86,12 +85,13 @@ def _used_keys(evaluation: Evaluation, kind: InputKind) -> set[str]:
 
 
 class Drivers:
-    """Resolves driver keys to low/high values: norms use their documented range, the rest ±20 % of base."""
+    """Resolves driver keys to low/high values: norms use their own range, the rest ± the swing norm."""
 
     def __init__(self, evaluation: Evaluation) -> None:
         self.evaluation = evaluation
         self.snapshot = evaluation.snapshot
         self.used_norms = _used_keys(evaluation, InputKind.NORM)
+        self.swing = self.snapshot.input.norms.value("sensitivity_swing_pct")
 
     def group(self, group: Group, low_pct: float, high_pct: float) -> Driver:
         return percent_driver(group.value, GROUP_NAMES[group], DriverKind.GROUP, None, 1.0, low_pct, high_pct)
@@ -113,8 +113,8 @@ class Drivers:
         return replace(driver, status=meta.status.value)
 
     def resolve(self, request: DriverRequest) -> Driver:
-        low_pct = request.low_pct if request.low_pct is not None else -DEFAULT_SWING_PCT
-        high_pct = request.high_pct if request.high_pct is not None else DEFAULT_SWING_PCT
+        low_pct = request.low_pct if request.low_pct is not None else -self.swing
+        high_pct = request.high_pct if request.high_pct is not None else self.swing
         if request.key in Group.__members__.values():
             driver = self.group(Group(request.key), low_pct, high_pct)
             if request.key == Group.EQUIPMENT_PRICE:
@@ -142,12 +142,12 @@ class Drivers:
         if self.snapshot.input.items:
             drivers.append(
                 replace(
-                    self.group(Group.EQUIPMENT_PRICE, -DEFAULT_SWING_PCT, DEFAULT_SWING_PCT),
+                    self.group(Group.EQUIPMENT_PRICE, -self.swing, self.swing),
                     kind=DriverKind.CATALOG,
                 )
             )
-            drivers.append(self.group(Group.OPERATIONS_VOLUME, -DEFAULT_SWING_PCT, DEFAULT_SWING_PCT))
-        drivers.append(self.group(Group.LABOR_COST, -DEFAULT_SWING_PCT, DEFAULT_SWING_PCT))
+            drivers.append(self.group(Group.OPERATIONS_VOLUME, -self.swing, self.swing))
+        drivers.append(self.group(Group.LABOR_COST, -self.swing, self.swing))
         keys = [*_DEFAULT_NORMS, *sorted(k for k in self.used_norms if k.startswith("labor_release_share"))]
         if metric in _RATE_METRICS:
             keys += list(_RATE_NORMS)
@@ -227,7 +227,7 @@ class AnalysisService:
         for key in sorted(_used_keys(evaluation, InputKind.PARAM)):
             meta = snapshot.input.param_meta.get(key)
             if meta is not None and meta.status in _UNVERIFIED and snapshot.input.params.get(key):
-                drivers.append(resolver.param(key, -DEFAULT_SWING_PCT, DEFAULT_SWING_PCT))
+                drivers.append(resolver.param(key, -resolver.swing, resolver.swing))
         for key in sorted(resolver.used_norms & snapshot.assumption_norms):
             driver = resolver.norm(key)
             if driver.low != driver.high:
@@ -263,7 +263,7 @@ class AnalysisService:
         resolver = Drivers(evaluation)
         params = evaluation.snapshot.input.params
         used = sorted(k for k in _used_keys(evaluation, InputKind.PARAM) if params.get(k))
-        drivers = [resolver.param(key, -DEFAULT_SWING_PCT, DEFAULT_SWING_PCT) for key in used]
+        drivers = [resolver.param(key, -resolver.swing, resolver.swing) for key in used]
         _, items = tornado(evaluation.snapshot.input, drivers, SURVEY_METRIC)
         moving = [item for item in items if item.swing > 0]
         impact = dict.fromkeys(evaluation.snapshot.input.param_meta, "low")

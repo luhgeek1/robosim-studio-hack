@@ -104,6 +104,11 @@ class InputBuilder:
             footprint_m=(length.value / MM_PER_M, width.value / MM_PER_M) if length and width else None,
         )
 
+    def _station_rate(self, sizing: ItemSizing, spec: dict[str, Any]) -> float:
+        """The product's own station rate when the vendor gives one — the same choice the cycle model made."""
+        own = sizing.item.specs.optional("station_throughput_lines_h")
+        return own.value if own is not None else self._value(spec.get("station_lines_per_hour"))
+
     def _process(self, sizing: ItemSizing, definition: ProcessDef, model: ProcessModel) -> SimProcess:
         spec = definition.simulation or {}
         key = definition.key
@@ -124,7 +129,7 @@ class InputBuilder:
             internal_per_day=self._value(spec.get("internal")),
             lines_per_day=self._value(spec.get("lines")),
             lines_per_trip=self._value(spec.get("lines_per_trip")) or 1.0,
-            station_lines_per_hour=self._value(spec.get("station_lines_per_hour")),
+            station_lines_per_hour=self._station_rate(sizing, spec),
             stations=sizing.stations or 0,
             analytic_robots=sizing.count.analytic,
             analytic_per_robot_h=outcome.effective_per_hour if outcome else None,

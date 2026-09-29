@@ -250,7 +250,8 @@ def _economics(
             return 0.0, "Экономика не оценена — нет модели производительности"
         # Place by NPV among the process's candidates: robust to an outlier, and a smaller loss still ranks
         # higher when no candidate pays back (the object's fixed costs are charged to each one in full).
-        better = sum(1 for value in known if value > own)
+        # Distinct NPV values on both sides: equal NPVs share a place, and the score stays within 0…100.
+        better = len({value for value in known if value > own})
         places = len(set(known)) - 1
         points = POINTS_MAX * (1 - better / places) if places else POINTS_MAX
         verdict = "окупается" if own > 0 else "не окупается за горизонт"

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from httpx import AsyncClient
 
@@ -131,8 +133,36 @@ async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
     best = (await client.get(f"/api/v1/simulations/{result['simulation_id']}", headers=headers)).json()
     assert best["purpose"] == "sweep"
     assert best["fleet"][0]["count"] == recommended
-    # The curve prices each fleet the way the scenario is priced once that N applies (D-028).
-    metrics = after["metrics"]
+    param = {"key": "shift_hours", "value": 12}
+    await client.patch(f"/api/v1/projects/{project_id}/params/shift_hours", json=param, headers=headers)
+    moved = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    assert moved["sizing"][0]["count"]["source"] == "analytic"
+    assert any("перезапустите перебор флота" in w for w in moved["warnings"])
+
+
+async def _sweep(
+    client: AsyncClient, scenario_id: str, headers: dict[str, str]
+) -> tuple[str, dict[str, Any]]:
+    response = await client.post(
+        f"/api/v1/scenarios/{scenario_id}/fleet-sweep",
+        json={"process_key": "pallet_transport"},
+        headers=headers,
+    )
+    job_id = response.json()["id"]
+    result = await client.get(f"/api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}", headers=headers)
+    return job_id, result.json()
+
+
+async def test_fleet_sweep_curve_is_priced_like_the_scenario(client: AsyncClient) -> None:
+    """The curve prices each fleet the way the scenario is priced once that N applies (D-028)."""
+    _, scenario_id, headers = await _scenario(client)
+    before = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    analytic = before["sizing"][0]["count"]
+    job_id, result = await _sweep(client, scenario_id, headers)
+    recommended = result["recommended_count"]
+    points = {p["count"]: p for p in result["points"]}
+    after = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    count, metrics = after["sizing"][0]["count"], after["metrics"]
     assert points[recommended]["robots_total"] == count["final"]
     assert points[recommended]["capex_rub"] == pytest.approx(metrics["capex_rub"])
     assert points[recommended]["payback_years"] == pytest.approx(metrics["payback_years"])
@@ -150,12 +180,6 @@ async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
     rerun = (await client.post(f"/api/v1/calculations/{before['id']}/rerun", headers=headers)).json()
     causes = {cause for row in rerun["diff"] for cause in row["causes"]}
     assert any("по формуле цикла → по имитации" in cause for cause in causes), causes
-
-    param = {"key": "shift_hours", "value": 12}
-    await client.patch(f"/api/v1/projects/{project_id}/params/shift_hours", json=param, headers=headers)
-    moved = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
-    assert moved["sizing"][0]["count"]["source"] == "analytic"
-    assert any("перезапустите перебор флота" in w for w in moved["warnings"])
 
 
 async def test_simulation_needs_a_layout_and_a_simulatable_process(client: AsyncClient) -> None:

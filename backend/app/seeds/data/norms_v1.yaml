@@ -484,6 +484,39 @@ norms:
     affects: [robot_count, sla]
     editable_by_user: true
     object_types: [hospital]
+  - key: vendor_claim_gap_factor
+    name: Во сколько раз заявка производителя выше цикла, чтобы отметить риск
+    value: 3
+    unit: раз
+    category: risk
+    range: {min: 2, max: 4}
+    source: team
+    rationale: "Калибровка по ФЦ БАС: паспортные 11,4 палл/ч против 3–4 палл/ч по циклу на маршруте объекта (docs/DATA.md) — разрыв около трёх раз. Меньший разрыв объясняется маршрутом и загрузкой; больший значит, что паспорт описывает идеальный цикл, и риск «паспорт против физики» показывается пользователю."
+    affects: [risks]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: sensitivity_swing_pct
+    name: Размах параметров в анализе чувствительности
+    value: 20
+    unit: "%"
+    category: finance
+    range: {min: 10, max: 30}
+    source: team
+    rationale: "ТЗ 3.5.6 требует чувствительность минимум к трём параметрам, но не задаёт размах. ±20 % покрывает типичный разброс цен вендоров и объёмов между сезонами в экспресс-оценке; нормативы с собственным диапазоном варьируются в нём. Пользователь задаёт свой размах в запросе."
+    affects: [sensitivity]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: elevator_rides_per_trip
+    name: Поездок на лифте за рейс робота
+    value: 2
+    unit: шт
+    category: sizing
+    range: {min: 1, max: 2}
+    source: team
+    rationale: "Время лифта в параметре и нормативах — от вызова до выхода на нужном этаже, то есть в одну сторону. Робот поднимается в отделение с грузом и спускается обратно пустым: за рейс две поездки. Одна — если пункт назначения на том же этаже, что и старт (тогда задайте 1)."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital]
   - key: disinfection_time_s
     name: Обеззараживание робота после рейса
     value: 300
