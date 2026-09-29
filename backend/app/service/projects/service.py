@@ -12,13 +12,16 @@ from app.db.repositories.projects import ProjectFilter, ProjectRepository, Proje
 from app.db.repositories.scenarios import ScenarioRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
+from app.domain.common.provenance import ProvenanceStatus
 from app.domain.organization import OrganizationRole
 from app.domain.project.models import AuditEntry, InitMode, ProjectInfo, ProjectStatus
 from app.domain.project.params import data_quality
+from app.domain.reference import DemoProjectRef
 from app.domain.scenario.models import ScenarioKind
 from app.service.layouts.service import LayoutService
 from app.service.projects.audit import AuditLog
 from app.service.projects.context import ProjectContext, ProjectLoader
+from app.service.projects.params import ParamChange, ParamsService
 
 _EDITABLE_STATUSES = frozenset({ProjectStatus.DRAFT, ProjectStatus.READY, ProjectStatus.ARCHIVED})
 
@@ -191,9 +194,20 @@ class ProjectService:
         self._repo.add(project)
         await self._uow.flush()
         self._audit.write(project.id, "project", "create", after=self._repo.snapshot(project))
+        demo = next((d for d in object_type.demo_projects if d.key == draft.demo_key), None)
+        if draft.mode == InitMode.DEMO and demo is not None and demo.params:
+            await self._demo_params(project.id, demo)
         if draft.mode == InitMode.DEMO and object_type.layout_templates:
             await self._demo_layout(project.id)
         return await self.get(project.id)
+
+    async def _demo_params(self, project_id: UUID, demo: DemoProjectRef) -> None:
+        """The demo's own values over the defaults, each a stated team assumption; set before the layout,
+        which reads them. The project stays at version 1: these are its starting data, not an edit."""
+        changes = [ParamChange(key, p.value, note=p.rationale) for key, p in demo.params.items()]
+        await ParamsService(self._uow, self._user).apply(
+            project_id, changes, ProvenanceStatus.ASSUMPTION, bump=False
+        )
 
     async def _demo_layout(self, project_id: UUID) -> None:
         """A demo object comes with its layout: routes in matching and scenarios are real from the start."""

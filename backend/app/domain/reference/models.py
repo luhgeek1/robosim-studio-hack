@@ -160,10 +160,17 @@ class SiteCostDef:
 
 
 @dataclass(frozen=True, slots=True)
+class DemoParam:
+    value: float | int | bool | str
+    rationale: str
+
+
+@dataclass(frozen=True, slots=True)
 class DemoProjectRef:
     key: str
     name: str
     description: str | None
+    params: dict[str, DemoParam] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
