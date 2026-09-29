@@ -319,16 +319,7 @@ function SimulationView({
 
   const lead = !sizing ? (
     'В сценарии нет процесса с моделью цикла — имитировать нечего.'
-  ) : summary ? (
-    <>
-      {config.mode === 'peak' ? 'Пиковые часы' : 'Обычный день'}
-      {config.volume ? ' +20 % объёма' : ''}
-      {config.failure ? ', отказ робота на 2 ч' : ''}: {formatNumber(summary.duration_hours, 1)} ч, задач{' '}
-      {formatNumber(summary.demand_total)}, выполнено {formatNumber(summary.completed)}
-      {summary.completed_by_humans ? `, из них людьми — ${summary.completed_by_humans}` : ''}. Роботы ездят по графу
-      планировки объекта — проходы, ворота, зарядки; это журнал событий имитации, а не анимация.
-    </>
-  ) : (
+  ) : summary ? undefined : (
     'Имитация прогонит день на планировке объекта и проверит, успевает ли парк выполнять задачи в срок.'
   )
 
