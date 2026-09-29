@@ -1,10 +1,14 @@
-import { ChevronRight, FileText } from 'lucide-react'
+import { ChevronDown, ChevronRight, FileText } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import type { Layout } from '@/shared/api/types'
+import { saveBlob } from '@/shared/lib/download'
 import { formatValue } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Spinner } from '@/shared/ui/states'
-import { useDerivationDownload } from './useDerivationDownload'
+import { derivationDocument } from './derivationDoc'
 import { DERIVATION_INPUT_KIND_LABEL, type LayoutDerivationStep } from './labels'
 
 export function DerivationList({ steps }: { steps: LayoutDerivationStep[] }) {
@@ -50,31 +54,41 @@ export function DerivationList({ steps }: { steps: LayoutDerivationStep[] }) {
   )
 }
 
-/* Нижняя панель рабочей области планировки: шаги вывода геометрии с формулами и выгрузка документом Word. */
+export function Derivation({ layout, projectName }: { layout: Layout; projectName: string }) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
 
-/* Под рабочей областью, по прокрутке: шаги вывода геометрии с формулами и выгрузка документом Word. */
-export function DerivationSection({ layout, projectName }: { layout: Layout; projectName: string }) {
-  const { saving, download } = useDerivationDownload(layout, projectName)
+  const download = async () => {
+    setSaving(true)
+    try {
+      const blob = await derivationDocument(layout, projectName)
+      saveBlob(blob, `геометрия-планировки-${layout.version}.docx`)
+    } catch {
+      toast.error('Не удалось собрать документ')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
-    <section id="layout-derivation" className="mx-auto w-full max-w-300 scroll-mt-32 pt-10 pb-16">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="hud mb-2 flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-signal" aria-hidden />
-            Вывод геометрии · {layout.derivation.length} шагов
+    <Collapsible open={open} onOpenChange={setOpen} className="mt-6 rounded-lg border bg-surface">
+      <div className="flex items-center gap-3 pr-3">
+        <CollapsibleTrigger className="flex min-w-0 flex-1 items-center justify-between px-5 py-3 text-left">
+          <div>
+            <div className="text-[15px] font-semibold">Как получена геометрия</div>
+            <div className="text-xs text-muted-foreground">
+              {layout.derivation.length} шагов: каждый размер — формула из параметров объекта и нормативов
+            </div>
           </div>
-          <h2 className="h2">Как получена геометрия</h2>
-          <p className="mt-1 text-[14px] text-ink-3">
-            Каждый размер схемы — формула из параметров объекта и нормативов; раскройте шаг, чтобы увидеть входы.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => void download()} disabled={saving}>
+          <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
+        </CollapsibleTrigger>
+        <Button variant="outline" size="sm" onClick={() => void download()} disabled={saving}>
           {saving ? <Spinner /> : <FileText />} Скачать документ
         </Button>
       </div>
-      <div className="card px-5 py-2">
+      <CollapsibleContent className="border-t px-5 pb-3">
         <DerivationList steps={layout.derivation} />
-      </div>
-    </section>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
