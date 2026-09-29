@@ -72,7 +72,7 @@ export function ObjectOverview({
   return (
     <section className="card overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="min-w-0 px-7 py-7">
+        <div className="flex min-w-0 flex-col px-7 py-7">
           {params ? <Readiness projectId={projectId} params={params} /> : <LoadingBlock rows={4} />}
         </div>
         <div className="relative min-h-140 border-t border-line lg:border-t-0 lg:border-l">
@@ -117,7 +117,7 @@ function Readiness({ projectId, params }: { projectId: string; params: ProjectPa
         : { ok: true, title: 'Данных хватает для расчёта' }
 
   return (
-    <div>
+    <div className="flex flex-1 flex-col">
       <div className="flex items-start gap-3.5">
         <span
           className={cn(
@@ -168,8 +168,8 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
   }
 
   return (
-    <div className="mt-7">
-      <div className="flex flex-wrap gap-1" onPointerLeave={() => setHovered(null)}>
+    <div className="my-auto py-8">
+      <div className="flex flex-wrap gap-1.25" onPointerLeave={() => setHovered(null)}>
         {cells.map((param) => (
           <motion.button
             key={param.key}
@@ -183,7 +183,7 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
             onClick={() => scrollToParam(param.key)}
             aria-label={`${param.name}: ${PROVENANCE_LABEL[param.provenance.status].toLowerCase()}`}
             className={cn(
-              'size-4 rounded-[4px] transition-opacity duration-150',
+              'size-5 rounded-[5px] transition-opacity duration-150',
               CELL[param.provenance.status],
               hovered && hovered.key !== param.key && 'opacity-45',
             )}
@@ -235,7 +235,7 @@ function Focus({ projectId, queue, params }: { projectId: string; queue: Item[];
 
   if (list.length === 0) {
     return (
-      <div className="mt-8 flex items-center gap-2 rounded-xl bg-ok-soft/60 px-4 py-3.5 text-[14px] text-ok">
+      <div className="mt-2 flex items-center gap-2 rounded-xl bg-ok-soft/60 px-4 py-3.5 text-[14px] text-ok">
         <Check className="size-4" /> Очередь пуста: важных пропусков и допущений не осталось.
       </div>
     )
@@ -249,7 +249,7 @@ function Focus({ projectId, queue, params }: { projectId: string; queue: Item[];
   }
 
   return (
-    <div className="mt-16">
+    <div className="mt-2">
       <div className="mb-3 flex items-center justify-between gap-3">
         <span className="text-[13px] text-ink-2">Уточните главное</span>
         <span className="flex items-center gap-1">
