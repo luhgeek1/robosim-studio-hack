@@ -1,5 +1,5 @@
 import { useIsMutating } from '@tanstack/react-query'
-import { Bot, Sparkles, Timer } from 'lucide-react'
+import { Bot, Play, Sparkles, Timer } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -235,11 +235,13 @@ function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizin
   const usingSimulation = count.source === 'simulated'
   return (
     <div className="mt-4 rounded-[10px] bg-surface-2 p-4 text-[13px]">
-      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className="font-medium text-ink">Откуда число роботов</span>
-        <Link to={`/projects/${projectId}/simulation`} className="text-[12.5px] text-ink-3 hover:text-ink">
-          Подробнее на шаге «Имитация» →
-        </Link>
+        <Button size="sm" asChild>
+          <Link to={`/projects/${projectId}/simulation`}>
+            <Play /> Как получено {simulated.working}: посмотреть имитацию
+          </Link>
+        </Button>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <OriginCard

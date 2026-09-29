@@ -1,13 +1,15 @@
 import { Canvas, useThree } from '@react-three/fiber'
 import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { Flame } from 'lucide-react'
 import * as THREE from 'three'
 import type { RobotTrack } from '@/entities/simulation'
 import type { LayoutGeometry, SimulationHeatmap } from '@/shared/api/types'
+import { Toggle } from '@/shared/ui/toggle'
 import { Segmented } from '@/shared/ui/v0'
 import { LayoutMap } from '@/widgets/layout-map'
 import { MapCamera, MapToolbar, type CameraAction, type ToolbarPlacement } from './MapCamera'
 import { C } from './palette'
-import { HeatLayer, RobotsLayer } from './Robots2D'
+import { HeatLayer, ROBOT_LEGEND, RobotsLayer, heatText, type HeatEdge } from './Robots2D'
 import { Building, Markers, Racks, RouteLines, Robots3D, sceneFrame, zoneLabels } from './scene3d'
 import { LabelLayer, LabelProjector } from './SceneLabels'
 import { svgToPng } from './snapshot'
@@ -58,7 +60,25 @@ export function Twin({
     onViewChange?.(next)
   }
   const [command, setCommand] = useState({ action: 'home' as CameraAction, id: 0 })
-  const [routes, setRoutes] = useState(false)
+  // One map layer at a time: the route graph or the run's flow and congestion — they draw on the same edges.
+  const [layer, setLayer] = useState<'none' | 'graph' | 'heat'>('none')
+  const routes = layer === 'graph'
+  const heatOn = layer === 'heat' && Boolean(heat)
+  const [picked, setPicked] = useState<HeatEdge | null>(null)
+  const heatToggle = heat ? (
+    <Toggle
+      size="sm"
+      variant="outline"
+      pressed={heatOn}
+      onPressedChange={(on) => {
+        setPicked(null)
+        setLayer(on ? 'heat' : 'none')
+      }}
+      aria-label="Поток и заторы"
+    >
+      <Flame /> Заторы
+    </Toggle>
+  ) : null
   const frame = useMemo(() => sceneFrame(layout), [layout])
   const labels = useMemo(() => zoneLabels(layout, frame), [layout, frame])
   const labelRefs = useRef(new Map<string, HTMLDivElement>())
@@ -98,14 +118,16 @@ export function Twin({
             layout={layout}
             fill
             legend={false}
-            showGraph={routes && !heat}
-            onShowGraphChange={setRoutes}
+            showGraph={routes}
+            onShowGraphChange={(on) => setLayer(on ? 'graph' : 'none')}
             className="h-full rounded-none border-0"
             toolbarClassName="top-16 right-4"
+            toolbarExtra={heatToggle}
+            infoCorner="top-left"
           >
             {(v) => (
               <>
-                {heat && <HeatLayer layout={layout} heat={heat} />}
+                {heatOn && heat && <HeatLayer layout={layout} heat={heat} onPick={setPicked} />}
                 {tracks && <RobotsLayer tracks={tracks} k={v.k} selected={selectedRobot} onSelect={onSelectRobot} />}
               </>
             )}
@@ -116,7 +138,9 @@ export function Twin({
           <MapToolbar
             onAction={(action) => setCommand((c) => ({ action, id: c.id + 1 }))}
             routes={routes}
-            onRoutes={() => setRoutes((v) => !v)}
+            onRoutes={() => setLayer((v) => (v === 'graph' ? 'none' : 'graph'))}
+            heat={heat ? heatOn : undefined}
+            onHeat={() => setLayer((v) => (v === 'heat' ? 'none' : 'heat'))}
             placement={toolbarPlacement}
           />
           <SceneBoundary
@@ -165,7 +189,7 @@ export function Twin({
                 <Building layout={layout} frame={frame} />
                 <Racks layout={layout} frame={frame} />
                 <Markers layout={layout} frame={frame} />
-                {(routes || heat) && <RouteLines layout={layout} frame={frame} heat={heat} />}
+                {(routes || heatOn) && <RouteLines layout={layout} frame={frame} heat={heatOn ? heat : null} />}
                 {tracks && (
                   <Robots3D tracks={tracks} frame={frame} selectedId={selectedRobot} onSelect={onSelectRobot} />
                 )}
@@ -178,7 +202,54 @@ export function Twin({
           <LabelLayer labels={labels} refs={labelRefs} />
         </>
       )}
+      <MapLegendStrip robots={view === '2d' && Boolean(tracks)} heat={heatOn} />
+      {heatOn && picked && (
+        <div className="absolute top-16 left-4 z-20 w-72 rounded-[12px] border border-line bg-white/95 p-3 text-[12.5px] shadow-card backdrop-blur">
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-medium text-ink">Участок проезда</span>
+            <button
+              type="button"
+              className="text-ink-4 hover:text-ink"
+              onClick={() => setPicked(null)}
+              aria-label="Закрыть"
+            >
+              ×
+            </button>
+          </div>
+          <p className="mt-1 leading-relaxed text-ink-2">{heatText(picked)}</p>
+        </div>
+      )}
     </div>
+  )
+}
+
+// What the colours on the map mean: robot states on the 2D plan, flow and congestion when that layer is on.
+function MapLegendStrip({ robots, heat }: { robots: boolean; heat: boolean }) {
+  if (!robots && !heat) return null
+  return (
+    <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex max-w-[calc(100%-24px)] flex-wrap items-center gap-x-3 gap-y-1 rounded-[10px] bg-white/90 px-3 py-1.5 text-[11.5px] text-ink-2 shadow-card backdrop-blur">
+      {heat ? (
+        <>
+          <span className="font-medium text-ink">Поток и заторы:</span>
+          <span>толщина — число проездов</span>
+          <Dot color="#287d9c" label="роботы не ждали" />
+          <Dot color="var(--warn)" label="ждали немного" />
+          <Dot color="var(--crit)" label="затор" />
+          <span className="text-ink-3">нажмите на участок</span>
+        </>
+      ) : (
+        ROBOT_LEGEND.map(([color, label]) => <Dot key={label} color={color} label={label} />)
+      )}
+    </div>
+  )
+}
+
+function Dot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1">
+      <span className="size-2 rounded-full" style={{ background: color }} />
+      {label}
+    </span>
   )
 }
 

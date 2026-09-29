@@ -33,7 +33,7 @@ export function PlayerBar() {
   const t = usePlayback((s) => Math.floor(s.t / 20) * 20)
   const { setPlaying, setSpeed, setT } = usePlayback.getState()
   return (
-    <div className="absolute bottom-4 left-1/2 z-10 flex w-[min(760px,calc(100%-32px))] -translate-x-1/2 items-center gap-3 rounded-[14px] border border-line bg-white/95 p-2 shadow-card backdrop-blur">
+    <div className="flex w-full shrink-0 items-center gap-3 rounded-[14px] border border-line bg-white p-2 shadow-card">
       <Button size="sm" onClick={() => setPlaying(!playing)} aria-label={playing ? 'Пауза' : 'Запустить'}>
         {playing ? <Pause /> : <Play />}
       </Button>

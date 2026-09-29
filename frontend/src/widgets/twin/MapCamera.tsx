@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ComponentRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { Box, HelpCircle, Map, Minus, Plus, RotateCcw, Route } from 'lucide-react'
+import { Box, HelpCircle, Flame, Map, Minus, Plus, RotateCcw, Route } from 'lucide-react'
 import { PerspectiveCamera, Vector3 } from 'three'
 
 export type CameraAction = 'home' | 'top' | 'in' | 'out'
@@ -80,11 +80,16 @@ export function MapToolbar({
   onAction,
   routes,
   onRoutes,
+  heat,
+  onHeat,
   placement = 'top-left',
 }: {
   onAction: (action: CameraAction) => void
   routes: boolean
   onRoutes: () => void
+  /** Undefined — the run has no congestion data yet, the button is hidden. */
+  heat?: boolean
+  onHeat?: () => void
   placement?: ToolbarPlacement
 }) {
   const [help, setHelp] = useState(false)
@@ -135,6 +140,17 @@ export function MapToolbar({
         >
           <Route size={17} />
         </button>
+        {heat !== undefined && (
+          <button
+            className={`${button} ${heat ? 'bg-rose-50 !text-rose-700' : ''}`}
+            title="Поток и заторы"
+            aria-label="Поток и заторы"
+            aria-pressed={heat}
+            onClick={onHeat}
+          >
+            <Flame size={17} />
+          </button>
+        )}
         <button
           className={button}
           title="Как управлять картой"

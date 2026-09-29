@@ -235,8 +235,8 @@ function SimulationView({
   const ready = Boolean(summary)
   const replay = useSimulationReplay(runId, ready)
   const timeline = useSimulationTimeline(runId, ready)
-  const [heatOn, setHeatOn] = useState(false)
-  const heat = useSimulationHeatmap(runId, ready && heatOn)
+  // Flow and congestion is a layer of the map (the map's own toolbar), not a run condition.
+  const heat = useSimulationHeatmap(runId, ready)
   const [error, setError] = useState<string | null>(null)
   const [selectedRobot, setSelectedRobot] = useState<string | null>(null)
   const capture: TwinCapture = useRef(null)
@@ -370,9 +370,6 @@ function SimulationView({
             <Toggle variant="outline" pressed={config.failure} onPressedChange={(failure) => change({ failure })}>
               Отказ робота на 2 ч
             </Toggle>
-            <Toggle variant="outline" pressed={heatOn} onPressedChange={setHeatOn} disabled={!ready}>
-              Заторы
-            </Toggle>
             <Button
               variant="outline"
               size="sm"
@@ -398,78 +395,73 @@ function SimulationView({
           )}
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]">
-            <div className="card relative h-[min(640px,calc(100vh-230px))] min-h-110 overflow-hidden">
-              {layout ? (
-                <Twin
-                  layout={layout}
-                  capture={capture}
-                  view={view}
-                  onViewChange={setView}
-                  tracks={tracks}
-                  heat={heatOn ? heat.data : null}
-                  selectedRobot={selectedRobot}
-                  onSelectRobot={setSelectedRobot}
-                />
-              ) : projectLayout.isPending ? (
-                <LoadingBlock label="Загружаем планировку…" />
-              ) : (
-                <EmptyState
-                  title="Планировка не построена"
-                  description="Имитация идёт по графу проездов планировки. Постройте её на шаге «Планировка»."
-                  action={
-                    <Button asChild>
-                      <Link to={`/projects/${projectId}/layout`}>К планировке</Link>
-                    </Button>
-                  }
-                />
-              )}
-
-              <AnimatePresence>
-                {selectedRobot && tracks && summary && (
-                  <RobotCard
-                    key={selectedRobot}
-                    track={tracks.find((t) => t.id === selectedRobot)}
-                    summary={summary}
-                    onClose={() => setSelectedRobot(null)}
+            {/* The player sits under the scene, not over it: the plan's labels and the legend stay visible. */}
+            <div className="flex h-[min(640px,calc(100vh-230px))] min-h-110 flex-col gap-3">
+              <div className="card relative min-h-0 flex-1 overflow-hidden">
+                {layout ? (
+                  <Twin
+                    layout={layout}
+                    capture={capture}
+                    view={view}
+                    onViewChange={setView}
+                    tracks={tracks}
+                    heat={heat.data ?? null}
+                    selectedRobot={selectedRobot}
+                    onSelectRobot={setSelectedRobot}
+                  />
+                ) : projectLayout.isPending ? (
+                  <LoadingBlock label="Загружаем планировку…" />
+                ) : (
+                  <EmptyState
+                    title="Планировка не построена"
+                    description="Имитация идёт по графу проездов планировки. Постройте её на шаге «Планировка»."
+                    action={
+                      <Button asChild>
+                        <Link to={`/projects/${projectId}/layout`}>К планировке</Link>
+                      </Button>
+                    }
                   />
                 )}
-              </AnimatePresence>
 
-              <AnimatePresence>
-                {busy && (
-                  <motion.div
-                    key="busy"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="pointer-events-none absolute bottom-21 left-1/2 z-10 flex w-[min(520px,90%)] -translate-x-1/2 items-center justify-center gap-2 rounded-[12px] bg-ink px-5 py-3 text-center text-[14px] font-medium text-white shadow-float"
-                  >
-                    <Spinner /> Считаем день имитацией{run.data?.stage ? `: ${run.data.stage}` : '…'}
-                    {run.data && run.data.progress > 0 && (
-                      <span className="num text-white/70">{Math.round(run.data.progress * 100)} %</span>
-                    )}
-                  </motion.div>
-                )}
-                {ready && replay.isPending && (
-                  <motion.div
-                    key="replay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="pointer-events-none absolute bottom-21 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/95 px-3 py-1.5 text-[12.5px] text-ink-2 shadow-card"
-                  >
-                    Загружаем журнал событий…
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <AnimatePresence>
+                  {selectedRobot && tracks && summary && (
+                    <RobotCard
+                      key={selectedRobot}
+                      track={tracks.find((t) => t.id === selectedRobot)}
+                      summary={summary}
+                      onClose={() => setSelectedRobot(null)}
+                    />
+                  )}
+                </AnimatePresence>
 
-              <div className="pointer-events-none absolute top-4 left-4 z-10 flex items-center gap-2">
-                <span className="rounded-full border border-line bg-white/90 px-2.5 py-1 text-[12px] text-ink-3">
-                  нагрузка <span className="num font-medium text-ink">{formatNumber(target)} ед/ч</span>
-                  {config.volume ? ' +20 %' : ''}
-                </span>
+                <AnimatePresence>
+                  {busy && (
+                    <motion.div
+                      key="busy"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="pointer-events-none absolute bottom-14 left-1/2 z-10 flex w-[min(520px,90%)] -translate-x-1/2 items-center justify-center gap-2 rounded-[12px] bg-ink px-5 py-3 text-center text-[14px] font-medium text-white shadow-float"
+                    >
+                      <Spinner /> Считаем день имитацией{run.data?.stage ? `: ${run.data.stage}` : '…'}
+                      {run.data && run.data.progress > 0 && (
+                        <span className="num text-white/70">{Math.round(run.data.progress * 100)} %</span>
+                      )}
+                    </motion.div>
+                  )}
+                  {ready && replay.isPending && (
+                    <motion.div
+                      key="replay"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="pointer-events-none absolute bottom-14 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/95 px-3 py-1.5 text-[12.5px] text-ink-2 shadow-card"
+                    >
+                      Загружаем журнал событий…
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-
               {tracks && <PlayerBar />}
             </div>
 
