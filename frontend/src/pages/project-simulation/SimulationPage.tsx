@@ -915,7 +915,13 @@ function FleetSweep({
           )
         )}
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <Button size="sm" variant={result ? 'outline' : 'default'} disabled={busy} onClick={run}>
+          <Button
+            size="sm"
+            variant={result ? 'outline' : 'default'}
+            className={cn('rounded-full px-3.5', result && 'border-ink/70')}
+            disabled={busy}
+            onClick={run}
+          >
             {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
             {sweep.isPending
               ? variantIds.length
@@ -928,7 +934,8 @@ function FleetSweep({
           {formula && simulated && (
             <Button
               size="sm"
-              variant="ghost"
+              variant="outline"
+              className="rounded-full border-ink/70 px-3.5"
               disabled={busy}
               title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
               onClick={() =>
