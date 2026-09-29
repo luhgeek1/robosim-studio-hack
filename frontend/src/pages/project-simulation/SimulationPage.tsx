@@ -175,7 +175,7 @@ export function SimulationPage() {
       picker={
         options.length > 1 ? (
           <Select value={scenario.id} onValueChange={setPicked}>
-            <SelectTrigger className="min-w-72">
+            <SelectTrigger className="w-full max-w-full min-w-0 bg-card" aria-label="Вариант сценария">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -340,45 +340,52 @@ function SimulationView({
       ? undefined
       : 'Имитация прогонит день на планировке объекта и проверит, успевает ли парк выполнять задачи в срок.'
 
+  const dockHalf = useDockHalf()
   const stepIdx = stepIndex('simulation')
   const prevStep = PROJECT_STEPS[stepIdx - 1]
   const nextStep = PROJECT_STEPS[stepIdx + 1]
 
-  // Рабочая область занимает всё окно под шапкой и плашкой шагов; портал — потому что у контейнера страницы есть
-  // анимация с transform, а внутри неё position: fixed отсчитывается не от окна.
+  // Рабочая область занимает всё окно под шапкой, плашка шагов плавает поверх середины её верхней строки.
+  // Портал — потому что у контейнера страницы есть анимация с transform, а внутри неё position: fixed
+  // отсчитывается не от окна.
   return createPortal(
-    <div className="fixed inset-x-0 top-[7.625rem] bottom-0 z-20 flex flex-col border-t border-line bg-card">
-      <div className="flex h-11 shrink-0 items-center gap-3 border-b border-line bg-surface-2 pr-2 pl-2">
-        {prevStep && (
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={`/projects/${projectId}/${prevStep.id}`}>
-              <ArrowLeft /> {prevStep.label}
-            </Link>
-          </Button>
-        )}
-        <span className="h-5 w-px shrink-0 bg-line-2" />
-        <span className="hud flex shrink-0 items-center gap-2">
-          <span className="size-1.5 rounded-full bg-signal" aria-hidden />
-          Шаг {String(stepIdx + 1).padStart(2, '0')} / {String(PROJECT_STEPS.length).padStart(2, '0')} ·{' '}
-          {PROJECT_STEPS[stepIdx]?.question}
-        </span>
-        <h1 className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em]">
-          {config.count} × {sizing?.product_name ?? '…'}
-        </h1>
-        {lead && <span className="meta hidden min-w-0 truncate xl:inline">{lead}</span>}
-        <span className="ml-auto flex shrink-0 items-center gap-2">
-          {picker}
-          {nextStep && (
-            <>
-              <span className="h-5 w-px bg-line-2" />
-              <Button variant="ghost" size="sm" asChild>
-                <Link to={`/projects/${projectId}/${nextStep.id}`}>
-                  {nextStep.label} <ArrowRight />
-                </Link>
-              </Button>
-            </>
+    <div
+      className="fixed inset-x-0 top-14 bottom-0 z-20 flex flex-col bg-card"
+      style={{ '--dock-half': `${dockHalf}px` } as CSSProperties}
+    >
+      {/* Строка высотой с зону плашки шагов: середину занимает плашка, содержимое — по краям. */}
+      <div className="flex h-[4.125rem] shrink-0 items-center justify-between gap-3 border-b border-line bg-surface-2 px-2">
+        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
+          {prevStep && (
+            <Button variant="ghost" size="icon-sm" asChild title={`Назад: ${prevStep.label}`}>
+              <Link to={`/projects/${projectId}/${prevStep.id}`} aria-label={`Назад: ${prevStep.label}`}>
+                <ArrowLeft />
+              </Link>
+            </Button>
           )}
-        </span>
+          <div className="min-w-0">
+            <div className="hud flex items-center gap-1.5">
+              <span className="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden />
+              Шаг {String(stepIdx + 1).padStart(2, '0')} / {String(PROJECT_STEPS.length).padStart(2, '0')}
+            </div>
+            <h1
+              className="truncate text-[14px] font-semibold tracking-[-0.01em]"
+              title={`${config.count} × ${sizing?.product_name ?? ''}${lead ? `. ${lead}` : ''}`}
+            >
+              {config.count} × {sizing?.product_name ?? '…'}
+            </h1>
+          </div>
+        </div>
+        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
+          <div className="min-w-0">{picker}</div>
+          {nextStep && (
+            <Button variant="ghost" size="icon-sm" asChild title={`Далее: ${nextStep.label}`}>
+              <Link to={`/projects/${projectId}/${nextStep.id}`} aria-label={`Далее: ${nextStep.label}`}>
+                <ArrowRight />
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {calculation.isPending && <LoadingBlock label="Загружаем расчёт…" className="m-6" />}
@@ -659,6 +666,24 @@ function SimulationView({
 
 const LEFT_W = 272
 const RIGHT_W = 316
+
+// Полуширина плашки шагов с зазором: края строки заголовка заканчиваются там, где начинается плашка.
+const DOCK_GAP_PX = 12
+const DOCK_FALLBACK_HALF_PX = 470
+
+function useDockHalf() {
+  const [half, setHalf] = useState(DOCK_FALLBACK_HALF_PX)
+  useEffect(() => {
+    const dock = document.querySelector<HTMLElement>('nav[aria-label="Шаги оценки"]')
+    if (!dock) return
+    const measure = () => setHalf(Math.ceil(dock.getBoundingClientRect().width / 2) + DOCK_GAP_PX)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(dock)
+    return () => observer.disconnect()
+  }, [])
+  return half
+}
 
 function pointAt(points: SimulationTimeline['points'], t: number) {
   let found = points[0]
