@@ -1,21 +1,21 @@
-import type { ReactNode } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 import type { SizingResult } from '@/shared/api/types'
 import { COUNT_HINT, type RunConfig } from './runConfig'
 import { formatNumber } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
+import { Button } from '@/shared/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Toggle } from '@/shared/ui/toggle'
 import { Segmented } from '@/shared/ui/v0'
 
-/* Песочница — первая строка экрана: число роботов, режим и стресс-тесты видны сразу, любая смена запускает прогон.
-   Если условия отличаются от расчёта, строка говорит, что это проверка «что если» и сценарий она не меняет. */
+/* Условия прогона за одной кнопкой: подпись кнопки — текущие условия, а если они отличаются от расчёта, кнопка
+   синяя и внутри сказано, что это проверка «что если», сценарий она не меняет. */
 export function Conditions({
   config,
   counts,
   working,
   sizing,
   whatIf,
-  processes,
-  onProcess,
   onChange,
 }: {
   config: RunConfig
@@ -23,24 +23,37 @@ export function Conditions({
   working: number
   sizing: SizingResult
   whatIf: string | null
-  processes: { key: string; label: string }[]
-  onProcess: (key: string) => void
   onChange: (next: Partial<RunConfig>) => void
 }) {
+  const summary = [
+    `${config.count} роб.`,
+    config.mode === 'peak' ? 'пик' : 'сутки',
+    config.volume ? '+20 %' : null,
+    config.failure ? 'отказ 2 ч' : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
   return (
-    <section className={cn('border-b border-line px-4 py-3 sm:px-5', whatIf && 'bg-info-soft/40')}>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        {processes.length > 1 && (
-          <Field label="Процесс">
-            <Segmented
-              size="sm"
-              value={sizing.process_key}
-              onChange={onProcess}
-              options={processes.map((p) => ({ value: p.key, label: p.label }))}
-            />
-          </Field>
-        )}
-        <Field label="Роботов">
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn('shrink-0', whatIf && 'border-info/50 bg-info-soft text-info hover:bg-info-soft/80')}
+          title={whatIf ?? 'Условия прогона: как в расчёте'}
+        >
+          <SlidersHorizontal /> Условия: {summary}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" side="top" sideOffset={10} className="w-[22rem] space-y-4 p-4">
+        <div>
+          <div className="text-[14px] font-semibold">Условия прогона</div>
+          <p className={cn('mt-1 text-[12.5px] leading-relaxed', whatIf ? 'text-info' : 'text-ink-3')}>
+            {whatIf ??
+              `Как в расчёте: ${working} роботов, пиковые часы. Смена условий сразу запускает новый прогон — это проверка «что если», сценарий она не меняет.`}
+          </p>
+        </div>
+        <Field label="Роботов в работе">
           <Segmented
             size="sm"
             value={config.count}
@@ -60,19 +73,19 @@ export function Conditions({
             options={[
               {
                 value: 'peak',
-                label: 'Пик',
+                label: 'Пиковые часы',
                 hint: `${formatNumber(sizing.demand_peak_per_hour)} ед/ч без передышки, как в переборе флота`,
               },
               {
                 value: 'normal',
-                label: 'Сутки',
+                label: 'Обычный день',
                 hint: `Сутки: ${formatNumber(sizing.demand_avg_per_hour)} ед/ч в среднем, пик в середине смены`,
               },
             ]}
           />
         </Field>
-        <Field label="Стресс">
-          <div className="flex flex-wrap gap-1.5">
+        <Field label="Стресс-тест">
+          <div className="flex gap-1.5">
             <Toggle
               size="sm"
               variant="outline"
@@ -93,19 +106,15 @@ export function Conditions({
             </Toggle>
           </div>
         </Field>
-      </div>
-      <p className={cn('mt-2 text-[12.5px] leading-relaxed', whatIf ? 'text-info' : 'text-ink-3')}>
-        {whatIf ??
-          `Как в расчёте: ${working} ${working === 1 ? 'робот' : 'роботов'} в работе, пиковые часы. Меняйте условия — прогон запустится сразу; сценарий меняет только перебор флота ниже.`}
-      </p>
-    </section>
+      </PopoverContent>
+    </Popover>
   )
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-w-0 items-center gap-2.5">
-      <span className="hud shrink-0">{label}</span>
+    <div>
+      <div className="hud mb-1.5">{label}</div>
       {children}
     </div>
   )

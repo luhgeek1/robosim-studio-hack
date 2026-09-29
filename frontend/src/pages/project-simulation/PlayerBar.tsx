@@ -1,5 +1,5 @@
 import { Pause, Play, RotateCcw } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect } from 'react'
 import { SPEEDS, usePlayback } from '@/entities/simulation'
 import { Button } from '@/shared/ui/button'
 import { cn } from '@/shared/lib/utils'
@@ -27,40 +27,36 @@ export function usePlaybackDriver() {
 }
 
 // ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения — первая строка нижней панели, под картой.
-export function PlayerBar({ disabled = false, track }: { disabled?: boolean; track?: ReactNode }) {
+export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
   const playing = usePlayback((s) => s.playing)
   const speed = usePlayback((s) => s.speed)
   const total = usePlayback((s) => s.total)
   const t = usePlayback((s) => Math.floor(s.t / 20) * 20)
   const { setPlaying, setSpeed, setT } = usePlayback.getState()
   return (
-    <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2', disabled && 'pointer-events-none opacity-45')}>
+    <div className={cn('flex items-center gap-3', disabled && 'pointer-events-none opacity-45')}>
       <Button
         size="icon-sm"
-        className="rounded-full max-lg:size-9"
+        className="rounded-full"
         onClick={() => setPlaying(!playing)}
         aria-label={playing ? 'Пауза' : 'Запустить'}
       >
         {playing ? <Pause /> : <Play />}
       </Button>
-      <Button variant="ghost" size="icon-sm" className="max-lg:size-9" onClick={() => setT(0)} aria-label="С начала">
+      <Button variant="ghost" size="icon-sm" onClick={() => setT(0)} aria-label="С начала">
         <RotateCcw />
       </Button>
-      <div className="relative flex h-8 min-w-24 flex-1 items-center">
-        {/* Очередь за прогон рисуется под ползунком: видно, куда перемотать, чтобы попасть в самый напряжённый момент. */}
-        {track && <div className="pointer-events-none absolute inset-x-0 top-0 bottom-1/2">{track}</div>}
-        <input
-          type="range"
-          min={0}
-          max={Math.max(1, total)}
-          step={1}
-          value={t}
-          onChange={(e) => setT(Number(e.target.value))}
-          className="relative h-1 w-full cursor-pointer accent-ink max-lg:h-6"
-          aria-label="Время имитации"
-        />
-      </div>
-      <span className="num w-23 shrink-0 text-center font-mono text-[12px] text-ink-2 max-sm:w-auto">
+      <input
+        type="range"
+        min={0}
+        max={Math.max(1, total)}
+        step={1}
+        value={t}
+        onChange={(e) => setT(Number(e.target.value))}
+        className="h-1 min-w-0 flex-1 cursor-pointer accent-ink"
+        aria-label="Время имитации"
+      />
+      <span className="num w-23 shrink-0 text-center font-mono text-[12px] text-ink-2">
         {clock(t)} / {clock(total)}
       </span>
       <Segmented

@@ -34,17 +34,17 @@ import type { Scenario, SizingResult } from '@/shared/api/types'
 import { formatDate, formatNumber, formatPct, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
-import { Callout, Screen, Section } from '@/shared/ui/page'
+import { Callout, Screen } from '@/shared/ui/page'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { KpiNumber, Pill, type Tone } from '@/shared/ui/v0'
-import { PulseDot } from '@/shared/ui/kinetics'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { Conditions } from './Conditions'
 import { COUNT_HINT, type RunConfig } from './runConfig'
 import { QueueSparkline } from './QueueSparkline'
+import { PaneSection, SideTabs, StatusBar, WorkbenchFrame, WorkbenchGrid, type Panels } from '@/widgets/workbench'
 
 const SEED = SWEEP_SEED
 // Стресс-тесты шага «Имитация» из docs/PRODUCT.md: +20 % объёма и отказ одного робота на 2 часа в начале смены.
@@ -208,23 +208,21 @@ function SimulationView({
   const start = useStartSimulation(scenario.id)
   const projectLayout = useLayout(projectId)
 
-  // Имитируются процессы с моделью цикла (паллеты, G2P, тягачи); остальные N остаются по расчёту. Если таких
-  // процессов несколько, песочница меняет парк одного из них, остальные едут в том же прогоне как в расчёте.
-  const checkable = useMemo(
-    () => calculation.data?.sizing.filter((s) => s.robot.cycle_time_s != null) ?? [],
-    [calculation.data],
-  )
-  const [processKey, setProcessKey] = useState<string>()
+  // Имитируем процесс сценария с моделью цикла (паллеты или G2P); остальные N остаются по расчёту.
   const sizing: SizingResult | undefined =
-    checkable.find((s) => s.process_key === processKey) ??
-    checkable.find((s) => s.count.simulation_id) ??
-    checkable[0] ??
+    calculation.data?.sizing.find((s) => s.count.simulation_id) ??
+    calculation.data?.sizing.find((s) => s.robot.cycle_time_s != null) ??
     calculation.data?.sizing[0]
   // Имитация проверяет рабочий парк, который сейчас в расчёте (без резерва на отказы): по перебору флота, по формуле
   // или заданный вручную.
   const working = sizing ? workingCount(sizing) : 0
   const lastSweep = useLastSweep(scenario.id, sizing?.process_key).data ?? undefined
-  const [draft, setDraft] = useState<Omit<RunConfig, 'count'> & { count: number | null }>(FRESH)
+  const [draft, setDraft] = useState<Omit<RunConfig, 'count'> & { count: number | null }>({
+    count: null,
+    mode: 'peak',
+    volume: false,
+    failure: false,
+  })
   const config: RunConfig = { ...draft, count: draft.count ?? Math.max(1, working) }
   const key = configKey(config)
   const counts = useMemo(() => {
@@ -234,47 +232,48 @@ function SimulationView({
 
   const [runIds, setRunIds] = useState<Record<string, string>>({})
   // Прогон с теми же условиями уже есть — берём его; прогон, записавший N в сценарий, — первым.
-  const findRun = (c: RunConfig) => {
+  const existing = useMemo(() => {
     if (!sizing) return undefined
-    const k = configKey(c)
-    if (runIds[k]) return runIds[k]
     const matching = (runs.data ?? []).filter((r) => {
-      const rc = configOf(r, sizing.process_key)
-      return usable(r) && rc !== null && configKey(rc) === k
+      const c = configOf(r, sizing.process_key)
+      return usable(r) && c !== null && configKey(c) === key
     })
-    return (matching.find((r) => r.id === sizing.count.simulation_id) ?? matching[0])?.id
-  }
-  const runId = findRun(config) ?? null
+    return matching.find((r) => r.id === sizing.count.simulation_id) ?? matching[0]
+  }, [runs.data, sizing, key])
+  const runId = runIds[key] ?? existing?.id ?? null
   const run = useSimulationRun(runId)
-  const summary = run.data?.status === 'done' ? (run.data.summary ?? null) : null
+  const summary = run.data?.status === 'done' ? run.data.summary : null
   const ready = Boolean(summary)
   const replay = useSimulationReplay(runId, ready)
   const timeline = useSimulationTimeline(runId, ready)
+  // Flow and congestion is a layer of the map (the map's own toolbar), not a run condition.
   const heat = useSimulationHeatmap(runId, ready)
   const [error, setError] = useState<string | null>(null)
   const [selectedRobot, setSelectedRobot] = useState<string | null>(null)
   const capture: TwinCapture = useRef(null)
   const [view, setView] = useState<TwinView>('3d')
   const upload = useUploadVisual(projectId)
-
-  const request = (c: RunConfig) => ({
-    mode: c.mode,
-    // Пик — окно `sim_peak_duration_hours` бэкенда, то же, что у перебора флота; обычный день — сутки.
-    ...(c.mode === 'normal' ? { duration_hours: 24 } : {}),
-    seed: SEED,
-    volume_multiplier: c.volume ? STRESS.volumeMultiplier : 1,
-    fleet_override: [{ process_key: sizing!.process_key, count: c.count }],
-    failures: c.failure ? [STRESS.failure] : [],
-    record_events: true,
-    compare_baseline: false,
-  })
+  const [panels, setPanels] = useState<Panels>({ left: false, right: true, bottom: true })
 
   useEffect(() => {
     if (!sizing || runId || runs.isPending || start.isPending || error) return
-    start.mutate(request(config), {
-      onSuccess: (created) => setRunIds((prev) => ({ ...prev, [key]: created.id })),
-      onError: (e) => setError(parseApiProblem(e).detail),
-    })
+    start.mutate(
+      {
+        mode: config.mode,
+        // Пик — окно `sim_peak_duration_hours` бэкенда, то же, что у перебора флота; обычный день — сутки.
+        ...(config.mode === 'normal' ? { duration_hours: 24 } : {}),
+        seed: SEED,
+        volume_multiplier: config.volume ? STRESS.volumeMultiplier : 1,
+        fleet_override: [{ process_key: sizing.process_key, count: config.count }],
+        failures: config.failure ? [STRESS.failure] : [],
+        record_events: true,
+        compare_baseline: false,
+      },
+      {
+        onSuccess: (created) => setRunIds((prev) => ({ ...prev, [key]: created.id })),
+        onError: (e) => setError(parseApiProblem(e).detail),
+      },
+    )
     // Запуск только при смене условий прогона; повторный вызов с тем же ключом не нужен.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, sizing?.process_key, runId, runs.isPending, error])
@@ -289,33 +288,10 @@ function SimulationView({
     setSelectedRobot(null)
     setDraft((d) => ({ ...d, count: d.count ?? config.count, ...next }))
   }
-  const open = (next: RunConfig, simulationId?: string | null) => {
+  const openRun = (count: number, simulationId: string | null) => {
+    const next: RunConfig = { count, mode: 'peak', volume: false, failure: false }
     if (simulationId) setRunIds((prev) => ({ ...prev, [configKey(next)]: simulationId }))
     change(next)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-  const pickProcess = (next: string) => {
-    setProcessKey(next)
-    setRunIds({})
-    setError(null)
-    setSelectedRobot(null)
-    setDraft(FRESH)
-  }
-
-  // Стресс-тесты «все сразу»: отдельный запуск, чтобы не мешать прогону на карте.
-  const checks = useStartSimulation(scenario.id)
-  const runChecks = async () => {
-    for (const check of CHECKS) {
-      const c: RunConfig = { count: fleet, mode: 'peak', ...check.config }
-      if (findRun(c)) continue
-      try {
-        const created = await checks.mutateAsync(request(c))
-        setRunIds((prev) => ({ ...prev, [configKey(c)]: created.id }))
-      } catch (e) {
-        toast.error(problemText(e))
-        return
-      }
-    }
   }
 
   const layout = replay.data?.layout ?? projectLayout.data
@@ -354,230 +330,241 @@ function SimulationView({
   }
 
   const whatIf = sizing ? whatIfText(sizing, config, working) : null
-  // Стресс-тесты гоняют весь купленный парк: резерв на отказы для того и заложен.
-  const fleet = working + (sizing?.count.reserve ?? 0)
+
+  const lead = !sizing
+    ? 'В сценарии нет процесса с моделью цикла — имитировать нечего.'
+    : summary
+      ? undefined
+      : 'Имитация прогонит день на планировке объекта и проверит, успевает ли парк выполнять задачи в срок.'
+
   const sweepPoint =
     run.data?.purpose === 'sweep' ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id) : undefined
-  const sla = summary && sizing ? processSla(summary, sizing.process_key) : null
-  const holds = summary && sla != null ? sla >= summary.sla.target_pct : null
-  const robots = `${config.count} ${pluralRu(config.count, ['робот', 'робота', 'роботов'])}`
-  const title =
-    !sizing || !summary
-      ? `${robots} ${sizing?.product_name ?? ''}: прогоняем ${config.mode === 'peak' ? 'пиковые часы' : 'сутки'}`
-      : `${robots} ${holds ? (config.count === 1 ? 'держит' : 'держат') : config.count === 1 ? 'не держит' : 'не держат'} ${config.mode === 'peak' ? 'пик' : 'день'}${config.volume || config.failure ? ' со стрессом' : ''}: ${formatNumber(sla ?? 0, (sla ?? 0) >= 99 ? 1 : 0)} % задач в срок`
+  const sweepProps = {
+    projectId,
+    scenarioId: scenario.id,
+    variantIds,
+    sizing: sizing!,
+    last: lastSweep,
+    shownCount: config.count,
+    onOpen: openRun,
+  }
 
   return (
-    <Screen
-      dense
-      title={title}
-      lead={!sizing ? 'В сценарии нет процесса с моделью цикла — имитировать нечего.' : undefined}
-      actions={
-        <>
-          {picker && <div className="w-64 max-sm:w-full">{picker}</div>}
-          <Button
-            variant="outline"
-            disabled={!tracks || upload.isPending}
-            onClick={() => void snapshot()}
-            title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
-          >
-            {upload.isPending ? <Spinner /> : <Camera />} Снимок в отчёт
-          </Button>
-        </>
-      }
+    <WorkbenchFrame
+      projectId={projectId}
+      step="simulation"
+      title={`${config.count} × ${sizing?.product_name ?? '…'}`}
+      titleHint={`${config.count} × ${sizing?.product_name ?? ''}${lead ? `. ${lead}` : ''}`}
+      actions={picker}
     >
-      {calculation.isPending && <LoadingBlock label="Загружаем расчёт…" />}
-      {calculation.isError && <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} />}
-      {sizing && (
-        <div className="space-y-4">
-          <section className="card overflow-hidden">
-            <Conditions
-              config={config}
-              counts={counts}
-              working={working}
-              sizing={sizing}
-              whatIf={whatIf}
-              processes={checkable.map((s) => ({
-                key: s.process_key,
-                label: s.product_name?.split(' (')[0] ?? s.process_key,
-              }))}
-              onProcess={pickProcess}
-              onChange={change}
-            />
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem]">
-              {/* Карта — иллюстрация прогона, а не главный экран: высота ограничена, чтобы вывод и ответы
-                  колонки были видны вместе с ней. */}
-              <div className="relative min-h-80 lg:min-h-[min(440px,calc(100svh-450px))]">
-                {(error || replay.isError) && (
-                  <div className="absolute inset-x-3 top-16 z-20 space-y-2">
-                    {error && (
-                      <Callout tone="crit">
-                        Имитация не запустилась: {error}. Сейчас имитация строится для транспортных роботов и «товар к
-                        человеку»; для остальных типов число роботов остаётся по расчёту времени цикла.
-                      </Callout>
-                    )}
-                    {replay.isError && (
-                      <Callout tone="crit">
-                        Журнал событий не загрузился: {parseApiProblem(replay.error).detail}
-                      </Callout>
-                    )}
-                  </div>
-                )}
-                {layout ? (
-                  <Twin
-                    layout={layout}
-                    capture={capture}
-                    view={view}
-                    onViewChange={setView}
-                    tracks={tracks}
-                    heat={heat.data ?? null}
-                    selectedRobot={selectedRobot}
-                    onSelectRobot={setSelectedRobot}
-                  />
-                ) : projectLayout.isPending ? (
-                  <LoadingBlock label="Загружаем планировку…" className="m-4" />
-                ) : (
-                  <EmptyState
-                    className="m-4"
-                    title="Планировка не построена"
-                    description="Имитация идёт по графу проездов планировки. Постройте её на шаге «Планировка»."
-                    action={
-                      <Button asChild>
-                        <Link to={`/projects/${projectId}/layout`}>К планировке</Link>
-                      </Button>
-                    }
-                  />
-                )}
-
-                <AnimatePresence>
-                  {selectedRobot && tracks && summary && (
-                    <RobotCard
-                      key={selectedRobot}
-                      track={tracks.find((t) => t.id === selectedRobot)}
-                      summary={summary}
-                      onClose={() => setSelectedRobot(null)}
-                    />
-                  )}
-                </AnimatePresence>
-
-                <AnimatePresence>
-                  {busy && (
-                    <motion.div
-                      key="busy"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      className="pointer-events-none absolute bottom-5 left-1/2 z-10 flex w-[min(520px,90%)] -translate-x-1/2 items-center justify-center gap-2 rounded-[12px] bg-ink px-5 py-3 text-center text-[14px] font-medium text-white shadow-float"
-                    >
-                      <Spinner /> Считаем смену имитацией{run.data?.stage ? `: ${run.data.stage}` : '…'}
-                      {run.data && run.data.progress > 0 && (
-                        <span className="num text-white/70">{Math.round(run.data.progress * 100)} %</span>
-                      )}
-                    </motion.div>
-                  )}
-                  {ready && replay.isPending && (
-                    <motion.div
-                      key="replay"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="pointer-events-none absolute bottom-5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/95 px-3 py-1.5 text-[12.5px] text-ink-2 shadow-card"
-                    >
-                      Загружаем журнал событий…
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <RunAside
-                processKey={sizing.process_key}
-                run={run.data}
-                summary={summary}
-                timeline={timeline.data}
-                sweepPoint={sweepPoint}
-                failed={failed}
-              />
-            </div>
-            <div className="border-t border-line px-4 py-2.5 sm:px-5">
-              <PlayerBar
-                disabled={!tracks}
-                track={
-                  timeline.data && timeline.data.points.length > 1 ? (
-                    <QueueSparkline points={timeline.data.points} height={28} bare />
-                  ) : undefined
-                }
-              />
-            </div>
-          </section>
-
-          <div className="space-y-4">
-            <FleetDecision
-              projectId={projectId}
-              scenarioId={scenario.id}
-              variantIds={variantIds}
-              sizing={sizing}
-              last={lastSweep}
-              shownCount={config.mode === 'peak' && !config.volume && !config.failure ? config.count : null}
-              onOpen={(count, id) => open({ count, mode: 'peak', volume: false, failure: false }, id)}
-              summary={summary}
-              target={target}
-            />
-            <>
-              <StressChecks
-                processKey={sizing.process_key}
-                fleet={fleet}
-                reserve={sizing.count.reserve ?? 0}
-                target={summary?.sla.target_pct ?? null}
-                find={findRun}
-                current={key}
-                pending={checks.isPending}
-                onRun={() => void runChecks()}
-                onOpen={(c, id) => open(c, id)}
-              />
-              {summary && <BusyShare summary={summary} />}
-            </>
-          </div>
-        </div>
+      {calculation.isPending && <LoadingBlock label="Загружаем расчёт…" className="m-6" />}
+      {calculation.isError && (
+        <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} className="m-6" />
       )}
-    </Screen>
+      {sizing && (
+        <WorkbenchGrid
+          panels={panels}
+          leftWidth={LEFT_W}
+          rightWidth={RIGHT_W}
+          left={null}
+          center={
+            <>
+              {(error || replay.isError) && (
+                <div className="absolute inset-x-3 top-3 z-20 space-y-2">
+                  {error && (
+                    <Callout tone="crit">
+                      Имитация не запустилась: {error}. Сейчас имитация строится для транспортных роботов и «товар к
+                      человеку»; для остальных типов число роботов остаётся по расчёту времени цикла.
+                    </Callout>
+                  )}
+                  {replay.isError && (
+                    <Callout tone="crit">Журнал событий не загрузился: {parseApiProblem(replay.error).detail}</Callout>
+                  )}
+                </div>
+              )}
+              {layout ? (
+                <Twin
+                  layout={layout}
+                  capture={capture}
+                  view={view}
+                  onViewChange={setView}
+                  tracks={tracks}
+                  heat={heat.data ?? null}
+                  selectedRobot={selectedRobot}
+                  onSelectRobot={setSelectedRobot}
+                />
+              ) : projectLayout.isPending ? (
+                <LoadingBlock label="Загружаем планировку…" className="m-4" />
+              ) : (
+                <EmptyState
+                  className="m-4"
+                  title="Планировка не построена"
+                  description="Имитация идёт по графу проездов планировки. Постройте её на шаге «Планировка»."
+                  action={
+                    <Button asChild>
+                      <Link to={`/projects/${projectId}/layout`}>К планировке</Link>
+                    </Button>
+                  }
+                />
+              )}
+
+              <AnimatePresence>
+                {selectedRobot && tracks && summary && (
+                  <RobotCard
+                    key={selectedRobot}
+                    track={tracks.find((t) => t.id === selectedRobot)}
+                    summary={summary}
+                    onClose={() => setSelectedRobot(null)}
+                  />
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {busy && (
+                  <motion.div
+                    key="busy"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="pointer-events-none absolute bottom-5 left-1/2 z-10 flex w-[min(520px,90%)] -translate-x-1/2 items-center justify-center gap-2 rounded-[12px] bg-ink px-5 py-3 text-center text-[14px] font-medium text-white shadow-float"
+                  >
+                    <Spinner /> Считаем день имитацией{run.data?.stage ? `: ${run.data.stage}` : '…'}
+                    {run.data && run.data.progress > 0 && (
+                      <span className="num text-white/70">{Math.round(run.data.progress * 100)} %</span>
+                    )}
+                  </motion.div>
+                )}
+                {ready && replay.isPending && (
+                  <motion.div
+                    key="replay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="pointer-events-none absolute bottom-5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/95 px-3 py-1.5 text-[12.5px] text-ink-2 shadow-card"
+                  >
+                    Загружаем журнал событий…
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          }
+          right={
+            <SideTabs
+              tabs={[
+                {
+                  key: 'summary',
+                  label: 'Итог',
+                  content: (
+                    <>
+                      {summary && run.data && (
+                        <RunLive
+                          run={run.data}
+                          summary={summary}
+                          timeline={timeline.data}
+                          sweepPoint={sweepPoint}
+                          parts={['sla']}
+                        />
+                      )}
+                      <FleetSweep {...sweepProps} part="decision" />
+                    </>
+                  ),
+                },
+                {
+                  key: 'run',
+                  label: 'Прогон',
+                  content:
+                    summary && run.data ? (
+                      <RunLive
+                        run={run.data}
+                        summary={summary}
+                        timeline={timeline.data}
+                        sweepPoint={sweepPoint}
+                        parts={['moment', 'queue', 'states']}
+                      />
+                    ) : (
+                      <NoRun text={failed} />
+                    ),
+                },
+                { key: 'fleet', label: 'Перебор', content: <FleetSweep {...sweepProps} part="table" /> },
+                {
+                  key: 'waits',
+                  label: 'Узкие места',
+                  content:
+                    summary && run.data ? (
+                      <>
+                        <RunCheck summary={summary} target={target} />
+                        <RunLive run={run.data} summary={summary} timeline={timeline.data} parts={['waits']} />
+                      </>
+                    ) : (
+                      <NoRun text={failed} />
+                    ),
+                },
+              ]}
+            />
+          }
+          bottom={
+            <div className="flex items-center gap-3 px-3.5 py-2">
+              <div className="min-w-0 flex-1">
+                <PlayerBar disabled={!tracks} />
+              </div>
+              <span className="h-6 w-px shrink-0 bg-line" />
+              <Conditions
+                config={config}
+                counts={counts}
+                working={working}
+                sizing={sizing}
+                whatIf={whatIf}
+                onChange={change}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!tracks || upload.isPending}
+                onClick={() => void snapshot()}
+                title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
+              >
+                {upload.isPending ? <Spinner /> : <Camera />} Снимок
+              </Button>
+            </div>
+          }
+          status={
+            <StatusBar
+              status={
+                failed || error
+                  ? 'Ошибка прогона'
+                  : busy
+                    ? `Считаем${run.data && run.data.progress > 0 ? ` ${Math.round(run.data.progress * 100)} %` : '…'}`
+                    : ready
+                      ? 'Прогон готов'
+                      : 'Нет прогона'
+              }
+              live={Boolean(busy)}
+              items={[
+                config.mode === 'peak' ? 'Пиковые часы' : 'Обычный день',
+                `${formatNumber(target)} ед/ч${config.volume ? ' +20 %' : ''}`,
+                `${config.count} роб.${config.failure ? ' · отказ 2 ч' : ''}`,
+                whatIf ? 'что если' : 'как в расчёте',
+              ]}
+              metrics={[
+                ...(summary
+                  ? [`SLA ${formatNumber(summary.sla.achieved_pct, summary.sla.achieved_pct >= 99 ? 1 : 0)} %`]
+                  : []),
+                <PlaybackClock key="clock" />,
+              ]}
+              panels={panels}
+              onToggle={(key) => setPanels((p) => ({ ...p, [key]: !p[key] }))}
+              labels={{ left: 'Панель прогона', bottom: 'Плеер и условия', right: 'Итог и детали' }}
+              toggles={['bottom', 'right']}
+            />
+          }
+        />
+      )}
+    </WorkbenchFrame>
   )
 }
 
-const FRESH = { count: null, mode: 'peak', volume: false, failure: false } as const satisfies Omit<
-  RunConfig,
-  'count'
-> & {
-  count: number | null
-}
-
-// Проверки устойчивости парка из расчёта: объём выше плана, отказ робота и оба сразу — в пиковые часы.
-const CHECKS: { key: string; title: string; note: string; config: Pick<RunConfig, 'volume' | 'failure'> }[] = [
-  {
-    key: 'volume',
-    title: 'Объём на 20 % выше',
-    note: 'поток задач на пятую часть больше плана',
-    config: { volume: true, failure: false },
-  },
-  {
-    key: 'failure',
-    title: 'Робот встал на 2 часа',
-    note: 'один робот выходит из строя в начале смены',
-    config: { volume: false, failure: true },
-  },
-  {
-    key: 'both',
-    title: 'Оба сразу',
-    note: 'больше задач и отказ робота в одну смену',
-    config: { volume: true, failure: true },
-  },
-]
-
-// Доля в срок того процесса, чей парк на экране: в прогоне сценария рядом едут и другие типы роботов со своим SLA.
-function processSla(summary: SimulationSummary, processKey: string): number {
-  const own = summary.per_process?.find((p) => p.process_key === processKey)
-  return (summary.per_process?.length ?? 0) > 1 && own?.sla_achieved_pct != null
-    ? own.sla_achieved_pct
-    : summary.sla.achieved_pct
-}
+const LEFT_W = 0
+const RIGHT_W = 336
 
 function pointAt(points: SimulationTimeline['points'], t: number) {
   let found = points[0]
@@ -588,503 +575,190 @@ function pointAt(points: SimulationTimeline['points'], t: number) {
   return found
 }
 
-/* Колонка у карты — три ответа без прокрутки: держит ли парк SLA, что происходит в момент плеера, где узкое место. */
-function RunAside({
-  processKey,
+type RunPart = 'sla' | 'moment' | 'queue' | 'states' | 'waits'
+
+function RunLive({
   run,
   summary,
   timeline,
   sweepPoint,
-  failed,
+  parts,
 }: {
-  processKey: string
-  run: SimulationRun | undefined
-  summary: SimulationSummary | null
+  run: SimulationRun
+  summary: SimulationSummary
   timeline?: SimulationTimeline
   sweepPoint?: FleetSweepResult['points'][number]
-  failed: string | null
+  parts: RunPart[]
 }) {
+  const has = (part: RunPart) => parts.includes(part)
   const bucket = usePlayback((s) => Math.floor(s.t / 30))
-  if (!summary || !run) {
-    return (
-      <aside className="flex items-center justify-center border-t border-line px-5 py-10 text-center text-[13px] text-ink-3 lg:border-t-0 lg:border-l">
-        {failed ?? 'Показатели появятся, когда прогон завершится.'}
-      </aside>
-    )
-  }
   const points = timeline?.points ?? []
   const now = points.length ? pointAt(points, bucket * 30) : undefined
   const slaTarget = summary.sla.target_pct
-  const sla = processSla(summary, processKey)
-  const tone = slaTone(sla, slaTarget)
-  const queue = now?.queue ?? 0
-  const bottleneck = summary.bottleneck && summary.bottleneck.resource_kind !== 'none' ? summary.bottleneck : null
-  const worst = summary.congestion?.top_edges?.[0]
-
-  return (
-    <aside className="flex min-w-0 flex-col divide-y divide-line border-t border-line lg:border-t-0 lg:border-l">
-      <div className="px-5 py-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="hud">Задачи в срок</span>
-          {run.purpose === 'sweep' && (
-            <Hint>
-              Один из {sweepPoint?.runs ?? 'нескольких'} прогонов перебора флота
-              {sweepPoint
-                ? `: в среднем ${formatNumber(sweepPoint.sla_achieved_pct, 1)} %, худший ${formatNumber(sweepPoint.sla_min_pct ?? sweepPoint.sla_achieved_pct, 1)} %`
-                : ''}
-              . Число роботов принято, только если SLA держат все прогоны.
-            </Hint>
-          )}
-        </div>
-        <div className="mt-1 flex items-baseline justify-between gap-2">
-          <div className="flex items-baseline gap-1">
-            <KpiNumber
-              value={sla}
-              digits={sla >= 99 ? 1 : 0}
-              className={`display text-[40px] ${tone === 'ok' ? 'text-ink' : tone === 'warn' ? 'text-warn' : 'text-crit'}`}
-            />
-            <span className="display text-[18px] text-ink-3">%</span>
-          </div>
-          <span className="meta">цель {formatNumber(slaTarget)} %</span>
-        </div>
-        <div className="relative mt-1.5 h-1.5 w-full rounded-full bg-black/6">
-          <motion.div
-            className={`h-full rounded-full ${tone === 'ok' ? 'bg-ink' : tone === 'warn' ? 'bg-warn' : 'bg-crit'}`}
-            initial={false}
-            animate={{ width: `${Math.max(0, Math.min(100, sla))}%` }}
-            transition={{ type: 'spring', stiffness: 120, damping: 24 }}
-          />
-          <span className="absolute -top-1 h-3.5 w-px bg-signal" style={{ left: `${slaTarget}%` }} />
-        </div>
-        {summary.sla.target_value != null && (
-          <p className="meta mt-2">
-            срок {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} · в среднем{' '}
-            {formatNumber(summary.sla.avg_lead_time_min, 1)} мин
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-3 divide-x divide-line">
-        <Kpi label="Готово" value={now?.done ?? 0} unit={`/ ${formatNumber(now?.demand_cum ?? 0)}`} />
-        <Kpi label="Очередь" value={queue} unit="зад." tone={queue > 15 ? 'crit' : queue > 6 ? 'warn' : 'neutral'} />
-        <Kpi label="Загрузка" value={(now?.utilization ?? 0) * 100} unit="%" />
-      </div>
-
-      <div className="px-5 py-3.5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="hud">Узкое место</span>
-          {(bottleneck || worst) && (
-            <Hint>
-              {bottleneck && <p>{bottleneck.explanation}</p>}
-              {bottleneck?.suggestion && <p>Что сделать: {bottleneck.suggestion}</p>}
-              {worst && (
-                <p>
-                  Дольше всего ждут: {worst.name ?? worst.edge_id} — {Math.round(worst.wait_s ?? 0)} с за прогон. Слой
-                  «Заторы» на карте показывает все участки.
-                </p>
-              )}
-            </Hint>
-          )}
-        </div>
-        <div className="mt-1 text-[14px] font-medium text-ink">
-          {bottleneck
-            ? `${bottleneck.resource_name ?? bottleneck.resource_kind}${bottleneck.utilization != null ? ` · ${formatPct(bottleneck.utilization, { share: true, digits: 0 })}` : ''}`
-            : 'Нет: парк не упирается ни в проходы, ни в ворота'}
-        </div>
-        {worst && (worst.wait_s ?? 0) > 0 && (
-          <div className="meta mt-0.5 truncate">
-            ждут дольше всего: {worst.name ?? worst.edge_id}, {Math.round(worst.wait_s ?? 0)} с
-          </div>
-        )}
-      </div>
-    </aside>
-  )
-}
-
-/* Чем заняты роботы — одна полоса долей времени. */
-function BusyShare({ summary }: { summary: SimulationSummary }) {
+  const tone = slaTone(summary.sla.achieved_pct, slaTarget)
   const byState = Object.entries(summary.utilization.by_state ?? {}).filter(([, v]) => (v ?? 0) > 0.001)
-  if (!byState.length) return null
-  return (
-    <Section title="Чем заняты роботы" description="доля времени за прогон">
-      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-black/6">
-        {byState.map(([k, v]) => (
-          <motion.div
-            key={k}
-            className={STATE_COLOR[k] ?? 'bg-ink-4'}
-            initial={false}
-            animate={{ width: `${(v ?? 0) * 100}%` }}
-            transition={{ type: 'spring', stiffness: 120, damping: 24 }}
-          />
-        ))}
-      </div>
-      <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[12.5px]">
-        {byState.map(([k, v]) => (
-          <li key={k} className="flex items-center gap-2">
-            <span className={cn('size-2 shrink-0 rounded-full', STATE_COLOR[k] ?? 'bg-ink-4')} />
-            <span className="min-w-0 truncate text-ink-2">{STATE_LABEL[k] ?? k}</span>
-            <span className="num ml-auto shrink-0 text-ink">{formatPct(v ?? 0, { share: true, digits: 0 })}</span>
-          </li>
-        ))}
-      </ul>
-    </Section>
-  )
-}
-
-/* Стресс-тесты как вердикт: парк из расчёта прогоняется в пике с повышенным объёмом, с отказом робота и с обоими
-   сразу. Карточка — ответ «держит / не держит»; клик открывает этот прогон на карте. */
-function StressChecks({
-  processKey,
-  fleet,
-  reserve,
-  target,
-  find,
-  current,
-  pending,
-  onRun,
-  onOpen,
-}: {
-  processKey: string
-  fleet: number
-  reserve: number
-  target: number | null
-  find: (c: RunConfig) => string | undefined
-  current: string
-  pending: boolean
-  onRun: () => void
-  onOpen: (c: RunConfig, id: string) => void
-}) {
-  const items = CHECKS.map((check) => {
-    const config: RunConfig = { count: fleet, mode: 'peak', ...check.config }
-    return { ...check, config, id: find(config) }
-  })
-  const missing = items.some((i) => !i.id)
-  return (
-    <Section
-      title="Стресс-тесты"
-      description={`весь парк сценария: ${fleet} ${pluralRu(fleet, ['робот', 'робота', 'роботов'])}${reserve ? ` с резервом ${reserve}` : ''}, пиковые часы`}
-      actions={
-        missing ? (
-          <Button size="sm" disabled={pending} onClick={onRun}>
-            {pending ? <Spinner /> : <Sparkles />} Прогнать проверки
-          </Button>
-        ) : undefined
-      }
-    >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {items.map((item) => (
-          <StressCard
-            key={item.key}
-            processKey={processKey}
-            title={item.title}
-            note={item.note}
-            id={item.id}
-            target={target}
-            active={configKey(item.config) === current}
-            onOpen={() => item.id && onOpen(item.config, item.id)}
-          />
-        ))}
-      </div>
-    </Section>
-  )
-}
-
-function StressCard({
-  processKey,
-  title,
-  note,
-  id,
-  target,
-  active,
-  onOpen,
-}: {
-  processKey: string
-  title: string
-  note: string
-  id: string | undefined
-  target: number | null
-  active: boolean
-  onOpen: () => void
-}) {
-  const run = useSimulationRun(id)
-  const summary = run.data?.status === 'done' ? run.data.summary : null
-  const goal = summary?.sla.target_pct ?? target
-  const sla = summary ? processSla(summary, processKey) : undefined
-  const holds = sla != null && goal != null ? sla >= goal : null
-  const running = Boolean(id) && !summary && run.data?.status !== 'failed'
-  return (
-    <button
-      type="button"
-      disabled={!summary}
-      onClick={onOpen}
-      title={summary ? 'Открыть этот прогон на карте' : undefined}
-      className={cn(
-        'flex min-w-0 flex-col items-start rounded-[12px] border px-4 py-3.5 text-left transition-colors',
-        holds === true && 'border-ok/30 bg-ok-soft/40',
-        holds === false && 'border-crit/30 bg-crit-soft/40',
-        holds === null && 'border-line bg-surface-2',
-        active && 'ring-2 ring-ink ring-offset-2 ring-offset-card',
-        summary && 'enabled:hover:brightness-[0.98]',
-      )}
-    >
-      <span className="text-[14px] font-semibold">{title}</span>
-      <span className="meta">{note}</span>
-      <span className="mt-3 block min-h-12">
-        {summary && sla != null ? (
-          <>
-            <span className={cn('hud block', holds ? 'text-ok' : 'text-crit')}>{holds ? 'держит' : 'не держит'}</span>
-            <span className="display num text-[28px] leading-none">
-              {formatNumber(sla, sla >= 99 ? 1 : 0)}
-              <span className="text-[14px] font-normal tracking-normal text-ink-3"> % в срок</span>
-            </span>
-          </>
-        ) : running ? (
-          <span className="flex items-center gap-2 text-[13px] text-ink-2">
-            <PulseDot /> считаем
-            {run.data && run.data.progress > 0 && (
-              <span className="num text-ink-3">{Math.round(run.data.progress * 100)} %</span>
-            )}
-          </span>
-        ) : (
-          <span className="text-[13px] text-ink-3">
-            {run.data?.status === 'failed' ? 'прогон не удался' : 'не проверено'}
-          </span>
-        )}
-      </span>
-    </button>
-  )
-}
-
-/* «Почему N»: перебор флота прогоняет одни и те же пиковые часы для разного N и берёт минимальное, при котором SLA
-   держат все прогоны (D-029). Здесь же сравнение «по формуле / по имитации» и выбор, какое число идёт в расчёт. */
-function FleetDecision({
-  projectId,
-  scenarioId,
-  variantIds,
-  sizing,
-  last,
-  shownCount,
-  onOpen,
-  summary,
-  target,
-}: {
-  projectId: string
-  scenarioId: string
-  variantIds: string[]
-  sizing: SizingResult
-  last: FleetSweepResult | undefined
-  shownCount: number | null
-  onOpen: (count: number, simulationId: string | null) => void
-  summary: SimulationSummary | null
-  target: number
-}) {
-  const sweep = useFleetSweep(projectId, scenarioId, variantIds)
-  const source = useCountSource(projectId, scenarioId)
-  const result: FleetSweepResult | undefined = sweep.data ?? last
-  const { count } = sizing
-  const formula = result?.by_formula
-  const simulated = result?.by_simulation
-  const usingSimulation = count.source === 'simulated'
-  const usingFormula = count.source === 'manual' && formula != null && count.final === formula.total
-  const best = result?.points.find((p) => p.count === result.recommended_count)
-  const busy = sweep.isPending || source.isPending
-
-  const run = () =>
-    sweep.mutate(
-      { process_key: sizing.process_key, mode: 'peak', seed: SEED },
-      {
-        onSuccess: (r) => {
-          if (r.recommended_count != null) onOpen(r.recommended_count, r.simulation_id ?? null)
-        },
-      },
-    )
+  const queue = now?.queue ?? 0
+  const topEdges = summary.congestion?.top_edges?.slice(0, 3) ?? []
 
   return (
-    <Section
-      title={result?.recommended_count != null ? `Почему ${result.recommended_count}` : 'Сколько роботов нужно'}
-      description={
-        result
-          ? `минимальное N, при котором все ${best?.runs ?? 5} прогонов пика держат ${formatNumber(result.target_pct)} % в срок`
-          : 'перебор флота имитацией'
-      }
-      actions={
-        <>
-          {result && (
-            <Hint>
-              {formula && simulated && best && (
-                <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
-              )}
-              <p className="text-ink-3">{result.explanation}</p>
-              <p className="text-ink-3">
-                Окупаемость — сценария с этим N и резервом.{' '}
-                {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
-              </p>
-            </Hint>
-          )}
-          <Button size="sm" disabled={busy} onClick={run}>
-            {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
-            {sweep.isPending
-              ? variantIds.length
-                ? 'Перебираем для всех вариантов…'
-                : 'Перебираем флот…'
-              : result
-                ? 'Перепроверить'
-                : 'Подобрать N имитацией'}
-          </Button>
-        </>
-      }
-    >
-      {!result ? (
-        <p className="text-[13.5px] leading-relaxed text-ink-2">
-          Формула цикла дала {count.analytic} {pluralRu(count.analytic, ['робота', 'роботов', 'роботов'])} с запасами.
-          Перебор прогонит одни и те же пиковые часы на планировке для разного N и найдёт минимальное, при котором SLA
-          держат все прогоны. Найденное число запишется в сценарий, экономика пересчитается.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_14rem]">
-          <SweepBars result={result} shownCount={shownCount} onOpen={onOpen} />
-          {formula && simulated && (
-            <div className="space-y-2">
-              <FleetTile title="По формуле цикла" fleet={formula} active={usingFormula} />
-              <FleetTile title="По имитации" fleet={simulated} active={usingSimulation} />
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                disabled={busy}
-                title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
-                onClick={() =>
-                  source.mutate({ processKey: sizing.process_key, manual: usingSimulation ? formula.total : null })
-                }
-              >
-                {source.isPending && <Spinner />}
-                {usingSimulation ? `Считать по формуле (${formula.total})` : `Считать по имитации (${simulated.total})`}
-              </Button>
+    <>
+      {has('sla') && (
+        <PaneSection
+          title="Задачи в срок · SLA"
+          aside={
+            run.purpose === 'sweep' ? (
+              <Hint>
+                Один из {sweepPoint?.runs ?? 'нескольких'} прогонов перебора флота
+                {sweepPoint
+                  ? `: в среднем ${formatNumber(sweepPoint.sla_achieved_pct, 1)} %, худший ${formatNumber(sweepPoint.sla_min_pct ?? sweepPoint.sla_achieved_pct, 1)} %`
+                  : ''}
+                . Число роботов принято, только если SLA держат все прогоны.
+              </Hint>
+            ) : undefined
+          }
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="flex items-baseline gap-1">
+              <KpiNumber
+                value={summary.sla.achieved_pct}
+                digits={summary.sla.achieved_pct >= 99 ? 1 : 0}
+                className={`display text-[38px] ${tone === 'ok' ? 'text-ink' : tone === 'warn' ? 'text-warn' : 'text-crit'}`}
+              />
+              <span className="display text-[18px] text-ink-3">%</span>
             </div>
+            <span className="meta">цель {formatNumber(slaTarget)} %</span>
+          </div>
+          <div className="relative mt-1.5 h-1.5 w-full rounded-full bg-black/6">
+            <motion.div
+              className={`h-full rounded-full ${tone === 'ok' ? 'bg-ink' : tone === 'warn' ? 'bg-warn' : 'bg-crit'}`}
+              initial={false}
+              animate={{ width: `${Math.max(0, Math.min(100, summary.sla.achieved_pct))}%` }}
+              transition={{ type: 'spring', stiffness: 120, damping: 24 }}
+            />
+            <span
+              className="absolute -top-1 h-3.5 w-px bg-signal"
+              style={{ left: `${slaTarget}%` }}
+              title={`Цель ${slaTarget} %`}
+            />
+          </div>
+          {summary.sla.target_value != null && (
+            <p className="meta mt-2">
+              в срок — до {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} · в среднем{' '}
+              {formatNumber(summary.sla.avg_lead_time_min, 1)} мин
+            </p>
           )}
+        </PaneSection>
+      )}
+
+      {has('moment') && (
+        <PaneSection title="В момент плеера">
+          <div className="-mx-3.5 grid grid-cols-3 divide-x divide-line border-y border-line bg-card">
+            <Kpi label="Готово" value={now?.done ?? 0} unit={`/ ${formatNumber(now?.demand_cum ?? 0)}`} />
+            <Kpi
+              label="Очередь"
+              value={queue}
+              unit="зад."
+              tone={queue > 15 ? 'crit' : queue > 6 ? 'warn' : 'neutral'}
+            />
+            <Kpi label="Загрузка" value={(now?.utilization ?? 0) * 100} unit="%" />
+          </div>
+        </PaneSection>
+      )}
+
+      {has('queue') && points.length > 1 && (
+        <PaneSection title="Очередь за прогон">
+          <QueueSparkline points={points} cursorMin={(bucket * 30) / 60} height={48} />
+        </PaneSection>
+      )}
+
+      {has('states') && byState.length > 0 && (
+        <PaneSection title="Чем заняты роботы" aside={<span className="meta">доля времени</span>}>
+          <div className="flex h-2 w-full overflow-hidden rounded-full bg-black/6">
+            {byState.map(([k, v]) => (
+              <motion.div
+                key={k}
+                className={STATE_COLOR[k] ?? 'bg-ink-4'}
+                initial={false}
+                animate={{ width: `${(v ?? 0) * 100}%` }}
+                transition={{ type: 'spring', stiffness: 120, damping: 24 }}
+              />
+            ))}
+          </div>
+          <ul className="mt-2.5 space-y-1 text-[12.5px]">
+            {byState.map(([k, v]) => (
+              <li key={k} className="flex items-center gap-2">
+                <span className={cn('size-2 shrink-0 rounded-full', STATE_COLOR[k] ?? 'bg-ink-4')} />
+                <span className="min-w-0 truncate text-ink-2">{STATE_LABEL[k] ?? k}</span>
+                <span className="num ml-auto shrink-0 text-ink">{formatPct(v ?? 0, { share: true, digits: 0 })}</span>
+              </li>
+            ))}
+          </ul>
+        </PaneSection>
+      )}
+
+      {has('waits') && topEdges.length > 0 && (
+        <PaneSection title="Где ждут дольше всего">
+          <ul className="space-y-1 text-[12.5px]">
+            {topEdges.map((e) => (
+              <li key={e.edge_id} className="flex items-center gap-2">
+                <span className="size-1.5 shrink-0 rounded-full bg-crit" />
+                <span className="min-w-0 truncate text-ink-2">{e.name ?? e.edge_id}</span>
+                <span className="num ml-auto shrink-0">{Math.round(e.wait_s ?? 0)} с</span>
+              </li>
+            ))}
+          </ul>
+        </PaneSection>
+      )}
+    </>
+  )
+}
+
+function RunCheck({ summary, target }: { summary: SimulationSummary; target: number }) {
+  const vs = summary.vs_analytic
+  const bottleneck = summary.bottleneck && summary.bottleneck.resource_kind !== 'none' ? summary.bottleneck : null
+  return (
+    <PaneSection
+      title="Расчёт против имитации"
+      aside={
+        <Hint>
+          <p>
+            Мощность того же парка при одинаковом запасе (целевая загрузка), без запаса она выше; нужно в пик{' '}
+            {formatNumber(target)} ед/ч.
+          </p>
+          {vs.text && <p>{vs.text}</p>}
+          {summary.completed_by_humans ? (
+            <p>Задач ушло людям после превышения норматива ожидания: {summary.completed_by_humans}</p>
+          ) : null}
+        </Hint>
+      }
+    >
+      <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
+      <div className="mt-2.5 grid grid-cols-2 gap-3">
+        <div>
+          <div className="display num text-[22px]">{formatNumber(vs.analytic_throughput_per_hour)}</div>
+          <div className="meta">ед/ч по формуле</div>
+        </div>
+        <div>
+          <div className="display num text-[22px]">{formatNumber(vs.sim_throughput_per_hour)}</div>
+          <div className="meta whitespace-nowrap">ед/ч в имитации · {formatPct(vs.delta_pct, { digits: 0 })}</div>
+        </div>
+      </div>
+      {bottleneck && (
+        <div className="mt-3 rounded-[10px] border border-line bg-card px-3 py-2 text-[12.5px]">
+          <div className="flex items-center gap-1">
+            <span className="hud">Узкое место</span>
+            <Hint>
+              <p>{bottleneck.explanation}</p>
+              {bottleneck.suggestion && <p>Что сделать: {bottleneck.suggestion}</p>}
+            </Hint>
+          </div>
+          <div className="mt-0.5 font-medium text-ink">
+            {bottleneck.resource_name ?? bottleneck.resource_kind}
+            {bottleneck.utilization != null && ` · ${formatPct(bottleneck.utilization, { share: true, digits: 0 })}`}
+          </div>
         </div>
       )}
-      {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
-      {summary && <VsLine summary={summary} target={target} />}
-    </Section>
-  )
-}
-
-/* Сверка производительности парка: формула цикла против имитации того же прогона. */
-function VsLine({ summary, target }: { summary: SimulationSummary; target: number }) {
-  const vs = summary.vs_analytic
-  return (
-    <div className="-mx-5 -mb-5 mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line bg-surface-2 px-5 py-3 text-[13px]">
-      <span className="hud">Расчёт против имитации</span>
-      <span className="num">
-        <span className="font-semibold">{formatNumber(vs.analytic_throughput_per_hour)}</span>{' '}
-        <span className="text-ink-3">ед/ч по формуле</span>
-      </span>
-      <span className="num">
-        <span className="font-semibold">{formatNumber(vs.sim_throughput_per_hour)}</span>{' '}
-        <span className="text-ink-3">ед/ч в имитации</span>
-      </span>
-      <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
-      <Hint>
-        <p>
-          Мощность того же парка при одинаковом запасе (целевая загрузка), без запаса она выше; нужно{' '}
-          {formatNumber(target)} ед/ч.
-        </p>
-        {vs.text && <p>{vs.text}</p>}
-        {summary.completed_by_humans ? (
-          <p>Задач ушло людям после превышения норматива ожидания: {summary.completed_by_humans}</p>
-        ) : null}
-      </Hint>
-    </div>
-  )
-}
-
-/* Столбцы перебора: высота — худший из прогонов пика (он решает, принят ли парк), шкала от нуля, линия — цель.
-   Принятое N — оранжевое, не держащие SLA — бледные. Клик открывает прогон на карте. */
-function SweepBars({
-  result,
-  shownCount,
-  onOpen,
-}: {
-  result: FleetSweepResult
-  shownCount: number | null
-  onOpen: (count: number, simulationId: string | null) => void
-}) {
-  const H = 132
-  return (
-    <div>
-      <div className="relative flex items-end gap-2" style={{ height: H + 22 }}>
-        {result.target_pct != null && (
-          <div
-            className="pointer-events-none absolute inset-x-0 border-t border-dashed border-signal/60"
-            style={{ bottom: (result.target_pct / 100) * H + 22 }}
-          ></div>
-        )}
-        {result.points.map((p) => {
-          const worst = p.sla_min_pct ?? p.sla_achieved_pct
-          const chosen = p.count === result.recommended_count
-          return (
-            <button
-              key={p.count}
-              type="button"
-              onClick={() => onOpen(p.count, p.simulation_id ?? null)}
-              title={`${p.count} роботов: в среднем ${formatNumber(p.sla_achieved_pct, 1)} %, худший прогон ${formatNumber(worst, 1)} %, загрузка ${formatPct(p.utilization, { share: true, digits: 0 })}`}
-              className="group flex min-w-0 flex-1 flex-col items-center justify-end"
-            >
-              <span className={cn('num mb-1 text-[11.5px]', p.passed ? 'text-ink-2' : 'text-crit')}>
-                {formatNumber(worst, 0)} %
-              </span>
-              <motion.span
-                className={cn(
-                  'w-full max-w-12 rounded-t-[4px] transition-opacity group-hover:opacity-80',
-                  chosen ? 'bg-signal' : p.passed ? 'bg-ink' : 'bg-crit/70',
-                  p.count === shownCount && 'ring-2 ring-info ring-offset-2 ring-offset-card',
-                )}
-                initial={{ height: 0 }}
-                animate={{ height: Math.max(2, (worst / 100) * H) }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-              />
-            </button>
-          )
-        })}
-      </div>
-      <div className="mt-1.5 flex gap-2">
-        {result.points.map((p) => (
-          <div key={p.count} className="min-w-0 flex-1 text-center">
-            <div
-              className={cn(
-                'num text-[14px]',
-                p.count === result.recommended_count ? 'font-extrabold text-ink' : 'text-ink-2',
-              )}
-            >
-              {p.count} роб.
-            </div>
-            <div className={cn('num truncate text-[11px]', p.passed ? 'text-ink-3' : 'text-crit')}>
-              {p.passed ? formatYears(p.payback_years) : 'не держит'}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
-        <Legend color="bg-signal" text="принятое N" />
-        <Legend color="bg-ink" text="держит срок" />
-        <Legend color="bg-crit/70" text="не держит" />
-        <span className="flex items-center gap-1.5">
-          <span className="w-4 border-t border-dashed border-signal/60" />
-          цель {formatNumber(result.target_pct)} %
-        </span>
-        <span>высота — худший из прогонов пика, под числом — окупаемость</span>
-      </div>
-    </div>
-  )
-}
-
-function Legend({ color, text }: { color: string; text: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span className={cn('size-2.5 rounded-[3px]', color)} />
-      {text}
-    </span>
+    </PaneSection>
   )
 }
 
@@ -1124,6 +798,185 @@ function whatIfText(sizing: SizingResult, config: RunConfig, working: number): s
   ].filter(Boolean)
   if (!changes.length) return null
   return `Проверка «что если» (${changes.join(', ')}) — сценарий не меняется: в расчёте ${working} ${pluralRu(working, ['робот', 'робота', 'роботов'])} в работе + резерв ${sizing.count.reserve}, ${COUNT_HINT[sizing.count.source]}`
+}
+
+function NoRun({ text }: { text: string | null }) {
+  return (
+    <p className="px-3.5 py-8 text-center text-[13px] text-ink-3">
+      {text ?? 'Показатели появятся, когда прогон завершится.'}
+    </p>
+  )
+}
+
+function PlaybackClock() {
+  const t = usePlayback((s) => Math.floor(s.t / 10) * 10)
+  const total = usePlayback((s) => s.total)
+  return (
+    <span>
+      {clock(t)} / {clock(total)}
+    </span>
+  )
+}
+
+/* Перебор флота записывает N в сценарий: он прогоняет одни и те же пиковые часы для разного N и берёт минимальное,
+   при котором SLA держат все прогоны (D-029). Здесь же — сравнение «по формуле / по имитации» и выбор источника. */
+function FleetSweep({
+  projectId,
+  scenarioId,
+  variantIds,
+  sizing,
+  last,
+  shownCount,
+  onOpen,
+  part,
+}: {
+  projectId: string
+  scenarioId: string
+  variantIds: string[]
+  sizing: SizingResult
+  last: FleetSweepResult | undefined
+  shownCount: number
+  onOpen: (count: number, simulationId: string | null) => void
+  part: 'decision' | 'table'
+}) {
+  const sweep = useFleetSweep(projectId, scenarioId, variantIds)
+  const source = useCountSource(projectId, scenarioId)
+  const result: FleetSweepResult | undefined = sweep.data ?? last
+  const { count } = sizing
+  const formula = result?.by_formula
+  const simulated = result?.by_simulation
+  const usingSimulation = count.source === 'simulated'
+  const usingFormula = count.source === 'manual' && formula != null && count.final === formula.total
+  const best = result?.points.find((p) => p.count === result.recommended_count)
+  const busy = sweep.isPending || source.isPending
+
+  const run = () =>
+    sweep.mutate(
+      { process_key: sizing.process_key, mode: 'peak', seed: SEED },
+      {
+        onSuccess: (r) => {
+          if (r.recommended_count != null) onOpen(r.recommended_count, r.simulation_id ?? null)
+        },
+      },
+    )
+
+  return (
+    <>
+      {part === 'decision' && (
+        <PaneSection
+          title="Сколько роботов нужно"
+          aside={
+            result ? (
+              <Hint>
+                {formula && simulated && best && (
+                  <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
+                )}
+                <p className="text-ink-3">{result.explanation}</p>
+                <p className="text-ink-3">
+                  Цель — {formatNumber(result.target_pct)} % задач в срок в каждом из прогонов. Окупаемость — сценария с
+                  этим N и резервом. {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
+                </p>
+              </Hint>
+            ) : undefined
+          }
+        >
+          {!result ? (
+            <p className="text-[13px] leading-relaxed text-ink-2">
+              Формула цикла дала {count.analytic} {pluralRu(count.analytic, ['робота', 'роботов', 'роботов'])} с
+              запасами. Перебор прогонит одни и те же пиковые часы на планировке для разного N и найдёт минимальное, при
+              котором SLA держат все прогоны. Найденное число запишется в сценарий, экономика пересчитается.
+            </p>
+          ) : (
+            formula &&
+            simulated && (
+              <div className="grid grid-cols-2 gap-2">
+                <FleetTile title="По формуле цикла" fleet={formula} active={usingFormula} />
+                <FleetTile title="По имитации" fleet={simulated} active={usingSimulation} />
+              </div>
+            )
+          )}
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <Button size="sm" variant={result ? 'outline' : 'default'} disabled={busy} onClick={run}>
+              {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
+              {sweep.isPending
+                ? variantIds.length
+                  ? 'Перебираем для всех вариантов…'
+                  : 'Перебираем флот…'
+                : result
+                  ? 'Перепроверить'
+                  : 'Подобрать N имитацией'}
+            </Button>
+            {formula && simulated && (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
+                onClick={() =>
+                  source.mutate({ processKey: sizing.process_key, manual: usingSimulation ? formula.total : null })
+                }
+              >
+                {source.isPending && <Spinner />}
+                {usingSimulation ? `По формуле (${formula.total})` : `По имитации (${simulated.total})`}
+              </Button>
+            )}
+          </div>
+          {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
+        </PaneSection>
+      )}
+
+      {part === 'table' && !result && (
+        <p className="px-3.5 py-6 text-center text-[13px] text-ink-3">
+          Перебора ещё не было. Запустите его на вкладке «Итог» — «Подобрать N имитацией».
+        </p>
+      )}
+      {part === 'table' && result && (
+        <PaneSection title="Перебор флота" aside={<span className="meta">клик — открыть прогон</span>}>
+          <table className="w-full text-[12.5px]">
+            <thead className="text-ink-3">
+              <tr>
+                <th className="pb-1 text-left font-normal">N</th>
+                <th className="pb-1 text-right font-normal" title="Среднее по прогонам пика">
+                  SLA
+                </th>
+                <th className="pb-1 text-right font-normal" title="Худший из прогонов: он решает, принят ли парк">
+                  худший
+                </th>
+                <th className="pb-1 text-right font-normal">загр.</th>
+                <th className="pb-1 text-right font-normal" title="Сценарий с этим N и резервом">
+                  окуп.
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {result.points.map((p) => (
+                <tr
+                  key={p.count}
+                  onClick={() => onOpen(p.count, p.simulation_id ?? null)}
+                  title={p.simulation_id ? 'Показать этот прогон' : 'Прогнать это число роботов'}
+                  className={cn(
+                    'cursor-pointer transition-colors hover:bg-black/3',
+                    p.count === result.recommended_count && 'font-semibold',
+                    p.count === shownCount && 'bg-signal-soft/70',
+                  )}
+                >
+                  <td className="num py-1">{p.count}</td>
+                  <td className="num py-1 text-right">{formatPct(p.sla_achieved_pct, { digits: 0 })}</td>
+                  <td className={`num py-1 text-right ${p.passed ? 'text-ok' : 'text-crit'}`}>
+                    {formatPct(p.sla_min_pct ?? p.sla_achieved_pct, { digits: 0 })}
+                  </td>
+                  <td className="num py-1 text-right">{formatPct(p.utilization, { share: true, digits: 0 })}</td>
+                  <td className="num py-1 text-right" title={p.passed ? undefined : 'Парк не держит SLA'}>
+                    {p.passed ? formatYears(p.payback_years) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </PaneSection>
+      )}
+    </>
+  )
 }
 
 function FleetTile({ title, fleet, active }: { title: string; fleet: FleetEconomics; active: boolean }) {
