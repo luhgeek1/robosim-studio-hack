@@ -20,6 +20,19 @@ const router = createBrowserRouter([
             Component: RequireAdmin,
             children: [
               { path: 'robots-3d', ...page(() => import('@/pages/robots').then((m) => ({ Component: m.RobotsPage }))) },
+              {
+                path: 'admin',
+                ...page(() => import('@/pages/admin').then((m) => ({ Component: m.AdminLayout }))),
+                children: [
+                  { index: true, ...page(() => import('@/pages/admin').then((m) => ({ Component: m.OverviewTab }))) },
+                  {
+                    path: 'catalog',
+                    ...page(() => import('@/pages/admin').then((m) => ({ Component: m.CatalogTab }))),
+                  },
+                  { path: 'norms', ...page(() => import('@/pages/admin').then((m) => ({ Component: m.NormsTab }))) },
+                  { path: 'users', ...page(() => import('@/pages/admin').then((m) => ({ Component: m.UsersTab }))) },
+                ],
+              },
             ],
           },
           { path: 'login', ...page(() => import('@/pages/login').then((m) => ({ Component: m.LoginPage }))) },

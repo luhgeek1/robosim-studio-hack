@@ -16,7 +16,7 @@ import { DeliveryScene } from './DeliveryScene'
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? 'Demo12345!'
 const DEMO_ACCOUNTS = [
   { email: 'user@robomera.demo', label: 'Пользователь', hint: 'проекты и расчёты' },
-  { email: 'admin@robomera.demo', label: 'Администратор', hint: 'проекты и 3D-модели каталога' },
+  { email: 'admin@robomera.demo', label: 'Администратор', hint: 'каталог, нормативы и пользователи' },
   { email: 'vendor@robomera.demo', label: 'Производитель', hint: 'каталог и расчёты' },
 ]
 

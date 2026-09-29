@@ -1,0 +1,93 @@
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowUpRight, BarChart3, Boxes, Scale, Users } from 'lucide-react'
+import { Link, NavLink, useLocation, useOutlet } from 'react-router'
+import { useSystemVersion } from '@/entities/reference'
+import { cn } from '@/shared/lib/utils'
+import { SPRING } from './motion'
+
+const TABS = [
+  { to: '/admin', label: 'Обзор', icon: BarChart3, end: true },
+  { to: '/admin/catalog', label: 'Каталог', icon: Boxes },
+  { to: '/admin/norms', label: 'Нормативы', icon: Scale },
+  { to: '/admin/users', label: 'Пользователи', icon: Users },
+]
+
+export function AdminLayout() {
+  const { pathname } = useLocation()
+  const outlet = useOutlet()
+  const version = useSystemVersion()
+
+  return (
+    <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-20">
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="max-w-170">
+          <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Администрирование</h1>
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-3">
+            Каждая правка каталога или нормативов — новая версия данных: сохранённые расчёты помечаются устаревшими и
+            пересчитываются с диффом.
+          </p>
+        </div>
+        {version.data && (
+          <div className="flex items-center gap-4 text-[12.5px] text-ink-3">
+            <span>
+              каталог <span className="num font-medium text-ink">{version.data.catalog_version}</span>
+            </span>
+            <span>
+              нормативы <span className="num font-medium text-ink">{version.data.norm_set_version}</span>
+            </span>
+          </div>
+        )}
+      </div>
+
+      <nav className="mb-8 flex items-center justify-between gap-4 border-b border-line" aria-label="Разделы админки">
+        <div className="flex items-center gap-1">
+          {TABS.map((tab) => (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              end={tab.end}
+              className={({ isActive }) =>
+                cn(
+                  'relative flex h-11 items-center gap-2 px-3 text-[14px] font-medium transition-colors',
+                  isActive ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <tab.icon size={15} className={isActive ? 'text-ink' : 'text-ink-4'} />
+                  {tab.label}
+                  {isActive && (
+                    <motion.span
+                      layoutId="admin-tab"
+                      className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-ink"
+                      transition={SPRING}
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
+        <Link
+          to="/robots-3d"
+          className="flex items-center gap-1 text-[13px] font-medium text-ink-3 transition-colors hover:text-ink"
+        >
+          3D-модели каталога <ArrowUpRight size={14} />
+        </Link>
+      </nav>
+
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6, transition: { duration: 0.12 } }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {outlet}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}

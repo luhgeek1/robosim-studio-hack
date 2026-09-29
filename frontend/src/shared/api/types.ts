@@ -130,3 +130,16 @@ export type LayoutGeometry = Pick<LayoutPlan, 'width_m' | 'height_m' | 'zones' |
   version?: number
   generator?: Layout['generator']
 }
+
+export type ProductWrite = S['ProductWrite']
+export type SpecWrite = S['SpecWrite']
+export type SourceWrite = S['SourceWrite']
+export type SourceKind = S['SourceKind']
+export type NormCategory = S['NormCategory']
+export type NormSet = S['NormSet']
+export type NormSetCreate = S['NormSetCreate']
+export type AdminUserUpdate = S['AdminUserUpdate']
+export type AnalyticsOverview = S['AnalyticsOverview']
+export type UserList = S['UserList']
+export type SolutionType = S['SolutionType']
+export type Industry = S['Industry']

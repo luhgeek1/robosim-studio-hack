@@ -41,6 +41,19 @@ export const qk = {
     one: (id: string) => ['scenarios', id] as const,
     survey: (id: string) => ['scenarios', id, 'survey'] as const,
   },
+  admin: {
+    all: ['admin'] as const,
+    analytics: ['admin', 'analytics'] as const,
+    users: (query: object) => ['admin', 'users', query] as const,
+    products: (query: object) => ['admin', 'products', query] as const,
+  },
+  reference: {
+    solutionTypes: ['reference', 'solution-types'] as const,
+    industries: ['reference', 'industries'] as const,
+    specKeys: ['reference', 'spec-keys'] as const,
+    normSets: ['reference', 'norm-sets'] as const,
+    norms: (version?: string) => ['reference', 'norms', version ?? null] as const,
+  },
   calculations: {
     one: (id: string) => ['calculations', id] as const,
     trace: (id: string) => ['calculations', id, 'trace'] as const,
