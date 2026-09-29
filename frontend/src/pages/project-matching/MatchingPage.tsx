@@ -21,6 +21,8 @@ import { MAX_COMPARE, STATUS_ORDER } from './labels'
 import { RecommendedBlock } from './RecommendedBlock'
 import { WeightsPopover } from './WeightsPopover'
 
+const TOP_COLUMN = 'mx-auto w-full max-w-300'
+
 export function MatchingPage() {
   const projectId = useProjectId()
   const matching = useMatching(projectId)
@@ -65,6 +67,8 @@ export function MatchingPage() {
     <Screen
       wide
       dense
+      // Шапка и рекомендация — в обычной колонке шагов, список кандидатов ниже — во всю ширину экрана.
+      headerClassName={TOP_COLUMN}
       title={
         data
           ? fit
@@ -90,9 +94,12 @@ export function MatchingPage() {
             >
               {run.isPending ? <Spinner /> : <RotateCw />} Пересчитать
             </Button>
-            <Button onClick={createFromRecommendation} disabled={creating || nothingToBuild}>
-              {creating ? <Spinner /> : <Sparkles />}{' '}
-              {checking ? 'Считаем и проверяем N имитацией…' : 'Создать сценарий из рекомендации'}
+            <Button
+              onClick={createFromRecommendation}
+              disabled={creating || nothingToBuild}
+              title="Создать сценарий из рекомендации: рассчитать экономику и проверить число роботов имитацией"
+            >
+              {creating ? <Spinner /> : <Sparkles />} {checking ? 'Проверяем N имитацией…' : 'Сценарий из рекомендации'}
             </Button>
           </>
         )
@@ -114,7 +121,11 @@ export function MatchingPage() {
           <ErrorBlock error={matching.error} onRetry={() => matching.refetch()} />
         ))}
 
-      {data && <RecommendedBlock projectId={projectId} matching={data} />}
+      {data && (
+        <div className={TOP_COLUMN}>
+          <RecommendedBlock projectId={projectId} matching={data} />
+        </div>
+      )}
       {data && <h2 className="h2 mb-5">Все кандидаты</h2>}
 
       {data && (

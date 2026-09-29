@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { quoted, useWorkspace } from '@/entities/organization'
 import { OBJECT_TYPE_LABEL, useCopyProject, useDeleteProject, useMoveProject, useProjects } from '@/entities/project'
 import { VerdictBadge } from '@/entities/scenario'
+import { useSession } from '@/entities/session'
 import { CreateProjectDialog } from '@/features/project-create'
 import type { Project } from '@/shared/api/types'
 import { formatDateTime, formatPct, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
@@ -97,10 +98,13 @@ export function ProjectsPage() {
 
 function ProjectRow({ project }: { project: Project }) {
   const navigate = useNavigate()
+  const { user } = useSession()
+  const { organization } = useWorkspace()
   const copy = useCopyProject()
   const remove = useDeleteProject()
   const metrics = project.headline_metrics
   const score = project.data_quality.score
+  const canManage = project.organization_id === null || project.owner_id === user?.id || organization?.role === 'owner'
 
   return (
     <div className="group relative flex items-start gap-3 px-4 py-4 transition-colors hover:bg-surface-2 max-md:flex-wrap sm:gap-4 sm:px-5 md:items-center">
@@ -171,18 +175,22 @@ function ProjectRow({ project }: { project: Project }) {
           >
             <Copy /> Дублировать
           </DropdownMenuItem>
-          <MoveTo project={project} />
-          <DropdownMenuSeparator />
-          <ConfirmDialog
-            title={`Удалить «${project.name}»?`}
-            description="Проект, его сценарии и расчёты будут удалены без возможности восстановления."
-            onConfirm={() => remove.mutateAsync(project.id)}
-            trigger={
-              <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
-                <Trash2 /> Удалить
-              </DropdownMenuItem>
-            }
-          />
+          {canManage && (
+            <>
+              <MoveTo project={project} />
+              <DropdownMenuSeparator />
+              <ConfirmDialog
+                title={`Удалить «${project.name}»?`}
+                description="Проект, его сценарии и расчёты будут удалены без возможности восстановления."
+                onConfirm={() => remove.mutateAsync(project.id)}
+                trigger={
+                  <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
+                    <Trash2 /> Удалить
+                  </DropdownMenuItem>
+                }
+              />
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
