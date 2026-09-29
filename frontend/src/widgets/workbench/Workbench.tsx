@@ -86,9 +86,9 @@ export function StatusBar({
     { key: 'right', icon: PanelRight, label: labels.right },
   ]
   return (
-    <footer className="col-span-full flex h-7 items-center gap-4 border-t border-line bg-card px-3 font-mono text-[11px] tracking-[0.04em] text-ink-3 uppercase">
-      <span className="flex items-center gap-2 text-ink">
-        {live ? <PulseDot /> : <span className="size-1.5 rounded-full bg-ink-4" />}
+    <footer className="col-span-full flex h-7 items-center gap-4 bg-ink px-3 font-mono text-[11px] tracking-[0.04em] text-white/70 uppercase">
+      <span className="flex items-center gap-2 text-white">
+        {live ? <PulseDot /> : <span className="size-1.5 rounded-full bg-white/50" />}
         {status}
       </span>
       {items.map((item, i) => (
@@ -98,11 +98,11 @@ export function StatusBar({
       ))}
       <span className="ml-auto flex items-center gap-4">
         {metrics.map((item, i) => (
-          <span key={i} className="num whitespace-nowrap text-ink">
+          <span key={i} className="num whitespace-nowrap text-white">
             {item}
           </span>
         ))}
-        <span className="flex items-center gap-0.5 border-l border-line pl-2">
+        <span className="flex items-center gap-0.5 border-l border-white/15 pl-2">
           {toggles
             .filter(({ key }) => shown.includes(key))
             .map(({ key, icon: Icon, label }) => (
@@ -114,8 +114,8 @@ export function StatusBar({
                 aria-label={label}
                 title={label}
                 className={cn(
-                  'flex size-5 items-center justify-center rounded-[4px] transition-colors hover:bg-black/5',
-                  panels[key] ? 'text-ink' : 'text-ink-4',
+                  'flex size-5 items-center justify-center rounded-[4px] transition-colors hover:bg-white/15',
+                  panels[key] ? 'text-white' : 'text-white/40',
                 )}
               >
                 <Icon size={13} />
