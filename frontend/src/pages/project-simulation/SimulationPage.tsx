@@ -39,7 +39,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Toggle } from '@/shared/ui/toggle'
-import { KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
+import { Dot, KpiNumber, Segmented, type Tone } from '@/shared/ui/v0'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
@@ -743,7 +743,11 @@ function RunCheck({ summary, target }: { summary: SimulationSummary; target: num
         </Hint>
       }
     >
-      <Pill tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'}>{VS_LABEL[vs.verdict]?.text ?? vs.verdict}</Pill>
+      {/* Вывод сверки — точкой и словом, как вердикты на других экранах, а не цветной плашкой. */}
+      <div className="flex items-center gap-2 text-[13px] font-medium text-ink">
+        <Dot tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'} />
+        {VS_LABEL[vs.verdict]?.text ?? vs.verdict}
+      </div>
       <div className="mt-2.5 grid grid-cols-2 gap-3">
         <div>
           <div className="display num text-[22px]">{formatNumber(vs.analytic_throughput_per_hour)}</div>
