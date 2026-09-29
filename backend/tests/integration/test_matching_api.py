@@ -44,10 +44,12 @@ async def test_matching_ranks_pallet_robots_with_reasons(client: AsyncClient) ->
     tractor = _candidate(pallets, "тягач RoboCV")
     # It does not pay back within the questionable band of ТЗ 3.5.7 (7 years), if at all.
     assert (tractor["estimate"]["payback_years"] or float("inf")) > 7
-    # Without a layout neither pays back here; the economics criterion still ranks the AMR above the tractor.
+    assert h1500["estimate"]["payback_years"] <= 7
+    assert h1500["rank"] < tractor["rank"]
     economics = next(c for c in h1500["score_breakdown"] if c["criterion"] == "cost_efficiency")
     towing = next(c for c in tractor["score_breakdown"] if c["criterion"] == "cost_efficiency")
-    assert economics["points"] > towing["points"]
+    assert economics["points"] > towing["points"] == 0
+    assert "дольше порога" in towing["explanation"]
     assert "NPV" in economics["explanation"]
 
 
