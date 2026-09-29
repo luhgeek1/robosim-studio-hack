@@ -136,12 +136,12 @@ class ParamsService:
             raise ParamsInvalidError(
                 f"Неизвестные параметры: {', '.join(unknown)}",
                 details=[
-                    {"loc": ["params", key], "msg": "unknown parameter", "type": "value_error"}
+                    {"loc": ["params", key], "msg": "неизвестный параметр", "type": "value_error"}
                     for key in unknown
                 ],
             )
         current = context.by_key
-        changed = 0
+        changed = moved = 0
         for change in changes:
             value = coerce(definitions[change.key], change)
             existing = current[change.key]
@@ -149,10 +149,13 @@ class ParamsService:
                 continue
             if value == existing.value and existing.provenance.status == status:
                 continue
+            moved += value != existing.value
             await self._store(context.project, existing, change, value, status, source_id)
             changed += 1
         if changed:
-            self._bump(context.project)
+            # Confirming a value («Верно») changes its provenance, not the numbers: calculations stay fresh.
+            if moved:
+                self._bump(context.project)
             self._audit.write(context.project.id, "project_params", "update", after={"changed": changed})
         await self._uow.flush()
         return await self.context(project_id)
