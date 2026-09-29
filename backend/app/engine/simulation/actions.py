@@ -108,8 +108,8 @@ class Actions:
 
     def needs_charge(self, robot: Robot) -> bool:
         spec = robot.process.robot
-        return (
-            bool(spec.runtime_h and spec.charge_min) and robot.battery <= self.inp.settings.charge_threshold
+        return bool(spec.runtime_h and spec.charge_min) and (
+            robot.charging_at_start or robot.battery <= self.inp.settings.charge_threshold
         )
 
     def charge(self, robot: Robot) -> Steps:
@@ -131,6 +131,7 @@ class Actions:
         yield self.env.timeout(duration)
         robot.battery = 1.0
         robot.charges += 1
+        robot.charging_at_start = False
         charger.release(self.env, request)
 
     def fail_if_due(self, robot: Robot) -> Steps:
