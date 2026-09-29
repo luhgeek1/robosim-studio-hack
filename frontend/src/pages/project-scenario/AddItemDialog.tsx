@@ -41,15 +41,16 @@ export function AddItemDialog({
         {matching.isPending && <LoadingBlock rows={3} />}
         {matching.isError && <ErrorBlock error={matching.error} />}
         {current && (
-          <div className="grid max-h-[60vh] grid-cols-[220px_1fr] gap-4">
-            <div className="space-y-1 overflow-y-auto">
+          // На телефоне процессы — строка фишек над списком кандидатов.
+          <div className="flex max-h-[60vh] min-w-0 flex-col gap-3 sm:grid sm:grid-cols-[220px_1fr] sm:gap-4">
+            <div className="scroll-thin flex shrink-0 gap-1 overflow-x-auto pb-1 sm:block sm:space-y-1 sm:overflow-x-visible sm:overflow-y-auto sm:pb-0">
               {processes.map((p) => (
                 <button
                   key={p.process_key}
                   type="button"
                   onClick={() => setProcessKey(p.process_key)}
                   className={cn(
-                    'w-full rounded-md px-2.5 py-2 text-left hover:bg-raised',
+                    'w-56 shrink-0 rounded-md px-2.5 py-2 text-left hover:bg-raised sm:w-full',
                     p.process_key === current.process_key && 'bg-raised font-medium',
                   )}
                 >
@@ -58,12 +59,12 @@ export function AddItemDialog({
                 </button>
               ))}
             </div>
-            <div className="space-y-2 overflow-y-auto pr-1">
+            <div className="min-h-0 space-y-2 overflow-y-auto pr-1">
               {candidates.length === 0 && (
                 <p className="text-muted-foreground">{current.no_fit_message ?? 'Подходящих решений нет.'}</p>
               )}
               {candidates.map((c) => (
-                <div key={c.product.id} className="flex items-center gap-3 rounded-md border p-3">
+                <div key={c.product.id} className="flex flex-wrap items-center gap-3 rounded-md border p-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{c.product.name}</span>

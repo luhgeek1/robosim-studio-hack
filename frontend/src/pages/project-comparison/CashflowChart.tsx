@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -21,6 +21,19 @@ type Row = { period: number } & Record<string, number | null>
 const SERIES_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)']
 const BASELINE_COLOR = 'var(--chart-5)'
 
+// Узкий экран (телефон): у графика меньше подписей и легенда сама выбирает высоту.
+const NARROW_QUERY = '(max-width: 639px)'
+function useNarrow() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia(NARROW_QUERY)
+      query.addEventListener('change', onChange)
+      return () => query.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(NARROW_QUERY).matches,
+  )
+}
+
 export function CashflowChart({ table }: { table: ComparisonTable }) {
   const overlay = table.cashflow_overlay ?? {}
   const scenarios = table.scenarios.filter((s) => overlay[s.scenario_id]?.length)
@@ -30,6 +43,7 @@ export function CashflowChart({ table }: { table: ComparisonTable }) {
     ),
   )
   const [mode, setMode] = useState<Mode>('cumulative_rub')
+  const narrow = useNarrow()
   const active: Mode = hasDiscounted ? mode : 'cumulative_rub'
 
   if (!scenarios.length) return <div className="text-muted-foreground">Денежные потоки не переданы в расчёте.</div>
@@ -70,16 +84,33 @@ export function CashflowChart({ table }: { table: ComparisonTable }) {
           <ToggleGroupItem value="discounted_cumulative_rub">Дисконтированный</ToggleGroupItem>
         </ToggleGroup>
       )}
+      {/* На телефоне легенда — обычный список над графиком: внутри SVG длинные названия наезжали на ось. */}
+      {narrow && (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+          {series.map((s) => (
+            <li key={s.id} className="flex min-w-0 items-center gap-1.5" style={{ color: s.color }}>
+              <span
+                className="inline-block h-0 w-3.5 shrink-0 border-t-2"
+                style={{ borderColor: s.color, borderStyle: s.baseline ? 'dashed' : 'solid' }}
+              />
+              {s.name}
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 16 }}>
+          <LineChart
+            data={data}
+            margin={{ top: narrow ? 12 : 8, right: narrow ? 8 : 16, left: narrow ? 0 : 8, bottom: 16 }}
+          >
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="period"
               type="number"
               domain={['dataMin', 'dataMax']}
               allowDecimals={false}
-              tickCount={Math.min(data.length, 13)}
+              tickCount={Math.min(data.length, narrow ? 7 : 13)}
               tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
               stroke="var(--border)"
               label={{
@@ -94,7 +125,7 @@ export function CashflowChart({ table }: { table: ComparisonTable }) {
               tickFormatter={(v: number) => formatMln(v)}
               tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
               stroke="var(--border)"
-              width={72}
+              width={narrow ? 52 : 72}
               label={{
                 value: 'млн ₽',
                 angle: -90,
@@ -109,13 +140,15 @@ export function CashflowChart({ table }: { table: ComparisonTable }) {
                 <CashflowTooltip active={active} payload={payload} label={label} unit={unit} series={series} />
               )}
             />
-            <Legend
-              verticalAlign="top"
-              align="right"
-              height={28}
-              iconType="plainline"
-              wrapperStyle={{ fontSize: 12 }}
-            />
+            {!narrow && (
+              <Legend
+                verticalAlign="top"
+                align="right"
+                height={28}
+                iconType="plainline"
+                wrapperStyle={{ fontSize: 12 }}
+              />
+            )}
             {series.map((s) => (
               <Line
                 key={s.id}

@@ -58,7 +58,7 @@ export function CostTable({
                   </div>
                   {row.hint && <div className="pl-5 text-xs text-muted-foreground">{row.hint}</div>}
                 </td>
-                <td className="w-40 py-2 pr-3">
+                <td className="w-12 py-2 pr-3 sm:w-40">
                   <div className="h-1.5 rounded-full bg-muted">
                     <div
                       className={cn('h-full rounded-full', row.amount < 0 ? 'bg-crit/60' : 'bg-primary/60')}
@@ -73,7 +73,7 @@ export function CostTable({
               </tr>
               {expanded && (
                 <tr className="bg-raised/30">
-                  <td colSpan={3} className="px-6 pt-1 pb-4">
+                  <td colSpan={3} className="px-2 pt-1 pb-4 sm:px-6">
                     <Formula formula={row.formula} rendered={row.formulaRendered} inputs={row.inputs} note={row.note} />
                     {row.normKey && (
                       <div className="mt-2 text-xs text-muted-foreground">

@@ -151,8 +151,8 @@ function WhyPopover({
   return (
     <Popover>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent align="start" className="w-[420px] space-y-3">
-        <div className="flex items-baseline justify-between gap-3">
+      <PopoverContent align="start" className="w-[min(420px,calc(100vw-2rem))] space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="font-medium">
             {checks} {pluralRu(checks, ['проверка', 'проверки', 'проверок'])} объекта
           </span>
@@ -328,7 +328,7 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
           <div className="text-[11px] text-ink-3 group-hover/score:text-ink-2">балл</div>
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[440px]">
+      <PopoverContent align="end" className="w-[min(440px,calc(100vw-2rem))]">
         <div className="mb-2 font-medium">Балл {formatNumber(candidate.score, 1)} из 100 — сумма вкладов</div>
         <table className="w-full text-xs">
           <thead className="text-ink-3">

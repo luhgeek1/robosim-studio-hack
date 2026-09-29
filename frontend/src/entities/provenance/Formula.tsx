@@ -24,7 +24,7 @@ export function Formula({
 }) {
   return (
     <div className="space-y-3">
-      <div className="space-y-1 rounded-md bg-raised p-3 font-mono text-xs leading-relaxed">
+      <div className="space-y-1 rounded-md bg-raised p-3 font-mono text-xs leading-relaxed [overflow-wrap:anywhere]">
         <div className="text-muted-foreground">{formula}</div>
         {rendered && <div className="font-medium text-foreground">{rendered}</div>}
       </div>
@@ -36,15 +36,17 @@ export function Formula({
               <tr key={input.key} className="border-t align-top first:border-t-0">
                 <td className="py-1.5 pr-3">
                   <div>{input.name}</div>
-                  <div className="font-mono text-[11px] text-muted-foreground">
+                  <div className="font-mono text-[11px] text-muted-foreground [overflow-wrap:anywhere]">
                     {input.key}
                     {input.kind && ` · ${INPUT_KIND_LABEL[input.kind]}`}
                   </div>
+                  {/* На телефоне происхождение уходит под название: третьей колонке не хватает ширины. */}
+                  <ProvenanceBadge provenance={input.provenance} className="mt-0.5 sm:hidden" />
                 </td>
                 <td className="num py-1.5 pr-3 text-right font-medium whitespace-nowrap">
                   {formatValue(input.value, input.unit)}
                 </td>
-                <td className="py-1.5 text-right">
+                <td className="py-1.5 text-right max-sm:hidden">
                   <ProvenanceBadge provenance={input.provenance} />
                 </td>
               </tr>

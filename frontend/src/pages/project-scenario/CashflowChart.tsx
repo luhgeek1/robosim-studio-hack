@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import {
   Bar,
   CartesianGrid,
@@ -26,8 +26,22 @@ const SERIES = {
   discounted: 'Дисконтированный',
 } as const
 
+// Узкий экран (телефон): у графика меньше подписей и легенда сама выбирает высоту.
+const NARROW_QUERY = '(max-width: 639px)'
+function useNarrow() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia(NARROW_QUERY)
+      query.addEventListener('change', onChange)
+      return () => query.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(NARROW_QUERY).matches,
+  )
+}
+
 export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; monthly: CashflowPoint[] }) {
   const [grain, setGrain] = useState<Grain>('yearly')
+  const narrow = useNarrow()
   const points = grain === 'yearly' ? yearly : monthly
   // Outflows are drawn below zero so the bars read as a cash-flow waterfall per period.
   const data = points.map((p) => ({
@@ -62,13 +76,13 @@ export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; mo
             axisLine={false}
             fontSize={12}
             tickFormatter={(v: number) => (grain === 'yearly' ? `${v} г.` : String(v))}
-            interval={grain === 'monthly' ? 5 : 0}
+            interval={grain === 'monthly' ? (narrow ? 11 : 5) : 0}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
             fontSize={12}
-            width={56}
+            width={narrow ? 48 : 56}
             tickFormatter={(v: number) => formatMln(v * 1e6)}
             label={{
               value: 'млн ₽',
