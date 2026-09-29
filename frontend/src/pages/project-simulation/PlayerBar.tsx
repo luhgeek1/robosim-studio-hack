@@ -34,16 +34,16 @@ export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
   const t = usePlayback((s) => Math.floor(s.t / 20) * 20)
   const { setPlaying, setSpeed, setT } = usePlayback.getState()
   return (
-    <div className={cn('flex items-center gap-3', disabled && 'pointer-events-none opacity-45')}>
+    <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2', disabled && 'pointer-events-none opacity-45')}>
       <Button
         size="icon-sm"
-        className="rounded-full"
+        className="rounded-full max-lg:size-9"
         onClick={() => setPlaying(!playing)}
         aria-label={playing ? 'Пауза' : 'Запустить'}
       >
         {playing ? <Pause /> : <Play />}
       </Button>
-      <Button variant="ghost" size="icon-sm" onClick={() => setT(0)} aria-label="С начала">
+      <Button variant="ghost" size="icon-sm" className="max-lg:size-9" onClick={() => setT(0)} aria-label="С начала">
         <RotateCcw />
       </Button>
       <input
@@ -53,10 +53,10 @@ export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
         step={1}
         value={t}
         onChange={(e) => setT(Number(e.target.value))}
-        className="h-1 min-w-0 flex-1 cursor-pointer accent-ink"
+        className="h-1 min-w-24 flex-1 cursor-pointer accent-ink max-lg:h-6"
         aria-label="Время имитации"
       />
-      <span className="num w-23 shrink-0 text-center font-mono text-[12px] text-ink-2">
+      <span className="num w-23 shrink-0 text-center font-mono text-[12px] text-ink-2 max-sm:w-auto">
         {clock(t)} / {clock(total)}
       </span>
       <Segmented

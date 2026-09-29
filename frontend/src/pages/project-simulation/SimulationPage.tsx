@@ -474,7 +474,7 @@ function SimulationView({
             </>
           }
           bottom={
-            <>
+            <div className="flex flex-col">
               <div className="flex h-9 items-center gap-4 border-b border-line pr-2 pl-3.5">
                 <span className="hud relative flex h-full shrink-0 items-center text-ink">
                   Условия прогона
@@ -490,7 +490,7 @@ function SimulationView({
                   onClick={() => void snapshot()}
                   title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
                 >
-                  {upload.isPending ? <Spinner /> : <Camera />} Снимок в отчёт
+                  {upload.isPending ? <Spinner /> : <Camera />} <span className="max-sm:sr-only">Снимок в отчёт</span>
                 </Button>
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-3.5 py-2">
@@ -548,10 +548,11 @@ function SimulationView({
                   </div>
                 </Control>
               </div>
-              <div className="px-3.5 py-2">
+              {/* На узком экране плеер сразу под сценой: условия прогона меняют реже, чем двигают время. */}
+              <div className="px-3.5 py-2 max-lg:order-first max-lg:border-b max-lg:border-line">
                 <PlayerBar disabled={!tracks} />
               </div>
-            </>
+            </div>
           }
           status={
             <StatusBar
@@ -1071,7 +1072,7 @@ function RobotCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.18 }}
-      className="absolute top-16 right-4 z-10 w-65 rounded-[12px] border border-line bg-white/95 p-4 shadow-card backdrop-blur"
+      className="absolute top-28 right-3 z-10 w-65 max-w-[calc(100%-1.5rem)] rounded-[12px] sm:top-16 sm:right-4 border border-line bg-white/95 p-4 shadow-card backdrop-blur"
     >
       <div className="flex items-start justify-between">
         <div>

@@ -83,8 +83,14 @@ export function LayoutPage() {
           titleHint={title}
           actions={
             !unsupported && (
-              <Button variant="outline" size="sm" onClick={openDialog}>
-                <RefreshCw /> Перегенерировать
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openDialog}
+                title="Перегенерировать"
+                className="max-sm:size-9 max-sm:px-0"
+              >
+                <RefreshCw /> <span className="max-sm:sr-only">Перегенерировать</span>
               </Button>
             )
           }
@@ -345,7 +351,7 @@ function PlanStage({
       </LayoutMap>
 
       {/* Under the scale and size labels of the top-left corner: a centred caption runs into them on a narrow map. */}
-      <div className="pointer-events-none absolute top-15 left-4 z-10">
+      <div className="pointer-events-none absolute top-15 right-4 left-4 z-10">
         <AnimatePresence mode="wait" initial={false}>
           {caption && (
             <motion.div
@@ -354,7 +360,7 @@ function PlanStage({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.18 }}
-              className="flex items-center gap-2.5 rounded-full bg-ink px-4 py-2 text-[12.5px] whitespace-nowrap text-white shadow-float"
+              className="flex w-fit max-w-full flex-wrap items-center gap-x-2.5 rounded-[18px] bg-ink px-4 py-2 text-[12.5px] text-white shadow-float sm:flex-nowrap sm:rounded-full sm:whitespace-nowrap"
             >
               {caption}
             </motion.div>

@@ -18,8 +18,8 @@ export function DerivationList({ steps }: { steps: LayoutDerivationStep[] }) {
               <span className="min-w-0 flex-1">{step.name}</span>
               <span className="num font-medium whitespace-nowrap">{formatValue(step.value, step.unit)}</span>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 pb-3 pl-7">
-              <div className="space-y-1 rounded-md bg-raised p-3 font-mono text-xs leading-relaxed">
+            <CollapsibleContent className="space-y-3 pb-3 pl-0 sm:pl-7">
+              <div className="space-y-1 rounded-md bg-raised p-3 font-mono text-xs leading-relaxed [overflow-wrap:anywhere]">
                 <div className="text-muted-foreground">{step.formula}</div>
                 <div className="font-medium text-foreground">{step.formula_rendered}</div>
               </div>
@@ -28,7 +28,7 @@ export function DerivationList({ steps }: { steps: LayoutDerivationStep[] }) {
                   <tbody>
                     {step.inputs.map((input) => (
                       <tr key={input.key} className="border-t align-top first:border-t-0">
-                        <td className="py-1.5 pr-3">
+                        <td className="py-1.5 pr-3 [overflow-wrap:anywhere]">
                           <div>{input.name}</div>
                           <div className="font-mono text-[11px] text-muted-foreground">
                             {input.key} · {DERIVATION_INPUT_KIND_LABEL[input.kind] ?? input.kind}
@@ -72,7 +72,7 @@ export function DerivationSection({ layout, projectName }: { layout: Layout; pro
           {saving ? <Spinner /> : <FileText />} Скачать документ
         </Button>
       </div>
-      <div className="card px-5 py-2">
+      <div className="card px-4 py-2 sm:px-5">
         <DerivationList steps={layout.derivation} />
       </div>
     </section>

@@ -83,6 +83,7 @@ export function MapToolbar({
   heat,
   onHeat,
   placement = 'top-left',
+  clearTopRight = false,
 }: {
   onAction: (action: CameraAction) => void
   routes: boolean
@@ -91,17 +92,19 @@ export function MapToolbar({
   heat?: boolean
   onHeat?: () => void
   placement?: ToolbarPlacement
+  /** The host keeps its own control in the top-right corner: on a narrow scene the toolbar drops below it. */
+  clearTopRight?: boolean
 }) {
   const [help, setHelp] = useState(false)
   const button =
-    'flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600'
+    'flex h-9 w-9 items-center justify-center rounded-lg @max-[26rem]:w-8 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600'
   return (
     // In the bottom corner the help card opens upwards, above the toolbar.
     <div
       className={
         placement === 'bottom-right'
           ? 'absolute right-4 bottom-4 z-20 flex flex-col-reverse items-end gap-2'
-          : 'absolute top-4 left-4 z-20 flex flex-col items-start gap-2'
+          : `absolute top-4 left-4 z-20 flex max-w-[calc(100%-2rem)] flex-col items-start gap-2 ${clearTopRight ? '@max-[34rem]:top-16' : ''}`
       }
     >
       <div

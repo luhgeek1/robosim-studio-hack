@@ -23,9 +23,9 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
       description="Самые влиятельные параметры, которые пока взяты по умолчанию или как допущение"
       bodyClassName="p-0"
     >
-      {survey.isPending && <LoadingBlock rows={3} className="mx-5 mb-5" />}
+      {survey.isPending && <LoadingBlock rows={3} className="mx-4 mb-5 sm:mx-5" />}
       {survey.isError && (
-        <div className="px-5 pb-5">
+        <div className="px-4 pb-5 sm:px-5">
           <ErrorBlock error={survey.error} onRetry={() => survey.refetch()} />
         </div>
       )}
@@ -40,7 +40,10 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
         <>
           <ol className="hairline divide-y divide-line">
             {shown.map((item) => (
-              <li key={item.key} className="grid grid-cols-[1.75rem_minmax(0,1fr)_11rem] items-start gap-4 px-5 py-4">
+              <li
+                key={item.key}
+                className="grid grid-cols-[1.75rem_minmax(0,1fr)] items-start gap-x-3 gap-y-3 px-4 py-4 sm:grid-cols-[1.75rem_minmax(0,1fr)_11rem] sm:gap-4 sm:px-5"
+              >
                 <span className="num flex size-7 items-center justify-center rounded-full bg-black/5 text-[12.5px] font-semibold">
                   {item.rank}
                 </span>
@@ -58,7 +61,7 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
                     {item.how_to_measure ?? item.recommendation}
                   </p>
                 </div>
-                <div className="pt-1">
+                <div className="col-start-2 pt-1 sm:col-start-auto">
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="text-[11.5px] text-ink-3">размах NPV</span>
                     <span className="num text-[13px] font-semibold">{formatRub(item.swing)}</span>

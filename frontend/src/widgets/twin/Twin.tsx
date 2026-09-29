@@ -76,7 +76,7 @@ export function Twin({
       }}
       aria-label="Поток и заторы"
     >
-      <Flame /> Заторы
+      <Flame /> <span className="@max-[28rem]:sr-only">Заторы</span>
     </Toggle>
   ) : null
   const frame = useMemo(() => sceneFrame(layout), [layout])
@@ -98,7 +98,7 @@ export function Twin({
   const span = Math.max(frame.w, frame.h)
 
   return (
-    <div className={`relative h-full w-full overflow-hidden ${className}`}>
+    <div className={`@container relative h-full w-full overflow-hidden ${className}`}>
       {switcher && (
         <div className="absolute top-4 right-4 z-20">
           <Segmented
@@ -124,6 +124,8 @@ export function Twin({
             toolbarClassName="top-16 right-4"
             toolbarExtra={heatToggle}
             infoCorner="top-left"
+            // На узкой сцене левый верхний угол делит строку с переключателем 3D / 2D — масштаб уходит под панель.
+            infoClassName={switcher ? '@max-[34rem]:top-28' : undefined}
           >
             {(v) => (
               <>
@@ -142,6 +144,7 @@ export function Twin({
             heat={heat ? heatOn : undefined}
             onHeat={() => setLayer((v) => (v === 'heat' ? 'none' : 'heat'))}
             placement={toolbarPlacement}
+            clearTopRight={switcher}
           />
           <SceneBoundary
             fallback={
@@ -204,7 +207,7 @@ export function Twin({
       )}
       <MapLegendStrip robots={view === '2d' && Boolean(tracks)} heat={heatOn} />
       {heatOn && picked && (
-        <div className="absolute top-16 left-4 z-20 w-72 rounded-[12px] border border-line bg-white/95 p-3 text-[12.5px] shadow-card backdrop-blur">
+        <div className="absolute top-16 left-4 z-20 w-72 max-w-[calc(100%-2rem)] rounded-[12px] border border-line bg-white/95 p-3 text-[12.5px] shadow-card backdrop-blur">
           <div className="flex items-start justify-between gap-2">
             <span className="font-medium text-ink">Участок проезда</span>
             <button

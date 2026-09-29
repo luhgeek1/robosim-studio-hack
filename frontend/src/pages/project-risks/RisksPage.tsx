@@ -38,7 +38,7 @@ export function RisksPage() {
   const lead = 'Разброс результата, что сильнее всего его двигает и какие данные объекта замерить первыми.'
   const actions = options.length > 0 && (
     <Select value={scenario?.id} onValueChange={setPicked}>
-      <SelectTrigger className="min-w-72">
+      <SelectTrigger className="max-w-[calc(100vw-2rem)] min-w-0 sm:min-w-72">
         <SelectValue placeholder="Сценарий" />
       </SelectTrigger>
       <SelectContent>

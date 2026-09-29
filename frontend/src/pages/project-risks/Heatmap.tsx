@@ -91,7 +91,10 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
           <span className="-rotate-90 text-xs whitespace-nowrap text-ink-3">{nameOf(hm.y_key)}, % от текущего</span>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="grid gap-0.5" style={{ gridTemplateColumns: `3.5rem repeat(${xs.length}, minmax(0, 1fr))` }}>
+          <div
+            className="grid gap-0.5 [--y-axis:2.75rem] sm:[--y-axis:3.5rem]"
+            style={{ gridTemplateColumns: `var(--y-axis) repeat(${xs.length}, minmax(0, 1fr))` }}
+          >
             {rows.map(({ y, yi }) => (
               <Row key={yi} y={y}>
                 {xs.map((x, xi) => {
@@ -104,7 +107,7 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
                       title={`${nameOf(hm.x_key)}: ${asPct(x)}; ${nameOf(hm.y_key)}: ${asPct(y)} → ${METRIC[metric].short}: ${METRIC[metric].format(v)}`}
                       style={cell}
                       className={cn(
-                        'num flex h-10 items-center justify-center rounded-md text-[13px] font-semibold transition-transform hover:scale-[1.04]',
+                        'num flex h-10 items-center justify-center rounded-md text-[12px] font-semibold transition-transform hover:scale-[1.04] sm:text-[13px]',
                         base && 'ring-2 ring-ink ring-offset-2 ring-offset-surface',
                       )}
                     >
@@ -116,12 +119,12 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
             ))}
             <div />
             {xs.map((x, xi) => (
-              <div key={xi} className="num pt-1 text-center text-xs text-ink-3">
+              <div key={xi} className="num pt-1 text-center text-[10px] whitespace-nowrap text-ink-3 sm:text-xs">
                 {asPct(x)}
               </div>
             ))}
           </div>
-          <div className="mt-1 pl-14 text-center text-xs text-ink-3">{nameOf(hm.x_key)}, % от текущего</div>
+          <div className="mt-1 pl-11 text-center text-xs text-ink-3 sm:pl-14">{nameOf(hm.x_key)}, % от текущего</div>
         </div>
       </div>
 
@@ -150,7 +153,9 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
 function Row({ y, children }: { y: number; children: ReactNode }) {
   return (
     <>
-      <div className="num flex items-center justify-end pr-2 text-xs text-ink-3">{asPct(y)}</div>
+      <div className="num flex items-center justify-end pr-1.5 text-[11px] whitespace-nowrap text-ink-3 sm:pr-2 sm:text-xs">
+        {asPct(y)}
+      </div>
       {children}
     </>
   )
