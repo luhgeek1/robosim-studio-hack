@@ -171,7 +171,7 @@ export function useUpdateScenario(projectId: string, id: string) {
   })
 }
 
-/* «Рассчитать» = формула + проверка числа роботов имитацией там, где она есть (D-028): пользователь сразу видит N,
+/* «Рассчитать» = формула + проверка числа роботов имитацией там, где она есть (D-029): пользователь сразу видит N,
    которое держит SLA, а не число по формуле, которое на шаге «Имитация» вдруг меняется. */
 export function useCalculate(projectId: string, id: string) {
   const queryClient = useQueryClient()

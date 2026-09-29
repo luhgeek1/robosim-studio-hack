@@ -165,7 +165,7 @@ export const checkable = (sizing: SizingResult, force = false) =>
 
 export type FleetCheck = { calculation: CalculationRun; checked: FleetSweepResult[]; skipped: string[] }
 
-/* Расчёт сценария вместе с проверкой числа роботов имитацией (D-028): формула даёт стартовое N, перебор флота на
+/* Расчёт сценария вместе с проверкой числа роботов имитацией (D-029): формула даёт стартовое N, перебор флота на
    планировке находит минимальное N, которое держит SLA во всех прогонах пика, и записывает его в сценарий, затем
    экономика пересчитывается. Где имитации нет (нет планировки, аэропорт, больница), остаётся расчёт по формуле. */
 export async function calculateWithFleetCheck(scenarioId: string, force = false): Promise<FleetCheck> {

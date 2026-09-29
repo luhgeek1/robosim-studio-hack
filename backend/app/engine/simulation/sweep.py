@@ -36,7 +36,7 @@ class SweepResult:
 
 
 class Sweep:
-    """Minimal fleet whose every one of `replications` runs keeps SLA ≥ target (D-028),
+    """Minimal fleet whose every one of `replications` runs keeps SLA ≥ target (D-029),
     searched around an estimate.
 
     A mean over runs let a fleet pass with one peak day in five far below target (95.7 % mean,

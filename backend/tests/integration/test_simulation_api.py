@@ -154,7 +154,7 @@ async def _sweep(
 
 
 async def test_fleet_sweep_curve_is_priced_like_the_scenario(client: AsyncClient) -> None:
-    """The curve prices each fleet the way the scenario is priced once that N applies (D-028)."""
+    """The curve prices each fleet the way the scenario is priced once that N applies (D-029)."""
     _, scenario_id, headers = await _scenario(client)
     before = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
     analytic = before["sizing"][0]["count"]

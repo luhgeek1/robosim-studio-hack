@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.5.2
+  version: 0.5.3
   license:
     name: MIT
     identifier: MIT
@@ -7838,7 +7838,7 @@ components:
     FleetSweepResult:
       type: object
       description: |
-        Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-028).
+        Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-029).
         Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
         Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
       required:
