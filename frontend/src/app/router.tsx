@@ -30,6 +30,10 @@ const router = createBrowserRouter([
                     ...page(() => import('@/pages/admin').then((m) => ({ Component: m.CatalogTab }))),
                   },
                   { path: 'norms', ...page(() => import('@/pages/admin').then((m) => ({ Component: m.NormsTab }))) },
+                  {
+                    path: 'reference',
+                    ...page(() => import('@/pages/admin').then((m) => ({ Component: m.ReferenceTab }))),
+                  },
                   { path: 'users', ...page(() => import('@/pages/admin').then((m) => ({ Component: m.UsersTab }))) },
                 ],
               },

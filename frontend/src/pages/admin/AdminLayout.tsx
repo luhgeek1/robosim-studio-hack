@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUpRight, BarChart3, Boxes, Scale, Users } from 'lucide-react'
+import { ArrowUpRight, BarChart3, BookMarked, Boxes, Scale, Users } from 'lucide-react'
 import { Link, NavLink, useLocation, useOutlet } from 'react-router'
 import { useSystemVersion } from '@/entities/reference'
 import { cn } from '@/shared/lib/utils'
@@ -10,6 +10,7 @@ const TABS = [
   { to: '/admin', label: 'Обзор', icon: BarChart3, end: true },
   { to: '/admin/catalog', label: 'Каталог', icon: Boxes },
   { to: '/admin/norms', label: 'Нормативы', icon: Scale },
+  { to: '/admin/reference', label: 'Справочники', icon: BookMarked },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
 ]
 
