@@ -5,6 +5,8 @@ import { PROJECT_STEPS, stepIndex } from '@/entities/project/steps'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
 
+const pad = (n: number) => String(n).padStart(2, '0')
+
 export function PageHeader({
   title,
   description,
@@ -23,7 +25,12 @@ export function PageHeader({
   return (
     <div className={cn('flex flex-wrap items-end justify-between gap-x-6 gap-y-4', dense ? 'mb-4' : 'mb-7', className)}>
       <div className="min-w-0 max-w-190">
-        {eyebrow && <div className={cn('meta num', dense ? 'mb-1' : 'mb-2')}>{eyebrow}</div>}
+        {eyebrow && (
+          <div className={cn('hud flex items-center gap-2', dense ? 'mb-1.5' : 'mb-3')}>
+            <span className="size-1.5 rounded-full bg-signal" aria-hidden />
+            {eyebrow}
+          </div>
+        )}
         <h1 className="h1">{title}</h1>
         {description && (
           <p className={cn('text-[15.5px] leading-relaxed text-ink-2', dense ? 'mt-1.5' : 'mt-3')}>{description}</p>
@@ -68,7 +75,7 @@ export function Screen({
   return (
     <div className={cn('mx-auto w-full pb-16 pt-2', wide ? 'max-w-360' : 'max-w-300', className)}>
       <PageHeader
-        eyebrow={step ? `Шаг ${idx + 1} из ${PROJECT_STEPS.length} · ${step.question}` : undefined}
+        eyebrow={step ? `Шаг ${pad(idx + 1)} / ${pad(PROJECT_STEPS.length)} · ${step.question}` : undefined}
         title={title}
         description={lead}
         actions={actions}

@@ -168,7 +168,7 @@ export function CatalogPage() {
               onValueChange={(value) => update({ sort: value === 'relevance' ? null : value })}
             >
               <SelectTrigger
-                className="h-11! w-56 rounded-xl bg-card text-[13.5px] shadow-[0_1px_2px_rgba(20,20,24,0.04)]"
+                className="h-11! w-56 rounded-xl bg-card text-[13.5px] shadow-[0_1px_2px_rgba(20,20,19,0.04)]"
                 aria-label="Сортировка"
               >
                 <SelectValue />
@@ -256,7 +256,7 @@ function SearchBox({ value, onCommit }: { value: string; onCommit: (q: string) =
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Название, производитель или описание — например, «AMR» или «Ronavi»"
-        className="h-11 w-full rounded-xl bg-card pr-4 pl-11 text-[14.5px] shadow-[0_1px_2px_rgba(20,20,24,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80"
+        className="h-11 w-full rounded-xl bg-card pr-4 pl-11 text-[14.5px] shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80"
         aria-label="Поиск по каталогу"
       />
     </label>

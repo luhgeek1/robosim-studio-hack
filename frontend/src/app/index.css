@@ -30,6 +30,12 @@
   --color-crit-soft: var(--crit-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-sun: var(--sun);
+  --color-sun-soft: var(--sun-soft);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -68,56 +74,62 @@
   --radius-2xl: 20px;
   --radius-3xl: 24px;
   --radius-4xl: 28px;
-  --shadow-card: 0 1px 2px rgba(20, 20, 24, 0.04), 0 8px 24px -12px rgba(20, 20, 24, 0.12);
-  --shadow-float: 0 2px 4px rgba(20, 20, 24, 0.05), 0 24px 48px -16px rgba(20, 20, 24, 0.22);
+  --shadow-card: 0 1px 2px rgba(20, 20, 19, 0.04), 0 8px 24px -12px rgba(20, 20, 19, 0.12);
+  --shadow-float: 0 2px 4px rgba(20, 20, 19, 0.05), 0 24px 48px -16px rgba(20, 20, 19, 0.22);
 }
 
-/* Палитра прототипа v0: тёплый светлый холст, чернильный текст и кнопки, синий только для акцента.
-   Зелёный приглушённый, шалфейный — чтобы не спорить с рыжим акцентом (--warn). */
+/* DESIGN.md: тёплый бумажный холст и чернила (Claude DESIGN.md), один сигнальный оранжевый и жёлтый — из шоурила,
+   синий — только ссылки и фокус. Ошибка темнее сигнала, чтобы их не путать. */
 :root {
-  --canvas: #f4f4f2;
-  --background: #f4f4f2;
-  --foreground: #17171a;
-  --ink-2: #45454b;
-  --ink-4: #b0b0b5;
-  --card: #ffffff;
-  --card-foreground: #17171a;
-  --surface-2: #fafaf9;
-  --popover: #ffffff;
-  --popover-foreground: #17171a;
-  --primary: #17171a;
+  --canvas: #f5f2ec;
+  --background: #f5f2ec;
+  --foreground: #141413;
+  --ink-2: #3d3d3a;
+  --ink-4: #aaa69d;
+  --card: #fffefb;
+  --card-foreground: #141413;
+  --surface-2: #faf8f3;
+  --popover: #fffefb;
+  --popover-foreground: #141413;
+  --primary: #141413;
   --primary-foreground: #ffffff;
-  --secondary: #ecece8;
-  --secondary-foreground: #17171a;
-  --muted: #f0f0ec;
-  --muted-foreground: #7b7b82;
+  --secondary: #ede8df;
+  --secondary-foreground: #141413;
+  --muted: #efeae1;
+  --muted-foreground: #6c6a64;
   --accent: #e6ebfb;
   --accent-foreground: #223f9e;
-  --destructive: #d24b3f;
-  --border: #e7e7e3;
-  --input: #d9d9d4;
+  --destructive: #c64545;
+  --border: #e6dfd8;
+  --input: #d8d1c7;
   --ring: #2f55d4;
   --ok: #447e4c;
   --ok-soft: #e9f1e6;
-  --warn: #d18a1f;
+  --warn: #c9820f;
   --warn-soft: #fbefd9;
-  --crit: #d24b3f;
+  --crit: #c64545;
   --crit-soft: #fbe4e1;
   --info: #2f55d4;
   --info-soft: #e6ebfb;
+  --signal: #f24a24;
+  --signal-soft: #fde4dc;
+  --sun: #efb51a;
+  --sun-soft: #fbf0cf;
+  --night: #0b1030;
+  --night-2: #151b40;
   --chart-1: #2f55d4;
   --chart-2: #447e4c;
-  --chart-3: #d18a1f;
-  --chart-4: #d24b3f;
-  --chart-5: #7b7b82;
+  --chart-3: #efb51a;
+  --chart-4: #f24a24;
+  --chart-5: #6c6a64;
   --radius: 0.625rem;
-  --sidebar: #fbfbf9;
-  --sidebar-foreground: #17171a;
-  --sidebar-primary: #17171a;
+  --sidebar: #faf8f3;
+  --sidebar-foreground: #141413;
+  --sidebar-primary: #141413;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ecece8;
-  --sidebar-accent-foreground: #17171a;
-  --sidebar-border: #e7e7e3;
+  --sidebar-accent-foreground: #141413;
+  --sidebar-border: #e6dfd8;
   --sidebar-ring: #2f55d4;
   color-scheme: light;
 }
@@ -162,15 +174,24 @@
     letter-spacing: -0.01em;
   }
   .display {
-    letter-spacing: -0.035em;
-    line-height: 1;
-    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 0.98;
+    font-weight: 800;
+  }
+  /* HUD-подпись шоурила: моноширинный верхний регистр для шагов, таймкодов и статусов. */
+  .hud {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
   }
   .h1 {
     font-size: 34px;
-    letter-spacing: -0.03em;
-    line-height: 1.12;
-    font-weight: 600;
+    letter-spacing: -0.032em;
+    line-height: 1.1;
+    font-weight: 700;
   }
   .h2 {
     font-size: 22px;
