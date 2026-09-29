@@ -1,5 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowDown, ArrowRight, Box, FileText, Map as MapIcon, RefreshCw } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowRight,
+  Box,
+  FileText,
+  Info,
+  Map as MapIcon,
+  MapPin,
+  MousePointerClick,
+  RefreshCw,
+} from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
@@ -11,6 +21,7 @@ import { formatNumber, isNum, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Screen } from '@/shared/ui/page'
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { LayoutMap, type FitPadding } from '@/widgets/layout-map'
 import { PaneSection, PaneTitle, StatusBar, WorkbenchFrame, WorkbenchGrid, type Panels } from '@/widgets/workbench'
@@ -222,9 +233,18 @@ function PlanWorkbench({
       right={
         <>
           <PaneTitle>Маршруты роботов</PaneTitle>
-          <PaneSection title="Средние по графу">
-            <p className="mb-2 text-[12.5px] leading-relaxed text-ink-3">
-              Идут в цикл робота вместо норматива; ваш замер из параметров объекта важнее.
+          <PaneSection
+            title="Средние по графу"
+            aside={
+              <Hint>
+                Средняя длина пути робота по графу проездов этой схемы. Она идёт в цикл робота вместо норматива; если в
+                параметрах объекта есть ваш замер, расчёт берёт его.
+              </Hint>
+            }
+          >
+            <p className="mb-2.5 flex items-center gap-1.5 text-[12.5px] text-ink-3">
+              <MousePointerClick size={14} className="shrink-0 text-ink-4" />
+              Выберите маршрут — пример пути появится на плане
             </p>
             <RoutesList routes={routes} active={activeRoute?.key} onPick={(key) => toggle({ kind: 'route', key })} />
           </PaneSection>
@@ -301,7 +321,7 @@ function PlanStage({
         <ArrowRight size={13} className="mx-1.5 inline -translate-y-px text-white/60" />
         {example?.to.label ?? ROUTE_ENDPOINT[route.key][1]}
       </span>
-      {example && <span className="num text-[#f3c77a]">{formatNumber(example.length, 1)} м</span>}
+      {example && <span className="num text-[#ff9a7e]">{formatNumber(example.length, 1)} м</span>}
     </>
   ) : figure ? (
     <>
@@ -345,6 +365,8 @@ function PlanStage({
   )
 }
 
+/* Маршрут — выбираемая строка: радио-кружок слева, «откуда → куда» и длина, под ними мини-путь от точки до
+   точки. Длина линии пропорциональна маршруту на общей шкале, у выбранного она сигнальная — как путь на плане. */
 function RoutesList({
   routes,
   active,
@@ -357,52 +379,112 @@ function RoutesList({
   const longest = Math.max(...routes.map((r) => r.value_m), 1)
   if (!routes.length) return <p className="text-[13px] text-ink-3">Маршруты не рассчитаны.</p>
   return (
-    <ul className="relative -mx-2.5">
-      <SlideHighlight className="rounded-lg bg-card ring-1 ring-line" transition={SPRING} />
+    <ul className="-mx-1.5 space-y-1" role="radiogroup" aria-label="Маршруты роботов">
       {routes.map((route) => {
         const on = route.key === active
         const [from, to] = ROUTE_ENDPOINT[route.key]
-        const pairs = `${formatNumber(route.pairs)} ${pluralRu(route.pairs, ['пара', 'пары', 'пар'])}`
+        const share = Math.max(0.08, route.value_m / longest)
         return (
           <li key={route.key}>
             <button
               type="button"
+              role="radio"
+              aria-checked={on}
               onClick={() => onPick(route.key)}
-              aria-pressed={on}
+              title={on ? 'Убрать путь с плана' : 'Показать пример пути на плане'}
               className={cn(
-                'relative w-full rounded-lg px-2.5 py-1.5 text-left transition-colors',
-                on ? 'text-ink' : 'text-ink-2 hover:bg-black/3',
+                'group relative w-full rounded-[10px] border px-2.5 pt-2 pb-2.5 text-left transition-[background-color,border-color,box-shadow] duration-150',
+                on
+                  ? 'border-signal/40 bg-card shadow-[0_1px_2px_rgba(20,20,19,0.05)]'
+                  : 'border-transparent hover:border-line hover:bg-card',
               )}
-              title={`${route.name}: ${ROUTE_USE[route.key]}, ${pairs}`}
             >
-              {on && <SlideMark />}
-              <span className="relative flex items-baseline justify-between gap-3">
-                <span className="min-w-0 truncate text-[13px]">
-                  {capitalize(from)}
-                  <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
-                  {to}
-                </span>
-                <span className="num shrink-0 text-[14px] font-semibold text-ink">
-                  {formatNumber(route.value_m)}
-                  <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
-                </span>
-              </span>
-              <span className="relative mt-1 flex items-center gap-2.5">
-                <span className="block h-0.75 flex-1 overflow-hidden rounded-full bg-black/5">
+              <span className="flex items-start gap-2.5">
+                <span
+                  className={cn(
+                    'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors',
+                    on ? 'border-signal' : 'border-ink-4 group-hover:border-ink-3',
+                  )}
+                  aria-hidden
+                >
                   <motion.span
-                    className={cn('block h-full rounded-full', on ? 'bg-signal' : 'bg-black/15')}
+                    className="size-2 rounded-full bg-signal"
                     initial={false}
-                    animate={{ width: `${(route.value_m / longest) * 100}%` }}
-                    transition={{ type: 'spring', stiffness: 160, damping: 26 }}
+                    animate={{ scale: on ? 1 : 0 }}
+                    transition={SPRING}
                   />
                 </span>
-                <span className="num shrink-0 text-[11px] text-ink-4">{pairs}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className={cn('min-w-0 text-[13px] leading-snug', on ? 'text-ink' : 'text-ink-2')}>
+                      {capitalize(from)}
+                      <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
+                      {to}
+                    </span>
+                    <span className="num shrink-0 text-[15px] font-semibold text-ink">
+                      {formatNumber(route.value_m)}
+                      <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
+                    </span>
+                  </span>
+                  <span className="mt-2 flex h-3.5 items-center gap-2">
+                    <span className="flex min-w-0 flex-1 items-center" aria-hidden>
+                      <motion.span
+                        className="flex items-center"
+                        initial={false}
+                        animate={{ width: `${share * 100}%` }}
+                        transition={{ type: 'spring', stiffness: 160, damping: 26 }}
+                      >
+                        <span className={cn('size-2 shrink-0 rounded-full', on ? 'bg-signal' : 'bg-ink-4')} />
+                        <span className={cn('h-0.5 flex-1', on ? 'bg-signal' : 'bg-ink-4/60')} />
+                        <span
+                          className={cn(
+                            'size-2 shrink-0 rounded-full border-[1.5px] bg-card',
+                            on ? 'border-signal' : 'border-ink-4',
+                          )}
+                        />
+                      </motion.span>
+                    </span>
+                    <span
+                      className={cn(
+                        'flex w-17 shrink-0 items-center justify-end gap-1 text-[11px] font-medium transition-opacity',
+                        on
+                          ? 'text-signal'
+                          : 'text-ink-3 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100',
+                      )}
+                    >
+                      <MapPin size={11} /> {on ? 'на плане' : 'показать'}
+                    </span>
+                  </span>
+                  <span className="mt-1 flex items-center justify-between gap-2 text-[11.5px] text-ink-3">
+                    <span className="truncate">{ROUTE_USE[route.key]}</span>
+                    <span className="num shrink-0">
+                      {formatNumber(route.pairs)} {pluralRu(route.pairs, ['пара', 'пары', 'пар'])}
+                    </span>
+                  </span>
+                </span>
               </span>
             </button>
           </li>
         )
       })}
     </ul>
+  )
+}
+
+/* Пояснение по клику в заголовке раздела панели. */
+function Hint({ children }: { children: ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        className="inline-flex shrink-0 text-ink-4 transition-colors hover:text-ink"
+        aria-label="Пояснение"
+      >
+        <Info size={14} />
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 text-[13px] leading-relaxed text-ink-2">
+        {children}
+      </PopoverContent>
+    </Popover>
   )
 }
 
