@@ -1,23 +1,31 @@
 from app.domain.vendor.codec import product_from_json, product_to_json, spec_from_json, spec_to_json
 from app.domain.vendor.models import (
+    FitMissing,
+    FitReason,
     KeySpecGap,
     ManufacturerRef,
+    ProductFit,
     ProposalDecision,
     ProposalInfo,
     ProposalKind,
     ProposalStatus,
+    VendorFit,
     VendorGap,
     VendorOverview,
     VendorProductStats,
 )
 
 __all__ = [
+    "FitMissing",
+    "FitReason",
     "KeySpecGap",
     "ManufacturerRef",
+    "ProductFit",
     "ProposalDecision",
     "ProposalInfo",
     "ProposalKind",
     "ProposalStatus",
+    "VendorFit",
     "VendorGap",
     "VendorOverview",
     "VendorProductStats",

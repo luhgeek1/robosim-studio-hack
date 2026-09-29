@@ -10,6 +10,15 @@ vendorOverview:
       '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
       '409': {$ref: '../components/common.yaml#/responses/Conflict'}
 
+vendorFit:
+  get:
+    tags: [vendor]
+    operationId: vendorFit
+    summary: "Как продукты проходят подбор: статусы, причины исключения, недостающие ТТХ"
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/VendorFit'}}}}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+
 vendorProposals:
   get:
     tags: [vendor]

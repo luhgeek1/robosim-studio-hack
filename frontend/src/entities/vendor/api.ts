@@ -8,6 +8,7 @@ import type {
   ProposalStatus,
   ProposalWrite,
   Res,
+  VendorFit,
   VendorOverview,
 } from '@/shared/api/types'
 
@@ -17,6 +18,7 @@ const QUEUE_POLL_MS = 60_000
 
 export const vendorApi = {
   overview: () => api.get<VendorOverview>('/vendor/overview').then((r) => r.data),
+  fit: () => api.get<VendorFit>('/vendor/fit').then((r) => r.data),
   proposals: () => api.get<ProposalList>('/vendor/proposals').then((r) => r.data),
   createProposal: (body: ProposalWrite) => api.post<Proposal>('/vendor/proposals', body).then((r) => r.data),
   withdrawProposal: (id: string) => api.post<Proposal>(`/vendor/proposals/${id}/withdraw`).then((r) => r.data),
@@ -30,6 +32,10 @@ export const vendorApi = {
 
 export const useVendorOverview = (enabled = true) =>
   useQuery({ queryKey: qk.vendor.overview, queryFn: vendorApi.overview, enabled, retry: false })
+
+// Подбор по проектам платформы считается секунды — держим результат пять минут, а не пересчитываем на каждый заход.
+export const useVendorFit = () =>
+  useQuery({ queryKey: qk.vendor.fit, queryFn: vendorApi.fit, staleTime: 5 * 60 * 1000 })
 
 export const useMyProposals = () => useQuery({ queryKey: qk.vendor.proposals, queryFn: vendorApi.proposals })
 

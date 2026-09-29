@@ -17,6 +17,7 @@ from app.domain.vendor import (
     ProposalInfo,
     ProposalKind,
     ProposalStatus,
+    VendorFit as VendorFitInfo,
     VendorOverview as VendorOverviewInfo,
     product_from_json,
     spec_from_json,
@@ -232,3 +233,60 @@ class VendorOverview(ApiModel):
 
 class ManufacturerList(ApiModel):
     items: list[Manufacturer]
+
+
+class FitReasonItem(ApiModel):
+    code: str
+    text: str = Field(description="Пример формулировки из одного проекта")
+    spec_key: str | None = None
+    count: int
+
+
+class FitMissingItem(ApiModel):
+    spec_key: str
+    name: str
+    count: int
+
+
+class ProductFitItem(ApiModel):
+    product_id: UUID
+    appearances: int = Field(description="Сколько раз продукт был кандидатом (проект × процесс)")
+    fit: int
+    check: int
+    excluded: int
+    manual: int
+    top3: int = Field(description="Сколько раз продукт в тройке лучших среди подходящих")
+    blocking: list[FitReasonItem] = Field(description="Частые причины исключения")
+    missing: list[FitMissingItem] = Field(description="Каких ТТХ не хватило подбору для проверки")
+
+
+class VendorFit(ApiModel):
+    projects_analysed: int
+    computed_at: datetime
+    products: list[ProductFitItem]
+
+    @classmethod
+    def from_domain(cls, item: VendorFitInfo) -> "VendorFit":
+        return cls(
+            projects_analysed=item.projects_analysed,
+            computed_at=item.computed_at,
+            products=[
+                ProductFitItem(
+                    product_id=p.product_id,
+                    appearances=p.appearances,
+                    fit=p.fit,
+                    check=p.check,
+                    excluded=p.excluded,
+                    manual=p.manual,
+                    top3=p.top3,
+                    blocking=[
+                        FitReasonItem(code=r.code, text=r.text, spec_key=r.spec_key, count=r.count)
+                        for r in p.blocking
+                    ],
+                    missing=[
+                        FitMissingItem(spec_key=m.spec_key, name=m.name, count=m.count) for m in p.missing
+                    ],
+                )
+                for p in item.products
+            ],
+        )

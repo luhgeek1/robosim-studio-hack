@@ -89,3 +89,38 @@ class VendorOverview:
     scenarios_with_products: int
     proposals_by_status: dict[str, int]
     gaps: list[VendorGap] = field(default_factory=list)
+
+
+@dataclass(frozen=True, slots=True)
+class FitReason:
+    code: str
+    text: str
+    spec_key: str | None
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
+class FitMissing:
+    spec_key: str
+    name: str
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
+class ProductFit:
+    product_id: UUID
+    appearances: int
+    fit: int
+    check: int
+    excluded: int
+    manual: int
+    top3: int
+    blocking: list[FitReason]
+    missing: list[FitMissing]
+
+
+@dataclass(frozen=True, slots=True)
+class VendorFit:
+    projects_analysed: int
+    computed_at: datetime
+    products: list[ProductFit]

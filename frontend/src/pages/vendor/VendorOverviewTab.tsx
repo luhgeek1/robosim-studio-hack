@@ -11,6 +11,7 @@ import { KpiNumber } from '@/shared/ui/v0'
 import { Donut, HBars, type Slice } from '@/pages/admin/charts'
 import { stagger } from '@/pages/admin/motion'
 import { Empty, Kpi, Panel } from '@/pages/admin/panels'
+import { FitPanel } from './FitPanel'
 
 const typeLabel = (key: string) => OBJECT_TYPE_LABEL[key as ObjectTypeKey] ?? key
 const projects = (n: number) => `${formatNumber(n)} ${pluralRu(n, ['проект', 'проекта', 'проектов'])}`
@@ -78,6 +79,8 @@ export function VendorOverviewTab() {
           hint={`принято ${data.proposals_by_status.approved ?? 0}`}
         />
       </div>
+
+      <FitPanel products={products} />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Спрос по объектам" note="Проекты платформы с объектами, для которых есть ваши продукты">

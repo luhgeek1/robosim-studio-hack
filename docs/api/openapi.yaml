@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.7.2
+  version: 0.7.3
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -170,6 +170,7 @@ paths:
   /api/v1/admin/proposals/{proposal_id}/review: {$ref: './paths/vendor.yaml#/adminProposalReview'}
   /api/v1/admin/manufacturers: {$ref: './paths/vendor.yaml#/adminManufacturers'}
   /api/v1/vendor/overview: {$ref: './paths/vendor.yaml#/vendorOverview'}
+  /api/v1/vendor/fit: {$ref: './paths/vendor.yaml#/vendorFit'}
   /api/v1/vendor/proposals: {$ref: './paths/vendor.yaml#/vendorProposals'}
   /api/v1/vendor/proposals/{proposal_id}/withdraw: {$ref: './paths/vendor.yaml#/vendorProposalWithdraw'}
   /api/v1/integrations/projects: {$ref: './paths/platform.yaml#/integrationProjects'}
@@ -235,3 +236,4 @@ components:
     Proposal: {$ref: './components/vendor.yaml#/Proposal'}
     ProposalList: {$ref: './components/vendor.yaml#/ProposalList'}
     VendorOverview: {$ref: './components/vendor.yaml#/VendorOverview'}
+    VendorFit: {$ref: './components/vendor.yaml#/VendorFit'}

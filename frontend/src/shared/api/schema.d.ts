@@ -1969,6 +1969,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/vendor/fit': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Как продукты проходят подбор: статусы, причины исключения, недостающие ТТХ */
+    get: operations['vendorFit']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/vendor/proposals': {
     parameters: {
       query?: never
@@ -3180,6 +3197,13 @@ export interface components {
         [key: string]: number
       }
       gaps: components['schemas']['VendorGap'][]
+    }
+    /** @description Подбор по последним проектам платформы с объектами продуктов; только счётчики, без данных проектов. */
+    VendorFit: {
+      projects_analysed: number
+      /** Format: date-time */
+      computed_at: string
+      products: components['schemas']['ProductFit'][]
     }
     Health: {
       /** @enum {string} */
@@ -5131,6 +5155,34 @@ export interface components {
       no_fit_count: number
       /** @description Ваши типы решений, которые этот процесс использует */
       solution_types: string[]
+    }
+    FitReason: {
+      code: string
+      /** @description Пример формулировки из одного проекта */
+      text: string
+      spec_key?: string | null
+      count: number
+    }
+    FitMissing: {
+      spec_key: string
+      name: string
+      count: number
+    }
+    ProductFit: {
+      /** Format: uuid */
+      product_id: string
+      /** @description Сколько раз продукт был кандидатом (проект × процесс) */
+      appearances: number
+      fit: number
+      check: number
+      excluded: number
+      manual: number
+      /** @description Сколько раз продукт в тройке лучших среди подходящих */
+      top3: number
+      /** @description Частые причины исключения */
+      blocking: components['schemas']['FitReason'][]
+      /** @description Каких ТТХ не хватило подбору для проверки */
+      missing: components['schemas']['FitMissing'][]
     }
     ProposalWrite: {
       /**
@@ -8678,6 +8730,27 @@ export interface operations {
         }
       }
       403: components['responses']['Forbidden']
+      409: components['responses']['Conflict']
+    }
+  }
+  vendorFit: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['VendorFit']
+        }
+      }
       409: components['responses']['Conflict']
     }
   }

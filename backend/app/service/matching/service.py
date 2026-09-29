@@ -26,7 +26,7 @@ from app.service.matching.candidates import (
     specs_by_product,
 )
 from app.service.matching.economics import QuickEconomics, payback_limit_years, quick_economics
-from app.service.projects.context import ProjectLoader
+from app.service.projects.context import ProjectContext, ProjectLoader
 from app.service.projects.processes import ProcessAnalysis, ProcessService, ProcessView
 
 WEIGHT_NORM_PREFIX = "matching_weight_"
@@ -123,6 +123,10 @@ class MatchingService:
         settings = await self._repo.settings(project_id)
         if weights is not None or include_rnd is not None or process_keys is not None:
             settings = await self._save_settings(project_id, settings, weights, include_rnd, process_keys)
+        return await self.outcome(context, settings)
+
+    async def outcome(self, context: ProjectContext, settings: MatchingSettings | None) -> MatchingOutcome:
+        """Matching of an already loaded project; callers own the access check."""
         analysis = await self._processes.analyse(context)
         effective = {**self._default_weights(analysis), **(settings.weights if settings else {})}
         unknown = set(effective) - set(CRITERIA)

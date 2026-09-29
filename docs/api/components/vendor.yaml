@@ -117,6 +117,46 @@ VendorOverview:
     proposals_by_status: {type: object, additionalProperties: {type: integer}}
     gaps: {type: array, items: {$ref: '#/VendorGap'}}
 
+FitReason:
+  type: object
+  required: [code, text, count]
+  properties:
+    code: {type: string}
+    text: {type: string, description: "Пример формулировки из одного проекта"}
+    spec_key: {type: [string, "null"]}
+    count: {type: integer}
+
+FitMissing:
+  type: object
+  required: [spec_key, name, count]
+  properties:
+    spec_key: {type: string}
+    name: {type: string}
+    count: {type: integer}
+
+ProductFit:
+  type: object
+  required: [product_id, appearances, fit, check, excluded, manual, top3, blocking, missing]
+  properties:
+    product_id: {type: string, format: uuid}
+    appearances: {type: integer, description: "Сколько раз продукт был кандидатом (проект × процесс)"}
+    fit: {type: integer}
+    check: {type: integer}
+    excluded: {type: integer}
+    manual: {type: integer}
+    top3: {type: integer, description: "Сколько раз продукт в тройке лучших среди подходящих"}
+    blocking: {type: array, items: {$ref: '#/FitReason'}, description: "Частые причины исключения"}
+    missing: {type: array, items: {$ref: '#/FitMissing'}, description: "Каких ТТХ не хватило подбору для проверки"}
+
+VendorFit:
+  type: object
+  description: Подбор по последним проектам платформы с объектами продуктов; только счётчики, без данных проектов.
+  required: [projects_analysed, computed_at, products]
+  properties:
+    projects_analysed: {type: integer}
+    computed_at: {type: string, format: date-time}
+    products: {type: array, items: {$ref: '#/ProductFit'}}
+
 ManufacturerList:
   type: object
   required: [items]

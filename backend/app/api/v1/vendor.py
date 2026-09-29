@@ -11,13 +11,14 @@ from app.api.schemas.vendor import (
     ProposalList,
     ProposalReview,
     ProposalWrite,
+    VendorFit,
     VendorOverview,
 )
 from app.db.repositories.vendor import VendorRepository
 from app.domain.auth import CurrentUser, Permission
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.vendor import ProposalStatus
-from app.service.vendor import ProposalService, VendorOverviewService
+from app.service.vendor import ProposalService, VendorFitService, VendorOverviewService
 
 router = APIRouter()
 
@@ -37,6 +38,17 @@ CONFLICT: dict[int | str, dict[str, Any]] = {409: {"description": "Конфли�
 )
 async def vendor_overview(user: VendorDep, uow: UowDep) -> VendorOverview:
     return VendorOverview.from_domain(await VendorOverviewService(uow, user).overview())
+
+
+@router.get(
+    "/vendor/fit",
+    tags=["vendor"],
+    operation_id="vendorFit",
+    summary="Как продукты проходят подбор в проектах платформы: статусы, причины исключения, недостающие ТТХ",
+    responses=CONFLICT,
+)
+async def vendor_fit(user: VendorDep, uow: UowDep) -> VendorFit:
+    return VendorFit.from_domain(await VendorFitService(uow, user).fit())
 
 
 @router.get(

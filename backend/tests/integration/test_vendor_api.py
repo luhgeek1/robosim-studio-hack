@@ -270,3 +270,25 @@ async def test_admin_binds_vendor_to_a_manufacturer(client: AsyncClient) -> None
     assert overview["manufacturer"]["id"] == target["id"]
     user = await _headers(client, "user@robomera.demo")
     assert (await client.get(f"{ADMIN}/manufacturers", headers=user)).status_code == 403
+
+
+async def test_fit_shows_how_products_pass_matching_without_project_data(client: AsyncClient) -> None:
+    user = await _headers(client, "user@robomera.demo")
+    payload = {
+        "name": "Склад заказчика «Секрет»",
+        "object_type": "warehouse",
+        "init": {"mode": "demo", "demo_key": "warehouse_demo_01"},
+    }
+    assert (await client.post("/api/v1/projects", json=payload, headers=user)).status_code == 201
+
+    vendor = await _headers(client, "vendor@robomera.demo")
+    response = await client.get(f"{VENDOR}/fit", headers=vendor)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["projects_analysed"] == 1
+    assert "Секрет" not in response.text, "вендор видит счётчики, а не чужие проекты"
+    seen = [p for p in body["products"] if p["appearances"] > 0]
+    assert seen, "продукты «Ронави» — кандидаты в подборе демо-склада"
+    for item in seen:
+        assert item["appearances"] == item["fit"] + item["check"] + item["excluded"] + item["manual"]
+    assert any(p["missing"] or p["blocking"] for p in body["products"])
