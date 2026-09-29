@@ -2,9 +2,9 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from fastapi import APIRouter, Depends, File, Form, Path, Query, Response, UploadFile, status
 
-from app.api.deps import UowDep, require
+from app.api.deps import SettingsDep, UowDep, require
 from app.api.schemas.admin import (
     AdminUserUpdate,
     AnalyticsOverview,
@@ -13,12 +13,19 @@ from app.api.schemas.admin import (
     SpecsBulkWrite,
     UserList,
 )
+from app.api.schemas.admin_catalog import CatalogImportResult
 from app.api.schemas.auth import User
 from app.api.schemas.catalog import ProductDetail
 from app.api.schemas.reference import NormSet
 from app.domain.admin import UserQuery
 from app.domain.auth import CurrentUser, Permission, Role
-from app.service.admin import AnalyticsService, CatalogAdminService, NormPublisher, UserAdminService
+from app.service.admin import (
+    AnalyticsService,
+    CatalogAdminService,
+    CatalogImporter,
+    NormPublisher,
+    UserAdminService,
+)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -79,6 +86,29 @@ async def upsert_product_specs(
     specs = [spec.to_domain() for spec in payload.specs]
     detail = await CatalogAdminService(uow, user.email).upsert_specs(product_id, specs)
     return ProductDetail.from_detail(detail)
+
+
+@router.post(
+    "/catalog/import",
+    operation_id="adminImportCatalog",
+    summary="Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)",
+    description="С `dry_run=true` ничего не пишет и показывает, что изменится. Карточки, которые правил или "
+    "скрыл администратор, не перезаписываются — они в `items` с `action: conflict`.",
+    responses={413: {"description": "Файл больше 20 МБ"}, 415: {"description": "Неподдерживаемый формат"}},
+)
+async def import_catalog(
+    uow: UowDep,
+    user: CatalogAdmin,
+    settings: SettingsDep,
+    file: Annotated[UploadFile, File()],
+    notes: Annotated[str | None, Form(max_length=2000)] = None,
+    dry_run: Annotated[bool, Query(description="Только предпросмотр: ничего не сохранять")] = False,
+) -> CatalogImportResult:
+    content = await file.read()
+    report = await CatalogImporter(uow, settings, user.email).run(
+        file.filename or "upload.csv", content, dry_run=dry_run, notes=notes.strip() if notes else None
+    )
+    return CatalogImportResult.from_domain(report)
 
 
 @router.post(

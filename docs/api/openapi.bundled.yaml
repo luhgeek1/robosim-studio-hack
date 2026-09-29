@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.7.1
+  version: 0.7.2
   license:
     name: MIT
     identifier: MIT
@@ -2656,7 +2656,20 @@ paths:
       tags:
         - admin
       operationId: adminImportCatalog
-      summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2)
+      summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+      description: |
+        Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
+        обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
+        процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+        они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
+        С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+      parameters:
+        - name: dry_run
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: 'Только предпросмотр: ничего не сохранять'
       requestBody:
         required: true
         content:
@@ -2671,6 +2684,8 @@ paths:
                   format: binary
                 notes:
                   type: string
+                  maxLength: 2000
+                  description: Что за выгрузка — пишется в журнал
       responses:
         '200':
           description: OK
@@ -2678,6 +2693,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogImportResult'
+        '413':
+          description: Файл больше 20 МБ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '415':
           description: Неподдерживаемый формат
           content:
@@ -2807,6 +2828,169 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NormSet'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/admin/parameter-defaults/{object_type}:
+    parameters:
+      - name: object_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeKey'
+    get:
+      tags:
+        - admin
+      operationId: adminListParameterDefaults
+      summary: Параметры по умолчанию типа объекта и сколько проектов на них опирается (ТЗ 2.1.6, 3.1.4)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterDefaultList'
+  /api/v1/admin/parameter-defaults/{object_type}/{key}:
+    parameters:
+      - name: object_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeKey'
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+    put:
+      tags:
+        - admin
+      operationId: adminSetParameterDefault
+      summary: Задать значение по умолчанию с источником и обоснованием
+      description: |
+        Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона — 422 (у проекта это
+        было бы предупреждением, у умолчания — ошибка во всех проектах). Проекты без своего значения, у которых
+        меняется действующее значение, получают новую версию: их сохранённые расчёты становятся устаревшими,
+        а пересчёт показывает изменение параметра в диффе. Старые расчёты хранят свой снимок входов (ТЗ 3.1.5).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterDefaultWrite'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterDefaultResult'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/admin/parameter-defaults/{object_type}/{key}/history:
+    parameters:
+      - name: object_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeKey'
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+    get:
+      tags:
+        - admin
+      operationId: adminParameterDefaultHistory
+      summary: История значения по умолчанию (кто, когда, было → стало, обоснование)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditList'
+  /api/v1/admin/sources:
+    get:
+      tags:
+        - admin
+      operationId: adminListSources
+      summary: Реестр источников данных — ссылки, даты, где используются (ТЗ 3.3.4)
+      description: |
+        Источники каталога, нормативов и параметров по умолчанию (загрузки пользователей в проекты не входят).
+        Сначала самые используемые. Источник старше `stale_after_months` месяцев (норматив
+        `source_stale_after_months`) — `stale`, без даты получения — `undated`.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: Название, ссылка или примечание
+        - name: kind
+          in: query
+          schema:
+            $ref: '#/components/schemas/SourceKind'
+        - name: freshness
+          in: query
+          schema:
+            $ref: '#/components/schemas/SourceFreshness'
+        - name: include_unused
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Показать источники, на которые ничего не ссылается
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceList'
+  /api/v1/admin/sources/{source_id}:
+    parameters:
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - admin
+      operationId: adminUpdateSource
+      summary: Исправить название, ссылку, дату получения или примечание источника
+      description: |
+        Правка — событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
+        и расчёты не устаревают; экраны и отчёты показывают исправленный источник. Сид не перезаписывает
+        источник, который правил администратор.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrySource'
         '422':
           $ref: '#/components/responses/ValidationError'
   /api/v1/admin/users:
@@ -9523,36 +9707,124 @@ components:
             - string
             - 'null'
           format: date-time
+    CatalogImportItem:
+      type: object
+      required:
+        - product_id
+        - name
+        - action
+        - row
+        - changes
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        action:
+          type: string
+          enum:
+            - created
+            - updated
+            - unchanged
+            - conflict
+        row:
+          type: integer
+          description: Первая строка продукта в файле
+        solution_type:
+          type:
+            - string
+            - 'null'
+          description: Тип решения нового продукта
+        reason:
+          type:
+            - string
+            - 'null'
+          description: Почему конфликт
+        changes:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - label
+            properties:
+              field:
+                type: string
+                example: price_from_rub
+              label:
+                type: string
+                example: Цена от, ₽
+              before:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: 'null'
+                description: Для описания не повторяется
+              after:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: 'null'
     CatalogImportResult:
       type: object
       required:
+        - dry_run
         - catalog_version
         - created
         - updated
+        - unchanged
+        - conflicts
         - offers_created
         - skipped
+        - not_in_file
         - errors
+        - items
       properties:
+        dry_run:
+          type: boolean
+          description: true — предпросмотр, ничего не сохранено
         catalog_version:
           type: string
+          description: После применения — новая версия; в предпросмотре и без изменений — текущая
         created:
           type: integer
+          description: Новые продукты (id нет в каталоге)
         updated:
           type: integer
+          description: Продукты под управлением сида, у которых файл что-то меняет
+        unchanged:
+          type: integer
+        conflicts:
+          type: integer
+          description: Карточки, которые правил или скрыл администратор, — не тронуты
         offers_created:
           type: integer
-          description: Строки-дубли сохранены как отдельные предложения
+          description: 'Новые предложения: строки-дубли сохраняются как отдельные предложения'
         skipped:
           type: integer
+          description: Строки без id
+        not_in_file:
+          type: integer
+          description: Продукты под управлением сида, которых нет в файле (не скрываются)
         errors:
           type: array
           items:
             type: object
+            required:
+              - row
+              - message
             properties:
               row:
                 type: integer
+                description: Номер строки файла, заголовок — строка 1
               message:
                 type: string
+        items:
+          type: array
+          description: Новые, изменённые и конфликтные продукты; неизменённые только считаются
+          items:
+            $ref: '#/components/schemas/CatalogImportItem'
     EnrichmentReview:
       type: object
       properties:
@@ -9618,6 +9890,195 @@ components:
                 $ref: '#/components/schemas/SourceWrite'
               rationale:
                 type: string
+    AdminParameterDefault:
+      allOf:
+        - $ref: '#/components/schemas/ParameterDef'
+        - type: object
+          required:
+            - object_type
+            - group_name
+            - applies_to_blank
+            - projects_total
+            - projects_using_default
+          properties:
+            object_type:
+              $ref: '#/components/schemas/ObjectTypeKey'
+            group_name:
+              type: string
+              example: Персонал
+            applies_to_blank:
+              type: boolean
+              description: 'false — данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё'
+            projects_total:
+              type: integer
+              description: Проектов этого типа объекта
+            projects_using_default:
+              type: integer
+              description: Из них берут значение из умолчания (своего значения нет)
+    ParameterDefaultList:
+      type: object
+      required:
+        - object_type
+        - items
+      properties:
+        object_type:
+          $ref: '#/components/schemas/ObjectTypeKey'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminParameterDefault'
+    ParameterDefaultWrite:
+      type: object
+      required:
+        - value
+        - source
+        - rationale
+      properties:
+        value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: boolean
+          description: В единице параметра (проценты — в процентах)
+        unit:
+          type:
+            - string
+            - 'null'
+          description: Если указана — должна совпадать с единицей параметра
+        status:
+          type:
+            - string
+            - 'null'
+          enum:
+            - default
+            - assumption
+            - null
+          description: default — значение из источника, assumption — допущение. Без значения — прежний статус (у параметра без умолчания — assumption)
+        source:
+          $ref: '#/components/schemas/SourceWrite'
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Почему такое значение
+    ParameterDefaultResult:
+      type: object
+      required:
+        - parameter
+        - projects_restamped
+      properties:
+        parameter:
+          $ref: '#/components/schemas/AdminParameterDefault'
+        projects_restamped:
+          type: integer
+          description: 'Проектов с новой версией: их сохранённые расчёты устарели'
+    SourceFreshness:
+      type: string
+      description: fresh — получен не раньше порога, stale — раньше (норматив source_stale_after_months), undated — без даты получения
+      enum:
+        - fresh
+        - stale
+        - undated
+    SourceUsage:
+      type: object
+      required:
+        - specs
+        - offers
+        - cases
+        - norms
+        - parameters
+        - total
+      properties:
+        specs:
+          type: integer
+          description: ТТХ видимых продуктов
+        offers:
+          type: integer
+          description: Цены (предложения) видимых продуктов
+        cases:
+          type: integer
+          description: Кейсы внедрения
+        norms:
+          type: integer
+          description: Нормативы действующей версии
+        parameters:
+          type: integer
+          description: Параметры по умолчанию
+        total:
+          type: integer
+    RegistrySource:
+      allOf:
+        - $ref: '#/components/schemas/Source'
+        - type: object
+          required:
+            - freshness
+            - usage
+          properties:
+            freshness:
+              $ref: '#/components/schemas/SourceFreshness'
+            usage:
+              $ref: '#/components/schemas/SourceUsage'
+    SourceList:
+      type: object
+      required:
+        - items
+        - page
+        - page_size
+        - total
+        - stale_after_months
+        - stale_before
+        - freshness_counts
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrySource'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        stale_after_months:
+          type: integer
+          description: Порог устаревания — норматив source_stale_after_months
+        stale_before:
+          type: string
+          format: date
+          description: Источник, полученный раньше этой даты, устарел
+        freshness_counts:
+          type: object
+          description: Сколько источников в каждом состоянии при тех же фильтрах, кроме freshness
+          properties:
+            fresh:
+              type: integer
+            stale:
+              type: integer
+            undated:
+              type: integer
+    SourceUpdate:
+      type: object
+      description: Меняются только переданные поля; url, retrieved_at и note можно очистить значением null
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        url:
+          type:
+            - string
+            - 'null'
+          format: uri
+        retrieved_at:
+          type:
+            - string
+            - 'null'
+          format: date
+        note:
+          type:
+            - string
+            - 'null'
+          maxLength: 2000
     UserList:
       type: object
       required:

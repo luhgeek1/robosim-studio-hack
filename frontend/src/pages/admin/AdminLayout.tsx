@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUpRight, BarChart3, Boxes, FileClock, Scale, Users } from 'lucide-react'
+import { ArrowUpRight, BarChart3, BookMarked, Boxes, FileClock, Scale, Users } from 'lucide-react'
 import { Link, NavLink, useLocation, useOutlet } from 'react-router'
 import { useSystemVersion } from '@/entities/reference'
 import { useProposalQueue } from '@/entities/vendor'
@@ -12,6 +12,7 @@ const TABS = [
   { to: '/admin/catalog', label: 'Каталог', icon: Boxes },
   { to: '/admin/proposals', label: 'Заявки', icon: FileClock },
   { to: '/admin/norms', label: 'Нормативы', icon: Scale },
+  { to: '/admin/reference', label: 'Справочники', icon: BookMarked },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
 ]
 
