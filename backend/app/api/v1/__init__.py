@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     admin,
+    admin_reference,
     analysis,
     auth,
     calculations,
@@ -17,6 +18,7 @@ from app.api.v1 import (
     scenarios,
     simulations,
     system,
+    vendor,
 )
 
 api_router = APIRouter(prefix="/api/v1")
@@ -36,3 +38,5 @@ api_router.include_router(analysis.router)
 api_router.include_router(simulations.router)
 api_router.include_router(reports.router)
 api_router.include_router(admin.router)
+api_router.include_router(vendor.router)
+api_router.include_router(admin_reference.router)

@@ -53,7 +53,7 @@ class CatalogAdminService:
     async def upsert_specs(self, product_id: UUID, specs: Sequence[SpecInput]) -> ProductDetail:
         product = await self._visible(product_id)
         keys = await self._repo.spec_keys()
-        _check_specs(specs, {key: row.value_type for key, row in keys.items()})
+        check_specs(specs, {key: row.value_type for key, row in keys.items()})
         await self._repo.replace_admin_specs(product.id, [spec.key for spec in specs])
         for spec in specs:
             source = await self._repo.add_source(spec.source)
@@ -168,7 +168,7 @@ class CatalogAdminService:
         )
 
 
-def _check_specs(specs: Sequence[SpecInput], value_types: dict[str, str]) -> None:
+def check_specs(specs: Sequence[SpecInput], value_types: dict[str, str]) -> None:
     seen: set[str] = set()
     for spec in specs:
         if spec.key not in value_types:

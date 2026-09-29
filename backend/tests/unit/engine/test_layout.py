@@ -66,7 +66,11 @@ def test_demo_capacity_fits_and_a_shortfall_is_reported_not_hidden() -> None:
 def test_routes_come_from_the_graph_and_are_plausible() -> None:
     summary = stats(build().plan)
     routes = summary.routes
-    assert set(routes) == set(RouteKey)
+    assert set(routes) == set(RouteKey) - {
+        RouteKey.SERVICE_TO_WARD,
+        RouteKey.SORTING_TO_STAND,
+        RouteKey.TERMINAL_TO_HUB,
+    }
     assert 60 < routes[RouteKey.DOCK_IN_TO_STORAGE].value_m < 130
     assert 60 < routes[RouteKey.STORAGE_TO_DOCK_OUT].value_m < 130
     # The FCBAS default of 200 m overstates the route in a 20 000 m² building with docks along the long side.
@@ -78,7 +82,7 @@ def test_routes_come_from_the_graph_and_are_plausible() -> None:
 
 
 def test_generated_plan_is_valid_and_connected() -> None:
-    for template in LayoutTemplate:
+    for template in (LayoutTemplate.WAREHOUSE_U_FLOW, LayoutTemplate.WAREHOUSE_FLOW_THROUGH):
         plan = build(template).plan
         assert validate(plan) == []
         kinds = {node.kind for node in plan.nodes}
@@ -150,3 +154,80 @@ def test_generation_is_fast_enough_for_interactive_use() -> None:
     started = time.perf_counter()
     stats(build(area_m2=60_000.0, pallet_positions=60_000.0).plan)
     assert time.perf_counter() - started < 2.0
+
+
+HOSPITAL = {
+    "floors": 9.0,
+    "elevators": 4.0,
+    "corridor_width_m": 2.4,
+    "kitchen_to_ward_distance_m": 180.0,
+    "meal_points": 18.0,
+}
+
+
+def hospital(**changes: float) -> Generated:
+    values = {**HOSPITAL, **changes}
+    return generate(
+        LayoutTemplate.HOSPITAL_FLOOR,
+        Book.of(InputKind.PARAM, [(k, k, v, None) for k, v in values.items()]),
+        NORMS,
+    )
+
+
+def test_hospital_plan_keeps_the_measured_route_and_is_connected() -> None:
+    generated = hospital()
+    plan = generated.plan
+    assert validate(plan) == []
+    kinds = {zone.kind for zone in plan.zones}
+    assert {ZoneKind.KITCHEN, ZoneKind.LAUNDRY, ZoneKind.PHARMACY, ZoneKind.LAB, ZoneKind.WASTE} <= kinds
+    assert {ZoneKind.WARD, ZoneKind.ELEVATOR, ZoneKind.CHARGING} <= kinds
+    lifts = [n for n in plan.nodes if n.kind == NodeKind.ELEVATOR]
+    assert len(lifts) == 2
+    assert all(n.capacity == 4 for n in lifts)
+    assert sum(e.kind == EdgeKind.ELEVATOR_LINK for e in plan.edges) == 1
+    # 18 delivery points over 8 ward floors: 3 wards on the typical floor.
+    assert sum(z.kind == ZoneKind.WARD for z in plan.zones) == 3
+    assert stats(plan).routes[RouteKey.SERVICE_TO_WARD].value_m == pytest.approx(180, abs=0.5)
+    longer = stats(hospital(kitchen_to_ward_distance_m=300).plan).routes[RouteKey.SERVICE_TO_WARD]
+    assert longer.value_m == pytest.approx(300, abs=0.5)
+
+
+def test_hospital_route_shorter_than_the_rooms_is_reported() -> None:
+    generated = hospital(kitchen_to_ward_distance_m=40)
+    assert generated.warnings
+    assert stats(generated.plan).routes[RouteKey.SERVICE_TO_WARD].value_m > 40
+
+
+AIRPORT = {
+    "gates": 20.0,
+    "terminals": 2.0,
+    "baggage_carousels": 8.0,
+    "baggage_route_length_m": 300.0,
+    "terminal_route_length_m": 200.0,
+}
+
+
+def airport(**changes: float) -> Generated:
+    values = {**AIRPORT, **changes}
+    return generate(
+        LayoutTemplate.AIRPORT_APRON,
+        Book.of(InputKind.PARAM, [(k, k, v, None) for k, v in values.items()]),
+        NORMS,
+    )
+
+
+def test_airport_pier_keeps_the_baggage_route_and_reports_a_longer_terminal_route() -> None:
+    generated = airport()
+    plan = generated.plan
+    assert validate(plan) == []
+    assert sum(z.kind == ZoneKind.APRON for z in plan.zones) == 20
+    assert sum(z.kind == ZoneKind.GATE for z in plan.zones) == 20
+    assert sum(z.kind == ZoneKind.TERMINAL for z in plan.zones) == 2
+    assert {ZoneKind.BUFFER, ZoneKind.WASTE, ZoneKind.CHARGING} <= {z.kind for z in plan.zones}
+    routes = stats(plan).routes
+    assert routes[RouteKey.SORTING_TO_STAND].value_m == pytest.approx(300, abs=0.5)
+    # Ten gates each side of the hub: the drawn route is longer than the 200 m estimate, and the plan says so.
+    assert routes[RouteKey.TERMINAL_TO_HUB].value_m > 200
+    assert any("выход → накопитель" in w for w in generated.warnings)
+    far = stats(airport(baggage_route_length_m=600).plan).routes[RouteKey.SORTING_TO_STAND]
+    assert far.value_m == pytest.approx(600, abs=0.5)

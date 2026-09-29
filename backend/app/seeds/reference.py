@@ -1,10 +1,11 @@
 from typing import Any
 
-from sqlalchemy import delete, tuple_
+from sqlalchemy import delete, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.config import Settings
-from app.db.models import Industry, ObjectType, ParameterDef, ProcessDef, SolutionType, SpecKey
+from app.db.models import Industry, ObjectType, ParameterDef, ProcessDef, SolutionType, Source, SpecKey
+from app.db.repositories.catalog_admin import ADMIN_SOURCE_PREFIX
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.layout.models import RouteKey
@@ -255,6 +256,12 @@ def _validate(object_type: ObjectTypeSeed, solution_types: set[str], norm_keys: 
         for s in cost.solution_types
         if s not in solution_types
     ]
+    problems += [
+        f"demo {demo.key}: unknown param {key}"
+        for demo in object_type.demo_projects
+        for key in demo.params
+        if key not in params
+    ]
     problems += _formula_problems(object_type, norm_keys)
     if problems:
         raise SeedDataError(f"{object_type.key}: " + "; ".join(problems))
@@ -293,6 +300,7 @@ async def seed_object_types(uow: UnitOfWork, settings: Settings) -> int:
         )
         sheet = dataset.get(object_type.dataset_sheet or "", {})
         params = [await _parameter_row(object_type, p, sheet, sources) for p in object_type.parameters]
+        await _keep_admin_defaults(uow, key, params)
         await _replace_children(uow, ParameterDef, key, params)
         processes = [
             {**p.model_dump(), "object_type": key, "order": index}
@@ -301,6 +309,22 @@ async def seed_object_types(uow: UnitOfWork, settings: Settings) -> int:
         await _replace_children(uow, ProcessDef, key, processes)
         count += len(params) + len(processes)
     return count
+
+
+_DEFAULT_COLUMNS = ("default_value", "default_status", "default_source_id", "default_note")
+
+
+async def _keep_admin_defaults(uow: UnitOfWork, object_type: str, rows: list[dict[str, Any]]) -> None:
+    """A default the admin set (its source is an admin source) outlives the seed, like an edited product."""
+    statement = (
+        select(ParameterDef.key, *(getattr(ParameterDef, column) for column in _DEFAULT_COLUMNS))
+        .join(Source, Source.id == ParameterDef.default_source_id)
+        .where(ParameterDef.object_type == object_type, Source.key.startswith(ADMIN_SOURCE_PREFIX))
+    )
+    kept = {key: values for key, *values in (await uow.session.execute(statement)).tuples()}
+    for row in rows:
+        if row["key"] in kept:
+            row.update(zip(_DEFAULT_COLUMNS, kept[row["key"]], strict=True))
 
 
 async def _replace_children(

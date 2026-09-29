@@ -27,7 +27,7 @@ export function usePlaybackDriver() {
 }
 
 // ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения — первая строка нижней панели, под картой.
-export function PlayerBar({ disabled = false, backdrop }: { disabled?: boolean; backdrop?: ReactNode }) {
+export function PlayerBar({ disabled = false, track }: { disabled?: boolean; track?: ReactNode }) {
   const playing = usePlayback((s) => s.playing)
   const speed = usePlayback((s) => s.speed)
   const total = usePlayback((s) => s.total)
@@ -46,9 +46,9 @@ export function PlayerBar({ disabled = false, backdrop }: { disabled?: boolean; 
       <Button variant="ghost" size="icon-sm" className="max-lg:size-9" onClick={() => setT(0)} aria-label="С начала">
         <RotateCcw />
       </Button>
-      {/* За шкалой — очередь задач за прогон: видно, куда перемотать, чтобы увидеть пик. */}
       <div className="relative flex h-8 min-w-24 flex-1 items-center">
-        {backdrop && <div className="pointer-events-none absolute inset-x-0 inset-y-0.5">{backdrop}</div>}
+        {/* Очередь за прогон рисуется под ползунком: видно, куда перемотать, чтобы попасть в самый напряжённый момент. */}
+        {track && <div className="pointer-events-none absolute inset-x-0 top-0 bottom-1/2">{track}</div>}
         <input
           type="range"
           min={0}

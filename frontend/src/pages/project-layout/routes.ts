@@ -71,23 +71,63 @@ function dijkstra(adj: Adjacency, sources: string[]) {
   return { dist, prev }
 }
 
-const SPEC: Record<RouteKey, { from: LayoutNode['kind']; to: LayoutNode['kind']; pallets: boolean; nearest: boolean }> =
-  {
-    dock_in_to_storage: { from: 'dock_in', to: 'rack_face', pallets: true, nearest: false },
-    storage_to_dock_out: { from: 'rack_face', to: 'dock_out', pallets: true, nearest: false },
-    storage_to_storage: { from: 'rack_face', to: 'rack_face', pallets: true, nearest: false },
-    pod_to_station: { from: 'pickup', to: 'pick_station', pallets: false, nearest: true },
-    storage_to_charger: { from: 'rack_face', to: 'charger', pallets: true, nearest: true },
-  }
+type ZoneKind = Layout['zones'][number]['kind']
+
+type Spec = {
+  from: LayoutNode['kind']
+  to: LayoutNode['kind']
+  pallets: boolean
+  nearest: boolean
+  // Service routes: the backend takes points of these zones only (`engine/layout/graph.py`, `_SERVICE_ROUTES`).
+  fromZones?: ZoneKind[]
+  toZones?: ZoneKind[]
+}
+
+const SERVICES: ZoneKind[] = ['kitchen', 'laundry', 'pharmacy', 'lab', 'waste']
+
+const SPEC: Partial<Record<RouteKey, Spec>> = {
+  dock_in_to_storage: { from: 'dock_in', to: 'rack_face', pallets: true, nearest: false },
+  storage_to_dock_out: { from: 'rack_face', to: 'dock_out', pallets: true, nearest: false },
+  storage_to_storage: { from: 'rack_face', to: 'rack_face', pallets: true, nearest: false },
+  pod_to_station: { from: 'pickup', to: 'pick_station', pallets: false, nearest: true },
+  storage_to_charger: { from: 'rack_face', to: 'charger', pallets: true, nearest: true },
+  service_to_ward: {
+    from: 'pickup',
+    to: 'dropoff',
+    pallets: false,
+    nearest: false,
+    fromZones: SERVICES,
+    toZones: ['ward'],
+  },
+  sorting_to_stand: {
+    from: 'pickup',
+    to: 'dropoff',
+    pallets: false,
+    nearest: false,
+    fromZones: ['buffer'],
+    toZones: ['apron'],
+  },
+  terminal_to_hub: {
+    from: 'pickup',
+    to: 'dropoff',
+    pallets: false,
+    nearest: false,
+    fromZones: ['gate'],
+    toZones: ['waste'],
+  },
+}
 
 /* One real path of the route whose length is closest to the route's mean: the plan shows what «92 м on average»
    looks like. The mean itself comes from the backend; this only picks an illustration of it. */
 export function exampleRoute(layout: Layout, key: RouteKey, mean: number): ExampleRoute | null {
   const spec = SPEC[key]
+  if (!spec) return null
   const byId = new Map(layout.nodes.map((n) => [n.id, n]))
-  const ofKind = (kind: LayoutNode['kind']) => layout.nodes.filter((n) => n.kind === kind)
-  const froms = ofKind(spec.from)
-  const tos = ofKind(spec.to)
+  const zoneKind = new Map(layout.zones.map((z) => [z.id, z.kind]))
+  const ofKind = (kind: LayoutNode['kind'], zones?: ZoneKind[]) =>
+    layout.nodes.filter((n) => n.kind === kind && (!zones || zones.includes(zoneKind.get(n.zone_id ?? '') as ZoneKind)))
+  const froms = ofKind(spec.from, spec.fromZones)
+  const tos = ofKind(spec.to, spec.toZones)
   if (!froms.length || !tos.length) return null
 
   // «To the nearest X» searches backwards from every X; otherwise from one origin in the middle of its row.

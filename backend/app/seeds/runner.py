@@ -9,7 +9,7 @@ from app.db.uow import UnitOfWork
 from app.seeds.catalog import seed_catalog
 from app.seeds.norms import seed_norms
 from app.seeds.reference import seed_industries, seed_object_types, seed_solution_types, seed_spec_keys
-from app.seeds.users import seed_demo_users
+from app.seeds.users import seed_demo_users, seed_vendor_binding
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ SEED_TASKS: list[tuple[str, SeedTask]] = [
     ("object_types", seed_object_types),
     ("norms", seed_norms),
     ("catalog", seed_catalog),
+    ("vendor_binding", seed_vendor_binding),
 ]
 
 

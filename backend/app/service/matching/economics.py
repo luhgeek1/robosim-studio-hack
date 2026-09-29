@@ -22,6 +22,11 @@ def horizon_years(analysis: ProcessAnalysis) -> int:
     return int(horizon) if horizon else int(analysis.norms.value(f"horizon_years_{object_type}"))
 
 
+def payback_limit_years(analysis: ProcessAnalysis) -> float:
+    """Longest payback a recommendation tolerates: the «сомнительно» band of ТЗ 3.5.7, within the horizon."""
+    return min(analysis.norms.value("verdict_payback_questionable_years"), float(horizon_years(analysis)))
+
+
 def quick_economics(
     analysis: ProcessAnalysis, process_key: str, data: CandidateData
 ) -> QuickEconomics | None:

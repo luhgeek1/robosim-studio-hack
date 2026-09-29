@@ -27,9 +27,10 @@ async def restore_seeded_tables(settings: Settings) -> AsyncIterator[None]:
         await conn.execute(text("DELETE FROM norm_sets WHERE published_by <> 'system'"))
         await conn.execute(text("UPDATE norm_sets SET is_current = (version = 'v1')"))
         await conn.execute(text("DELETE FROM sources WHERE key LIKE 'admin:%'"))
-        await conn.execute(
-            text("UPDATE data_versions SET version = :v WHERE key = 'catalog'"), {"v": version}
-        )
+        if version is not None:
+            await conn.execute(
+                text("UPDATE data_versions SET version = :v WHERE key = 'catalog'"), {"v": version}
+            )
     await engine.dispose()
 
 

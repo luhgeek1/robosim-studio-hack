@@ -238,25 +238,55 @@ def _relative(value: float | None, best: float | None, *, lower_is_better: bool)
     return POINTS_MAX * ratio
 
 
+@dataclass(frozen=True, slots=True)
+class QuickEstimate:
+    """Purchase of one candidate for its process: NPV over the horizon and simple payback, years."""
+
+    npv_rub: float
+    payback_years: float | None
+
+
+def pays_back(estimate: QuickEstimate | None, limit_years: float | None) -> bool:
+    """Payback within the limit (ТЗ 3.5.7: the «сомнительно» band and the horizon, whichever is shorter)."""
+    if estimate is None or estimate.payback_years is None:
+        return False
+    return limit_years is None or estimate.payback_years <= limit_years
+
+
 def _economics(
-    c: CandidateInput, peers: Sequence[CandidateResult], npv: Mapping[UUID, float]
+    c: CandidateInput,
+    peers: Sequence[CandidateResult],
+    economics: Mapping[UUID, QuickEstimate],
+    payback_limit_years: float | None = None,
 ) -> tuple[float, str]:
-    """NPV of buying the solution for the process, relative to the best one: cheap hardware that frees little
-    labour (a tow tractor replaces drivers, not loaders) must not outrank a solution that pays back."""
-    if npv:
-        known = [npv[p.candidate.product_id] for p in peers if p.candidate.product_id in npv]
-        own = npv.get(c.product_id)
+    """Payback first, then NPV: a candidate that does not pay back within the norm gets no points, however
+    cheap its hardware (a tow tractor replaces drivers, not loaders); the ones that pay back go by NPV."""
+    if economics:
+        own = economics.get(c.product_id)
         if own is None:
             return 0.0, "Экономика не оценена — нет модели производительности"
-        # Place by NPV among the process's candidates: robust to an outlier, and a smaller loss still ranks
-        # higher when no candidate pays back (the object's fixed costs are charged to each one in full).
-        # Distinct NPV values on both sides: equal NPVs share a place, and the score stays within 0…100.
-        better = len({value for value in known if value > own})
-        places = len(set(known)) - 1
-        points = POINTS_MAX * (1 - better / places) if places else POINTS_MAX
-        verdict = "окупается" if own > 0 else "не окупается за горизонт"
-        place = f"{better + 1}-е место из {len(known)}"
-        return points, f"NPV покупки {fmt(own / 1e6)} млн ₽ за горизонт — {verdict}; {place}"
+        npv = f"NPV покупки {fmt(own.npv_rub / 1e6)} млн ₽ за горизонт"
+        if not pays_back(own, payback_limit_years):
+            term = (
+                "не окупается за горизонт"
+                if own.payback_years is None
+                else f"окупаемость {fmt(own.payback_years)} лет"
+            )
+            limit = (
+                f" — дольше порога {fmt(payback_limit_years)} лет (ТЗ 3.5.7)" if payback_limit_years else ""
+            )
+            return 0.0, f"{npv}; {term}{limit}: баллов за экономику нет, ставится после окупающихся"
+        known = [
+            economics[p.candidate.product_id].npv_rub
+            for p in peers
+            if pays_back(economics.get(p.candidate.product_id), payback_limit_years)
+        ]
+        # Place by NPV among the candidates that pay back: robust to an outlier; equal NPVs share a place,
+        # the last place still earns points over a candidate that does not pay back.
+        better = len({value for value in known if value > own.npv_rub})
+        points = POINTS_MAX * (1 - better / len(set(known)))
+        place = f"{better + 1}-е место по NPV из {len(known)} окупающихся"
+        return points, f"{npv}; окупаемость {fmt(own.payback_years or 0)} лет; {place}"
     capex = [p.candidate.capex_estimate_rub for p in peers if p.candidate.capex_estimate_rub]
     if not c.capex_estimate_rub:
         return 0.0, "CAPEX не оценён"
@@ -268,11 +298,12 @@ def _components(
     result: CandidateResult,
     peers: Sequence[CandidateResult],
     weights: Mapping[str, float],
-    npv: Mapping[UUID, float],
+    economics_by_id: Mapping[UUID, QuickEstimate],
+    payback_limit_years: float | None,
 ) -> list[ScoreComponent]:
     c = result.candidate
     robots = [p.candidate.robots_estimate for p in peers if p.candidate.robots_estimate]
-    economics, economics_note = _economics(c, peers, npv)
+    economics, economics_note = _economics(c, peers, economics_by_id, payback_limit_years)
     cases = max((p.candidate.cases_count for p in peers), default=0)
     infra = POINTS_MAX * result.checks_passed / result.checks_evaluated if result.checks_evaluated else 0.0
     points = {
@@ -303,14 +334,20 @@ def _components(
 
 
 def rank(
-    results: list[CandidateResult], weights: Mapping[str, float], npv: Mapping[UUID, float] | None = None
+    results: list[CandidateResult],
+    weights: Mapping[str, float],
+    economics: Mapping[UUID, QuickEstimate] | None = None,
+    payback_limit_years: float | None = None,
 ) -> list[CandidateResult]:
     """Explainable score = Σ weight × points; points are relative to the best candidate of the process.
 
-    `npv` — the quick purchase estimate per product; without it the economics criterion compares CAPEX."""
+    `economics` — the quick purchase estimate per product; without it the economics criterion compares CAPEX.
+    With it, a candidate that pays back within `payback_limit_years` is never placed after one that does not
+    (ТЗ 3.5.7): a high score from few cheap machines does not make a loss-making purchase a recommendation."""
+    known = economics or {}
     scored = [r for r in results if r.status != CandidateStatus.EXCLUDED]
     for result in scored:
-        result.breakdown = _components(result, scored, weights, npv or {})
+        result.breakdown = _components(result, scored, weights, known, payback_limit_years)
         result.score = round(sum(component.contribution for component in result.breakdown), 1)
     order = {
         CandidateStatus.FIT: 0,
@@ -318,7 +355,13 @@ def rank(
         CandidateStatus.CHECK: 2,
         CandidateStatus.EXCLUDED: 3,
     }
-    ordered = sorted(results, key=lambda r: (order[r.status], -(r.score or 0.0), r.candidate.name))
+
+    def loses_money(result: CandidateResult) -> bool:
+        return bool(known) and not pays_back(known.get(result.candidate.product_id), payback_limit_years)
+
+    ordered = sorted(
+        results, key=lambda r: (order[r.status], loses_money(r), -(r.score or 0.0), r.candidate.name)
+    )
     for position, result in enumerate([r for r in ordered if r.status == CandidateStatus.FIT], start=1):
         result.rank = position
     return ordered

@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion'
-import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { useAdminAnalytics, useAdminUsers } from '@/entities/admin'
 import { PRODUCT_STATUS_LABEL, useCatalogFacets, useProducts } from '@/entities/catalog'
@@ -7,11 +6,10 @@ import { OBJECT_TYPE_LABEL } from '@/entities/project'
 import { useObjectTypes } from '@/entities/reference'
 import type { ObjectTypeKey, ProductStatus } from '@/shared/api/types'
 import { formatNumber, formatYears, pluralRu } from '@/shared/lib/format'
-import { cn } from '@/shared/lib/utils'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
-import { KpiNumber } from '@/shared/ui/v0'
 import { Donut, HBars, type Slice } from './charts'
 import { PaybackScale } from './PaybackScale'
+import { Empty, Kpi, Panel } from './panels'
 import { stagger } from './motion'
 
 const TOP_TYPES = 8
@@ -77,7 +75,7 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-5">
-      <div className="card grid grid-cols-2 overflow-hidden sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-line">
+      <div className="card grid grid-cols-3 overflow-hidden lg:grid-cols-6 lg:divide-x lg:divide-line">
         <Kpi
           label="Проектов"
           value={projectsTotal}
@@ -188,56 +186,4 @@ export function OverviewTab() {
       )}
     </div>
   )
-}
-
-function Kpi({
-  label,
-  value,
-  hint,
-  tone,
-  format,
-}: {
-  label: string
-  value: number | null | undefined
-  hint?: string
-  tone?: string
-  format?: (v: number) => string
-}) {
-  return (
-    <div className="min-w-0 px-4 py-4 sm:px-5">
-      <div className="truncate text-[12.5px] text-ink-3">{label}</div>
-      <div className="display mt-1.5 text-[30px] leading-none" style={tone ? { color: tone } : undefined}>
-        {value === undefined || value === null ? (
-          <span className="text-ink-4">—</span>
-        ) : (
-          <KpiNumber value={value} format={format} />
-        )}
-      </div>
-      {hint && <div className="mt-1.5 truncate text-[12px] text-ink-3">{hint}</div>}
-    </div>
-  )
-}
-
-function Panel({
-  title,
-  note,
-  children,
-  className,
-}: {
-  title: string
-  note?: string
-  children: ReactNode
-  className?: string
-}) {
-  return (
-    <section className={cn('card px-4 pt-4.5 pb-5 sm:px-5', className)}>
-      <h2 className="text-[15px] font-semibold tracking-[-0.01em]">{title}</h2>
-      {note && <p className="meta mt-0.5">{note}</p>}
-      <div className="mt-4">{children}</div>
-    </section>
-  )
-}
-
-function Empty({ children }: { children: ReactNode }) {
-  return <p className="py-6 text-center text-[13.5px] text-ink-3">{children}</p>
 }

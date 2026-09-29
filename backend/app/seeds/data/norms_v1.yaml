@@ -495,6 +495,17 @@ norms:
     affects: [risks]
     editable_by_user: true
     object_types: [warehouse, airport, hospital]
+  - key: source_stale_after_months
+    name: Через сколько месяцев источник данных каталога и справочников считается устаревшим
+    value: 12
+    unit: мес.
+    category: risk
+    range: {min: 3, max: 36}
+    source: team
+    rationale: "ТЗ 3.3.4 требует хранить дату получения данных. Модель индексирует цены раз в год (норматив opex_indexation_rate — годовой, Банк России 11.09.2026), а производители обновляют прайс-листы и линейки к модельному году: цена или ТТХ, полученные больше одного периода индексации назад, уже не отражают текущее предложение. Реестр источников админ-панели помечает такие источники к перепроверке; в расчёт порог не входит."
+    affects: [sources]
+    editable_by_user: false
+    object_types: [warehouse, airport, hospital]
   - key: sensitivity_swing_pct
     name: Размах параметров в анализе чувствительности
     value: 20
@@ -1517,7 +1528,7 @@ norms:
     rationale: "До расчёта сценария число роботов неизвестно; резервируем место под 8 зарядок — до 24 роботов при нормативе robots_per_charging_station = 3. После расчёта планировку перегенерируют с числом зарядок из сценария."
     affects: []
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: layout_robot_headway_m
     name: Минимальная дистанция между роботами на проезде
     value: 3
@@ -1528,7 +1539,7 @@ norms:
     rationale: "Длина робота с паллетой 1,5–2 м плюс защитное поле лидара около 1 м. Задаёт, сколько роботов одновременно помещается на участке проезда (вместимость ребра графа в имитации)."
     affects: [sla]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: layout_loaded_vehicle_width_m
     name: Габарит робота с паллетой поперёк проезда
     value: 1.2
@@ -1539,7 +1550,7 @@ norms:
     rationale: "Европаллета 1 200 мм по длинной стороне (датасет) определяет, разъедутся ли два робота: проезд двусторонний, если он не уже 2 × 1,2 м + зазор безопасности (aisle_safety_clearance_mm). В рабочем проходе 2,8 м движение одностороннее, в главном проезде 3,5 м — двустороннее."
     affects: [sla]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: sim_peak_window_hours
     name: Длительность пикового окна в обычном дне имитации
     value: 3
@@ -1550,7 +1561,7 @@ norms:
     rationale: "Пиковый коэффициент датасета задаёт интенсивность пикового часа, но не длительность пика. Приёмка и отгрузка на РЦ идут волнами по 2–4 часа (утренний заезд, вечерняя отгрузка); берём 3 часа посередине рабочего дня. Остальные часы — с интенсивностью, при которой сумма за сутки совпадает с объёмом из параметров."
     affects: [sla, robot_count]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: sim_peak_duration_hours
     name: Длительность прогона «пиковый режим»
     value: 4
@@ -1561,7 +1572,7 @@ norms:
     rationale: "Перебор флота (D-007) проверяет SLA при пиковой интенсивности без передышки. Четыре часа — дольше пиковой волны (3 ч) и десятков циклов робота, чтобы очереди вышли на установившийся режим; короче суток, чтобы 5 повторов × 6 вариантов N уложились в лимит ТЗ 60 с."
     affects: [robot_count, sla]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: sim_truck_pallets
     name: Паллет в одной машине
     value: 33
@@ -1583,7 +1594,7 @@ norms:
     rationale: "Системы управления парком AMR отправляют робота на зарядку при 20–30 % заряда, чтобы он гарантированно доехал до станции. Берём нижнюю границу: консервативно для доступности парка это не так важно, как очередь на зарядку, которую показывает имитация."
     affects: [robot_count, sla]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: sim_human_takeover_wait_min
     name: Ожидание, после которого задачу забирают люди
     value: 60
@@ -1594,7 +1605,95 @@ norms:
     rationale: "Если паллета или строка ждут робота дольше часа, диспетчер отдаёт задачу водителю погрузчика или отборщику. Такие задачи считаются просроченными и показываются отдельно, чтобы очередь не росла бесконечно при нехватке роботов."
     affects: [sla]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
+  - key: layout_hospital_room_depth_m
+    name: Глубина помещения от коридора (схема больницы)
+    value: 6
+    unit: м
+    category: layout
+    range: {min: 4, max: 12}
+    source: team
+    rationale: "Схема этажа больницы: помещения по обе стороны коридора. Типовая палата при шаге каркаса 6 м имеет глубину около 6 м (СП 158.13330.2014, палаты 2–4 коек); на маршрут влияет только через полглубины лифтового холла."
+    affects: [route_length]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: layout_hospital_room_frontage_m
+    name: Длина отделения или службы вдоль коридора (схема больницы)
+    value: 36
+    unit: м
+    category: layout
+    range: {min: 12, max: 72}
+    source: team
+    rationale: "Палатная секция по СП 158.13330.2014 — до 30 коек: около 10 палат по 3–4 койки при шаге 3,6 м, по обе стороны коридора ≈ 36 м. Та же длина принята для служб на схеме. Определяет, как далеко от лифта точки выдачи на этаже; длина коридора служебного этажа подбирается так, чтобы средний маршрут совпал с замером «пищеблок → отделение»."
+    affects: [route_length]
+    editable_by_user: true
+    object_types: [hospital]
+  - key: sim_service_trip_lead_time_min
+    name: Срок выполнения плановой заявки на перевозку в имитации
+    value: 60
+    unit: мин
+    category: simulation
+    range: {min: 15, max: 240}
+    source: team
+    rationale: "Для процессов без собственного норматива времени (бельё, отходы, плановая доставка лекарств в больнице; тележки и отходы терминала аэропорта) датасет задаёт только число рейсов или обходов в сутки. Допущение команды: заявка считается выполненной в срок, если закрыта в течение часа — это меньше интервала между обходами при 2–3 обходах в смену. Питание (20 мин) и пробы (30 мин) берут нормативы датасета."
+    affects: [robot_count, sla]
+    editable_by_user: true
+    object_types: [hospital, airport]
+  - key: layout_airport_stand_frontage_m
+    name: Ширина контактной стоянки ВС вдоль перрона (схема аэропорта)
+    value: 45
+    unit: м
+    category: layout
+    range: {min: 30, max: 90}
+    source: team
+    rationale: "Узкофюзеляжные ВС кода C по ИКАО (Приложение 14): размах крыла до 36 м плюс зазор между ВС на стоянке 4,5 м с каждой стороны ≈ 45 м. Задаёт длину пирса: gates × 45 м."
+    affects: [route_length]
+    editable_by_user: true
+    object_types: [airport]
+  - key: layout_airport_stand_depth_m
+    name: Глубина стоянки ВС от служебной дороги (схема аэропорта)
+    value: 45
+    unit: м
+    category: layout
+    range: {min: 30, max: 90}
+    source: team
+    rationale: "Длина ВС кода C — 37–40 м (A320, B737-800) плюс зазор до служебной дороги. На маршрут не влияет: точка подъезда тягача — у края стоянки."
+    affects: []
+    editable_by_user: true
+    object_types: [airport]
+  - key: layout_airport_road_width_m
+    name: Ширина служебной дороги перрона (схема аэропорта)
+    value: 8
+    unit: м
+    category: layout
+    range: {min: 5, max: 15}
+    source: team
+    rationale: "Две полосы по 3,5–4 м для встречного движения багажных тягачей и спецтехники (практика проектирования перронов по руководству ИКАО по аэродромам, ч. 2). Та же ширина принята для служебного коридора терминала."
+    affects: [route_length]
+    editable_by_user: true
+    object_types: [airport]
+  - key: layout_airport_terminal_depth_m
+    name: Ширина пирса терминала (схема аэропорта)
+    value: 30
+    unit: м
+    category: layout
+    range: {min: 15, max: 60}
+    source: team
+    rationale: "Пирс с выходами на посадку по одну сторону — 20–40 м в ширину; берём середину. Тоннель багажа не короче пирса: сортировка стоит за терминалом."
+    affects: [route_length]
+    editable_by_user: true
+    object_types: [airport]
+  - key: layout_airport_makeup_pitch_m
+    name: Шаг позиций комплектации багажа (схема аэропорта)
+    value: 12
+    unit: м
+    category: layout
+    range: {min: 6, max: 30}
+    source: team
+    rationale: "У позиции комплектации встаёт сцепка тягача: tow_train_carts_per_trip = 3 тележки по ~4 м ≈ 12 м. Позиций на схеме — по числу каруселей из датасета."
+    affects: [route_length]
+    editable_by_user: true
+    object_types: [airport]
   - key: sim_tow_dispatch_wait_min
     name: Сколько буксир ждёт полную сцепку, прежде чем уехать неполным
     value: 10
@@ -1605,7 +1704,7 @@ norms:
     rationale: "Беспилотный тягач уходит, когда тележки сцепки заполнены, или по расписанию, если груз копится медленно. Норматив обработки паллеты — 20 минут (параметр склада); половину отдаём на ожидание сцепки, вторая остаётся на рейс и выгрузку. В часы пика сцепка заполняется раньше, и норматив не срабатывает."
     affects: [robot_count, sla]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: wms_implementation_rub
     name: Внедрение WMS, если на складе её нет
     value: 6000000
@@ -1759,7 +1858,7 @@ norms:
     rationale: "По теории очередей (M/M/1) время ожидания растёт как ρ / (1 − ρ): при загрузке 85 % очередь уже в 5,7 раза длиннее обслуживания. Верхняя граница легенды датасета для AMR — тоже 85 %. Ресурс с загрузкой выше порога — кандидат в узкое место."
     affects: [sla]
     editable_by_user: true
-    object_types: [warehouse]
+    object_types: [warehouse, hospital, airport]
   - key: g2p_station_utilization_target
     name: Целевая загрузка станции отбора
     value: 0.85

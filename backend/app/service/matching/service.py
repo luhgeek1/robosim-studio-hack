@@ -12,7 +12,7 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.catalog import ProductSummary
 from app.domain.reference import ProcessDef
-from app.engine.matching import CRITERIA, CandidateResult, CandidateStatus, evaluate, rank
+from app.engine.matching import CRITERIA, CandidateResult, CandidateStatus, QuickEstimate, evaluate, rank
 from app.engine.trace import fmt
 from app.service.catalog.mappers import to_summary
 from app.service.matching.candidates import (
@@ -25,8 +25,8 @@ from app.service.matching.candidates import (
     route_length,
     specs_by_product,
 )
-from app.service.matching.economics import QuickEconomics, quick_economics
-from app.service.projects.context import ProjectLoader
+from app.service.matching.economics import QuickEconomics, payback_limit_years, quick_economics
+from app.service.projects.context import ProjectContext, ProjectLoader
 from app.service.projects.processes import ProcessAnalysis, ProcessService, ProcessView
 
 WEIGHT_NORM_PREFIX = "matching_weight_"
@@ -123,6 +123,10 @@ class MatchingService:
         settings = await self._repo.settings(project_id)
         if weights is not None or include_rnd is not None or process_keys is not None:
             settings = await self._save_settings(project_id, settings, weights, include_rnd, process_keys)
+        return await self.outcome(context, settings)
+
+    async def outcome(self, context: ProjectContext, settings: MatchingSettings | None) -> MatchingOutcome:
+        """Matching of an already loaded project; callers own the access check."""
         analysis = await self._processes.analyse(context)
         effective = {**self._default_weights(analysis), **(settings.weights if settings else {})}
         unknown = set(effective) - set(CRITERIA)
@@ -207,7 +211,10 @@ class MatchingService:
             for r in results
             if r.candidate.robots_estimate and r.status != CandidateStatus.EXCLUDED
         }
-        ordered = rank(results, weights, {pid: e.npv_rub for pid, e in economics.items() if e is not None})
+        estimates = {
+            pid: QuickEstimate(e.npv_rub, e.payback_years) for pid, e in economics.items() if e is not None
+        }
+        ordered = rank(results, weights, estimates, payback_limit_years(analysis))
         summaries = await self._summaries([data.product for data in candidates])
         views = [
             CandidateView(

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.6.0
+  version: 0.7.3
   license:
     name: MIT
     identifier: MIT
@@ -58,6 +58,8 @@ tags:
     description: Меры господдержки
   - name: rfq
     description: Запрос коммерческого предложения вендорам
+  - name: vendor
+    description: 'Кабинет производителя: заявки на правку каталога, спрос на продукты'
   - name: admin
     description: Администрирование каталога, нормативов, пользователей
   - name: integrations
@@ -2654,7 +2656,20 @@ paths:
       tags:
         - admin
       operationId: adminImportCatalog
-      summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2)
+      summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+      description: |
+        Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
+        обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
+        процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+        они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
+        С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+      parameters:
+        - name: dry_run
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: 'Только предпросмотр: ничего не сохранять'
       requestBody:
         required: true
         content:
@@ -2669,6 +2684,8 @@ paths:
                   format: binary
                 notes:
                   type: string
+                  maxLength: 2000
+                  description: Что за выгрузка — пишется в журнал
       responses:
         '200':
           description: OK
@@ -2676,6 +2693,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogImportResult'
+        '413':
+          description: Файл больше 20 МБ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '415':
           description: Неподдерживаемый формат
           content:
@@ -2807,6 +2830,169 @@ paths:
                 $ref: '#/components/schemas/NormSet'
         '422':
           $ref: '#/components/responses/ValidationError'
+  /api/v1/admin/parameter-defaults/{object_type}:
+    parameters:
+      - name: object_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeKey'
+    get:
+      tags:
+        - admin
+      operationId: adminListParameterDefaults
+      summary: Параметры по умолчанию типа объекта и сколько проектов на них опирается (ТЗ 2.1.6, 3.1.4)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterDefaultList'
+  /api/v1/admin/parameter-defaults/{object_type}/{key}:
+    parameters:
+      - name: object_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeKey'
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+    put:
+      tags:
+        - admin
+      operationId: adminSetParameterDefault
+      summary: Задать значение по умолчанию с источником и обоснованием
+      description: |
+        Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона — 422 (у проекта это
+        было бы предупреждением, у умолчания — ошибка во всех проектах). Проекты без своего значения, у которых
+        меняется действующее значение, получают новую версию: их сохранённые расчёты становятся устаревшими,
+        а пересчёт показывает изменение параметра в диффе. Старые расчёты хранят свой снимок входов (ТЗ 3.1.5).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterDefaultWrite'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterDefaultResult'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/admin/parameter-defaults/{object_type}/{key}/history:
+    parameters:
+      - name: object_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ObjectTypeKey'
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+    get:
+      tags:
+        - admin
+      operationId: adminParameterDefaultHistory
+      summary: История значения по умолчанию (кто, когда, было → стало, обоснование)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditList'
+  /api/v1/admin/sources:
+    get:
+      tags:
+        - admin
+      operationId: adminListSources
+      summary: Реестр источников данных — ссылки, даты, где используются (ТЗ 3.3.4)
+      description: |
+        Источники каталога, нормативов и параметров по умолчанию (загрузки пользователей в проекты не входят).
+        Сначала самые используемые. Источник старше `stale_after_months` месяцев (норматив
+        `source_stale_after_months`) — `stale`, без даты получения — `undated`.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: Название, ссылка или примечание
+        - name: kind
+          in: query
+          schema:
+            $ref: '#/components/schemas/SourceKind'
+        - name: freshness
+          in: query
+          schema:
+            $ref: '#/components/schemas/SourceFreshness'
+        - name: include_unused
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Показать источники, на которые ничего не ссылается
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceList'
+  /api/v1/admin/sources/{source_id}:
+    parameters:
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - admin
+      operationId: adminUpdateSource
+      summary: Исправить название, ссылку, дату получения или примечание источника
+      description: |
+        Правка — событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
+        и расчёты не устаревают; экраны и отчёты показывают исправленный источник. Сид не перезаписывает
+        источник, который правил администратор.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrySource'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/v1/admin/users:
     get:
       tags:
@@ -2881,6 +3067,158 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalyticsOverview'
+  /api/v1/admin/proposals:
+    get:
+      tags:
+        - admin
+      operationId: adminListProposals
+      summary: Заявки производителей на модерацию
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProposalStatus'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/admin/proposals/{proposal_id}/review:
+    post:
+      tags:
+        - admin
+      operationId: adminReviewProposal
+      summary: Одобрить заявку (правка попадает в каталог, версия каталога растёт) или отклонить с причиной
+      parameters:
+        - $ref: '#/components/parameters/ProposalId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalReview'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/admin/manufacturers:
+    get:
+      tags:
+        - admin
+      operationId: adminListManufacturers
+      summary: Производители — для привязки учётной записи вендора
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufacturerList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/vendor/overview:
+    get:
+      tags:
+        - vendor
+      operationId: vendorOverview
+      summary: 'Кабинет производителя: продукты, пробелы карточек, спрос'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorOverview'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/vendor/fit:
+    get:
+      tags:
+        - vendor
+      operationId: vendorFit
+      summary: 'Как продукты проходят подбор: статусы, причины исключения, недостающие ТТХ'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorFit'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/vendor/proposals:
+    get:
+      tags:
+        - vendor
+      operationId: vendorListProposals
+      summary: Заявки производителя на правку каталога
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalList'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    post:
+      tags:
+        - vendor
+      operationId: vendorCreateProposal
+      summary: Предложить правку своей карточки или новый продукт (на модерацию)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalWrite'
+      responses:
+        '201':
+          description: На модерации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/vendor/proposals/{proposal_id}/withdraw:
+    post:
+      tags:
+        - vendor
+      operationId: vendorWithdrawProposal
+      summary: Отозвать заявку до решения модератора
+      parameters:
+        - $ref: '#/components/parameters/ProposalId'
+      responses:
+        '200':
+          description: Отозвана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/v1/integrations/projects:
     post:
       tags:
@@ -4054,10 +4392,15 @@ components:
       type: string
       description: |
         warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
-        warehouse_flow_through — приёмка и отгрузка на противоположных фасадах.
+        warehouse_flow_through — приёмка и отгрузка на противоположных фасадах;
+        hospital_floor — больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
+        и типовой этаж отделений;
+        airport_apron — аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
       enum:
         - warehouse_u_flow
         - warehouse_flow_through
+        - hospital_floor
+        - airport_apron
     MatchingResult:
       type: object
       required:
@@ -5350,6 +5693,136 @@ components:
         created_at:
           type: string
           format: date-time
+    Proposal:
+      type: object
+      required:
+        - id
+        - kind
+        - status
+        - manufacturer
+        - product_name
+        - specs
+        - comment
+        - created_at
+        - catalog_version
+        - product_changed_since
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/ProposalKind'
+        status:
+          $ref: '#/components/schemas/ProposalStatus'
+        manufacturer:
+          $ref: '#/components/schemas/Manufacturer'
+        product_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: У одобренного нового продукта — созданная карточка
+        product_name:
+          type: string
+        card:
+          oneOf:
+            - $ref: '#/components/schemas/ProductWrite'
+            - type: 'null'
+        specs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpecWrite'
+        comment:
+          type: string
+        author:
+          oneOf:
+            - $ref: '#/components/schemas/ProposalPerson'
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        catalog_version:
+          type: string
+          description: Версия каталога, на которой вендор готовил заявку
+        product_changed_since:
+          type: boolean
+          description: Карточку меняли после подачи заявки — сверьте перед решением
+        reviewed_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        reviewer_name:
+          type:
+            - string
+            - 'null'
+        review_comment:
+          type:
+            - string
+            - 'null'
+    ProposalList:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Proposal'
+        total:
+          type: integer
+    VendorOverview:
+      type: object
+      description: Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3).
+      required:
+        - manufacturer
+        - products
+        - projects_total
+        - projects_by_object_type
+        - scenarios_with_products
+        - proposals_by_status
+        - gaps
+      properties:
+        manufacturer:
+          $ref: '#/components/schemas/Manufacturer'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorProduct'
+        projects_total:
+          type: integer
+        projects_by_object_type:
+          type: object
+          additionalProperties:
+            type: integer
+        scenarios_with_products:
+          type: integer
+        proposals_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        gaps:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorGap'
+    VendorFit:
+      type: object
+      description: Подбор по последним проектам платформы с объектами продуктов; только счётчики, без данных проектов.
+      required:
+        - projects_analysed
+        - computed_at
+        - products
+      properties:
+        projects_analysed:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductFit'
     Health:
       type: object
       required:
@@ -6776,13 +7249,16 @@ components:
             - storage_to_storage
             - pod_to_station
             - storage_to_charger
+            - service_to_ward
+            - sorting_to_stand
+            - terminal_to_hub
         name:
           type: string
           example: Ворота приёмки → место хранения
         value_m:
           type: number
           example: 91.1
-          description: Среднее кратчайших путей по графу, взвешенное по паллетоместам
+          description: Среднее кратчайших путей по графу, взвешенное по вместимости точек (паллетоместа, точки выдачи); поездка на лифте в длину не входит
         pairs:
           type: integer
           description: Сколько пар «откуда → куда» усреднено
@@ -9263,36 +9739,124 @@ components:
             - string
             - 'null'
           format: date-time
+    CatalogImportItem:
+      type: object
+      required:
+        - product_id
+        - name
+        - action
+        - row
+        - changes
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        action:
+          type: string
+          enum:
+            - created
+            - updated
+            - unchanged
+            - conflict
+        row:
+          type: integer
+          description: Первая строка продукта в файле
+        solution_type:
+          type:
+            - string
+            - 'null'
+          description: Тип решения нового продукта
+        reason:
+          type:
+            - string
+            - 'null'
+          description: Почему конфликт
+        changes:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - label
+            properties:
+              field:
+                type: string
+                example: price_from_rub
+              label:
+                type: string
+                example: Цена от, ₽
+              before:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: 'null'
+                description: Для описания не повторяется
+              after:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: 'null'
     CatalogImportResult:
       type: object
       required:
+        - dry_run
         - catalog_version
         - created
         - updated
+        - unchanged
+        - conflicts
         - offers_created
         - skipped
+        - not_in_file
         - errors
+        - items
       properties:
+        dry_run:
+          type: boolean
+          description: true — предпросмотр, ничего не сохранено
         catalog_version:
           type: string
+          description: После применения — новая версия; в предпросмотре и без изменений — текущая
         created:
           type: integer
+          description: Новые продукты (id нет в каталоге)
         updated:
           type: integer
+          description: Продукты под управлением сида, у которых файл что-то меняет
+        unchanged:
+          type: integer
+        conflicts:
+          type: integer
+          description: Карточки, которые правил или скрыл администратор, — не тронуты
         offers_created:
           type: integer
-          description: Строки-дубли сохранены как отдельные предложения
+          description: 'Новые предложения: строки-дубли сохраняются как отдельные предложения'
         skipped:
           type: integer
+          description: Строки без id
+        not_in_file:
+          type: integer
+          description: Продукты под управлением сида, которых нет в файле (не скрываются)
         errors:
           type: array
           items:
             type: object
+            required:
+              - row
+              - message
             properties:
               row:
                 type: integer
+                description: Номер строки файла, заголовок — строка 1
               message:
                 type: string
+        items:
+          type: array
+          description: Новые, изменённые и конфликтные продукты; неизменённые только считаются
+          items:
+            $ref: '#/components/schemas/CatalogImportItem'
     EnrichmentReview:
       type: object
       properties:
@@ -9358,6 +9922,195 @@ components:
                 $ref: '#/components/schemas/SourceWrite'
               rationale:
                 type: string
+    AdminParameterDefault:
+      allOf:
+        - $ref: '#/components/schemas/ParameterDef'
+        - type: object
+          required:
+            - object_type
+            - group_name
+            - applies_to_blank
+            - projects_total
+            - projects_using_default
+          properties:
+            object_type:
+              $ref: '#/components/schemas/ObjectTypeKey'
+            group_name:
+              type: string
+              example: Персонал
+            applies_to_blank:
+              type: boolean
+              description: 'false — данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё'
+            projects_total:
+              type: integer
+              description: Проектов этого типа объекта
+            projects_using_default:
+              type: integer
+              description: Из них берут значение из умолчания (своего значения нет)
+    ParameterDefaultList:
+      type: object
+      required:
+        - object_type
+        - items
+      properties:
+        object_type:
+          $ref: '#/components/schemas/ObjectTypeKey'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminParameterDefault'
+    ParameterDefaultWrite:
+      type: object
+      required:
+        - value
+        - source
+        - rationale
+      properties:
+        value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: boolean
+          description: В единице параметра (проценты — в процентах)
+        unit:
+          type:
+            - string
+            - 'null'
+          description: Если указана — должна совпадать с единицей параметра
+        status:
+          type:
+            - string
+            - 'null'
+          enum:
+            - default
+            - assumption
+            - null
+          description: default — значение из источника, assumption — допущение. Без значения — прежний статус (у параметра без умолчания — assumption)
+        source:
+          $ref: '#/components/schemas/SourceWrite'
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Почему такое значение
+    ParameterDefaultResult:
+      type: object
+      required:
+        - parameter
+        - projects_restamped
+      properties:
+        parameter:
+          $ref: '#/components/schemas/AdminParameterDefault'
+        projects_restamped:
+          type: integer
+          description: 'Проектов с новой версией: их сохранённые расчёты устарели'
+    SourceFreshness:
+      type: string
+      description: fresh — получен не раньше порога, stale — раньше (норматив source_stale_after_months), undated — без даты получения
+      enum:
+        - fresh
+        - stale
+        - undated
+    SourceUsage:
+      type: object
+      required:
+        - specs
+        - offers
+        - cases
+        - norms
+        - parameters
+        - total
+      properties:
+        specs:
+          type: integer
+          description: ТТХ видимых продуктов
+        offers:
+          type: integer
+          description: Цены (предложения) видимых продуктов
+        cases:
+          type: integer
+          description: Кейсы внедрения
+        norms:
+          type: integer
+          description: Нормативы действующей версии
+        parameters:
+          type: integer
+          description: Параметры по умолчанию
+        total:
+          type: integer
+    RegistrySource:
+      allOf:
+        - $ref: '#/components/schemas/Source'
+        - type: object
+          required:
+            - freshness
+            - usage
+          properties:
+            freshness:
+              $ref: '#/components/schemas/SourceFreshness'
+            usage:
+              $ref: '#/components/schemas/SourceUsage'
+    SourceList:
+      type: object
+      required:
+        - items
+        - page
+        - page_size
+        - total
+        - stale_after_months
+        - stale_before
+        - freshness_counts
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrySource'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        stale_after_months:
+          type: integer
+          description: Порог устаревания — норматив source_stale_after_months
+        stale_before:
+          type: string
+          format: date
+          description: Источник, полученный раньше этой даты, устарел
+        freshness_counts:
+          type: object
+          description: Сколько источников в каждом состоянии при тех же фильтрах, кроме freshness
+          properties:
+            fresh:
+              type: integer
+            stale:
+              type: integer
+            undated:
+              type: integer
+    SourceUpdate:
+      type: object
+      description: Меняются только переданные поля; url, retrieved_at и note можно очистить значением null
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        url:
+          type:
+            - string
+            - 'null'
+          format: uri
+        retrieved_at:
+          type:
+            - string
+            - 'null'
+          format: date
+        note:
+          type:
+            - string
+            - 'null'
+          maxLength: 2000
     UserList:
       type: object
       required:
@@ -9439,6 +10192,223 @@ components:
                 type: integer
         rfq_count:
           type: integer
+    ProposalStatus:
+      type: string
+      description: pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+      enum:
+        - pending
+        - approved
+        - rejected
+        - withdrawn
+    ProposalKind:
+      type: string
+      description: update — правка существующей карточки; new_product — новый продукт производителя.
+      enum:
+        - new_product
+        - update
+    ProposalPerson:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+    ProposalReview:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+          enum:
+            - approve
+            - reject
+        comment:
+          type:
+            - string
+            - 'null'
+          maxLength: 2000
+          description: Обязателен при отказе
+        specs_status:
+          type: string
+          enum:
+            - vendor_claim
+            - confirmed
+          default: vendor_claim
+          description: С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+    ManufacturerList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Manufacturer'
+    KeySpec:
+      type: object
+      required:
+        - key
+        - name
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+    VendorProduct:
+      type: object
+      required:
+        - product
+        - missing_key_specs
+        - relevant_projects
+        - scenarios_count
+        - manual_adds
+      properties:
+        product:
+          $ref: '#/components/schemas/Product'
+        missing_key_specs:
+          type: array
+          description: Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки».
+          items:
+            $ref: '#/components/schemas/KeySpec'
+        relevant_projects:
+          type: integer
+          description: Проекты платформы с типами объектов этого продукта
+        scenarios_count:
+          type: integer
+          description: Сценарии, в которые продукт включён
+        manual_adds:
+          type: integer
+          description: Сколько раз пользователи добавили продукт в подбор вручную
+        pending_proposal_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+    VendorGap:
+      type: object
+      required:
+        - object_type
+        - process_key
+        - process_name
+        - no_fit_count
+        - solution_types
+      properties:
+        object_type:
+          type: string
+        process_key:
+          type: string
+        process_name:
+          type: string
+        no_fit_count:
+          type: integer
+          description: Проекты, где у процесса нет продукта в каталоге
+        solution_types:
+          type: array
+          items:
+            type: string
+          description: Ваши типы решений, которые этот процесс использует
+    FitReason:
+      type: object
+      required:
+        - code
+        - text
+        - count
+      properties:
+        code:
+          type: string
+        text:
+          type: string
+          description: Пример формулировки из одного проекта
+        spec_key:
+          type:
+            - string
+            - 'null'
+        count:
+          type: integer
+    FitMissing:
+      type: object
+      required:
+        - spec_key
+        - name
+        - count
+      properties:
+        spec_key:
+          type: string
+        name:
+          type: string
+        count:
+          type: integer
+    ProductFit:
+      type: object
+      required:
+        - product_id
+        - appearances
+        - fit
+        - check
+        - excluded
+        - manual
+        - top3
+        - blocking
+        - missing
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        appearances:
+          type: integer
+          description: Сколько раз продукт был кандидатом (проект × процесс)
+        fit:
+          type: integer
+        check:
+          type: integer
+        excluded:
+          type: integer
+        manual:
+          type: integer
+        top3:
+          type: integer
+          description: Сколько раз продукт в тройке лучших среди подходящих
+        blocking:
+          type: array
+          items:
+            $ref: '#/components/schemas/FitReason'
+          description: Частые причины исключения
+        missing:
+          type: array
+          items:
+            $ref: '#/components/schemas/FitMissing'
+          description: Каких ТТХ не хватило подбору для проверки
+    ProposalWrite:
+      type: object
+      required:
+        - comment
+      properties:
+        product_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: null — предложить новый продукт
+        card:
+          description: Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор.
+          oneOf:
+            - $ref: '#/components/schemas/ProductWrite'
+            - type: 'null'
+        specs:
+          type: array
+          description: Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения.
+          items:
+            $ref: '#/components/schemas/SpecWrite'
+        comment:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Что изменилось и почему — для модератора
     IntegrationProjectCreate:
       type: object
       description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи.
@@ -9553,6 +10523,13 @@ components:
         format: uuid
     SimulationId:
       name: simulation_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProposalId:
+      name: proposal_id
       in: path
       required: true
       schema:

@@ -1,5 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, EyeOff, MoreHorizontal, Pencil, Plus, Ruler, Search, SearchX } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  EyeOff,
+  FileUp,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Ruler,
+  Search,
+  SearchX,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -21,6 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { ConfidenceRing } from '@/shared/ui/v0'
 import { ProductStatusMark } from '@/pages/catalog/parts'
+import { CatalogImportDialog } from './CatalogImportDialog'
 import { stagger } from './motion'
 import { ProductEditor, type EditorTarget } from './ProductEditor'
 
@@ -35,6 +47,7 @@ export function CatalogTab() {
   const [type, setType] = useState(ALL)
   const [page, setPage] = useState(1)
   const [target, setTarget] = useState<EditorTarget | null>(null)
+  const [importing, setImporting] = useState(false)
   const solutionTypes = useSolutionTypes()
 
   useEffect(() => {
@@ -90,7 +103,10 @@ export function CatalogTab() {
             ))}
           </SelectContent>
         </Select>
-        <Button className="ml-auto" onClick={() => setTarget({ mode: 'create' })}>
+        <Button className="ml-auto" variant="outline" onClick={() => setImporting(true)}>
+          <FileUp /> Обновить из файла
+        </Button>
+        <Button onClick={() => setTarget({ mode: 'create' })}>
           <Plus /> Добавить решение
         </Button>
       </div>
@@ -170,6 +186,7 @@ export function CatalogTab() {
       )}
 
       <ProductEditor target={target} onClose={() => setTarget(null)} />
+      <CatalogImportDialog open={importing} onOpenChange={setImporting} />
     </div>
   )
 }

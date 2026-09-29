@@ -9,6 +9,7 @@ from simpy.resources.resource import Request
 
 from app.engine.simulation.agents import Robot, Task
 from app.engine.simulation.models import ProcessModel, SimEvent, SimInput, State
+from app.engine.simulation.network import Chunk
 from app.engine.simulation.resources import Tracked
 
 SECONDS_PER_MINUTE = 60.0
@@ -27,6 +28,7 @@ class Actions:
     docks: dict[str, Tracked]
     stations: dict[str, Tracked]
     chargers: dict[str, Tracked]
+    lifts: dict[str, Tracked]
     faces: frozenset[str]
     events: list[SimEvent]
     edge_traffic: Counter[str]
@@ -67,6 +69,9 @@ class Actions:
         for chunk in route.chunks:
             if robot.held is not None and robot.held[0] != chunk.segment:
                 self._release_segment(robot)
+            if chunk.segment in self.lifts:
+                yield from self._ride(robot, chunk)
+                continue
             if chunk.segment is not None and robot.held is None:
                 started = self.env.now
                 robot.switch(State.WAITING, started)
@@ -84,6 +89,20 @@ class Actions:
             self.edge_traffic.update(chunk.edges)
             robot.node = chunk.nodes[-1]
         self.node_visits[dest] += 1
+
+    def _ride(self, robot: Robot, chunk: Chunk) -> Steps:
+        """The lift ride of the cycle model (wait for the car among people, doors, floors) with the lift held:
+        robots queue for the building's lifts on top of that."""
+        lift = self.lifts[chunk.segment or ""]
+        request = yield from self._wait(robot, lift, "elevator_busy")
+        duration = robot.process.ride_s
+        robot.switch(State.MOVING, self.env.now)
+        self.emit("move", robot, path=chunk.nodes, eta=self.env.now + duration)
+        yield self.env.timeout(duration)
+        robot.drain(duration)
+        lift.release(self.env, request)
+        self.edge_traffic.update(chunk.edges)
+        robot.node = chunk.nodes[-1]
 
     def handle(self, robot: Robot, node: str, seconds: float, state: State, task: Task) -> Steps:
         dock = self.docks.get(node)

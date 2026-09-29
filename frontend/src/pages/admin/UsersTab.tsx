@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { ROLE_LABEL, useAdminUsers, useUpdateUser } from '@/entities/admin'
 import { useSession } from '@/entities/session'
+import { useManufacturers } from '@/entities/vendor'
 import type { Role, User } from '@/shared/api/types'
 import { formatDateTime, formatNumber } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
@@ -82,8 +83,8 @@ export function UsersTab() {
           <div className="card overflow-hidden">
             {/* Роль и доступ стоят справа от имени: на узком экране строка листается вбок внутри карточки. */}
             <div className="scroll-thin overflow-x-auto overscroll-x-contain">
-              <div className="min-w-[700px]">
-                <div className="grid grid-cols-[minmax(0,1fr)_180px_150px_96px] items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3">
+              <div className="min-w-[740px]">
+                <div className="grid grid-cols-[minmax(0,1fr)_220px_150px_96px] items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3">
                   <span>Пользователь</span>
                   <span>Роль</span>
                   <span>Последний вход</span>
@@ -149,7 +150,7 @@ function UserRow({ user, index }: { user: User; index: number }) {
   const self = session.user?.id === user.id
   const active = user.is_active !== false
 
-  const save = (body: { role?: Role; is_active?: boolean }, message: string) =>
+  const save = (body: { role?: Role; is_active?: boolean; vendor_manufacturer_id?: string | null }, message: string) =>
     update.mutate({ id: user.id, body }, { onSuccess: () => toast.success(message) })
 
   return (
@@ -160,7 +161,7 @@ function UserRow({ user, index }: { user: User; index: number }) {
       exit={{ opacity: 0 }}
       transition={stagger(index)}
       className={cn(
-        'grid grid-cols-[minmax(0,1fr)_180px_150px_96px] items-center gap-4 px-5 py-3 transition-opacity',
+        'grid grid-cols-[minmax(0,1fr)_220px_150px_96px] items-center gap-4 px-5 py-3 transition-opacity',
         !active && 'opacity-55',
       )}
     >
@@ -184,22 +185,33 @@ function UserRow({ user, index }: { user: User; index: number }) {
           </span>
         </span>
       </span>
-      <Select
-        value={user.role}
-        disabled={self || update.isPending}
-        onValueChange={(role) => save({ role: role as Role }, `Роль изменена: ${ROLE_LABEL[role as Role]}`)}
-      >
-        <SelectTrigger size="sm" className="h-8 w-full rounded-[9px] bg-card" aria-label="Роль">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {ROLES.map((role) => (
-            <SelectItem key={role} value={role}>
-              {ROLE_LABEL[role]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <span className="min-w-0 space-y-1.5">
+        <Select
+          value={user.role}
+          disabled={self || update.isPending}
+          onValueChange={(role) => save({ role: role as Role }, `Роль изменена: ${ROLE_LABEL[role as Role]}`)}
+        >
+          <SelectTrigger size="sm" className="h-8 w-full rounded-[9px] bg-card" aria-label="Роль">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ROLES.map((role) => (
+              <SelectItem key={role} value={role}>
+                {ROLE_LABEL[role]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {user.role === 'vendor' && (
+          <VendorCompany
+            value={user.vendor_manufacturer_id ?? null}
+            disabled={update.isPending}
+            onChange={(id, name) =>
+              save({ vendor_manufacturer_id: id }, id ? `Вендор привязан: ${name}` : 'Привязка к компании снята')
+            }
+          />
+        )}
+      </span>
       <span className="num text-[12.5px] text-ink-3">
         {user.last_login_at ? formatDateTime(user.last_login_at) : 'не входил'}
       </span>
@@ -215,5 +227,46 @@ function UserRow({ user, index }: { user: User; index: number }) {
         />
       </span>
     </motion.li>
+  )
+}
+
+const NO_COMPANY = 'none'
+
+/* Вендор говорит от лица одной компании каталога: кабинет показывает и правит только её продукты. */
+function VendorCompany({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string | null
+  disabled: boolean
+  onChange: (id: string | null, name: string) => void
+}) {
+  const manufacturers = useManufacturers()
+  const items = manufacturers.data ?? []
+  return (
+    <Select
+      value={value ?? NO_COMPANY}
+      disabled={disabled || manufacturers.isPending}
+      onValueChange={(id) =>
+        id === NO_COMPANY ? onChange(null, '') : onChange(id, items.find((m) => m.id === id)?.name ?? '')
+      }
+    >
+      <SelectTrigger
+        size="sm"
+        className={cn('h-8 w-full rounded-[9px] bg-card text-[12.5px]', !value && 'text-crit')}
+        aria-label="Компания вендора"
+      >
+        <SelectValue placeholder="Компания" />
+      </SelectTrigger>
+      <SelectContent className="max-h-80">
+        <SelectItem value={NO_COMPANY}>Не привязан к компании</SelectItem>
+        {items.map((m) => (
+          <SelectItem key={m.id} value={m.id}>
+            {m.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

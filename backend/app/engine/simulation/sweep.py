@@ -42,6 +42,10 @@ class Sweep:
     A mean over runs let a fleet pass with one peak day in five far below target (95.7 % mean,
     87 % worst on the demo warehouse): the fleet has to hold on each of the days. Runs share random
     streams per replication (common random numbers): fleets are compared on the same days.
+
+    Each run holds only the swept process: its own SLA decides, not a scenario total where another
+    process's backlog (147 G2P robots next to 15 pallet AMRs) would hide it, and a large fleet of
+    another type does not multiply the run time. The processes use separate zones of the plan.
     """
 
     def __init__(
@@ -55,7 +59,7 @@ class Sweep:
         process = next((p for p in inp.processes if p.key == process_key), None)
         if process is None:
             raise SimulationError(f"Процесса {process_key} нет в сценарии")
-        self.inp = inp
+        self.inp = replace(inp, processes=(process,))
         self.process = process
         self.replications = max(1, replications)
         self.prepared = prepared
@@ -122,6 +126,8 @@ class Sweep:
             if process.model == ProcessModel.GOODS_TO_PERSON
             else process.inbound_per_day + process.outbound_per_day + process.internal_per_day
         )
+        if process.sources and process.model == ProcessModel.TRANSPORT:
+            per_day *= process.units_per_trip
         peak = per_day / process.hours_per_day * process.peak_factor * config.volume_multiplier
         # The comparison applies the utilization target like the cycle model; the search wants raw capacity.
         per_robot = comparison.sim_throughput_per_hour / analytic / self.inp.settings.utilization_target

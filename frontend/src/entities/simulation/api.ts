@@ -156,7 +156,7 @@ async function runSweep(scenarioId: string, body: FleetSweepRequest): Promise<Fl
   return waitForSweep(scenarioId, job.id)
 }
 
-/* Какие процессы имитация умеет проверить: модель цикла (паллеты, G2P, тягачи). Число, заданное вручную, остаётся
+/* Какие процессы имитация умеет проверить: модель цикла (паллеты, G2P, тягачи, доставка по больнице, багаж и тележки в аэропорту). Число, заданное вручную, остаётся
    за пользователем; уже проверенное — не перепроверяем без явной просьбы. */
 export const checkable = (sizing: SizingResult, force = false) =>
   sizing.robot.cycle_time_s != null &&
@@ -167,7 +167,7 @@ export type FleetCheck = { calculation: CalculationRun; checked: FleetSweepResul
 
 /* Расчёт сценария вместе с проверкой числа роботов имитацией (D-029): формула даёт стартовое N, перебор флота на
    планировке находит минимальное N, которое держит SLA во всех прогонах пика, и записывает его в сценарий, затем
-   экономика пересчитывается. Где имитации нет (нет планировки, аэропорт, больница), остаётся расчёт по формуле. */
+   экономика пересчитывается. Где имитации нет (нет планировки или тип объекта без генератора), остаётся расчёт по формуле. */
 export async function calculateWithFleetCheck(scenarioId: string, force = false): Promise<FleetCheck> {
   const first = await simulationApi.calculate(scenarioId)
   const checked: FleetSweepResult[] = []

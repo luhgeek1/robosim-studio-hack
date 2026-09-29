@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
+from enum import StrEnum
 from uuid import UUID
 
 from app.domain.auth import Role
 from app.domain.catalog import Badge, ProductStatus
 from app.domain.common.provenance import ProvenanceStatus, SourceKind
+from app.domain.reference import ParameterDef
 
 SpecScalar = float | int | str | bool
 
@@ -107,3 +109,80 @@ class AnalyticsOverview:
     demand_by_industry: dict[str, int]
     catalog_gaps: list[CatalogGap]
     rfq_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class DefaultChange:
+    """A new reference default of one parameter: the value, where it comes from and why."""
+
+    value: SpecScalar
+    unit: str | None
+    status: ProvenanceStatus | None
+    source: SourceInput
+    rationale: str
+
+
+@dataclass(frozen=True, slots=True)
+class DefaultView:
+    """A parameter with its reference default and how many projects of the object type rely on it."""
+
+    object_type: str
+    group_name: str
+    definition: ParameterDef
+    applies_to_blank: bool
+    projects_total: int
+    projects_using_default: int
+    changed_by: str | None = None
+    changed_at: datetime | None = None
+
+
+class Freshness(StrEnum):
+    FRESH = "fresh"
+    STALE = "stale"
+    UNDATED = "undated"
+
+
+@dataclass(frozen=True, slots=True)
+class SourceEdit:
+    """Fields of a registry source the admin changes; ``fields`` names the ones sent in the request."""
+
+    title: str | None = None
+    url: str | None = None
+    retrieved_at: date | None = None
+    note: str | None = None
+    fields: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True, slots=True)
+class SourceQuery:
+    page: int = 1
+    page_size: int = 50
+    q: str | None = None
+    kind: SourceKind | None = None
+    freshness: Freshness | None = None
+    include_unused: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class SourceUsage:
+    specs: int = 0
+    offers: int = 0
+    cases: int = 0
+    norms: int = 0
+    parameters: int = 0
+
+    @property
+    def total(self) -> int:
+        return self.specs + self.offers + self.cases + self.norms + self.parameters
+
+
+@dataclass(frozen=True, slots=True)
+class SourceEntry:
+    id: UUID
+    kind: SourceKind
+    title: str
+    url: str | None
+    retrieved_at: date | None
+    note: str | None
+    usage: SourceUsage
+    freshness: Freshness

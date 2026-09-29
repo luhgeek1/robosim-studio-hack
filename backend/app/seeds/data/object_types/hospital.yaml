@@ -1,12 +1,12 @@
 key: hospital
 name: Медицинское учреждение
 description: 'Больница или поликлиника: доставка питания, белья, медикаментов и анализов между отделениями, вывоз отходов,
-  уборка. Считается на базовом уровне: параметры, подбор и аналитическая экономика без имитации. Отрасли «Здравоохранение»
+  уборка. Типовой этаж с лифтовым холлом и имитация доставок через лифты: число роботов проверяется так же, как на складе. Отрасли «Здравоохранение»
   в каталоге организатора нет; ближайшая — «Торговля и услуги», там роботы-уборщики и робот-курьер для помещений.'
 industry: Торговля и услуги
-depth: basic
+depth: full
 dataset_sheet: Медучреждение
-layout_templates: []
+layout_templates: [hospital_floor]
 parameter_groups:
 - {key: facility, name: Объект, order: 1, survey_hint: 'Сверить с поэтажным планом и техническим паспортом здания'}
 - {key: operating_mode, name: Режим работы, order: 2, survey_hint: 'Взять график смен и табель учёта рабочего времени за 3 месяца'}
@@ -977,7 +977,14 @@ processes:
     заменяют только перевозку, — это учитывает доля высвобождения.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
-  route_length: kitchen_to_ward_distance_m
+  simulation:
+    model: transport
+    sources: kitchen
+    destinations: ward
+    ride_s: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    lead_time_min: meal_delivery_norm_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
+  route_length: coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)
   requirements:
   - key: payload_vs_meal_cart
     spec: payload_kg
@@ -1040,7 +1047,14 @@ processes:
     белья — вся группа относится к процессу.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
-  route_length: kitchen_to_ward_distance_m
+  simulation:
+    model: transport
+    sources: laundry
+    destinations: ward
+    ride_s: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    lead_time_min: sim_service_trip_lead_time_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
+  route_length: coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)
   requirements:
   - key: payload_vs_linen_container
     spec: payload_kg
@@ -1105,7 +1119,14 @@ processes:
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot, amr_transport]
   sizing_model: elevator_cycle
-  route_length: kitchen_to_ward_distance_m
+  simulation:
+    model: transport
+    sources: ward
+    destinations: waste
+    ride_s: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    lead_time_min: sim_service_trip_lead_time_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
+  route_length: coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)
   requirements:
   - key: payload_vs_waste_pickup
     spec: payload_kg
@@ -1166,7 +1187,14 @@ processes:
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
-  route_length: kitchen_to_ward_distance_m
+  simulation:
+    model: transport
+    sources: pharmacy
+    destinations: ward
+    ride_s: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    lead_time_min: sim_service_trip_lead_time_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
+  route_length: coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)
   requirements:
   - key: width_in_corridor
     spec: width_mm
@@ -1215,7 +1243,14 @@ processes:
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
-  route_length: kitchen_to_ward_distance_m
+  simulation:
+    model: transport
+    sources: ward
+    destinations: lab
+    ride_s: coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
+    lead_time_min: lab_delivery_norm_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
+  route_length: coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)
   requirements:
   - key: width_in_corridor
     spec: width_mm

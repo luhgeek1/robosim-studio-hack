@@ -1,11 +1,12 @@
 key: airport
 name: Аэропорт
 description: 'Пассажирский аэропорт: багаж на перроне, внутренняя логистика и уборка терминалов, помощь пассажирам, патрулирование.
-  Считается на базовом уровне: параметры, подбор и аналитическая экономика без имитации.'
+  Схема пирса (сортировка, терминал, перрон) и имитация багажных тягачей и перевозок терминала: число роботов проверяется
+  так же, как на складе.'
 industry: Транспорт и логистика
-depth: basic
+depth: full
 dataset_sheet: Аэропорт
-layout_templates: []
+layout_templates: [airport_apron]
 parameter_groups:
 - {key: facility, name: Объект, order: 1, survey_hint: 'Сверить с поэтажным планом и техническим паспортом здания'}
 - {key: operating_mode, name: Режим работы, order: 2, survey_hint: 'Взять график смен и табель учёта рабочего времени за 3 месяца'}
@@ -793,7 +794,13 @@ processes:
     перрона.'
   solution_types: [tow_tractor, amr_transport, autonomous_truck, sorting_robot]
   sizing_model: tow_train
-  route_length: baggage_route_length_m
+  simulation:
+    model: transport
+    sources: buffer
+    destinations: apron
+    lead_time_min: turnaround_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
+  route_length: coalesce(layout_route_sorting_to_stand_m, baggage_route_length_m)
   unit_weight: baggage_weight_kg
   requirements:
   - key: airside_admission
@@ -865,7 +872,13 @@ processes:
     ≈ 22 человека из 180, то есть 0,12.'
   solution_types: [amr_transport, tow_tractor, delivery_robot]
   sizing_model: transport_cycle
-  route_length: terminal_route_length_m
+  simulation:
+    model: transport
+    sources: gate
+    destinations: waste
+    lead_time_min: sim_service_trip_lead_time_min
+    target_share: coalesce(sla_target_share, sim_sla_target_share)
+  route_length: coalesce(layout_route_terminal_to_hub_m, terminal_route_length_m)
   unit_weight: airport_terminal_cart_weight_kg
   requirements:
   - key: noise_limit

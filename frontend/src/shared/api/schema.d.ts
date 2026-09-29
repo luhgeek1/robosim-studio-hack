@@ -1656,7 +1656,14 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2) */
+    /**
+     * Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+     * @description Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
+     *     обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
+     *     процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+     *     они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
+     *     С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+     */
     post: operations['adminImportCatalog']
     delete?: never
     options?: never
@@ -1732,6 +1739,117 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/admin/parameter-defaults/{object_type}': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        object_type: components['schemas']['ObjectTypeKey']
+      }
+      cookie?: never
+    }
+    /** Параметры по умолчанию типа объекта и сколько проектов на них опирается (ТЗ 2.1.6, 3.1.4) */
+    get: operations['adminListParameterDefaults']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/parameter-defaults/{object_type}/{key}': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        object_type: components['schemas']['ObjectTypeKey']
+        key: string
+      }
+      cookie?: never
+    }
+    get?: never
+    /**
+     * Задать значение по умолчанию с источником и обоснованием
+     * @description Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона — 422 (у проекта это
+     *     было бы предупреждением, у умолчания — ошибка во всех проектах). Проекты без своего значения, у которых
+     *     меняется действующее значение, получают новую версию: их сохранённые расчёты становятся устаревшими,
+     *     а пересчёт показывает изменение параметра в диффе. Старые расчёты хранят свой снимок входов (ТЗ 3.1.5).
+     */
+    put: operations['adminSetParameterDefault']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/parameter-defaults/{object_type}/{key}/history': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        object_type: components['schemas']['ObjectTypeKey']
+        key: string
+      }
+      cookie?: never
+    }
+    /** История значения по умолчанию (кто, когда, было → стало, обоснование) */
+    get: operations['adminParameterDefaultHistory']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/sources': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Реестр источников данных — ссылки, даты, где используются (ТЗ 3.3.4)
+     * @description Источники каталога, нормативов и параметров по умолчанию (загрузки пользователей в проекты не входят).
+     *     Сначала самые используемые. Источник старше `stale_after_months` месяцев (норматив
+     *     `source_stale_after_months`) — `stale`, без даты получения — `undated`.
+     */
+    get: operations['adminListSources']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/sources/{source_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        source_id: string
+      }
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    /**
+     * Исправить название, ссылку, дату получения или примечание источника
+     * @description Правка — событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
+     *     и расчёты не устаревают; экраны и отчёты показывают исправленный источник. Сид не перезаписывает
+     *     источник, который правил администратор.
+     */
+    patch: operations['adminUpdateSource']
+    trace?: never
+  }
   '/api/v1/admin/users': {
     parameters: {
       query?: never
@@ -1777,6 +1895,126 @@ export interface paths {
     get: operations['adminAnalyticsOverview']
     put?: never
     post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/proposals': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Заявки производителей на модерацию */
+    get: operations['adminListProposals']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/proposals/{proposal_id}/review': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Одобрить заявку (правка попадает в каталог, версия каталога растёт) или отклонить с причиной */
+    post: operations['adminReviewProposal']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/manufacturers': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Производители — для привязки учётной записи вендора */
+    get: operations['adminListManufacturers']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/overview': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Кабинет производителя: продукты, пробелы карточек, спрос */
+    get: operations['vendorOverview']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/fit': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Как продукты проходят подбор: статусы, причины исключения, недостающие ТТХ */
+    get: operations['vendorFit']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/proposals': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Заявки производителя на правку каталога */
+    get: operations['vendorListProposals']
+    put?: never
+    /** Предложить правку своей карточки или новый продукт (на модерацию) */
+    post: operations['vendorCreateProposal']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/proposals/{proposal_id}/withdraw': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Отозвать заявку до решения модератора */
+    post: operations['vendorWithdrawProposal']
     delete?: never
     options?: never
     head?: never
@@ -2350,10 +2588,13 @@ export interface components {
     }
     /**
      * @description warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
-     *     warehouse_flow_through — приёмка и отгрузка на противоположных фасадах.
+     *     warehouse_flow_through — приёмка и отгрузка на противоположных фасадах;
+     *     hospital_floor — больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
+     *     и типовой этаж отделений;
+     *     airport_apron — аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
      * @enum {string}
      */
-    LayoutTemplate: 'warehouse_u_flow' | 'warehouse_flow_through'
+    LayoutTemplate: 'warehouse_u_flow' | 'warehouse_flow_through' | 'hospital_floor' | 'airport_apron'
     MatchingResult: {
       /** Format: uuid */
       project_id: string
@@ -2911,6 +3152,58 @@ export interface components {
       invited_by_email?: string | null
       /** Format: date-time */
       created_at: string
+    }
+    Proposal: {
+      /** Format: uuid */
+      id: string
+      kind: components['schemas']['ProposalKind']
+      status: components['schemas']['ProposalStatus']
+      manufacturer: components['schemas']['Manufacturer']
+      /**
+       * Format: uuid
+       * @description У одобренного нового продукта — созданная карточка
+       */
+      product_id?: string | null
+      product_name: string
+      card?: components['schemas']['ProductWrite'] | null
+      specs: components['schemas']['SpecWrite'][]
+      comment: string
+      author?: components['schemas']['ProposalPerson'] | null
+      /** Format: date-time */
+      created_at: string
+      /** @description Версия каталога, на которой вендор готовил заявку */
+      catalog_version: string
+      /** @description Карточку меняли после подачи заявки — сверьте перед решением */
+      product_changed_since: boolean
+      /** Format: date-time */
+      reviewed_at?: string | null
+      reviewer_name?: string | null
+      review_comment?: string | null
+    }
+    ProposalList: {
+      items: components['schemas']['Proposal'][]
+      total: number
+    }
+    /** @description Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3). */
+    VendorOverview: {
+      manufacturer: components['schemas']['Manufacturer']
+      products: components['schemas']['VendorProduct'][]
+      projects_total: number
+      projects_by_object_type: {
+        [key: string]: number
+      }
+      scenarios_with_products: number
+      proposals_by_status: {
+        [key: string]: number
+      }
+      gaps: components['schemas']['VendorGap'][]
+    }
+    /** @description Подбор по последним проектам платформы с объектами продуктов; только счётчики, без данных проектов. */
+    VendorFit: {
+      projects_analysed: number
+      /** Format: date-time */
+      computed_at: string
+      products: components['schemas']['ProductFit'][]
     }
     Health: {
       /** @enum {string} */
@@ -3524,11 +3817,19 @@ export interface components {
     }
     LayoutRoute: {
       /** @enum {string} */
-      key: 'dock_in_to_storage' | 'storage_to_dock_out' | 'storage_to_storage' | 'pod_to_station' | 'storage_to_charger'
+      key:
+        | 'dock_in_to_storage'
+        | 'storage_to_dock_out'
+        | 'storage_to_storage'
+        | 'pod_to_station'
+        | 'storage_to_charger'
+        | 'service_to_ward'
+        | 'sorting_to_stand'
+        | 'terminal_to_hub'
       /** @example Ворота приёмки → место хранения */
       name: string
       /**
-       * @description Среднее кратчайших путей по графу, взвешенное по паллетоместам
+       * @description Среднее кратчайших путей по графу, взвешенное по вместимости точек (паллетоместа, точки выдачи); поездка на лифте в длину не входит
        * @example 91.1
        */
       value_m: number
@@ -4600,17 +4901,53 @@ export interface components {
       /** Format: date-time */
       finished_at?: string | null
     }
-    CatalogImportResult: {
-      catalog_version: string
-      created: number
-      updated: number
-      /** @description Строки-дубли сохранены как отдельные предложения */
-      offers_created: number
-      skipped: number
-      errors: {
-        row?: number
-        message?: string
+    CatalogImportItem: {
+      /** Format: uuid */
+      product_id: string
+      name: string
+      /** @enum {string} */
+      action: 'created' | 'updated' | 'unchanged' | 'conflict'
+      /** @description Первая строка продукта в файле */
+      row: number
+      /** @description Тип решения нового продукта */
+      solution_type?: string | null
+      /** @description Почему конфликт */
+      reason?: string | null
+      changes: {
+        /** @example price_from_rub */
+        field: string
+        /** @example Цена от, ₽ */
+        label: string
+        /** @description Для описания не повторяется */
+        before?: string | number | null
+        after?: string | number | null
       }[]
+    }
+    CatalogImportResult: {
+      /** @description true — предпросмотр, ничего не сохранено */
+      dry_run: boolean
+      /** @description После применения — новая версия; в предпросмотре и без изменений — текущая */
+      catalog_version: string
+      /** @description Новые продукты (id нет в каталоге) */
+      created: number
+      /** @description Продукты под управлением сида, у которых файл что-то меняет */
+      updated: number
+      unchanged: number
+      /** @description Карточки, которые правил или скрыл администратор, — не тронуты */
+      conflicts: number
+      /** @description Новые предложения: строки-дубли сохраняются как отдельные предложения */
+      offers_created: number
+      /** @description Строки без id */
+      skipped: number
+      /** @description Продукты под управлением сида, которых нет в файле (не скрываются) */
+      not_in_file: number
+      errors: {
+        /** @description Номер строки файла, заголовок — строка 1 */
+        row: number
+        message: string
+      }[]
+      /** @description Новые, изменённые и конфликтные продукты; неизменённые только считаются */
+      items: components['schemas']['CatalogImportItem'][]
     }
     EnrichmentReview: {
       /** @description spec_key, принимаемые как есть (статус confirmed или vendor_claim) */
@@ -4636,6 +4973,90 @@ export interface components {
         source?: components['schemas']['SourceWrite']
         rationale?: string
       }[]
+    }
+    AdminParameterDefault: components['schemas']['ParameterDef'] & {
+      object_type: components['schemas']['ObjectTypeKey']
+      /** @example Персонал */
+      group_name: string
+      /** @description false — данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё */
+      applies_to_blank: boolean
+      /** @description Проектов этого типа объекта */
+      projects_total: number
+      /** @description Из них берут значение из умолчания (своего значения нет) */
+      projects_using_default: number
+    }
+    ParameterDefaultList: {
+      object_type: components['schemas']['ObjectTypeKey']
+      items: components['schemas']['AdminParameterDefault'][]
+    }
+    ParameterDefaultWrite: {
+      /** @description В единице параметра (проценты — в процентах) */
+      value: number | string | boolean
+      /** @description Если указана — должна совпадать с единицей параметра */
+      unit?: string | null
+      /**
+       * @description default — значение из источника, assumption — допущение. Без значения — прежний статус (у параметра без умолчания — assumption)
+       * @enum {string|null}
+       */
+      status?: 'default' | 'assumption' | null
+      source: components['schemas']['SourceWrite']
+      /** @description Почему такое значение */
+      rationale: string
+    }
+    ParameterDefaultResult: {
+      parameter: components['schemas']['AdminParameterDefault']
+      /** @description Проектов с новой версией: их сохранённые расчёты устарели */
+      projects_restamped: number
+    }
+    /**
+     * @description fresh — получен не раньше порога, stale — раньше (норматив source_stale_after_months), undated — без даты получения
+     * @enum {string}
+     */
+    SourceFreshness: 'fresh' | 'stale' | 'undated'
+    SourceUsage: {
+      /** @description ТТХ видимых продуктов */
+      specs: number
+      /** @description Цены (предложения) видимых продуктов */
+      offers: number
+      /** @description Кейсы внедрения */
+      cases: number
+      /** @description Нормативы действующей версии */
+      norms: number
+      /** @description Параметры по умолчанию */
+      parameters: number
+      total: number
+    }
+    RegistrySource: components['schemas']['Source'] & {
+      freshness: components['schemas']['SourceFreshness']
+      usage: components['schemas']['SourceUsage']
+    }
+    SourceList: {
+      items: components['schemas']['RegistrySource'][]
+      page: number
+      page_size: number
+      total: number
+      /** @description Порог устаревания — норматив source_stale_after_months */
+      stale_after_months: number
+      /**
+       * Format: date
+       * @description Источник, полученный раньше этой даты, устарел
+       */
+      stale_before: string
+      /** @description Сколько источников в каждом состоянии при тех же фильтрах, кроме freshness */
+      freshness_counts: {
+        fresh?: number
+        stale?: number
+        undated?: number
+      }
+    }
+    /** @description Меняются только переданные поля; url, retrieved_at и note можно очистить значением null */
+    SourceUpdate: {
+      title?: string
+      /** Format: uri */
+      url?: string | null
+      /** Format: date */
+      retrieved_at?: string | null
+      note?: string | null
     }
     UserList: {
       items: components['schemas']['User'][]
@@ -4678,6 +5099,103 @@ export interface components {
         no_fit_count?: number
       }[]
       rfq_count?: number
+    }
+    /**
+     * @description pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+     * @enum {string}
+     */
+    ProposalStatus: 'pending' | 'approved' | 'rejected' | 'withdrawn'
+    /**
+     * @description update — правка существующей карточки; new_product — новый продукт производителя.
+     * @enum {string}
+     */
+    ProposalKind: 'new_product' | 'update'
+    ProposalPerson: {
+      name: string
+      /** Format: email */
+      email: string
+    }
+    ProposalReview: {
+      /** @enum {string} */
+      decision: 'approve' | 'reject'
+      /** @description Обязателен при отказе */
+      comment?: string | null
+      /**
+       * @description С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+       * @default vendor_claim
+       * @enum {string}
+       */
+      specs_status: 'vendor_claim' | 'confirmed'
+    }
+    ManufacturerList: {
+      items: components['schemas']['Manufacturer'][]
+    }
+    KeySpec: {
+      key: string
+      name: string
+    }
+    VendorProduct: {
+      product: components['schemas']['Product']
+      /** @description Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки». */
+      missing_key_specs: components['schemas']['KeySpec'][]
+      /** @description Проекты платформы с типами объектов этого продукта */
+      relevant_projects: number
+      /** @description Сценарии, в которые продукт включён */
+      scenarios_count: number
+      /** @description Сколько раз пользователи добавили продукт в подбор вручную */
+      manual_adds: number
+      /** Format: uuid */
+      pending_proposal_id?: string | null
+    }
+    VendorGap: {
+      object_type: string
+      process_key: string
+      process_name: string
+      /** @description Проекты, где у процесса нет продукта в каталоге */
+      no_fit_count: number
+      /** @description Ваши типы решений, которые этот процесс использует */
+      solution_types: string[]
+    }
+    FitReason: {
+      code: string
+      /** @description Пример формулировки из одного проекта */
+      text: string
+      spec_key?: string | null
+      count: number
+    }
+    FitMissing: {
+      spec_key: string
+      name: string
+      count: number
+    }
+    ProductFit: {
+      /** Format: uuid */
+      product_id: string
+      /** @description Сколько раз продукт был кандидатом (проект × процесс) */
+      appearances: number
+      fit: number
+      check: number
+      excluded: number
+      manual: number
+      /** @description Сколько раз продукт в тройке лучших среди подходящих */
+      top3: number
+      /** @description Частые причины исключения */
+      blocking: components['schemas']['FitReason'][]
+      /** @description Каких ТТХ не хватило подбору для проверки */
+      missing: components['schemas']['FitMissing'][]
+    }
+    ProposalWrite: {
+      /**
+       * Format: uuid
+       * @description null — предложить новый продукт
+       */
+      product_id?: string | null
+      /** @description Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор. */
+      card?: components['schemas']['ProductWrite'] | null
+      /** @description Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения. */
+      specs?: components['schemas']['SpecWrite'][]
+      /** @description Что изменилось и почему — для модератора */
+      comment: string
     }
     /** @description Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи. */
     IntegrationProjectCreate: {
@@ -4773,6 +5291,7 @@ export interface components {
     ScenarioId: string
     CalculationId: string
     SimulationId: string
+    ProposalId: string
   }
   requestBodies: never
   headers: never
@@ -7744,7 +8263,10 @@ export interface operations {
   }
   adminImportCatalog: {
     parameters: {
-      query?: never
+      query?: {
+        /** @description Только предпросмотр: ничего не сохранять */
+        dry_run?: boolean
+      }
       header?: never
       path?: never
       cookie?: never
@@ -7754,6 +8276,7 @@ export interface operations {
         'multipart/form-data': {
           /** Format: binary */
           file: string
+          /** @description Что за выгрузка — пишется в журнал */
           notes?: string
         }
       }
@@ -7766,6 +8289,15 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['CatalogImportResult']
+        }
+      }
+      /** @description Файл больше 20 МБ */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
         }
       }
       /** @description Неподдерживаемый формат */
@@ -7900,6 +8432,138 @@ export interface operations {
       422: components['responses']['ValidationError']
     }
   }
+  adminListParameterDefaults: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        object_type: components['schemas']['ObjectTypeKey']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ParameterDefaultList']
+        }
+      }
+    }
+  }
+  adminSetParameterDefault: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        object_type: components['schemas']['ObjectTypeKey']
+        key: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ParameterDefaultWrite']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ParameterDefaultResult']
+        }
+      }
+      422: components['responses']['ValidationError']
+    }
+  }
+  adminParameterDefaultHistory: {
+    parameters: {
+      query?: {
+        page?: components['parameters']['Page']
+        page_size?: components['parameters']['PageSize']
+      }
+      header?: never
+      path: {
+        object_type: components['schemas']['ObjectTypeKey']
+        key: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AuditList']
+        }
+      }
+    }
+  }
+  adminListSources: {
+    parameters: {
+      query?: {
+        page?: components['parameters']['Page']
+        page_size?: number
+        /** @description Название, ссылка или примечание */
+        q?: string
+        kind?: components['schemas']['SourceKind']
+        freshness?: components['schemas']['SourceFreshness']
+        /** @description Показать источники, на которые ничего не ссылается */
+        include_unused?: boolean
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SourceList']
+        }
+      }
+    }
+  }
+  adminUpdateSource: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        source_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SourceUpdate']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RegistrySource']
+        }
+      }
+      422: components['responses']['ValidationError']
+    }
+  }
   adminListUsers: {
     parameters: {
       query?: {
@@ -7972,6 +8636,194 @@ export interface operations {
           'application/json': components['schemas']['AnalyticsOverview']
         }
       }
+    }
+  }
+  adminListProposals: {
+    parameters: {
+      query?: {
+        status?: components['schemas']['ProposalStatus']
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ProposalList']
+        }
+      }
+      403: components['responses']['Forbidden']
+    }
+  }
+  adminReviewProposal: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        proposal_id: components['parameters']['ProposalId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProposalReview']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Proposal']
+        }
+      }
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+      422: components['responses']['ValidationError']
+    }
+  }
+  adminListManufacturers: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ManufacturerList']
+        }
+      }
+      403: components['responses']['Forbidden']
+    }
+  }
+  vendorOverview: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['VendorOverview']
+        }
+      }
+      403: components['responses']['Forbidden']
+      409: components['responses']['Conflict']
+    }
+  }
+  vendorFit: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['VendorFit']
+        }
+      }
+      409: components['responses']['Conflict']
+    }
+  }
+  vendorListProposals: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ProposalList']
+        }
+      }
+      409: components['responses']['Conflict']
+    }
+  }
+  vendorCreateProposal: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProposalWrite']
+      }
+    }
+    responses: {
+      /** @description На модерации */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Proposal']
+        }
+      }
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+      422: components['responses']['ValidationError']
+    }
+  }
+  vendorWithdrawProposal: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        proposal_id: components['parameters']['ProposalId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Отозвана */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Proposal']
+        }
+      }
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
     }
   }
   integrationCreateProject: {

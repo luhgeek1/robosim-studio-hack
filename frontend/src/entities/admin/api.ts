@@ -4,10 +4,18 @@ import { qk } from '@/shared/api/keys'
 import type {
   AdminUserUpdate,
   AnalyticsOverview,
+  AuditList,
+  CatalogImportResult,
   NormSetCreate,
+  ParameterDefaultWrite,
   ProductDetail,
   ProductWrite,
+  RegistrySource,
   Res,
+  SourceFreshness,
+  SourceKind,
+  SourceList,
+  SourceUpdate,
   SpecWrite,
   User,
   UserList,
@@ -16,6 +24,17 @@ import type {
 const HOUR = 60 * 60 * 1000
 
 export type UsersQuery = { q?: string; role?: string; page?: number; page_size?: number }
+export type SourcesQuery = {
+  q?: string
+  kind?: SourceKind
+  freshness?: SourceFreshness
+  include_unused?: boolean
+  page?: number
+  page_size?: number
+}
+export type CatalogImport = { file: File; notes?: string; dryRun: boolean }
+type DefaultsPath = '/api/v1/admin/parameter-defaults/{object_type}'
+type DefaultPath = '/api/v1/admin/parameter-defaults/{object_type}/{key}'
 
 export const adminApi = {
   analytics: () => api.get<AnalyticsOverview>('/admin/analytics/overview').then((r) => r.data),
@@ -25,6 +44,17 @@ export const adminApi = {
   updateProduct: (id: string, body: ProductWrite) =>
     api.patch<ProductDetail>(`/admin/catalog/products/${id}`, body).then((r) => r.data),
   deleteProduct: (id: string) => api.delete(`/admin/catalog/products/${id}`).then(() => undefined),
+  importCatalog: ({ file, notes, dryRun }: CatalogImport) => {
+    const form = new FormData()
+    form.append('file', file)
+    if (notes) form.append('notes', notes)
+    return api
+      .post<CatalogImportResult>('/admin/catalog/import', form, {
+        params: { dry_run: dryRun },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
   upsertSpecs: (id: string, specs: SpecWrite[]) =>
     api.put<ProductDetail>(`/admin/catalog/products/${id}/specs`, { specs }).then((r) => r.data),
   publishNormSet: (body: NormSetCreate) =>
@@ -35,6 +65,15 @@ export const adminApi = {
   normSets: () => api.get<Res<'/api/v1/norm-sets', 'get'>>('/norm-sets').then((r) => r.data.items),
   norms: (version?: string) =>
     api.get<Res<'/api/v1/norms', 'get'>>('/norms', { params: { version } }).then((r) => r.data),
+  defaults: (objectType: string) =>
+    api.get<Res<DefaultsPath, 'get'>>(`/admin/parameter-defaults/${objectType}`).then((r) => r.data),
+  setDefault: (objectType: string, key: string, body: ParameterDefaultWrite) =>
+    api.put<Res<DefaultPath, 'put'>>(`/admin/parameter-defaults/${objectType}/${key}`, body).then((r) => r.data),
+  defaultHistory: (objectType: string, key: string) =>
+    api.get<AuditList>(`/admin/parameter-defaults/${objectType}/${key}/history`).then((r) => r.data),
+  sources: (query: SourcesQuery) => api.get<SourceList>('/admin/sources', { params: query }).then((r) => r.data),
+  updateSource: (id: string, body: SourceUpdate) =>
+    api.patch<RegistrySource>(`/admin/sources/${id}`, body).then((r) => r.data),
 }
 
 export const useAdminAnalytics = () => useQuery({ queryKey: qk.admin.analytics, queryFn: adminApi.analytics })
@@ -87,6 +126,13 @@ export const useCreateProduct = () => useCatalogWrite((body: ProductWrite) => ad
 export const useUpdateProduct = () =>
   useCatalogWrite(({ id, body }: { id: string; body: ProductWrite }) => adminApi.updateProduct(id, body))
 export const useDeleteProduct = () => useCatalogWrite((id: string) => adminApi.deleteProduct(id))
+// Предпросмотр ничего не пишет — кэш не трогаем; применение идёт через useCatalogWrite.
+export const usePreviewCatalogImport = () =>
+  useMutation({
+    mutationFn: (args: Omit<CatalogImport, 'dryRun'>) => adminApi.importCatalog({ ...args, dryRun: true }),
+  })
+export const useApplyCatalogImport = () =>
+  useCatalogWrite((args: Omit<CatalogImport, 'dryRun'>) => adminApi.importCatalog({ ...args, dryRun: false }))
 export const useUpsertSpecs = () =>
   useCatalogWrite(({ id, specs }: { id: string; specs: SpecWrite[] }) => adminApi.upsertSpecs(id, specs))
 
@@ -101,6 +147,54 @@ export function usePublishNormSet() {
         client.invalidateQueries({ queryKey: qk.projects.all }),
         client.invalidateQueries({ queryKey: qk.scenarios.all }),
         client.invalidateQueries({ queryKey: qk.version }),
+      ]),
+  })
+}
+
+export const useParameterDefaults = (objectType: string) =>
+  useQuery({ queryKey: qk.admin.defaults(objectType), queryFn: () => adminApi.defaults(objectType) })
+
+export const useDefaultHistory = (objectType: string, key: string, enabled: boolean) =>
+  useQuery({
+    queryKey: qk.admin.defaultHistory(objectType, key),
+    queryFn: () => adminApi.defaultHistory(objectType, key),
+    enabled,
+  })
+
+// Новое умолчание меняет действующее значение в проектах без своего: их версия растёт, расчёты устаревают.
+export function useSetDefault() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ objectType, key, body }: { objectType: string; key: string; body: ParameterDefaultWrite }) =>
+      adminApi.setDefault(objectType, key, body),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: qk.admin.all }),
+        client.invalidateQueries({ queryKey: qk.objectTypes }),
+        client.invalidateQueries({ queryKey: qk.projects.all }),
+        client.invalidateQueries({ queryKey: qk.scenarios.all }),
+      ]),
+  })
+}
+
+export const useAdminSources = (query: SourcesQuery) =>
+  useQuery({
+    queryKey: qk.admin.sources(query),
+    queryFn: () => adminApi.sources(query),
+    placeholderData: keepPreviousData,
+  })
+
+// Источник показывается в карточках каталога, нормативах и параметрах: перечитываем их вместе с реестром.
+export function useUpdateSource() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: SourceUpdate }) => adminApi.updateSource(id, body),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: qk.admin.all }),
+        client.invalidateQueries({ queryKey: ['catalog'] }),
+        client.invalidateQueries({ queryKey: ['reference'] }),
+        client.invalidateQueries({ queryKey: qk.objectTypes }),
       ]),
   })
 }

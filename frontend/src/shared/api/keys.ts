@@ -48,6 +48,10 @@ export const qk = {
     analytics: ['admin', 'analytics'] as const,
     users: (query: object) => ['admin', 'users', query] as const,
     products: (query: object) => ['admin', 'products', query] as const,
+    defaults: (objectType: string) => ['admin', 'parameter-defaults', objectType] as const,
+    defaultHistory: (objectType: string, key: string) =>
+      ['admin', 'parameter-defaults', objectType, key, 'history'] as const,
+    sources: (query: object) => ['admin', 'sources', query] as const,
   },
   reference: {
     solutionTypes: ['reference', 'solution-types'] as const,
@@ -56,6 +60,17 @@ export const qk = {
     normSets: ['reference', 'norm-sets'] as const,
     norms: (version?: string) => ['reference', 'norms', version ?? null] as const,
   },
+  vendor: {
+    all: ['vendor'] as const,
+    overview: ['vendor', 'overview'] as const,
+    fit: ['vendor', 'fit'] as const,
+    proposals: ['vendor', 'proposals'] as const,
+  },
+  proposals: {
+    all: ['proposals'] as const,
+    queue: (status?: string) => ['proposals', 'queue', status ?? 'all'] as const,
+  },
+  manufacturers: ['manufacturers'] as const,
   organizations: {
     all: ['organizations'] as const,
     list: ['organizations', 'list'] as const,

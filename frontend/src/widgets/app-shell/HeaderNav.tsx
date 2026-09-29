@@ -144,6 +144,7 @@ export function Sections({ projectId }: { projectId?: string }) {
       </SectionLink>
       {/* Каталог, нормативы, пользователи и галерея 3D-моделей — инструменты администратора. */}
       {user?.role === 'admin' && <SectionLink to="/admin">Админ-панель</SectionLink>}
+      {user?.role === 'vendor' && <SectionLink to="/vendor">Кабинет производителя</SectionLink>}
       <SectionLink to={compareTo}>
         Сравнение решений
         <AnimatePresence>

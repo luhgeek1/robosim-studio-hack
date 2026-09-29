@@ -1,5 +1,6 @@
 import csv
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -14,6 +15,9 @@ from app.seeds.sources import SourceSpec, url_source
 
 CATALOG_FILE = "case/dataset/catalog_export_v4.csv"
 SPECS_FILE = "research/catalog_specs/warehouse_specs.yaml"
+CATALOG_DELIMITER = ";"
+# Columns the loader reads; the organizer's export has more (УГТ, Рын Потенциал, Регион), all optional.
+CATALOG_REQUIRED_COLUMNS = ("id", "Название", "компания", "Отрасль", "Сценарий", "Цена изделия")
 
 CATALOG_SOURCE = SourceSpec(
     key="catalog:catalog_export_v4",
@@ -62,15 +66,21 @@ class ResearchProduct:
     in_registry: bool = False
 
 
-def read_catalog(data_root: Path) -> dict[str, list[CatalogRow]]:
-    """Product id → its CSV rows (duplicates are separate offers, Q&A)."""
+def parse_catalog(lines: Iterable[str]) -> tuple[dict[str, list[CatalogRow]], list[CatalogRow]]:
+    """Product id → its rows of the organizer's CSV (duplicates are separate offers, Q&A); rows without id.
+
+    Row numbers count the header as row 1, as a spreadsheet shows them.
+    """
     grouped: dict[str, list[CatalogRow]] = {}
+    for index, fields in enumerate(csv.DictReader(lines, delimiter=CATALOG_DELIMITER), start=2):
+        row = CatalogRow(row=index, fields=fields)
+        grouped.setdefault(row.get("id") or "", []).append(row)
+    return grouped, grouped.pop("", [])
+
+
+def read_catalog(data_root: Path) -> dict[str, list[CatalogRow]]:
     with (data_root / CATALOG_FILE).open(encoding="utf-8-sig", newline="") as handle:
-        for index, fields in enumerate(csv.DictReader(handle, delimiter=";"), start=2):
-            row = CatalogRow(row=index, fields=fields)
-            grouped.setdefault(row.get("id") or "", []).append(row)
-    grouped.pop("", None)
-    return grouped
+        return parse_catalog(handle)[0]
 
 
 def catalog_status(raw: str | None) -> str:

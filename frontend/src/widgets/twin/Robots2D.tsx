@@ -18,8 +18,8 @@ export const LOADED = '#1d3fb5'
 // What a colour means on the plan: the legend under the map reads this list.
 export const ROBOT_LEGEND: [string, string][] = [
   [BODY.moving, 'едет пустым'],
-  [LOADED, 'везёт паллету'],
-  [BODY.load, 'берёт или ставит паллету'],
+  [LOADED, 'везёт груз'],
+  [BODY.load, 'берёт или сдаёт груз'],
   [BODY.idle, 'свободен, ждёт задачу'],
   [BODY.wait, 'ждёт в заторе'],
   [BODY.charge, 'на зарядке'],

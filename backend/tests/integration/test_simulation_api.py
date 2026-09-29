@@ -256,3 +256,118 @@ async def test_tow_train_scenario_is_simulated_and_swept(client: AsyncClient) ->
     assert result["recommended_count"] is not None
     after = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
     assert after["sizing"][0]["count"]["source"] == "simulated"
+
+
+async def test_hospital_deliveries_ride_the_lifts_and_the_fleet_is_swept(client: AsyncClient) -> None:
+    """Demo hospital: the plan comes with the project, the recommended robots are simulated through the lift
+    hall, and the sweep gives the checked count like on a warehouse."""
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
+    payload = {
+        "name": "Больница",
+        "object_type": "hospital",
+        "init": {"mode": "demo", "demo_key": "hospital_demo_01"},
+    }
+    project = (await client.post("/api/v1/projects", json=payload, headers=headers)).json()
+    layout = (await client.get(f"/api/v1/projects/{project['id']}/layout", headers=headers)).json()
+    assert layout["template"] == "hospital_floor"
+    routes = {r["key"]: r["value_m"] for r in layout["stats"]["routes"]}
+    assert routes["service_to_ward"] == pytest.approx(180, abs=1)
+    body = (await client.get(f"/api/v1/projects/{project['id']}/matching", headers=headers)).json()
+    items = [
+        {"process_key": p["process_key"], "product_id": p["candidates"][0]["product"]["id"]}
+        for p in body["processes"]
+        if p["candidates"]
+    ]
+    scenario = {"name": "Рекомендация", "kind": "purchase", "items": items}
+    created = await client.post(f"/api/v1/projects/{project['id']}/scenarios", json=scenario, headers=headers)
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+    calc = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    meal = next(s for s in calc["sizing"] if s["process_key"] == "meal_delivery")
+    assert meal["robot"]["cycle_time_s"]
+
+    run_id = (
+        await client.post(
+            f"/api/v1/scenarios/{scenario_id}/simulations", json={"mode": "peak", "seed": 2}, headers=headers
+        )
+    ).json()["id"]
+    run = (await client.get(f"/api/v1/simulations/{run_id}", headers=headers)).json()
+    assert run["status"] == "done", run
+    assert "meal_delivery" not in run["summary"]["skipped_processes"]
+    assert run["summary"]["vs_analytic"] is not None
+    replay = (
+        await client.get(
+            f"/api/v1/simulations/{run_id}/replay", params={"from_s": 1800, "to_s": 3600}, headers=headers
+        )
+    ).json()
+    lifts = {n["id"] for n in replay["layout"]["nodes"] if n["kind"] == "elevator"}
+    assert any(set(e["path"]) & lifts for e in replay["events"] if e["type"] == "move")
+
+    job_id = (
+        await client.post(
+            f"/api/v1/scenarios/{scenario_id}/fleet-sweep",
+            json={"process_key": "meal_delivery"},
+            headers=headers,
+        )
+    ).json()["id"]
+    result = (
+        await client.get(f"/api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}", headers=headers)
+    ).json()
+    assert result["recommended_count"] is not None, result
+    after = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    meal = next(s for s in after["sizing"] if s["process_key"] == "meal_delivery")
+    assert meal["count"]["source"] == "simulated"
+
+
+async def test_airport_baggage_and_terminal_trips_are_simulated_and_swept(client: AsyncClient) -> None:
+    headers = bearer((await login(client, "user@robomera.demo"))["access"])
+    payload = {
+        "name": "Аэропорт",
+        "object_type": "airport",
+        "init": {"mode": "demo", "demo_key": "airport_demo_01"},
+    }
+    project = (await client.post("/api/v1/projects", json=payload, headers=headers)).json()
+    layout = (await client.get(f"/api/v1/projects/{project['id']}/layout", headers=headers)).json()
+    assert layout["template"] == "airport_apron"
+    routes = {r["key"]: r["value_m"] for r in layout["stats"]["routes"]}
+    assert routes["sorting_to_stand"] == pytest.approx(300, abs=1)
+    assert "terminal_to_hub" in routes
+    body = (await client.get(f"/api/v1/projects/{project['id']}/matching", headers=headers)).json()
+    items = [
+        {"process_key": p["process_key"], "product_id": p["candidates"][0]["product"]["id"]}
+        for p in body["processes"]
+        if p["candidates"] and p["process_key"] in {"baggage_handling", "cart_and_waste_logistics"}
+    ]
+    scenario = {"name": "Рекомендация", "kind": "purchase", "items": items}
+    created = await client.post(f"/api/v1/projects/{project['id']}/scenarios", json=scenario, headers=headers)
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+    calc = (await client.post(f"/api/v1/scenarios/{scenario_id}/calculate", headers=headers)).json()
+    simulated = {
+        s["process_key"]
+        for s in calc["sizing"]
+        if s["process_key"] in {"baggage_handling", "cart_and_waste_logistics"}
+    }
+    assert simulated
+
+    run_id = (
+        await client.post(
+            f"/api/v1/scenarios/{scenario_id}/simulations", json={"mode": "peak", "seed": 2}, headers=headers
+        )
+    ).json()["id"]
+    run = (await client.get(f"/api/v1/simulations/{run_id}", headers=headers)).json()
+    assert run["status"] == "done", run
+    assert not simulated & set(run["summary"]["skipped_processes"])
+
+    for process_key in sorted(simulated):
+        job_id = (
+            await client.post(
+                f"/api/v1/scenarios/{scenario_id}/fleet-sweep",
+                json={"process_key": process_key},
+                headers=headers,
+            )
+        ).json()["id"]
+        result = (
+            await client.get(f"/api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}", headers=headers)
+        ).json()
+        assert result["recommended_count"] is not None, (process_key, result)

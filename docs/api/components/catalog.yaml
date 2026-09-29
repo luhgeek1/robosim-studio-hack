@@ -230,18 +230,48 @@ SpecsBulkWrite:
 
 CatalogImportResult:
   type: object
-  required: [catalog_version, created, updated, offers_created, skipped, errors]
+  required: [dry_run, catalog_version, created, updated, unchanged, conflicts, offers_created, skipped, not_in_file, errors, items]
   properties:
-    catalog_version: {type: string}
-    created: {type: integer}
-    updated: {type: integer}
-    offers_created: {type: integer, description: "Строки-дубли сохранены как отдельные предложения"}
-    skipped: {type: integer}
+    dry_run: {type: boolean, description: "true — предпросмотр, ничего не сохранено"}
+    catalog_version: {type: string, description: "После применения — новая версия; в предпросмотре и без изменений — текущая"}
+    created: {type: integer, description: "Новые продукты (id нет в каталоге)"}
+    updated: {type: integer, description: "Продукты под управлением сида, у которых файл что-то меняет"}
+    unchanged: {type: integer}
+    conflicts: {type: integer, description: "Карточки, которые правил или скрыл администратор, — не тронуты"}
+    offers_created: {type: integer, description: "Новые предложения: строки-дубли сохраняются как отдельные предложения"}
+    skipped: {type: integer, description: "Строки без id"}
+    not_in_file: {type: integer, description: "Продукты под управлением сида, которых нет в файле (не скрываются)"}
     errors:
       type: array
       items:
         type: object
-        properties: {row: {type: integer}, message: {type: string}}
+        required: [row, message]
+        properties: {row: {type: integer, description: "Номер строки файла, заголовок — строка 1"}, message: {type: string}}
+    items:
+      type: array
+      description: Новые, изменённые и конфликтные продукты; неизменённые только считаются
+      items: {$ref: '#/CatalogImportItem'}
+
+CatalogImportItem:
+  type: object
+  required: [product_id, name, action, row, changes]
+  properties:
+    product_id: {type: string, format: uuid}
+    name: {type: string}
+    action: {type: string, enum: [created, updated, unchanged, conflict]}
+    row: {type: integer, description: "Первая строка продукта в файле"}
+    solution_type: {type: [string, "null"], description: "Тип решения нового продукта"}
+    reason: {type: [string, "null"], description: "Почему конфликт"}
+    changes:
+      type: array
+      items:
+        type: object
+        required: [field, label]
+        properties:
+          field: {type: string, example: "price_from_rub"}
+          label: {type: string, example: "Цена от, ₽"}
+          before: {oneOf: [{type: string}, {type: number}, {type: "null"}], description: "Для описания не повторяется"}
+          after: {oneOf: [{type: string}, {type: number}, {type: "null"}]}
 
 EnrichmentProposal:
   type: object

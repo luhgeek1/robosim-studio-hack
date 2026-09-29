@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUpRight, BarChart3, Boxes, Scale, Users } from 'lucide-react'
+import { ArrowUpRight, BarChart3, BookMarked, Boxes, FileClock, Scale, Users } from 'lucide-react'
 import { Link, NavLink, useLocation, useOutlet } from 'react-router'
 import { useSystemVersion } from '@/entities/reference'
+import { useProposalQueue } from '@/entities/vendor'
 import { cn } from '@/shared/lib/utils'
 import { SPRING } from './motion'
 import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
@@ -9,7 +10,9 @@ import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 const TABS = [
   { to: '/admin', label: 'Обзор', icon: BarChart3, end: true },
   { to: '/admin/catalog', label: 'Каталог', icon: Boxes },
+  { to: '/admin/proposals', label: 'Заявки', icon: FileClock },
   { to: '/admin/norms', label: 'Нормативы', icon: Scale },
+  { to: '/admin/reference', label: 'Справочники', icon: BookMarked },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
 ]
 
@@ -17,6 +20,7 @@ export function AdminLayout() {
   const { pathname } = useLocation()
   const outlet = useOutlet()
   const version = useSystemVersion()
+  const pending = useProposalQueue('pending').data?.total ?? 0
 
   return (
     <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-12 pb-20">
@@ -58,6 +62,17 @@ export function AdminLayout() {
                   <>
                     <tab.icon size={15} className={isActive ? 'text-ink' : 'text-ink-4'} />
                     {tab.label}
+                    {tab.to === '/admin/proposals' && pending > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={SPRING}
+                        className="num flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-signal px-1 text-[10.5px] text-white"
+                        title="Заявок на модерации"
+                      >
+                        {pending}
+                      </motion.span>
+                    )}
                     {isActive && <SlideMark className="absolute inset-x-2 -bottom-px h-0.5" />}
                   </>
                 )}

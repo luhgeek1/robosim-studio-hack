@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, TypeAdapter, model_validator
 
 from app.domain.catalog import Badge
 from app.domain.common.provenance import ProvenanceStatus, SourceKind
-from app.domain.layout.models import LayoutTemplate
+from app.domain.layout.models import LayoutTemplate, ZoneKind
 from app.domain.reference import NormCategory, ObjectTypeKey, SizingModel, SpecGroup
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -119,9 +119,24 @@ class SimulationSeed(SeedModel):
     station_lines_per_hour: str | None = None
     lead_time_min: str
     target_share: str
+    # Service flows between zones of the plan: zone kinds separated by commas, not expressions.
+    sources: str | None = None
+    destinations: str | None = None
+    ride_s: str | None = None
+
+    @model_validator(mode="after")
+    def _zones_known(self) -> "SimulationSeed":
+        kinds = {kind.value for kind in ZoneKind}
+        for field in (self.sources, self.destinations):
+            unknown = [k for k in (field or "").split(",") if k and k not in kinds]
+            if unknown:
+                raise ValueError(f"unknown zone kinds {unknown}")
+        if bool(self.sources) != bool(self.destinations):
+            raise ValueError("sources and destinations go together")
+        return self
 
     def formulas(self) -> dict[str, str]:
-        return {k: v for k, v in self.model_dump(exclude={"model"}).items() if v}
+        return {k: v for k, v in self.model_dump(exclude={"model", "sources", "destinations"}).items() if v}
 
 
 class CycleExtraSeed(SeedModel):
@@ -172,10 +187,17 @@ class SiteCostSeed(SeedModel):
     note: str | None = None
 
 
+class DemoParamSeed(SeedModel):
+    value: float | int | bool | str
+    rationale: str
+
+
 class DemoProjectSeed(SeedModel):
     key: str
     name: str
     description: str | None = None
+    # Values that differ from the parameter defaults: a team assumption, each with its reason.
+    params: dict[str, DemoParamSeed] = {}
 
 
 class ObjectTypeSeed(SeedModel):

@@ -1,8 +1,10 @@
 from collections.abc import Mapping
 
 from app.domain.layout.models import LayoutTemplate
+from app.engine.layout.airport import AirportSketch
 from app.engine.layout.dimensions import OVERRIDES, REQUIRED_PARAMS, Deriver, Inputs
 from app.engine.layout.graph import Graph, stats, validate
+from app.engine.layout.hospital import HospitalSketch
 from app.engine.layout.models import (
     Edge,
     Generated,
@@ -44,13 +46,18 @@ def generate(
     *,
     render: bool = True,
 ) -> Generated:
-    """Warehouse plan from object parameters and layout norms; every dimension is a traced step.
+    """Plan from object parameters and layout norms; every dimension is a traced step.
 
     The plan is a schematic, not CAD: it exists to give the cycle model real route lengths and the simulation
     a graph with aisle widths, docks, stations and chargers.
     """
     inputs = Inputs(params, norms, overrides or {})
     tracer = Tracer(render=render)
+    sketches = {LayoutTemplate.HOSPITAL_FLOOR: HospitalSketch, LayoutTemplate.AIRPORT_APRON: AirportSketch}
+    if template in sketches:
+        sketch = sketches[template](inputs, tracer)
+        plan = sketch.draw()
+        return Generated(template, plan, tracer.steps, sketch.warnings, dict(inputs.used))
     deriver = Deriver(template, inputs, tracer)
     dims = deriver.derive()
     drawer = WarehouseDrawer(dims)
