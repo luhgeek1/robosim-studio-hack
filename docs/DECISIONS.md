@@ -71,7 +71,8 @@
 - **Решение:** ВМ `robomera` (ru-central1-a, 2 vCPU / 8 ГБ / 40 ГБ SSD, Ubuntu 24.04) со статическим IP 111.88.250.255,
   домен prooood.ru. Стек — тот же `docker-compose.yml` плюс `deploy/docker-compose.prod.yml`: закрыты порты БД и Redis,
   `RS_STAGE=prod`, secure-cookie, Caddy на 80/443 сам выпускает сертификат. Секреты — `~/app/.env` на ВМ, не в git.
-  Выкладка — `deploy/deploy.sh deploy@111.88.250.255` (выкладывает закоммиченный `HEAD`, не рабочее дерево).
+  Выкладка — GitHub Actions на push в `main` (`.github/workflows/deploy.yml`, отдельный SSH-ключ) или вручную
+  `deploy/deploy.sh deploy@111.88.250.255`; выкладывается закоммиченное состояние, не рабочее дерево.
 - **Почему:** демо-стенд должен собираться из репозитория так же, как у жюри; бонус облака (5 000 ₽) покрывает ВМ.
 - **Отвергнуто:** Managed PostgreSQL и Kubernetes — дороже и дольше, для одной ВМ нагрузки хватает.
 
