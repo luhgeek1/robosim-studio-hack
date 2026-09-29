@@ -20,13 +20,7 @@ export function AdminLayout() {
   return (
     <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-20">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="max-w-170">
-          <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Администрирование</h1>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-3">
-            Каждая правка каталога или нормативов — новая версия данных: сохранённые расчёты помечаются устаревшими и
-            пересчитываются с диффом.
-          </p>
-        </div>
+        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Админ-панель</h1>
         {version.data && (
           <div className="flex items-center gap-4 text-[12.5px] text-ink-3">
             <span>
