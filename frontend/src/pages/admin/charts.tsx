@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   Bar,
   BarChart,
@@ -43,7 +43,7 @@ export function Donut({
   const total = data.reduce((sum, s) => sum + s.value, 0)
   const shown = active !== null ? data[active] : null
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
       <div className="relative size-40 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -77,7 +77,7 @@ export function Donut({
           <span className="mt-1 max-w-24 truncate text-[11.5px] text-ink-3">{shown ? shown.name : centerLabel}</span>
         </div>
       </div>
-      <ul className="min-w-0 flex-1 space-y-2">
+      <ul className="min-w-0 flex-1 space-y-2 self-stretch sm:self-auto">
         {data.map((slice, i) => (
           <li
             key={slice.key}
@@ -102,6 +102,8 @@ export function Donut({
 }
 
 const ROW = 34
+// Граница sm из Tailwind: уже неё карточка графика занимает весь экран телефона.
+const PHONE_MAX = 640
 
 function NameTick({ x, y, payload, width }: { x?: number; y?: number; payload?: { value: string }; width: number }) {
   const text = payload?.value ?? ''
@@ -135,23 +137,34 @@ export function HBars({
 }) {
   const max = domainMax ?? Math.max(...data.map((d) => d.value), 1)
   const fill = (slice: Slice) => (typeof color === 'function' ? color(slice) : color)
+  const [box, setBox] = useState<HTMLDivElement | null>(null)
+  const [boxWidth, setBoxWidth] = useState(0)
+  useEffect(() => {
+    if (!box) return
+    const observer = new ResizeObserver(([entry]) => setBoxWidth(entry.contentRect.width))
+    observer.observe(box)
+    return () => observer.disconnect()
+  }, [box])
+  // На телефоне подписи с десктопной шириной оставили бы столбцам пару пикселей — отдаём им не больше 42 % карточки.
+  const phone = boxWidth > 0 && window.innerWidth < PHONE_MAX
+  const labelWidth = phone ? Math.min(nameWidth, Math.round(boxWidth * 0.42)) : nameWidth
   return (
-    <div style={{ height: data.length * ROW + (marks.length ? 26 : 6) }}>
+    <div ref={setBox} style={{ height: data.length * ROW + (marks.length ? 26 : 6) }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 2, right: 72, bottom: marks.length ? 20 : 2, left: 0 }}
+          margin={{ top: 2, right: phone ? 56 : 72, bottom: marks.length ? 20 : 2, left: 0 }}
           barCategoryGap={10}
         >
           <XAxis type="number" hide domain={[0, max]} />
           <YAxis
             type="category"
             dataKey="name"
-            width={nameWidth}
+            width={labelWidth}
             axisLine={false}
             tickLine={false}
-            tick={<NameTick width={nameWidth} />}
+            tick={<NameTick width={labelWidth} />}
           />
           {marks.map((mark) => (
             <ReferenceLine

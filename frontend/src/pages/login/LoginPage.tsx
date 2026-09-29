@@ -94,7 +94,7 @@ export function LoginPage() {
           <h1 className="display max-w-150 text-center text-[32px] leading-[1.05] tracking-[-0.035em] lg:text-[40px]">
             Стоит ли роботизировать ваш объект?
           </h1>
-          <div className="mt-16 w-full max-w-190 lg:mt-28">
+          <div className="mt-10 w-full max-w-190 sm:mt-16 lg:mt-28">
             <DeliveryScene />
           </div>
         </motion.section>
@@ -211,7 +211,7 @@ export function LoginPage() {
                       className="group flex w-full items-center justify-between gap-3 rounded-[10px] border border-line bg-card px-4 py-2.5 text-left transition-colors hover:border-line-2 hover:bg-surface-2 disabled:opacity-50"
                     >
                       <span className="text-[14px] font-medium">{account.label}</span>
-                      <span className="meta flex items-center gap-1">
+                      <span className="meta flex items-center gap-1 text-right">
                         {account.hint}
                         <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                       </span>

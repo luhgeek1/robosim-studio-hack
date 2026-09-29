@@ -53,7 +53,7 @@ export function CardForm({
             className="h-9 rounded-[10px]"
           />
         </Field>
-        <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
           <Field label="Производитель" error={errors.manufacturer_name} hint="Новый производитель создастся сам">
             <Input
               value={form.manufacturer_name}
@@ -72,7 +72,7 @@ export function CardForm({
             />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Тип решения" error={errors.solution_type}>
             <Select
               value={form.solution_type || undefined}

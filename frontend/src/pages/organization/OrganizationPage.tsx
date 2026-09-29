@@ -44,11 +44,11 @@ function Organization({ org }: { org: OrganizationDetail }) {
     <>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-[14px] bg-ink text-[22px] font-semibold text-white">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-ink text-[20px] font-semibold text-white sm:size-14 sm:text-[22px]">
             {initialOf(org.name)}
           </span>
           <div className="min-w-0">
-            <h1 className="display truncate text-[36px] leading-[1.1] tracking-[-0.03em]">{org.name}</h1>
+            <h1 className="display truncate text-[28px] leading-[1.1] tracking-[-0.03em] sm:text-[36px]">{org.name}</h1>
             <div className="mt-1 text-[14px] text-ink-3">
               {ROLE_LABEL[org.role]} · {org.members_count}{' '}
               {pluralRu(org.members_count, ['участник', 'участника', 'участников'])} · {org.projects_count}{' '}
@@ -74,7 +74,7 @@ function Organization({ org }: { org: OrganizationDetail }) {
           {org.members.map((member) => {
             const me = member.user_id === user?.id
             return (
-              <li key={member.user_id} className="flex items-center gap-3 px-5 py-3">
+              <li key={member.user_id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-black/6 text-[13px] font-semibold text-ink-2">
                   {initialOf(member.name || member.email)}
                 </span>
@@ -102,32 +102,37 @@ function Organization({ org }: { org: OrganizationDetail }) {
       {org.invitations.length > 0 && (
         <Card title="Ждут ответа" hint="Приглашённые видят приглашение в колокольчике рядом с профилем">
           <ul className="divide-y divide-line">
-            {org.invitations.map((invitation) => (
-              <li key={invitation.id} className="flex items-center gap-3 px-5 py-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-line-2 text-ink-4">
-                  <Mail size={14} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium">{invitation.email}</span>
-                  <span className="block truncate text-[12.5px] text-ink-3">
-                    {invitation.invited_by_name && `пригласил(а) ${invitation.invited_by_name} · `}
-                    {formatDateTime(invitation.created_at)}
+            {org.invitations.map((invitation) => {
+              const state = invitation.invitee_registered ? (
+                <Pill>
+                  <Clock /> Ждём ответа
+                </Pill>
+              ) : (
+                <Pill tone="warn">Ещё не зарегистрирован</Pill>
+              )
+              return (
+                <li key={invitation.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-line-2 text-ink-4">
+                    <Mail size={14} />
                   </span>
-                </span>
-                {invitation.invitee_registered ? (
-                  <Pill>
-                    <Clock /> Ждём ответа
-                  </Pill>
-                ) : (
-                  <Pill tone="warn">Ещё не зарегистрирован</Pill>
-                )}
-                {isOwner ? (
-                  <RevokeInvitation orgId={org.id} invitationId={invitation.id} />
-                ) : (
-                  <span className="size-8" />
-                )}
-              </li>
-            ))}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-medium">{invitation.email}</span>
+                    <span className="block truncate text-[12.5px] text-ink-3">
+                      {invitation.invited_by_name && `пригласил(а) ${invitation.invited_by_name} · `}
+                      {formatDateTime(invitation.created_at)}
+                    </span>
+                    {/* На телефоне статус встаёт под адресом, иначе он съедает место под email. */}
+                    <span className="mt-1.5 block sm:hidden">{state}</span>
+                  </span>
+                  <span className="hidden sm:contents">{state}</span>
+                  {isOwner ? (
+                    <RevokeInvitation orgId={org.id} invitationId={invitation.id} />
+                  ) : (
+                    <span className="size-8" />
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </Card>
       )}
@@ -164,14 +169,14 @@ function InviteForm({ org }: { org: OrganizationDetail }) {
   }
   return (
     <Card title="Пригласить по email">
-      <form onSubmit={submit} className="flex flex-wrap items-center gap-2 px-5 py-4">
+      <form onSubmit={submit} className="flex flex-wrap items-center gap-2 px-4 py-4 sm:px-5">
         <Input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="colleague@company.ru"
-          className="min-w-60 flex-1"
+          className="min-w-0 flex-1 sm:min-w-60"
           aria-label="Email приглашённого"
         />
         <Button type="submit" disabled={invite.isPending || !email.trim()}>
@@ -233,7 +238,7 @@ function DangerZone({ org, userId }: { org: OrganizationDetail; userId?: string 
   if (org.role !== 'owner') {
     return (
       <Card title="Участие">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
           <span className="text-[13.5px] text-ink-2">Выйдя, вы потеряете доступ к общим проектам организации.</span>
           <ConfirmDialog
             title={`Выйти из ${quoted(org.name)}?`}
@@ -256,7 +261,7 @@ function DangerZone({ org, userId }: { org: OrganizationDetail; userId?: string 
   return (
     <Card title="Настройки">
       <form
-        className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-4"
+        className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-4 sm:px-5"
         onSubmit={async (e) => {
           e.preventDefault()
           await rename.mutateAsync(name.trim())
@@ -267,14 +272,14 @@ function DangerZone({ org, userId }: { org: OrganizationDetail; userId?: string 
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={120}
-          className="min-w-60 flex-1"
+          className="min-w-0 flex-1 sm:min-w-60"
           aria-label="Название организации"
         />
         <Button type="submit" variant="outline" disabled={rename.isPending || !name.trim() || name.trim() === org.name}>
           {rename.isPending && <Spinner />} Переименовать
         </Button>
       </form>
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
         <span className="text-[13.5px] text-ink-2">
           Удаление необратимо: вместе с организацией удалятся {org.projects_count}{' '}
           {pluralRu(org.projects_count, ['проект', 'проекта', 'проектов'])} с расчётами и отчётами.

@@ -84,7 +84,7 @@ export function SpecsEditor({ product }: { product: ProductDetail }) {
 
   return (
     <div className="pb-20">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="meta max-w-sm">
           Каждое значение сохраняется с источником и датой (ТЗ 3.3.3). Ключевые ТТХ участвуют в проверках подбора.
         </p>
@@ -111,11 +111,11 @@ export function SpecsEditor({ product }: { product: ProductDetail }) {
                     <li
                       key={key.key}
                       className={cn(
-                        'grid grid-cols-[minmax(0,1fr)_128px_132px] items-center gap-3 px-3.5 py-2.5 transition-colors',
+                        'grid grid-cols-2 items-center gap-x-3 gap-y-2 px-3.5 py-2.5 transition-colors sm:grid-cols-[minmax(0,1fr)_128px_132px] sm:gap-y-3',
                         dirty && 'bg-warn-soft/40',
                       )}
                     >
-                      <span className="min-w-0">
+                      <span className="col-span-2 min-w-0 sm:col-span-1">
                         <span className="flex items-center gap-1.5 text-[13px] font-medium">
                           <span className="truncate">{key.name}</span>
                           {missing.has(key.key) && (
@@ -166,10 +166,10 @@ export function SpecsEditor({ product }: { product: ProductDetail }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={SPRING}
-            className="sticky bottom-0 -mx-6 mt-5 border-t border-line bg-card/95 px-6 pt-4 pb-5 backdrop-blur"
+            className="sticky bottom-0 -mx-4 mt-5 border-t border-line bg-card/95 px-4 pt-4 pb-5 backdrop-blur sm:-mx-6 sm:px-6"
           >
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_130px] gap-2.5">
-              <Field label="Источник">
+            <div className="grid grid-cols-[minmax(0,1fr)_130px] gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_130px]">
+              <Field label="Источник" className="max-sm:col-span-2">
                 <Input
                   value={source.title}
                   onChange={(e) => setSource({ ...source, title: e.target.value })}

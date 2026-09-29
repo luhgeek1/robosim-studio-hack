@@ -46,9 +46,9 @@ export function ProjectsPage() {
 
   return (
     <div className="mx-auto w-full max-w-275 px-4 pt-7 sm:px-6 sm:pt-12 pb-16">
-      <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Проекты</h1>
+          <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Проекты</h1>
           {/* Чьи это проекты: переключатель рабочих областей — в меню профиля. */}
           <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[14px] text-ink-3">
             {organization ? (
@@ -103,18 +103,18 @@ function ProjectRow({ project }: { project: Project }) {
   const score = project.data_quality.score
 
   return (
-    <div className="group relative flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-2">
+    <div className="group relative flex items-start gap-3 px-4 py-4 transition-colors hover:bg-surface-2 max-md:flex-wrap sm:gap-4 sm:px-5 md:items-center">
       <span className="flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-black/5 text-ink-2">
         {ICONS[project.object_type] ?? <Warehouse size={18} />}
       </span>
       <span className="min-w-0 flex-1">
         <Link
           to={`/projects/${project.id}`}
-          className="block truncate text-[15px] font-semibold after:absolute after:inset-0"
+          className="block text-[15px] font-semibold after:absolute after:inset-0 max-md:line-clamp-2 md:truncate"
         >
           {project.name}
         </Link>
-        <span className="block truncate text-[13px] text-ink-3">
+        <span className="block text-[13px] text-ink-3 md:truncate">
           {OBJECT_TYPE_LABEL[project.object_type]} · обновлён {formatDateTime(project.updated_at)}
         </span>
       </span>
@@ -131,19 +131,34 @@ function ProjectRow({ project }: { project: Project }) {
           {project.scenarios_count > 0 ? `Сценариев: ${project.scenarios_count}, расчёта нет` : 'Расчёта ещё нет'}
         </span>
       )}
-      <Metric
-        value={
-          <span className="flex items-center gap-1.5">
-            <ConfidenceRing value={score * 100} size={16} />
-            {formatPct(score, { share: true, digits: 0 })}
+      <DataScore score={score} className="hidden w-28 md:flex" />
+      {/* На узком экране цифры проекта идут отдельной строкой под названием во всю ширину, а не колонками справа. */}
+      <span className="order-last flex basis-full flex-wrap gap-x-6 gap-y-2.5 text-[13px] md:hidden">
+        {metrics ? (
+          <>
+            <Metric value={formatYears(metrics.payback_years)} label="окупаемость" />
+            <Metric value={formatRub(metrics.capex_rub)} label="CAPEX" />
+          </>
+        ) : (
+          <span className="basis-full text-ink-3">
+            {project.scenarios_count > 0 ? `Сценариев: ${project.scenarios_count}, расчёта нет` : 'Расчёта ещё нет'}
           </span>
-        }
-        label="данных введено"
-        className="w-28"
-      />
+        )}
+        <DataScore score={score} />
+        {metrics && (
+          <span className="basis-full">
+            <VerdictBadge verdict={metrics.verdict} />
+          </span>
+        )}
+      </span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative z-10 text-ink-4" aria-label="Действия с проектом">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative z-10 -mt-1 -mr-1.5 text-ink-4 md:mt-0 md:mr-0"
+            aria-label="Действия с проектом"
+          >
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
@@ -202,6 +217,21 @@ function MoveTo({ project }: { project: Project }) {
         ))}
       </DropdownMenuSubContent>
     </DropdownMenuSub>
+  )
+}
+
+function DataScore({ score, className }: { score: number; className?: string }) {
+  return (
+    <Metric
+      value={
+        <span className="flex items-center gap-1.5">
+          <ConfidenceRing value={score * 100} size={16} />
+          {formatPct(score, { share: true, digits: 0 })}
+        </span>
+      }
+      label="данных введено"
+      className={className}
+    />
   )
 }
 

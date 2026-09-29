@@ -60,7 +60,7 @@ export function NormsTab() {
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <div className="relative w-72 max-w-full">
+          <div className="relative w-72 max-w-full max-sm:w-full">
             <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-4" />
             <Input
               value={search}
@@ -109,7 +109,7 @@ export function NormsTab() {
         <div className="space-y-5">
           {groups.map((group) => (
             <section key={group.cat} className="card overflow-hidden">
-              <div className="flex items-baseline justify-between border-b border-line bg-surface-2 px-5 py-2.5">
+              <div className="flex items-baseline justify-between border-b border-line bg-surface-2 px-4 py-2.5 sm:px-5">
                 <h2 className="text-[13.5px] font-semibold">{NORM_CATEGORY_LABEL[group.cat]}</h2>
                 <span className="num text-[12px] text-ink-3">{group.norms.length}</span>
               </div>
@@ -141,7 +141,7 @@ export function NormsTab() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.97 }}
             transition={SPRING}
-            className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-[16px] bg-ink py-2.5 pr-2.5 pl-5 text-white shadow-float"
+            className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-[16px] bg-ink py-2.5 pr-2.5 pl-5 text-white shadow-float max-sm:bottom-3 max-sm:w-[calc(100%-1.5rem)] max-sm:flex-wrap max-sm:justify-between max-sm:gap-x-3 max-sm:gap-y-1.5 max-sm:pl-4"
           >
             <span className="text-[13.5px]">
               Изменено <span className="num font-semibold">{changes.length}</span>{' '}
@@ -156,7 +156,7 @@ export function NormsTab() {
             </button>
             <Button
               size="sm"
-              className="h-8 bg-white px-3.5 text-ink hover:bg-white/90"
+              className="h-8 bg-white px-3.5 text-ink hover:bg-white/90 max-sm:h-9 max-sm:w-full"
               onClick={() => setPublishing(true)}
             >
               <Upload /> Опубликовать версию
@@ -222,19 +222,19 @@ function NormRow({
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center gap-4 px-5 py-3 text-left transition-colors hover:bg-surface-2"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2 sm:gap-4 sm:px-5"
       >
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2 text-[13.5px] font-medium">
             {changed && <span className="size-1.5 shrink-0 rounded-full bg-warn" />}
-            <span className="truncate">{norm.name}</span>
+            <span className="sm:truncate">{norm.name}</span>
           </span>
           <span className="block truncate font-mono text-[11px] text-ink-4">{norm.key}</span>
         </span>
         {range && range.min !== undefined && range.max !== undefined && range.max > range.min && (
           <RangeTrack min={range.min} max={range.max} value={changed ? draft : norm.value} />
         )}
-        <span className="w-40 shrink-0 text-right">
+        <span className="w-28 shrink-0 text-right sm:w-40">
           {changed ? (
             <span className="flex flex-col items-end leading-tight">
               <span className="num text-[14px] font-semibold text-warn">{formatValue(draft, norm.unit)}</span>
@@ -258,7 +258,7 @@ function NormRow({
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="grid gap-5 px-5 pt-1 pb-4 md:grid-cols-[minmax(0,1fr)_240px]">
+            <div className="grid gap-5 px-4 pt-1 pb-4 sm:px-5 md:grid-cols-[minmax(0,1fr)_240px]">
               <div className="space-y-2 text-[13px] leading-relaxed">
                 {norm.rationale && <p className="text-ink-2">{norm.rationale}</p>}
                 <p className="text-ink-3">
@@ -356,7 +356,7 @@ function Versions({
   onView: (version: string | undefined) => void
 }) {
   return (
-    <aside className="card sticky top-20 px-4 pt-4 pb-3">
+    <aside className="card sticky top-20 px-4 pt-4 pb-3 max-lg:static max-lg:order-first">
       <h2 className="px-1 text-[14px] font-semibold">Версии нормативов</h2>
       <p className="meta mt-0.5 px-1">Расчёт хранит свою версию и воспроизводится на ней</p>
       <ol className="relative mt-3">

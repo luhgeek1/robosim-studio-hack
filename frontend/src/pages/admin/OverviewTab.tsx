@@ -77,7 +77,7 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-5">
-      <div className="card grid grid-cols-3 overflow-hidden lg:grid-cols-6 lg:divide-x lg:divide-line">
+      <div className="card grid grid-cols-2 overflow-hidden sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-line">
         <Kpi
           label="Проектов"
           value={projectsTotal}
@@ -204,7 +204,7 @@ function Kpi({
   format?: (v: number) => string
 }) {
   return (
-    <div className="min-w-0 px-5 py-4">
+    <div className="min-w-0 px-4 py-4 sm:px-5">
       <div className="truncate text-[12.5px] text-ink-3">{label}</div>
       <div className="display mt-1.5 text-[30px] leading-none" style={tone ? { color: tone } : undefined}>
         {value === undefined || value === null ? (
@@ -230,7 +230,7 @@ function Panel({
   className?: string
 }) {
   return (
-    <section className={cn('card px-5 pt-4.5 pb-5', className)}>
+    <section className={cn('card px-4 pt-4.5 pb-5 sm:px-5', className)}>
       <h2 className="text-[15px] font-semibold tracking-[-0.01em]">{title}</h2>
       {note && <p className="meta mt-0.5">{note}</p>}
       <div className="mt-4">{children}</div>

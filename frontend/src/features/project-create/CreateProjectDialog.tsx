@@ -78,7 +78,7 @@ export function CreateProjectDialog({
 
           <div className="space-y-2">
             <Label>Тип объекта</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {(objectTypes.data ?? []).map((t) => (
                 <Choice key={t.key} active={t.key === objectType} onClick={() => setObjectType(t.key)}>
                   <span className="font-medium">{t.name}</span>
@@ -92,7 +92,7 @@ export function CreateProjectDialog({
 
           <div className="space-y-2">
             <Label>Начальные данные</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Choice active={mode === 'demo'} disabled={!demo} onClick={() => setMode('demo')}>
                 <span className="font-medium">Демо-объект организатора</span>
                 <span className="text-xs text-muted-foreground">

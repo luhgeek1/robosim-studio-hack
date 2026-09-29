@@ -46,7 +46,7 @@ export function UsersTab() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="relative w-80 max-w-full">
+        <div className="relative w-80 max-w-full max-sm:w-full">
           <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-4" />
           <Input
             value={search}
@@ -80,19 +80,24 @@ export function UsersTab() {
       {users.data && users.data.items.length > 0 && (
         <>
           <div className="card overflow-hidden">
-            <div className="grid grid-cols-[minmax(0,1fr)_180px_150px_96px] items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3">
-              <span>Пользователь</span>
-              <span>Роль</span>
-              <span>Последний вход</span>
-              <span className="text-right">Доступ</span>
+            {/* Роль и доступ стоят справа от имени: на узком экране строка листается вбок внутри карточки. */}
+            <div className="scroll-thin overflow-x-auto overscroll-x-contain">
+              <div className="min-w-[700px]">
+                <div className="grid grid-cols-[minmax(0,1fr)_180px_150px_96px] items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3">
+                  <span>Пользователь</span>
+                  <span>Роль</span>
+                  <span>Последний вход</span>
+                  <span className="text-right">Доступ</span>
+                </div>
+                <ul className="divide-y divide-line">
+                  <AnimatePresence initial={false}>
+                    {users.data.items.map((user, i) => (
+                      <UserRow key={user.id} user={user} index={i} />
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              </div>
             </div>
-            <ul className="divide-y divide-line">
-              <AnimatePresence initial={false}>
-                {users.data.items.map((user, i) => (
-                  <UserRow key={user.id} user={user} index={i} />
-                ))}
-              </AnimatePresence>
-            </ul>
           </div>
           <div className="mt-3 flex items-center justify-between text-[12.5px] text-ink-3">
             <span className="num">

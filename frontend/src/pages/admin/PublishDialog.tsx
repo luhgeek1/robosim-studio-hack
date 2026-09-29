@@ -69,19 +69,19 @@ export function PublishDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-xl">
-        <DialogHeader className="px-6 pt-6 pb-4">
+        <DialogHeader className="px-4 pt-6 pb-4 sm:px-6">
           <DialogTitle className="text-[18px]">Новая версия нормативов</DialogTitle>
           <DialogDescription>
             Текущая версия останется в архиве: расчёты на ней воспроизводятся как были. Новые расчёты возьмут новую.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="scroll-thin max-h-[52vh] space-y-5 overflow-y-auto px-6 pb-5">
+        <div className="scroll-thin max-h-[52vh] space-y-5 overflow-y-auto px-4 pb-5 sm:px-6">
           <ul className="divide-y divide-line rounded-[12px] border border-line">
             {changes.map((norm) => (
               <li key={norm.key} className="px-4 py-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 truncate text-[13.5px] font-medium">{norm.name}</span>
+                <div className="flex items-baseline justify-between gap-x-3 gap-y-0.5 max-sm:flex-wrap">
+                  <span className="min-w-0 text-[13.5px] font-medium sm:truncate">{norm.name}</span>
                   <span className="num flex shrink-0 items-center gap-1.5 text-[13px]">
                     <span className="text-ink-3 line-through">{formatValue(norm.value, norm.unit)}</span>
                     <ArrowRight size={12} className="text-ink-4" />
@@ -128,7 +128,7 @@ export function PublishDialog({
           </div>
         </div>
 
-        <DialogFooter className="m-0 rounded-none border-line bg-surface-2 px-6 py-4">
+        <DialogFooter className="m-0 rounded-none border-line bg-surface-2 px-4 py-4 sm:px-6">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Отмена
           </Button>

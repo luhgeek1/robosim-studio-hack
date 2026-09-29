@@ -52,46 +52,55 @@ export function RobotCard({
 
   return (
     <article
-      className={cn('group card relative aspect-[5/6] w-full cursor-pointer overflow-hidden', className)}
+      className={cn(
+        // На сенсорном экране наведения нет: панель с цифрами стоит под сценой постоянно, карточка растёт по высоте.
+        'group card relative aspect-[5/6] w-full cursor-pointer overflow-hidden pointer-coarse:flex pointer-coarse:h-auto pointer-coarse:flex-col pointer-coarse:aspect-auto',
+        className,
+      )}
       onPointerDownCapture={(e) => (press.current = { x: e.clientX, y: e.clientY })}
       onClick={open}
     >
-      <RobotStage productId={productId} solutionType={solutionType} className="cursor-pointer" />
-      {accent && <span aria-hidden className="absolute inset-x-0 top-0 z-10 h-1" style={{ background: accent }} />}
+      <div className="absolute inset-0 pointer-coarse:relative pointer-coarse:inset-auto pointer-coarse:aspect-[5/4] pointer-coarse:shrink-0">
+        <RobotStage productId={productId} solutionType={solutionType} className="cursor-pointer" />
+        {accent && <span aria-hidden className="absolute inset-x-0 top-0 z-10 h-1" style={{ background: accent }} />}
 
-      {chips && <div className="absolute top-4 left-4 flex items-center gap-1.5">{chips}</div>}
-      {corner && (
-        <div
-          className={cn(
-            'absolute top-4 right-4 transition-opacity',
-            cornerPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100',
-          )}
-        >
-          {corner}
-        </div>
-      )}
+        {chips && <div className="absolute top-4 left-4 flex items-center gap-1.5">{chips}</div>}
+        {corner && (
+          <div
+            className={cn(
+              'absolute top-4 right-4 transition-opacity',
+              cornerPinned
+                ? 'opacity-100'
+                : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100',
+            )}
+          >
+            {corner}
+          </div>
+        )}
 
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0">
-        <div className="min-w-0">
-          <h3 className="line-clamp-2 text-[17px] leading-snug font-semibold tracking-[-0.01em]">{name}</h3>
-          {subtitle && <p className="mt-0.5 truncate text-[13px] text-ink-3">{subtitle}</p>}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0 pointer-coarse:opacity-100! max-sm:p-4">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-[17px] leading-snug font-semibold tracking-[-0.01em]">{name}</h3>
+            {subtitle && <p className="mt-0.5 truncate text-[13px] text-ink-3">{subtitle}</p>}
+          </div>
+          <CardPrice price={price} />
         </div>
-        <CardPrice price={price} />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-4 pt-3 pb-3.5 transition-[translate,box-shadow] duration-300 ease-out group-focus-within:translate-y-0 group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)] group-hover:translate-y-0 group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)]">
-        <div className="flex items-center justify-between gap-3">
+      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-4 pt-3 pb-3.5 transition-[translate,box-shadow] duration-300 ease-out group-focus-within:translate-y-0 group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)] group-hover:translate-y-0 group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)] pointer-coarse:static pointer-coarse:flex-1 pointer-coarse:translate-y-0 pointer-coarse:border-t pointer-coarse:border-line pointer-coarse:shadow-none">
+        {/* Название на сенсорном экране уже подписано на сцене — здесь остаётся только то, что стоит рядом с ним. */}
+        <div className={cn('flex items-center justify-between gap-3', !aside && 'pointer-coarse:hidden')}>
           <Link
             to={to}
             state={linkState}
             title={[name, subtitle].filter(Boolean).join(' · ')}
-            className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] transition-colors hover:text-info"
+            className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] transition-colors hover:text-info pointer-coarse:invisible"
           >
             {name}
           </Link>
           {aside}
         </div>
-        {details && <div className="mt-2.5">{details}</div>}
+        {details && <div className={cn('mt-2.5', !aside && 'pointer-coarse:mt-1.5')}>{details}</div>}
       </div>
     </article>
   )
