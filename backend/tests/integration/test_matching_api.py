@@ -42,7 +42,8 @@ async def test_matching_ranks_pallet_robots_with_reasons(client: AsyncClient) ->
     assert h1500["estimate"]["payback_years"] is not None
     # A tow tractor needs few machines but frees only drivers: it must not outrank an AMR that pays back.
     tractor = _candidate(pallets, "тягач RoboCV")
-    assert tractor["estimate"]["payback_years"] is None
+    # It does not pay back within the questionable band of ТЗ 3.5.7 (7 years), if at all.
+    assert (tractor["estimate"]["payback_years"] or float("inf")) > 7
     assert h1500["score"] > tractor["score"]
     economics = next(c for c in h1500["score_breakdown"] if c["criterion"] == "cost_efficiency")
     assert "NPV" in economics["explanation"]

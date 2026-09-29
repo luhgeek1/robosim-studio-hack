@@ -70,13 +70,15 @@ def _release_cap(
         Section.EFFECT,
     ).as_quantity()
     per_day = demand["per_day"].as_quantity()
+    # The annual fund is working time; vacations, sick leave and turnover add staff on top (dataset: +25 %).
+    loss = ctx.books.norms.get("labor_time_loss_share")
     return ctx.tr.record(
         f"{ns}.release_cap_fte",
         "Потолок высвобождения по объёму работ",
-        per_day.value * days.value / rate.value / hours.value,
+        per_day.value * days.value / rate.value / hours.value * (1 + loss.value),
         "FTE",
-        f"{per_day.key} × {days.key} / {rate.key} / {hours.key}",
-        [per_day, days, rate, hours],
+        f"{per_day.key} × {days.key} / {rate.key} / {hours.key} × (1 + {loss.key})",
+        [per_day, days, rate, hours, loss],
         Section.EFFECT,
     ).as_quantity()
 
@@ -369,7 +371,8 @@ def build_fleet_item(
         count=count,
         stations=stations,
         chargers=int(chargers.value),
-        fleet_per_hour=working * effective if effective else None,
+        # A simulated fleet held the peak in the DES; the cycle model's derated rate would understate it.
+        fleet_per_hour=peak.value if simulated else (working * effective if effective else None),
         coverage=coverage.value,
         warnings=warnings,
     )

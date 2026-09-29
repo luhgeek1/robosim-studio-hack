@@ -198,12 +198,12 @@ def test_missing_specs_require_manual_count() -> None:
 
 def test_release_is_capped_by_the_work_itself() -> None:
     # 400 pallets a day need far fewer than the 17.5 forklift drivers of the dataset:
-    # cap = 400 × 365 / nominal 7.137 per hour / (24 × 365 / 4.2) ≈ 9.8 FTE
+    # cap = 400 × 365 / nominal 7.137 per hour / (24 × 365 / 4.2) × (1 + 0.25 time loss) ≈ 12.3 FTE
     params = {**PARAMS, "pallets_in_per_day": 200.0, "pallets_out_per_day": 200.0}
     result = calculate(scenario(params=params))
     savings = result.economics.effect.lines[0]
     cap = next(step for step in result.trace if step.key == "pallet_transport.release_cap_fte")
-    assert cap.value == pytest.approx(400 * 365 / (3600 / 504.44) / (24 * 365 / 4.2), rel=1e-3)
+    assert cap.value == pytest.approx(400 * 365 / (3600 / 504.44) / (24 * 365 / 4.2) * 1.25, rel=1e-3)
     assert savings.fte == pytest.approx(cap.value)
     assert any("ограничено объёмом работ" in w for w in result.warnings)
 

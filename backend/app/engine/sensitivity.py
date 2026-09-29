@@ -155,9 +155,10 @@ def evaluate_metric(inp: CalculationInput, metric: str) -> tuple[float | None, M
 
 
 def _comparable(value: float | None, metric: str, horizon: int) -> float | None:
-    """A payback that never happens is at least the horizon — used for ranking, never reported."""
-    if value is None and metric == "payback_years":
-        return float(horizon)
+    """Paybacks beyond the horizon — longer ones and «never» alike — all read «не окупается за горизонт»:
+    capped at the horizon, so an 8-year payback does not rank worse than no payback at all."""
+    if metric == "payback_years":
+        return float(horizon) if value is None else min(value, float(horizon))
     return value
 
 
