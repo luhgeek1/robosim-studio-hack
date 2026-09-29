@@ -14,9 +14,9 @@ import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
    Место под ней в потоке держит распорка той же высоты. */
 function StepDock({ projectId }: { projectId: string }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-8">
       <nav
-        className="glass pointer-events-auto relative flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150"
+        className="glass pointer-events-auto relative flex max-w-full items-center gap-1 overflow-x-auto rounded-full p-2 backdrop-blur-xl backdrop-saturate-150"
         aria-label="Шаги оценки"
       >
         <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,19,0.08),0_4px_12px_-4px_rgba(20,20,19,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
@@ -26,7 +26,7 @@ function StepDock({ projectId }: { projectId: string }) {
             to={`/projects/${projectId}/${step.id}`}
             className={({ isActive }) =>
               cn(
-                'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap text-ink transition-colors',
+                'relative flex h-11 items-center rounded-full px-4.5 text-[14.5px] font-medium whitespace-nowrap text-ink transition-colors',
                 !isActive && 'hover:bg-white/50',
               )
             }
@@ -34,8 +34,8 @@ function StepDock({ projectId }: { projectId: string }) {
             {({ isActive }) => (
               <>
                 {isActive && <SlideMark />}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <span className="num text-[11px] text-ink">{i + 1}</span>
+                <span className="relative z-10 flex items-center gap-2">
+                  <span className="num text-[12px] text-ink">{i + 1}</span>
                   {step.label}
                 </span>
               </>
@@ -79,7 +79,7 @@ export function AppShell() {
       </main>
       {projectId && (
         <>
-          <div className="h-18 shrink-0" aria-hidden />
+          <div className="h-28 shrink-0" aria-hidden />
           <StepDock projectId={projectId} />
         </>
       )}
