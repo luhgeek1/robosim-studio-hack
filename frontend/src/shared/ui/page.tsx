@@ -52,6 +52,7 @@ export function Screen({
   nextLabel,
   nextDisabled = false,
   nextTo,
+  nextPrimary,
   dense = false,
   className,
 }: {
@@ -64,6 +65,8 @@ export function Screen({
   nextLabel?: string
   nextDisabled?: boolean
   nextTo?: string
+  // Верхняя кнопка «Далее» заметна, только если на экране нет своего главного действия; иначе она контурная.
+  nextPrimary?: boolean
   className?: string
 }) {
   const navigate = useNavigate()
@@ -73,67 +76,41 @@ export function Screen({
   const step = PROJECT_STEPS[idx]
   const prev = idx > 0 ? PROJECT_STEPS[idx - 1] : null
   const next = idx >= 0 ? PROJECT_STEPS.slice(idx + 1).find((s) => !s.soon) : undefined
-  const nav = {
-    prev: prev ? prev.label : 'Обзор',
-    next: next?.label,
-    nextLabel,
-    nextDisabled,
-    onPrev: () => navigate(prev ? `${base}/${prev.id}` : base),
-    onNext: () => next && navigate(nextTo ?? `${base}/${next.id}`),
-  }
+  const goNext = () => navigate(nextTo ?? `${base}/${next?.id}`)
+  const nextText = nextLabel ?? (next ? `Далее: ${next.label.toLowerCase()}` : '')
+  const topNext = next && (
+    <Button variant={(nextPrimary ?? !actions) ? 'default' : 'outline'} disabled={nextDisabled} onClick={goNext}>
+      {nextText} <ArrowRight />
+    </Button>
+  )
   return (
     <div className={cn('mx-auto w-full pb-16 pt-2', wide ? 'max-w-360' : 'max-w-300', className)}>
-      {idx >= 0 && <StepNav {...nav} compact className="mb-5" />}
       <PageHeader
         eyebrow={step ? `Шаг ${pad(idx + 1)} / ${pad(PROJECT_STEPS.length)} · ${step.question}` : undefined}
         title={title}
         description={lead}
-        actions={actions}
+        actions={
+          (actions || topNext) && (
+            <>
+              {actions}
+              {topNext}
+            </>
+          )
+        }
         dense={dense}
       />
       {children}
-      {idx >= 0 && <StepNav {...nav} className="hairline mt-12 pt-6" />}
-    </div>
-  )
-}
-
-/* Переходы назад / дальше по углам экрана шага. Стоят и над заголовком, и под контентом: на длинном шаге
-   не нужно листать до конца, чтобы пойти дальше. */
-function StepNav({
-  prev,
-  next,
-  nextLabel,
-  nextDisabled,
-  onPrev,
-  onNext,
-  compact = false,
-  className,
-}: {
-  prev: string
-  next?: string
-  nextLabel?: string
-  nextDisabled: boolean
-  onPrev: () => void
-  onNext: () => void
-  compact?: boolean
-  className?: string
-}) {
-  return (
-    <div className={cn('flex items-center justify-between gap-4', className)}>
-      <Button variant="ghost" size={compact ? 'default' : 'lg'} className={cn(compact && '-ml-2.5')} onClick={onPrev}>
-        <ArrowLeft /> {prev}
-      </Button>
-      {next && (
-        // Такая же тихая кнопка, как «назад»: главные действия шага — в его заголовке и контенте.
-        <Button
-          variant="ghost"
-          size={compact ? 'default' : 'lg'}
-          className={cn(compact && '-mr-2.5')}
-          disabled={nextDisabled}
-          onClick={onNext}
-        >
-          {nextLabel ?? `Далее: ${next.toLowerCase()}`} <ArrowRight />
-        </Button>
+      {idx >= 0 && (
+        <div className="hairline mt-12 flex items-center justify-between pt-6">
+          <Button variant="ghost" onClick={() => navigate(prev ? `${base}/${prev.id}` : base)}>
+            <ArrowLeft /> {prev ? prev.label : 'Обзор'}
+          </Button>
+          {next && (
+            <Button size="lg" disabled={nextDisabled} onClick={goNext}>
+              {nextText} <ArrowRight />
+            </Button>
+          )}
+        </div>
       )}
     </div>
   )
