@@ -28,7 +28,7 @@ export function Conditions({
   onChange: (next: Partial<RunConfig>) => void
 }) {
   return (
-    <section className={cn('card px-4 py-3 sm:px-5', whatIf && 'border-info/40')}>
+    <section className={cn('border-b border-line px-4 py-3 sm:px-5', whatIf && 'bg-info-soft/40')}>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         {processes.length > 1 && (
           <Field label="Процесс">
