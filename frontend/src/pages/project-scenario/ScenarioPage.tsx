@@ -162,7 +162,14 @@ export function ScenarioPage() {
           )}
           {calculation.isPending && calculationId && <LoadingBlock rows={4} />}
           {calculation.isError && <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} />}
-          {calculation.data && <CalculationView run={calculation.data} isBaseline={isBaseline} onTrace={openTrace} />}
+          {calculation.data && (
+            <CalculationView
+              run={calculation.data}
+              isBaseline={isBaseline}
+              onTrace={openTrace}
+              locked={dirty || busy}
+            />
+          )}
         </div>
       )}
       {activeTab === 'config' && (

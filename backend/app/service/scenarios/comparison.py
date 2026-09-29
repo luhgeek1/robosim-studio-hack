@@ -189,10 +189,13 @@ class ComparisonService:
 
     async def refresh_recommendation(self, project_id: UUID) -> None:
         """Re-pick the recommended scenario from the stored calculations, so every screen that shows «the»
-        result agrees right after a calculation, not only once the comparison screen was opened."""
+        result agrees right after a calculation, not only once the comparison screen was opened.
+
+        The flags are set by one statement for the whole project, so concurrent calculations leave exactly
+        one scenario recommended; the next calculation or the comparison settles which one."""
+        project = await self._loader.project(self._user, project_id)
         scenarios = list(await self._repo.for_project(project_id))
         runs = await self._repo.latest_runs([s.id for s in scenarios])
-        project = await self._loader.project(self._user, project_id)
         versions = await self._versions.current(project)
         compared = [
             ComparedScenario(
@@ -208,9 +211,7 @@ class ComparisonService:
         if not any(not c.scenario.is_baseline for c in compared):
             return
         _, chosen = self._recommend(compared, [])
-        for scenario in scenarios:
-            scenario.is_recommended = chosen is not None and scenario.id == chosen.scenario.id
-        await self._uow.flush()
+        await self._repo.set_recommended(project_id, chosen.scenario.id if chosen else None)
 
     async def rerun(self, calculation_id: UUID) -> RerunView:
         old = (await self._calculations.get(calculation_id)).run

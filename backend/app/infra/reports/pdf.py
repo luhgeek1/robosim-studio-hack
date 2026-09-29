@@ -530,7 +530,14 @@ class Builder:
             self.add(p(sweep.get("explanation", ""), "small"))
             formula, simulated = sweep.get("by_formula"), sweep.get("by_simulation")
             if formula and simulated:
-                rows = [["", "По формуле цикла", "По имитации (в расчёте)"]]
+                used = sim.get("count_source")
+                rows = [
+                    [
+                        "",
+                        "По формуле цикла" + (" (в расчёте)" if used == "manual" else ""),
+                        "По имитации" + (" (в расчёте)" if used == "simulated" else ""),
+                    ]
+                ]
                 rows.append(
                     [
                         "Роботов (в работе + резерв)",

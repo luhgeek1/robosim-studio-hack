@@ -38,10 +38,12 @@ export function CalculationView({
   run,
   isBaseline,
   onTrace,
+  locked = false,
 }: {
   run: CalculationRun
   isBaseline: boolean
   onTrace: (query: string) => void
+  locked?: boolean
 }) {
   const m = run.metrics
   const effectRows: CostRow[] = run.effect_year.items.map((item) => ({
@@ -101,7 +103,9 @@ export function CalculationView({
         </StatStrip>
       )}
 
-      {!isBaseline && <SizingSection scenarioId={run.scenario_id} sizing={run.sizing} onTrace={onTrace} />}
+      {!isBaseline && (
+        <SizingSection scenarioId={run.scenario_id} sizing={run.sizing} onTrace={onTrace} locked={locked} />
+      )}
 
       <Section
         title="Из чего складываются деньги"

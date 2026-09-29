@@ -81,9 +81,13 @@ const POSE_LABEL: Record<string, string> = {
 
 const fleetOf = (run: SimulationRun, processKey: string) => run.fleet?.find((f) => f.process_key === processKey)?.count
 
+// Пиковые часы экрана — то же окно, что у перебора флота; прогоны «24 ч пика» из прежней версии экрана не подходят.
+const PEAK_WINDOW_MAX_H = 12
+
 const configOf = (run: SimulationRun, processKey: string): RunConfig | null => {
   const count = fleetOf(run, processKey)
   if (count == null) return null
+  if (run.config.mode === 'peak' && (run.summary?.duration_hours ?? 0) > PEAK_WINDOW_MAX_H) return null
   return {
     count,
     mode: run.config.mode === 'peak' ? 'peak' : 'normal',

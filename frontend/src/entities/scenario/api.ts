@@ -177,43 +177,58 @@ export function useCalculate(projectId: string, id: string) {
   const queryClient = useQueryClient()
   const refresh = useRefreshScenarios(projectId)
   return useMutation({
-    mutationFn: () => calculateWithFleetCheck(id).then((check) => check.calculation),
-    onSuccess: (run) => {
-      queryClient.setQueryData(qk.calculations.one(run.id), run)
+    // force — перепроверить и уже проверенное N (кнопка «Перепроверить»).
+    mutationFn: (force?: boolean) => calculateWithFleetCheck(id, force ?? false),
+    onSuccess: ({ calculation }) => {
+      queryClient.setQueryData(qk.calculations.one(calculation.id), calculation)
       return Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: qk.scenarios.one(id) })])
     },
   })
 }
 
 /* Откуда сценарий берёт число роботов процесса: «по имитации» (auto — перебор флота) или «по формуле» (ручное число =
-   формула + резерв). Имитация и формула видны рядом, пользователь выбирает, что идёт в экономику. */
+   формула + резерв). Выбор применяется и к вариантам с тем же процессом и продуктом (RaaS, лизинг): сравнение
+   сопоставляет одинаковые парки. */
 export function useCountSource(projectId: string, scenarioId: string) {
   const queryClient = useQueryClient()
   const refresh = useRefreshScenarios(projectId)
   return useMutation({
     mutationFn: async ({ processKey, manual }: { processKey: string; manual: number | null }) => {
       const current = await scenarioApi.get(scenarioId)
-      await scenarioApi.update(current.id, {
-        items: current.items.map((item) => ({
-          process_key: item.process_key,
-          product_id: item.product_id,
-          offer_id: item.offer_id,
-          count_mode: item.process_key === processKey ? (manual ? 'manual' : 'auto') : item.count_mode,
-          count_manual: item.process_key === processKey ? manual : (item.count_manual ?? null),
-          stations: item.stations,
-          notes: item.notes ?? null,
-          price_override_rub: item.price_override_rub ?? null,
-          throughput_override_per_hour: item.throughput_override_per_hour ?? null,
-          override_reason: item.override_reason ?? null,
-        })),
-      })
-      return scenarioApi.calculate(current.id)
+      const product = current.items.find((i) => i.process_key === processKey)?.product_id
+      const siblings = (await scenarioApi.list(projectId)).filter(
+        (s) =>
+          s.id !== scenarioId &&
+          !s.is_baseline &&
+          s.items.some((i) => i.process_key === processKey && i.product_id === product),
+      )
+      for (const scenario of [current, ...siblings]) {
+        await scenarioApi.update(scenario.id, { items: withCount(scenario, processKey, manual) })
+      }
+      const run = await scenarioApi.calculate(current.id)
+      for (const scenario of siblings) await scenarioApi.calculate(scenario.id)
+      return run
     },
     onSuccess: (run) => {
       queryClient.setQueryData(qk.calculations.one(run.id), run)
       return Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: qk.scenarios.all })])
     },
   })
+}
+
+function withCount(scenario: Scenario, processKey: string, manual: number | null): ScenarioUpdate['items'] {
+  return scenario.items.map((item) => ({
+    process_key: item.process_key,
+    product_id: item.product_id,
+    offer_id: item.offer_id,
+    count_mode: item.process_key === processKey ? (manual ? 'manual' : 'auto') : item.count_mode,
+    count_manual: item.process_key === processKey ? manual : (item.count_manual ?? null),
+    stations: item.stations,
+    notes: item.notes ?? null,
+    price_override_rub: item.price_override_rub ?? null,
+    throughput_override_per_hour: item.throughput_override_per_hour ?? null,
+    override_reason: item.override_reason ?? null,
+  }))
 }
 
 // The comparison follows one purchase scenario; RaaS and leasing are copies of it with the same fleet.
@@ -250,11 +265,10 @@ export function useBuildComparisonSet(projectId: string) {
         await scenarioApi.copy(main.id, { kind, name: VARIANT_NAME[kind] })
       }
       const all = await scenarioApi.list(projectId)
-      await Promise.all(
-        all
-          .filter((s) => !s.last_calculation || s.last_calculation.status === 'stale')
-          .map((s) => scenarioApi.calculate(s.id)),
-      )
+      // One after another: each calculation re-picks the recommended scenario from the others' results.
+      for (const s of all.filter((s) => !s.last_calculation || s.last_calculation.status === 'stale')) {
+        await scenarioApi.calculate(s.id)
+      }
       return main
     },
     onSuccess: refresh,

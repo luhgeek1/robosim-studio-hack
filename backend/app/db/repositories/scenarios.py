@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import CalculationRun, Project, Scenario, ScenarioItem
@@ -36,6 +36,15 @@ class ScenarioRepository:
             statement = statement.with_for_update(of=Scenario)
         scenario: Scenario | None = await self._session.scalar(statement)
         return scenario
+
+    async def set_recommended(self, project_id: UUID, scenario_id: UUID | None) -> None:
+        """One statement for the whole project: exactly one scenario (or none) is left recommended."""
+        await self._session.execute(
+            update(Scenario)
+            .where(Scenario.project_id == project_id)
+            .values(is_recommended=Scenario.id == scenario_id if scenario_id else False)
+            .execution_options(synchronize_session="fetch")
+        )
 
     async def counts(self, project_ids: Sequence[UUID]) -> dict[UUID, int]:
         if not project_ids:

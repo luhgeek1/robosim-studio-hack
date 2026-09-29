@@ -1,6 +1,11 @@
+import { useIsMutating } from '@tanstack/react-query'
 import { Bot, Sparkles, Timer } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { useProjectId } from '@/entities/project'
+import { toast } from 'sonner'
+import { useLayout } from '@/entities/layout'
+import { useProject, useProjectId } from '@/entities/project'
+import { useObjectType } from '@/entities/reference'
 import { useCalculate, useCountSource } from '@/entities/scenario'
 import { checkable, useLastSweep, type FleetEconomics } from '@/entities/simulation'
 import type { SizingResult } from '@/shared/api/types'
@@ -21,10 +26,12 @@ export function SizingSection({
   scenarioId,
   sizing,
   onTrace,
+  locked = false,
 }: {
   scenarioId: string
   sizing: SizingResult[]
   onTrace: (query: string) => void
+  locked?: boolean
 }) {
   if (sizing.length === 0) return null
   return (
@@ -34,7 +41,13 @@ export function SizingSection({
     >
       <div className="space-y-4">
         {sizing.map((s) => (
-          <SizingCard key={`${s.process_key}-${s.product_id}`} scenarioId={scenarioId} sizing={s} onTrace={onTrace} />
+          <SizingCard
+            key={`${s.process_key}-${s.product_id}`}
+            scenarioId={scenarioId}
+            sizing={s}
+            onTrace={onTrace}
+            locked={locked}
+          />
         ))}
       </div>
     </Section>
@@ -45,10 +58,12 @@ function SizingCard({
   scenarioId,
   sizing,
   onTrace,
+  locked,
 }: {
   scenarioId: string
   sizing: SizingResult
   onTrace: (query: string) => void
+  locked: boolean
 }) {
   const { robot, count } = sizing
   const cycleTotal = robot.cycle_components?.reduce((sum, c) => sum + c.seconds, 0) ?? 0
@@ -151,39 +166,70 @@ function SizingCard({
           {count.explanation && <p className="text-xs text-muted-foreground">{count.explanation}</p>}
         </div>
       </div>
-      <CountOrigin scenarioId={scenarioId} sizing={sizing} />
+      <CountOrigin scenarioId={scenarioId} sizing={sizing} locked={locked} />
     </div>
   )
 }
 
 /* Откуда число роботов: формула цикла даёт стартовое N с запасами, имитация на планировке находит минимальное N,
    которое держит SLA. Обе оценки и их экономика видны рядом, пользователь выбирает, какую брать в расчёт. */
-function CountOrigin({ scenarioId, sizing }: { scenarioId: string; sizing: SizingResult }) {
+function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizing: SizingResult; locked: boolean }) {
   const projectId = useProjectId()
+  const project = useProject(projectId).data
+  const depth = useObjectType(project?.object_type).data?.depth
+  const layout = useLayout(projectId, depth === 'full').data
   const { count } = sizing
-  const sweep = useLastSweep(scenarioId, sizing.robot.cycle_time_s != null ? sizing.process_key : undefined).data
+  const cycle = sizing.robot.cycle_time_s != null
+  const simulable = cycle && depth === 'full'
+  const sweep = useLastSweep(scenarioId, simulable ? sizing.process_key : undefined).data
   const recheck = useCalculate(projectId, scenarioId)
   const source = useCountSource(projectId, scenarioId)
+  const mutating = useIsMutating() > 0
+  const busy = locked || mutating
   const formula = sweep?.by_formula
   const simulated = sweep?.by_simulation
-  const busy = recheck.isPending || source.isPending
 
-  if (sizing.robot.cycle_time_s == null) return null
-  if (count.source === 'analytic' && !sweep) {
+  const check = (force: boolean) =>
+    recheck.mutate(force, {
+      onSuccess: ({ checked, skipped }) => {
+        if (!checked.length && skipped.length) toast.warning(`Имитация не проверила число роботов: ${skipped[0]}`)
+        else if (checked.some((r) => r.recommended_count == null))
+          toast.warning('Даже тройной парк не держит SLA: ограничение не в числе роботов — смотрите узкое место')
+      },
+    })
+  const checkButton = (force: boolean, label: string) => (
+    <Button size="sm" variant="outline" onClick={() => check(force)} disabled={busy}>
+      {recheck.isPending ? <Spinner /> : <Sparkles />} {label}
+    </Button>
+  )
+
+  if (!simulable) return null
+  if (!layout) {
     return (
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-surface-2 px-4 py-3 text-[13px]">
-        <span className="text-ink-2">
-          Число роботов посчитано по формуле цикла и ещё не проверено имитацией на планировке объекта.
-        </span>
-        {checkable(sizing) && (
-          <Button size="sm" variant="outline" onClick={() => recheck.mutate()} disabled={busy}>
-            {recheck.isPending ? <Spinner /> : <Sparkles />} Проверить имитацией
-          </Button>
-        )}
-      </div>
+      <Note>
+        Число роботов посчитано по формуле цикла. Чтобы проверить его имитацией, постройте планировку на шаге
+        «Планировка».
+      </Note>
     )
   }
-  if (!formula || !simulated) return null
+  if (count.source === 'analytic') {
+    return (
+      <Note action={checkable(sizing) ? checkButton(false, 'Проверить имитацией') : null}>
+        {sweep
+          ? 'Параметры объекта менялись после проверки имитацией: число роботов сейчас по формуле цикла. Проверьте заново.'
+          : 'Число роботов посчитано по формуле цикла и ещё не проверено имитацией на планировке объекта.'}
+      </Note>
+    )
+  }
+  if (!formula || !simulated) {
+    return (
+      <Note action={checkButton(true, 'Перепроверить')}>
+        {count.source === 'simulated'
+          ? 'Число роботов проверено имитацией по прежнему правилу. Перепроверьте: теперь парк принят, только если SLA держат все прогоны.'
+          : 'Число роботов задано вручную.'}
+      </Note>
+    )
+  }
 
   const usingFormula = count.source === 'manual' && count.final === formula.total
   const usingSimulation = count.source === 'simulated'
@@ -210,31 +256,34 @@ function CountOrigin({ scenarioId, sizing }: { scenarioId: string; sizing: Sizin
         />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {usingSimulation ? (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy}
-            onClick={() => source.mutate({ processKey: sizing.process_key, manual: formula.total })}
-          >
-            {source.isPending && <Spinner />} Считать по формуле ({formula.total})
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy}
-            onClick={() => source.mutate({ processKey: sizing.process_key, manual: null })}
-          >
-            {source.isPending && <Spinner />} Считать по имитации ({simulated.total})
-          </Button>
-        )}
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() =>
+            source.mutate({ processKey: sizing.process_key, manual: usingSimulation ? formula.total : null })
+          }
+        >
+          {source.isPending && <Spinner />}
+          {usingSimulation ? `Считать по формуле (${formula.total})` : `Считать по имитации (${simulated.total})`}
+        </Button>
         <span className="text-[12px] text-ink-3">
-          {count.source === 'manual' && !usingFormula
-            ? `Сейчас в расчёте — ${count.final}, заданное вручную`
-            : 'Выбранный вариант идёт в экономику, сравнение и отчёт'}
+          {locked
+            ? 'Сначала сохраните или отмените правки состава'
+            : count.source === 'manual' && !usingFormula
+              ? `Сейчас в расчёте — ${count.final}, заданное вручную`
+              : 'Выбор применяется и к вариантам RaaS и лизинга с тем же роботом'}
         </span>
       </div>
+    </div>
+  )
+}
+
+function Note({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-surface-2 px-4 py-3 text-[13px]">
+      <span className="text-ink-2">{children}</span>
+      {action}
     </div>
   )
 }

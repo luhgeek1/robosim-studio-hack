@@ -160,6 +160,21 @@ async def run_fleet_sweep(db: Database, job_id: UUID) -> None:
         logger.exception("fleet_sweep_crashed", extra={"job_id": str(job_id)})
         await _fail(db, job_id, None, CRASHED)
         return
+    try:
+        await _finish_sweep(db, job_id, payload, result, best)
+    except Exception:
+        # The scenario could change while the sweep ran (product replaced, process removed): the job must end.
+        logger.exception("fleet_sweep_apply_failed", extra={"job_id": str(job_id)})
+        await _fail(db, job_id, None, "Сценарий изменился во время перебора — запустите перебор ещё раз")
+
+
+async def _finish_sweep(
+    db: Database,
+    job_id: UUID,
+    payload: dict[str, Any],
+    result: SweepResult,
+    best: tuple[SimResult, int] | None,
+) -> None:
     async with UnitOfWork(db.session()) as uow:
         job = await uow.jobs.get(job_id)
         scenario = await uow.session.get(Scenario, UUID(payload["scenario_id"]))
@@ -264,7 +279,9 @@ def _priced(base: CalculationInput, process_key: str, change: dict[str, Any]) ->
         result = calculate(replace(base, items=items), render=False)
     except CalculationError:
         return None
-    count = next(s.count for s in result.sizing if s.item.process_key == process_key)
+    count = next((s.count for s in result.sizing if s.item.process_key == process_key), None)
+    if count is None:
+        return None
     metrics = result.economics.metrics
     working = count.simulated if count.simulated and count.source == CountSource.SIMULATED else count.analytic
     return FleetEconomics(

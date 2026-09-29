@@ -11,6 +11,7 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.jobs import JobStatus
 from app.domain.reports.models import ParamRow, ReportModel, ReportSection, ScenarioReport, Visual
+from app.domain.scenario.models import CountMode
 from app.engine.calculation import CalculationError
 from app.service.layouts.reader import LayoutReader
 from app.service.matching.service import MatchingService
@@ -173,7 +174,21 @@ class ReportCollector:
         sweep = await self._uow.jobs.latest_sweep(scenario.id)
         if run is None and sweep is None:
             return None
+        swept = next(
+            (i for i in scenario.items if sweep and i.process_key == sweep.payload.get("process_key")), None
+        )
+        # Which of «по формуле / по имитации» the scenario uses: a manual count is the formula choice (D-029).
+        count_source = (
+            None
+            if swept is None
+            else "manual"
+            if swept.count_mode == CountMode.MANUAL
+            else "simulated"
+            if swept.simulated_count
+            else "analytic"
+        )
         return {
+            "count_source": count_source,
             "id": str(run.id) if run else None,
             "summary": run.summary if run else None,
             "fleet": run.fleet if run else [],
