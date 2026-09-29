@@ -44,6 +44,7 @@ export function Screen({
   nextLabel,
   nextDisabled = false,
   nextTo,
+  nextPrimary,
   dense = false,
   className,
 }: {
@@ -56,6 +57,8 @@ export function Screen({
   nextLabel?: string
   nextDisabled?: boolean
   nextTo?: string
+  // Верхняя кнопка «Далее» заметна, только если на экране нет своего главного действия; иначе она контурная.
+  nextPrimary?: boolean
   className?: string
 }) {
   const navigate = useNavigate()
@@ -65,13 +68,27 @@ export function Screen({
   const step = PROJECT_STEPS[idx]
   const prev = idx > 0 ? PROJECT_STEPS[idx - 1] : null
   const next = idx >= 0 ? PROJECT_STEPS.slice(idx + 1).find((s) => !s.soon) : undefined
+  const goNext = () => navigate(nextTo ?? `${base}/${next?.id}`)
+  const nextText = nextLabel ?? (next ? `Далее: ${next.label.toLowerCase()}` : '')
+  const topNext = next && (
+    <Button variant={(nextPrimary ?? !actions) ? 'default' : 'outline'} disabled={nextDisabled} onClick={goNext}>
+      {nextText} <ArrowRight />
+    </Button>
+  )
   return (
     <div className={cn('mx-auto w-full pb-16 pt-2', wide ? 'max-w-360' : 'max-w-300', className)}>
       <PageHeader
         eyebrow={step ? `Шаг ${idx + 1} из ${PROJECT_STEPS.length} · ${step.question}` : undefined}
         title={title}
         description={lead}
-        actions={actions}
+        actions={
+          (actions || topNext) && (
+            <>
+              {actions}
+              {topNext}
+            </>
+          )
+        }
         dense={dense}
       />
       {children}
@@ -81,8 +98,8 @@ export function Screen({
             <ArrowLeft /> {prev ? prev.label : 'Обзор'}
           </Button>
           {next && (
-            <Button size="lg" disabled={nextDisabled} onClick={() => navigate(nextTo ?? `${base}/${next.id}`)}>
-              {nextLabel ?? `Далее: ${next.label.toLowerCase()}`} <ArrowRight />
+            <Button size="lg" disabled={nextDisabled} onClick={goNext}>
+              {nextText} <ArrowRight />
             </Button>
           )}
         </div>
