@@ -58,7 +58,6 @@ export function UsersTab() {
         </div>
         <Segmented
           size="sm"
-          layoutId="admin-users-role"
           value={role}
           onChange={(value) => {
             setRole(value)

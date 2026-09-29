@@ -135,7 +135,6 @@ export function ScenarioPage() {
       )}
 
       <Segmented
-        layoutId="scenario-tab"
         value={activeTab}
         onChange={setTab}
         options={[

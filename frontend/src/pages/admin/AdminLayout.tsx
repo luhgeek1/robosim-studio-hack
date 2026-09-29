@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useOutlet } from 'react-router'
 import { useSystemVersion } from '@/entities/reference'
 import { cn } from '@/shared/lib/utils'
 import { SPRING } from './motion'
+import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
 const TABS = [
   { to: '/admin', label: 'Обзор', icon: BarChart3, end: true },
@@ -34,7 +35,8 @@ export function AdminLayout() {
       </div>
 
       <nav className="mb-8 flex items-center justify-between gap-4 border-b border-line" aria-label="Разделы админки">
-        <div className="flex items-center gap-1">
+        <div className="relative flex items-center gap-1">
+          <SlideHighlight className="z-10 rounded-full bg-ink" transition={SPRING} />
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
@@ -51,13 +53,7 @@ export function AdminLayout() {
                 <>
                   <tab.icon size={15} className={isActive ? 'text-ink' : 'text-ink-4'} />
                   {tab.label}
-                  {isActive && (
-                    <motion.span
-                      layoutId="admin-tab"
-                      className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-ink"
-                      transition={SPRING}
-                    />
-                  )}
+                  {isActive && <SlideMark className="absolute inset-x-2 -bottom-px h-0.5" />}
                 </>
               )}
             </NavLink>

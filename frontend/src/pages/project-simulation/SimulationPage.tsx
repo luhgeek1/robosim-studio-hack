@@ -340,7 +340,6 @@ function SimulationView({
         <>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <Segmented
-              layoutId="robots-count"
               value={config.count}
               onChange={(count) => change({ count })}
               options={counts.map((n) => ({
@@ -350,7 +349,6 @@ function SimulationView({
               }))}
             />
             <Segmented
-              layoutId="load-mode"
               value={config.mode}
               onChange={(mode) => change({ mode })}
               options={[

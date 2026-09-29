@@ -12,6 +12,7 @@ import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { SPRING, stagger } from './motion'
 import { parseNumber } from './parse'
 import { PublishDialog } from './PublishDialog'
+import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
 export type Draft = Record<string, number>
 const ALL = 'all'
@@ -76,7 +77,8 @@ export function NormsTab() {
           )}
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-1" role="tablist">
+        <div className="relative mb-5 flex flex-wrap gap-1" role="tablist">
+          <SlideHighlight className="rounded-full bg-ink" transition={SPRING} />
           {[ALL, ...NORM_CATEGORY_ORDER.filter((c) => counts[c])].map((cat) => {
             const active = category === cat
             return (
@@ -91,13 +93,7 @@ export function NormsTab() {
                   active ? 'text-white' : 'text-ink-3 hover:bg-black/5 hover:text-ink',
                 )}
               >
-                {active && (
-                  <motion.span
-                    layoutId="norm-category"
-                    className="absolute inset-0 rounded-full bg-ink"
-                    transition={SPRING}
-                  />
-                )}
+                {active && <SlideMark />}
                 <span className="relative">{cat === ALL ? 'Все' : NORM_CATEGORY_LABEL[cat as NormCategory]}</span>
                 <span className={cn('num relative text-[11.5px]', active ? 'text-white/60' : 'text-ink-4')}>
                   {cat === ALL ? (items?.length ?? 0) : counts[cat as NormCategory]}

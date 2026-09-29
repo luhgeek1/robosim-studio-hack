@@ -7,6 +7,7 @@ import { cn } from '@/shared/lib/utils'
 import { EmptyState } from '@/shared/ui/states'
 import { Segmented } from '@/shared/ui/v0'
 import { ParamRow } from './ParamRow'
+import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
 type Filter = 'all' | 'attention' | 'edited'
 
@@ -67,6 +68,7 @@ export function ParamsEditor({
   return (
     <div className="grid grid-cols-[13rem_minmax(0,1fr)] items-start gap-8">
       <nav className="sticky top-40 space-y-0.5" aria-label="Разделы параметров">
+        <SlideHighlight className="rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(20,20,24,0.04)]" />
         {views.map((group) => {
           const empty = group.params.length === 0
           const current = group.key === active
@@ -83,13 +85,7 @@ export function ParamsEditor({
                 current ? 'text-ink' : 'text-ink-3 hover:text-ink',
               )}
             >
-              {current && (
-                <motion.span
-                  layoutId="param-group"
-                  className="absolute inset-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(20,20,24,0.04)]"
-                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                />
-              )}
+              {current && <SlideMark />}
               <span className="relative min-w-0 flex-1 leading-snug">{group.name}</span>
               {group.flagged > 0 && <span className="relative size-1.5 shrink-0 rounded-full bg-warn" />}
               <span className="num relative text-[12px] text-ink-4">
@@ -103,7 +99,6 @@ export function ParamsEditor({
       <div className="min-w-0">
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <Segmented
-            layoutId="param-filter"
             size="sm"
             value={filter}
             onChange={setFilter}

@@ -35,7 +35,6 @@ export function MonteCarloPanel({ scenarioId, horizon }: { scenarioId: string; h
           </p>
         </div>
         <Segmented
-          layoutId="risks-mc-metric"
           size="sm"
           value={metric}
           onChange={setMetric}

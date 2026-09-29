@@ -222,7 +222,6 @@ function ProcessView({
     <div className="space-y-5">
       <div>
         <Segmented
-          layoutId="matching-filter"
           size="sm"
           value={filter}
           onChange={setFilter}

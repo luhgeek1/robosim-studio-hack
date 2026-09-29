@@ -82,13 +82,11 @@ function TwinStage({
   view,
   onViewChange,
   fitPadding,
-  switchId,
 }: {
   layout: Layout
   view: TwinView
   onViewChange: (view: TwinView) => void
   fitPadding: FitPadding
-  switchId: string
 }) {
   return (
     <>
@@ -111,7 +109,6 @@ function TwinStage({
       <div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 rounded-[12px] bg-white/90 p-1 shadow-card backdrop-blur">
         <Segmented
           size="sm"
-          layoutId={switchId}
           value={view}
           onChange={onViewChange}
           options={[
@@ -154,13 +151,7 @@ function LayoutTwin({
   return (
     <>
       {!expanded && host === 'card' && (
-        <TwinStage
-          layout={layout}
-          view={view}
-          onViewChange={setView}
-          fitPadding={PLAN_PAD}
-          switchId="object-twin-view"
-        />
+        <TwinStage layout={layout} view={view} onViewChange={setView} fitPadding={PLAN_PAD} />
       )}
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent
@@ -171,13 +162,7 @@ function LayoutTwin({
         >
           <DialogTitle className="sr-only">Планировка объекта</DialogTitle>
           {host === 'dialog' ? (
-            <TwinStage
-              layout={layout}
-              view={view}
-              onViewChange={setView}
-              fitPadding={MODAL_PLAN_PAD}
-              switchId="object-twin-view-modal"
-            />
+            <TwinStage layout={layout} view={view} onViewChange={setView} fitPadding={MODAL_PLAN_PAD} />
           ) : (
             <div className="flex h-full items-center justify-center bg-surface-2">
               <Spinner />

@@ -124,7 +124,6 @@ function SensitivitySections({
 
   const metricSwitch = (
     <Segmented
-      layoutId="risks-metric"
       size="sm"
       value={metric}
       onChange={onMetric}

@@ -55,7 +55,6 @@ export function PlayerBar() {
       </span>
       <Segmented
         size="sm"
-        layoutId="sim-speed"
         value={speed}
         onChange={setSpeed}
         options={SPEEDS.map((s) => ({ value: s, label: `×${s}`, hint: `1 секунда = ${s} с имитации` }))}

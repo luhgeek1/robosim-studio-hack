@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { animate, motion } from 'framer-motion'
 import { cn } from '@/shared/lib/utils'
+import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
 export type Tone = 'neutral' | 'accent' | 'ok' | 'warn' | 'crit'
 
@@ -164,17 +165,16 @@ export function Segmented<T extends string | number>({
   options,
   onChange,
   size = 'md',
-  layoutId,
 }: {
   value: T
   options: { value: T; label: ReactNode; hint?: string; disabled?: boolean }[]
   onChange: (v: T) => void
   size?: 'sm' | 'md'
-  layoutId: string
 }) {
   const h = size === 'sm' ? 'h-8 text-[13px]' : 'h-10 text-[14px]'
   return (
-    <div className="inline-flex items-center rounded-[10px] bg-black/[0.05] p-[3px]">
+    <div className="relative inline-flex items-center rounded-[10px] bg-black/[0.05] p-[3px]">
+      <SlideHighlight className="rounded-[8px] bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.04)]" />
       {options.map((o) => {
         const active = o.value === value
         return (
@@ -190,13 +190,7 @@ export function Segmented<T extends string | number>({
               active ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
             )}
           >
-            {active && (
-              <motion.span
-                layoutId={layoutId}
-                className="absolute inset-0 rounded-[8px] bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.04)]"
-                transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-              />
-            )}
+            {active && <SlideMark />}
             <span className="relative z-10 whitespace-nowrap">{o.label}</span>
           </button>
         )

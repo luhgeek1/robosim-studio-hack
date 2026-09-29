@@ -19,6 +19,7 @@ import { FocusLayer, type Spotlight } from './FocusLayer'
 import { ROUTE_ENDPOINT, ROUTE_USE, TEMPLATE_LABEL, type LayoutRoute } from './labels'
 import { RegenerateDialog } from './RegenerateDialog'
 import { exampleRoute, type ExampleRoute, type RouteKey } from './routes'
+import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
 type Focus = { kind: 'route'; key: RouteKey } | { kind: 'figure'; key: string } | null
 
@@ -155,9 +156,10 @@ function PlanOverview({ layout, onRegenerate }: { layout: Layout; onRegenerate?:
       </div>
 
       <div
-        className="grid grid-cols-3 border-t border-line md:grid-cols-(--cols) md:divide-x md:divide-line"
+        className="relative grid grid-cols-3 border-t border-line md:grid-cols-(--cols) md:divide-x md:divide-line"
         style={{ '--cols': `repeat(${figures.length}, minmax(0, 1fr))` } as CSSProperties}
       >
+        <SlideHighlight className="z-10 bg-warn" transition={SPRING} />
         {figures.map((figure) => (
           <FigureButton
             key={figure.key}
@@ -291,7 +293,8 @@ function RoutesPanel({
       </p>
 
       {routes.length ? (
-        <ul className="mt-3">
+        <ul className="relative mt-3">
+          <SlideHighlight className="rounded-lg bg-surface-2 ring-1 ring-line" transition={SPRING} />
           {routes.map((route) => {
             const on = route.key === active
             const [from, to] = ROUTE_ENDPOINT[route.key]
@@ -308,13 +311,7 @@ function RoutesPanel({
                   )}
                   title={`${route.name}: ${ROUTE_USE[route.key]}, ${pairs}`}
                 >
-                  {on && (
-                    <motion.span
-                      layoutId="layout-route"
-                      className="absolute inset-0 rounded-lg bg-surface-2 ring-1 ring-line"
-                      transition={SPRING}
-                    />
-                  )}
+                  {on && <SlideMark />}
                   <span className="relative flex items-baseline justify-between gap-3">
                     <span className="min-w-0 truncate text-[13px]">
                       {capitalize(from)}
@@ -416,9 +413,7 @@ function FigureButton({ figure, active, onClick }: { figure: Figure; active: boo
         active ? 'bg-surface-2' : 'hover:bg-surface-2',
       )}
     >
-      {active && (
-        <motion.span layoutId="layout-figure" className="absolute inset-x-0 top-0 h-0.5 bg-warn" transition={SPRING} />
-      )}
+      {active && <SlideMark className="absolute inset-x-0 top-0 h-0.5" />}
       <span className="num block text-[20px] leading-tight font-semibold tracking-[-0.01em]">{figure.value}</span>
       <span className="mt-0.5 block truncate text-[12.5px] text-ink-3">{figure.label}</span>
     </button>

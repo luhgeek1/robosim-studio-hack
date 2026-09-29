@@ -117,7 +117,6 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
         <div className="mt-4 flex items-center justify-between gap-3">
           <Segmented
             size="sm"
-            layoutId="admin-editor-tab"
             value={tab}
             onChange={setTab}
             options={[

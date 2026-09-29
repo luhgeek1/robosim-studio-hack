@@ -83,7 +83,6 @@ export function Twin({
         <div className="absolute top-4 right-4 z-20">
           <Segmented
             size="sm"
-            layoutId="twin-view"
             value={view}
             onChange={setView}
             options={[

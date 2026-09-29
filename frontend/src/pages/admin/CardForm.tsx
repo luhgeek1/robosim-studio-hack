@@ -106,7 +106,6 @@ export function CardForm({
           <Field label="Стадия">
             <Segmented
               size="sm"
-              layoutId="admin-product-status"
               value={form.status}
               onChange={(status) => onChange({ status })}
               options={STATUSES.map((s) => ({ value: s, label: PRODUCT_STATUS_LABEL[s] }))}

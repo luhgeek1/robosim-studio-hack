@@ -261,7 +261,6 @@ export function RobotsPage() {
           </button>
           <Segmented
             size="sm"
-            layoutId="robots-speed"
             value={speed}
             onChange={setSpeed}
             options={[

@@ -293,7 +293,7 @@ function CostTabs({
   ]
   return (
     <div className="space-y-3">
-      <Segmented layoutId="cost-tab" size="sm" value={tab} onChange={setTab} options={options} />
+      <Segmented size="sm" value={tab} onChange={setTab} options={options} />
       {tab === 'capex' && <CostTable rows={toRows(run.capex)} total={run.capex.total_rub} totalLabel="CAPEX, с НДС" />}
       {tab === 'opex' && (
         <CostTable
