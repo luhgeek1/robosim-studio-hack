@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { NavLink, Outlet, useMatch } from 'react-router'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -19,14 +19,46 @@ const subscribeScroll = (onChange: () => void) => {
 }
 const isScrolledDown = () => window.scrollY > DOCK_HIDE_AFTER_PX
 
+// «Рывок вверх» — не меньше 120 px со скоростью от 1,5 px/мс (1500 px/с) за последние 200 мс. Спокойное чтение
+// вверх (колесо по щелчку, трекпад без броска) медленнее и плашку не достаёт.
+const PULL_WINDOW_MS = 200
+const PULL_MIN_PX = 120
+const PULL_MIN_SPEED = 1.5
+
+/* Резкий бросок прокрутки вверх достаёт плашку, следующая прокрутка вниз прячет её снова. */
+function useScrollPull() {
+  const [pulled, setPulled] = useState(false)
+  useEffect(() => {
+    let samples: { t: number; y: number }[] = [{ t: performance.now(), y: window.scrollY }]
+    const onScroll = () => {
+      const t = performance.now()
+      const y = window.scrollY
+      const last = samples[samples.length - 1]
+      if (y > last.y) {
+        samples = [{ t, y }]
+        setPulled(false)
+        return
+      }
+      samples = [...samples.filter((s) => t - s.t <= PULL_WINDOW_MS), { t, y }]
+      const first = samples[0]
+      const distance = first.y - y
+      if (distance >= PULL_MIN_PX && distance / Math.max(t - first.t, 1) >= PULL_MIN_SPEED) setPulled(true)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  return pulled
+}
+
 /* Плашка шагов под шапкой. При прокрутке вниз уезжает под шапку и не закрывает контент; навести курсор на её место
-   (или перейти в неё с клавиатуры, Tab) — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
+   (или перейти в неё с клавиатуры, Tab) или резко прокрутить вверх — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
    Шапка и плашка — fixed, а место в потоке держат распорки той же высоты. */
 function StepDock({ projectId }: { projectId: string }) {
   const scrolled = useSyncExternalStore(subscribeScroll, isScrolledDown)
+  const pulled = useScrollPull()
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
-  const hidden = scrolled && !hovered && !focused
+  const hidden = scrolled && !pulled && !hovered && !focused
   return (
     <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-6">
       <div
