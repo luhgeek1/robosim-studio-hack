@@ -1,10 +1,12 @@
+from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import User
+from app.domain.admin import UserQuery
 from app.domain.auth import CurrentUser, UserProfile
 
 
@@ -43,6 +45,21 @@ class UserRepository:
             select(func.count()).select_from(User).where(User.email == email)
         )
         return result.scalar_one() > 0
+
+    async def search(self, query: UserQuery) -> tuple[Sequence[User], int]:
+        statement = select(User)
+        if query.q:
+            pattern = f"%{query.q.strip()}%"
+            statement = statement.where(or_(User.email.ilike(pattern), User.name.ilike(pattern)))
+        if query.role is not None:
+            statement = statement.where(User.role == query.role)
+        total = await self._session.scalar(select(func.count()).select_from(statement.subquery()))
+        page = (
+            statement.order_by(User.created_at.desc(), User.email)
+            .limit(query.page_size)
+            .offset((query.page - 1) * query.page_size)
+        )
+        return (await self._session.scalars(page)).all(), int(total or 0)
 
     def add(self, user: User) -> None:
         self._session.add(user)

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import any_, func, literal, select
+from sqlalchemy import any_, func, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
@@ -49,7 +49,9 @@ class ReferenceRepository:
 
     async def products_per_solution_type(self) -> dict[str, int]:
         rows = await self._session.execute(
-            select(Product.solution_type, func.count()).group_by(Product.solution_type)
+            select(Product.solution_type, func.count())
+            .where(Product.hidden_at.is_(None))
+            .group_by(Product.solution_type)
         )
         return dict(rows.tuples().all())
 
@@ -57,10 +59,11 @@ class ReferenceRepository:
         return (await self._session.scalars(select(SpecKey).order_by(SpecKey.order))).all()
 
     async def industries_with_counts(self) -> list[tuple[Industry, int]]:
-        count = func.count(func.distinct(ProductOffer.product_id))
+        count = func.count(func.distinct(Product.id))
         statement = (
             select(Industry, count)
             .outerjoin(ProductOffer, ProductOffer.industry_key == Industry.key)
+            .outerjoin(Product, (Product.id == ProductOffer.product_id) & Product.hidden_at.is_(None))
             .group_by(Industry.key)
             .order_by(count.desc(), Industry.name)
         )
@@ -70,6 +73,22 @@ class ReferenceRepository:
         condition = NormSet.version == version if version else NormSet.is_current.is_(True)
         norm_set: NormSet | None = await self._session.scalar(select(NormSet).where(condition))
         return norm_set
+
+    async def norm_set_versions(self) -> set[str]:
+        return set((await self._session.scalars(select(NormSet.version))).all())
+
+    async def publish_norm_set(self, norm_set: NormSet, norms: Sequence[Norm]) -> None:
+        """The new set becomes the only current one; older sets stay for reproducing old calculations."""
+        await self._session.execute(
+            update(NormSet).where(NormSet.is_current.is_(True)).values(is_current=False)
+        )
+        norm_set.is_current = True
+        self._session.add(norm_set)
+        await self._session.flush()
+        for norm in norms:
+            norm.norm_set_id = norm_set.id
+            self._session.add(norm)
+        await self._session.flush()
 
     async def norm_sets_with_counts(self) -> list[tuple[NormSet, int]]:
         statement = (
