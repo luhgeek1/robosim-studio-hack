@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.6.0
+  version: 0.7.0
   license:
     name: MIT
     identifier: MIT
@@ -58,6 +58,8 @@ tags:
     description: Меры господдержки
   - name: rfq
     description: Запрос коммерческого предложения вендорам
+  - name: vendor
+    description: 'Кабинет производителя: заявки на правку каталога, спрос на продукты'
   - name: admin
     description: Администрирование каталога, нормативов, пользователей
   - name: integrations
@@ -2881,6 +2883,143 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalyticsOverview'
+  /api/v1/admin/proposals:
+    get:
+      tags:
+        - admin
+      operationId: adminListProposals
+      summary: Заявки производителей на модерацию
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProposalStatus'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/admin/proposals/{proposal_id}/review:
+    post:
+      tags:
+        - admin
+      operationId: adminReviewProposal
+      summary: Одобрить заявку (правка попадает в каталог, версия каталога растёт) или отклонить с причиной
+      parameters:
+        - $ref: '#/components/parameters/ProposalId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalReview'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/admin/manufacturers:
+    get:
+      tags:
+        - admin
+      operationId: adminListManufacturers
+      summary: Производители — для привязки учётной записи вендора
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufacturerList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/vendor/overview:
+    get:
+      tags:
+        - vendor
+      operationId: vendorOverview
+      summary: 'Кабинет производителя: продукты, пробелы карточек, спрос'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorOverview'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/vendor/proposals:
+    get:
+      tags:
+        - vendor
+      operationId: vendorListProposals
+      summary: Заявки производителя на правку каталога
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalList'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    post:
+      tags:
+        - vendor
+      operationId: vendorCreateProposal
+      summary: Предложить правку своей карточки или новый продукт (на модерацию)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalWrite'
+      responses:
+        '201':
+          description: На модерации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/vendor/proposals/{proposal_id}/withdraw:
+    post:
+      tags:
+        - vendor
+      operationId: vendorWithdrawProposal
+      summary: Отозвать заявку до решения модератора
+      parameters:
+        - $ref: '#/components/parameters/ProposalId'
+      responses:
+        '200':
+          description: Отозвана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/v1/integrations/projects:
     post:
       tags:
@@ -5350,6 +5489,119 @@ components:
         created_at:
           type: string
           format: date-time
+    Proposal:
+      type: object
+      required:
+        - id
+        - kind
+        - status
+        - manufacturer
+        - product_name
+        - specs
+        - comment
+        - created_at
+        - catalog_version
+        - product_changed_since
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/ProposalKind'
+        status:
+          $ref: '#/components/schemas/ProposalStatus'
+        manufacturer:
+          $ref: '#/components/schemas/Manufacturer'
+        product_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: У одобренного нового продукта — созданная карточка
+        product_name:
+          type: string
+        card:
+          oneOf:
+            - $ref: '#/components/schemas/ProductWrite'
+            - type: 'null'
+        specs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpecWrite'
+        comment:
+          type: string
+        author:
+          oneOf:
+            - $ref: '#/components/schemas/ProposalPerson'
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        catalog_version:
+          type: string
+          description: Версия каталога, на которой вендор готовил заявку
+        product_changed_since:
+          type: boolean
+          description: Карточку меняли после подачи заявки — сверьте перед решением
+        reviewed_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        reviewer_name:
+          type:
+            - string
+            - 'null'
+        review_comment:
+          type:
+            - string
+            - 'null'
+    ProposalList:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Proposal'
+        total:
+          type: integer
+    VendorOverview:
+      type: object
+      description: Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3).
+      required:
+        - manufacturer
+        - products
+        - projects_total
+        - projects_by_object_type
+        - scenarios_with_products
+        - proposals_by_status
+        - gaps
+      properties:
+        manufacturer:
+          $ref: '#/components/schemas/Manufacturer'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorProduct'
+        projects_total:
+          type: integer
+        projects_by_object_type:
+          type: object
+          additionalProperties:
+            type: integer
+        scenarios_with_products:
+          type: integer
+        proposals_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        gaps:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorGap'
     Health:
       type: object
       required:
@@ -9439,6 +9691,152 @@ components:
                 type: integer
         rfq_count:
           type: integer
+    ProposalStatus:
+      type: string
+      description: pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+      enum:
+        - pending
+        - approved
+        - rejected
+        - withdrawn
+    ProposalKind:
+      type: string
+      description: update — правка существующей карточки; new_product — новый продукт производителя.
+      enum:
+        - new_product
+        - update
+    ProposalPerson:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+    ProposalReview:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+          enum:
+            - approve
+            - reject
+        comment:
+          type:
+            - string
+            - 'null'
+          maxLength: 2000
+          description: Обязателен при отказе
+        specs_status:
+          type: string
+          enum:
+            - vendor_claim
+            - confirmed
+          default: vendor_claim
+          description: С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+    ManufacturerList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Manufacturer'
+    KeySpec:
+      type: object
+      required:
+        - key
+        - name
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+    VendorProduct:
+      type: object
+      required:
+        - product
+        - missing_key_specs
+        - relevant_projects
+        - scenarios_count
+        - manual_adds
+      properties:
+        product:
+          $ref: '#/components/schemas/Product'
+        missing_key_specs:
+          type: array
+          description: Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки».
+          items:
+            $ref: '#/components/schemas/KeySpec'
+        relevant_projects:
+          type: integer
+          description: Проекты платформы с типами объектов этого продукта
+        scenarios_count:
+          type: integer
+          description: Сценарии, в которые продукт включён
+        manual_adds:
+          type: integer
+          description: Сколько раз пользователи добавили продукт в подбор вручную
+        pending_proposal_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+    VendorGap:
+      type: object
+      required:
+        - object_type
+        - process_key
+        - process_name
+        - no_fit_count
+        - solution_types
+      properties:
+        object_type:
+          type: string
+        process_key:
+          type: string
+        process_name:
+          type: string
+        no_fit_count:
+          type: integer
+          description: Проекты, где у процесса нет продукта в каталоге
+        solution_types:
+          type: array
+          items:
+            type: string
+          description: Ваши типы решений, которые этот процесс использует
+    ProposalWrite:
+      type: object
+      required:
+        - comment
+      properties:
+        product_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: null — предложить новый продукт
+        card:
+          description: Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор.
+          oneOf:
+            - $ref: '#/components/schemas/ProductWrite'
+            - type: 'null'
+        specs:
+          type: array
+          description: Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения.
+          items:
+            $ref: '#/components/schemas/SpecWrite'
+        comment:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Что изменилось и почему — для модератора
     IntegrationProjectCreate:
       type: object
       description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи.
@@ -9553,6 +9951,13 @@ components:
         format: uuid
     SimulationId:
       name: simulation_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProposalId:
+      name: proposal_id
       in: path
       required: true
       schema:

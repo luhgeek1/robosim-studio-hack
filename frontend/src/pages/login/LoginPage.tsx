@@ -18,8 +18,10 @@ const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? 'Demo12345!'
 const DEMO_ACCOUNTS = [
   { email: 'user@robomera.demo', label: 'Пользователь', hint: 'проекты и расчёты' },
   { email: 'admin@robomera.demo', label: 'Администратор', hint: 'каталог, нормативы и пользователи' },
-  { email: 'vendor@robomera.demo', label: 'Производитель', hint: 'каталог и расчёты' },
+  { email: 'vendor@robomera.demo', label: 'Производитель', hint: 'свои карточки и спрос' },
 ]
+
+const HOME: Partial<Record<User['role'], string>> = { admin: '/admin', vendor: '/vendor' }
 
 type Mode = 'login' | 'register'
 const SWAP: Transition = { type: 'spring', stiffness: 170, damping: 26, mass: 1 }
@@ -37,9 +39,9 @@ export function LoginPage() {
   const location = useLocation()
   const back = location.state as { from?: string; userId?: string | null } | null
   // Возвращаем на прежнюю страницу только её владельца: другой учётке прошлый проект чужой.
-  // Возврат туда, откуда отправили на вход; иначе администратор попадает в админ-панель, остальные — в проекты.
+  // Возврат туда, откуда отправили на вход; иначе админ — в админ-панель, производитель — в кабинет, остальные — в проекты.
   const target = (me: User) =>
-    back?.from && (!back.userId || back.userId === me.id) ? back.from : me.role === 'admin' ? '/admin' : '/projects'
+    back?.from && (!back.userId || back.userId === me.id) ? back.from : (HOME[me.role] ?? '/projects')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [email, setEmail] = useState('')

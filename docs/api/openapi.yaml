@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.6.0
+  version: 0.7.0
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -38,6 +38,7 @@ tags:
   - {name: demo, description: "Демо для гостя без авторизации"}
   - {name: support, description: "Меры господдержки"}
   - {name: rfq, description: "Запрос коммерческого предложения вендорам"}
+  - {name: vendor, description: "Кабинет производителя: заявки на правку каталога, спрос на продукты"}
   - {name: admin, description: "Администрирование каталога, нормативов, пользователей"}
   - {name: integrations, description: "Импорт из внешних систем по ключу API"}
 
@@ -160,6 +161,12 @@ paths:
   /api/v1/admin/users: {$ref: './paths/platform.yaml#/adminUsers'}
   /api/v1/admin/users/{user_id}: {$ref: './paths/platform.yaml#/adminUser'}
   /api/v1/admin/analytics/overview: {$ref: './paths/platform.yaml#/adminAnalytics'}
+  /api/v1/admin/proposals: {$ref: './paths/vendor.yaml#/adminProposals'}
+  /api/v1/admin/proposals/{proposal_id}/review: {$ref: './paths/vendor.yaml#/adminProposalReview'}
+  /api/v1/admin/manufacturers: {$ref: './paths/vendor.yaml#/adminManufacturers'}
+  /api/v1/vendor/overview: {$ref: './paths/vendor.yaml#/vendorOverview'}
+  /api/v1/vendor/proposals: {$ref: './paths/vendor.yaml#/vendorProposals'}
+  /api/v1/vendor/proposals/{proposal_id}/withdraw: {$ref: './paths/vendor.yaml#/vendorProposalWithdraw'}
   /api/v1/integrations/projects: {$ref: './paths/platform.yaml#/integrationProjects'}
   /api/v1/integrations/catalog/products: {$ref: './paths/platform.yaml#/integrationCatalogUpsert'}
 
@@ -220,3 +227,6 @@ components:
     OrganizationInvitation: {$ref: './components/organizations.yaml#/OrganizationInvitation'}
     OrganizationRole: {$ref: './components/organizations.yaml#/OrganizationRole'}
     IncomingInvitation: {$ref: './components/organizations.yaml#/IncomingInvitation'}
+    Proposal: {$ref: './components/vendor.yaml#/Proposal'}
+    ProposalList: {$ref: './components/vendor.yaml#/ProposalList'}
+    VendorOverview: {$ref: './components/vendor.yaml#/VendorOverview'}

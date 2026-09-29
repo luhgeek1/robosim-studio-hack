@@ -1,0 +1,78 @@
+# Кабинет производителя и модерация его заявок. Подключаются из ../openapi.yaml.
+
+vendorOverview:
+  get:
+    tags: [vendor]
+    operationId: vendorOverview
+    summary: "Кабинет производителя: продукты, пробелы карточек, спрос"
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/VendorOverview'}}}}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+
+vendorProposals:
+  get:
+    tags: [vendor]
+    operationId: vendorListProposals
+    summary: Заявки производителя на правку каталога
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/ProposalList'}}}}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+  post:
+    tags: [vendor]
+    operationId: vendorCreateProposal
+    summary: Предложить правку своей карточки или новый продукт (на модерацию)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/vendor.yaml#/ProposalWrite'}}}
+    responses:
+      '201': {description: "На модерации", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/Proposal'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+vendorProposalWithdraw:
+  post:
+    tags: [vendor]
+    operationId: vendorWithdrawProposal
+    summary: Отозвать заявку до решения модератора
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProposalId'}]
+    responses:
+      '200': {description: "Отозвана", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/Proposal'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+
+adminProposals:
+  get:
+    tags: [admin]
+    operationId: adminListProposals
+    summary: Заявки производителей на модерацию
+    parameters:
+      - {name: status, in: query, schema: {$ref: '../components/vendor.yaml#/ProposalStatus'}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/ProposalList'}}}}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+
+adminProposalReview:
+  post:
+    tags: [admin]
+    operationId: adminReviewProposal
+    summary: Одобрить заявку (правка попадает в каталог, версия каталога растёт) или отклонить с причиной
+    parameters: [{$ref: '../components/common.yaml#/parameters/ProposalId'}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/vendor.yaml#/ProposalReview'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/Proposal'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+adminManufacturers:
+  get:
+    tags: [admin]
+    operationId: adminListManufacturers
+    summary: Производители — для привязки учётной записи вендора
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/ManufacturerList'}}}}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}

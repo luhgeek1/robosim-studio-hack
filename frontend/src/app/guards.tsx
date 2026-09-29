@@ -29,10 +29,21 @@ export function RequireAdmin() {
   return <Outlet />
 }
 
+export function RequireVendor() {
+  const { status, user } = useSession()
+  if (status === 'restoring') return <LoadingBlock className="p-8" />
+  if (status === 'guest') return <ToLogin />
+  if (user?.role !== 'vendor') return <Navigate to="/" replace />
+  return <Outlet />
+}
+
+// Каждая роль открывает своё рабочее место: админ — панель, производитель — кабинет, остальные — проекты.
+const HOME: Partial<Record<string, string>> = { admin: '/admin', vendor: '/vendor' }
+
 export function RootRedirect() {
   const { status, user } = useSession()
   if (status === 'restoring') return <LoadingBlock className="p-8" />
-  const home = user?.role === 'admin' ? '/admin' : '/projects'
+  const home = (user?.role && HOME[user.role]) ?? '/projects'
   return <Navigate to={status === 'authenticated' ? home : '/catalog'} replace />
 }
 

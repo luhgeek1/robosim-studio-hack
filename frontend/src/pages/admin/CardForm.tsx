@@ -18,10 +18,13 @@ export function CardForm({
   form,
   errors,
   onChange,
+  vendor = false,
 }: {
   form: ProductWrite
   errors: ProductErrors
   onChange: (patch: Partial<ProductWrite>) => void
+  /** Кабинет производителя: компания — из привязки учётной записи, отметки реестра и испытаний ставит админ. */
+  vendor?: boolean
 }) {
   const solutionTypes = useSolutionTypes()
   const objectTypes = useObjectTypes()
@@ -53,25 +56,32 @@ export function CardForm({
             className="h-9 rounded-[10px]"
           />
         </Field>
-        <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-3">
-          <Field label="Производитель" error={errors.manufacturer_name} hint="Новый производитель создастся сам">
-            <Input
-              value={form.manufacturer_name}
-              onChange={(e) => onChange({ manufacturer_name: e.target.value })}
-              placeholder="ООО «Ронави Роботикс»"
-              aria-invalid={Boolean(errors.manufacturer_name)}
-              className="h-9 rounded-[10px]"
-            />
-          </Field>
-          <Field label="Страна" hint="Код ISO">
-            <Input
-              value={form.manufacturer_country ?? 'RU'}
-              maxLength={2}
-              onChange={(e) => onChange({ manufacturer_country: e.target.value.toUpperCase() })}
-              className="h-9 rounded-[10px] uppercase"
-            />
-          </Field>
-        </div>
+        {vendor ? (
+          <p className="text-[12.5px] text-ink-3">
+            Производитель — <span className="font-medium text-ink-2">{form.manufacturer_name}</span>, по привязке
+            учётной записи
+          </p>
+        ) : (
+          <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-3">
+            <Field label="Производитель" error={errors.manufacturer_name} hint="Новый производитель создастся сам">
+              <Input
+                value={form.manufacturer_name}
+                onChange={(e) => onChange({ manufacturer_name: e.target.value })}
+                placeholder="ООО «Ронави Роботикс»"
+                aria-invalid={Boolean(errors.manufacturer_name)}
+                className="h-9 rounded-[10px]"
+              />
+            </Field>
+            <Field label="Страна" hint="Код ISO">
+              <Input
+                value={form.manufacturer_country ?? 'RU'}
+                maxLength={2}
+                onChange={(e) => onChange({ manufacturer_country: e.target.value.toUpperCase() })}
+                className="h-9 rounded-[10px] uppercase"
+              />
+            </Field>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Тип решения" error={errors.solution_type}>
             <Select
@@ -123,17 +133,21 @@ export function CardForm({
             />
           </Field>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {ASSIGNABLE_BADGES.map((badge) => (
-            <Chip
-              key={badge}
-              active={badges.includes(badge)}
-              onClick={() => onChange({ badges: toggle(badges, badge) })}
-            >
-              {BADGE_LABEL[badge]}
-            </Chip>
-          ))}
-        </div>
+        {vendor ? (
+          <p className="meta">Отметки «В реестре» и «Испытано ФЦ БАС» ставит администратор платформы.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {ASSIGNABLE_BADGES.map((badge) => (
+              <Chip
+                key={badge}
+                active={badges.includes(badge)}
+                onClick={() => onChange({ badges: toggle(badges, badge) })}
+              >
+                {BADGE_LABEL[badge]}
+              </Chip>
+            ))}
+          </div>
+        )}
       </FormSection>
 
       <FormSection title="Применимость" note="Подбор предлагает решение только для отмеченных объектов и процессов">

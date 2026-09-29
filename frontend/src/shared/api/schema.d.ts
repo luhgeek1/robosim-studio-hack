@@ -1783,6 +1783,109 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/admin/proposals': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Заявки производителей на модерацию */
+    get: operations['adminListProposals']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/proposals/{proposal_id}/review': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Одобрить заявку (правка попадает в каталог, версия каталога растёт) или отклонить с причиной */
+    post: operations['adminReviewProposal']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/manufacturers': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Производители — для привязки учётной записи вендора */
+    get: operations['adminListManufacturers']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/overview': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Кабинет производителя: продукты, пробелы карточек, спрос */
+    get: operations['vendorOverview']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/proposals': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Заявки производителя на правку каталога */
+    get: operations['vendorListProposals']
+    put?: never
+    /** Предложить правку своей карточки или новый продукт (на модерацию) */
+    post: operations['vendorCreateProposal']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/proposals/{proposal_id}/withdraw': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Отозвать заявку до решения модератора */
+    post: operations['vendorWithdrawProposal']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/integrations/projects': {
     parameters: {
       query?: never
@@ -2911,6 +3014,51 @@ export interface components {
       invited_by_email?: string | null
       /** Format: date-time */
       created_at: string
+    }
+    Proposal: {
+      /** Format: uuid */
+      id: string
+      kind: components['schemas']['ProposalKind']
+      status: components['schemas']['ProposalStatus']
+      manufacturer: components['schemas']['Manufacturer']
+      /**
+       * Format: uuid
+       * @description У одобренного нового продукта — созданная карточка
+       */
+      product_id?: string | null
+      product_name: string
+      card?: components['schemas']['ProductWrite'] | null
+      specs: components['schemas']['SpecWrite'][]
+      comment: string
+      author?: components['schemas']['ProposalPerson'] | null
+      /** Format: date-time */
+      created_at: string
+      /** @description Версия каталога, на которой вендор готовил заявку */
+      catalog_version: string
+      /** @description Карточку меняли после подачи заявки — сверьте перед решением */
+      product_changed_since: boolean
+      /** Format: date-time */
+      reviewed_at?: string | null
+      reviewer_name?: string | null
+      review_comment?: string | null
+    }
+    ProposalList: {
+      items: components['schemas']['Proposal'][]
+      total: number
+    }
+    /** @description Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3). */
+    VendorOverview: {
+      manufacturer: components['schemas']['Manufacturer']
+      products: components['schemas']['VendorProduct'][]
+      projects_total: number
+      projects_by_object_type: {
+        [key: string]: number
+      }
+      scenarios_with_products: number
+      proposals_by_status: {
+        [key: string]: number
+      }
+      gaps: components['schemas']['VendorGap'][]
     }
     Health: {
       /** @enum {string} */
@@ -4679,6 +4827,75 @@ export interface components {
       }[]
       rfq_count?: number
     }
+    /**
+     * @description pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+     * @enum {string}
+     */
+    ProposalStatus: 'pending' | 'approved' | 'rejected' | 'withdrawn'
+    /**
+     * @description update — правка существующей карточки; new_product — новый продукт производителя.
+     * @enum {string}
+     */
+    ProposalKind: 'new_product' | 'update'
+    ProposalPerson: {
+      name: string
+      /** Format: email */
+      email: string
+    }
+    ProposalReview: {
+      /** @enum {string} */
+      decision: 'approve' | 'reject'
+      /** @description Обязателен при отказе */
+      comment?: string | null
+      /**
+       * @description С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+       * @default vendor_claim
+       * @enum {string}
+       */
+      specs_status: 'vendor_claim' | 'confirmed'
+    }
+    ManufacturerList: {
+      items: components['schemas']['Manufacturer'][]
+    }
+    KeySpec: {
+      key: string
+      name: string
+    }
+    VendorProduct: {
+      product: components['schemas']['Product']
+      /** @description Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки». */
+      missing_key_specs: components['schemas']['KeySpec'][]
+      /** @description Проекты платформы с типами объектов этого продукта */
+      relevant_projects: number
+      /** @description Сценарии, в которые продукт включён */
+      scenarios_count: number
+      /** @description Сколько раз пользователи добавили продукт в подбор вручную */
+      manual_adds: number
+      /** Format: uuid */
+      pending_proposal_id?: string | null
+    }
+    VendorGap: {
+      object_type: string
+      process_key: string
+      process_name: string
+      /** @description Проекты, где у процесса нет продукта в каталоге */
+      no_fit_count: number
+      /** @description Ваши типы решений, которые этот процесс использует */
+      solution_types: string[]
+    }
+    ProposalWrite: {
+      /**
+       * Format: uuid
+       * @description null — предложить новый продукт
+       */
+      product_id?: string | null
+      /** @description Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор. */
+      card?: components['schemas']['ProductWrite'] | null
+      /** @description Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения. */
+      specs?: components['schemas']['SpecWrite'][]
+      /** @description Что изменилось и почему — для модератора */
+      comment: string
+    }
     /** @description Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи. */
     IntegrationProjectCreate: {
       /** @description Идентификатор объекта во внешней системе */
@@ -4773,6 +4990,7 @@ export interface components {
     ScenarioId: string
     CalculationId: string
     SimulationId: string
+    ProposalId: string
   }
   requestBodies: never
   headers: never
@@ -7972,6 +8190,173 @@ export interface operations {
           'application/json': components['schemas']['AnalyticsOverview']
         }
       }
+    }
+  }
+  adminListProposals: {
+    parameters: {
+      query?: {
+        status?: components['schemas']['ProposalStatus']
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ProposalList']
+        }
+      }
+      403: components['responses']['Forbidden']
+    }
+  }
+  adminReviewProposal: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        proposal_id: components['parameters']['ProposalId']
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProposalReview']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Proposal']
+        }
+      }
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+      422: components['responses']['ValidationError']
+    }
+  }
+  adminListManufacturers: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ManufacturerList']
+        }
+      }
+      403: components['responses']['Forbidden']
+    }
+  }
+  vendorOverview: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['VendorOverview']
+        }
+      }
+      403: components['responses']['Forbidden']
+      409: components['responses']['Conflict']
+    }
+  }
+  vendorListProposals: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ProposalList']
+        }
+      }
+      409: components['responses']['Conflict']
+    }
+  }
+  vendorCreateProposal: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProposalWrite']
+      }
+    }
+    responses: {
+      /** @description На модерации */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Proposal']
+        }
+      }
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+      422: components['responses']['ValidationError']
+    }
+  }
+  vendorWithdrawProposal: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        proposal_id: components['parameters']['ProposalId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Отозвана */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Proposal']
+        }
+      }
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
     }
   }
   integrationCreateProject: {

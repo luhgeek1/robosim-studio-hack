@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
 import { AppShell } from '@/widgets/app-shell'
-import { NotFoundPage, RequireAdmin, RequireAuth, RootRedirect } from './guards'
+import { NotFoundPage, RequireAdmin, RequireAuth, RequireVendor, RootRedirect } from './guards'
 import { RouteError } from './RouteError'
 
 const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: loader })
@@ -29,8 +29,35 @@ const router = createBrowserRouter([
                     path: 'catalog',
                     ...page(() => import('@/pages/admin').then((m) => ({ Component: m.CatalogTab }))),
                   },
+                  {
+                    path: 'proposals',
+                    ...page(() => import('@/pages/admin').then((m) => ({ Component: m.ProposalsTab }))),
+                  },
                   { path: 'norms', ...page(() => import('@/pages/admin').then((m) => ({ Component: m.NormsTab }))) },
                   { path: 'users', ...page(() => import('@/pages/admin').then((m) => ({ Component: m.UsersTab }))) },
+                ],
+              },
+            ],
+          },
+          {
+            Component: RequireVendor,
+            children: [
+              {
+                path: 'vendor',
+                ...page(() => import('@/pages/vendor').then((m) => ({ Component: m.VendorLayout }))),
+                children: [
+                  {
+                    index: true,
+                    ...page(() => import('@/pages/vendor').then((m) => ({ Component: m.VendorOverviewTab }))),
+                  },
+                  {
+                    path: 'products',
+                    ...page(() => import('@/pages/vendor').then((m) => ({ Component: m.VendorProductsTab }))),
+                  },
+                  {
+                    path: 'proposals',
+                    ...page(() => import('@/pages/vendor').then((m) => ({ Component: m.VendorProposalsTab }))),
+                  },
                 ],
               },
             ],

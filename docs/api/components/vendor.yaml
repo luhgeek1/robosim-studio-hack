@@ -1,0 +1,124 @@
+# Кабинет производителя (роль vendor, ТЗ 3.1.1): заявки на правку каталога с модерацией, спрос на продукты.
+
+ProposalStatus:
+  type: string
+  description: pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+  enum: [pending, approved, rejected, withdrawn]
+
+ProposalKind:
+  type: string
+  description: update — правка существующей карточки; new_product — новый продукт производителя.
+  enum: [new_product, update]
+
+ProposalWrite:
+  type: object
+  required: [comment]
+  properties:
+    product_id: {type: [string, "null"], format: uuid, description: "null — предложить новый продукт"}
+    card:
+      description: Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор.
+      oneOf: [{$ref: './catalog.yaml#/ProductWrite'}, {type: 'null'}]
+    specs:
+      type: array
+      description: Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения.
+      items: {$ref: './catalog.yaml#/SpecWrite'}
+    comment: {type: string, minLength: 1, maxLength: 2000, description: "Что изменилось и почему — для модератора"}
+
+ProposalPerson:
+  type: object
+  required: [name, email]
+  properties:
+    name: {type: string}
+    email: {type: string, format: email}
+
+Proposal:
+  type: object
+  required: [id, kind, status, manufacturer, product_name, specs, comment, created_at, catalog_version, product_changed_since]
+  properties:
+    id: {type: string, format: uuid}
+    kind: {$ref: '#/ProposalKind'}
+    status: {$ref: '#/ProposalStatus'}
+    manufacturer: {$ref: './catalog.yaml#/Manufacturer'}
+    product_id: {type: [string, "null"], format: uuid, description: "У одобренного нового продукта — созданная карточка"}
+    product_name: {type: string}
+    card:
+      oneOf: [{$ref: './catalog.yaml#/ProductWrite'}, {type: 'null'}]
+    specs: {type: array, items: {$ref: './catalog.yaml#/SpecWrite'}}
+    comment: {type: string}
+    author:
+      oneOf: [{$ref: '#/ProposalPerson'}, {type: 'null'}]
+    created_at: {type: string, format: date-time}
+    catalog_version: {type: string, description: "Версия каталога, на которой вендор готовил заявку"}
+    product_changed_since: {type: boolean, description: "Карточку меняли после подачи заявки — сверьте перед решением"}
+    reviewed_at: {type: [string, "null"], format: date-time}
+    reviewer_name: {type: [string, "null"]}
+    review_comment: {type: [string, "null"]}
+
+ProposalList:
+  type: object
+  required: [items, total]
+  properties:
+    items: {type: array, items: {$ref: '#/Proposal'}}
+    total: {type: integer}
+
+ProposalReview:
+  type: object
+  required: [decision]
+  properties:
+    decision: {type: string, enum: [approve, reject]}
+    comment: {type: [string, "null"], maxLength: 2000, description: "Обязателен при отказе"}
+    specs_status:
+      type: string
+      enum: [vendor_claim, confirmed]
+      default: vendor_claim
+      description: С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+
+KeySpec:
+  type: object
+  required: [key, name]
+  properties:
+    key: {type: string}
+    name: {type: string}
+
+VendorProduct:
+  type: object
+  required: [product, missing_key_specs, relevant_projects, scenarios_count, manual_adds]
+  properties:
+    product: {$ref: './catalog.yaml#/Product'}
+    missing_key_specs:
+      type: array
+      description: Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки».
+      items: {$ref: '#/KeySpec'}
+    relevant_projects: {type: integer, description: "Проекты платформы с типами объектов этого продукта"}
+    scenarios_count: {type: integer, description: "Сценарии, в которые продукт включён"}
+    manual_adds: {type: integer, description: "Сколько раз пользователи добавили продукт в подбор вручную"}
+    pending_proposal_id: {type: [string, "null"], format: uuid}
+
+VendorGap:
+  type: object
+  required: [object_type, process_key, process_name, no_fit_count, solution_types]
+  properties:
+    object_type: {type: string}
+    process_key: {type: string}
+    process_name: {type: string}
+    no_fit_count: {type: integer, description: "Проекты, где у процесса нет продукта в каталоге"}
+    solution_types: {type: array, items: {type: string}, description: "Ваши типы решений, которые этот процесс использует"}
+
+VendorOverview:
+  type: object
+  description: Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3).
+  required: [manufacturer, products, projects_total, projects_by_object_type, scenarios_with_products, proposals_by_status, gaps]
+  properties:
+    manufacturer: {$ref: './catalog.yaml#/Manufacturer'}
+    products: {type: array, items: {$ref: '#/VendorProduct'}}
+    projects_total: {type: integer}
+    projects_by_object_type: {type: object, additionalProperties: {type: integer}}
+    scenarios_with_products: {type: integer}
+    proposals_by_status: {type: object, additionalProperties: {type: integer}}
+    gaps: {type: array, items: {$ref: '#/VendorGap'}}
+
+ManufacturerList:
+  type: object
+  required: [items]
+  properties:
+    items: {type: array, items: {$ref: './catalog.yaml#/Manufacturer'}}

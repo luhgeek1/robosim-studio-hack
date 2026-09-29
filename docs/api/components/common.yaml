@@ -225,6 +225,11 @@ parameters:
     name: page_size
     in: query
     schema: {type: integer, minimum: 1, maximum: 200, default: 20}
+  ProposalId:
+    name: proposal_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
   ProjectId:
     name: project_id
     in: path

@@ -56,6 +56,16 @@ export const qk = {
     normSets: ['reference', 'norm-sets'] as const,
     norms: (version?: string) => ['reference', 'norms', version ?? null] as const,
   },
+  vendor: {
+    all: ['vendor'] as const,
+    overview: ['vendor', 'overview'] as const,
+    proposals: ['vendor', 'proposals'] as const,
+  },
+  proposals: {
+    all: ['proposals'] as const,
+    queue: (status?: string) => ['proposals', 'queue', status ?? 'all'] as const,
+  },
+  manufacturers: ['manufacturers'] as const,
   organizations: {
     all: ['organizations'] as const,
     list: ['organizations', 'list'] as const,

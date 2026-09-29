@@ -20,6 +20,7 @@ from app.db.models.reference import (
 from app.db.models.reports import Report
 from app.db.models.scenarios import CalculationRun, Scenario, ScenarioItem
 from app.db.models.simulations import SimulationRun
+from app.db.models.vendor import VendorProposal
 
 __all__ = [
     "ApiKey",
@@ -57,4 +58,5 @@ __all__ = [
     "SpecKey",
     "StoredFile",
     "User",
+    "VendorProposal",
 ]
