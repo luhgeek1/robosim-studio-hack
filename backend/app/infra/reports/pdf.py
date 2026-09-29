@@ -528,6 +528,34 @@ class Builder:
                 )
             )
             self.add(p(sweep.get("explanation", ""), "small"))
+            formula, simulated = sweep.get("by_formula"), sweep.get("by_simulation")
+            if formula and simulated:
+                rows = [["", "По формуле цикла", "По имитации (в расчёте)"]]
+                rows.append(
+                    [
+                        "Роботов (в работе + резерв)",
+                        f"{formula['working']} + {formula['reserve']} = {formula['total']}",
+                        f"{simulated['working']} + {simulated['reserve']} = {simulated['total']}",
+                    ]
+                )
+                rows.append(
+                    [
+                        "CAPEX, млн ₽",
+                        number(formula["capex_rub"] / MILLION, 1),
+                        number(simulated["capex_rub"] / MILLION, 1),
+                    ]
+                )
+                rows.append(
+                    ["Окупаемость, лет", number(formula["payback_years"]), number(simulated["payback_years"])]
+                )
+                rows.append(
+                    [
+                        "NPV, млн ₽",
+                        number(formula["npv_rub"] / MILLION, 1),
+                        number(simulated["npv_rub"] / MILLION, 1),
+                    ]
+                )
+                self.add(table(rows, [0.36, 0.32, 0.32]))
 
     def assumptions(self) -> None:
         m = self.m

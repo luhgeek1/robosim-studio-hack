@@ -305,7 +305,7 @@ FleetSweepRequest:
 FleetSweepResult:
   type: object
   description: |
-    Минимальное N, при котором среднее SLA по `sim_replications` прогонам пикового режима не ниже цели.
+    Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-028).
     Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
     Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
   required: [process_key, points, recommended_count, explanation]
@@ -325,15 +325,33 @@ FleetSweepResult:
           utilization: {type: number}
           throughput_per_hour: {type: number}
           queue_max: {type: integer}
+          robots_total: {type: [integer, "null"], description: "N плюс резерв — как в сценарии после применения"}
           capex_rub: {type: [number, "null"]}
-          payback_years: {type: [number, "null"]}
+          payback_years: {type: [number, "null"], description: "null, если N не держит SLA: такой парк не выполняет работу"}
+          npv_rub: {type: [number, "null"]}
           simulation_id: {type: [string, "null"], format: uuid}
     recommended_count: {type: [integer, "null"], description: "null — даже тройной парк не выполняет SLA: ограничение не в роботах"}
     analytic_count: {type: [integer, "null"]}
     target_pct: {type: [number, "null"]}
     simulation_id: {type: [string, "null"], format: uuid, description: "Прогон рекомендованного N с журналом для плеера"}
     applied: {type: boolean, description: "N записано в сценарий"}
+    by_formula: {oneOf: [{$ref: '#/FleetEconomics'}, {type: "null"}], description: "N по формуле цикла и его экономика"}
+    by_simulation: {oneOf: [{$ref: '#/FleetEconomics'}, {type: "null"}], description: "N по имитации — то, что берёт расчёт"}
+    job_id: {type: [string, "null"], format: uuid}
+    computed_at: {type: [string, "null"], format: date-time}
     explanation: {type: string, example: "12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 %"}
+
+FleetEconomics:
+  type: object
+  description: Парк процесса и экономика сценария с ним.
+  required: [working, reserve, total, capex_rub, npv_rub]
+  properties:
+    working: {type: integer, description: "Роботов в работе"}
+    reserve: {type: integer}
+    total: {type: integer}
+    capex_rub: {type: number}
+    payback_years: {type: [number, "null"]}
+    npv_rub: {type: number}
 
 ProgressEvent:
   type: object

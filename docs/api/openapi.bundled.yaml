@@ -1743,6 +1743,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
   /api/v1/scenarios/{scenario_id}/fleet-sweep:
+    get:
+      tags:
+        - simulation
+      operationId: getLatestFleetSweep
+      summary: Последний завершённый перебор флота сценария
+      description: Кривая «N → SLA, окупаемость» и сравнение «по формуле / по имитации» после перезагрузки экрана.
+      parameters:
+        - $ref: '#/components/parameters/ScenarioId'
+        - name: process_key
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FleetSweepResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
     post:
       tags:
         - simulation
@@ -7788,35 +7810,35 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SimulationRun'
-    FleetSweepRequest:
+    FleetEconomics:
       type: object
-      description: Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость».
+      description: Парк процесса и экономика сценария с ним.
       required:
-        - process_key
+        - working
+        - reserve
+        - total
+        - capex_rub
+        - npv_rub
       properties:
-        process_key:
-          type: string
-        from_count:
+        working:
+          type: integer
+          description: Роботов в работе
+        reserve:
+          type: integer
+        total:
+          type: integer
+        capex_rub:
+          type: number
+        payback_years:
           type:
-            - integer
+            - number
             - 'null'
-          minimum: 1
-          description: Вместе с to_count — полный перебор диапазона вместо поиска
-        to_count:
-          type:
-            - integer
-            - 'null'
-          minimum: 1
-        mode:
-          $ref: '#/components/schemas/SimulationMode'
-        seed:
-          type:
-            - integer
-            - 'null'
+        npv_rub:
+          type: number
     FleetSweepResult:
       type: object
       description: |
-        Минимальное N, при котором среднее SLA по `sim_replications` прогонам пикового режима не ниже цели.
+        Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-028).
         Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
         Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
       required:
@@ -7857,11 +7879,21 @@ components:
                 type: number
               queue_max:
                 type: integer
+              robots_total:
+                type:
+                  - integer
+                  - 'null'
+                description: N плюс резерв — как в сценарии после применения
               capex_rub:
                 type:
                   - number
                   - 'null'
               payback_years:
+                type:
+                  - number
+                  - 'null'
+                description: 'null, если N не держит SLA: такой парк не выполняет работу'
+              npv_rub:
                 type:
                   - number
                   - 'null'
@@ -7892,9 +7924,54 @@ components:
         applied:
           type: boolean
           description: N записано в сценарий
+        by_formula:
+          oneOf:
+            - $ref: '#/components/schemas/FleetEconomics'
+            - type: 'null'
+          description: N по формуле цикла и его экономика
+        by_simulation:
+          oneOf:
+            - $ref: '#/components/schemas/FleetEconomics'
+            - type: 'null'
+          description: N по имитации — то, что берёт расчёт
+        job_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+        computed_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
         explanation:
           type: string
           example: 12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 %
+    FleetSweepRequest:
+      type: object
+      description: Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость».
+      required:
+        - process_key
+      properties:
+        process_key:
+          type: string
+        from_count:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          description: Вместе с to_count — полный перебор диапазона вместо поиска
+        to_count:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+        mode:
+          $ref: '#/components/schemas/SimulationMode'
+        seed:
+          type:
+            - integer
+            - 'null'
     TimelinePoint:
       type: object
       required:

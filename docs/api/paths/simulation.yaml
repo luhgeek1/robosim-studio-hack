@@ -23,6 +23,17 @@ scenarioSimulations:
       '409': {description: "Нет планировки или сценарий не полон", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
 
 scenarioFleetSweep:
+  get:
+    tags: [simulation]
+    operationId: getLatestFleetSweep
+    summary: Последний завершённый перебор флота сценария
+    description: Кривая «N → SLA, окупаемость» и сравнение «по формуле / по имитации» после перезагрузки экрана.
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ScenarioId'}
+      - {name: process_key, in: query, required: false, schema: {type: string}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/FleetSweepResult'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
   post:
     tags: [simulation]
     operationId: runFleetSweep

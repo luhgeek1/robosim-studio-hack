@@ -33,7 +33,7 @@ class JobRepository:
     def add(self, job: Job) -> None:
         self._session.add(job)
 
-    async def latest_sweep(self, scenario_id: UUID) -> Job | None:
+    async def latest_sweep(self, scenario_id: UUID, process_key: str | None = None) -> Job | None:
         statement = (
             select(Job)
             .where(
@@ -44,5 +44,7 @@ class JobRepository:
             .order_by(Job.finished_at.desc())
             .limit(1)
         )
+        if process_key is not None:
+            statement = statement.where(Job.payload["process_key"].astext == process_key)
         job: Job | None = await self._session.scalar(statement)
         return job

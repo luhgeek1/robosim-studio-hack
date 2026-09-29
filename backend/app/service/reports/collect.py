@@ -4,11 +4,12 @@ from typing import Any
 from uuid import UUID
 
 from app.core.errors import ConflictError, ScenarioIncompleteError
-from app.db.models import CalculationRun, StoredFile
+from app.db.models import CalculationRun, Scenario, StoredFile
 from app.db.repositories.layouts import LayoutRepository
 from app.db.repositories.simulations import SimulationRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
+from app.domain.jobs import JobStatus
 from app.domain.reports.models import ParamRow, ReportModel, ReportSection, ScenarioReport, Visual
 from app.engine.calculation import CalculationError
 from app.service.layouts.reader import LayoutReader
@@ -132,7 +133,7 @@ class ReportCollector:
         layout = await self._layouts.layout(project_id)
         return layout.version if layout else None
 
-    async def _scenario(self, scenario: Any, run: CalculationRun) -> ScenarioReport:
+    async def _scenario(self, scenario: Scenario, run: CalculationRun) -> ScenarioReport:
         story = narrative(run)
         report = ScenarioReport(
             id=str(scenario.id),
@@ -160,12 +161,16 @@ class ReportCollector:
             },
         )
         if not scenario.is_baseline:
-            report.simulation = await self._simulation(scenario.id)
+            report.simulation = await self._simulation(scenario)
         return report
 
-    async def _simulation(self, scenario_id: UUID) -> dict[str, Any] | None:
-        run = await self._simulations.latest_done(scenario_id)
-        sweep = await self._uow.jobs.latest_sweep(scenario_id)
+    async def _simulation(self, scenario: Scenario) -> dict[str, Any] | None:
+        """The run the scenario's N rests on (the fleet sweep's), not the last what-if run of the screen."""
+        used = next((i.simulation_id for i in scenario.items if i.simulation_id), None)
+        run = await self._simulations.get(used) if used else None
+        if run is None or run.status != JobStatus.DONE:
+            run = await self._simulations.latest_done(scenario.id)
+        sweep = await self._uow.jobs.latest_sweep(scenario.id)
         if run is None and sweep is None:
             return None
         return {

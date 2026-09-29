@@ -182,6 +182,9 @@ def test_fleet_sweep_finds_the_smallest_fleet_meeting_sla() -> None:
     points = {p.count: p for p in result.points}
     assert points[result.recommended_count].passed
     assert not points[result.recommended_count - 1].passed
+    # Every replication has to hold the target, not only their mean (D-028).
+    assert points[result.recommended_count].sla_min_pct >= result.target_pct
+    assert all(p.passed == (p.sla_min_pct >= result.target_pct) for p in result.points)
     assert result.recommended_count <= PALLETS.analytic_robots
     assert "минимальное N" in result.explanation
 

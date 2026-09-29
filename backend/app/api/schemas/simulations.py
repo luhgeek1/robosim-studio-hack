@@ -209,11 +209,22 @@ class FleetSweepPoint(ApiModel):
     utilization: float
     throughput_per_hour: float
     queue_max: int | None = None
+    robots_total: int | None = None
     capex_rub: float | None = None
     payback_years: float | None = None
+    npv_rub: float | None = None
     simulation_id: UUID | None = None
     passed: bool | None = None
     runs: int | None = None
+
+
+class FleetEconomics(ApiModel):
+    working: int
+    reserve: int
+    total: int
+    capex_rub: float
+    payback_years: float | None = None
+    npv_rub: float
 
 
 class FleetSweepResult(ApiModel):
@@ -225,3 +236,7 @@ class FleetSweepResult(ApiModel):
     explanation: str
     simulation_id: UUID | None = None
     applied: bool = False
+    by_formula: FleetEconomics | None = None
+    by_simulation: FleetEconomics | None = None
+    job_id: UUID | None = None
+    computed_at: datetime | None = None

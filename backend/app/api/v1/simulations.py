@@ -103,6 +103,23 @@ async def run_fleet_sweep(
 
 
 @router.get(
+    "/scenarios/{scenario_id}/fleet-sweep",
+    operation_id="getLatestFleetSweep",
+    summary="Последний завершённый перебор флота сценария",
+    responses={404: {"description": "Перебор ещё не запускался"}},
+)
+async def get_latest_fleet_sweep(
+    scenario_id: ScenarioIdPath,
+    user: OwnerDep,
+    uow: UowDep,
+    process_key: Annotated[str | None, Query()] = None,
+) -> FleetSweepResult:
+    return FleetSweepResult.model_validate(
+        await SimulationService(uow, user).latest_sweep(scenario_id, process_key)
+    )
+
+
+@router.get(
     "/scenarios/{scenario_id}/fleet-sweep/{job_id}",
     operation_id="getFleetSweepResult",
     summary="Результат перебора флота",

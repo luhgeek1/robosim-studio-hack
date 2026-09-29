@@ -36,9 +36,12 @@ class SweepResult:
 
 
 class Sweep:
-    """Minimal fleet with mean SLA over `replications` runs ≥ target (D-007), searched around an estimate.
+    """Minimal fleet whose every one of `replications` runs keeps SLA ≥ target (D-028),
+    searched around an estimate.
 
-    Runs share random streams per replication (common random numbers): fleets are compared on the same days.
+    A mean over runs let a fleet pass with one peak day in five far below target (95.7 % mean,
+    87 % worst on the demo warehouse): the fleet has to hold on each of the days. Runs share random
+    streams per replication (common random numbers): fleets are compared on the same days.
     """
 
     def __init__(
@@ -84,7 +87,7 @@ class Sweep:
             throughput_per_hour=round(sum(r.summary.throughput_per_hour for r in runs) / len(runs), 2),
             queue_max=max(r.summary.queue["max"] for r in runs),
             runs=len(runs),
-            passed=mean_sla >= self.target,
+            passed=min(slas) >= self.target,
         )
         self.points[count] = point
         self.results[count] = runs[0]
@@ -173,12 +176,16 @@ def _explain(
         )
     best = by_count[recommended]
     parts = [
-        f"{recommended} — минимальное N с SLA ≥ {fmt(target)} % "
-        f"(среднее {runs} прогонов пикового режима {fmt(best.sla_achieved_pct)} %)"
+        f"{recommended} — минимальное N, при котором все {runs} прогонов пикового режима "
+        f"держат SLA ≥ {fmt(target)} % (худший {fmt(best.sla_min_pct)} %, "
+        f"в среднем {fmt(best.sla_achieved_pct)} %)"
     ]
     below = by_count.get(recommended - 1)
     if below is not None:
-        parts.append(f"{below.count} даёт {fmt(below.sla_achieved_pct)} %")
+        parts.append(
+            f"{below.count} — в среднем {fmt(below.sla_achieved_pct)} %, "
+            f"худший прогон {fmt(below.sla_min_pct)} %"
+        )
     if analytic != recommended and analytic in by_count:
         parts.append(
             f"по циклу {analytic}: загрузка {fmt(round(by_count[analytic].utilization * PERCENT))} %"

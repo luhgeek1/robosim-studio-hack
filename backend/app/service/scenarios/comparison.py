@@ -218,6 +218,29 @@ def _changes(label: str, old: dict[str, Any], new: dict[str, Any], names: dict[s
     ]
 
 
+def _count(item: dict[str, Any]) -> str:
+    if item.get("count_mode") == "manual" and item.get("count_manual"):
+        return f"вручную {item['count_manual']}"
+    if item.get("simulated_robots"):
+        return f"по имитации {item['simulated_robots']}"
+    return "по формуле цикла"
+
+
+def _item_causes(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
+    """What changed inside one process: price, the source of N (formula, fleet sweep, by hand), throughput."""
+    name = after["product_name"]
+    causes: list[str] = []
+    if before["price"] != after["price"]:
+        causes.append(f"Цена «{name}»: {mln(before['price'])} → {mln(after['price'])} млн ₽")
+    if _count(before) != _count(after):
+        causes.append(f"Число роботов «{name}»: {_count(before)} → {_count(after)}")
+    if before.get("throughput_override") != after.get("throughput_override"):
+        causes.append(
+            f"Производительность «{name}» задана вручную: {after.get('throughput_override') or 'нет'}"
+        )
+    return causes
+
+
 def _causes(old: CalculationRun, new: CalculationRun) -> list[str]:
     causes: list[str] = []
     for attr, label in (
@@ -234,10 +257,14 @@ def _causes(old: CalculationRun, new: CalculationRun) -> list[str]:
         before, after = old_items.get(key), new_items.get(key)
         if before is None or after is None or before["product_id"] != after["product_id"]:
             causes.append(f"Изменён состав решений: {key}")
-        elif before["price"] != after["price"]:
-            causes.append(
-                f"Цена «{after['product_name']}»: {mln(before['price'])} → {mln(after['price'])} млн ₽"
-            )
+        else:
+            causes += _item_causes(before, after)
+    for attr, label in (("horizon_years", "Горизонт, лет"), ("discount_rate", "Ставка дисконтирования")):
+        before_value, after_value = old.inputs.get(attr), new.inputs.get(attr)
+        if before_value is not None and after_value is not None and before_value != after_value:
+            causes.append(f"{label}: {fmt(before_value)} → {fmt(after_value)}")
+    if old.inputs.get("financing") != new.inputs.get("financing"):
+        causes.append("Изменены условия финансирования")
     causes += _changes(
         "Норматив", old.inputs.get("norms", {}), new.inputs.get("norms", {}), new.inputs.get("norm_names", {})
     )

@@ -131,6 +131,25 @@ async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
     best = (await client.get(f"/api/v1/simulations/{result['simulation_id']}", headers=headers)).json()
     assert best["purpose"] == "sweep"
     assert best["fleet"][0]["count"] == recommended
+    # The curve prices each fleet the way the scenario is priced once that N applies (D-028).
+    metrics = after["metrics"]
+    assert points[recommended]["robots_total"] == count["final"]
+    assert points[recommended]["capex_rub"] == pytest.approx(metrics["capex_rub"])
+    assert points[recommended]["payback_years"] == pytest.approx(metrics["payback_years"])
+    assert result["by_simulation"]["total"] == count["final"]
+    assert result["by_formula"]["working"] == analytic["analytic"]
+    assert result["by_formula"]["capex_rub"] == pytest.approx(before["metrics"]["capex_rub"])
+    assert all(p["payback_years"] is None for p in result["points"] if not p["passed"])
+    latest = await client.get(
+        f"/api/v1/scenarios/{scenario_id}/fleet-sweep",
+        params={"process_key": "pallet_transport"},
+        headers=headers,
+    )
+    assert latest.status_code == 200
+    assert latest.json()["job_id"] == job_id
+    rerun = (await client.post(f"/api/v1/calculations/{before['id']}/rerun", headers=headers)).json()
+    causes = {cause for row in rerun["diff"] for cause in row["causes"]}
+    assert any("по формуле цикла → по имитации" in cause for cause in causes), causes
 
     param = {"key": "shift_hours", "value": 12}
     await client.patch(f"/api/v1/projects/{project_id}/params/shift_hours", json=param, headers=headers)

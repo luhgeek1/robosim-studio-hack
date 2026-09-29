@@ -234,6 +234,14 @@ class SimulationService:
         await self._uow.flush()
         return job
 
+    async def latest_sweep(self, scenario_id: UUID, process_key: str | None) -> dict[str, Any]:
+        """The last finished sweep of the scenario: the screen shows its curve after a reload."""
+        await self._scenarios.owned(scenario_id)
+        job = await self._uow.jobs.latest_sweep(scenario_id, process_key)
+        if job is None or job.result is None:
+            raise NotFoundError("Перебор флота для этого сценария ещё не запускался")
+        return {**job.result, "job_id": str(job.id)}
+
     async def sweep_result(self, scenario_id: UUID, job_id: UUID) -> dict[str, Any]:
         await self._scenarios.owned(scenario_id)
         job = await self._uow.jobs.get(job_id)
@@ -243,4 +251,4 @@ class SimulationService:
             raise ConflictError((job.error or {}).get("detail", "Перебор завершился ошибкой"))
         if job.status != JobStatus.DONE or job.result is None:
             raise ConflictError("Перебор ещё считается", error_code=ErrorCode.JOB_NOT_READY)
-        return job.result
+        return {**job.result, "job_id": str(job.id)}
