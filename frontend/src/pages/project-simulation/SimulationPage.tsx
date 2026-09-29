@@ -1,10 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Camera, Info, Sparkles, X } from 'lucide-react'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { ArrowLeft, ArrowRight, Camera, Info, Sparkles, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
-import { useProject, useProjectId } from '@/entities/project'
+import { PROJECT_STEPS, stepIndex, useProject, useProjectId } from '@/entities/project'
 import { useObjectType } from '@/entities/reference'
 import { useUploadVisual } from '@/entities/report'
 import { SCENARIO_KIND_LABEL, useCalculation, useCountSource, useScenarios } from '@/entities/scenario'
@@ -219,7 +220,6 @@ function SimulationView({
   // или заданный вручную.
   const working = sizing ? workingCount(sizing) : 0
   const lastSweep = useLastSweep(scenario.id, sizing?.process_key).data ?? undefined
-  const stage = useStageHeight()
   const [draft, setDraft] = useState<Omit<RunConfig, 'count'> & { count: number | null }>({
     count: null,
     mode: 'peak',
@@ -340,46 +340,63 @@ function SimulationView({
       ? undefined
       : 'Имитация прогонит день на планировке объекта и проверит, успевает ли парк выполнять задачи в срок.'
 
-  return (
-    <Screen
-      wide
-      dense
-      title={
-        <>
+  const stepIdx = stepIndex('simulation')
+  const prevStep = PROJECT_STEPS[stepIdx - 1]
+  const nextStep = PROJECT_STEPS[stepIdx + 1]
+
+  // Рабочая область занимает всё окно под шапкой и плашкой шагов; портал — потому что у контейнера страницы есть
+  // анимация с transform, а внутри неё position: fixed отсчитывается не от окна.
+  return createPortal(
+    <div className="fixed inset-x-0 top-[7.625rem] bottom-0 z-20 flex flex-col border-t border-line bg-card">
+      <div className="flex h-11 shrink-0 items-center gap-3 border-b border-line bg-surface-2 pr-2 pl-2">
+        {prevStep && (
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/projects/${projectId}/${prevStep.id}`}>
+              <ArrowLeft /> {prevStep.label}
+            </Link>
+          </Button>
+        )}
+        <span className="h-5 w-px shrink-0 bg-line-2" />
+        <span className="hud flex shrink-0 items-center gap-2">
+          <span className="size-1.5 rounded-full bg-signal" aria-hidden />
+          Шаг {String(stepIdx + 1).padStart(2, '0')} / {String(PROJECT_STEPS.length).padStart(2, '0')} ·{' '}
+          {PROJECT_STEPS[stepIdx]?.question}
+        </span>
+        <h1 className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em]">
           {config.count} × {sizing?.product_name ?? '…'}
-        </>
-      }
-      lead={lead}
-      actions={picker}
-    >
-      {calculation.isPending && <LoadingBlock label="Загружаем расчёт…" />}
-      {calculation.isError && <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} />}
+        </h1>
+        {lead && <span className="meta hidden min-w-0 truncate xl:inline">{lead}</span>}
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          {picker}
+          {nextStep && (
+            <>
+              <span className="h-5 w-px bg-line-2" />
+              <Button variant="ghost" size="sm" asChild>
+                <Link to={`/projects/${projectId}/${nextStep.id}`}>
+                  {nextStep.label} <ArrowRight />
+                </Link>
+              </Button>
+            </>
+          )}
+        </span>
+      </div>
+
+      {calculation.isPending && <LoadingBlock label="Загружаем расчёт…" className="m-6" />}
+      {calculation.isError && (
+        <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} className="m-6" />
+      )}
 
       {sizing && (
         <>
-          {error && (
-            <Callout tone="crit" className="mb-3">
-              Имитация не запустилась: {error}. Сейчас имитация строится для транспортных роботов и «товар к человеку»;
-              для остальных типов число роботов остаётся по расчёту времени цикла.
-            </Callout>
-          )}
-          {replay.isError && (
-            <Callout tone="crit" className="mb-3">
-              Журнал событий не загрузился: {parseApiProblem(replay.error).detail}
-            </Callout>
-          )}
-
           {/* Рабочая область как в IDE: слева ход прогона, по центру карта, справа решение для расчёта,
               внизу плеер и условия прогона, под всем — строка состояния. */}
           <div
-            ref={stage.ref}
             style={
               {
-                '--stage-h': stage.height ? `${stage.height}px` : undefined,
                 '--cols': `${panels.left ? `${LEFT_W}px` : '0px'} minmax(0,1fr) ${panels.right ? `${RIGHT_W}px` : '0px'}`,
               } as CSSProperties
             }
-            className="card grid grid-cols-1 overflow-hidden transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:h-(--stage-h) lg:grid-cols-(--cols) lg:grid-rows-[minmax(0,1fr)_auto_auto]"
+            className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:grid-cols-(--cols) lg:grid-rows-[minmax(0,1fr)_auto_auto] lg:overflow-hidden"
           >
             <aside
               className={cn(
@@ -412,6 +429,19 @@ function SimulationView({
             </aside>
 
             <main className="relative order-1 h-[60vh] min-h-0 min-w-0 lg:order-none lg:h-auto">
+              {(error || replay.isError) && (
+                <div className="absolute inset-x-3 top-3 z-20 space-y-2">
+                  {error && (
+                    <Callout tone="crit">
+                      Имитация не запустилась: {error}. Сейчас имитация строится для транспортных роботов и «товар к
+                      человеку»; для остальных типов число роботов остаётся по расчёту времени цикла.
+                    </Callout>
+                  )}
+                  {replay.isError && (
+                    <Callout tone="crit">Журнал событий не загрузился: {parseApiProblem(replay.error).detail}</Callout>
+                  )}
+                </div>
+              )}
               {layout ? (
                 <Twin
                   layout={layout}
@@ -622,43 +652,13 @@ function SimulationView({
           </div>
         </>
       )}
-    </Screen>
+    </div>,
+    document.body,
   )
 }
 
 const LEFT_W = 272
 const RIGHT_W = 316
-// Нижний отступ сцены от края окна и минимальная высота, ниже которой колонки уже не читаются.
-const STAGE_GAP_PX = 16
-const STAGE_MIN_PX = 560
-const HEADER_PX = 72
-
-/* Сцена тянется до низа окна: карта и обе колонки помещаются в экран без прокрутки страницы. */
-function useStageHeight() {
-  // Callback-ref: сетка сцены монтируется только после загрузки расчёта.
-  const [el, ref] = useState<HTMLDivElement | null>(null)
-  const [height, setHeight] = useState<number>()
-  useLayoutEffect(() => {
-    if (!el) return
-    const fit = () => {
-      const top = el.getBoundingClientRect().top + window.scrollY
-      // На низком экране (1366×768) область не меньше STAGE_MIN_PX, но и не выше окна под шапкой: после короткой
-      // прокрутки она видна целиком, вместе со строкой состояния.
-      const floor = Math.min(STAGE_MIN_PX, window.innerHeight - HEADER_PX - STAGE_GAP_PX)
-      setHeight(Math.max(floor, Math.round(window.innerHeight - top - STAGE_GAP_PX)))
-    }
-    fit()
-    // Над сценой появляются и исчезают подсказки и ошибки — они сдвигают её верх.
-    const observer = new ResizeObserver(fit)
-    if (el.parentElement) observer.observe(el.parentElement)
-    window.addEventListener('resize', fit)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', fit)
-    }
-  }, [el])
-  return { ref, height }
-}
 
 function pointAt(points: SimulationTimeline['points'], t: number) {
   let found = points[0]
