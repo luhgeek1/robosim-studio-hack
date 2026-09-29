@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import EmailStr, Field
+from pydantic import ConfigDict, EmailStr, Field
 
 from app.api.schemas.base import ApiModel
 from app.domain.organization import (
@@ -33,6 +33,8 @@ class OrganizationList(ApiModel):
 
 
 class OrganizationWrite(ApiModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     name: str = Field(min_length=1, max_length=120)
 
 
