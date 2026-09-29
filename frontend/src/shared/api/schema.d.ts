@@ -1656,7 +1656,14 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2) */
+    /**
+     * Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+     * @description Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
+     *     обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
+     *     процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+     *     они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
+     *     С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+     */
     post: operations['adminImportCatalog']
     delete?: never
     options?: never
@@ -4711,17 +4718,53 @@ export interface components {
       /** Format: date-time */
       finished_at?: string | null
     }
-    CatalogImportResult: {
-      catalog_version: string
-      created: number
-      updated: number
-      /** @description Строки-дубли сохранены как отдельные предложения */
-      offers_created: number
-      skipped: number
-      errors: {
-        row?: number
-        message?: string
+    CatalogImportItem: {
+      /** Format: uuid */
+      product_id: string
+      name: string
+      /** @enum {string} */
+      action: 'created' | 'updated' | 'unchanged' | 'conflict'
+      /** @description Первая строка продукта в файле */
+      row: number
+      /** @description Тип решения нового продукта */
+      solution_type?: string | null
+      /** @description Почему конфликт */
+      reason?: string | null
+      changes: {
+        /** @example price_from_rub */
+        field: string
+        /** @example Цена от, ₽ */
+        label: string
+        /** @description Для описания не повторяется */
+        before?: string | number | null
+        after?: string | number | null
       }[]
+    }
+    CatalogImportResult: {
+      /** @description true — предпросмотр, ничего не сохранено */
+      dry_run: boolean
+      /** @description После применения — новая версия; в предпросмотре и без изменений — текущая */
+      catalog_version: string
+      /** @description Новые продукты (id нет в каталоге) */
+      created: number
+      /** @description Продукты под управлением сида, у которых файл что-то меняет */
+      updated: number
+      unchanged: number
+      /** @description Карточки, которые правил или скрыл администратор, — не тронуты */
+      conflicts: number
+      /** @description Новые предложения: строки-дубли сохраняются как отдельные предложения */
+      offers_created: number
+      /** @description Строки без id */
+      skipped: number
+      /** @description Продукты под управлением сида, которых нет в файле (не скрываются) */
+      not_in_file: number
+      errors: {
+        /** @description Номер строки файла, заголовок — строка 1 */
+        row: number
+        message: string
+      }[]
+      /** @description Новые, изменённые и конфликтные продукты; неизменённые только считаются */
+      items: components['schemas']['CatalogImportItem'][]
     }
     EnrichmentReview: {
       /** @description spec_key, принимаемые как есть (статус confirmed или vendor_claim) */
@@ -7939,7 +7982,10 @@ export interface operations {
   }
   adminImportCatalog: {
     parameters: {
-      query?: never
+      query?: {
+        /** @description Только предпросмотр: ничего не сохранять */
+        dry_run?: boolean
+      }
       header?: never
       path?: never
       cookie?: never
@@ -7949,6 +7995,7 @@ export interface operations {
         'multipart/form-data': {
           /** Format: binary */
           file: string
+          /** @description Что за выгрузка — пишется в журнал */
           notes?: string
         }
       }
@@ -7961,6 +8008,15 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['CatalogImportResult']
+        }
+      }
+      /** @description Файл больше 20 МБ */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
         }
       }
       /** @description Неподдерживаемый формат */

@@ -2654,7 +2654,20 @@ paths:
       tags:
         - admin
       operationId: adminImportCatalog
-      summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2)
+      summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+      description: |
+        Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
+        обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
+        процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+        они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
+        С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+      parameters:
+        - name: dry_run
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: 'Только предпросмотр: ничего не сохранять'
       requestBody:
         required: true
         content:
@@ -2669,6 +2682,8 @@ paths:
                   format: binary
                 notes:
                   type: string
+                  maxLength: 2000
+                  description: Что за выгрузка — пишется в журнал
       responses:
         '200':
           description: OK
@@ -2676,6 +2691,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogImportResult'
+        '413':
+          description: Файл больше 20 МБ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '415':
           description: Неподдерживаемый формат
           content:
@@ -9426,36 +9447,124 @@ components:
             - string
             - 'null'
           format: date-time
+    CatalogImportItem:
+      type: object
+      required:
+        - product_id
+        - name
+        - action
+        - row
+        - changes
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        action:
+          type: string
+          enum:
+            - created
+            - updated
+            - unchanged
+            - conflict
+        row:
+          type: integer
+          description: Первая строка продукта в файле
+        solution_type:
+          type:
+            - string
+            - 'null'
+          description: Тип решения нового продукта
+        reason:
+          type:
+            - string
+            - 'null'
+          description: Почему конфликт
+        changes:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - label
+            properties:
+              field:
+                type: string
+                example: price_from_rub
+              label:
+                type: string
+                example: Цена от, ₽
+              before:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: 'null'
+                description: Для описания не повторяется
+              after:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: 'null'
     CatalogImportResult:
       type: object
       required:
+        - dry_run
         - catalog_version
         - created
         - updated
+        - unchanged
+        - conflicts
         - offers_created
         - skipped
+        - not_in_file
         - errors
+        - items
       properties:
+        dry_run:
+          type: boolean
+          description: true — предпросмотр, ничего не сохранено
         catalog_version:
           type: string
+          description: После применения — новая версия; в предпросмотре и без изменений — текущая
         created:
           type: integer
+          description: Новые продукты (id нет в каталоге)
         updated:
           type: integer
+          description: Продукты под управлением сида, у которых файл что-то меняет
+        unchanged:
+          type: integer
+        conflicts:
+          type: integer
+          description: Карточки, которые правил или скрыл администратор, — не тронуты
         offers_created:
           type: integer
-          description: Строки-дубли сохранены как отдельные предложения
+          description: 'Новые предложения: строки-дубли сохраняются как отдельные предложения'
         skipped:
           type: integer
+          description: Строки без id
+        not_in_file:
+          type: integer
+          description: Продукты под управлением сида, которых нет в файле (не скрываются)
         errors:
           type: array
           items:
             type: object
+            required:
+              - row
+              - message
             properties:
               row:
                 type: integer
+                description: Номер строки файла, заголовок — строка 1
               message:
                 type: string
+        items:
+          type: array
+          description: Новые, изменённые и конфликтные продукты; неизменённые только считаются
+          items:
+            $ref: '#/components/schemas/CatalogImportItem'
     EnrichmentReview:
       type: object
       properties:

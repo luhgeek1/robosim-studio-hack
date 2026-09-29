@@ -5,6 +5,7 @@ import type {
   AdminUserUpdate,
   AnalyticsOverview,
   AuditList,
+  CatalogImportResult,
   NormSetCreate,
   ParameterDefaultWrite,
   ProductDetail,
@@ -31,6 +32,7 @@ export type SourcesQuery = {
   page?: number
   page_size?: number
 }
+export type CatalogImport = { file: File; notes?: string; dryRun: boolean }
 type DefaultsPath = '/api/v1/admin/parameter-defaults/{object_type}'
 type DefaultPath = '/api/v1/admin/parameter-defaults/{object_type}/{key}'
 
@@ -42,6 +44,17 @@ export const adminApi = {
   updateProduct: (id: string, body: ProductWrite) =>
     api.patch<ProductDetail>(`/admin/catalog/products/${id}`, body).then((r) => r.data),
   deleteProduct: (id: string) => api.delete(`/admin/catalog/products/${id}`).then(() => undefined),
+  importCatalog: ({ file, notes, dryRun }: CatalogImport) => {
+    const form = new FormData()
+    form.append('file', file)
+    if (notes) form.append('notes', notes)
+    return api
+      .post<CatalogImportResult>('/admin/catalog/import', form, {
+        params: { dry_run: dryRun },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
   upsertSpecs: (id: string, specs: SpecWrite[]) =>
     api.put<ProductDetail>(`/admin/catalog/products/${id}/specs`, { specs }).then((r) => r.data),
   publishNormSet: (body: NormSetCreate) =>
@@ -113,6 +126,13 @@ export const useCreateProduct = () => useCatalogWrite((body: ProductWrite) => ad
 export const useUpdateProduct = () =>
   useCatalogWrite(({ id, body }: { id: string; body: ProductWrite }) => adminApi.updateProduct(id, body))
 export const useDeleteProduct = () => useCatalogWrite((id: string) => adminApi.deleteProduct(id))
+// Предпросмотр ничего не пишет — кэш не трогаем; применение идёт через useCatalogWrite.
+export const usePreviewCatalogImport = () =>
+  useMutation({
+    mutationFn: (args: Omit<CatalogImport, 'dryRun'>) => adminApi.importCatalog({ ...args, dryRun: true }),
+  })
+export const useApplyCatalogImport = () =>
+  useCatalogWrite((args: Omit<CatalogImport, 'dryRun'>) => adminApi.importCatalog({ ...args, dryRun: false }))
 export const useUpsertSpecs = () =>
   useCatalogWrite(({ id, specs }: { id: string; specs: SpecWrite[] }) => adminApi.upsertSpecs(id, specs))
 

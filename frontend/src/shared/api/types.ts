@@ -147,6 +147,8 @@ export type RegistrySource = S['RegistrySource']
 export type SourceList = S['SourceList']
 export type SourceUpdate = S['SourceUpdate']
 export type SourceFreshness = S['SourceFreshness']
+export type CatalogImportResult = S['CatalogImportResult']
+export type CatalogImportItem = S['CatalogImportItem']
 export type SolutionType = S['SolutionType']
 export type Industry = S['Industry']
 

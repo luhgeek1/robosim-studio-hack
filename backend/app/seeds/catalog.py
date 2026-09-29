@@ -46,6 +46,7 @@ from app.seeds.schemas import (
 from app.seeds.sources import SourceRegistry
 
 _OFFER_NAMESPACE = uuid.UUID("5b3f0c1e-8a1d-4d8e-9f62-3c0a4b7e2d11")
+UNKNOWN_MANUFACTURER = "Не указан"
 
 
 _SEED_FILES = ("catalog_mapping.yaml", "spec_keys.yaml", "solution_types.yaml")
@@ -101,6 +102,55 @@ def _number(raw: str | None) -> float | None:
         return None
 
 
+def manufacturer_name(rows: list[CatalogRow]) -> str:
+    return rows[0].get("компания") or UNKNOWN_MANUFACTURER
+
+
+def product_values(
+    rows: list[CatalogRow], item: ProductMappingSeed, synonyms: dict[str, str]
+) -> dict[str, Any]:
+    """Card fields of one product from its CSV rows and the mapping entry (name, type, processes)."""
+    first = rows[0]
+    return {
+        "name": item.name,
+        "solution_type": item.solution_type,
+        "subtype": _subtype(first, synonyms),
+        "catalog_category": first.get("Тип") or first.get("тип"),
+        "status": catalog_status(first.get("статус")),
+        "trl": int(trl) if (trl := _number(first.get("УГТ"))) else None,
+        "market_potential": _number(first.get("Рын Потенциал")),
+        "description": first.get("описание"),
+        "object_types": [t.value for t in item.object_types],
+        "processes": item.processes,
+        "price_from_rub": min(catalog_price(row) for row in rows),
+        "offers_count": len(rows),
+    }
+
+
+def offer_values(
+    pid: uuid.UUID, rows: list[CatalogRow], industry_keys: dict[str, str]
+) -> list[dict[str, Any]]:
+    """One offer per CSV row; the id is stable for (product, industry, scenario), so scenarios keep it."""
+    offers: list[dict[str, Any]] = []
+    for row in rows:
+        industry = industry_keys.get(row.get("Отрасль") or "")
+        if industry is None:
+            raise SeedDataError(f"row {row.row}: unknown industry {row.get('Отрасль')!r}")
+        offers.append(
+            {
+                "id": uuid.uuid5(_OFFER_NAMESPACE, f"{pid}|{industry}|{row.get('Сценарий')}"),
+                "product_id": pid,
+                "industry_key": industry,
+                "scenario": row.get("Сценарий") or "—",
+                "price_rub": catalog_price(row),
+                "vat_included": True,
+                "cases_text": row.get("Кейсы"),
+                "source_row": row.row,
+            }
+        )
+    return offers
+
+
 class CatalogSeeder:
     def __init__(self, uow: UnitOfWork, settings: Settings, mapping: CatalogMappingSeed) -> None:
         self._uow = uow
@@ -124,50 +174,42 @@ class CatalogSeeder:
         unknown_refs = sorted({m.specs_ref for m in mapped.values() if m.specs_ref} - set(self._research))
         if unknown_refs:
             raise SeedDataError(f"catalog_mapping.yaml: unknown specs_ref {unknown_refs}")
-        capability_rows = await self._uow.session.execute(
-            select(SolutionType.key, SolutionType.capability_keys)
-        )
-        capabilities = dict(capability_rows.tuples().all())
-        self._case_owners = _case_owners(rows_by_id)
+        capabilities = await self.capabilities()
+        self.use_case_owners(rows_by_id)
         touched = 0
         for product_id, rows in rows_by_id.items():
             existing = await self._uow.session.get(Product, uuid.UUID(product_id))
             if existing is not None and not existing.managed_by_seed:
                 continue
-            await self._upsert_product(product_id, rows, mapped[product_id], capabilities)
+            await self.upsert_product(product_id, rows, mapped[product_id], capabilities)
             touched += 1
         await self._bump_version(current, inputs_hash)
         return touched
 
-    async def _upsert_product(
+    async def capabilities(self) -> dict[str, list[str]]:
+        rows = await self._uow.session.execute(select(SolutionType.key, SolutionType.capability_keys))
+        return dict(rows.tuples().all())
+
+    def use_case_owners(self, rows_by_id: dict[str, list[CatalogRow]]) -> None:
+        """Which products share a «Кейсы» text: only a text of one product alone counts as its own case."""
+        self._case_owners = _case_owners(rows_by_id)
+
+    async def upsert_product(
         self,
         product_id: str,
         rows: list[CatalogRow],
         item: ProductMappingSeed,
         capabilities: dict[str, list[str]],
     ) -> None:
-        first = rows[0]
         pid = uuid.UUID(product_id)
         manufacturer_id = await _manufacturer_id(
-            self._uow, (first.get("компания") or "Не указан"), first.get("Регион"), item.website
+            self._uow, manufacturer_name(rows), rows[0].get("Регион"), item.website
         )
         research = self._research.get(item.specs_ref) if item.specs_ref else None
-        prices = [catalog_price(row) for row in rows]
         values: dict[str, Any] = {
             "id": pid,
-            "name": item.name,
+            **product_values(rows, item, self._mapping.subtype_synonyms),
             "manufacturer_id": manufacturer_id,
-            "solution_type": item.solution_type,
-            "subtype": _subtype(first, self._mapping.subtype_synonyms),
-            "catalog_category": first.get("Тип") or first.get("тип"),
-            "status": catalog_status(first.get("статус")),
-            "trl": int(trl) if (trl := _number(first.get("УГТ"))) else None,
-            "market_potential": _number(first.get("Рын Потенциал")),
-            "description": first.get("описание"),
-            "object_types": [t.value for t in item.object_types],
-            "processes": item.processes,
-            "price_from_rub": min(prices),
-            "offers_count": len(rows),
             "updated_at": datetime.now(UTC),
         }
         statement = insert(Product).values(**values, managed_by_seed=True, badges=[], completeness=0.0)
@@ -182,22 +224,10 @@ class CatalogSeeder:
     async def _replace_offers(self, pid: uuid.UUID, rows: list[CatalogRow]) -> None:
         source_id = await self._sources.id_for(CATALOG_SOURCE)
         keep: list[uuid.UUID] = []
-        for row in rows:
-            industry = self._mapping.industry_keys.get(row.get("Отрасль") or "")
-            if industry is None:
-                raise SeedDataError(f"row {row.row}: unknown industry {row.get('Отрасль')!r}")
-            offer_id = uuid.uuid5(_OFFER_NAMESPACE, f"{pid}|{industry}|{row.get('Сценарий')}")
+        for offer in offer_values(pid, rows, self._mapping.industry_keys):
+            offer_id = offer.pop("id")
             keep.append(offer_id)
-            values = {
-                "product_id": pid,
-                "industry_key": industry,
-                "scenario": row.get("Сценарий") or "—",
-                "price_rub": catalog_price(row),
-                "vat_included": True,
-                "cases_text": row.get("Кейсы"),
-                "source_id": source_id,
-                "source_row": row.row,
-            }
+            values = {**offer, "source_id": source_id}
             statement = insert(ProductOffer).values(id=offer_id, **values)
             await self._uow.session.execute(
                 statement.on_conflict_do_update(index_elements=[ProductOffer.id], set_=values)
