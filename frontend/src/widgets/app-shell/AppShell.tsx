@@ -16,18 +16,20 @@ function StepDock({ projectId }: { projectId: string }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-8">
       <nav
-        className="glass pointer-events-auto relative flex max-w-full items-center gap-1 overflow-x-auto rounded-full p-2 backdrop-blur-xl backdrop-saturate-150"
+        // Тёмная «приборная» поверхность (DESIGN.md): на бумажном холсте и светлых карточках плашка не сливается
+        // с контентом, а сигнальный цвет остаётся за главным выводом экрана.
+        className="pointer-events-auto relative flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-ink/92 p-2 shadow-[0_18px_40px_-12px_rgba(20,20,19,0.45),0_2px_6px_rgba(20,20,19,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/10 backdrop-blur-xl [scrollbar-width:none]"
         aria-label="Шаги оценки"
       >
-        <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,19,0.08),0_4px_12px_-4px_rgba(20,20,19,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
+        <SlideHighlight className="rounded-full bg-card shadow-[0_1px_2px_rgba(0,0,0,0.25),0_6px_16px_-6px_rgba(0,0,0,0.45)]" />
         {PROJECT_STEPS.map((step, i) => (
           <NavLink
             key={step.id}
             to={`/projects/${projectId}/${step.id}`}
             className={({ isActive }) =>
               cn(
-                'relative flex h-11 items-center rounded-full px-4.5 text-[14.5px] font-medium whitespace-nowrap text-ink transition-colors',
-                !isActive && 'hover:bg-white/50',
+                'relative flex h-11 items-center rounded-full px-4.5 text-[14.5px] font-medium whitespace-nowrap transition-colors',
+                isActive ? 'text-ink' : 'text-white/72 hover:bg-white/8 hover:text-white',
               )
             }
           >
@@ -35,7 +37,7 @@ function StepDock({ projectId }: { projectId: string }) {
               <>
                 {isActive && <SlideMark />}
                 <span className="relative z-10 flex items-center gap-2">
-                  <span className="num text-[12px] text-ink">{i + 1}</span>
+                  <span className={cn('num text-[12px]', isActive ? 'text-ink-3' : 'text-white/40')}>{i + 1}</span>
                   {step.label}
                 </span>
               </>
