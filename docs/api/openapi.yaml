@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.7.3
+  version: 0.8.0
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -172,6 +172,8 @@ paths:
   /api/v1/vendor/overview: {$ref: './paths/vendor.yaml#/vendorOverview'}
   /api/v1/vendor/fit: {$ref: './paths/vendor.yaml#/vendorFit'}
   /api/v1/vendor/proposals: {$ref: './paths/vendor.yaml#/vendorProposals'}
+  /api/v1/vendor/rfqs: {$ref: './paths/vendor.yaml#/vendorRfqs'}
+  /api/v1/vendor/rfqs/{rfq_id}/reply: {$ref: './paths/vendor.yaml#/vendorRfqReply'}
   /api/v1/vendor/proposals/{proposal_id}/withdraw: {$ref: './paths/vendor.yaml#/vendorProposalWithdraw'}
   /api/v1/integrations/projects: {$ref: './paths/platform.yaml#/integrationProjects'}
   /api/v1/integrations/catalog/products: {$ref: './paths/platform.yaml#/integrationCatalogUpsert'}
@@ -237,3 +239,5 @@ components:
     ProposalList: {$ref: './components/vendor.yaml#/ProposalList'}
     VendorOverview: {$ref: './components/vendor.yaml#/VendorOverview'}
     VendorFit: {$ref: './components/vendor.yaml#/VendorFit'}
+    Rfq: {$ref: './components/vendor.yaml#/Rfq'}
+    RfqList: {$ref: './components/vendor.yaml#/RfqList'}

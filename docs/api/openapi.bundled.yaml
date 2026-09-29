@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.7.3
+  version: 0.8.0
   license:
     name: MIT
     identifier: MIT
@@ -2531,13 +2531,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/SupportMeasureList'
   /api/v1/projects/{project_id}/rfq:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags:
+        - rfq
+      operationId: listProjectRfqs
+      summary: Запросы КП проекта и ответы производителей
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RfqList'
+        '404':
+          $ref: '#/components/responses/NotFound'
     post:
       tags:
         - rfq
       operationId: createRfq
-      summary: Сформировать запрос коммерческого предложения вендорам по сценарию
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
+      summary: Запросить коммерческое предложение у производителей решений сценария
       requestBody:
         required: true
         content:
@@ -2546,11 +2560,15 @@ paths:
               $ref: '#/components/schemas/RfqRequest'
       responses:
         '201':
-          description: Сформирован
+          description: Отправлено
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Rfq'
+                $ref: '#/components/schemas/RfqList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/v1/admin/catalog/products:
     post:
       tags:
@@ -3194,6 +3212,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Proposal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/vendor/rfqs:
+    get:
+      tags:
+        - vendor
+      operationId: vendorListRfqs
+      summary: Входящие запросы КП производителя
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RfqList'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/vendor/rfqs/{rfq_id}/reply:
+    post:
+      tags:
+        - vendor
+      operationId: vendorReplyRfq
+      summary: 'Ответить на запрос КП: цена и срок поставки или отказ с причиной'
+      parameters:
+        - name: rfq_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RfqReply'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rfq'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -5823,6 +5888,134 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProductFit'
+    Rfq:
+      type: object
+      description: Запрос КП. Производитель видит снимок объекта на момент запроса, а не живой проект.
+      required:
+        - id
+        - status
+        - product
+        - object
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/RfqStatus'
+        project_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+        scenario_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+        product:
+          $ref: '#/components/schemas/Product'
+        quantity:
+          type:
+            - integer
+            - 'null'
+        message:
+          type:
+            - string
+            - 'null'
+        object:
+          type: object
+          required:
+            - object_type
+            - object_type_name
+            - industry
+            - params
+            - processes
+          properties:
+            object_type:
+              type: string
+            object_type_name:
+              type: string
+            industry:
+              type: string
+            params:
+              type: array
+              items:
+                type: object
+                required:
+                  - key
+                  - name
+                properties:
+                  key:
+                    type: string
+                  name:
+                    type: string
+                  value: {}
+                  unit:
+                    type:
+                      - string
+                      - 'null'
+            processes:
+              type: array
+              items:
+                type: object
+                required:
+                  - key
+                  - name
+                properties:
+                  key:
+                    type: string
+                  name:
+                    type: string
+        contact:
+          description: Только производителю и только с согласия заказчика.
+          oneOf:
+            - type: object
+              required:
+                - name
+                - email
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                organization:
+                  type:
+                    - string
+                    - 'null'
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        price:
+          oneOf:
+            - $ref: '#/components/schemas/Money'
+            - type: 'null'
+        lead_time_weeks:
+          type:
+            - integer
+            - 'null'
+        response_message:
+          type:
+            - string
+            - 'null'
+        responded_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+    RfqList:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rfq'
+        total:
+          type: integer
     Health:
       type: object
       required:
@@ -9437,70 +9630,48 @@ components:
               type:
                 - number
                 - 'null'
+    RfqStatus:
+      type: string
+      description: sent — ждёт ответа; answered — производитель назвал цену и срок; declined — отказ с причиной.
+      enum:
+        - sent
+        - answered
+        - declined
     RfqRequest:
       type: object
       required:
         - scenario_id
-        - product_ids
+        - items
       properties:
         scenario_id:
           type: string
           format: uuid
-        product_ids:
+        items:
           type: array
+          minItems: 1
           items:
-            type: string
-            format: uuid
-        contact:
-          type: object
-          properties:
-            name:
-              type: string
-            email:
-              type: string
-              format: email
-            phone:
-              type:
-                - string
-                - 'null'
-            organization:
-              type: string
+            type: object
+            required:
+              - product_id
+            properties:
+              product_id:
+                type: string
+                format: uuid
+              quantity:
+                type:
+                  - integer
+                  - 'null'
+                minimum: 1
+                description: Сколько единиц в сценарии
         message:
           type:
             - string
             - 'null'
-    Rfq:
-      type: object
-      required:
-        - id
-        - project_id
-        - scenario_id
-        - products
-        - document
-        - created_at
-      properties:
-        id:
-          type: string
-          format: uuid
-        project_id:
-          type: string
-          format: uuid
-        scenario_id:
-          type: string
-          format: uuid
-        products:
-          type: array
-          items:
-            $ref: '#/components/schemas/Product'
-        document:
-          $ref: '#/components/schemas/FileRef'
-        payload:
-          type: object
-          description: Структурированный запрос — параметры объекта, требуемые ТТХ, количество, вопросы вендору.
-          additionalProperties: true
-        created_at:
-          type: string
-          format: date-time
+          maxLength: 2000
+        share_contact:
+          type: boolean
+          default: false
+          description: Показать производителю имя, почту и компанию
     SourceWrite:
       type: object
       required:
@@ -10192,6 +10363,7 @@ components:
                 type: integer
         rfq_count:
           type: integer
+          description: Запросы КП производителям за период
     ProposalStatus:
       type: string
       description: pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
@@ -10409,6 +10581,33 @@ components:
           minLength: 1
           maxLength: 2000
           description: Что изменилось и почему — для модератора
+    RfqReply:
+      type: object
+      required:
+        - decision
+      properties:
+        decision:
+          type: string
+          enum:
+            - offer
+            - decline
+        price:
+          description: Цена за единицу; обязательна для offer.
+          oneOf:
+            - $ref: '#/components/schemas/Money'
+            - type: 'null'
+        lead_time_weeks:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          maximum: 260
+        message:
+          type:
+            - string
+            - 'null'
+          maxLength: 2000
+          description: Обязателен при отказе
     IntegrationProjectCreate:
       type: object
       description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи.

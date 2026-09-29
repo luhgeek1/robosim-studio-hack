@@ -330,32 +330,6 @@ SupportMeasureList:
 
 # ---------------- Запрос вендорам (RFQ) ----------------
 
-RfqRequest:
-  type: object
-  required: [scenario_id, product_ids]
-  properties:
-    scenario_id: {type: string, format: uuid}
-    product_ids: {type: array, items: {type: string, format: uuid}}
-    contact:
-      type: object
-      properties: {name: {type: string}, email: {type: string, format: email}, phone: {type: [string, "null"]}, organization: {type: string}}
-    message: {type: [string, "null"]}
-
-Rfq:
-  type: object
-  required: [id, project_id, scenario_id, products, document, created_at]
-  properties:
-    id: {type: string, format: uuid}
-    project_id: {type: string, format: uuid}
-    scenario_id: {type: string, format: uuid}
-    products: {type: array, items: {$ref: './catalog.yaml#/Product'}}
-    document: {$ref: './common.yaml#/FileRef'}
-    payload:
-      type: object
-      description: Структурированный запрос — параметры объекта, требуемые ТТХ, количество, вопросы вендору.
-      additionalProperties: true
-    created_at: {type: string, format: date-time}
-
 # ---------------- Аналитика для ФЦ БАС ----------------
 
 AnalyticsOverview:
@@ -373,7 +347,7 @@ AnalyticsOverview:
       type: array
       description: Процессы, для которых чаще всего нет подходящих решений — сигнал для ФЦ БАС.
       items: {type: object, properties: {object_type: {type: string}, process_key: {type: string}, no_fit_count: {type: integer}}}
-    rfq_count: {type: integer}
+    rfq_count: {type: integer, description: "Запросы КП производителям за период"}
 
 # ---------------- Справочники в админке: параметры по умолчанию и источники ----------------
 

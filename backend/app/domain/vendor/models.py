@@ -124,3 +124,33 @@ class VendorFit:
     projects_analysed: int
     computed_at: datetime
     products: list[ProductFit]
+
+
+class RfqStatus(StrEnum):
+    SENT = "sent"
+    ANSWERED = "answered"
+    DECLINED = "declined"
+
+
+class RfqDecision(StrEnum):
+    OFFER = "offer"
+    DECLINE = "decline"
+
+
+@dataclass(frozen=True, slots=True)
+class RfqInfo:
+    id: UUID
+    status: RfqStatus
+    project_id: UUID | None
+    scenario_id: UUID | None
+    product: ProductSummary
+    quantity: int | None
+    message: str | None
+    snapshot: dict[str, Any]
+    contact: dict[str, str | None] | None
+    created_at: datetime
+    price_rub: float | None = None
+    vat_included: bool = True
+    lead_time_weeks: int | None = None
+    response_message: str | None = None
+    responded_at: datetime | None = None

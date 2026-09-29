@@ -11,6 +11,10 @@ from app.api.schemas.vendor import (
     ProposalList,
     ProposalReview,
     ProposalWrite,
+    Rfq as RfqSchema,
+    RfqList,
+    RfqReply,
+    RfqRequest,
     VendorFit,
     VendorOverview,
 )
@@ -18,11 +22,12 @@ from app.db.repositories.vendor import VendorRepository
 from app.domain.auth import CurrentUser, Permission
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.vendor import ProposalStatus
-from app.service.vendor import ProposalService, VendorFitService, VendorOverviewService
+from app.service.vendor import ProposalService, RfqService, VendorFitService, VendorOverviewService
 
 router = APIRouter()
 
 VendorDep = Annotated[CurrentUser, Depends(require(Permission.CATALOG_PROPOSE))]
+MemberDep = Annotated[CurrentUser, Depends(require(Permission.PROJECTS_OWN))]
 CatalogAdmin = Annotated[CurrentUser, Depends(require(Permission.CATALOG_WRITE))]
 ProposalIdPath = Annotated[UUID, Path()]
 NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"description": "Не найдено"}}
@@ -137,3 +142,67 @@ async def admin_list_manufacturers(_: CatalogAdmin, uow: UowDep) -> Manufacturer
             if counts.get(m.id, 0) > 0
         ]
     )
+
+
+@router.post(
+    "/projects/{project_id}/rfq",
+    tags=["rfq"],
+    operation_id="createRfq",
+    summary="Запросить коммерческое предложение у производителей решений сценария",
+    status_code=status.HTTP_201_CREATED,
+    responses=NOT_FOUND,
+)
+async def create_rfq(
+    project_id: Annotated[UUID, Path()], payload: RfqRequest, user: MemberDep, uow: UowDep
+) -> RfqList:
+    items = await RfqService(uow, user).create(
+        project_id,
+        payload.scenario_id,
+        [(item.product_id, item.quantity) for item in payload.items],
+        payload.message,
+        payload.share_contact,
+    )
+    return RfqList.from_domain(items)
+
+
+@router.get(
+    "/projects/{project_id}/rfq",
+    tags=["rfq"],
+    operation_id="listProjectRfqs",
+    summary="Запросы КП проекта и ответы производителей",
+    responses=NOT_FOUND,
+)
+async def list_project_rfqs(project_id: Annotated[UUID, Path()], user: MemberDep, uow: UowDep) -> RfqList:
+    return RfqList.from_domain(await RfqService(uow, user).for_project(project_id))
+
+
+@router.get(
+    "/vendor/rfqs",
+    tags=["vendor"],
+    operation_id="vendorListRfqs",
+    summary="Входящие запросы КП производителя",
+    responses=CONFLICT,
+)
+async def vendor_list_rfqs(user: VendorDep, uow: UowDep) -> RfqList:
+    return RfqList.from_domain(await RfqService(uow, user).inbox())
+
+
+@router.post(
+    "/vendor/rfqs/{rfq_id}/reply",
+    tags=["vendor"],
+    operation_id="vendorReplyRfq",
+    summary="Ответить на запрос КП: цена и срок поставки или отказ с причиной",
+    responses={**NOT_FOUND, **CONFLICT},
+)
+async def vendor_reply_rfq(
+    rfq_id: Annotated[UUID, Path()], payload: RfqReply, user: VendorDep, uow: UowDep
+) -> RfqSchema:
+    item = await RfqService(uow, user).reply(
+        rfq_id,
+        payload.decision,
+        payload.price.amount_rub if payload.price else None,
+        payload.price.vat_included if payload.price else True,
+        payload.lead_time_weeks,
+        payload.message,
+    )
+    return RfqSchema.from_domain(item)

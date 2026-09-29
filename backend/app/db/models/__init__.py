@@ -20,7 +20,7 @@ from app.db.models.reference import (
 from app.db.models.reports import Report
 from app.db.models.scenarios import CalculationRun, Scenario, ScenarioItem
 from app.db.models.simulations import SimulationRun
-from app.db.models.vendor import VendorProposal
+from app.db.models.vendor import Rfq, VendorProposal
 
 __all__ = [
     "ApiKey",
@@ -50,6 +50,7 @@ __all__ = [
     "Project",
     "ProjectParam",
     "Report",
+    "Rfq",
     "Scenario",
     "ScenarioItem",
     "SimulationRun",

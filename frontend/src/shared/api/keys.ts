@@ -64,6 +64,7 @@ export const qk = {
     all: ['vendor'] as const,
     overview: ['vendor', 'overview'] as const,
     fit: ['vendor', 'fit'] as const,
+    rfqs: ['vendor', 'rfqs'] as const,
     proposals: ['vendor', 'proposals'] as const,
   },
   proposals: {

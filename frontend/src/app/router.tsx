@@ -62,6 +62,10 @@ const router = createBrowserRouter([
                     path: 'proposals',
                     ...page(() => import('@/pages/vendor').then((m) => ({ Component: m.VendorProposalsTab }))),
                   },
+                  {
+                    path: 'rfqs',
+                    ...page(() => import('@/pages/vendor').then((m) => ({ Component: m.VendorRfqsTab }))),
+                  },
                 ],
               },
             ],

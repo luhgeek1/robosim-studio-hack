@@ -9,6 +9,7 @@ import { Textarea } from '@/shared/ui/textarea'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Segmented } from '@/shared/ui/v0'
 import { CalculationView } from './CalculationView'
+import { RfqPanel } from './RfqPanel'
 import { draftProblems, sameDraft, toDraft, toUpdate, type Draft } from './draft'
 import { ScenarioEditor } from './ScenarioEditor'
 import { TraceSheet } from './TraceSheet'
@@ -152,6 +153,19 @@ export function ScenarioPage() {
         </div>
       )}
 
+      <RfqPanel
+        projectId={projectId}
+        scenario={current}
+        onApplyPrice={(productId, price, reason) => {
+          setDraft({
+            ...draft,
+            items: draft.items.map((item) =>
+              item.product_id === productId ? { ...item, price_override_rub: price, override_reason: reason } : item,
+            ),
+          })
+          setTab('config')
+        }}
+      />
       <Segmented
         value={activeTab}
         onChange={setTab}

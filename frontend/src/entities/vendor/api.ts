@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/shared/api/client'
 import { qk } from '@/shared/api/keys'
+import type { paths } from '@/shared/api/schema'
 import type {
   Proposal,
   ProposalList,
@@ -8,9 +9,17 @@ import type {
   ProposalStatus,
   ProposalWrite,
   Res,
+  Rfq,
+  RfqList,
   VendorFit,
   VendorOverview,
 } from '@/shared/api/types'
+
+type Req<P extends keyof paths> = paths[P] extends {
+  post: { requestBody?: { content: { 'application/json': infer B } } }
+}
+  ? B
+  : never
 
 const HOUR = 60 * 60 * 1000
 // Очередь модерации и счётчик в шапке админки обновляются сами: заявки приходят без действий администратора.
@@ -26,6 +35,12 @@ export const vendorApi = {
     api.get<ProposalList>('/admin/proposals', { params: { status } }).then((r) => r.data),
   review: (id: string, body: ProposalReview) =>
     api.post<Proposal>(`/admin/proposals/${id}/review`, body).then((r) => r.data),
+  rfqs: () => api.get<RfqList>('/vendor/rfqs').then((r) => r.data),
+  reply: (id: string, body: Req<'/api/v1/vendor/rfqs/{rfq_id}/reply'>) =>
+    api.post<Rfq>(`/vendor/rfqs/${id}/reply`, body).then((r) => r.data),
+  projectRfqs: (projectId: string) => api.get<RfqList>(`/projects/${projectId}/rfq`).then((r) => r.data),
+  createRfq: (projectId: string, body: Req<'/api/v1/projects/{project_id}/rfq'>) =>
+    api.post<RfqList>(`/projects/${projectId}/rfq`, body).then((r) => r.data),
   manufacturers: () =>
     api.get<Res<'/api/v1/admin/manufacturers', 'get'>>('/admin/manufacturers').then((r) => r.data.items),
 }
@@ -81,3 +96,31 @@ export function useReviewProposal() {
 
 export const useManufacturers = () =>
   useQuery({ queryKey: qk.manufacturers, queryFn: vendorApi.manufacturers, staleTime: HOUR })
+
+// Запросы КП приходят от заказчиков в любой момент — входящие обновляются сами, как очередь модерации у админа.
+export const useVendorRfqs = () =>
+  useQuery({ queryKey: qk.vendor.rfqs, queryFn: vendorApi.rfqs, refetchInterval: QUEUE_POLL_MS })
+
+export function useReplyRfq() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Req<'/api/v1/vendor/rfqs/{rfq_id}/reply'> }) =>
+      vendorApi.reply(id, body),
+    onSuccess: () => client.invalidateQueries({ queryKey: qk.vendor.rfqs }),
+  })
+}
+
+export const useProjectRfqs = (projectId: string) =>
+  useQuery({
+    queryKey: ['projects', projectId, 'rfqs'],
+    queryFn: () => vendorApi.projectRfqs(projectId),
+    refetchInterval: QUEUE_POLL_MS,
+  })
+
+export function useCreateRfq(projectId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Req<'/api/v1/projects/{project_id}/rfq'>) => vendorApi.createRfq(projectId, body),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['projects', projectId, 'rfqs'] }),
+  })
+}

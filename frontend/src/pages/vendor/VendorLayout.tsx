@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Building2, FileClock, LayoutDashboard, Package } from 'lucide-react'
+import { Building2, FileClock, Inbox, LayoutDashboard, Package } from 'lucide-react'
 import { NavLink, useLocation, useOutlet } from 'react-router'
 import { useSystemVersion } from '@/entities/reference'
-import { useVendorOverview } from '@/entities/vendor'
+import { useVendorOverview, useVendorRfqs } from '@/entities/vendor'
 import { parseApiProblem } from '@/shared/api/problem'
 import { cn } from '@/shared/lib/utils'
 import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
@@ -13,6 +13,7 @@ const TABS = [
   { to: '/vendor', label: 'Обзор', icon: LayoutDashboard, end: true },
   { to: '/vendor/products', label: 'Продукты', icon: Package },
   { to: '/vendor/proposals', label: 'Заявки', icon: FileClock },
+  { to: '/vendor/rfqs', label: 'Запросы КП', icon: Inbox },
 ]
 
 export function VendorLayout() {
@@ -20,6 +21,7 @@ export function VendorLayout() {
   const outlet = useOutlet()
   const overview = useVendorOverview()
   const version = useSystemVersion()
+  const rfqs = useVendorRfqs()
 
   if (overview.isPending) return <LoadingBlock className="p-8" label="Открываем кабинет…" />
   if (overview.isError) {
@@ -41,6 +43,8 @@ export function VendorLayout() {
 
   const { manufacturer } = overview.data
   const pending = overview.data.proposals_by_status.pending ?? 0
+  const incoming = rfqs.data?.items.filter((r) => r.status === 'sent').length ?? 0
+  const badges: Record<string, number> = { '/vendor/proposals': pending, '/vendor/rfqs': incoming }
 
   return (
     <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-20">
@@ -78,15 +82,14 @@ export function VendorLayout() {
                 <>
                   <tab.icon size={15} className={isActive ? 'text-ink' : 'text-ink-4'} />
                   {tab.label}
-                  {tab.to === '/vendor/proposals' && pending > 0 && (
+                  {(badges[tab.to] ?? 0) > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={SPRING}
                       className="num flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-black/8 px-1 text-[10.5px] text-ink-2"
-                      title="На модерации"
                     >
-                      {pending}
+                      {badges[tab.to]}
                     </motion.span>
                   )}
                   {isActive && <SlideMark className="absolute inset-x-2 -bottom-px h-0.5" />}

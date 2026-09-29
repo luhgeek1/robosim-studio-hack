@@ -1563,12 +1563,15 @@ export interface paths {
     parameters: {
       query?: never
       header?: never
-      path?: never
+      path: {
+        project_id: components['parameters']['ProjectId']
+      }
       cookie?: never
     }
-    get?: never
+    /** Запросы КП проекта и ответы производителей */
+    get: operations['listProjectRfqs']
     put?: never
-    /** Сформировать запрос коммерческого предложения вендорам по сценарию */
+    /** Запросить коммерческое предложение у производителей решений сценария */
     post: operations['createRfq']
     delete?: never
     options?: never
@@ -1998,6 +2001,40 @@ export interface paths {
     put?: never
     /** Предложить правку своей карточки или новый продукт (на модерацию) */
     post: operations['vendorCreateProposal']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/rfqs': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Входящие запросы КП производителя */
+    get: operations['vendorListRfqs']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/vendor/rfqs/{rfq_id}/reply': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Ответить на запрос КП: цена и срок поставки или отказ с причиной */
+    post: operations['vendorReplyRfq']
     delete?: never
     options?: never
     head?: never
@@ -3204,6 +3241,51 @@ export interface components {
       /** Format: date-time */
       computed_at: string
       products: components['schemas']['ProductFit'][]
+    }
+    /** @description Запрос КП. Производитель видит снимок объекта на момент запроса, а не живой проект. */
+    Rfq: {
+      /** Format: uuid */
+      id: string
+      status: components['schemas']['RfqStatus']
+      /** Format: uuid */
+      project_id?: string | null
+      /** Format: uuid */
+      scenario_id?: string | null
+      product: components['schemas']['Product']
+      quantity?: number | null
+      message?: string | null
+      object: {
+        object_type: string
+        object_type_name: string
+        industry: string
+        params: {
+          key: string
+          name: string
+          value?: unknown
+          unit?: string | null
+        }[]
+        processes: {
+          key: string
+          name: string
+        }[]
+      }
+      /** @description Только производителю и только с согласия заказчика. */
+      contact?: {
+        name: string
+        email: string
+        organization?: string | null
+      } | null
+      /** Format: date-time */
+      created_at: string
+      price?: components['schemas']['Money'] | null
+      lead_time_weeks?: number | null
+      response_message?: string | null
+      /** Format: date-time */
+      responded_at?: string | null
+    }
+    RfqList: {
+      items: components['schemas']['Rfq'][]
+      total: number
     }
     Health: {
       /** @enum {string} */
@@ -4784,34 +4866,26 @@ export interface components {
         domestic_share_pct?: number | null
       }
     }
+    /**
+     * @description sent — ждёт ответа; answered — производитель назвал цену и срок; declined — отказ с причиной.
+     * @enum {string}
+     */
+    RfqStatus: 'sent' | 'answered' | 'declined'
     RfqRequest: {
       /** Format: uuid */
       scenario_id: string
-      product_ids: string[]
-      contact?: {
-        name?: string
-        /** Format: email */
-        email?: string
-        phone?: string | null
-        organization?: string
-      }
+      items: {
+        /** Format: uuid */
+        product_id: string
+        /** @description Сколько единиц в сценарии */
+        quantity?: number | null
+      }[]
       message?: string | null
-    }
-    Rfq: {
-      /** Format: uuid */
-      id: string
-      /** Format: uuid */
-      project_id: string
-      /** Format: uuid */
-      scenario_id: string
-      products: components['schemas']['Product'][]
-      document: components['schemas']['FileRef']
-      /** @description Структурированный запрос — параметры объекта, требуемые ТТХ, количество, вопросы вендору. */
-      payload?: {
-        [key: string]: unknown
-      }
-      /** Format: date-time */
-      created_at: string
+      /**
+       * @description Показать производителю имя, почту и компанию
+       * @default false
+       */
+      share_contact: boolean
     }
     SourceWrite: {
       kind: components['schemas']['SourceKind']
@@ -5098,6 +5172,7 @@ export interface components {
         process_key?: string
         no_fit_count?: number
       }[]
+      /** @description Запросы КП производителям за период */
       rfq_count?: number
     }
     /**
@@ -5196,6 +5271,15 @@ export interface components {
       specs?: components['schemas']['SpecWrite'][]
       /** @description Что изменилось и почему — для модератора */
       comment: string
+    }
+    RfqReply: {
+      /** @enum {string} */
+      decision: 'offer' | 'decline'
+      /** @description Цена за единицу; обязательна для offer. */
+      price?: components['schemas']['Money'] | null
+      lead_time_weeks?: number | null
+      /** @description Обязателен при отказе */
+      message?: string | null
     }
     /** @description Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи. */
     IntegrationProjectCreate: {
@@ -8102,6 +8186,29 @@ export interface operations {
       }
     }
   }
+  listProjectRfqs: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        project_id: components['parameters']['ProjectId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RfqList']
+        }
+      }
+      404: components['responses']['NotFound']
+    }
+  }
   createRfq: {
     parameters: {
       query?: never
@@ -8117,15 +8224,17 @@ export interface operations {
       }
     }
     responses: {
-      /** @description Сформирован */
+      /** @description Отправлено */
       201: {
         headers: {
           [name: string]: unknown
         }
         content: {
-          'application/json': components['schemas']['Rfq']
+          'application/json': components['schemas']['RfqList']
         }
       }
+      404: components['responses']['NotFound']
+      422: components['responses']['ValidationError']
     }
   }
   adminCreateProduct: {
@@ -8795,6 +8904,56 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Proposal']
+        }
+      }
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+      422: components['responses']['ValidationError']
+    }
+  }
+  vendorListRfqs: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RfqList']
+        }
+      }
+      409: components['responses']['Conflict']
+    }
+  }
+  vendorReplyRfq: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        rfq_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RfqReply']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Rfq']
         }
       }
       404: components['responses']['NotFound']

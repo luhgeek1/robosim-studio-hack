@@ -292,3 +292,82 @@ async def test_fit_shows_how_products_pass_matching_without_project_data(client:
     for item in seen:
         assert item["appearances"] == item["fit"] + item["check"] + item["excluded"] + item["manual"]
     assert any(p["missing"] or p["blocking"] for p in body["products"])
+
+
+async def _rfq_scenario(client: AsyncClient) -> tuple[str, str, str, dict[str, str]]:
+    user = await _headers(client, "user@robomera.demo")
+    payload = {
+        "name": "Склад «Секрет»",
+        "object_type": "warehouse",
+        "init": {"mode": "demo", "demo_key": "warehouse_demo_01"},
+    }
+    project_id = (await client.post("/api/v1/projects", json=payload, headers=user)).json()["id"]
+    matching = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=user)).json()
+    candidates = next(p for p in matching["processes"] if p["process_key"] == "pallet_transport")[
+        "candidates"
+    ]
+    product_id = next(c for c in candidates if "H1500" in c["product"]["name"])["product"]["id"]
+    scenario = {
+        "name": "Покупка",
+        "kind": "purchase",
+        "items": [{"process_key": "pallet_transport", "product_id": product_id}],
+    }
+    created = await client.post(f"/api/v1/projects/{project_id}/scenarios", json=scenario, headers=user)
+    assert created.status_code == 201, created.text
+    return project_id, created.json()["id"], product_id, user
+
+
+async def test_rfq_from_scenario_reaches_vendor_and_the_offer_comes_back(client: AsyncClient) -> None:
+    project_id, scenario_id, product_id, user = await _rfq_scenario(client)
+    url = f"/api/v1/projects/{project_id}/rfq"
+    body = {
+        "scenario_id": scenario_id,
+        "items": [{"product_id": product_id, "quantity": 13}],
+        "message": "Нужна поставка к марту",
+        "share_contact": True,
+    }
+    sent = await client.post(url, json=body, headers=user)
+    assert sent.status_code == 201, sent.text
+    rfq = sent.json()["items"][0]
+    assert rfq["status"] == "sent"
+    assert rfq["object"]["object_type"] == "warehouse"
+    assert rfq["object"]["params"], "производитель видит обязательные параметры объекта"
+
+    vendor = await _headers(client, "vendor@robomera.demo")
+    inbox = (await client.get(f"{VENDOR}/rfqs", headers=vendor)).json()["items"]
+    assert [item["id"] for item in inbox] == [rfq["id"]]
+    assert inbox[0]["contact"]["email"] == "user@robomera.demo"
+    assert "Секрет" not in str(inbox), "название проекта производителю не показываем"
+
+    reply = f"{VENDOR}/rfqs/{rfq['id']}/reply"
+    assert (await client.post(reply, json={"decision": "offer"}, headers=vendor)).status_code == 422
+    offer = {
+        "decision": "offer",
+        "price": {"amount_rub": 2_450_000},
+        "lead_time_weeks": 8,
+        "message": "Скидка 5 %",
+    }
+    answered = await client.post(reply, json=offer, headers=vendor)
+    assert answered.status_code == 200, answered.text
+    assert (await client.post(reply, json=offer, headers=vendor)).status_code == 409
+
+    mine = (await client.get(url, headers=user)).json()["items"]
+    assert mine[0]["status"] == "answered"
+    assert mine[0]["price"]["amount_rub"] == 2_450_000
+    assert mine[0]["contact"] is None
+
+    admin = await _headers(client, "admin@robomera.demo")
+    assert (await client.get(f"{ADMIN}/analytics/overview", headers=admin)).json()["rfq_count"] == 1
+
+
+async def test_rfq_only_for_scenario_products_and_own_projects(client: AsyncClient) -> None:
+    project_id, scenario_id, _, user = await _rfq_scenario(client)
+    admin = await _headers(client, "admin@robomera.demo")
+    foreign = await client.post(
+        f"{ADMIN}/catalog/products", json=_card("Чужой AMR", "Чужая компания"), headers=admin
+    )
+    url = f"/api/v1/projects/{project_id}/rfq"
+    body = {"scenario_id": scenario_id, "items": [{"product_id": foreign.json()["id"]}]}
+    assert (await client.post(url, json=body, headers=user)).status_code == 422
+    vendor = await _headers(client, "vendor@robomera.demo")
+    assert (await client.get(url, headers=vendor)).status_code == 404

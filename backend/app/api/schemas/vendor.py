@@ -17,6 +17,9 @@ from app.domain.vendor import (
     ProposalInfo,
     ProposalKind,
     ProposalStatus,
+    RfqDecision,
+    RfqInfo,
+    RfqStatus,
     VendorFit as VendorFitInfo,
     VendorOverview as VendorOverviewInfo,
     product_from_json,
@@ -290,3 +293,95 @@ class VendorFit(ApiModel):
                 for p in item.products
             ],
         )
+
+
+class RfqItemWrite(ApiModel):
+    product_id: UUID
+    quantity: int | None = Field(default=None, ge=1, description="Сколько единиц в сценарии")
+
+
+class RfqRequest(ApiModel):
+    scenario_id: UUID
+    items: list[RfqItemWrite] = Field(min_length=1)
+    message: str | None = Field(default=None, max_length=2000)
+    share_contact: bool = Field(default=False, description="Показать производителю имя, почту и компанию")
+
+
+class RfqParam(ApiModel):
+    key: str
+    name: str
+    value: Any = None
+    unit: str | None = None
+
+
+class RfqProcess(ApiModel):
+    key: str
+    name: str
+
+
+class RfqObject(ApiModel):
+    object_type: str
+    object_type_name: str
+    industry: str
+    params: list[RfqParam]
+    processes: list[RfqProcess]
+
+
+class RfqContact(ApiModel):
+    name: str
+    email: str
+    organization: str | None = None
+
+
+class Rfq(ApiModel):
+    id: UUID
+    status: RfqStatus
+    project_id: UUID | None = None
+    scenario_id: UUID | None = None
+    product: Product
+    quantity: int | None = None
+    message: str | None = None
+    object: RfqObject = Field(description="Снимок объекта на момент запроса — не живой проект")
+    contact: RfqContact | None = Field(default=None, description="Только производителю и только с согласия")
+    created_at: datetime
+    price: Money | None = None
+    lead_time_weeks: int | None = None
+    response_message: str | None = None
+    responded_at: datetime | None = None
+
+    @classmethod
+    def from_domain(cls, item: RfqInfo) -> "Rfq":
+        return cls(
+            id=item.id,
+            status=item.status,
+            project_id=item.project_id,
+            scenario_id=item.scenario_id,
+            product=Product.from_domain(item.product),
+            quantity=item.quantity,
+            message=item.message,
+            object=RfqObject.model_validate(item.snapshot),
+            contact=RfqContact.model_validate(item.contact) if item.contact else None,
+            created_at=item.created_at,
+            price=Money(amount_rub=item.price_rub, vat_included=item.vat_included)
+            if item.price_rub is not None
+            else None,
+            lead_time_weeks=item.lead_time_weeks,
+            response_message=item.response_message,
+            responded_at=item.responded_at,
+        )
+
+
+class RfqList(ApiModel):
+    items: list[Rfq]
+    total: int
+
+    @classmethod
+    def from_domain(cls, items: list[RfqInfo]) -> "RfqList":
+        return cls(items=[Rfq.from_domain(i) for i in items], total=len(items))
+
+
+class RfqReply(ApiModel):
+    decision: RfqDecision
+    price: Money | None = Field(default=None, description="Цена за единицу; обязательна для offer")
+    lead_time_weeks: int | None = Field(default=None, ge=0, le=260)
+    message: str | None = Field(default=None, max_length=2000, description="Обязателен при отказе")

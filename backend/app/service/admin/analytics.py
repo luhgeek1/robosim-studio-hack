@@ -5,9 +5,6 @@ from app.db.repositories.analytics import AnalyticsRepository
 from app.db.uow import UnitOfWork
 from app.domain.admin import AnalyticsOverview
 
-# The platform has no request-to-vendor (RFQ) flow yet; the field stays in the contract for the dashboard.
-NO_RFQ = 0
-
 
 def _day_start(day: date) -> datetime:
     return datetime.combine(day, time.min, tzinfo=UTC)
@@ -35,5 +32,5 @@ class AnalyticsService:
             top_products_in_scenarios=await repo.top_products(),
             demand_by_industry=await repo.projects_by_industry(),
             catalog_gaps=await repo.catalog_gaps(),
-            rfq_count=NO_RFQ,
+            rfq_count=await repo.rfq_count(),
         )

@@ -4,7 +4,16 @@ from typing import Any
 from sqlalchemy import ColumnElement, Select, any_, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import CalculationRun, ObjectType, ProcessDef, Product, Project, Scenario, ScenarioItem
+from app.db.models import (
+    CalculationRun,
+    ObjectType,
+    ProcessDef,
+    Product,
+    Project,
+    Rfq,
+    Scenario,
+    ScenarioItem,
+)
 from app.domain.admin import CatalogGap, ProductCount
 from app.domain.catalog import ProductStatus
 from app.domain.scenario.models import ScenarioKind
@@ -122,3 +131,7 @@ class AnalyticsRepository:
         )
         rows = (await self._session.execute(statement)).tuples()
         return [CatalogGap(object_type=ot, process_key=key, no_fit_count=total) for ot, key, total in rows]
+
+    async def rfq_count(self) -> int:
+        statement = select(func.count()).where(_within(Rfq.created_at, self._start, self._end))
+        return int(await self._session.scalar(statement) or 0)

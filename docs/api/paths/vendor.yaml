@@ -19,6 +19,31 @@ vendorFit:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/VendorFit'}}}}
       '409': {$ref: '../components/common.yaml#/responses/Conflict'}
 
+vendorRfqs:
+  get:
+    tags: [vendor]
+    operationId: vendorListRfqs
+    summary: Входящие запросы КП производителя
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/RfqList'}}}}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+
+vendorRfqReply:
+  post:
+    tags: [vendor]
+    operationId: vendorReplyRfq
+    summary: "Ответить на запрос КП: цена и срок поставки или отказ с причиной"
+    parameters:
+      - {name: rfq_id, in: path, required: true, schema: {type: string, format: uuid}}
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/vendor.yaml#/RfqReply'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/Rfq'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
 vendorProposals:
   get:
     tags: [vendor]

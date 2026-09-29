@@ -172,16 +172,25 @@ supportMeasures:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/SupportMeasureList'}}}}
 
 projectRfq:
+  parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+  get:
+    tags: [rfq]
+    operationId: listProjectRfqs
+    summary: Запросы КП проекта и ответы производителей
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/RfqList'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
   post:
     tags: [rfq]
     operationId: createRfq
-    summary: Сформировать запрос коммерческого предложения вендорам по сценарию
-    parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
+    summary: Запросить коммерческое предложение у производителей решений сценария
     requestBody:
       required: true
-      content: {application/json: {schema: {$ref: '../components/platform.yaml#/RfqRequest'}}}
+      content: {application/json: {schema: {$ref: '../components/vendor.yaml#/RfqRequest'}}}
     responses:
-      '201': {description: "Сформирован", content: {application/json: {schema: {$ref: '../components/platform.yaml#/Rfq'}}}}
+      '201': {description: "Отправлено", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/RfqList'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
 
 # ---------------- Админка: каталог ----------------
 
