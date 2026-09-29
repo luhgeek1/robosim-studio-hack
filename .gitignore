@@ -30,6 +30,7 @@ DESIGN.md
 docs/*
 !docs/api/
 !docs/METHOD.md
+!docs/assets/
 case/notes/
 case/org/
 presentation/
