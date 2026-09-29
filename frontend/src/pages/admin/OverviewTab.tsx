@@ -10,11 +10,10 @@ import { formatNumber, formatYears, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { KpiNumber } from '@/shared/ui/v0'
-import { Donut, HBars, VBars, type Slice } from './charts'
+import { Donut, HBars, type Slice } from './charts'
+import { PaybackScale } from './PaybackScale'
 import { stagger } from './motion'
 
-// Интервалы вердикта ТЗ 3.5.7: до 3 лет — выгодно, 3–5 — приемлемо, 5–7 — на грани.
-const PAYBACK_MARKS = [3, 5, 7]
 const TOP_TYPES = 8
 
 const typeLabel = (key: string) => OBJECT_TYPE_LABEL[key as ObjectTypeKey] ?? key
@@ -147,18 +146,8 @@ export function OverviewTab() {
             <Empty>Проектов пока нет</Empty>
           )}
         </Panel>
-        <Panel title="Окупаемость по объектам" note="Средняя по последним расчётам, лет">
-          {payback.length ? (
-            <VBars
-              data={payback}
-              format={(v) => formatYears(v)}
-              color={(s) => paybackTone(s.value)}
-              domainMax={Math.max(8, ...payback.map((s) => Math.ceil(s.value)))}
-              marks={PAYBACK_MARKS.map((m) => ({ value: m, label: `${m}` }))}
-            />
-          ) : (
-            <Empty>Расчётов с окупаемостью пока нет</Empty>
-          )}
+        <Panel title="Окупаемость по объектам" note="Средняя по последним расчётам на шкале вердикта">
+          {payback.length ? <PaybackScale data={payback} /> : <Empty>Расчётов с окупаемостью пока нет</Empty>}
         </Panel>
         <Panel title="Чаще всего в сценариях" note="Решения в расчётах пользователей, сценариев">
           {top.length ? (
