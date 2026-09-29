@@ -90,7 +90,7 @@ export function OverviewPage() {
               <span className="text-[13px] text-ink-3">
                 Сравните покупку с арендой и лизингом или заберите готовое обоснование
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 max-sm:w-full [&>a]:max-sm:flex-1">
                 <Button asChild variant="outline" size="lg">
                   <Link to="comparison">Сравнить варианты</Link>
                 </Button>
@@ -123,7 +123,7 @@ export function OverviewPage() {
                     )}
                   >
                     {audit.data.items.slice(0, 20).map((event) => (
-                      <li key={event.id} className="flex gap-3 px-2 py-2 first:pt-0">
+                      <li key={event.id} className="flex flex-col gap-0.5 px-2 py-2 first:pt-0 sm:flex-row sm:gap-3">
                         <span className="num shrink-0 whitespace-nowrap text-ink-3">{formatDateTime(event.at)}</span>
                         <span className="min-w-0">
                           <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? 'изменение'}</span>{' '}
@@ -192,8 +192,8 @@ function Start({ scenario }: { scenario?: Scenario }) {
 
 function Figure({ label, value, children }: { label: string; value: string; children: ReactNode }) {
   return (
-    <div className="min-w-0 px-6 py-5">
-      <div className="truncate text-[13px] text-ink-3">{label}</div>
+    <div className="min-w-0 px-5 py-4 sm:px-6 sm:py-5">
+      <div className="text-[13px] text-ink-3 sm:truncate">{label}</div>
       <div className="display num mt-2 text-[28px]">{value}</div>
       <div className="mt-2">{children}</div>
     </div>

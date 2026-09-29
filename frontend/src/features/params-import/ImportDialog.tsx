@@ -198,7 +198,7 @@ export function ImportDialog({
                           aria-label={`Применить «${item.name}»`}
                         />
                       </TableCell>
-                      <TableCell className="max-w-72 whitespace-normal">
+                      <TableCell className="max-w-72 min-w-44 whitespace-normal">
                         <div className="font-medium">{item.name}</div>
                         {item.raw_field && item.raw_field !== item.name && (
                           <div className="text-xs text-muted-foreground">поле «{item.raw_field}»</div>
@@ -237,7 +237,7 @@ export function ImportDialog({
               <div className="font-medium">
                 Не распознано <span className="num text-muted-foreground">({result.unmapped.length})</span>
               </div>
-              <ul className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+              <ul className="grid grid-cols-1 gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
                 {result.unmapped.map((item, i) => {
                   const suggestion = item.suggestion_key ? byKey.get(item.suggestion_key) : undefined
                   return (
@@ -261,8 +261,8 @@ export function ImportDialog({
           )}
         </div>
 
-        <DialogFooter className="items-center sm:justify-between">
-          <div className="flex items-center gap-2">
+        <DialogFooter className="sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 max-sm:order-last">
             {mapped.length > 0 && (
               <>
                 <Checkbox
@@ -276,7 +276,7 @@ export function ImportDialog({
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 [&>button]:max-sm:flex-1">
             <Button variant="outline" onClick={close}>
               Отмена
             </Button>

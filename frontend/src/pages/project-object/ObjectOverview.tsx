@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion'
 import { Check, ChevronLeft, ChevronRight, CircleAlert, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useDataQuality, useUpdateParam, useValidation } from '@/entities/project'
 import { PROVENANCE_LABEL } from '@/entities/provenance'
 import { ParamValueInput, displayRange, parseDraft, shortHint, toDraft } from '@/features/param-edit'
@@ -72,10 +72,10 @@ export function ObjectOverview({
   return (
     <section className="card overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="flex min-w-0 flex-col px-7 py-7">
+        <div className="flex min-w-0 flex-col px-5 py-6 sm:px-7 sm:py-7">
           {params ? <Readiness projectId={projectId} params={params} /> : <LoadingBlock rows={4} />}
         </div>
-        <div className="relative min-h-140 border-t border-line lg:border-t-0 lg:border-l">
+        <div className="relative min-h-110 border-t border-line sm:min-h-140 lg:border-t-0 lg:border-l">
           {objectType ? (
             <ObjectTwin projectId={projectId} objectType={objectType} />
           ) : (
@@ -168,7 +168,7 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
   }
 
   return (
-    <div className="my-auto py-8">
+    <div className="my-auto py-6 sm:py-8">
       <div className="flex flex-wrap gap-1.25" onPointerLeave={() => setHovered(null)}>
         {cells.map((param) => (
           <motion.button
@@ -192,10 +192,11 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
       </div>
       {/* Легенда и подпись наведённого параметра лежат друг на друге и меняются только прозрачностью:
           без монтирования по ключу подпись не может «застрять», как бы быстро ни двигался курсор. */}
-      <div className="relative mt-3 h-5 text-[12.5px]">
+      {/* До lg легенда стоит в потоке и переносится; подпись лежит поверх неё. */}
+      <div className="relative mt-3 min-h-5 text-[12.5px] lg:h-5">
         <div
           className={cn(
-            'absolute inset-0 flex gap-4 text-ink-3 transition-opacity duration-150',
+            'flex min-h-5 flex-wrap gap-x-4 gap-y-1 text-ink-3 lg:absolute lg:inset-0 lg:flex-nowrap transition-opacity duration-150',
             hovered ? 'opacity-0' : 'opacity-100',
           )}
         >
@@ -319,7 +320,7 @@ function FocusCard({
   }
 
   return (
-    <div className="px-5 pt-4.5 pb-5">
+    <div className="px-4 pt-4.5 pb-5 sm:px-5">
       <div className="flex items-center gap-2 text-[12.5px]">
         {impact && (
           <span className={cn('font-medium', item.impact === 'high' ? 'text-crit' : 'text-warn')}>{impact}</span>
@@ -353,26 +354,32 @@ function FocusCard({
               aria-label={param.name}
               aria-invalid={error ? true : undefined}
               disabled={update.isPending}
+              // На телефоне поле узкое: отступ под единицу по её длине, а не фиксированный, иначе число не видно.
+              style={
+                param.unit
+                  ? ({ '--unit-pad': `calc(${param.unit.length * 0.5}rem + 1.75rem)` } as CSSProperties)
+                  : undefined
+              }
               onChange={(event) => {
                 setDraft(event.target.value)
                 if (error) setError(null)
               }}
               className={cn(
-                'h-12 w-full rounded-lg bg-card px-4 text-[17px] shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-[15px] placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80',
+                'h-12 w-full rounded-lg bg-card px-3.5 text-[17px] sm:px-4 shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-[15px] placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80',
                 type !== 'string' && 'num',
-                param.unit && 'pr-24',
+                param.unit && 'pr-(--unit-pad) sm:pr-24',
                 error && 'ring-crit',
               )}
             />
             {param.unit && (
-              <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[13px] text-ink-3">
+              <span className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-[13px] text-ink-3 sm:right-4">
                 {param.unit}
               </span>
             )}
           </label>
           <Button
             type="submit"
-            className="h-12 min-w-28 rounded-lg px-5 text-[14px]"
+            className="h-12 min-w-22 rounded-lg px-4 text-[14px] sm:min-w-28 sm:px-5"
             disabled={update.isPending || empty}
           >
             {update.isPending ? <Spinner /> : changed ? 'Сохранить' : 'Верно'}
@@ -396,7 +403,7 @@ function FocusCard({
         <button
           type="button"
           onClick={onNext}
-          className="shrink-0 font-medium text-ink-3 transition-colors hover:text-ink"
+          className="shrink-0 font-medium text-ink-3 transition-colors hover:text-ink max-sm:-my-2 max-sm:py-2"
         >
           Пропустить
         </button>
@@ -445,7 +452,7 @@ function Passport({ params }: { params: ProjectParam[] }) {
   const hours = byKey.get('shift_hours')?.value
 
   return (
-    <div className="grid grid-cols-3 border-t border-line md:grid-cols-6 md:divide-x md:divide-line">
+    <div className="grid grid-cols-2 border-t border-line sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-line">
       {figures.map(({ param, label }) => (
         <Figure
           key={param.key}
@@ -470,11 +477,11 @@ function Figure({ value, label, onClick }: { value: string; label: string; onCli
     <button
       type="button"
       onClick={onClick}
-      className="min-w-0 px-6 py-4 text-left transition-colors hover:bg-surface-2"
+      className="min-w-0 px-5 py-3.5 text-left transition-colors hover:bg-surface-2 sm:px-6 sm:py-4"
       title={`${label} — изменить`}
     >
       <span className="num block text-[20px] leading-tight font-semibold tracking-[-0.01em]">{value}</span>
-      <span className="mt-0.5 block truncate text-[12.5px] text-ink-3">{label}</span>
+      <span className="mt-0.5 block text-[12.5px] text-ink-3 max-lg:leading-snug lg:truncate">{label}</span>
     </button>
   )
 }

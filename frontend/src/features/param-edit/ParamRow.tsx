@@ -33,7 +33,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
   return (
     <div
       id={`param-${param.key}`}
-      className="group/row grid scroll-mt-48 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6 px-6 py-3.5 transition-colors hover:bg-surface-2/70"
+      className="group/row grid scroll-mt-48 grid-cols-1 items-start gap-x-6 gap-y-2.5 px-4 py-3.5 transition-colors hover:bg-surface-2/70 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-6"
     >
       <div className="min-w-0 pt-1">
         <div className="flex items-center gap-2 text-[14px] font-medium">
@@ -63,12 +63,13 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
         )}
       </div>
 
+      {/* На телефоне поле во всю ширину под названием, а история и сброс — справа от него. */}
       <div className="flex items-start gap-1.5">
-        <span className="mt-1 flex h-6 w-14 shrink-0 items-center justify-end">
+        <span className="mt-1 flex h-6 shrink-0 items-center justify-end max-sm:order-last max-sm:mt-2 sm:w-14">
           {pending ? (
             <Spinner className="size-3 text-ink-3" />
           ) : (
-            <span className="flex items-center opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
+            <span className="flex items-center opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100">
               {param.history_count > 0 && <ParamHistory projectId={projectId} param={param} />}
               {RESETTABLE.has(param.provenance.status) && (
                 <Tooltip>
@@ -89,7 +90,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
             </span>
           )}
         </span>
-        <div className="w-50 shrink-0">
+        <div className="min-w-0 flex-1 sm:w-50 sm:flex-none sm:shrink-0">
           <ParamValueInput param={param} pending={pending} onCommit={commit} suffix={param.unit} />
         </div>
       </div>
