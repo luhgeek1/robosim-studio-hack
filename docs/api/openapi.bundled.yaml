@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.5.3
+  version: 0.6.0
   license:
     name: MIT
     identifier: MIT
@@ -32,8 +32,10 @@ tags:
     description: Справочники — типы объектов, параметры, процессы, нормативы
   - name: catalog
     description: Каталог решений — поиск, карточки, сравнение
+  - name: organizations
+    description: 'Организации: общие проекты, участники, приглашения по email'
   - name: projects
-    description: Проекты пользователя
+    description: Проекты пользователя и его организаций
   - name: params
     description: Параметры объекта, импорт, валидация, процессы
   - name: layout
@@ -337,6 +339,217 @@ paths:
           description: Отозван
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/v1/me/invitations:
+    get:
+      tags:
+        - organizations
+      operationId: listMyInvitations
+      summary: Приглашения в организации, ждущие ответа
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomingInvitationList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/me/invitations/{invitation_id}/accept:
+    parameters:
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - organizations
+      operationId: acceptInvitation
+      summary: Принять приглашение — стать участником организации
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/me/invitations/{invitation_id}/decline:
+    parameters:
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - organizations
+      operationId: declineInvitation
+      summary: Отклонить приглашение
+      responses:
+        '204':
+          description: Отклонено
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/organizations:
+    get:
+      tags:
+        - organizations
+      operationId: listOrganizations
+      summary: Организации пользователя
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - organizations
+      operationId: createOrganization
+      summary: Создать организацию (создатель — владелец)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationWrite'
+      responses:
+        '201':
+          description: Создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/v1/organizations/{organization_id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    get:
+      tags:
+        - organizations
+      operationId: getOrganization
+      summary: 'Организация: участники и ожидающие приглашения'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - organizations
+      operationId: updateOrganization
+      summary: Переименовать организацию (владелец)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationWrite'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - organizations
+      operationId: deleteOrganization
+      summary: Удалить организацию вместе с её проектами (владелец)
+      responses:
+        '204':
+          description: Удалена
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/organizations/{organization_id}/invitations:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+    post:
+      tags:
+        - organizations
+      operationId: inviteToOrganization
+      summary: Пригласить пользователя по email (владелец)
+      description: Приглашение появляется у адресата в уведомлениях; незарегистрированный адрес увидит его после регистрации.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationCreate'
+      responses:
+        '201':
+          description: Отправлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationInvitation'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/organizations/{organization_id}/invitations/{invitation_id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags:
+        - organizations
+      operationId: revokeOrganizationInvitation
+      summary: Отозвать приглашение (владелец)
+      responses:
+        '204':
+          description: Отозвано
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/organizations/{organization_id}/members/{user_id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags:
+        - organizations
+      operationId: removeOrganizationMember
+      summary: Исключить участника (владелец) или выйти из организации (свой user_id)
+      responses:
+        '204':
+          description: Исключён
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/v1/object-types:
     get:
       tags:
@@ -721,8 +934,14 @@ paths:
       tags:
         - projects
       operationId: listProjects
-      summary: Проекты пользователя
+      summary: Проекты рабочей области — личные или организации
       parameters:
+        - name: organization_id
+          in: query
+          description: Организация; без значения — личные проекты пользователя
+          schema:
+            type: string
+            format: uuid
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - name: q
@@ -798,7 +1017,7 @@ paths:
       tags:
         - projects
       operationId: updateProject
-      summary: Переименовать, заметки, теги, статус
+      summary: Переименовать, заметки, теги, статус, перенос в другую рабочую область
       requestBody:
         required: true
         content:
@@ -3458,6 +3677,13 @@ components:
         owner_id:
           type: string
           format: uuid
+          description: Автор проекта
+        organization_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: Организация, чьим участникам виден проект; null — личный проект автора.
         organization:
           type:
             - string
@@ -4998,6 +5224,132 @@ components:
         is_active:
           type: boolean
           default: true
+    Organization:
+      type: object
+      description: Организация глазами текущего пользователя — с его ролью.
+      required:
+        - id
+        - name
+        - role
+        - members_count
+        - projects_count
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: ООО «Логистика Север»
+        role:
+          $ref: '#/components/schemas/OrganizationRole'
+        members_count:
+          type: integer
+        projects_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    OrganizationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Organization'
+        - type: object
+          required:
+            - members
+            - invitations
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrganizationMember'
+            invitations:
+              type: array
+              description: Приглашения, ждущие ответа.
+              items:
+                $ref: '#/components/schemas/OrganizationInvitation'
+    OrganizationMember:
+      type: object
+      required:
+        - user_id
+        - email
+        - name
+        - role
+        - joined_at
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/OrganizationRole'
+        joined_at:
+          type: string
+          format: date-time
+    OrganizationInvitation:
+      type: object
+      description: Исходящее приглашение. Если адрес ещё не зарегистрирован, приглашение увидят после регистрации.
+      required:
+        - id
+        - email
+        - status
+        - created_at
+        - invitee_registered
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        status:
+          $ref: '#/components/schemas/InvitationStatus'
+        created_at:
+          type: string
+          format: date-time
+        invited_by_name:
+          type:
+            - string
+            - 'null'
+        invitee_registered:
+          type: boolean
+    OrganizationRole:
+      type: string
+      description: owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
+      enum:
+        - owner
+        - member
+    IncomingInvitation:
+      type: object
+      description: Приглашение на email текущего пользователя, ждущее ответа.
+      required:
+        - id
+        - organization_id
+        - organization_name
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        organization_name:
+          type: string
+        invited_by_name:
+          type:
+            - string
+            - 'null'
+        invited_by_email:
+          type:
+            - string
+            - 'null'
+        created_at:
+          type: string
+          format: date-time
     Health:
       type: object
       required:
@@ -5196,6 +5548,48 @@ components:
             secret:
               type: string
               description: Показывается один раз
+    IncomingInvitationList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncomingInvitation'
+    OrganizationList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+    OrganizationWrite:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+    InvitationStatus:
+      type: string
+      enum:
+        - pending
+        - accepted
+        - declined
+        - revoked
+    InvitationCreate:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
     ObjectTypeKey:
       type: string
       description: warehouse — склад (в полной глубине), airport, hospital — параметры и подбор; custom — свой объект.
@@ -5682,6 +6076,12 @@ components:
                 - string
                 - 'null'
               format: uuid
+        organization_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: Создать в организации (нужно быть её участником); без значения — личный проект. Копия остаётся в рабочей области исходного проекта.
         notes:
           type:
             - string
@@ -5709,6 +6109,12 @@ components:
             - draft
             - ready
             - archived
+        organization_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: Перенести в организацию или (null) в личное пространство — может автор или владелец организации.
     AuditEvent:
       type: object
       required:
@@ -9095,6 +9501,13 @@ components:
           - web
           - mobile
         default: web
+    OrganizationId:
+      name: organization_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     Page:
       name: page
       in: query

@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from app.core.errors import ConflictError, ErrorCode, InvalidInputError, NotFoundError, job_problem
 from app.db.models import Job, Project, Report, StoredFile
+from app.db.repositories.projects import accessible_to
 from app.db.repositories.users import to_current_user
 from app.db.session import Database
 from app.db.uow import UnitOfWork
@@ -95,7 +96,7 @@ class ReportService:
         report = await self._uow.session.scalar(
             select(Report)
             .join(Project, Project.id == Report.project_id)
-            .where(Report.id == report_id, Project.owner_id == self._user.id)
+            .where(Report.id == report_id, accessible_to(self._user.id))
         )
         if report is None:
             raise NotFoundError(REPORT_NOT_FOUND)
@@ -117,7 +118,7 @@ class ReportService:
         stored = await self._uow.session.scalar(
             select(StoredFile)
             .join(Project, Project.id == StoredFile.project_id)
-            .where(StoredFile.id == file_id, Project.owner_id == self._user.id)
+            .where(StoredFile.id == file_id, accessible_to(self._user.id))
         )
         if stored is None:
             raise NotFoundError("Файл не найден или недоступен")

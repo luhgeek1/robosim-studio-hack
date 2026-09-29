@@ -1,0 +1,92 @@
+# Организации: общие проекты команды, участники, приглашения по email.
+
+OrganizationRole:
+  type: string
+  description: owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
+  enum: [owner, member]
+
+InvitationStatus:
+  type: string
+  enum: [pending, accepted, declined, revoked]
+
+Organization:
+  type: object
+  description: Организация глазами текущего пользователя — с его ролью.
+  required: [id, name, role, members_count, projects_count, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    name: {type: string, example: "ООО «Логистика Север»"}
+    role: {$ref: '#/OrganizationRole'}
+    members_count: {type: integer}
+    projects_count: {type: integer}
+    created_at: {type: string, format: date-time}
+
+OrganizationList:
+  type: object
+  required: [items]
+  properties:
+    items: {type: array, items: {$ref: '#/Organization'}}
+
+OrganizationWrite:
+  type: object
+  required: [name]
+  properties:
+    name: {type: string, minLength: 1, maxLength: 120}
+
+OrganizationMember:
+  type: object
+  required: [user_id, email, name, role, joined_at]
+  properties:
+    user_id: {type: string, format: uuid}
+    email: {type: string, format: email}
+    name: {type: string}
+    role: {$ref: '#/OrganizationRole'}
+    joined_at: {type: string, format: date-time}
+
+OrganizationInvitation:
+  type: object
+  description: Исходящее приглашение. Если адрес ещё не зарегистрирован, приглашение увидят после регистрации.
+  required: [id, email, status, created_at, invitee_registered]
+  properties:
+    id: {type: string, format: uuid}
+    email: {type: string, format: email}
+    status: {$ref: '#/InvitationStatus'}
+    created_at: {type: string, format: date-time}
+    invited_by_name: {type: [string, "null"]}
+    invitee_registered: {type: boolean}
+
+OrganizationDetail:
+  allOf:
+    - $ref: '#/Organization'
+    - type: object
+      required: [members, invitations]
+      properties:
+        members: {type: array, items: {$ref: '#/OrganizationMember'}}
+        invitations:
+          type: array
+          description: Приглашения, ждущие ответа.
+          items: {$ref: '#/OrganizationInvitation'}
+
+InvitationCreate:
+  type: object
+  required: [email]
+  properties:
+    email: {type: string, format: email}
+
+IncomingInvitation:
+  type: object
+  description: Приглашение на email текущего пользователя, ждущее ответа.
+  required: [id, organization_id, organization_name, created_at]
+  properties:
+    id: {type: string, format: uuid}
+    organization_id: {type: string, format: uuid}
+    organization_name: {type: string}
+    invited_by_name: {type: [string, "null"]}
+    invited_by_email: {type: [string, "null"]}
+    created_at: {type: string, format: date-time}
+
+IncomingInvitationList:
+  type: object
+  required: [items]
+  properties:
+    items: {type: array, items: {$ref: '#/IncomingInvitation'}}

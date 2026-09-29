@@ -5,6 +5,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import CalculationRun, Project, Scenario, ScenarioItem
+from app.db.repositories.projects import accessible_to
 from app.domain.scenario.models import ScenarioKind
 
 
@@ -30,7 +31,7 @@ class ScenarioRepository:
         statement = (
             select(Scenario)
             .join(Project, Project.id == Scenario.project_id)
-            .where(Scenario.id == scenario_id, Project.owner_id == owner_id)
+            .where(Scenario.id == scenario_id, accessible_to(owner_id))
         )
         if lock:
             statement = statement.with_for_update(of=Scenario)
@@ -87,7 +88,7 @@ class ScenarioRepository:
         statement = (
             select(CalculationRun)
             .join(Project, Project.id == CalculationRun.project_id)
-            .where(CalculationRun.id == run_id, Project.owner_id == owner_id)
+            .where(CalculationRun.id == run_id, accessible_to(owner_id))
         )
         run: CalculationRun | None = await self._session.scalar(statement)
         return run

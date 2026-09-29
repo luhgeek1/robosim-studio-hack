@@ -35,8 +35,10 @@ async def list_projects(
     object_type: Annotated[ObjectTypeKey | None, Query()] = None,
     project_status: Annotated[ProjectStatus | None, Query(alias="status")] = None,
     sort: Annotated[Literal["updated_desc", "created_desc", "name"], Query()] = "updated_desc",
+    organization_id: Annotated[UUID | None, Query()] = None,
 ) -> ProjectList:
     items, total = await ProjectService(uow, user).list_projects(
+        organization_id=organization_id,
         q=q,
         object_type=object_type.value if object_type else None,
         status=project_status.value if project_status else None,
@@ -63,6 +65,7 @@ async def create_project(payload: ProjectCreate, user: OwnerDep, uow: UowDep) ->
         mode=init.mode if init else InitMode.BLANK,
         demo_key=init.demo_key if init else None,
         source_project_id=init.source_project_id if init else None,
+        organization_id=payload.organization_id,
         notes=payload.notes,
         tags=payload.tags,
     )
@@ -79,7 +82,11 @@ async def get_project(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) ->
     return Project.from_domain(await ProjectService(uow, user).get(project_id))
 
 
-@router.patch("/{project_id}", operation_id="updateProject", summary="Переименовать, заметки, теги, статус")
+@router.patch(
+    "/{project_id}",
+    operation_id="updateProject",
+    summary="Переименовать, заметки, теги, статус, перенос в другую рабочую область",
+)
 async def update_project(
     project_id: ProjectIdPath, payload: ProjectUpdate, user: OwnerDep, uow: UowDep
 ) -> Project:
@@ -89,6 +96,7 @@ async def update_project(
         notes=payload.notes,
         tags=payload.tags,
         status=ProjectStatus(payload.status) if payload.status else None,
+        organization_id=payload.organization_id,
     )
     return Project.from_domain(await ProjectService(uow, user).update(project_id, patch))
 

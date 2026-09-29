@@ -245,7 +245,8 @@ class SimulationService:
     async def sweep_result(self, scenario_id: UUID, job_id: UUID) -> dict[str, Any]:
         await self._scenarios.owned(scenario_id)
         job = await self._uow.jobs.get(job_id)
-        if job is None or job.owner_id != self._user.id or job.payload.get("scenario_id") != str(scenario_id):
+        # The scenario is already checked above: a sweep another member of the organization ran is theirs too.
+        if job is None or job.payload.get("scenario_id") != str(scenario_id):
             raise NotFoundError("Перебор флота не найден")
         if job.status == JobStatus.FAILED:
             raise ConflictError((job.error or {}).get("detail", "Перебор завершился ошибкой"))

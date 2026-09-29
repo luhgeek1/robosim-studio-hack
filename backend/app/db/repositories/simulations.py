@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import defer
 
 from app.db.models import Project, SimulationRun
+from app.db.repositories.projects import accessible_to
 from app.domain.jobs import JobStatus
 
 
@@ -25,7 +26,7 @@ class SimulationRepository:
         statement = (
             select(SimulationRun)
             .join(Project, Project.id == SimulationRun.project_id)
-            .where(SimulationRun.id == run_id, Project.owner_id == owner_id)
+            .where(SimulationRun.id == run_id, accessible_to(owner_id))
         )
         if not with_events:
             statement = statement.options(defer(SimulationRun.events), defer(SimulationRun.engine_input))

@@ -18,9 +18,16 @@ def _project_fk() -> sa.ForeignKey:
 
 class Project(UuidPkMixin, TimestampMixin, Base):
     __tablename__ = "projects"
-    __table_args__ = (sa.Index("ix_projects_owner_updated", "owner_id", "updated_at"),)
+    __table_args__ = (
+        sa.Index("ix_projects_owner_updated", "owner_id", "updated_at"),
+        sa.Index("ix_projects_organization_updated", "organization_id", "updated_at"),
+    )
 
     owner_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("users.id", ondelete="CASCADE"))
+    # None — personal project of owner_id; otherwise shared with every member of the organization.
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("organizations.id", ondelete="CASCADE")
+    )
     name: Mapped[str] = mapped_column(sa.String(200))
     object_type: Mapped[str] = mapped_column(sa.ForeignKey("object_types.key"))
     status: Mapped[ProjectStatus] = mapped_column(

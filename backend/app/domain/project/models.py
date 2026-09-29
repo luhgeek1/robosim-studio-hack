@@ -132,6 +132,7 @@ class ProjectInfo:
     status: ProjectStatus
     version: int
     owner_id: UUID
+    organization_id: UUID | None
     organization: str | None
     notes: str | None
     tags: list[str]

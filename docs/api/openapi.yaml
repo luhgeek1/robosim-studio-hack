@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.5.3
+  version: 0.6.0
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -25,7 +25,8 @@ tags:
   - {name: auth, description: "Регистрация, вход, профиль, ключи API"}
   - {name: reference, description: "Справочники — типы объектов, параметры, процессы, нормативы"}
   - {name: catalog, description: "Каталог решений — поиск, карточки, сравнение"}
-  - {name: projects, description: "Проекты пользователя"}
+  - {name: organizations, description: "Организации: общие проекты, участники, приглашения по email"}
+  - {name: projects, description: "Проекты пользователя и его организаций"}
   - {name: params, description: "Параметры объекта, импорт, валидация, процессы"}
   - {name: layout, description: "Планировка объекта для 2D-карты и симуляции"}
   - {name: matching, description: "Подбор решений по процессам"}
@@ -57,6 +58,16 @@ paths:
   /api/v1/me: {$ref: './paths/auth.yaml#/me'}
   /api/v1/me/api-keys: {$ref: './paths/auth.yaml#/apiKeys'}
   /api/v1/me/api-keys/{key_id}: {$ref: './paths/auth.yaml#/apiKey'}
+  /api/v1/me/invitations: {$ref: './paths/organizations.yaml#/myInvitations'}
+  /api/v1/me/invitations/{invitation_id}/accept: {$ref: './paths/organizations.yaml#/myInvitationAccept'}
+  /api/v1/me/invitations/{invitation_id}/decline: {$ref: './paths/organizations.yaml#/myInvitationDecline'}
+
+  # ---- организации ----
+  /api/v1/organizations: {$ref: './paths/organizations.yaml#/organizations'}
+  /api/v1/organizations/{organization_id}: {$ref: './paths/organizations.yaml#/organization'}
+  /api/v1/organizations/{organization_id}/invitations: {$ref: './paths/organizations.yaml#/organizationInvitations'}
+  /api/v1/organizations/{organization_id}/invitations/{invitation_id}: {$ref: './paths/organizations.yaml#/organizationInvitation'}
+  /api/v1/organizations/{organization_id}/members/{user_id}: {$ref: './paths/organizations.yaml#/organizationMember'}
 
   # ---- справочники ----
   /api/v1/object-types: {$ref: './paths/reference.yaml#/objectTypes'}
@@ -203,3 +214,9 @@ components:
     SimEvent: {$ref: './components/simulation.yaml#/SimEvent'}
     Report: {$ref: './components/platform.yaml#/Report'}
     User: {$ref: './components/platform.yaml#/User'}
+    Organization: {$ref: './components/organizations.yaml#/Organization'}
+    OrganizationDetail: {$ref: './components/organizations.yaml#/OrganizationDetail'}
+    OrganizationMember: {$ref: './components/organizations.yaml#/OrganizationMember'}
+    OrganizationInvitation: {$ref: './components/organizations.yaml#/OrganizationInvitation'}
+    OrganizationRole: {$ref: './components/organizations.yaml#/OrganizationRole'}
+    IncomingInvitation: {$ref: './components/organizations.yaml#/IncomingInvitation'}

@@ -230,6 +230,11 @@ parameters:
     in: path
     required: true
     schema: {type: string, format: uuid}
+  OrganizationId:
+    name: organization_id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
   ScenarioId:
     name: scenario_id
     in: path

@@ -25,7 +25,11 @@ Project:
     object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
     status: {$ref: '#/ProjectStatus'}
     version: {type: integer, description: "Растёт при изменении параметров и планировки; расчёты ссылаются на версию"}
-    owner_id: {type: string, format: uuid}
+    owner_id: {type: string, format: uuid, description: "Автор проекта"}
+    organization_id:
+      type: [string, "null"]
+      format: uuid
+      description: Организация, чьим участникам виден проект; null — личный проект автора.
     organization: {type: [string, "null"]}
     notes: {type: [string, "null"]}
     tags: {type: array, items: {type: string}}
@@ -67,6 +71,10 @@ ProjectCreate:
         mode: {type: string, enum: [blank, demo, copy], default: blank}
         demo_key: {type: [string, "null"], example: "warehouse_demo_01"}
         source_project_id: {type: [string, "null"], format: uuid}
+    organization_id:
+      type: [string, "null"]
+      format: uuid
+      description: Создать в организации (нужно быть её участником); без значения — личный проект. Копия остаётся в рабочей области исходного проекта.
     notes: {type: [string, "null"]}
     tags: {type: array, items: {type: string}}
 
@@ -77,6 +85,10 @@ ProjectUpdate:
     notes: {type: [string, "null"]}
     tags: {type: array, items: {type: string}}
     status: {type: string, enum: [draft, ready, archived]}
+    organization_id:
+      type: [string, "null"]
+      format: uuid
+      description: Перенести в организацию или (null) в личное пространство — может автор или владелец организации.
 
 ParamValidation:
   type: object

@@ -44,6 +44,7 @@ class Project(ApiModel):
     status: ProjectStatus
     version: int
     owner_id: UUID
+    organization_id: UUID | None = None
     organization: str | None = None
     notes: str | None = None
     tags: list[str] = Field(default_factory=list)
@@ -65,6 +66,7 @@ class Project(ApiModel):
             status=item.status,
             version=item.version,
             owner_id=item.owner_id,
+            organization_id=item.organization_id,
             organization=item.organization,
             notes=item.notes,
             tags=item.tags,
@@ -96,6 +98,7 @@ class ProjectCreate(ApiModel):
     name: str = Field(min_length=1, max_length=200)
     object_type: ObjectTypeKey
     init: ProjectInit | None = None
+    organization_id: UUID | None = None
     notes: str | None = None
     tags: list[str] = Field(default_factory=list)
 
@@ -105,6 +108,7 @@ class ProjectUpdate(ApiModel):
     notes: str | None = None
     tags: list[str] | None = None
     status: Literal["draft", "ready", "archived"] | None = None
+    organization_id: UUID | None = None
 
 
 class ProjectCopy(ApiModel):

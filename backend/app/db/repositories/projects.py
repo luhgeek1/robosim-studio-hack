@@ -1,11 +1,20 @@
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any, Literal
 from uuid import UUID
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import ColumnElement, and_, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AuditEvent, ParamHistory, ParamImport, Project, ProjectParam, Source
+from app.db.models import (
+    AuditEvent,
+    OrganizationMember,
+    ParamHistory,
+    ParamImport,
+    Project,
+    ProjectParam,
+    Source,
+)
 
 ProjectSort = Literal["updated_desc", "created_desc", "name"]
 _SORTS = {
@@ -13,6 +22,22 @@ _SORTS = {
     "created_desc": Project.created_at.desc(),
     "name": Project.name,
 }
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectFilter:
+    q: str | None = None
+    object_type: str | None = None
+    status: str | None = None
+
+
+def accessible_to(user_id: UUID) -> ColumnElement[bool]:
+    """A personal project is its owner's; an organization's project belongs to every member."""
+    member_of = select(OrganizationMember.organization_id).where(OrganizationMember.user_id == user_id)
+    return or_(
+        and_(Project.organization_id.is_(None), Project.owner_id == user_id),
+        Project.organization_id.in_(member_of),
+    )
 
 
 class ProjectRepository:
@@ -23,14 +48,19 @@ class ProjectRepository:
         self,
         owner_id: UUID,
         *,
-        q: str | None,
-        object_type: str | None,
-        status: str | None,
+        organization_id: UUID | None,
+        filters: ProjectFilter,
         sort: ProjectSort,
         page: int,
         page_size: int,
     ) -> tuple[Sequence[Project], int]:
-        statement = select(Project).where(Project.owner_id == owner_id)
+        q, object_type, status = filters.q, filters.object_type, filters.status
+        workspace = (
+            Project.organization_id == organization_id
+            if organization_id
+            else and_(Project.organization_id.is_(None), Project.owner_id == owner_id)
+        )
+        statement = select(Project).where(workspace, accessible_to(owner_id))
         if q:
             statement = statement.where(Project.name.ilike(f"%{q}%"))
         if object_type:
@@ -44,7 +74,7 @@ class ProjectRepository:
         return (await self._session.scalars(page_query)).all(), int(total or 0)
 
     async def get_owned(self, project_id: UUID, owner_id: UUID, *, lock: bool = False) -> Project | None:
-        statement = select(Project).where(Project.id == project_id, Project.owner_id == owner_id)
+        statement = select(Project).where(Project.id == project_id, accessible_to(owner_id))
         if lock:
             statement = statement.with_for_update()
         project: Project | None = await self._session.scalar(statement)

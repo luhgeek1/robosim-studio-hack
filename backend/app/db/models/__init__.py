@@ -3,6 +3,7 @@ from app.db.models.catalog import Manufacturer, Product, ProductCase, ProductOff
 from app.db.models.jobs import Job
 from app.db.models.layouts import Layout, StoredFile
 from app.db.models.matching import ManualCandidate, MatchingSettings
+from app.db.models.organizations import Organization, OrganizationInvitation, OrganizationMember
 from app.db.models.projects import AuditEvent, ParamHistory, ParamImport, Project, ProjectParam
 from app.db.models.reference import (
     DataVersion,
@@ -34,6 +35,9 @@ __all__ = [
     "Norm",
     "NormSet",
     "ObjectType",
+    "Organization",
+    "OrganizationInvitation",
+    "OrganizationMember",
     "ParamHistory",
     "ParamImport",
     "ParameterDef",

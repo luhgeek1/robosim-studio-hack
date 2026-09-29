@@ -4,13 +4,15 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from app.core.errors import ConflictError, DomainError, ErrorCode, NotFoundError
+from app.core.errors import ConflictError, DomainError, ErrorCode, ForbiddenError, NotFoundError
 from app.db.models import Project
 from app.db.repositories.layouts import LayoutRepository
-from app.db.repositories.projects import ProjectRepository, ProjectSort
+from app.db.repositories.organizations import OrganizationRepository
+from app.db.repositories.projects import ProjectFilter, ProjectRepository, ProjectSort
 from app.db.repositories.scenarios import ScenarioRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
+from app.domain.organization import OrganizationRole
 from app.domain.project.models import AuditEntry, InitMode, ProjectInfo, ProjectStatus
 from app.domain.project.params import data_quality
 from app.domain.scenario.models import ScenarioKind
@@ -30,6 +32,7 @@ class ProjectDraft:
     mode: InitMode = InitMode.BLANK
     demo_key: str | None = None
     source_project_id: UUID | None = None
+    organization_id: UUID | None = None
     notes: str | None = None
     tags: list[str] = field(default_factory=list)
 
@@ -41,6 +44,7 @@ class ProjectPatch:
     notes: str | None = None
     tags: list[str] | None = None
     status: ProjectStatus | None = None
+    organization_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,6 +99,7 @@ def to_info(context: ProjectContext, scenarios: ScenarioSummary | None = None) -
         status=ProjectStatus(project.status),
         version=project.version,
         owner_id=project.owner_id,
+        organization_id=project.organization_id,
         organization=project.organization,
         notes=project.notes,
         tags=list(project.tags),
@@ -117,10 +122,23 @@ class ProjectService:
         self._loader = ProjectLoader(uow)
         self._audit = AuditLog(self._repo, user)
         self._scenarios = ScenarioRepository(uow.session)
+        self._organizations = OrganizationRepository(uow.session)
+
+    async def _require_member(self, organization_id: UUID) -> None:
+        if await self._organizations.membership(organization_id, self._user.id) is None:
+            raise NotFoundError("Организация не найдена или вы в ней не состоите")
+
+    async def _can_manage(self, project: Project) -> bool:
+        """Moving or deleting a shared project: its author or an owner of the organization."""
+        if project.owner_id == self._user.id or project.organization_id is None:
+            return True
+        member = await self._organizations.membership(project.organization_id, self._user.id)
+        return member is not None and member.role == OrganizationRole.OWNER
 
     async def list_projects(
         self,
         *,
+        organization_id: UUID | None,
         q: str | None,
         object_type: str | None,
         status: str | None,
@@ -128,11 +146,12 @@ class ProjectService:
         page: int,
         page_size: int,
     ) -> tuple[list[ProjectInfo], int]:
+        if organization_id:
+            await self._require_member(organization_id)
         projects, total = await self._repo.list_owned(
             self._user.id,
-            q=q,
-            object_type=object_type,
-            status=status,
+            organization_id=organization_id,
+            filters=ProjectFilter(q=q, object_type=object_type, status=status),
             sort=sort,
             page=page,
             page_size=page_size,
@@ -152,11 +171,14 @@ class ProjectService:
             if draft.source_project_id is None:
                 raise DomainError("Для копии укажите исходный проект", error_code=ErrorCode.BAD_REQUEST)
             return await self.copy(draft.source_project_id, draft.name)
+        if draft.organization_id:
+            await self._require_member(draft.organization_id)
         demo_keys = {demo.key for demo in object_type.demo_projects}
         if draft.mode == InitMode.DEMO and draft.demo_key not in demo_keys:
             raise NotFoundError(f"Демо-объект не найден; доступны: {', '.join(sorted(demo_keys)) or 'нет'}")
         project = Project(
             owner_id=self._user.id,
+            organization_id=draft.organization_id,
             name=draft.name.strip(),
             object_type=draft.object_type,
             status=ProjectStatus.DRAFT,
@@ -195,6 +217,8 @@ class ProjectService:
                     "Статус «рассчитан» ставится только расчётом", error_code=ErrorCode.BAD_REQUEST
                 )
             project.status = patch.status
+        if "organization_id" in patch.fields and patch.organization_id != project.organization_id:
+            await self._move(project, patch.organization_id)
         project.updated_at = datetime.now(UTC)
         await self._uow.flush()
         self._audit.write(
@@ -206,8 +230,20 @@ class ProjectService:
         )
         return await self.get(project.id)
 
+    async def _move(self, project: Project, organization_id: UUID | None) -> None:
+        if not await self._can_manage(project):
+            raise ForbiddenError("Перенести проект может его автор или владелец организации")
+        if organization_id:
+            await self._require_member(organization_id)
+        else:
+            # Back to a personal space: the project becomes personal for whoever moves it.
+            project.owner_id = self._user.id
+        project.organization_id = organization_id
+
     async def delete(self, project_id: UUID) -> None:
         project = await self._loader.project(self._user, project_id, lock=True)
+        if not await self._can_manage(project):
+            raise ForbiddenError("Удалить общий проект может его автор или владелец организации")
         self._audit.write(
             None,
             f"project:{project.id}",
@@ -221,6 +257,7 @@ class ProjectService:
         source = await self._loader.project(self._user, project_id)
         copy = Project(
             owner_id=self._user.id,
+            organization_id=source.organization_id,
             name=(name or f"{source.name} (копия)").strip(),
             object_type=source.object_type,
             status=ProjectStatus.DRAFT,

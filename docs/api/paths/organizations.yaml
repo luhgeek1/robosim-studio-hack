@@ -1,0 +1,120 @@
+# Организации и приглашения. Подключаются из ../openapi.yaml.
+
+organizations:
+  get:
+    tags: [organizations]
+    operationId: listOrganizations
+    summary: Организации пользователя
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationList'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+  post:
+    tags: [organizations]
+    operationId: createOrganization
+    summary: Создать организацию (создатель — владелец)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationWrite'}}}
+    responses:
+      '201': {description: "Создана", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/Organization'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+organization:
+  parameters: [{$ref: '../components/common.yaml#/parameters/OrganizationId'}]
+  get:
+    tags: [organizations]
+    operationId: getOrganization
+    summary: "Организация: участники и ожидающие приглашения"
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationDetail'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+  patch:
+    tags: [organizations]
+    operationId: updateOrganization
+    summary: Переименовать организацию (владелец)
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationWrite'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/Organization'}}}}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+  delete:
+    tags: [organizations]
+    operationId: deleteOrganization
+    summary: Удалить организацию вместе с её проектами (владелец)
+    responses:
+      '204': {description: "Удалена"}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+organizationInvitations:
+  parameters: [{$ref: '../components/common.yaml#/parameters/OrganizationId'}]
+  post:
+    tags: [organizations]
+    operationId: inviteToOrganization
+    summary: Пригласить пользователя по email (владелец)
+    description: Приглашение появляется у адресата в уведомлениях; незарегистрированный адрес увидит его после регистрации.
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/organizations.yaml#/InvitationCreate'}}}
+    responses:
+      '201': {description: "Отправлено", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationInvitation'}}}}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+
+organizationInvitation:
+  parameters:
+    - {$ref: '../components/common.yaml#/parameters/OrganizationId'}
+    - {name: invitation_id, in: path, required: true, schema: {type: string, format: uuid}}
+  delete:
+    tags: [organizations]
+    operationId: revokeOrganizationInvitation
+    summary: Отозвать приглашение (владелец)
+    responses:
+      '204': {description: "Отозвано"}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+organizationMember:
+  parameters:
+    - {$ref: '../components/common.yaml#/parameters/OrganizationId'}
+    - {name: user_id, in: path, required: true, schema: {type: string, format: uuid}}
+  delete:
+    tags: [organizations]
+    operationId: removeOrganizationMember
+    summary: Исключить участника (владелец) или выйти из организации (свой user_id)
+    responses:
+      '204': {description: "Исключён"}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+
+myInvitations:
+  get:
+    tags: [organizations]
+    operationId: listMyInvitations
+    summary: Приглашения в организации, ждущие ответа
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/IncomingInvitationList'}}}}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+
+myInvitationAccept:
+  parameters: [{name: invitation_id, in: path, required: true, schema: {type: string, format: uuid}}]
+  post:
+    tags: [organizations]
+    operationId: acceptInvitation
+    summary: Принять приглашение — стать участником организации
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/Organization'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+myInvitationDecline:
+  parameters: [{name: invitation_id, in: path, required: true, schema: {type: string, format: uuid}}]
+  post:
+    tags: [organizations]
+    operationId: declineInvitation
+    summary: Отклонить приглашение
+    responses:
+      '204': {description: "Отклонено"}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}

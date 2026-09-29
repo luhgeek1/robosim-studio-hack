@@ -4,8 +4,9 @@ projects:
   get:
     tags: [projects]
     operationId: listProjects
-    summary: Проекты пользователя
+    summary: Проекты рабочей области — личные или организации
     parameters:
+      - {name: organization_id, in: query, description: "Организация; без значения — личные проекты пользователя", schema: {type: string, format: uuid}}
       - {$ref: '../components/common.yaml#/parameters/Page'}
       - {$ref: '../components/common.yaml#/parameters/PageSize'}
       - {name: q, in: query, schema: {type: string}}
@@ -39,7 +40,7 @@ project:
   patch:
     tags: [projects]
     operationId: updateProject
-    summary: Переименовать, заметки, теги, статус
+    summary: Переименовать, заметки, теги, статус, перенос в другую рабочую область
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProjectUpdate'}}}
