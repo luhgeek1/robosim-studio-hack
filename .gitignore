@@ -21,3 +21,4 @@ new_exports/
 
 # v0 backend kept locally as a logic donor only (full v0 is in tag v0-prototype)
 legacy/
+previous_project_presentation_system/
