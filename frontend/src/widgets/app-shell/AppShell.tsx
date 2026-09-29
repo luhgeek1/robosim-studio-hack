@@ -40,10 +40,13 @@ function StepDock({ projectId }: { projectId: string }) {
       >
         <nav
           className={cn(
-            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5',
-            'transition-[translate,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+            // Плашка чаще появляется поверх прокрученного контента: без размытия цифры и 3D-карточки лезут сквозь подписи.
+            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
+            // Выезжает с замедлением, уезжает с разгоном: так движение читается целиком, а не вспышкой в первом кадре.
+            'transition-[translate,opacity] duration-320 ease-[cubic-bezier(0.33,1,0.68,1)] motion-reduce:transition-none',
             // Уход — с короткой задержкой: курсор, проскочивший мимо края, не заставляет плашку дёргаться.
-            hidden && 'pointer-events-none -translate-y-[calc(100%+1.5rem)] opacity-0 delay-150',
+            hidden &&
+              'pointer-events-none -translate-y-[calc(100%+1.5rem)] opacity-0 delay-100 duration-220 ease-[cubic-bezier(0.32,0,0.67,0)]',
           )}
           aria-label="Шаги оценки"
         >
