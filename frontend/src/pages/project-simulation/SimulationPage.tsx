@@ -357,12 +357,13 @@ function SimulationView({
   const fleet = working + (sizing?.count.reserve ?? 0)
   const sweepPoint =
     run.data?.purpose === 'sweep' ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id) : undefined
-  const holds = summary ? summary.sla.achieved_pct >= summary.sla.target_pct : null
+  const sla = summary && sizing ? processSla(summary, sizing.process_key) : null
+  const holds = summary && sla != null ? sla >= summary.sla.target_pct : null
   const robots = `${config.count} ${pluralRu(config.count, ['робот', 'робота', 'роботов'])}`
   const title =
     !sizing || !summary
       ? `${robots} ${sizing?.product_name ?? ''}: прогоняем ${config.mode === 'peak' ? 'пиковые часы' : 'сутки'}`
-      : `${robots} ${holds ? (config.count === 1 ? 'держит' : 'держат') : config.count === 1 ? 'не держит' : 'не держат'} ${config.mode === 'peak' ? 'пик' : 'день'}${config.volume || config.failure ? ' со стрессом' : ''}: ${formatNumber(summary.sla.achieved_pct, summary.sla.achieved_pct >= 99 ? 1 : 0)} % задач в срок`
+      : `${robots} ${holds ? (config.count === 1 ? 'держит' : 'держат') : config.count === 1 ? 'не держит' : 'не держат'} ${config.mode === 'peak' ? 'пик' : 'день'}${config.volume || config.failure ? ' со стрессом' : ''}: ${formatNumber(sla ?? 0, (sla ?? 0) >= 99 ? 1 : 0)} % задач в срок`
 
   return (
     <Screen
@@ -398,7 +399,10 @@ function SimulationView({
             working={working}
             sizing={sizing}
             whatIf={whatIf}
-            processes={checkable.map((s) => ({ key: s.process_key, label: s.product_name ?? s.process_key }))}
+            processes={checkable.map((s) => ({
+              key: s.process_key,
+              label: s.product_name?.split(' (')[0] ?? s.process_key,
+            }))}
             onProcess={pickProcess}
             onChange={change}
           />
@@ -488,6 +492,7 @@ function SimulationView({
               </div>
 
               <RunAside
+                processKey={sizing.process_key}
                 run={run.data}
                 summary={summary}
                 timeline={timeline.data}
@@ -520,6 +525,7 @@ function SimulationView({
             />
             <div className="space-y-4">
               <StressChecks
+                processKey={sizing.process_key}
                 fleet={fleet}
                 reserve={sizing.count.reserve ?? 0}
                 target={summary?.sla.target_pct ?? null}
@@ -552,6 +558,14 @@ const CHECKS: { key: string; title: string; config: Pick<RunConfig, 'volume' | '
   { key: 'both', title: 'Оба сразу', config: { volume: true, failure: true } },
 ]
 
+// Доля в срок того процесса, чей парк на экране: в прогоне сценария рядом едут и другие типы роботов со своим SLA.
+function processSla(summary: SimulationSummary, processKey: string): number {
+  const own = summary.per_process?.find((p) => p.process_key === processKey)
+  return (summary.per_process?.length ?? 0) > 1 && own?.sla_achieved_pct != null
+    ? own.sla_achieved_pct
+    : summary.sla.achieved_pct
+}
+
 function pointAt(points: SimulationTimeline['points'], t: number) {
   let found = points[0]
   for (const p of points) {
@@ -563,6 +577,7 @@ function pointAt(points: SimulationTimeline['points'], t: number) {
 
 /* Колонка у карты — три ответа без прокрутки: держит ли парк SLA, что происходит в момент плеера, где узкое место. */
 function RunAside({
+  processKey,
   run,
   summary,
   timeline,
@@ -570,6 +585,7 @@ function RunAside({
   target,
   failed,
 }: {
+  processKey: string
   run: SimulationRun | undefined
   summary: SimulationSummary | null
   timeline?: SimulationTimeline
@@ -588,7 +604,8 @@ function RunAside({
   const points = timeline?.points ?? []
   const now = points.length ? pointAt(points, bucket * 30) : undefined
   const slaTarget = summary.sla.target_pct
-  const tone = slaTone(summary.sla.achieved_pct, slaTarget)
+  const sla = processSla(summary, processKey)
+  const tone = slaTone(sla, slaTarget)
   const queue = now?.queue ?? 0
   const vs = summary.vs_analytic
   const bottleneck = summary.bottleneck && summary.bottleneck.resource_kind !== 'none' ? summary.bottleneck : null
@@ -612,8 +629,8 @@ function RunAside({
         <div className="mt-1 flex items-baseline justify-between gap-2">
           <div className="flex items-baseline gap-1">
             <KpiNumber
-              value={summary.sla.achieved_pct}
-              digits={summary.sla.achieved_pct >= 99 ? 1 : 0}
+              value={sla}
+              digits={sla >= 99 ? 1 : 0}
               className={`display text-[40px] ${tone === 'ok' ? 'text-ink' : tone === 'warn' ? 'text-warn' : 'text-crit'}`}
             />
             <span className="display text-[18px] text-ink-3">%</span>
@@ -624,7 +641,7 @@ function RunAside({
           <motion.div
             className={`h-full rounded-full ${tone === 'ok' ? 'bg-ink' : tone === 'warn' ? 'bg-warn' : 'bg-crit'}`}
             initial={false}
-            animate={{ width: `${Math.max(0, Math.min(100, summary.sla.achieved_pct))}%` }}
+            animate={{ width: `${Math.max(0, Math.min(100, sla))}%` }}
             transition={{ type: 'spring', stiffness: 120, damping: 24 }}
           />
           <span className="absolute -top-1 h-3.5 w-px bg-signal" style={{ left: `${slaTarget}%` }} />
@@ -729,6 +746,7 @@ function BusyShare({ summary }: { summary: SimulationSummary }) {
 /* Стресс-тесты как вердикт: парк из расчёта прогоняется в пике с повышенным объёмом, с отказом робота и с обоими
    сразу. Карточка — ответ «держит / не держит»; клик открывает этот прогон на карте. */
 function StressChecks({
+  processKey,
   fleet,
   reserve,
   target,
@@ -738,6 +756,7 @@ function StressChecks({
   onRun,
   onOpen,
 }: {
+  processKey: string
   fleet: number
   reserve: number
   target: number | null
@@ -768,6 +787,7 @@ function StressChecks({
         {items.map((item) => (
           <StressCard
             key={item.key}
+            processKey={processKey}
             title={item.title}
             id={item.id}
             target={target}
@@ -781,12 +801,14 @@ function StressChecks({
 }
 
 function StressCard({
+  processKey,
   title,
   id,
   target,
   active,
   onOpen,
 }: {
+  processKey: string
   title: string
   id: string | undefined
   target: number | null
@@ -796,7 +818,7 @@ function StressCard({
   const run = useSimulationRun(id)
   const summary = run.data?.status === 'done' ? run.data.summary : null
   const goal = summary?.sla.target_pct ?? target
-  const sla = summary?.sla.achieved_pct
+  const sla = summary ? processSla(summary, processKey) : undefined
   const holds = sla != null && goal != null ? sla >= goal : null
   const running = Boolean(id) && !summary && run.data?.status !== 'failed'
   return (
