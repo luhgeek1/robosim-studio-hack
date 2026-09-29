@@ -169,21 +169,21 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
 
   return (
     <div className="mt-7">
-      <div className="flex flex-wrap gap-1" onPointerLeave={() => setHovered(null)}>
+      <div className="grid grid-cols-12 gap-1.5" onPointerLeave={() => setHovered(null)}>
         {cells.map((param) => (
           <motion.button
             key={param.key}
             layout
             type="button"
             transition={SWAP}
-            whileHover={{ scale: 1.25 }}
+            whileHover={{ scale: 1.12 }}
             onPointerEnter={() => show(param)}
             onFocus={() => show(param)}
             onBlur={() => setHovered(null)}
             onClick={() => scrollToParam(param.key)}
             aria-label={`${param.name}: ${PROVENANCE_LABEL[param.provenance.status].toLowerCase()}`}
             className={cn(
-              'size-4 rounded-[4px] transition-opacity duration-150',
+              'aspect-square rounded-md transition-opacity duration-150',
               CELL[param.provenance.status],
               hovered && hovered.key !== param.key && 'opacity-45',
             )}
@@ -192,7 +192,7 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
       </div>
       {/* Легенда и подпись наведённого параметра лежат друг на друге и меняются только прозрачностью:
           без монтирования по ключу подпись не может «застрять», как бы быстро ни двигался курсор. */}
-      <div className="relative mt-3 h-5 text-[12.5px]">
+      <div className="relative mt-4 h-5 text-[12.5px]">
         <div
           className={cn(
             'absolute inset-0 flex gap-4 text-ink-3 transition-opacity duration-150',

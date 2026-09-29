@@ -291,10 +291,11 @@ function RoutesPanel({
       </p>
 
       {routes.length ? (
-        <ul className="mt-4 space-y-0.5">
+        <ul className="mt-3">
           {routes.map((route) => {
             const on = route.key === active
             const [from, to] = ROUTE_ENDPOINT[route.key]
+            const pairs = `${formatNumber(route.pairs)} ${pluralRu(route.pairs, ['пара', 'пары', 'пар'])}`
             return (
               <li key={route.key}>
                 <button
@@ -302,42 +303,39 @@ function RoutesPanel({
                   onClick={() => onPick(route.key)}
                   aria-pressed={on}
                   className={cn(
-                    'relative w-full rounded-xl px-3 py-2.5 text-left transition-colors',
+                    'relative w-full rounded-lg px-2.5 py-1.5 text-left transition-colors',
                     on ? 'text-ink' : 'text-ink-2 hover:bg-surface-2',
                   )}
-                  title={route.name}
+                  title={`${route.name}: ${ROUTE_USE[route.key]}, ${pairs}`}
                 >
                   {on && (
                     <motion.span
                       layoutId="layout-route"
-                      className="absolute inset-0 rounded-xl bg-surface-2 ring-1 ring-line"
+                      className="absolute inset-0 rounded-lg bg-surface-2 ring-1 ring-line"
                       transition={SPRING}
                     />
                   )}
                   <span className="relative flex items-baseline justify-between gap-3">
-                    <span className="min-w-0 text-[13.5px] leading-snug">
+                    <span className="min-w-0 truncate text-[13px]">
                       {capitalize(from)}
-                      <ArrowRight size={12} className="mx-1 inline -translate-y-px text-ink-4" />
+                      <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
                       {to}
                     </span>
-                    <span className="num shrink-0 text-[17px] font-semibold tracking-[-0.01em] text-ink">
+                    <span className="num shrink-0 text-[14px] font-semibold text-ink">
                       {formatNumber(route.value_m)}
-                      <span className="ml-0.5 text-[12px] font-normal text-ink-3">м</span>
+                      <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
                     </span>
                   </span>
-                  <span className="relative mt-2 block h-1 overflow-hidden rounded-full bg-black/5">
-                    <motion.span
-                      className={cn('block h-full rounded-full', on ? 'bg-warn' : 'bg-black/15')}
-                      initial={false}
-                      animate={{ width: `${(route.value_m / longest) * 100}%` }}
-                      transition={{ type: 'spring', stiffness: 160, damping: 26 }}
-                    />
-                  </span>
-                  <span className="relative mt-1.5 flex justify-between gap-3 text-[12px] text-ink-3">
-                    <span className="truncate">{ROUTE_USE[route.key]}</span>
-                    <span className="num shrink-0">
-                      {formatNumber(route.pairs)} {pluralRu(route.pairs, ['пара', 'пары', 'пар'])}
+                  <span className="relative mt-1 flex items-center gap-2.5">
+                    <span className="block h-0.75 flex-1 overflow-hidden rounded-full bg-black/5">
+                      <motion.span
+                        className={cn('block h-full rounded-full', on ? 'bg-warn' : 'bg-black/15')}
+                        initial={false}
+                        animate={{ width: `${(route.value_m / longest) * 100}%` }}
+                        transition={{ type: 'spring', stiffness: 160, damping: 26 }}
+                      />
                     </span>
+                    <span className="num shrink-0 text-[11px] text-ink-4">{pairs}</span>
                   </span>
                 </button>
               </li>
