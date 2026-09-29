@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
+import { Stagger } from '@/shared/ui/kinetics'
 import { ConfidenceRing } from '@/shared/ui/v0'
 
 const ICONS: Record<string, ReactNode> = {
@@ -53,11 +54,11 @@ export function ProjectsPage() {
           </div>
         )}
         {projects.data && projects.data.items.length > 0 && (
-          <ul className="card divide-y divide-line overflow-hidden">
+          <Stagger className="card divide-y divide-line overflow-hidden">
             {projects.data.items.map((project) => (
               <ProjectRow key={project.id} project={project} />
             ))}
-          </ul>
+          </Stagger>
         )}
       </section>
     </div>
@@ -72,7 +73,7 @@ function ProjectRow({ project }: { project: Project }) {
   const score = project.data_quality.score
 
   return (
-    <li className="group relative flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-2">
+    <div className="group relative flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-2">
       <span className="flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-black/5 text-ink-2">
         {ICONS[project.object_type] ?? <Warehouse size={18} />}
       </span>
@@ -138,7 +139,7 @@ function ProjectRow({ project }: { project: Project }) {
           />
         </DropdownMenuContent>
       </DropdownMenu>
-    </li>
+    </div>
   )
 }
 

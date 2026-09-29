@@ -4,6 +4,7 @@ import { Link, useMatch, useNavigate } from 'react-router'
 import { PROJECT_STEPS, stepIndex } from '@/entities/project/steps'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
+import { ScrambleText } from './kinetics'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -164,7 +165,9 @@ export function Stat({
   return (
     <div className={cn('min-w-0 px-5 py-4', className)}>
       <div className="truncate text-[13px] text-ink-3">{label}</div>
-      <div className={cn('display num mt-1.5 text-[24px]', valueClassName)}>{value}</div>
+      <div className={cn('display num mt-1.5 text-[24px]', valueClassName)}>
+        {typeof value === 'string' ? <ScrambleText text={value} /> : value}
+      </div>
       {hint && <div className="meta mt-1 truncate">{hint}</div>}
     </div>
   )
