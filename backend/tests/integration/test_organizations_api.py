@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from httpx import AsyncClient
 
@@ -10,6 +12,7 @@ PROJECTS = "/api/v1/projects"
 INVITATIONS = "/api/v1/me/invitations"
 OWNER = "user@robomera.demo"
 INVITEE = "vendor@robomera.demo"
+STRANGER = "admin@robomera.demo"
 
 
 async def _auth(client: AsyncClient, email: str) -> dict[str, str]:
@@ -73,6 +76,22 @@ async def test_create_invite_accept_share_projects(client: AsyncClient) -> None:
     assert detail["projects_count"] == 1
 
 
+async def test_organization_name_is_trimmed_and_not_blank(client: AsyncClient) -> None:
+    owner = await _auth(client, OWNER)
+    blank = await client.post(ORGS, json={"name": "  \t"}, headers=owner)
+    assert blank.status_code == 422
+
+    created = await client.post(ORGS, json={"name": "  Логистика Север  "}, headers=owner)
+    assert created.status_code == 201
+    org = created.json()
+    assert org["name"] == "Логистика Север"
+
+    renamed = await client.patch(f"{ORGS}/{org['id']}", json={"name": "  \n"}, headers=owner)
+    assert renamed.status_code == 422
+    detail = await client.get(f"{ORGS}/{org['id']}", headers=owner)
+    assert detail.json()["name"] == "Логистика Север"
+
+
 async def test_outsider_cannot_see_or_create_in_organization(client: AsyncClient) -> None:
     owner = await _auth(client, OWNER)
     org = (await client.post(ORGS, json={"name": "Закрытая"}, headers=owner)).json()
@@ -113,6 +132,36 @@ async def test_unregistered_email_is_invited(client: AsyncClient) -> None:
     assert [i["email"] for i in detail["invitations"]] == ["new.person@example.com"]
 
 
+async def test_concurrent_duplicate_invitation_returns_conflict(client: AsyncClient) -> None:
+    owner = await _auth(client, OWNER)
+    org = (await client.post(ORGS, json={"name": "Параллельные приглашения"}, headers=owner)).json()
+    responses = await asyncio.gather(
+        client.post(f"{ORGS}/{org['id']}/invitations", json={"email": INVITEE}, headers=owner),
+        client.post(f"{ORGS}/{org['id']}/invitations", json={"email": INVITEE}, headers=owner),
+    )
+    assert sorted(response.status_code for response in responses) == [201, 409]
+
+
+async def test_invitation_is_case_insensitive_and_private(client: AsyncClient) -> None:
+    owner = await _auth(client, OWNER)
+    invitee = await _auth(client, INVITEE)
+    stranger = await _auth(client, STRANGER)
+    org = (await client.post(ORGS, json={"name": "Адресат"}, headers=owner)).json()
+    invited = await client.post(
+        f"{ORGS}/{org['id']}/invitations", json={"email": "VENDOR@ROBOMERA.DEMO"}, headers=owner
+    )
+    invitation = invited.json()
+    assert invitation["email"] == INVITEE
+    assert invitation["invitee_registered"] is True
+    assert (
+        await client.post(f"{INVITATIONS}/{invitation['id']}/accept", headers=stranger)
+    ).status_code == 404
+    assert (
+        await client.post(f"{INVITATIONS}/{invitation['id']}/decline", headers=stranger)
+    ).status_code == 404
+    assert (await client.post(f"{INVITATIONS}/{invitation['id']}/accept", headers=invitee)).status_code == 200
+
+
 async def test_member_rights_leave_and_last_owner(client: AsyncClient) -> None:
     org, owner, invitee = await _org_with_member(client)
     owner_id = next(
@@ -151,11 +200,17 @@ async def test_move_project_between_workspaces(client: AsyncClient) -> None:
     )
     assert moved.json()["organization_id"] == org["id"]
     assert (await client.get(f"{PROJECTS}/{project['id']}", headers=invitee)).status_code == 200
+    edited = await client.patch(
+        f"{PROJECTS}/{project['id']}", json={"name": "Изменён участником"}, headers=invitee
+    )
+    assert edited.status_code == 200
+    assert edited.json()["name"] == "Изменён участником"
     back = await client.patch(f"{PROJECTS}/{project['id']}", json={"organization_id": None}, headers=invitee)
     assert back.status_code == 403
 
     copied = await client.post(f"{PROJECTS}/{project['id']}/copy", headers=invitee)
     assert copied.json()["organization_id"] == org["id"]
+    assert (await client.delete(f"{PROJECTS}/{copied.json()['id']}", headers=owner)).status_code == 204
 
 
 async def test_delete_organization_removes_its_projects(client: AsyncClient) -> None:

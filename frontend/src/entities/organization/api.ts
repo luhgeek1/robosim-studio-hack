@@ -102,11 +102,19 @@ export const useRevokeInvitation = (id: string) =>
     () => [[...qk.organizations.one(id)]],
   )
 
-export const useRemoveMember = (id: string) =>
-  useOrgMutation(
-    (userId: string) => organizationApi.removeMember(id, userId),
-    () => [[...qk.organizations.one(id)], [...qk.projects.all]],
-  )
+export function useRemoveMember(id: string) {
+  const { user } = useSession()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => organizationApi.removeMember(id, userId),
+    onSuccess: (_, userId) =>
+      Promise.all(
+        [qk.organizations.list, qk.projects.all, ...(userId === user?.id ? [] : [qk.organizations.one(id)])].map(
+          (queryKey) => queryClient.invalidateQueries({ queryKey }),
+        ),
+      ),
+  })
+}
 
 export const useAcceptInvitation = () =>
   useOrgMutation(organizationApi.accept, () => [[...qk.organizations.invitations]])
