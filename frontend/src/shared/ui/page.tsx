@@ -55,6 +55,7 @@ export function Screen({
   nextPrimary,
   dense = false,
   className,
+  headerClassName,
 }: {
   title: ReactNode
   lead?: ReactNode
@@ -68,6 +69,8 @@ export function Screen({
   // Верхняя кнопка «Далее» заметна, только если на экране нет своего главного действия; иначе она контурная.
   nextPrimary?: boolean
   className?: string
+  // Широкий экран может держать шапку в обычной колонке, как у остальных шагов.
+  headerClassName?: string
 }) {
   const navigate = useNavigate()
   const match = useMatch('/projects/:projectId/:step/*')
@@ -98,6 +101,7 @@ export function Screen({
           )
         }
         dense={dense}
+        className={headerClassName}
       />
       {children}
       {idx >= 0 && (
