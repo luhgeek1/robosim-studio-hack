@@ -111,7 +111,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
       )}
 
       {(calc || scenario) && (
-        <footer className="grid grid-cols-2 items-center gap-x-8 gap-y-5 border-t border-line bg-surface-2 px-8 py-5 md:grid-cols-[repeat(3,auto)_1fr]">
+        <footer className="grid grid-cols-2 items-center gap-x-5 gap-y-5 border-t border-line bg-surface-2 px-5 py-5 sm:gap-x-8 sm:px-8 md:grid-cols-[repeat(3,auto)_1fr]">
           {calc && (
             <>
               <Figure label="окупаемость" value={formatYears(calc.payback_years)}>
@@ -130,7 +130,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
             <Link
               to={`/projects/${projectId}/scenarios/${scenario.id}`}
               className={cn(
-                'group col-span-2 inline-flex items-center gap-2 justify-self-start rounded-full px-4 py-2 text-[13px] font-medium transition-colors md:col-span-1 md:justify-self-end',
+                'group col-span-2 inline-flex items-center gap-2 justify-self-start rounded-full px-4 py-2 text-[13px] font-medium whitespace-nowrap transition-colors md:col-span-1 md:justify-self-end',
                 stale ? 'bg-warn-soft text-warn hover:bg-warn-soft/70' : 'bg-ink text-white hover:bg-ink/85',
               )}
             >
@@ -160,10 +160,10 @@ function PickHero({ pick, first }: { pick: Pick; first: boolean }) {
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col px-8 py-7 md:border-l md:border-line">
+      <div className="flex min-w-0 flex-col px-5 py-6 sm:px-8 sm:py-7 md:border-l md:border-line">
         <Link
           to={`/catalog/${pick.productId}`}
-          className="display self-start text-[34px] transition-colors hover:text-info"
+          className="display self-start text-[28px] transition-colors hover:text-info sm:text-[34px]"
         >
           {pick.name}
         </Link>
@@ -173,7 +173,7 @@ function PickHero({ pick, first }: { pick: Pick; first: boolean }) {
 
         <div className="mt-auto pt-8">
           <div className="flex items-end gap-3">
-            <span className="display num text-[76px]">{pick.unknown ? '—' : formatNumber(count)}</span>
+            <span className="display num text-[60px] sm:text-[76px]">{pick.unknown ? '—' : formatNumber(count)}</span>
             <span className="pb-2 leading-tight">
               {!pick.unknown && (
                 <span className="block text-[15px] font-semibold">
@@ -202,7 +202,7 @@ function PickCard({ pick, first }: { pick: Pick; first: boolean }) {
   const total = isNum(pick.unitPrice) && count ? pick.unitPrice * count : null
 
   return (
-    <li className="flex min-w-72 flex-1 basis-0 flex-col">
+    <li className="flex min-w-64 flex-1 basis-0 flex-col sm:min-w-72">
       <div className="relative h-60 border-b border-line">
         <RobotStage productId={pick.productId} solutionType={product?.solution_type ?? ''} />
         <div className="pointer-events-none absolute top-4 right-4 left-4 flex flex-wrap items-center gap-1.5">
@@ -211,7 +211,7 @@ function PickCard({ pick, first }: { pick: Pick; first: boolean }) {
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col px-6 pt-5 pb-6">
+      <div className="flex min-w-0 flex-1 flex-col px-5 pt-5 pb-6 sm:px-6">
         <Link
           to={`/catalog/${pick.productId}`}
           className="truncate text-[20px] font-semibold tracking-[-0.02em] transition-colors hover:text-ink-2"
@@ -273,9 +273,9 @@ function Fleet({ working, reserve }: { working: number; reserve: number }) {
 
 function Figure({ value, label, children }: { value: string; label: string; children?: ReactNode }) {
   return (
-    <div className="min-w-0 whitespace-nowrap">
-      <div className="display num text-[22px]">{value}</div>
-      <div className="meta mt-1 flex items-center gap-2">
+    <div className="min-w-0 sm:whitespace-nowrap">
+      <div className="display num text-[20px] sm:text-[22px]">{value}</div>
+      <div className="meta mt-1 flex flex-wrap items-center gap-x-2">
         {label}
         {children}
       </div>

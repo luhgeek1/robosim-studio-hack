@@ -14,6 +14,7 @@ import {
 import type { CashflowPoint } from '@/shared/api/types'
 import { formatMln } from '@/shared/lib/format'
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
+import { useNarrow } from '@/shared/lib/media'
 
 type Grain = 'yearly' | 'monthly'
 
@@ -28,6 +29,7 @@ const SERIES = {
 
 export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; monthly: CashflowPoint[] }) {
   const [grain, setGrain] = useState<Grain>('yearly')
+  const narrow = useNarrow()
   const points = grain === 'yearly' ? yearly : monthly
   // Outflows are drawn below zero so the bars read as a cash-flow waterfall per period.
   const data = points.map((p) => ({
@@ -62,13 +64,13 @@ export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; mo
             axisLine={false}
             fontSize={12}
             tickFormatter={(v: number) => (grain === 'yearly' ? `${v} г.` : String(v))}
-            interval={grain === 'monthly' ? 5 : 0}
+            interval={grain === 'monthly' ? (narrow ? 11 : 5) : 0}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
             fontSize={12}
-            width={56}
+            width={narrow ? 48 : 56}
             tickFormatter={(v: number) => formatMln(v * 1e6)}
             label={{
               value: 'млн ₽',

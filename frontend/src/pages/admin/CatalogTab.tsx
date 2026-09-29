@@ -71,7 +71,7 @@ export function CatalogTab() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative w-80 max-w-full">
+        <div className="relative w-80 max-w-full max-sm:w-full">
           <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-4" />
           <Input
             value={search}
@@ -88,7 +88,10 @@ export function CatalogTab() {
             setPage(1)
           }}
         >
-          <SelectTrigger className="h-9 w-64 rounded-[10px] bg-card" aria-label="Тип решения">
+          <SelectTrigger
+            className="h-9 w-64 rounded-[10px] bg-card max-sm:min-w-0 max-sm:flex-1"
+            aria-label="Тип решения"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="max-h-80">
@@ -120,30 +123,35 @@ export function CatalogTab() {
       {products.data && products.data.items.length > 0 && (
         <>
           <div className="card overflow-hidden">
-            <div
-              className={`grid ${COLUMNS} items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3`}
-            >
-              <span>Решение</span>
-              <span>Тип</span>
-              <span>Стадия</span>
-              <span className="text-right">Цена от</span>
-              <span className="text-right">Полнота</span>
-              <span />
+            {/* Шесть колонок не сжимаются в столбик по слову: на узком экране таблица листается вбок внутри карточки. */}
+            <div className="scroll-thin overflow-x-auto overscroll-x-contain">
+              <div className="min-w-[880px]">
+                <div
+                  className={`grid ${COLUMNS} items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3`}
+                >
+                  <span>Решение</span>
+                  <span>Тип</span>
+                  <span>Стадия</span>
+                  <span className="text-right">Цена от</span>
+                  <span className="text-right">Полнота</span>
+                  <span />
+                </div>
+                <ul className="divide-y divide-line">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {products.data.items.map((product, i) => (
+                      <ProductRow
+                        key={product.id}
+                        product={product}
+                        index={i}
+                        onEdit={(tab) => setTarget({ mode: 'edit', id: product.id, tab })}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              </div>
             </div>
-            <ul className="divide-y divide-line">
-              <AnimatePresence initial={false} mode="popLayout">
-                {products.data.items.map((product, i) => (
-                  <ProductRow
-                    key={product.id}
-                    product={product}
-                    index={i}
-                    onEdit={(tab) => setTarget({ mode: 'edit', id: product.id, tab })}
-                  />
-                ))}
-              </AnimatePresence>
-            </ul>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[12.5px] text-ink-3">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[12.5px] text-ink-3">
             <span className="num">
               {formatNumber((page - 1) * PAGE_SIZE + 1)}–{formatNumber(Math.min(page * PAGE_SIZE, total))} из{' '}
               {formatNumber(total)} · сначала изменённые недавно

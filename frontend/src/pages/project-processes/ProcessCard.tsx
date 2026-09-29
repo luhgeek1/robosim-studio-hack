@@ -28,8 +28,9 @@ export function ProcessCard({
 
   return (
     <article id={`process-${process.process_key}`} className="card scroll-mt-36 overflow-hidden">
-      <header className="px-6 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-6">
+      <header className="px-4 pt-5 pb-4 sm:px-6">
+        {/* На телефоне сумма уходит под название: рядом с ней длинному названию осталась бы узкая колонка. */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0">
             <h2 className="h3 text-[18px]">{process.name}</h2>
             <p className="mt-1 flex min-w-0 items-center gap-2 text-[13px] text-ink-3">
@@ -39,8 +40,8 @@ export function ProcessCard({
               </span>
             </p>
           </div>
-          <div className="shrink-0 text-right">
-            <div className="display num text-[26px]">{formatRub(current?.cost_rub_year)}</div>
+          <div className="shrink-0 sm:text-right">
+            <div className="display num text-[24px] sm:text-[26px]">{formatRub(current?.cost_rub_year)}</div>
             <div className="meta mt-1">
               в год{share !== undefined && ` · ${formatPct(share, { share: true })} всего ФОТ`}
             </div>
@@ -54,8 +55,8 @@ export function ProcessCard({
       </header>
 
       <div className="hairline grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <div className="px-6 py-5">
-          <dl className="grid grid-cols-3 gap-x-6 gap-y-5">
+        <div className="px-4 py-5 sm:px-6">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
             <Figure value={formatNumber(process.demand_per_day)} label={`${unit} в сутки`} />
             <Figure value={formatNumber(process.avg_per_hour)} label={`${unit}/ч в среднем`} />
             <Figure
@@ -85,7 +86,7 @@ export function ProcessCard({
           )}
         </div>
 
-        <div className="border-t border-line bg-surface-2/60 px-6 py-5 lg:border-t-0 lg:border-l">
+        <div className="border-t border-line bg-surface-2/60 px-4 py-5 sm:px-6 lg:border-t-0 lg:border-l">
           <div className="mb-3 text-[13px] text-ink-2">Кто делает сейчас</div>
           {groups.length > 0 ? (
             <ul className="divide-y divide-line">
@@ -122,7 +123,7 @@ function Figure({ value, label, tone }: { value: ReactNode; label: string; tone?
   // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
   return (
     <div className="flex min-w-0 flex-col-reverse">
-      <dt className="mt-0.5 truncate text-[12.5px] text-ink-3" title={label}>
+      <dt className="mt-0.5 text-[12.5px] text-ink-3 max-sm:leading-snug sm:truncate" title={label}>
         {label}
       </dt>
       <dd
@@ -244,7 +245,7 @@ function Solutions({ processKey, fallback }: { processKey: string; fallback: str
             const fit = ofType.filter((c) => c.status === 'fit').length
             const check = ofType.filter((c) => c.status === 'check').length
             return (
-              <li key={type.key} className="flex items-start justify-between gap-4">
+              <li key={type.key} className="flex items-start justify-between gap-x-4 gap-y-1 max-sm:flex-wrap">
                 <span className="min-w-0 text-[13.5px] leading-snug">{type.name}</span>
                 <span className="num flex shrink-0 items-center gap-2.5 pt-0.5 text-[12.5px]">
                   <span className={cn('flex items-center gap-1', fit ? 'text-ok' : 'text-ink-4')}>
@@ -284,7 +285,7 @@ function Notes({ notes }: { notes: string[] }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink"
+        className="flex items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink max-sm:-my-1.5 max-sm:py-1.5"
       >
         <ChevronRight size={14} className={cn('transition-transform', open && 'rotate-90')} />
         Как распределён персонал

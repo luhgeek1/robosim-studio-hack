@@ -90,13 +90,43 @@ export function useViewport(
     [zoomAt, size.width, size.height],
   )
 
+  // Активные касания: один палец двигает план, два — масштабируют вокруг середины между ними и тоже двигают.
+  const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const release = (event: PointerEvent<HTMLDivElement>) => {
+    if (!pointers.current.delete(event.pointerId)) return
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    const rest = [...pointers.current.entries()][0]
+    drag.current = rest ? { id: rest[0], x: rest[1].x, y: rest[1].y } : null
+  }
+
   const handlers = {
     onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
       if (event.button !== 0 || (event.target as Element).closest('[data-map-control]')) return
-      drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY }
+      pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+      if (!drag.current) drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY }
       event.currentTarget.setPointerCapture(event.pointerId)
     },
     onPointerMove: (event: PointerEvent<HTMLDivElement>) => {
+      const prev = pointers.current.get(event.pointerId)
+      if (!prev) return
+      const next = { x: event.clientX, y: event.clientY }
+      if (pointers.current.size >= 2) {
+        const [a, b] = [...pointers.current.values()]
+        const other = a === prev ? b : a
+        const rect = event.currentTarget.getBoundingClientRect()
+        const before = Math.hypot(prev.x - other.x, prev.y - other.y)
+        const after = Math.hypot(next.x - other.x, next.y - other.y)
+        const mid = { x: (next.x + other.x) / 2 - rect.left, y: (next.y + other.y) / 2 - rect.top }
+        // Сдвиг середины — половина хода пальца: второй палец в этом событии стоит на месте.
+        const dx = (next.x - prev.x) / 2
+        const dy = (next.y - prev.y) / 2
+        pointers.current.set(event.pointerId, next)
+        if (before > 0) zoomAt(after / before, mid.x, mid.y)
+        setView((v) => ({ ...v, tx: v.tx + dx, ty: v.ty + dy }))
+        return
+      }
+      pointers.current.set(event.pointerId, next)
       const d = drag.current
       if (!d || d.id !== event.pointerId) return
       const dx = event.clientX - d.x
@@ -105,11 +135,8 @@ export function useViewport(
       d.y = event.clientY
       setView((v) => ({ ...v, tx: v.tx + dx, ty: v.ty + dy }))
     },
-    onPointerUp: (event: PointerEvent<HTMLDivElement>) => {
-      if (drag.current?.id !== event.pointerId) return
-      drag.current = null
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    },
+    onPointerUp: release,
+    onPointerCancel: release,
   }
 
   return { size, view, fit, zoomCenter, handlers }

@@ -21,7 +21,7 @@ export function PaneSection({
   const [open, setOpen] = useState(defaultOpen)
   return (
     <section className={cn('border-b border-line last:border-b-0', className)}>
-      <div className="flex h-8 items-center gap-1 pr-2 pl-1.5">
+      <div className="flex h-10 items-center gap-1 pr-2 pl-1.5 lg:h-8">
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -80,49 +80,102 @@ export function StatusBar({
   labels?: Record<keyof Panels, string>
   toggles?: (keyof Panels)[]
 }) {
-  const toggles: { key: keyof Panels; icon: typeof PanelLeft; label: string }[] = [
-    { key: 'left', icon: PanelLeft, label: labels.left },
+  // Ниже lg боковые панели стоят столбиком и видны всегда — сворачивать там нечего, остаётся только нижняя.
+  const all: { key: keyof Panels; icon: typeof PanelLeft; label: string; wide?: boolean }[] = [
+    { key: 'left', icon: PanelLeft, label: labels.left, wide: true },
     { key: 'bottom', icon: PanelBottom, label: labels.bottom },
-    { key: 'right', icon: PanelRight, label: labels.right },
+    { key: 'right', icon: PanelRight, label: labels.right, wide: true },
   ]
+  const toggles = all.filter(({ key }) => shown.includes(key))
+  const onlyWide = toggles.every((t) => t.wide)
   return (
-    <footer className="col-span-full flex h-7 items-center gap-4 bg-ink px-3 font-mono text-[11px] tracking-[0.04em] text-white/70 uppercase">
-      <span className="flex items-center gap-2 text-white">
-        {live ? <PulseDot /> : <span className="size-1.5 rounded-full bg-white/50" />}
-        {status}
+    <footer className="sticky bottom-0 z-10 order-5 col-span-full flex h-7 items-center gap-3 bg-ink px-3 font-mono text-[11px] tracking-[0.04em] text-white/70 uppercase sm:gap-4 lg:static lg:order-none">
+      <span className="flex min-w-0 items-center gap-2 text-white">
+        {live ? <PulseDot /> : <span className="size-1.5 shrink-0 rounded-full bg-white/50" />}
+        <span className="truncate">{status}</span>
       </span>
       {items.map((item, i) => (
         <span key={i} className="hidden truncate md:inline">
           {item}
         </span>
       ))}
-      <span className="ml-auto flex items-center gap-4">
+      <span className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
         {metrics.map((item, i) => (
           <span key={i} className="num whitespace-nowrap text-white">
             {item}
           </span>
         ))}
-        <span className="flex items-center gap-0.5 border-l border-white/15 pl-2">
-          {toggles
-            .filter(({ key }) => shown.includes(key))
-            .map(({ key, icon: Icon, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => onToggle(key)}
-                aria-pressed={panels[key]}
-                aria-label={label}
-                title={label}
-                className={cn(
-                  'flex size-5 items-center justify-center rounded-[4px] transition-colors hover:bg-white/15',
-                  panels[key] ? 'text-white' : 'text-white/40',
-                )}
-              >
-                <Icon size={13} />
-              </button>
-            ))}
+        <span className={cn('flex items-center gap-0.5 border-l border-white/15 pl-2', onlyWide && 'max-lg:hidden')}>
+          {toggles.map(({ key, icon: Icon, label, wide }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onToggle(key)}
+              aria-pressed={panels[key]}
+              aria-label={label}
+              title={label}
+              className={cn(
+                'flex size-5 items-center justify-center rounded-[4px] transition-colors hover:bg-white/15',
+                panels[key] ? 'text-white' : 'text-white/40',
+                wide ? 'max-lg:hidden' : 'max-lg:size-6',
+              )}
+            >
+              <Icon size={13} />
+            </button>
+          ))}
         </span>
       </span>
     </footer>
+  )
+}
+
+export type SideTab = { key: string; label: string; content: ReactNode }
+
+/* Вкладки боковой панели как в VS Code: одна тема на экране вместо длинной ленты разделов. */
+export function SideTabs({ tabs }: { tabs: SideTab[] }) {
+  const [active, setActive] = useState(tabs[0]?.key)
+  const current = tabs.find((t) => t.key === active) ?? tabs[0]
+  return (
+    <>
+      <div className="flex h-10 shrink-0 items-end gap-1 border-b border-line px-2" role="tablist">
+        {tabs.map((tab) => {
+          const on = tab.key === current?.key
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setActive(tab.key)}
+              className={cn(
+                'relative h-9 rounded-t-[8px] px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                on ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
+              )}
+            >
+              {tab.label}
+              {on && (
+                <motion.span
+                  layoutId="side-tab"
+                  className="absolute inset-x-1.5 -bottom-px h-0.5 rounded-full bg-ink"
+                  transition={{ type: 'spring', stiffness: 520, damping: 42 }}
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={current?.key}
+          role="tabpanel"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.08 } }}
+          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {current?.content}
+        </motion.div>
+      </AnimatePresence>
+    </>
   )
 }

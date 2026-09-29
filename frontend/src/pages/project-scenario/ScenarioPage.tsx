@@ -5,7 +5,7 @@ import { useProject, useProjectId } from '@/entities/project'
 import { SCENARIO_KIND_LABEL, useCalculate, useCalculation, useScenario, useUpdateScenario } from '@/entities/scenario'
 import { formatDateTime } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
+import { Textarea } from '@/shared/ui/textarea'
 import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Segmented } from '@/shared/ui/v0'
 import { CalculationView } from './CalculationView'
@@ -61,7 +61,8 @@ export function ScenarioPage() {
   }
 
   const nextButton = (
-    <Button asChild variant="outline">
+    // На телефоне переход дальше остаётся внизу экрана, как в остальных шагах.
+    <Button asChild variant="outline" className="max-sm:hidden">
       <Link to={`/projects/${projectId}/comparison`}>
         Далее: сравнение <ArrowRight />
       </Link>
@@ -69,7 +70,7 @@ export function ScenarioPage() {
   )
 
   return (
-    <div className="mx-auto max-w-300 space-y-5 pb-16 pt-2">
+    <div className="mx-auto w-full max-w-300 space-y-5 pb-16 pt-2">
       <div className="space-y-3">
         <Link
           to={`/projects/${projectId}/scenarios`}
@@ -78,12 +79,20 @@ export function ScenarioPage() {
           <ArrowLeft className="size-4" /> Все сценарии
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1 space-y-2">
-            <Input
+          <div className="min-w-[min(100%,18rem)] flex-1 space-y-2">
+            {/* Многострочное поле: длинное название на телефоне переносится, а не обрезается. */}
+            <Textarea
+              rows={1}
               value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value.replace(/\n/g, ' ') })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  e.currentTarget.blur()
+                }
+              }}
               aria-label="Название сценария"
-              className="h1 h-auto border-transparent bg-transparent px-0 shadow-none hover:border-border focus-visible:px-2 md:text-[34px]"
+              className="h1 h-auto min-h-0 resize-none border-transparent bg-transparent px-0 py-1 shadow-none hover:border-border focus-visible:px-2 max-md:text-[27px] max-md:leading-tight md:text-[34px]"
             />
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-ink-3">
               <span className="flex items-center gap-1.5 font-medium text-ink-2">
@@ -107,7 +116,7 @@ export function ScenarioPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {calculationId && (
               <Button variant="outline" onClick={() => openTrace('')}>
                 <ListTree /> Трасса расчёта
@@ -132,7 +141,7 @@ export function ScenarioPage() {
         <div className="sticky top-34 z-20 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white/95 px-4 py-2.5 text-sm shadow-float backdrop-blur">
           <span className="font-medium">Есть несохранённые изменения</span>
           {problems.length > 0 && <span className="text-warn">{problems[0]}</span>}
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap gap-2">
             <Button variant="ghost" size="sm" onClick={() => setDraft(toDraft(current))} disabled={busy}>
               <RotateCcw /> Отменить
             </Button>
@@ -192,7 +201,7 @@ export function ScenarioPage() {
         </div>
       )}
 
-      <div className="hairline mt-12 flex items-center justify-between pt-6">
+      <div className="hairline mt-10 flex flex-wrap-reverse items-center justify-between gap-3 pt-6 sm:mt-12">
         <Button asChild variant="ghost">
           <Link to={`/projects/${projectId}/scenarios`}>
             <ArrowLeft /> Все сценарии

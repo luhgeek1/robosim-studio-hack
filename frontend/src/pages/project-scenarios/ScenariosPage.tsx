@@ -153,7 +153,7 @@ function BaselineStrip({ projectId, scenario }: { projectId: string; scenario: S
   return (
     <Link
       to={`/projects/${projectId}/scenarios/${scenario.id}`}
-      className="group mb-4 flex items-center justify-between gap-6 rounded-[14px] bg-surface-2 px-6 py-4 ring-1 ring-line transition-colors hover:bg-card"
+      className="group mb-4 flex items-center justify-between gap-3 rounded-[14px] bg-surface-2 px-4 py-4 ring-1 sm:gap-6 sm:px-6 ring-line transition-colors hover:bg-card"
     >
       <span className="flex min-w-0 items-center gap-3">
         <span className="size-2 shrink-0 rounded-full bg-ink-4" />

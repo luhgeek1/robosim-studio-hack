@@ -256,6 +256,12 @@ def _validate(object_type: ObjectTypeSeed, solution_types: set[str], norm_keys: 
         for s in cost.solution_types
         if s not in solution_types
     ]
+    problems += [
+        f"demo {demo.key}: unknown param {key}"
+        for demo in object_type.demo_projects
+        for key in demo.params
+        if key not in params
+    ]
     problems += _formula_problems(object_type, norm_keys)
     if problems:
         raise SeedDataError(f"{object_type.key}: " + "; ".join(problems))

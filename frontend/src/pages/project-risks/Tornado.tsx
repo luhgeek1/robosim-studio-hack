@@ -98,9 +98,10 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
         )}
       </div>
 
-      <div className="mt-5 grid grid-cols-[1.5rem_minmax(0,16rem)_minmax(0,1fr)_6.5rem] gap-x-4">
-        <div className="col-span-2" />
-        <div className="relative h-8">
+      {/* На узком экране строка параметра — два ряда: имя и разброс сверху, полоса во всю ширину под ними. */}
+      <div className="mt-5 grid grid-cols-[1.25rem_minmax(0,1fr)_5rem] gap-x-3 lg:grid-cols-[1.5rem_minmax(0,16rem)_minmax(0,1fr)_6.5rem] lg:gap-x-4">
+        <div className="hidden lg:col-span-2 lg:block" />
+        <div className="relative col-span-3 mx-6 h-8 lg:col-span-1 lg:mx-0">
           <span
             className="num absolute bottom-2 -translate-x-1/2 rounded-full bg-ink px-2.5 py-0.5 text-[12px] font-medium whitespace-nowrap text-white transition-[left] duration-300"
             style={{ left: `${basePos * 100}%` }}
@@ -108,7 +109,7 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
             база {fmt(base)}
           </span>
         </div>
-        <div className="flex items-end justify-end pb-2 text-[12px] text-ink-3">разброс</div>
+        <div className="hidden items-end justify-end pb-2 text-[12px] text-ink-3 lg:flex">разброс</div>
 
         {items.map((item, i) => (
           <Row
@@ -160,9 +161,9 @@ function Row({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="group col-span-4 grid grid-cols-subgrid items-center rounded-xl py-3 transition-colors hover:bg-black/2.5">
-          <span className="num pl-2 text-[12.5px] text-ink-4">{index}</span>
-          <div className="min-w-0">
+        <div className="group col-span-3 grid grid-cols-subgrid items-center gap-y-2 rounded-xl py-3 transition-colors hover:bg-black/2.5 lg:col-span-4 lg:gap-y-0">
+          <span className="num row-start-1 pl-1 text-[12.5px] text-ink-4 lg:row-auto lg:pl-2">{index}</span>
+          <div className="row-start-1 min-w-0 lg:row-auto">
             <div className="truncate text-[13.5px] leading-snug font-medium" title={item.name}>
               {item.name}
             </div>
@@ -174,11 +175,11 @@ function Row({
             </div>
           </div>
 
-          <div className="relative h-11">
-            <span className="absolute inset-y-[-12px] w-px bg-ink" style={{ left: `${basePos * 100}%` }} />
+          <div className="relative col-span-3 row-start-2 mx-6 h-11 lg:col-auto lg:row-auto lg:mx-0">
+            <span className="absolute -top-1 -bottom-3 w-px bg-ink lg:-top-3" style={{ left: `${basePos * 100}%` }} />
             {zeroPos !== null && (
               <span
-                className="absolute inset-y-[-12px] w-0 border-l border-dashed border-ink-4"
+                className="absolute -top-1 -bottom-3 w-0 border-l border-dashed lg:-top-3 border-ink-4"
                 style={{ left: `${zeroPos * 100}%` }}
               />
             )}
@@ -201,7 +202,8 @@ function Row({
             />
           </div>
 
-          <div className="pr-2 text-right">
+          <div className="col-start-3 row-start-1 pr-1 text-right lg:col-auto lg:row-auto lg:pr-2">
+            <div className="text-[11px] text-ink-3 lg:hidden">разброс</div>
             <div className="num text-[13.5px] font-semibold tracking-[-0.01em]">{swing}</div>
             <div className="mt-1 ml-auto h-1 w-16 overflow-hidden rounded-full bg-black/6">
               <motion.div

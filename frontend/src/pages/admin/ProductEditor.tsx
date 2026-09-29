@@ -22,7 +22,7 @@ export type EditorTarget = { mode: 'create' } | { mode: 'edit'; id: string; tab?
 export function ProductEditor({ target, onClose }: { target: EditorTarget | null; onClose: () => void }) {
   return (
     <Sheet open={target !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full gap-0 p-0 data-[side=right]:sm:max-w-170">
+      <SheetContent className="w-full gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-170">
         {target && <EditorBody key={target.mode === 'edit' ? target.id : 'new'} target={target} onClose={onClose} />}
       </SheetContent>
     </Sheet>
@@ -97,7 +97,7 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-line px-6 pt-5 pb-4">
+      <div className="border-b border-line px-4 pt-5 pb-4 sm:px-6">
         <div className="flex items-start justify-between gap-4 pr-8">
           <div className="min-w-0">
             <SheetTitle className="truncate text-[20px] font-semibold tracking-[-0.02em]">{title}</SheetTitle>
@@ -114,7 +114,7 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
             </span>
           )}
         </div>
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 flex min-w-0 items-center justify-between gap-3">
           <Segmented
             size="sm"
             value={tab}
@@ -128,7 +128,7 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
           {id && (
             <Link
               to={`/catalog/${id}`}
-              className="flex items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink"
+              className="flex shrink-0 items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink"
             >
               В каталоге <ArrowUpRight size={13} />
             </Link>
@@ -136,7 +136,7 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
         </div>
       </div>
 
-      <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-6 pt-5">
+      <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-4 pt-5 sm:px-6">
         {id && product.isPending && <LoadingBlock label="Загружаем карточку…" />}
         {product.isError && <ErrorBlock error={product.error} onRetry={() => product.refetch()} />}
         <AnimatePresence mode="wait" initial={false}>
@@ -162,11 +162,11 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
       </div>
 
       {tab !== 'specs' && (
-        <div className="flex items-center justify-between gap-3 border-t border-line bg-surface-2 px-6 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-line bg-surface-2 px-4 py-3.5 sm:px-6">
           <span className="text-[12.5px] text-ink-3">
             {dirty ? 'Есть несохранённые изменения' : id ? 'Все изменения сохранены' : 'Заполните карточку и цены'}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-sm:ml-auto">
             <Button variant="ghost" onClick={onClose}>
               Закрыть
             </Button>

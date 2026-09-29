@@ -110,10 +110,13 @@ export function ReportPage() {
                 <li key={v.id} className="flex items-center justify-between gap-3 py-2 text-[13.5px]">
                   <span className="flex min-w-0 items-center gap-2">
                     <ImageIcon className="size-4 shrink-0 text-ink-3" />
-                    <span className="truncate">{v.caption}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate">{v.caption}</span>
+                      <span className="meta sm:hidden">{formatDateTime(v.createdAt)}</span>
+                    </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-3">
-                    <span className="meta">{formatDateTime(v.createdAt)}</span>
+                    <span className="meta max-sm:hidden">{formatDateTime(v.createdAt)}</span>
                     <Button
                       size="icon-sm"
                       variant="ghost"
@@ -139,7 +142,7 @@ export function ReportPage() {
             <ul className="divide-y divide-line">
               {reports.data.map((r) => (
                 <li key={r.id} className="flex items-center justify-between gap-3 py-2 text-[13.5px]">
-                  <span className="flex items-center gap-3">
+                  <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="w-12 font-medium">{FORMAT_LABEL[r.format]}</span>
                     <span className="meta">{formatDateTime(r.finished_at ?? r.created_at)}</span>
                     <Pill tone={r.status === 'done' ? 'ok' : r.status === 'failed' ? 'crit' : 'neutral'}>

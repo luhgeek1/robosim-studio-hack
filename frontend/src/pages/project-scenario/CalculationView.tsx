@@ -1,5 +1,5 @@
 import { ChevronDown, ShieldAlert, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { SOURCE_KIND_LABEL, SourceLink } from '@/entities/provenance'
 import { BAND_LABEL, RISK_SEVERITY_LABEL, VERDICT_LABEL, useNarrative, type Verdict } from '@/entities/scenario'
 import type { CalculationRun, CostBreakdown } from '@/shared/api/types'
@@ -71,10 +71,7 @@ export function CalculationView({
           <Stat label="Ставка дисконтирования" value={formatPct(m.discount_rate_pct)} />
         </StatStrip>
       ) : (
-        <StatStrip
-          columns={4}
-          className="md:divide-x-0 md:[&>*:nth-child(-n+4)]:border-b md:[&>*:not(:nth-child(4n+1))]:border-l"
-        >
+        <StatStrip columns={4}>
           <Stat label="CAPEX" value={formatRub(m.capex_rub)} hint="с НДС" />
           <Stat label="OPEX роботизации" value={formatRub(m.opex_rub_year)} hint="в год" />
           <Stat
@@ -137,7 +134,7 @@ export function CalculationView({
       )}
 
       {(run.risks.length > 0 || (run.warnings?.length ?? 0) > 0) && (
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <Section title="Риски">
             {run.risks.length === 0 ? (
               <p className="text-muted-foreground">Существенных рисков не найдено.</p>
@@ -221,7 +218,7 @@ function VerdictBlock({ run }: { run: CalculationRun }) {
   return (
     <section className="card overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="min-w-0 px-7 py-6">
+        <div className="min-w-0 px-5 py-5 sm:px-7 sm:py-6">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
             <span className="flex items-center gap-1.5 font-medium text-ink">
               <span className={cn('size-2 rounded-full', VERDICT_DOT[verdict] ?? 'bg-ink-4')} />
@@ -232,7 +229,7 @@ function VerdictBlock({ run }: { run: CalculationRun }) {
           <h2 className="h2 mt-3">{interpretation.headline}</h2>
           <p className="mt-2 max-w-3xl text-[14px] leading-relaxed text-ink-3">{interpretation.summary}</p>
         </div>
-        <div className="flex flex-col justify-center border-t border-line bg-surface-2 px-7 py-6 lg:border-t-0 lg:border-l">
+        <div className="flex flex-col justify-center border-t border-line bg-surface-2 px-5 py-5 sm:px-7 sm:py-6 lg:border-t-0 lg:border-l">
           <div className="display num text-[44px]">{formatYears(m.payback_years)}</div>
           <div className="meta mt-1.5">до окупаемости</div>
           <div className="mt-4 text-[13px] text-ink-2">
@@ -241,9 +238,10 @@ function VerdictBlock({ run }: { run: CalculationRun }) {
         </div>
       </div>
       {columns.length > 0 && (
+        // На телефоне колонки встают друг под друга: в трёх узких выходило по слову в строке.
         <div
-          className="grid gap-8 border-t border-line px-7 py-6"
-          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+          className="grid grid-cols-1 gap-6 border-t border-line px-5 py-5 sm:px-7 sm:py-6 md:grid-cols-[repeat(var(--cols),minmax(0,1fr))] md:gap-8"
+          style={{ '--cols': columns.length } as CSSProperties}
         >
           {columns}
         </div>
@@ -347,37 +345,43 @@ function Calibration({ calibration }: { calibration: NonNullable<CalculationRun[
       }
     >
       {calibration.checks && calibration.checks.length > 0 && (
-        <table className="w-full text-sm">
-          <thead className="text-xs text-muted-foreground">
-            <tr>
-              <th className="py-1 text-left font-normal">Показатель модельного кейса</th>
-              <th className="py-1 text-right font-normal">Наш расчёт</th>
-              <th className="py-1 text-right font-normal">ФЦ БАС</th>
-              <th className="py-1 text-right font-normal">Отклонение</th>
-            </tr>
-          </thead>
-          <tbody>
-            {calibration.checks.map((check) => {
-              const within = check.tolerance_pct == null || Math.abs(check.deviation_pct) <= check.tolerance_pct
-              return (
-                <tr key={check.key} className="border-t">
-                  <td className="py-1.5">{check.name}</td>
-                  <td className="num py-1.5 text-right">{formatValue(check.ours, check.unit)}</td>
-                  <td className="num py-1.5 text-right">{formatValue(check.reference, check.unit)}</td>
-                  <td className={cn('num py-1.5 text-right', within ? 'text-ok' : 'text-warn')}>
-                    {formatPct(check.deviation_pct)}
-                    {check.tolerance_pct != null && (
-                      <span className="text-muted-foreground">
-                        {' '}
-                        (допуск {formatPct(check.tolerance_pct, { digits: 0 })})
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <div className="-mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[34rem] text-sm">
+            <thead className="text-xs text-muted-foreground">
+              <tr>
+                <th className="py-1 text-left font-normal">Показатель модельного кейса</th>
+                <th className="py-1 text-right font-normal">Наш расчёт</th>
+                <th className="py-1 text-right font-normal">ФЦ БАС</th>
+                <th className="py-1 text-right font-normal">Отклонение</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calibration.checks.map((check) => {
+                const within = check.tolerance_pct == null || Math.abs(check.deviation_pct) <= check.tolerance_pct
+                return (
+                  <tr key={check.key} className="border-t">
+                    <td className="py-1.5">{check.name}</td>
+                    <td className="num py-1.5 pl-3 text-right whitespace-nowrap">
+                      {formatValue(check.ours, check.unit)}
+                    </td>
+                    <td className="num py-1.5 pl-3 text-right whitespace-nowrap">
+                      {formatValue(check.reference, check.unit)}
+                    </td>
+                    <td className={cn('num py-1.5 pl-3 text-right', within ? 'text-ok' : 'text-warn')}>
+                      {formatPct(check.deviation_pct)}
+                      {check.tolerance_pct != null && (
+                        <span className="text-muted-foreground">
+                          {' '}
+                          (допуск {formatPct(check.tolerance_pct, { digits: 0 })})
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
       {calibration.note && <p className="mt-3 text-muted-foreground">{calibration.note}</p>}
     </Section>
@@ -388,23 +392,27 @@ function Assumptions({ norms }: { norms: NonNullable<CalculationRun['assumptions
   const [open, setOpen] = useState(false)
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border bg-surface">
-      <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-3 text-left">
+      <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5">
         <div>
           <div className="text-[15px] font-semibold">Нормативы и допущения расчёта</div>
           <div className="text-xs text-muted-foreground">{norms.length} значений: у каждого источник и обоснование</div>
         </div>
         <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </CollapsibleTrigger>
-      <CollapsibleContent className="border-t px-5 pb-5">
-        <table className="w-full text-sm">
-          <tbody>
+      <CollapsibleContent className="border-t px-4 pb-5 sm:px-5">
+        {/* На телефоне строка норматива складывается: название и значение сверху, источник под ними. */}
+        <table className="w-full text-sm max-sm:block">
+          <tbody className="max-sm:block">
             {norms.map((norm) => (
-              <tr key={norm.key} className="border-t align-top">
-                <td className="py-2 pr-3">
+              <tr
+                key={norm.key}
+                className="border-t align-top max-sm:grid max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:gap-x-3 max-sm:py-2"
+              >
+                <td className="py-2 pr-3 max-sm:p-0">
                   <div>{norm.name}</div>
                   <div className="font-mono text-[11px] text-muted-foreground">{norm.key}</div>
                 </td>
-                <td className="num py-2 pr-3 whitespace-nowrap">
+                <td className="num py-2 pr-3 whitespace-nowrap max-sm:p-0 max-sm:text-right">
                   {formatValue(norm.value, norm.unit)}
                   {norm.range && (
                     <div className="text-xs text-muted-foreground">
@@ -412,7 +420,7 @@ function Assumptions({ norms }: { norms: NonNullable<CalculationRun['assumptions
                     </div>
                   )}
                 </td>
-                <td className="py-2 text-xs">
+                <td className="py-2 text-xs max-sm:col-span-2 max-sm:pt-1.5 max-sm:pb-0">
                   <div>
                     {SOURCE_KIND_LABEL[norm.source.kind]}:{' '}
                     <SourceLink title={norm.source.title} url={norm.source.url} />

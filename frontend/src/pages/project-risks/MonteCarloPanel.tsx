@@ -27,7 +27,7 @@ export function MonteCarloPanel({ scenarioId, horizon }: { scenarioId: string; h
 
   return (
     <article className="card overflow-hidden">
-      <header className="flex flex-wrap items-start justify-between gap-4 px-6 pt-5 pb-4">
+      <header className="flex flex-wrap items-start justify-between gap-4 px-4 pt-5 pb-4 sm:px-6">
         <div className="min-w-0">
           <h2 className="h3 text-[18px]">Разброс результата</h2>
           <p className="meta mt-1">
@@ -41,9 +41,9 @@ export function MonteCarloPanel({ scenarioId, horizon }: { scenarioId: string; h
           options={MC_METRICS.map((m) => ({ value: m, label: METRIC[m].short, hint: METRIC[m].label }))}
         />
       </header>
-      {mc.isPending && <LoadingBlock rows={3} className="px-6 pb-6" />}
+      {mc.isPending && <LoadingBlock rows={3} className="px-4 pb-6 sm:px-6" />}
       {mc.isError && (
-        <div className="px-6 pb-6">
+        <div className="px-4 pb-6 sm:px-6">
           <ErrorBlock error={mc.error} onRetry={() => mc.refetch()} />
         </div>
       )}
@@ -59,8 +59,8 @@ function MonteCarloBody({ result, metric, horizon }: { result: MonteCarloResult;
 
   return (
     <div className="hairline grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-      <div className="px-6 py-5">
-        <dl className="grid grid-cols-3 gap-6">
+      <div className="px-4 py-5 sm:px-6">
+        <dl className="grid grid-cols-3 gap-3 sm:gap-6">
           <Figure value={fmt(result.p10)} label={`P10 · ${lowerBetter ? 'удачный' : 'осторожный'} исход`} />
           <Figure value={fmt(result.p50)} label="P50 · медиана" strong />
           <Figure value={fmt(result.p90)} label={`P90 · ${lowerBetter ? 'осторожный' : 'удачный'} исход`} />
@@ -73,7 +73,7 @@ function MonteCarloBody({ result, metric, horizon }: { result: MonteCarloResult;
         </p>
       </div>
 
-      <div className="border-t border-line bg-surface-2/60 px-6 py-5 lg:border-t-0 lg:border-l">
+      <div className="border-t border-line bg-surface-2/60 px-4 py-5 sm:px-6 lg:border-t-0 lg:border-l">
         <div className="text-[13px] text-ink-2">Что двигает результат</div>
         <p className="meta mt-1 mb-4">
           Связь параметра с показателем по прогонам: вправо — рост параметра увеличивает показатель, влево — уменьшает
@@ -86,12 +86,12 @@ function MonteCarloBody({ result, metric, horizon }: { result: MonteCarloResult;
 
 function Figure({ value, label, strong }: { value: string; label: string; strong?: boolean }) {
   return (
-    <div className="flex min-w-0 flex-col-reverse">
-      <dt className="mt-0.5 truncate text-[12.5px] text-ink-3">{label}</dt>
+    <div className="flex min-w-0 flex-col-reverse justify-end">
+      <dt className="mt-0.5 text-[12px] leading-snug text-ink-3 sm:truncate sm:text-[12.5px]">{label}</dt>
       <dd
         className={cn(
           'num leading-tight font-semibold tracking-[-0.01em]',
-          strong ? 'text-[22px]' : 'text-[19px] text-ink-2',
+          strong ? 'text-[19px] sm:text-[22px]' : 'text-[16px] text-ink-2 sm:text-[19px]',
         )}
       >
         {value}

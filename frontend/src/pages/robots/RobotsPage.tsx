@@ -218,12 +218,12 @@ export function RobotsPage() {
   if (catalog.isPending) return <LoadingBlock label="Загружаем каталог…" />
   if (catalog.isError) return <ErrorBlock error={catalog.error} onRetry={() => catalog.refetch()} />
   return (
-    <div className="mx-auto w-full max-w-360 px-6 pt-12 pb-28">
-      <div className="mb-2 flex items-baseline gap-3">
-        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Роботы в 3D</h1>
-        <span className="display num text-[28px] text-ink-4">{KINDS.length}</span>
+    <div className="mx-auto w-full max-w-360 px-4 pt-7 sm:px-6 sm:pt-12 pb-28">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-3">
+        <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Роботы в 3D</h1>
+        <span className="display num text-[22px] text-ink-4 sm:text-[28px]">{KINDS.length}</span>
       </div>
-      <p className="mb-7 max-w-190 text-[15.5px] leading-relaxed text-ink-2">
+      <p className="mb-7 max-w-190 text-[14.5px] leading-relaxed text-ink-2 sm:text-[15.5px]">
         Модель привязана к классу решения из каталога, а форму и анимацию задают ТТХ продукта — габариты,
         грузоподъёмность, высота подъёма, вылет и скорость. Новый продукт известного класса сразу получает модель; чего
         нет в ТТХ, берётся по умолчанию класса и помечается.{' '}
@@ -248,12 +248,12 @@ export function RobotsPage() {
             {g === 'all' ? 'Все' : g}
           </button>
         ))}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 max-sm:mt-2 max-sm:w-full sm:ml-auto">
           <button
             type="button"
             onClick={toggleHuman}
             className={cn(
-              'flex h-8 items-center gap-1.5 rounded-[10px] px-3 text-[13px] font-medium transition-colors',
+              'flex h-8 items-center gap-1.5 rounded-[10px] px-3 text-[13px] font-medium whitespace-nowrap transition-colors',
               human ? 'bg-ink text-white' : 'bg-black/[0.05] text-ink-2 hover:text-ink',
             )}
           >

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Check, Search, SearchX, X } from 'lucide-react'
+import { Check, Search, SearchX, SlidersHorizontal, X } from 'lucide-react'
 import { useLocation, useSearchParams } from 'react-router'
 import { useCatalogFacets, useInfiniteProducts } from '@/entities/catalog'
 import { CompareSelectionBar, CompareToggle, useCompareSelection } from '@/features/catalog-compare-selection'
@@ -82,93 +82,126 @@ export function CatalogPage() {
   const resetAll = () =>
     update({ q: null, object_type: null, industry: null, solution_type: null, status: null, badge: null })
 
-  return (
-    <div className="mx-auto w-full max-w-360 px-6 pt-12 pb-28">
-      <div className="mb-8 flex items-baseline gap-3">
-        <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Каталог решений</h1>
-        {data && <span className="display num text-[28px] text-ink-4">{formatNumber(data.total)}</span>}
+  // На телефоне и планшете фильтры не помещаются колонкой слева — они раскрываются панелью над выдачей.
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const activeCount =
+    [query.object_type, query.industry].filter(Boolean).length +
+    LIST_KEYS.reduce((sum, key) => sum + readList(params, key).length, 0)
+
+  const filters = (
+    <>
+      <div className="mb-4 flex h-7 items-center justify-between">
+        <span className="text-[13px] font-medium text-ink-2">Фильтры</span>
+        {activeFilters && (
+          <button
+            type="button"
+            onClick={resetAll}
+            className="flex items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink max-lg:h-9"
+          >
+            <X size={13} /> Сбросить
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-[232px_minmax(0,1fr)] items-start gap-10">
-        <aside className="scroll-thin sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 pb-4">
-          <div className="mb-4 flex h-7 items-center justify-between">
-            <span className="text-[13px] font-medium text-ink-2">Фильтры</span>
-            {activeFilters && (
-              <button
-                type="button"
-                onClick={resetAll}
-                className="flex items-center gap-1 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink"
-              >
-                <X size={13} /> Сбросить
-              </button>
-            )}
-          </div>
+      {facets.isError && <ErrorBlock error={facets.error} onRetry={() => facets.refetch()} />}
+      {facets.isPending && <Skeleton className="h-64 w-full rounded-xl" />}
+      {facets.data && (
+        <div className="divide-y divide-line">
+          <FilterGroup title="Тип объекта">
+            <OptionList
+              options={[{ key: ALL, name: 'Любой объект' }, ...(facets.data.object_types ?? [])]}
+              isActive={(key) => (query.object_type ?? ALL) === key}
+              onToggle={(key) => update({ object_type: key === ALL ? null : key })}
+              kind="radio"
+            />
+          </FilterGroup>
+          <FilterGroup title="Отрасль">
+            <Select
+              value={query.industry ?? ALL}
+              onValueChange={(value) => update({ industry: value === ALL ? null : value })}
+            >
+              <SelectTrigger className="h-9 w-full rounded-lg bg-card" aria-label="Отрасль">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Все отрасли</SelectItem>
+                {(facets.data.industries ?? []).map((facet) => (
+                  <SelectItem key={facet.key} value={facet.key}>
+                    {facet.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterGroup>
+          <FilterGroup title="Тип решения">
+            <OptionList
+              options={facets.data.solution_types ?? []}
+              isActive={(key) => (query.solution_type ?? []).includes(key)}
+              onToggle={(key) => toggleIn('solution_type', key)}
+              scroll
+            />
+          </FilterGroup>
+          <FilterGroup title="Стадия">
+            <OptionList
+              options={facets.data.statuses ?? []}
+              isActive={(key) => (query.status ?? []).includes(key)}
+              onToggle={(key) => toggleIn('status', key)}
+            />
+          </FilterGroup>
+          <FilterGroup title="Отметки">
+            <OptionList
+              options={facets.data.badges ?? []}
+              isActive={(key) => (query.badge ?? []).includes(key)}
+              onToggle={(key) => toggleIn('badge', key)}
+            />
+          </FilterGroup>
+        </div>
+      )}
+    </>
+  )
 
-          {facets.isError && <ErrorBlock error={facets.error} onRetry={() => facets.refetch()} />}
-          {facets.isPending && <Skeleton className="h-64 w-full rounded-xl" />}
-          {facets.data && (
-            <div className="divide-y divide-line">
-              <FilterGroup title="Тип объекта">
-                <OptionList
-                  options={[{ key: ALL, name: 'Любой объект' }, ...(facets.data.object_types ?? [])]}
-                  isActive={(key) => (query.object_type ?? ALL) === key}
-                  onToggle={(key) => update({ object_type: key === ALL ? null : key })}
-                  kind="radio"
-                />
-              </FilterGroup>
-              <FilterGroup title="Отрасль">
-                <Select
-                  value={query.industry ?? ALL}
-                  onValueChange={(value) => update({ industry: value === ALL ? null : value })}
-                >
-                  <SelectTrigger className="h-9 w-full rounded-lg bg-card" aria-label="Отрасль">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL}>Все отрасли</SelectItem>
-                    {(facets.data.industries ?? []).map((facet) => (
-                      <SelectItem key={facet.key} value={facet.key}>
-                        {facet.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FilterGroup>
-              <FilterGroup title="Тип решения">
-                <OptionList
-                  options={facets.data.solution_types ?? []}
-                  isActive={(key) => (query.solution_type ?? []).includes(key)}
-                  onToggle={(key) => toggleIn('solution_type', key)}
-                  scroll
-                />
-              </FilterGroup>
-              <FilterGroup title="Стадия">
-                <OptionList
-                  options={facets.data.statuses ?? []}
-                  isActive={(key) => (query.status ?? []).includes(key)}
-                  onToggle={(key) => toggleIn('status', key)}
-                />
-              </FilterGroup>
-              <FilterGroup title="Отметки">
-                <OptionList
-                  options={facets.data.badges ?? []}
-                  isActive={(key) => (query.badge ?? []).includes(key)}
-                  onToggle={(key) => toggleIn('badge', key)}
-                />
-              </FilterGroup>
-            </div>
-          )}
+  return (
+    <div className="mx-auto w-full max-w-360 px-4 pt-7 sm:px-6 sm:pt-12 pb-28">
+      <div className="mb-6 flex flex-wrap items-baseline gap-x-3 sm:mb-8">
+        <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Каталог решений</h1>
+        {data && <span className="display num text-[22px] text-ink-4 sm:text-[28px]">{formatNumber(data.total)}</span>}
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[232px_minmax(0,1fr)]">
+        <aside className="scroll-thin sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 pb-4 lg:block">
+          {filters}
         </aside>
 
         <div className="min-w-0">
-          <div className="mb-5 flex items-center gap-3">
+          <div className="mb-5 flex flex-wrap items-center gap-3 sm:flex-nowrap">
             <SearchBox value={query.q ?? ''} onCommit={(q) => update({ q: q || null })} />
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              className={cn(
+                'flex h-11 shrink-0 items-center gap-2 rounded-xl px-4 text-[13.5px] font-medium shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 transition-colors lg:hidden',
+                filtersOpen ? 'bg-ink text-white ring-ink' : 'bg-card text-ink ring-line',
+              )}
+            >
+              <SlidersHorizontal className="size-4" /> Фильтры
+              {activeCount > 0 && (
+                <span
+                  className={cn(
+                    'num grid h-5 min-w-5 place-items-center rounded-full px-1 text-[11.5px]',
+                    filtersOpen ? 'bg-white text-ink' : 'bg-ink text-white',
+                  )}
+                >
+                  {activeCount}
+                </span>
+              )}
+            </button>
             <Select
               value={query.sort}
               onValueChange={(value) => update({ sort: value === 'relevance' ? null : value })}
             >
               <SelectTrigger
-                className="h-11! w-56 rounded-xl bg-card text-[13.5px] shadow-[0_1px_2px_rgba(20,20,19,0.04)]"
+                className="h-11! w-56 rounded-xl bg-card text-[13.5px] shadow-[0_1px_2px_rgba(20,20,19,0.04)] max-sm:w-auto max-sm:min-w-0 max-sm:flex-1"
                 aria-label="Сортировка"
               >
                 <SelectValue />
@@ -182,6 +215,22 @@ export function CatalogPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {filtersOpen && (
+            <div className="mb-5 rounded-2xl bg-card px-4 pt-4 pb-1 ring-1 ring-line lg:hidden">
+              {filters}
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="mb-3 h-10 w-full rounded-xl bg-ink text-[13.5px] font-medium text-white"
+              >
+                Показать{' '}
+                {data
+                  ? `${formatNumber(data.total)} ${pluralRu(data.total, ['решение', 'решения', 'решений'])}`
+                  : 'решения'}
+              </button>
+            </div>
+          )}
 
           {products.isError && <ErrorBlock error={products.error} onRetry={() => products.refetch()} />}
           {products.isPending && (
@@ -250,7 +299,7 @@ function SearchBox({ value, onCommit }: { value: string; onCommit: (q: string) =
   }, [text, value, onCommit])
 
   return (
-    <label className="relative flex-1">
+    <label className="relative flex-1 max-sm:basis-full">
       <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-3" />
       <input
         value={text}
@@ -302,7 +351,7 @@ function OptionList({
             aria-checked={active}
             onClick={() => onToggle(option.key)}
             className={cn(
-              'flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13.5px] leading-snug transition-colors',
+              'flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13.5px] leading-snug transition-colors max-lg:py-2.5',
               active ? 'bg-black/5 font-medium text-ink' : 'text-ink-2 hover:bg-black/4 hover:text-ink',
             )}
           >
@@ -349,7 +398,7 @@ function ProductCard({ product, catalogSearch }: { product: Product; catalogSear
           <ProductStatusMark status={product.status} />
         </CardChip>
       }
-      corner={<CompareToggle product={product} className="h-7 rounded-full" />}
+      corner={<CompareToggle product={product} className="h-7 rounded-full pointer-coarse:h-9" />}
       cornerPinned={selection.has(product.id)}
       details={
         <>

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
 from app.core.errors import NotFoundError
@@ -11,6 +12,7 @@ from app.domain.common.provenance import Provenance, PValue
 from app.domain.reference import (
     CrossCheck,
     CycleExtra,
+    DemoParam,
     DemoProjectRef,
     Industry,
     LaborGroupDef,
@@ -119,10 +121,15 @@ def _object_type(
         processes=[_process(p) for p in processes],
         labor_groups=[LaborGroupDef(**g) for g in item.labor_groups],
         layout_templates=item.layout_templates,
-        demo_projects=[DemoProjectRef(**d) for d in item.demo_projects],
+        demo_projects=[_demo(d) for d in item.demo_projects],
         checks=[CrossCheck(**c) for c in item.checks],
         site_costs=[SiteCostDef(**c) for c in item.site_costs],
     )
+
+
+def _demo(item: dict[str, Any]) -> DemoProjectRef:
+    params = {key: DemoParam(**value) for key, value in (item.get("params") or {}).items()}
+    return DemoProjectRef(item["key"], item["name"], item.get("description"), params)
 
 
 def _norm(norm: Norm, sources: dict[UUID, Source]) -> NormInfo:

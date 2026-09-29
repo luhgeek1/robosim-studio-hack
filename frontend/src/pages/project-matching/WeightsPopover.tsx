@@ -58,7 +58,7 @@ export function WeightsPopover({
           <SlidersHorizontal /> Веса критериев
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-96 space-y-4">
+      <PopoverContent align="start" className="w-[min(24rem,calc(100vw-2rem))] space-y-4">
         <div>
           <div className="font-medium">Веса скоринга</div>
           <p className="text-xs text-muted-foreground">
@@ -91,7 +91,7 @@ export function WeightsPopover({
           <Switch checked={rnd} onCheckedChange={setRnd} />
         </label>
         {total === 0 && <p className="text-xs text-crit">Хотя бы один критерий должен иметь вес больше нуля.</p>}
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setDraft(toPercent(weights))}>
             Сбросить
           </Button>

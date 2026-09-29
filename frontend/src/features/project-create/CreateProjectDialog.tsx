@@ -43,9 +43,11 @@ export function CreateProjectDialog({
   const [objectType, setObjectType] = useState<ObjectTypeKey>('warehouse')
   const [preferredMode, setMode] = useState<InitMode>('demo')
   const [name, setName] = useState('')
+  const [demoKey, setDemoKey] = useState<string | null>(null)
 
   const selected = objectTypes.data?.find((t) => t.key === objectType)
-  const demo = selected?.demo_projects?.[0]
+  const demos = selected?.demo_projects ?? []
+  const demo = demos.find((d) => d.key === demoKey) ?? demos[0]
 
   const mode: InitMode = demo ? preferredMode : 'blank'
 
@@ -78,7 +80,7 @@ export function CreateProjectDialog({
 
           <div className="space-y-2">
             <Label>Тип объекта</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {(objectTypes.data ?? []).map((t) => (
                 <Choice key={t.key} active={t.key === objectType} onClick={() => setObjectType(t.key)}>
                   <span className="font-medium">{t.name}</span>
@@ -92,13 +94,26 @@ export function CreateProjectDialog({
 
           <div className="space-y-2">
             <Label>Начальные данные</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Choice active={mode === 'demo'} disabled={!demo} onClick={() => setMode('demo')}>
-                <span className="font-medium">Демо-объект организатора</span>
-                <span className="text-xs text-muted-foreground">
-                  {demo?.description ?? 'Для этого типа нет демо-набора'}
-                </span>
-              </Choice>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {demos.map((d) => (
+                <Choice
+                  key={d.key}
+                  active={mode === 'demo' && d.key === demo?.key}
+                  onClick={() => {
+                    setDemoKey(d.key)
+                    setMode('demo')
+                  }}
+                >
+                  <span className="font-medium">{d.name}</span>
+                  <span className="text-xs text-muted-foreground">{d.description}</span>
+                </Choice>
+              ))}
+              {demos.length === 0 && (
+                <Choice active={false} disabled onClick={() => setMode('demo')}>
+                  <span className="font-medium">Демо-объект</span>
+                  <span className="text-xs text-muted-foreground">Для этого типа нет демо-набора</span>
+                </Choice>
+              )}
               <Choice active={mode === 'blank'} onClick={() => setMode('blank')}>
                 <span className="font-medium">Пустой проект</span>
                 <span className="text-xs text-muted-foreground">

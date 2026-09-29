@@ -52,12 +52,12 @@ export function SpecsList({
                   <li
                     key={key.key}
                     className={cn(
-                      'grid items-center gap-3 px-3.5 py-2.5 transition-colors',
-                      lockedStatus ? 'grid-cols-[minmax(0,1fr)_150px]' : 'grid-cols-[minmax(0,1fr)_128px_132px]',
+                      'grid grid-cols-2 items-center gap-x-3 gap-y-2 px-3.5 py-2.5 transition-colors sm:gap-y-3',
+                      lockedStatus ? 'sm:grid-cols-[minmax(0,1fr)_150px]' : 'sm:grid-cols-[minmax(0,1fr)_128px_132px]',
                       dirty && 'bg-warn-soft/40',
                     )}
                   >
-                    <span className="min-w-0">
+                    <span className="col-span-2 min-w-0 sm:col-span-1">
                       <span className="flex items-center gap-1.5 text-[13px] font-medium">
                         <span className="truncate">{key.name}</span>
                         {missing.has(key.key) && (
@@ -107,8 +107,8 @@ export function SpecsList({
 
 export function SourceFields({ source, onChange }: { source: SpecSource; onChange: (source: SpecSource) => void }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_130px] gap-2.5">
-      <Field label="Источник">
+    <div className="grid grid-cols-[minmax(0,1fr)_130px] gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_130px]">
+      <Field label="Источник" className="max-sm:col-span-2">
         <Input
           value={source.title}
           onChange={(e) => onChange({ ...source, title: e.target.value })}

@@ -41,8 +41,8 @@ export function WhySheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="gap-0 bg-canvas data-[side=right]:w-[600px] data-[side=right]:sm:max-w-[min(600px,94vw)]">
-        <div className="scroll-thin flex-1 overflow-y-auto px-7 pt-7 pb-8">
+      <SheetContent className="gap-0 bg-canvas data-[side=right]:w-full data-[side=right]:sm:w-[600px] data-[side=right]:sm:max-w-[min(600px,94vw)]">
+        <div className="scroll-thin flex-1 overflow-y-auto px-5 pt-6 pb-8 sm:px-7 sm:pt-7">
           <p className="text-[13px] text-ink-3">Почему рекомендуем</p>
           <SheetTitle className="h2 mt-1.5 pr-8 text-[26px] leading-[1.15]">{best.name}</SheetTitle>
           <SheetDescription className="mt-2.5 flex items-center gap-2 text-[13.5px] text-ink-2">
@@ -51,7 +51,7 @@ export function WhySheet({
             {band && <span className="text-ink-3">{band}</span>}
           </SheetDescription>
 
-          <dl className="mt-6 grid grid-cols-3 divide-x divide-line rounded-2xl bg-card ring-1 ring-line">
+          <dl className="mt-6 grid grid-cols-1 divide-y divide-line rounded-2xl bg-card ring-1 ring-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Figure value={formatRub(m.npv_rub)} label="NPV" note="лучший среди окупаемых" />
             <Figure
               value={isNum(m.payback_years) ? formatYears(m.payback_years) : '—'}
@@ -71,7 +71,7 @@ export function WhySheet({
 
           {robotized.length > 1 && (
             <Block title="Рядом с другими вариантами">
-              <div className="space-y-5 rounded-2xl bg-card px-5 py-4 ring-1 ring-line">
+              <div className="space-y-5 rounded-2xl bg-card px-4 py-4 ring-1 ring-line sm:px-5">
                 <Bars
                   title="NPV"
                   scenarios={robotized}
@@ -104,7 +104,7 @@ export function WhySheet({
           {caveats.length > 0 && <Caveats items={caveats} />}
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-line bg-card px-7 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-line bg-card px-5 py-4 sm:flex-nowrap sm:px-7">
           <p className="text-[12px] leading-snug text-ink-3">
             Предварительная оценка — требует верификации при обследовании объекта.
           </p>
@@ -263,7 +263,7 @@ function Bars({
           return (
             <li
               key={s.scenario_id}
-              className="grid grid-cols-[minmax(0,11.5rem)_minmax(0,1fr)_5.5rem] items-center gap-3"
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,11.5rem)_minmax(0,1fr)_5.5rem] sm:gap-3"
             >
               <span
                 className={cn('truncate text-[12.5px]', best ? 'font-medium text-ink' : 'text-ink-2')}
@@ -271,7 +271,7 @@ function Bars({
               >
                 {s.name}
               </span>
-              <span className="relative h-2.5 overflow-hidden rounded-full bg-black/4.5">
+              <span className="relative h-2.5 overflow-hidden rounded-full bg-black/4.5 max-sm:col-span-2 max-sm:row-start-2">
                 {lo < 0 && <span className="absolute inset-y-0 w-px bg-ink-4" style={{ left: `${zero}%` }} />}
                 {isNum(v) && (
                   <motion.span

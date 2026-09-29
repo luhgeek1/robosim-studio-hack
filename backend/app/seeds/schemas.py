@@ -187,10 +187,17 @@ class SiteCostSeed(SeedModel):
     note: str | None = None
 
 
+class DemoParamSeed(SeedModel):
+    value: float | int | bool | str
+    rationale: str
+
+
 class DemoProjectSeed(SeedModel):
     key: str
     name: str
     description: str | None = None
+    # Values that differ from the parameter defaults: a team assumption, each with its reason.
+    params: dict[str, DemoParamSeed] = {}
 
 
 class ObjectTypeSeed(SeedModel):

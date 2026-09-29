@@ -115,7 +115,7 @@ export function ScenarioEditor({
         </Section>
       )}
 
-      <div className={scenario.is_baseline ? '' : 'grid grid-cols-2 gap-6'}>
+      <div className={scenario.is_baseline ? '' : 'grid grid-cols-1 gap-6 md:grid-cols-2'}>
         {!scenario.is_baseline && (
           <Section title="Финансирование">
             {scenario.kind === 'raas' ? (
@@ -285,7 +285,7 @@ function ItemRow({
             )}
           </div>
         </div>
-        <div className="flex items-end gap-2">
+        <div className="flex flex-wrap items-end gap-2">
           <Field label="Количество">
             <Select
               value={item.count_mode ?? 'auto'}
@@ -320,7 +320,7 @@ function ItemRow({
         </div>
       </div>
       {showOverrides && (
-        <div className="mt-3 grid grid-cols-[180px_200px_1fr] gap-3 border-t pt-3">
+        <div className="mt-3 grid grid-cols-1 gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-[180px_200px_1fr]">
           <Field label="Своя цена за единицу">
             <NumberField
               value={item.price_override_rub}
@@ -339,7 +339,7 @@ function ItemRow({
               min={0}
             />
           </Field>
-          <Field label="Причина (обязательна)">
+          <Field label="Причина (обязательна)" className="sm:col-span-2 lg:col-span-1">
             <Input
               value={item.override_reason ?? ''}
               onChange={(e) => onChange({ override_reason: e.target.value || null })}
@@ -376,9 +376,9 @@ function NormOverrides({
       title="Переопределение нормативов"
       description="Своё значение с причиной попадёт в журнал и в трассу расчёта"
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           <Select value={pick} onValueChange={setPick}>
-            <SelectTrigger className="w-72">
+            <SelectTrigger className="min-w-0 flex-1 sm:w-72 sm:flex-none">
               <SelectValue placeholder="Выберите норматив" />
             </SelectTrigger>
             <SelectContent className="max-h-80">
@@ -421,8 +421,9 @@ function NormOverrides({
       {draft.overrides.length === 0 ? (
         <p className="text-muted-foreground">Расчёт идёт на нормативах по умолчанию.</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-xs text-muted-foreground">
+        // На телефоне строка переопределения складывается в карточку: пять колонок в ширину не помещаются.
+        <table className="w-full text-sm max-sm:block">
+          <thead className="text-xs text-muted-foreground max-sm:hidden">
             <tr>
               <th className="py-1 text-left font-normal">Норматив</th>
               <th className="py-1 text-left font-normal">По умолчанию</th>
@@ -431,33 +432,37 @@ function NormOverrides({
               <th />
             </tr>
           </thead>
-          <tbody>
+          <tbody className="max-sm:block">
             {draft.overrides.map((override, index) => {
               const norm = byKey.get(override.norm_key)
               return (
-                <tr key={override.norm_key} className="border-t">
-                  <td className="py-2 pr-3">
+                <tr
+                  key={override.norm_key}
+                  className="border-t max-sm:grid max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:gap-x-3 max-sm:gap-y-2 max-sm:py-3"
+                >
+                  <td className="py-2 pr-3 max-sm:p-0">
                     <div>{norm?.name ?? override.norm_key}</div>
                     <div className="font-mono text-[11px] text-muted-foreground">{override.norm_key}</div>
                   </td>
-                  <td className="num py-2 pr-3 text-muted-foreground">
+                  <td className="num py-2 pr-3 text-muted-foreground max-sm:col-span-2 max-sm:p-0 max-sm:text-xs">
+                    <span className="sm:hidden">по умолчанию </span>
                     {formatValue(norm?.value ?? override.default_value, override.unit ?? norm?.unit)}
                   </td>
-                  <td className="w-40 py-2 pr-3">
+                  <td className="w-40 py-2 pr-3 max-sm:col-span-2 max-sm:w-auto max-sm:p-0">
                     <NumberField
                       value={override.value}
                       onChange={(v) => update(index, { value: v ?? 0 })}
                       suffix={override.unit ?? norm?.unit ?? undefined}
                     />
                   </td>
-                  <td className="py-2 pr-3">
+                  <td className="py-2 pr-3 max-sm:col-span-2 max-sm:p-0">
                     <Input
                       value={override.reason}
                       onChange={(e) => update(index, { reason: e.target.value })}
                       placeholder="Почему другое значение"
                     />
                   </td>
-                  <td className="py-2">
+                  <td className="py-2 max-sm:col-start-2 max-sm:row-start-1 max-sm:p-0">
                     <Button
                       variant="ghost"
                       size="icon"

@@ -40,7 +40,7 @@ export function OffersEditor({
 
   return (
     <div>
-      <div className="mb-4 flex items-end justify-between gap-3">
+      <div className="mb-4 flex items-end justify-between gap-3 max-sm:flex-col max-sm:items-start">
         <div>
           <h3 className="text-[13.5px] font-semibold">Цены по отраслям</h3>
           <p className="meta">
@@ -72,7 +72,7 @@ export function OffersEditor({
               transition={SPRING}
               className="rounded-[12px] border border-line bg-card p-3.5"
             >
-              <div className="grid grid-cols-[minmax(0,1fr)_150px_auto] items-end gap-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_150px_auto]">
                 <Field label="Отрасль">
                   <Select value={offer.industry || undefined} onValueChange={(industry) => patch(index, { industry })}>
                     <SelectTrigger className="h-9 w-full rounded-[10px]">
@@ -87,7 +87,7 @@ export function OffersEditor({
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Цена, ₽">
+                <Field label="Цена, ₽" className="max-sm:order-last max-sm:col-span-2">
                   <Input
                     inputMode="numeric"
                     value={groupDigits(offer.price.amount_rub)}

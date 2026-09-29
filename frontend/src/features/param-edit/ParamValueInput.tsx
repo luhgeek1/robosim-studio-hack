@@ -44,7 +44,7 @@ export function ParamValueInput({
         onValueChange={(value) => void onCommit(value)}
         disabled={pending}
       >
-        <SelectTrigger className="w-full" aria-label={label}>
+        <SelectTrigger className="w-full max-sm:data-[size=default]:h-10" aria-label={label}>
           <SelectValue placeholder="Не задано" />
         </SelectTrigger>
         <SelectContent>
@@ -119,7 +119,7 @@ function TextValueInput({
           aria-label={label}
           aria-invalid={error ? true : undefined}
           disabled={pending}
-          className={cn(numeric && 'num text-right')}
+          className={cn('max-sm:h-10', numeric && 'num text-right')}
           // Единица стоит внутри поля справа: отступ под её длину, чтобы число не наезжало.
           style={suffix ? { paddingRight: `calc(${suffix.length * 0.5}rem + 1.25rem)` } : undefined}
           onChange={(event) => {

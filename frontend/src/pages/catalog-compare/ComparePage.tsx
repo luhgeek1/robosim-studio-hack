@@ -66,8 +66,8 @@ export function ComparePage() {
   }
 
   const header = (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-      <h1 className="display text-[44px] leading-[1.05] tracking-[-0.035em]">Сравнение решений</h1>
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
+      <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Сравнение решений</h1>
       <div className="flex items-center gap-2">
         <Button asChild variant="ghost" className="text-ink-3">
           <Link to="/catalog">
@@ -87,7 +87,7 @@ export function ComparePage() {
 
   if (ids.length < 2) {
     return (
-      <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-16">
+      <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-12 pb-16">
         {header}
         <EmptyState
           icon={<GitCompareArrows className="size-6" />}
@@ -104,7 +104,7 @@ export function ComparePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-16">
+    <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-12 pb-16">
       {header}
       {compare.isPending && <LoadingBlock rows={6} />}
       {compare.isError && <ErrorBlock error={compare.error} onRetry={() => compare.refetch()} />}
@@ -132,12 +132,12 @@ function AuthenticatedProjectPicker({ value, onChange }: { value?: string; onCha
   const items = projects.data?.items ?? []
   if (!projects.isPending && items.length === 0) return null
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 max-sm:w-full">
       <Label htmlFor="compare-project" className="text-[13px] font-normal text-ink-3">
         Совместимость с объектом
       </Label>
       <Select value={value ?? NO_PROJECT} onValueChange={(next) => onChange(next === NO_PROJECT ? null : next)}>
-        <SelectTrigger id="compare-project" className="h-9 w-72 rounded-lg bg-card">
+        <SelectTrigger id="compare-project" className="h-9 w-72 rounded-lg bg-card max-sm:w-full">
           <SelectValue placeholder="Проект" />
         </SelectTrigger>
         <SelectContent>
@@ -210,19 +210,24 @@ function CompareTable({
         </label>
       </div>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}>
+      {/* На узком экране карточки не сжимаются в столбики, а листаются вбок лентой; с md — сетка как раньше. */}
+      <div
+        className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:gap-4 md:overflow-visible md:px-0 md:pb-0"
+        style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}
+      >
         {products.map((product) => (
-          <ProductSummary
-            key={product.id}
-            product={product}
-            color={colors.get(product.id)!}
-            compatibility={projectId ? (result.compatibility?.[product.id] ?? null) : undefined}
-            onRemove={() => onRemove(product.id)}
-          />
+          <div key={product.id} className="w-[78%] max-w-80 shrink-0 snap-start md:w-auto md:max-w-none md:min-w-0">
+            <ProductSummary
+              product={product}
+              color={colors.get(product.id)!}
+              compatibility={projectId ? (result.compatibility?.[product.id] ?? null) : undefined}
+              onRemove={() => onRemove(product.id)}
+            />
+          </div>
         ))}
       </div>
 
-      <div className="mt-10 mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-ink-3">
+      <div className="mt-8 mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-ink-3 sm:mt-10">
         <span className="inline-flex items-center gap-1.5">
           <Trophy className="size-3.5 text-ok" /> лучшее значение
         </span>
@@ -315,7 +320,7 @@ function ProductSummary({
           onClick={onRemove}
           aria-label={`Убрать «${product.name}» из сравнения`}
           title="Убрать из сравнения"
-          className="grid size-7 place-items-center rounded-full bg-white/90 text-ink-3 transition-colors hover:bg-white hover:text-ink"
+          className="grid size-7 place-items-center rounded-full bg-white/90 text-ink-3 transition-colors hover:bg-white hover:text-ink pointer-coarse:size-9"
         >
           <X className="size-3.5" />
         </button>
@@ -404,7 +409,10 @@ function SpecChart({ row, products, colors }: { row: Row; products: Product[]; c
           const value = spec?.value
           const best = row.best_product_id === product.id
           return (
-            <div key={product.id} className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-center gap-3">
+            <div
+              key={product.id}
+              className="grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)]"
+            >
               <ProductLabel product={product} color={colors.get(product.id)!} />
               <div className="flex min-w-0 items-center gap-2.5">
                 {typeof value === 'number' ? (
@@ -462,7 +470,10 @@ function SpecText({ row, products, colors }: { row: Row; products: Product[]; co
         {products.map((product) => {
           const spec = row.values[product.id]
           return (
-            <li key={product.id} className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] items-start gap-3">
+            <li
+              key={product.id}
+              className="grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)]"
+            >
               <span className="pt-px">
                 <ProductLabel product={product} color={colors.get(product.id)!} />
               </span>

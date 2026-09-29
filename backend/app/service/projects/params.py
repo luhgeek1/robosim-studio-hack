@@ -128,6 +128,7 @@ class ParamsService:
         *,
         source_id: UUID | None = None,
         overwrite_user: bool = True,
+        bump: bool = True,
     ) -> ProjectContext:
         context = await self._loader.context(self._user, project_id, lock=True)
         definitions = {p.key: p.definition for p in context.params}
@@ -154,7 +155,7 @@ class ParamsService:
             changed += 1
         if changed:
             # Confirming a value («Верно») changes its provenance, not the numbers: calculations stay fresh.
-            if moved:
+            if moved and bump:
                 self._bump(context.project)
             self._audit.write(context.project.id, "project_params", "update", after={"changed": changed})
         await self._uow.flush()

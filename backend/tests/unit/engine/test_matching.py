@@ -5,7 +5,15 @@ import pytest
 
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.reference import Requirement
-from app.engine.matching import CandidateInput, CandidateStatus, SpecFact, _economics, evaluate, rank
+from app.engine.matching import (
+    CandidateInput,
+    CandidateStatus,
+    QuickEstimate,
+    SpecFact,
+    _economics,
+    evaluate,
+    rank,
+)
 
 PAYLOAD = Requirement(
     key="payload_vs_pallet",
@@ -133,6 +141,35 @@ def test_equal_npvs_share_a_place_and_the_score_stays_in_range() -> None:
     results = [
         evaluate(product(name, payload_kg=1500), [PAYLOAD], VALUES, include_rnd=False) for name in "ABCD"
     ]
-    npv = dict(zip((r.candidate.product_id for r in results), (10e6, 5e6, 5e6, 1e6), strict=True))
-    points = [_economics(r.candidate, results, npv)[0] for r in results]
-    assert points == pytest.approx([100, 50, 50, 0])
+    npv = (10e6, 5e6, 5e6, 1e6)
+    estimates = {
+        r.candidate.product_id: QuickEstimate(value, 3.0) for r, value in zip(results, npv, strict=True)
+    }
+    points = [_economics(r.candidate, results, estimates, 7.0)[0] for r in results]
+    assert points == pytest.approx([100, 200 / 3, 200 / 3, 100 / 3])
+
+
+def test_candidate_that_does_not_pay_back_ranks_after_one_that_does() -> None:
+    # Few cheap, mature machines (high score on every other criterion) that free little labour.
+    tractor = evaluate(
+        replace(product("Тягач", robots=4, capex=10e6, payload_kg=1500), cases_count=5),
+        [PAYLOAD],
+        VALUES,
+        include_rnd=False,
+    )
+    amr = evaluate(
+        replace(product("AMR", robots=20, capex=80e6, payload_kg=1500), trl=6),
+        [PAYLOAD],
+        VALUES,
+        include_rnd=False,
+    )
+    estimates = {
+        tractor.candidate.product_id: QuickEstimate(-17e6, 19.3),
+        amr.candidate.product_id: QuickEstimate(40e6, 4.8),
+    }
+    ordered = rank([tractor, amr], WEIGHTS, estimates, 7.0)
+    assert [r.candidate.name for r in ordered] == ["AMR", "Тягач"]
+    towing = next(c for c in ordered[1].breakdown if c.criterion == "cost_efficiency")
+    assert towing.points == 0
+    assert "дольше порога 7 лет" in towing.explanation
+    assert ordered[1].rank == 2

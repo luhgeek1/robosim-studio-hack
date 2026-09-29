@@ -69,7 +69,7 @@ function SizingCard({
   const cycleTotal = robot.cycle_components?.reduce((sum, c) => sum + c.seconds, 0) ?? 0
 
   return (
-    <div className="rounded-md border bg-raised/40 p-4">
+    <div className="rounded-md border bg-raised/40 p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <div className="font-medium">{sizing.product_name}</div>
@@ -87,7 +87,7 @@ function SizingCard({
         </button>
       </div>
 
-      <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-[1.2fr_1fr_1fr]">
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Timer className="size-3.5" /> Цикл робота
@@ -137,7 +137,7 @@ function SizingCard({
           <Row label="Покрытие пика парком" value={sizing.coverage_of_peak} share />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 sm:col-span-2 lg:col-span-1">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Bot className="size-3.5" /> Количество
           </div>
@@ -234,10 +234,14 @@ function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizin
   const usingFormula = count.source === 'manual' && count.final === formula.total
   const usingSimulation = count.source === 'simulated'
   return (
-    <div className="mt-4 rounded-[10px] bg-surface-2 p-4 text-[13px]">
+    <div className="mt-4 rounded-[10px] bg-surface-2 p-3 text-[13px] sm:p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <span className="font-medium text-ink">Откуда число роботов</span>
-        <Button size="sm" asChild>
+        <Button
+          size="sm"
+          asChild
+          className="max-sm:h-auto max-sm:min-h-8 max-sm:shrink max-sm:py-1.5 max-sm:whitespace-normal"
+        >
           <Link to={`/projects/${projectId}/simulation`}>
             <Play /> Как получено {simulated.working}: посмотреть имитацию
           </Link>
@@ -307,11 +311,11 @@ function OriginCard({
         <span className="font-medium text-ink">{title}</span>
         {active && <span className="text-[11.5px] font-medium text-ok">в расчёте</span>}
       </div>
-      <div className="num mt-1 text-[22px] leading-tight font-semibold">
+      <div className="num mt-1 text-[20px] leading-tight font-semibold sm:text-[22px]">
         {fleet.working} + {fleet.reserve} = {fleet.total}
         <span className="ml-1 text-[12px] font-normal text-ink-3">в работе + резерв</span>
       </div>
-      <div className="num mt-1 grid grid-cols-3 gap-2 text-[12px] text-ink-2">
+      <div className="num mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[12px] text-ink-2 lg:grid lg:grid-cols-3 lg:gap-2">
         <span>CAPEX {formatRub(fleet.capex_rub)}</span>
         <span>окупаемость {formatYears(fleet.payback_years)}</span>
         <span>NPV {formatRub(fleet.npv_rub)}</span>

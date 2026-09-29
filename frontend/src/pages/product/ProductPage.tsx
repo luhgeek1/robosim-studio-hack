@@ -66,7 +66,7 @@ export function ProductPage() {
   }, [productId])
 
   return (
-    <div className="mx-auto w-full max-w-360 px-6 pt-6 pb-28">
+    <div className="mx-auto w-full max-w-360 px-4 pt-6 pb-28 sm:px-6">
       <BackLink />
       {product.isPending && <HeroSkeleton />}
       {product.isError && <ErrorBlock error={product.error} onRetry={() => product.refetch()} />}
@@ -122,8 +122,8 @@ function ProductView({ product }: { product: ProductDetail }) {
 
       {passport.length > 0 && <Passport specs={passport} />}
 
-      <div className="mt-14 grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-14">
-        <div className="min-w-0 space-y-14">
+      <div className="mt-10 grid grid-cols-1 items-start gap-10 sm:mt-14 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-14">
+        <div className="min-w-0 space-y-10 sm:space-y-14">
           {product.description && product.description !== product.short_description && (
             <Block title="Описание">
               <p className="max-w-[68ch] text-[15px] leading-[1.65] whitespace-pre-line text-ink-2">
@@ -147,7 +147,7 @@ function ProductView({ product }: { product: ProductDetail }) {
       </div>
 
       {similar.length > 0 && (
-        <section className="mt-20">
+        <section className="mt-14 sm:mt-20">
           <h2 className="h2 mb-5">Похожие решения</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {similar.slice(0, 4).map((item) => (
@@ -176,7 +176,7 @@ function Stage({ product }: { product: ProductDetail }) {
   )
 
   return (
-    <div className="card relative h-[clamp(420px,calc(100vh-220px),640px)] overflow-hidden bg-surface-2">
+    <div className="card relative h-[clamp(320px,62vh,440px)] overflow-hidden bg-surface-2 sm:h-[clamp(420px,calc(100vh-220px),640px)]">
       <div
         aria-hidden
         className="absolute inset-0"
@@ -184,7 +184,7 @@ function Stage({ product }: { product: ProductDetail }) {
       />
       <RobotPreview3D productId={product.id} framing={{ scale: 1.08, lower: 0.05 }} />
 
-      <div className="pointer-events-none absolute inset-x-5 bottom-5 flex items-end justify-between gap-4">
+      <div className="pointer-events-none absolute inset-x-4 bottom-4 flex flex-col-reverse items-start gap-2 sm:inset-x-5 sm:bottom-5 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="glass pointer-events-auto flex items-center gap-0.5 rounded-full p-1">
           <StageToggle
             active={human}
@@ -203,7 +203,7 @@ function Stage({ product }: { product: ProductDetail }) {
             {paused ? <Play /> : <Pause />}
           </StageToggle>
         </div>
-        <span className="flex items-center gap-1.5 pb-2 text-[12.5px] text-ink-3">
+        <span className="flex items-center gap-1.5 pl-1 text-[12.5px] text-ink-3 sm:pb-2 sm:pl-0">
           <Rotate3d className="size-4" /> Потяните, чтобы повернуть
         </span>
       </div>
@@ -232,7 +232,7 @@ function StageToggle({
           onClick={onClick}
           aria-pressed={active}
           className={cn(
-            'flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-medium transition-colors [&>svg]:size-4',
+            'flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-medium whitespace-nowrap transition-colors max-sm:h-9 [&>svg]:size-4',
             active ? 'bg-ink text-white' : 'text-ink-2 hover:bg-black/5 hover:text-ink',
           )}
         >
@@ -254,7 +254,7 @@ function Intro({ product }: { product: ProductDetail }) {
   return (
     <div className="flex min-w-0 flex-col py-1">
       <p className="text-[13.5px] text-ink-3">{type}</p>
-      <h1 className="display mt-3 text-[clamp(40px,4.2vw,58px)] leading-[0.98] wrap-break-word">{title}</h1>
+      <h1 className="display mt-3 text-[clamp(34px,4.2vw,58px)] leading-[0.98] wrap-break-word">{title}</h1>
       {caption && <p className="mt-3 text-[18px] leading-snug tracking-[-0.01em] text-ink-2">{caption}</p>}
 
       <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px]">
@@ -344,7 +344,7 @@ function Price({ product }: { product: ProductDetail }) {
   return (
     <div>
       <div className="flex flex-wrap items-baseline gap-x-3">
-        <span className="display num text-[40px]">{formatRub(product.price_from.amount_rub)}</span>
+        <span className="display num text-[34px] sm:text-[40px]">{formatRub(product.price_from.amount_rub)}</span>
         <span className="text-[13px] text-ink-3">
           {max > product.price_from.amount_rub ? `от, до ${formatRub(max)} по отраслям` : 'за единицу'},{' '}
           {product.price_from.vat_included === false ? 'без НДС' : 'с НДС'}
@@ -373,18 +373,25 @@ function pickPassport(specs: Spec[]) {
 function Passport({ specs }: { specs: Spec[] }) {
   return (
     <dl
-      className="mt-6 grid grid-cols-2 divide-line rounded-2xl bg-card ring-1 ring-line md:grid-cols-[repeat(var(--n),minmax(max-content,1fr))] md:divide-x"
+      className="mt-6 grid grid-flow-dense grid-cols-2 divide-line sm:grid-cols-3 rounded-2xl bg-card ring-1 ring-line lg:grid-flow-row lg:grid-cols-[repeat(var(--n),minmax(max-content,1fr))] lg:divide-x"
       style={{ '--n': specs.length } as CSSProperties}
     >
       {specs.map((spec) => (
-        <div key={spec.key} className="flex min-w-0 flex-col-reverse px-6 py-5">
+        <div
+          key={spec.key}
+          className={cn(
+            'flex min-w-0 flex-col-reverse px-4 py-4 sm:px-6 sm:py-5',
+            // Габариты строкой шире половины узкого экрана — до lg им отдаётся вся строка паспорта.
+            typeof spec.value === 'string' && 'max-lg:col-span-2',
+          )}
+        >
           {/* Ширину колонки задаёт число, а не подпись: длинная подпись обрезается, число — никогда. */}
           <dt className="mt-1.5 flex items-center gap-1 text-[13px] text-ink-3 [contain:inline-size]" title={spec.name}>
             <span className="truncate">{spec.name}</span>
             <SourceMark provenance={spec.provenance} compact />
           </dt>
           <dd className="flex min-w-0 items-baseline gap-1.5">
-            <span className="display num text-[30px] whitespace-nowrap">{passportValue(spec)}</span>
+            <span className="display num text-[24px] whitespace-nowrap sm:text-[30px]">{passportValue(spec)}</span>
             {spec.unit && <span className="shrink-0 text-[14px] text-ink-3">{spec.unit}</span>}
           </dd>
         </div>
@@ -419,7 +426,7 @@ function SpecsBlock({ product }: { product: ProductDetail }) {
   if (groups.length === 0) {
     return (
       <Block title="Характеристики">
-        <div className="card px-6 py-6">
+        <div className="card px-4 py-5 sm:px-6 sm:py-6">
           <p className="text-[14.5px] font-medium">Производитель не раскрыл технические характеристики</p>
           <p className="mt-1 max-w-[62ch] text-[13.5px] leading-relaxed text-ink-3">
             В каталоге организатора есть только цена и сценарий применения. Подбор учтёт решение, но количество роботов
@@ -444,7 +451,7 @@ function SpecsBlock({ product }: { product: ProductDetail }) {
         </span>
         <span>источник — в подсказке у точки</span>
       </div>
-      <div className="card divide-y divide-line px-6">
+      <div className="card divide-y divide-line px-4 sm:px-6">
         {groups.map(({ group, items }) => (
           <div key={group} className="grid grid-cols-1 gap-x-8 py-5 md:grid-cols-[160px_minmax(0,1fr)]">
             <h3 className="pb-2 text-[13px] font-medium text-ink-3 md:pt-2.5">{SPEC_GROUP_LABEL[group]}</h3>
@@ -462,7 +469,7 @@ function SpecsBlock({ product }: { product: ProductDetail }) {
 
 function SpecRow({ spec }: { spec: Spec }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] items-start gap-6 py-2.5">
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] items-start gap-4 py-2.5 sm:gap-6">
       <dt className="flex items-center gap-1.5 text-[14px] leading-snug text-ink-2">
         <span>{spec.name}</span>
         {spec.is_key_constraint && (
@@ -499,8 +506,8 @@ function Offer({ offer }: { offer: ProductDetail['offers'][number] }) {
   const [open, setOpen] = useState(false)
   const long = (offer.cases_text?.length ?? 0) > 260
   return (
-    <li className="px-6 py-5">
-      <div className="flex items-start justify-between gap-6">
+    <li className="px-4 py-4 sm:px-6 sm:py-5">
+      <div className="flex items-start justify-between gap-4 sm:gap-6">
         <div className="min-w-0">
           <div className="text-[15px] font-semibold tracking-[-0.01em]">{offer.industry}</div>
           <div className="mt-0.5 text-[13.5px] text-ink-3">{offer.scenario}</div>
@@ -543,7 +550,7 @@ function CasesBlock({ cases }: { cases: ProductDetail['cases'] }) {
     <Block title="Внедрения" count={cases.length}>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {cases.map((item, i) => (
-          <article key={i} className="card flex gap-5 px-6 py-5">
+          <article key={i} className="card flex gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5">
             {isNum(item.count) && (
               <div className="shrink-0">
                 <div className="display num text-[34px]">{formatNumber(item.count)}</div>
@@ -713,7 +720,7 @@ function SimilarCard({ product, state }: { product: Product; state: CatalogLinkS
           <ProductStatusMark status={product.status} />
         </CardChip>
       }
-      corner={<CompareToggle product={product} className="h-7 rounded-full" />}
+      corner={<CompareToggle product={product} className="h-7 rounded-full pointer-coarse:h-9" />}
       details={
         <>
           <p className="-mt-1.5 mb-2.5 truncate text-[12.5px] text-ink-3" title={type}>
@@ -735,7 +742,7 @@ function SimilarCard({ product, state }: { product: Product; state: CatalogLinkS
 function HeroSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-12">
-      <Skeleton className="h-[clamp(420px,calc(100vh-220px),640px)] rounded-xl" />
+      <Skeleton className="h-[clamp(320px,62vh,440px)] rounded-xl sm:h-[clamp(420px,calc(100vh-220px),640px)]" />
       <div className="space-y-4 py-1">
         <Skeleton className="h-4 w-48" />
         <Skeleton className="h-14 w-4/5" />

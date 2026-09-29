@@ -45,6 +45,8 @@ export type LayoutMapProps = {
   toolbarClassName?: string
   /** Where the scale bar and the building size sit; a full-bleed host keeps the bottom for its own overlays. */
   infoCorner?: 'bottom' | 'top-left'
+  /** Moves the scale bar and the building size, e.g. below the host's own controls on a narrow map. */
+  infoClassName?: string
   /** Free space kept around the building at «Целиком», for hosts that lay their own overlays over the map. */
   fitPadding?: FitPadding
   /** Overlay in meter coordinates (robots, heat spots); `view.k` is pixels per meter for constant-size marks. */
@@ -66,6 +68,7 @@ export function LayoutMap({
   fill = false,
   toolbarClassName,
   infoCorner = 'bottom',
+  infoClassName,
   fitPadding,
   children,
   toolbarExtra,
@@ -91,7 +94,8 @@ export function LayoutMap({
       <div
         ref={containerRef}
         className={cn(
-          'relative h-[520px] cursor-grab touch-none overflow-hidden rounded-md border bg-canvas select-none active:cursor-grabbing',
+          // Контейнер для запросов по ширине: на узкой карте кнопки панели остаются без подписей.
+          '@container relative h-[520px] cursor-grab touch-none overflow-hidden rounded-md border bg-canvas select-none active:cursor-grabbing',
           className,
         )}
         {...handlers}
@@ -130,7 +134,7 @@ export function LayoutMap({
                 onPressedChange={setGraph}
                 aria-label="Граф маршрутов"
               >
-                <Waypoints /> Граф маршрутов
+                <Waypoints /> <span className="@max-[28rem]:sr-only">Граф маршрутов</span>
               </Toggle>
             </TooltipTrigger>
             <TooltipContent>Узлы и рёбра, по которым считаются маршруты роботов</TooltipContent>
@@ -142,7 +146,7 @@ export function LayoutMap({
             <Minus />
           </Button>
           <Button size="sm" variant="ghost" onClick={fit} aria-label="Показать целиком">
-            <Maximize2 /> Целиком
+            <Maximize2 /> <span className="@max-[28rem]:sr-only">Целиком</span>
           </Button>
         </div>
 
@@ -150,6 +154,7 @@ export function LayoutMap({
           className={cn(
             'pointer-events-none absolute flex gap-2',
             infoCorner === 'bottom' ? 'inset-x-2 bottom-2 items-end justify-between' : 'top-4 left-4 items-start',
+            infoClassName,
           )}
         >
           <div className="rounded-md bg-raised/90 px-2 py-1 text-[11px]">

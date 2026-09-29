@@ -20,7 +20,7 @@ export function ParamHistory({ projectId, param }: { projectId: string; param: P
           <History /> <span className="num">{param.history_count}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96">
+      <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))]">
         <div className="mb-2 font-medium">История правок</div>
         <div className="mb-3 text-xs text-muted-foreground">{param.name}</div>
         {history.isPending && <LoadingBlock rows={2} />}

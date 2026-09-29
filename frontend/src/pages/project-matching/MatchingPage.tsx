@@ -142,7 +142,7 @@ export function MatchingPage() {
       )}
 
       {compare.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[14px] border border-line bg-white/95 px-4 py-2 shadow-float backdrop-blur">
+        <div className="fixed bottom-4 left-1/2 z-40 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-[14px] border border-line bg-white/95 px-4 py-2 shadow-float backdrop-blur">
           <span className="text-sm">
             Выбрано для сравнения: <span className="num font-medium">{compare.length}</span> из {MAX_COMPARE}
           </span>
@@ -193,7 +193,7 @@ function MatchingView({
   }
 
   return (
-    <div className="grid grid-cols-[15rem_minmax(0,1fr)] items-start gap-8">
+    <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
       <ProcessNav
         processes={data.processes}
         selectedKey={selected?.process_key}
@@ -301,7 +301,7 @@ function ProcessNav({
 }) {
   const [active, setActive] = useState(selectedKey)
   const [synced, setSynced] = useState(selectedKey)
-  const [box, setBox] = useState<{ top: number; height: number } | null>(null)
+  const [box, setBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null)
   const [, startTransition] = useTransition()
   const refs = useRef(new Map<string, HTMLButtonElement>())
   const timer = useRef<number | undefined>(undefined)
@@ -315,7 +315,7 @@ function ProcessNav({
   useLayoutEffect(() => {
     const measure = () => {
       const el = active ? refs.current.get(active) : undefined
-      setBox(el ? { top: el.offsetTop, height: el.offsetHeight } : null)
+      setBox(el ? { left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight } : null)
     }
     measure()
     const observer = new ResizeObserver(measure)
@@ -332,13 +332,14 @@ function ProcessNav({
   }
 
   return (
-    <nav className="sticky top-40" aria-label="Процессы">
-      <div className="relative flex flex-col gap-0.5">
+    // На телефоне и планшете процессы — строка фишек, которая листается вбок над карточками.
+    <nav className="-mx-4 min-w-0 sm:-mx-6 lg:sticky lg:top-40 lg:mx-0" aria-label="Процессы">
+      <div className="scroll-thin relative flex gap-1 overflow-x-auto px-4 pb-1 sm:px-6 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0">
         {box && (
           <span
             aria-hidden
-            className="absolute inset-x-0 top-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,19,0.06),0_0_0_1px_rgba(20,20,19,0.04)] transition-[transform,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
-            style={{ transform: `translateY(${box.top}px)`, height: box.height }}
+            className="absolute top-0 left-0 rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,19,0.06),0_0_0_1px_rgba(20,20,19,0.04)] transition-[transform,width,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+            style={{ transform: `translate(${box.left}px, ${box.top}px)`, width: box.width, height: box.height }}
           />
         )}
         {processes.map((process) => {
@@ -355,7 +356,7 @@ function ProcessNav({
               aria-current={on ? 'true' : undefined}
               onClick={() => pick(process.process_key)}
               className={cn(
-                'relative flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-[13.5px] transition-colors duration-200',
+                'relative flex shrink-0 items-start gap-2 rounded-lg px-3 py-2.5 text-left text-[13.5px] whitespace-nowrap transition-colors duration-200 lg:w-full lg:shrink lg:whitespace-normal',
                 on ? 'text-ink' : 'text-ink-3 hover:text-ink',
               )}
             >

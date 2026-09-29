@@ -57,7 +57,11 @@ export function Notifications() {
           </AnimatePresence>
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={8} className="w-96 gap-0 overflow-hidden rounded-[14px] p-0 shadow-float">
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-96 max-w-[calc(100vw-1.5rem)] gap-0 overflow-hidden rounded-[14px] p-0 shadow-float"
+      >
         <div className="px-4 pt-3.5 pb-2">
           <div className="text-[13.5px] font-semibold">Приглашения</div>
           <div className="meta">В организации с общими проектами</div>

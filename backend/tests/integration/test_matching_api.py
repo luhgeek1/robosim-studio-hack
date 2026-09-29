@@ -6,12 +6,12 @@ from tests.conftest import bearer, login
 pytestmark = pytest.mark.integration
 
 
-async def _demo(client: AsyncClient) -> tuple[str, dict[str, str]]:
+async def _demo(client: AsyncClient, demo_key: str = "warehouse_demo_01") -> tuple[str, dict[str, str]]:
     headers = bearer((await login(client, "user@robomera.demo"))["access"])
     payload = {
         "name": "Склад",
         "object_type": "warehouse",
-        "init": {"mode": "demo", "demo_key": "warehouse_demo_01"},
+        "init": {"mode": "demo", "demo_key": demo_key},
     }
     project = (await client.post("/api/v1/projects", json=payload, headers=headers)).json()
     return project["id"], headers
@@ -44,11 +44,29 @@ async def test_matching_ranks_pallet_robots_with_reasons(client: AsyncClient) ->
     tractor = _candidate(pallets, "тягач RoboCV")
     # It does not pay back within the questionable band of ТЗ 3.5.7 (7 years), if at all.
     assert (tractor["estimate"]["payback_years"] or float("inf")) > 7
-    # Without a layout neither pays back here; the economics criterion still ranks the AMR above the tractor.
+    assert h1500["estimate"]["payback_years"] <= 7
+    assert h1500["rank"] < tractor["rank"]
     economics = next(c for c in h1500["score_breakdown"] if c["criterion"] == "cost_efficiency")
     towing = next(c for c in tractor["score_breakdown"] if c["criterion"] == "cost_efficiency")
-    assert economics["points"] > towing["points"]
+    assert economics["points"] > towing["points"] == 0
+    assert "дольше порога" in towing["explanation"]
     assert "NPV" in economics["explanation"]
+
+
+async def test_showcase_demo_pays_back_on_several_processes(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client, "warehouse_showcase_24x7")
+    project = (await client.get(f"/api/v1/projects/{project_id}", headers=headers)).json()
+    assert project["version"] == 1
+    body = (await client.get(f"/api/v1/projects/{project_id}/params", headers=headers)).json()
+    params = {p["key"]: p for p in body["params"]}
+    assert params["shifts_per_day"]["value"] == 3
+    assert params["picker_productivity_lines_per_hour"]["value"] == 75
+    assert params["pickers"]["provenance"]["status"] == "assumption"
+    assert "Допущение команды" in params["pickers"]["provenance"]["note"]
+    matching = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=headers)).json()
+    for key in ("pallet_transport", "order_picking", "floor_cleaning"):
+        paybacks = [c["estimate"]["payback_years"] for c in _process(matching, key)["candidates"]]
+        assert any(p is not None and p < 5 for p in paybacks), key
 
 
 async def test_confirmed_mismatch_is_excluded_with_numbers(client: AsyncClient) -> None:

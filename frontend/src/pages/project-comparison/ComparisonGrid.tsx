@@ -17,10 +17,13 @@ export function ComparisonGrid({ table }: { table: ComparisonTable }) {
   const highlight = (id: string) => id === recommendedId && 'bg-surface-2'
 
   return (
-    <Table className="table-fixed">
+    // На телефоне таблица листается вбок внутри своей карточки, а колонка показателей остаётся на месте.
+    <Table className="table-fixed" style={{ minWidth: `${11 + table.scenarios.length * 8}rem` }}>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-64 pl-5 align-bottom">Показатель</TableHead>
+          <TableHead className="w-44 pl-4 align-bottom max-sm:sticky max-sm:left-0 max-sm:z-10 max-sm:bg-card sm:w-64 sm:pl-5">
+            Показатель
+          </TableHead>
           {table.scenarios.map((s) => (
             <TableHead
               key={s.scenario_id}
@@ -52,12 +55,12 @@ export function ComparisonGrid({ table }: { table: ComparisonTable }) {
           const hint = row.better === 'none' ? null : BETTER_HINT[row.better]
           return (
             <TableRow key={row.metric_key}>
-              <TableCell className="pl-5 whitespace-normal">
+              <TableCell className="pl-4 whitespace-normal max-sm:sticky max-sm:left-0 max-sm:z-10 max-sm:bg-card sm:pl-5">
                 <div className="font-medium">{row.name}</div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {row.unit && <span>{row.unit}</span>}
+                <div className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
+                  {row.unit && <span className="whitespace-nowrap">{row.unit}</span>}
                   {hint && (
-                    <span className="inline-flex items-center gap-0.5">
+                    <span className="inline-flex items-center gap-0.5 whitespace-nowrap">
                       {row.unit && '·'} <hint.icon className="size-3" /> {hint.text}
                     </span>
                   )}

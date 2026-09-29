@@ -66,8 +66,12 @@ export function ParamsEditor({
   const active = useActiveGroup(visible.map((g) => g.key))
 
   return (
-    <div className="grid grid-cols-[13rem_minmax(0,1fr)] items-start gap-8">
-      <nav className="sticky top-40 space-y-0.5" aria-label="Разделы параметров">
+    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-8">
+      {/* На узком экране разделы — лента чипов над списком, которая листается вбок; с lg — липкая колонка слева. */}
+      <nav
+        className="scroll-thin relative -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:sticky lg:top-40 lg:mx-0 lg:block lg:space-y-0.5 lg:overflow-visible lg:px-0 lg:pb-0"
+        aria-label="Разделы параметров"
+      >
         <SlideHighlight className="rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,19,0.06),0_0_0_1px_rgba(20,20,19,0.04)]" />
         {views.map((group) => {
           const empty = group.params.length === 0
@@ -81,12 +85,12 @@ export function ParamsEditor({
                 document.getElementById(`group-${group.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
               className={cn(
-                'relative flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13.5px] transition-colors disabled:opacity-35',
+                'relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-[13.5px] whitespace-nowrap transition-colors disabled:opacity-35 max-lg:min-h-9 lg:w-full lg:shrink lg:whitespace-normal',
                 current ? 'text-ink' : 'text-ink-3 hover:text-ink',
               )}
             >
               {current && <SlideMark />}
-              <span className="relative min-w-0 flex-1 leading-snug">{group.name}</span>
+              <span className="relative leading-snug lg:min-w-0 lg:flex-1">{group.name}</span>
               {group.flagged > 0 && <span className="relative size-1.5 shrink-0 rounded-full bg-warn" />}
               <span className="num relative text-[12px] text-ink-4">
                 {filter === 'all' && !query ? group.total : `${group.params.length}/${group.total}`}
@@ -108,7 +112,7 @@ export function ParamsEditor({
               { value: 'edited', label: `Введённые · ${edited}` },
             ]}
           />
-          <label className="relative flex h-8 w-64 items-center rounded-lg bg-black/5 transition-colors focus-within:bg-white focus-within:shadow-[0_0_0_1px_rgba(20,20,19,0.12)]">
+          <label className="relative flex h-9 w-full items-center sm:h-8 sm:w-64 rounded-lg bg-black/5 transition-colors focus-within:bg-white focus-within:shadow-[0_0_0_1px_rgba(20,20,19,0.12)]">
             <Search className="pointer-events-none absolute left-3 size-3.5 text-ink-3" />
             <input
               value={query}
@@ -153,7 +157,7 @@ export function ParamsEditor({
                 transition={{ duration: 0.2 }}
                 className="card scroll-mt-40 overflow-hidden"
               >
-                <header className="flex items-baseline justify-between gap-4 px-6 pt-5 pb-2">
+                <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 pt-5 pb-2 sm:px-6">
                   <h3 className="h3 text-[18px]">{group.name}</h3>
                   <span className="meta">
                     <span className="num">{group.total}</span>{' '}
