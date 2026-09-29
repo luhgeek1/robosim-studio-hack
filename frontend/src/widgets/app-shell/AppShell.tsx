@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { NavLink, Outlet, useMatch } from 'react-router'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -10,41 +10,71 @@ import { Notifications } from './Notifications'
 import { WorkspaceMenu } from './WorkspaceMenu'
 import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
-/* Плашка шагов закреплена внизу экрана, по центру: шаги всегда под рукой и не спорят с шапкой.
-   Место под ней в потоке держит распорка той же высоты. */
+// Плашка прячется, как только страницу прокрутили дальше этого порога; вверху страницы она видна всегда.
+const DOCK_HIDE_AFTER_PX = 24
+
+const subscribeScroll = (onChange: () => void) => {
+  window.addEventListener('scroll', onChange, { passive: true })
+  return () => window.removeEventListener('scroll', onChange)
+}
+const isScrolledDown = () => window.scrollY > DOCK_HIDE_AFTER_PX
+
+/* Плашка шагов под шапкой. При прокрутке вниз уезжает под шапку и не закрывает контент; навести курсор на её место
+   (или перейти в неё с клавиатуры) — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
+   Шапка и плашка — fixed, а место в потоке держат распорки той же высоты. */
 function StepDock({ projectId }: { projectId: string }) {
+  const scrolled = useSyncExternalStore(subscribeScroll, isScrolledDown)
+  const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const hidden = scrolled && !hovered && !focused
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-8">
-      <nav
-        // Тёмная «приборная» поверхность (DESIGN.md): на бумажном холсте и светлых карточках плашка не сливается
-        // с контентом, а сигнальный цвет остаётся за главным выводом экрана.
-        className="pointer-events-auto relative flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-ink/92 p-2 shadow-[0_18px_40px_-12px_rgba(20,20,19,0.45),0_2px_6px_rgba(20,20,19,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/10 backdrop-blur-xl [scrollbar-width:none]"
-        aria-label="Шаги оценки"
+    <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-6">
+      <div
+        className="pointer-events-auto max-w-full pt-3 pb-2"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false)
+        }}
       >
-        <SlideHighlight className="rounded-full bg-card shadow-[0_1px_2px_rgba(0,0,0,0.25),0_6px_16px_-6px_rgba(0,0,0,0.45)]" />
-        {PROJECT_STEPS.map((step, i) => (
-          <NavLink
-            key={step.id}
-            to={`/projects/${projectId}/${step.id}`}
-            className={({ isActive }) =>
-              cn(
-                'relative flex h-11 items-center rounded-full px-4.5 text-[14.5px] font-medium whitespace-nowrap transition-colors',
-                isActive ? 'text-ink' : 'text-white/72 hover:bg-white/8 hover:text-white',
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && <SlideMark />}
-                <span className="relative z-10 flex items-center gap-2">
-                  <span className={cn('num text-[12px]', isActive ? 'text-ink-3' : 'text-white/40')}>{i + 1}</span>
-                  {step.label}
-                </span>
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+        <nav
+          className={cn(
+            // Плашка чаще появляется поверх прокрученного контента: без размытия цифры и 3D-карточки лезут сквозь подписи.
+            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
+            // Выезжает с замедлением, уезжает с разгоном: так движение читается целиком, а не вспышкой в первом кадре.
+            'transition-[translate,opacity] duration-320 ease-[cubic-bezier(0.33,1,0.68,1)] motion-reduce:transition-none',
+            // Уход — с короткой задержкой: курсор, проскочивший мимо края, не заставляет плашку дёргаться.
+            hidden &&
+              'pointer-events-none -translate-y-[calc(100%+1.5rem)] opacity-0 delay-100 duration-220 ease-[cubic-bezier(0.32,0,0.67,0)]',
+          )}
+          aria-label="Шаги оценки"
+        >
+          <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,19,0.08),0_4px_12px_-4px_rgba(20,20,19,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
+          {PROJECT_STEPS.map((step, i) => (
+            <NavLink
+              key={step.id}
+              to={`/projects/${projectId}/${step.id}`}
+              className={({ isActive }) =>
+                cn(
+                  'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap text-ink transition-colors',
+                  !isActive && 'hover:bg-white/50',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && <SlideMark />}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <span className="num text-[11px] text-ink">{i + 1}</span>
+                    {step.label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
     </div>
   )
 }
@@ -76,15 +106,15 @@ export function AppShell() {
           </div>
         </div>
       </motion.header>
-      <main className="flex min-h-0 flex-1 flex-col">
-        <Outlet />
-      </main>
       {projectId && (
         <>
-          <div className="h-28 shrink-0" aria-hidden />
+          <div className="h-16.5 shrink-0" aria-hidden />
           <StepDock projectId={projectId} />
         </>
       )}
+      <main className="flex min-h-0 flex-1 flex-col">
+        <Outlet />
+      </main>
     </div>
   )
 }

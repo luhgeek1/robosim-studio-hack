@@ -131,8 +131,7 @@ export function MatchingPage() {
       )}
 
       {compare.length > 0 && (
-        // Над плашкой шагов, которая закреплена внизу экрана.
-        <div className="fixed bottom-30 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[14px] border border-line bg-white/95 px-4 py-2 shadow-float backdrop-blur">
+        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[14px] border border-line bg-white/95 px-4 py-2 shadow-float backdrop-blur">
           <span className="text-sm">
             Выбрано для сравнения: <span className="num font-medium">{compare.length}</span> из {MAX_COMPARE}
           </span>
