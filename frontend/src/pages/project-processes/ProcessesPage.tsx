@@ -58,12 +58,12 @@ export function ProcessesPage() {
               />
               <Stat
                 label="Рабочих часов в сутки"
-                value={data.working_hours_per_day !== undefined ? `${formatNumber(data.working_hours_per_day)} ч` : '—'}
+                value={data.working_hours_per_day != null ? `${formatNumber(data.working_hours_per_day)} ч` : '—'}
                 hint="по режиму работы объекта"
               />
               <Stat
                 label="Пиковый коэффициент"
-                value={data.peak_factor !== undefined ? `×${formatNumber(data.peak_factor)}` : '—'}
+                value={data.peak_factor != null ? `×${formatNumber(data.peak_factor)}` : '—'}
                 hint="пиковый час к среднему"
               />
               <Stat label="Процессов" value={sorted.length} hint={`можно роботизировать: ${robotizable}`} />

@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { useProjectId } from '@/entities/project'
 import { SCENARIO_KIND_LABEL, useMonteCarlo, useScenarios, useSensitivity } from '@/entities/scenario'
 import type { MonteCarloResult } from '@/shared/api/types'
-import { formatNumber, formatPct, formatYears, isNum } from '@/shared/lib/format'
+import { formatNumber, formatPayback, formatPct, formatYears, isNum } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Callout, Screen, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
@@ -101,8 +101,8 @@ export function RisksPage() {
           </Callout>
         )}
 
-        {mc.data && <Odds result={mc.data} />}
-        <MonteCarloPanel scenarioId={scenario.id} />
+        {mc.data && <Odds result={mc.data} horizon={scenario.horizon_years} />}
+        <MonteCarloPanel scenarioId={scenario.id} horizon={scenario.horizon_years} />
         <SensitivitySections scenarioId={scenario.id} metric={metric} onMetric={setMetric} />
         <SurveyPanel scenarioId={scenario.id} />
       </div>
@@ -156,7 +156,7 @@ function SensitivitySections({
   )
 }
 
-function Odds({ result }: { result: MonteCarloResult }) {
+function Odds({ result, horizon }: { result: MonteCarloResult; horizon: number }) {
   const p = result.probability ?? {}
   const share = (v: number | undefined) => (isNum(v) ? formatPct(v, { share: true, digits: 0 }) : '—')
   return (
@@ -166,8 +166,12 @@ function Odds({ result }: { result: MonteCarloResult }) {
       <Stat label="NPV больше нуля" value={share(p.npv_positive)} hint="вероятность" />
       <Stat
         label="Окупаемость, P10–P90"
-        value={`${formatNumber(result.p10, 1)}–${formatYears(result.p90)}`}
-        hint={`медиана ${formatYears(result.p50)}`}
+        value={
+          isNum(result.p90) && result.p90 >= horizon - 1e-6
+            ? `от ${formatNumber(result.p10, 1)} до «не окупается»`
+            : `${formatNumber(result.p10, 1)}–${formatYears(result.p90)}`
+        }
+        hint={`медиана ${formatPayback(result.p50, horizon)}`}
       />
     </StatStrip>
   )

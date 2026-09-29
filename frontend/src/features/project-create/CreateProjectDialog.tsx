@@ -117,7 +117,8 @@ export function CreateProjectDialog({
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Отмена
             </Button>
-            <Button type="submit" disabled={create.isPending}>
+            {/* Пока типы объектов не загрузились, демо-набор неизвестен — не даём создать пустой проект вместо демо. */}
+            <Button type="submit" disabled={create.isPending || !objectTypes.data}>
               {create.isPending && <Spinner />} Создать
             </Button>
           </DialogFooter>

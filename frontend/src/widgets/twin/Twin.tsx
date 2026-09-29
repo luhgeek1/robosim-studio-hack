@@ -11,6 +11,7 @@ import { HeatLayer, RobotsLayer } from './Robots2D'
 import { Building, Markers, Racks, RouteLines, Robots3D, sceneFrame, zoneLabels } from './scene3d'
 import { LabelLayer, LabelProjector } from './SceneLabels'
 import { svgToPng } from './snapshot'
+import { SceneBoundary } from '@/shared/ui/boundary'
 
 export type TwinView = '3d' | '2d'
 
@@ -119,45 +120,62 @@ export function Twin({
             onRoutes={() => setRoutes((v) => !v)}
             placement={toolbarPlacement}
           />
-          <Canvas
-            shadows={{ type: THREE.PCFSoftShadowMap }}
-            dpr={[1, 1.75]}
-            // Layout size, not the transformed box: inside a dialog that opens with a zoom the canvas would stay at 95 %.
-            resize={{ offsetSize: true }}
-            camera={{ position: [span * 0.5, span * 0.8, span], fov: 38, near: 0.5, far: span * 12 }}
-            gl={{ antialias: true, powerPreference: 'high-performance' }}
-            onCreated={({ gl, scene }) => {
-              gl.setClearColor(C.bg)
-              scene.fog = new THREE.Fog(C.bg, span * 3, span * 8)
-            }}
-            onPointerMissed={() => onSelectRobot?.(null)}
+          <SceneBoundary
+            fallback={
+              <div className="absolute inset-0 grid place-items-center p-6 text-center text-[13.5px] text-ink-3">
+                <div className="space-y-3">
+                  <p>3D-вид недоступен в этом браузере (нет WebGL).</p>
+                  {onViewChange && (
+                    <button type="button" className="font-medium text-ink underline" onClick={() => onViewChange('2d')}>
+                      Показать 2D-схему
+                    </button>
+                  )}
+                </div>
+              </div>
+            }
           >
-            <Suspense fallback={null}>
-              <ambientLight intensity={0.7} />
-              <hemisphereLight args={['#e4f3ff', '#b5a38b', 1.1]} />
-              <directionalLight
-                position={[span * 0.3, span * 0.6, span * 0.25]}
-                intensity={2.2}
-                castShadow
-                shadow-mapSize={[2048, 2048]}
-                shadow-bias={-0.0004}
-                shadow-camera-left={-frame.w / 2}
-                shadow-camera-right={frame.w / 2}
-                shadow-camera-top={frame.h / 2}
-                shadow-camera-bottom={-frame.h / 2}
-                shadow-camera-near={1}
-                shadow-camera-far={span * 2}
-              />
-              <Building layout={layout} frame={frame} />
-              <Racks layout={layout} frame={frame} />
-              <Markers layout={layout} frame={frame} />
-              {(routes || heat) && <RouteLines layout={layout} frame={frame} heat={heat} />}
-              {tracks && <Robots3D tracks={tracks} frame={frame} selectedId={selectedRobot} onSelect={onSelectRobot} />}
-              <MapCamera command={command} extent={{ w: frame.w, h: frame.h }} />
-              <LabelProjector labels={labels} refs={labelRefs} />
-              {capture && <FrameCapture capture={capture} />}
-            </Suspense>
-          </Canvas>
+            <Canvas
+              shadows={{ type: THREE.PCFSoftShadowMap }}
+              dpr={[1, 1.75]}
+              // Layout size, not the transformed box: inside a dialog that opens with a zoom the canvas would stay at 95 %.
+              resize={{ offsetSize: true }}
+              camera={{ position: [span * 0.5, span * 0.8, span], fov: 38, near: 0.5, far: span * 12 }}
+              gl={{ antialias: true, powerPreference: 'high-performance' }}
+              onCreated={({ gl, scene }) => {
+                gl.setClearColor(C.bg)
+                scene.fog = new THREE.Fog(C.bg, span * 3, span * 8)
+              }}
+              onPointerMissed={() => onSelectRobot?.(null)}
+            >
+              <Suspense fallback={null}>
+                <ambientLight intensity={0.7} />
+                <hemisphereLight args={['#e4f3ff', '#b5a38b', 1.1]} />
+                <directionalLight
+                  position={[span * 0.3, span * 0.6, span * 0.25]}
+                  intensity={2.2}
+                  castShadow
+                  shadow-mapSize={[2048, 2048]}
+                  shadow-bias={-0.0004}
+                  shadow-camera-left={-frame.w / 2}
+                  shadow-camera-right={frame.w / 2}
+                  shadow-camera-top={frame.h / 2}
+                  shadow-camera-bottom={-frame.h / 2}
+                  shadow-camera-near={1}
+                  shadow-camera-far={span * 2}
+                />
+                <Building layout={layout} frame={frame} />
+                <Racks layout={layout} frame={frame} />
+                <Markers layout={layout} frame={frame} />
+                {(routes || heat) && <RouteLines layout={layout} frame={frame} heat={heat} />}
+                {tracks && (
+                  <Robots3D tracks={tracks} frame={frame} selectedId={selectedRobot} onSelect={onSelectRobot} />
+                )}
+                <MapCamera command={command} extent={{ w: frame.w, h: frame.h }} />
+                <LabelProjector labels={labels} refs={labelRefs} />
+                {capture && <FrameCapture capture={capture} />}
+              </Suspense>
+            </Canvas>
+          </SceneBoundary>
           <LabelLayer labels={labels} refs={labelRefs} />
         </>
       )}

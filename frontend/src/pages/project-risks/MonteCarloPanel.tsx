@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useMonteCarlo } from '@/entities/scenario'
 import type { MonteCarloRequest, MonteCarloResult } from '@/shared/api/types'
-import { formatMln, formatNumber } from '@/shared/lib/format'
+import { formatMln, formatNumber, formatPayback } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { Segmented } from '@/shared/ui/v0'
@@ -21,7 +21,7 @@ const METHOD_LABEL: Record<MonteCarloResult['method'], string> = {
 const POS_COLOR = 'var(--foreground)'
 const NEG_COLOR = 'var(--ink-4)'
 
-export function MonteCarloPanel({ scenarioId }: { scenarioId: string }) {
+export function MonteCarloPanel({ scenarioId, horizon }: { scenarioId: string; horizon: number }) {
   const [metric, setMetric] = useState<McMetric>('payback_years')
   const mc = useMonteCarlo(scenarioId, { ...MC_REQUEST, metric })
 
@@ -48,13 +48,14 @@ export function MonteCarloPanel({ scenarioId }: { scenarioId: string }) {
           <ErrorBlock error={mc.error} onRetry={() => mc.refetch()} />
         </div>
       )}
-      {mc.data && <MonteCarloBody result={mc.data} metric={metric} />}
+      {mc.data && <MonteCarloBody result={mc.data} metric={metric} horizon={horizon} />}
     </article>
   )
 }
 
-function MonteCarloBody({ result, metric }: { result: MonteCarloResult; metric: McMetric }) {
-  const fmt = METRIC[metric].format
+function MonteCarloBody({ result, metric, horizon }: { result: MonteCarloResult; metric: McMetric; horizon: number }) {
+  const fmt =
+    metric === 'payback_years' ? (v: number | null | undefined) => formatPayback(v, horizon) : METRIC[metric].format
   const lowerBetter = metric === 'payback_years'
 
   return (

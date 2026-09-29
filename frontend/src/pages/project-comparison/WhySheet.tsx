@@ -5,7 +5,7 @@ import { Area, AreaChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YA
 import { Link } from 'react-router'
 import { BAND_LABEL, VERDICT_LABEL, VERDICT_TONE } from '@/entities/scenario'
 import type { ComparisonTable } from '@/shared/api/types'
-import { formatMln, formatPct, formatRub, formatYears, isNum } from '@/shared/lib/format'
+import { formatMln, formatPct, formatRub, formatYears, horizonText, isNum } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/shared/ui/sheet'
@@ -60,7 +60,7 @@ export function WhySheet({
             />
             <Figure
               value={formatRub(saving(best))}
-              label={`экономия за ${m.horizon_years} лет`}
+              label={`экономия за ${horizonText(m.horizon_years)}`}
               note="против «как сейчас»"
             />
           </dl>
@@ -79,7 +79,7 @@ export function WhySheet({
                   value={(s) => s.metrics.npv_rub ?? null}
                 />
                 <Bars
-                  title={`Экономия за ${m.horizon_years} лет против «как сейчас»`}
+                  title={`Экономия за ${horizonText(m.horizon_years)} против «как сейчас»`}
                   scenarios={robotized}
                   bestId={best.scenario_id}
                   value={saving}

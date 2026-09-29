@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import * as THREE from 'three'
+import { SceneBoundary } from '@/shared/ui/boundary'
 import { useProduct } from '@/entities/catalog'
 import { cn } from '@/shared/lib/utils'
 import { modelKindOf, variantFromProduct } from './catalog'
@@ -68,19 +69,21 @@ export function RobotPreview3D({
       onPointerCancel={onUp}
     >
       {near && Model && variant && bounds && (
-        <Canvas
-          dpr={[1, 1.5]}
-          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-          onCreated={({ gl }) => {
-            gl.setClearColor(0x000000, 0)
-            gl.toneMapping = THREE.ACESFilmicToneMapping
-            gl.toneMappingExposure = 1.05
-          }}
-        >
-          <Studio bounds={bounds} drag={drag} framing={framing}>
-            <Model v={variant} accent={kind.accent} />
-          </Studio>
-        </Canvas>
+        <SceneBoundary>
+          <Canvas
+            dpr={[1, 1.5]}
+            gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+            onCreated={({ gl }) => {
+              gl.setClearColor(0x000000, 0)
+              gl.toneMapping = THREE.ACESFilmicToneMapping
+              gl.toneMappingExposure = 1.05
+            }}
+          >
+            <Studio bounds={bounds} drag={drag} framing={framing}>
+              <Model v={variant} accent={kind.accent} />
+            </Studio>
+          </Canvas>
+        </SceneBoundary>
       )}
     </div>
   )

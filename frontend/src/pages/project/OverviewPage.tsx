@@ -9,6 +9,17 @@ import { cn } from '@/shared/lib/utils'
 import { LoadingBlock } from '@/shared/ui/states'
 import { RobotPreview3D } from '@/widgets/robot-3d'
 
+// Journal entities as the user knows them; the raw prefix of the audit key is an internal name.
+const AUDIT_ENTITY_LABEL: Record<string, string> = {
+  project: 'проекта',
+  project_param: 'параметра объекта',
+  project_params: 'параметров объекта',
+  scenario: 'сценария',
+  import: 'данных из файла',
+  layout: 'планировки',
+  background: 'подложки планировки',
+}
+
 const AUDIT_ACTION_LABEL: Record<AuditEvent['action'], string> = {
   create: 'создание',
   update: 'изменение',
@@ -79,7 +90,9 @@ export function OverviewPage() {
                       <span className="num shrink-0 whitespace-nowrap text-ink-3">{formatDateTime(event.at)}</span>
                       <span className="min-w-0">
                         <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span>{' '}
-                        <span className="text-ink-3">{event.entity.split(':')[0]}</span>
+                        <span className="text-ink-3">
+                          {AUDIT_ENTITY_LABEL[event.entity.split(':')[0]] ?? 'данных проекта'}
+                        </span>
                         {event.note && <span className="text-ink-3"> — {event.note}</span>}
                       </span>
                     </li>

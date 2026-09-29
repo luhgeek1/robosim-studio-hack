@@ -61,3 +61,14 @@ const dateOnly = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium' })
 
 export const formatDateTime = (iso: string | null | undefined) => (iso ? dateTime.format(new Date(iso)) : '—')
 export const formatDate = (iso: string | null | undefined) => (iso ? dateOnly.format(new Date(iso)) : '—')
+
+// Monte Carlo and the tornado cap paybacks beyond the horizon at the horizon: such a value means «не окупается за горизонт».
+export function formatPayback(value: number | null | undefined, horizon: number | null | undefined): string {
+  if (!isNum(value)) return 'не окупается'
+  if (isNum(horizon) && value >= horizon - 1e-6)
+    return `не окупается за ${horizon} ${pluralRu(horizon, ['год', 'года', 'лет'])}`
+  return formatYears(value)
+}
+
+export const horizonText = (years: number | null | undefined) =>
+  isNum(years) ? `${years} ${pluralRu(years, ['год', 'года', 'лет'])}` : 'горизонт расчёта'

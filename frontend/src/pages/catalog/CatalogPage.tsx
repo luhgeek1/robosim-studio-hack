@@ -128,7 +128,7 @@ export function CatalogPage() {
                     <SelectItem value={ALL}>Все отрасли</SelectItem>
                     {(facets.data.industries ?? []).map((facet) => (
                       <SelectItem key={facet.key} value={facet.key}>
-                        {facet.name} <span className="num text-muted-foreground">{facet.count}</span>
+                        {facet.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -221,6 +221,7 @@ export function CatalogPage() {
                 total={data.total}
                 hasMore={products.hasNextPage}
                 loading={products.isFetchingNextPage}
+                failed={products.isFetchNextPageError}
                 onMore={() => void products.fetchNextPage()}
               />
             </>
@@ -374,26 +375,33 @@ function LoadMore({
   total,
   hasMore,
   loading,
+  failed,
   onMore,
 }: {
   total: number
   hasMore: boolean
   loading: boolean
+  failed: boolean
   onMore: () => void
 }) {
   const [marker, setMarker] = useState<HTMLDivElement | null>(null)
   useEffect(() => {
-    if (!marker || !hasMore || loading) return
+    // After a failed page the marker stays in view: without this guard it would retry in a loop.
+    if (!marker || !hasMore || loading || failed) return
     const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && onMore(), {
       rootMargin: '900px 0px',
     })
     observer.observe(marker)
     return () => observer.disconnect()
-  }, [marker, hasMore, loading, onMore])
+  }, [marker, hasMore, loading, failed, onMore])
 
   return (
     <div ref={setMarker} className="mt-8 flex h-10 items-center justify-center text-[13px] text-ink-3">
-      {hasMore ? (
+      {failed ? (
+        <button type="button" className="font-medium text-ink underline" onClick={onMore}>
+          Не удалось загрузить продолжение — повторить
+        </button>
+      ) : hasMore ? (
         <span className="flex items-center gap-2">
           <Spinner className="size-3.5" /> Загружаем ещё
         </span>

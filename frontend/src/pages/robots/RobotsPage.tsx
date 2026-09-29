@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import { useProduct } from '@/entities/catalog'
 import type { Product } from '@/shared/api/types'
 import { cn } from '@/shared/lib/utils'
+import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Segmented } from '@/shared/ui/v0'
 import {
@@ -145,7 +146,7 @@ function RobotCard({ kind, products }: { kind: Kind; products: Product[] | undef
         {product && (
           <div className="-mt-1 flex items-center justify-between gap-3 text-[11.5px] text-ink-3">
             <span className="min-w-0 truncate">
-              Класс «{product.solution_type_name}» · {products!.length} в каталоге
+              Класс «{product.solution_type_name ?? v.name}» · {products!.length} в каталоге
               {detail.isLoading && ' · загружаем ТТХ…'}
             </span>
             <Link
@@ -214,6 +215,8 @@ export function RobotsPage() {
     return { byKind, unmapped: [...unmapped.values()].sort((a, b) => b.count - a.count), mapped }
   }, [catalog.data])
   const total = catalog.data?.items.length ?? 0
+  if (catalog.isPending) return <LoadingBlock label="Загружаем каталог…" />
+  if (catalog.isError) return <ErrorBlock error={catalog.error} onRetry={() => catalog.refetch()} />
   return (
     <div className="mx-auto w-full max-w-360 px-6 pt-12 pb-28">
       <div className="mb-2 flex items-baseline gap-3">
@@ -221,9 +224,9 @@ export function RobotsPage() {
         <span className="display num text-[28px] text-ink-4">{KINDS.length}</span>
       </div>
       <p className="mb-7 max-w-190 text-[15.5px] leading-relaxed text-ink-2">
-        Временная витрина: модель привязана к классу решения из каталога, а форму и анимацию задают ТТХ продукта —
-        габариты, грузоподъёмность, высота подъёма, вылет и скорость. Новый продукт известного класса сразу получает
-        модель; чего нет в ТТХ, берётся по умолчанию класса и помечается.{' '}
+        Модель привязана к классу решения из каталога, а форму и анимацию задают ТТХ продукта — габариты,
+        грузоподъёмность, высота подъёма, вылет и скорость. Новый продукт известного класса сразу получает модель; чего
+        нет в ТТХ, берётся по умолчанию класса и помечается.{' '}
         {total > 0 && (
           <span className="num text-ink-3">
             {mapped} из {total} продуктов каталога с моделью

@@ -2,7 +2,7 @@ import { ArrowUpRight, Info } from 'lucide-react'
 import { Link } from 'react-router'
 import { SCENARIO_KIND_LABEL } from '@/entities/scenario'
 import type { ComparisonTable } from '@/shared/api/types'
-import { formatRub, formatYears, isNum } from '@/shared/lib/format'
+import { formatPct, formatRub, formatYears, horizonText, isNum } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
 type Scenario = ComparisonTable['scenarios'][number]
@@ -98,7 +98,7 @@ function ScenarioCard({
 
       <div className="mt-5">
         <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
-          <span className="text-ink-3">экономия за {m.horizon_years ?? 5} лет</span>
+          <span className="text-ink-3">экономия за {horizonText(m.horizon_years)}</span>
           <span className={cn('num font-medium', saving !== null && saving < 0 && 'text-crit')}>
             {formatRub(saving)}
           </span>
@@ -143,8 +143,8 @@ function BaselineCard({ scenario: s }: { scenario: Scenario }) {
       </p>
 
       <dl className="mt-auto space-y-1.5 border-t border-line pt-4">
-        <Fact label={`TCO за ${m.horizon_years ?? 5} лет`} value={formatRub(m.tco_rub)} />
-        <Fact label="ставка дисконта" value={isNum(m.discount_rate_pct) ? `${m.discount_rate_pct} %` : '—'} />
+        <Fact label={`TCO за ${horizonText(m.horizon_years)}`} value={formatRub(m.tco_rub)} />
+        <Fact label="ставка дисконта" value={formatPct(m.discount_rate_pct)} />
       </dl>
     </Link>
   )
