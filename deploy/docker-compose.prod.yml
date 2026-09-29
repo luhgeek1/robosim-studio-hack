@@ -1,0 +1,38 @@
+services:
+  db:
+    ports: !reset []
+    restart: unless-stopped
+  redis:
+    ports: !reset []
+    restart: unless-stopped
+  backend:
+    ports: !reset []
+    restart: unless-stopped
+    environment:
+      RS_STAGE: prod
+      RS_COOKIE_SECURE: "true"
+  worker:
+    restart: unless-stopped
+    environment:
+      RS_STAGE: prod
+      RS_COOKIE_SECURE: "true"
+  migrate:
+    environment:
+      RS_STAGE: prod
+      RS_COOKIE_SECURE: "true"
+  frontend:
+    ports: !reset []
+    restart: unless-stopped
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      RS_DOMAIN: ${RS_DOMAIN:?set RS_DOMAIN in .env}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [frontend]
+
+volumes:
+  caddy_data:

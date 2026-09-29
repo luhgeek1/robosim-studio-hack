@@ -1,0 +1,10 @@
+www.{$RS_DOMAIN} {
+	redir https://{$RS_DOMAIN}{uri} permanent
+}
+
+{$RS_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy frontend:80 {
+		flush_interval -1
+	}
+}
