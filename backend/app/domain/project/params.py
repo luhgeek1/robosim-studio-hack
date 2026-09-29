@@ -93,12 +93,17 @@ def validate_value(definition: ParameterDef, value: Scalar) -> ParamValidation:
     return ParamValidation(ValidationState.OK)
 
 
-def resolve(definition: ParameterDef, stored: StoredParam | None, mode: InitMode) -> EffectiveParam:
-    """Effective value of a parameter: stored > default > missing.
+def default_applies(status: ProvenanceStatus, required: bool, mode: InitMode) -> bool:
+    """Whether a reference default fills an empty field of a project created in this mode.
 
-    In a blank project the organizer's demo values are not applied to required parameters: they describe one
-    particular facility, so the user has to enter their own. Assumption defaults apply in every project.
+    The organizer's demo values (status ``default``) of required parameters describe one particular facility,
+    so a blank project does not take them; assumption defaults apply in every project.
     """
+    return not (status == ProvenanceStatus.DEFAULT and required and mode == InitMode.BLANK)
+
+
+def resolve(definition: ParameterDef, stored: StoredParam | None, mode: InitMode) -> EffectiveParam:
+    """Effective value of a parameter: stored > default > missing (see ``default_applies``)."""
     if stored is not None:
         return EffectiveParam(
             definition,
@@ -109,10 +114,7 @@ def resolve(definition: ParameterDef, stored: StoredParam | None, mode: InitMode
             stored.history_count,
         )
     default = definition.default
-    demo_only = (
-        default is not None and default.provenance.status == ProvenanceStatus.DEFAULT and definition.required
-    )
-    if default is None or (demo_only and mode == InitMode.BLANK):
+    if default is None or not default_applies(default.provenance.status, definition.required, mode):
         return EffectiveParam(
             definition,
             None,

@@ -328,6 +328,89 @@ adminNormSets:
       '201': {description: "Опубликована", content: {application/json: {schema: {$ref: '../components/reference.yaml#/NormSet'}}}}
       '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
 
+# ---------------- Админка: справочники (параметры по умолчанию, источники) ----------------
+
+adminParameterDefaults:
+  parameters:
+    - {name: object_type, in: path, required: true, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+  get:
+    tags: [admin]
+    operationId: adminListParameterDefaults
+    summary: Параметры по умолчанию типа объекта и сколько проектов на них опирается (ТЗ 2.1.6, 3.1.4)
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/ParameterDefaultList'}}}}
+
+adminParameterDefault:
+  parameters:
+    - {name: object_type, in: path, required: true, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+    - {name: key, in: path, required: true, schema: {type: string, maxLength: 64}}
+  put:
+    tags: [admin]
+    operationId: adminSetParameterDefault
+    summary: Задать значение по умолчанию с источником и обоснованием
+    description: |
+      Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона — 422 (у проекта это
+      было бы предупреждением, у умолчания — ошибка во всех проектах). Проекты без своего значения, у которых
+      меняется действующее значение, получают новую версию: их сохранённые расчёты становятся устаревшими,
+      а пересчёт показывает изменение параметра в диффе. Старые расчёты хранят свой снимок входов (ТЗ 3.1.5).
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/ParameterDefaultWrite'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/ParameterDefaultResult'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
+adminParameterDefaultHistory:
+  parameters:
+    - {name: object_type, in: path, required: true, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}
+    - {name: key, in: path, required: true, schema: {type: string, maxLength: 64}}
+  get:
+    tags: [admin]
+    operationId: adminParameterDefaultHistory
+    summary: История значения по умолчанию (кто, когда, было → стало, обоснование)
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/Page'}
+      - {$ref: '../components/common.yaml#/parameters/PageSize'}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/AuditList'}}}}
+
+adminSources:
+  get:
+    tags: [admin]
+    operationId: adminListSources
+    summary: Реестр источников данных — ссылки, даты, где используются (ТЗ 3.3.4)
+    description: |
+      Источники каталога, нормативов и параметров по умолчанию (загрузки пользователей в проекты не входят).
+      Сначала самые используемые. Источник старше `stale_after_months` месяцев (норматив
+      `source_stale_after_months`) — `stale`, без даты получения — `undated`.
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/Page'}
+      - {name: page_size, in: query, schema: {type: integer, minimum: 1, maximum: 200, default: 50}}
+      - {name: q, in: query, schema: {type: string, maxLength: 200}, description: "Название, ссылка или примечание"}
+      - {name: kind, in: query, schema: {$ref: '../components/common.yaml#/SourceKind'}}
+      - {name: freshness, in: query, schema: {$ref: '../components/platform.yaml#/SourceFreshness'}}
+      - {name: include_unused, in: query, schema: {type: boolean, default: false}, description: "Показать источники, на которые ничего не ссылается"}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/SourceList'}}}}
+
+adminSource:
+  parameters:
+    - {name: source_id, in: path, required: true, schema: {type: string, format: uuid}}
+  patch:
+    tags: [admin]
+    operationId: adminUpdateSource
+    summary: Исправить название, ссылку, дату получения или примечание источника
+    description: |
+      Правка — событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
+      и расчёты не устаревают; экраны и отчёты показывают исправленный источник. Сид не перезаписывает
+      источник, который правил администратор.
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/platform.yaml#/SourceUpdate'}}}
+    responses:
+      '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/RegistrySource'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+
 adminUsers:
   get:
     tags: [admin]

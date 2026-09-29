@@ -375,6 +375,98 @@ AnalyticsOverview:
       items: {type: object, properties: {object_type: {type: string}, process_key: {type: string}, no_fit_count: {type: integer}}}
     rfq_count: {type: integer}
 
+# ---------------- Справочники в админке: параметры по умолчанию и источники ----------------
+
+AdminParameterDefault:
+  allOf:
+    - $ref: './reference.yaml#/ParameterDef'
+    - type: object
+      required: [object_type, group_name, applies_to_blank, projects_total, projects_using_default]
+      properties:
+        object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
+        group_name: {type: string, example: "Персонал"}
+        applies_to_blank:
+          type: boolean
+          description: "false — данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё"
+        projects_total: {type: integer, description: "Проектов этого типа объекта"}
+        projects_using_default: {type: integer, description: "Из них берут значение из умолчания (своего значения нет)"}
+
+ParameterDefaultList:
+  type: object
+  required: [object_type, items]
+  properties:
+    object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
+    items: {type: array, items: {$ref: '#/AdminParameterDefault'}}
+
+ParameterDefaultWrite:
+  type: object
+  required: [value, source, rationale]
+  properties:
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}], description: "В единице параметра (проценты — в процентах)"}
+    unit: {type: [string, "null"], description: "Если указана — должна совпадать с единицей параметра"}
+    status:
+      type: [string, "null"]
+      enum: [default, assumption, null]
+      description: "default — значение из источника, assumption — допущение. Без значения — прежний статус (у параметра без умолчания — assumption)"
+    source: {$ref: './reference.yaml#/SourceWrite'}
+    rationale: {type: string, minLength: 1, maxLength: 2000, description: "Почему такое значение"}
+
+ParameterDefaultResult:
+  type: object
+  required: [parameter, projects_restamped]
+  properties:
+    parameter: {$ref: '#/AdminParameterDefault'}
+    projects_restamped: {type: integer, description: "Проектов с новой версией: их сохранённые расчёты устарели"}
+
+SourceFreshness:
+  type: string
+  description: "fresh — получен не раньше порога, stale — раньше (норматив source_stale_after_months), undated — без даты получения"
+  enum: [fresh, stale, undated]
+
+SourceUsage:
+  type: object
+  required: [specs, offers, cases, norms, parameters, total]
+  properties:
+    specs: {type: integer, description: "ТТХ видимых продуктов"}
+    offers: {type: integer, description: "Цены (предложения) видимых продуктов"}
+    cases: {type: integer, description: "Кейсы внедрения"}
+    norms: {type: integer, description: "Нормативы действующей версии"}
+    parameters: {type: integer, description: "Параметры по умолчанию"}
+    total: {type: integer}
+
+RegistrySource:
+  allOf:
+    - $ref: './common.yaml#/Source'
+    - type: object
+      required: [freshness, usage]
+      properties:
+        freshness: {$ref: '#/SourceFreshness'}
+        usage: {$ref: '#/SourceUsage'}
+
+SourceList:
+  type: object
+  required: [items, page, page_size, total, stale_after_months, stale_before, freshness_counts]
+  properties:
+    items: {type: array, items: {$ref: '#/RegistrySource'}}
+    page: {type: integer}
+    page_size: {type: integer}
+    total: {type: integer}
+    stale_after_months: {type: integer, description: "Порог устаревания — норматив source_stale_after_months"}
+    stale_before: {type: string, format: date, description: "Источник, полученный раньше этой даты, устарел"}
+    freshness_counts:
+      type: object
+      description: "Сколько источников в каждом состоянии при тех же фильтрах, кроме freshness"
+      properties: {fresh: {type: integer}, stale: {type: integer}, undated: {type: integer}}
+
+SourceUpdate:
+  type: object
+  description: "Меняются только переданные поля; url, retrieved_at и note можно очистить значением null"
+  properties:
+    title: {type: string, minLength: 1, maxLength: 500}
+    url: {type: [string, "null"], format: uri}
+    retrieved_at: {type: [string, "null"], format: date}
+    note: {type: [string, "null"], maxLength: 2000}
+
 # ---------------- Интеграции ----------------
 
 IntegrationProjectCreate:

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.6.0
+  version: 0.6.1
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -157,6 +157,11 @@ paths:
   /api/v1/admin/catalog/enrichment-jobs/{job_id}/review: {$ref: './paths/platform.yaml#/adminEnrichmentJobReview'}
   /api/v1/admin/catalog/enrichment-schedule: {$ref: './paths/platform.yaml#/adminEnrichmentSchedule'}
   /api/v1/admin/norm-sets: {$ref: './paths/platform.yaml#/adminNormSets'}
+  /api/v1/admin/parameter-defaults/{object_type}: {$ref: './paths/platform.yaml#/adminParameterDefaults'}
+  /api/v1/admin/parameter-defaults/{object_type}/{key}: {$ref: './paths/platform.yaml#/adminParameterDefault'}
+  /api/v1/admin/parameter-defaults/{object_type}/{key}/history: {$ref: './paths/platform.yaml#/adminParameterDefaultHistory'}
+  /api/v1/admin/sources: {$ref: './paths/platform.yaml#/adminSources'}
+  /api/v1/admin/sources/{source_id}: {$ref: './paths/platform.yaml#/adminSource'}
   /api/v1/admin/users: {$ref: './paths/platform.yaml#/adminUsers'}
   /api/v1/admin/users/{user_id}: {$ref: './paths/platform.yaml#/adminUser'}
   /api/v1/admin/analytics/overview: {$ref: './paths/platform.yaml#/adminAnalytics'}

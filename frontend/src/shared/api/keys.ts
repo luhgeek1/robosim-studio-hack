@@ -48,6 +48,10 @@ export const qk = {
     analytics: ['admin', 'analytics'] as const,
     users: (query: object) => ['admin', 'users', query] as const,
     products: (query: object) => ['admin', 'products', query] as const,
+    defaults: (objectType: string) => ['admin', 'parameter-defaults', objectType] as const,
+    defaultHistory: (objectType: string, key: string) =>
+      ['admin', 'parameter-defaults', objectType, key, 'history'] as const,
+    sources: (query: object) => ['admin', 'sources', query] as const,
   },
   reference: {
     solutionTypes: ['reference', 'solution-types'] as const,

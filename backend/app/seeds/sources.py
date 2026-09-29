@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.db.models import Source
+from app.db.repositories.source_registry import edited_source_ids
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import SourceKind
 
@@ -54,15 +55,21 @@ def url_source(url: str, retrieved_at: date | None, *, vendor_domain: str | None
 
 
 class SourceRegistry:
-    """Upserts sources by natural key and caches their ids for the duration of a seed run."""
+    """Upserts sources by natural key and caches their ids for the duration of a seed run.
+
+    A source the admin edited in the registry keeps the admin's title, link and date.
+    """
 
     def __init__(self, uow: UnitOfWork) -> None:
         self._uow = uow
         self._ids: dict[str, UUID] = {}
+        self._edited: set[UUID] | None = None
 
     async def id_for(self, spec: SourceSpec) -> UUID:
         if spec.key in self._ids:
             return self._ids[spec.key]
+        if self._edited is None:
+            self._edited = await edited_source_ids(self._uow.session)
         values = {
             "key": spec.key,
             "kind": spec.kind,
@@ -73,7 +80,9 @@ class SourceRegistry:
         }
         statement = insert(Source).values(**values)
         statement = statement.on_conflict_do_update(
-            index_elements=[Source.key], set_={k: v for k, v in values.items() if k != "key"}
+            index_elements=[Source.key],
+            set_={k: v for k, v in values.items() if k != "key"},
+            where=Source.id.not_in(self._edited) if self._edited else None,
         )
         await self._uow.session.execute(statement)
         source_id = await self._uow.session.scalar(select(Source.id).where(Source.key == spec.key))
