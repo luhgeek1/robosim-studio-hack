@@ -2,6 +2,7 @@ import { Pause, Play, RotateCcw } from 'lucide-react'
 import { useEffect } from 'react'
 import { SPEEDS, usePlayback } from '@/entities/simulation'
 import { Button } from '@/shared/ui/button'
+import { cn } from '@/shared/lib/utils'
 import { Segmented } from '@/shared/ui/v0'
 
 export const clock = (seconds: number) => {
@@ -25,19 +26,24 @@ export function usePlaybackDriver() {
   }, [tick])
 }
 
-// ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения. Выбор сценария и условий прогона — над сценой.
-export function PlayerBar() {
+// ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения — первая строка нижней панели, под картой.
+export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
   const playing = usePlayback((s) => s.playing)
   const speed = usePlayback((s) => s.speed)
   const total = usePlayback((s) => s.total)
   const t = usePlayback((s) => Math.floor(s.t / 20) * 20)
   const { setPlaying, setSpeed, setT } = usePlayback.getState()
   return (
-    <div className="absolute bottom-4 left-1/2 z-10 flex w-[min(760px,calc(100%-32px))] -translate-x-1/2 items-center gap-3 rounded-[14px] border border-line bg-white/95 p-2 shadow-card backdrop-blur">
-      <Button size="sm" onClick={() => setPlaying(!playing)} aria-label={playing ? 'Пауза' : 'Запустить'}>
+    <div className={cn('flex items-center gap-3', disabled && 'pointer-events-none opacity-45')}>
+      <Button
+        size="icon-sm"
+        className="rounded-full"
+        onClick={() => setPlaying(!playing)}
+        aria-label={playing ? 'Пауза' : 'Запустить'}
+      >
         {playing ? <Pause /> : <Play />}
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => setT(0)} aria-label="С начала">
+      <Button variant="ghost" size="icon-sm" onClick={() => setT(0)} aria-label="С начала">
         <RotateCcw />
       </Button>
       <input
@@ -50,7 +56,7 @@ export function PlayerBar() {
         className="h-1 min-w-0 flex-1 cursor-pointer accent-ink"
         aria-label="Время имитации"
       />
-      <span className="num w-23 shrink-0 text-center text-[12.5px] text-ink-2">
+      <span className="num w-23 shrink-0 text-center font-mono text-[12px] text-ink-2">
         {clock(t)} / {clock(total)}
       </span>
       <Segmented
