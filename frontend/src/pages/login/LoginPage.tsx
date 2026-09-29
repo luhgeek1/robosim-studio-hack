@@ -37,7 +37,9 @@ export function LoginPage() {
   const location = useLocation()
   const back = location.state as { from?: string; userId?: string | null } | null
   // Возвращаем на прежнюю страницу только её владельца: другой учётке прошлый проект чужой.
-  const target = (me: User) => (back?.from && (!back.userId || back.userId === me.id) ? back.from : '/projects')
+  // Возврат туда, откуда отправили на вход; иначе администратор попадает в админ-панель, остальные — в проекты.
+  const target = (me: User) =>
+    back?.from && (!back.userId || back.userId === me.id) ? back.from : me.role === 'admin' ? '/admin' : '/projects'
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [email, setEmail] = useState('')

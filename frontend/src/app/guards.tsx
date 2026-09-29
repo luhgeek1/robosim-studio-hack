@@ -30,9 +30,10 @@ export function RequireAdmin() {
 }
 
 export function RootRedirect() {
-  const { status } = useSession()
+  const { status, user } = useSession()
   if (status === 'restoring') return <LoadingBlock className="p-8" />
-  return <Navigate to={status === 'authenticated' ? '/projects' : '/catalog'} replace />
+  const home = user?.role === 'admin' ? '/admin' : '/projects'
+  return <Navigate to={status === 'authenticated' ? home : '/catalog'} replace />
 }
 
 export function NotFoundPage() {
