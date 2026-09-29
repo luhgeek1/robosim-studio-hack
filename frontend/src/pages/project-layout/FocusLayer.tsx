@@ -12,7 +12,7 @@ export type Spotlight = {
 }
 
 const nonScaling = { vectorEffect: 'non-scaling-stroke' } as const
-const ACCENT = 'var(--warn)'
+const ACCENT = 'var(--signal)'
 
 /* The rest of the plan fades back and the focus stays in full colour: a route with a robot running along it,
    or the zones, markers and aisles behind one of the figures under the map. Coordinates are meters; `k` is px/m. */

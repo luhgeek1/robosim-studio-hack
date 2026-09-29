@@ -17,7 +17,7 @@ export function ProjectLayout() {
            A CSS animation with no fill mode always ends on the visible element. */
         <div
           key={pathname}
-          className="flex min-h-0 flex-1 flex-col animate-in fade-in slide-in-from-bottom-2.5 duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="flex min-h-0 flex-1 flex-col animate-in fade-in slide-in-from-bottom-2 duration-300 ease-[cubic-bezier(0.33,1,0.68,1)]"
         >
           <Outlet />
         </div>

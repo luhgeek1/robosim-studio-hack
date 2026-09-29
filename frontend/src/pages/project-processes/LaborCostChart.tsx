@@ -1,4 +1,4 @@
-import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ProcessDemand } from '@/shared/api/types'
 import { formatPct, formatRub } from '@/shared/lib/format'
 
@@ -72,16 +72,19 @@ export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
             />
             <Bar
               dataKey="cost"
-              fill="var(--warn)"
               radius={3}
               barSize={18}
               background={{ fill: 'rgba(0,0,0,0.045)', radius: 3 }}
-              activeBar={{ fill: '#b8740f' }}
+              activeBar={{ opacity: 0.85 }}
               animationDuration={700}
               animationEasing="ease-out"
               cursor="pointer"
               onClick={(entry) => open(entry?.payload as Row | undefined)}
             >
+              {/* Как в кадре шоурила: столбцы чернилами, самый дорогой процесс — единственный сигнальный. */}
+              {data.map((row) => (
+                <Cell key={row.key} fill={row.cost === max ? 'var(--signal)' : 'var(--foreground)'} />
+              ))}
               <LabelList
                 dataKey="cost"
                 position="right"

@@ -41,13 +41,12 @@ export function ObjectPage() {
           <Button variant="outline" onClick={() => void downloadTemplate()} disabled={downloading}>
             {downloading ? <Spinner /> : <FileSpreadsheet />} Шаблон Excel
           </Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
+          <Button onClick={() => setImportOpen(true)}>
             <Upload /> Загрузить файл
           </Button>
         </>
       }
       nextLabel="Начать анализ"
-      nextPrimary
       nextDisabled={validation.data ? !validation.data.can_match : false}
     >
       <ObjectOverview projectId={projectId} objectType={objectType.data} params={params.data?.params} />

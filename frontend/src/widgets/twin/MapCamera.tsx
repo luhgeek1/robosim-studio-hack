@@ -101,7 +101,7 @@ export function MapToolbar({
       className={
         placement === 'bottom-right'
           ? 'absolute right-4 bottom-4 z-20 flex flex-col-reverse items-end gap-2'
-          : 'absolute left-4 top-16 z-20 flex flex-col items-start gap-2'
+          : 'absolute top-4 left-4 z-20 flex flex-col items-start gap-2'
       }
     >
       <div

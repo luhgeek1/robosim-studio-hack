@@ -3,6 +3,7 @@ import { Loader2, RotateCw } from 'lucide-react'
 import { parseApiProblem } from '@/shared/api/problem'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
+import { PulseDot } from './kinetics'
 
 export function Spinner({ className }: { className?: string }) {
   return <Loader2 className={cn('size-4 animate-spin', className)} />
@@ -16,7 +17,7 @@ export function LoadingBlock({ label = 'Считаем…', className }: { rows?
         className,
       )}
     >
-      <span className="size-4 animate-spin rounded-full border-2 border-line-2 border-t-ink" />
+      <PulseDot className="mx-1" />
       {label}
     </div>
   )

@@ -4,6 +4,9 @@ import { Link, useMatch, useNavigate } from 'react-router'
 import { PROJECT_STEPS, stepIndex } from '@/entities/project/steps'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
+import { ScrambleText } from './kinetics'
+
+const pad = (n: number) => String(n).padStart(2, '0')
 
 export function PageHeader({
   title,
@@ -23,7 +26,12 @@ export function PageHeader({
   return (
     <div className={cn('flex flex-wrap items-end justify-between gap-x-6 gap-y-4', dense ? 'mb-4' : 'mb-7', className)}>
       <div className="min-w-0 max-w-190">
-        {eyebrow && <div className={cn('meta num', dense ? 'mb-1' : 'mb-2')}>{eyebrow}</div>}
+        {eyebrow && (
+          <div className={cn('hud flex items-center gap-2', dense ? 'mb-1.5' : 'mb-3')}>
+            <span className="size-1.5 rounded-full bg-signal" aria-hidden />
+            {eyebrow}
+          </div>
+        )}
         <h1 className="h1">{title}</h1>
         {description && (
           <p className={cn('text-[15.5px] leading-relaxed text-ink-2', dense ? 'mt-1.5' : 'mt-3')}>{description}</p>
@@ -44,7 +52,6 @@ export function Screen({
   nextLabel,
   nextDisabled = false,
   nextTo,
-  nextPrimary,
   dense = false,
   className,
 }: {
@@ -57,8 +64,6 @@ export function Screen({
   nextLabel?: string
   nextDisabled?: boolean
   nextTo?: string
-  // Верхняя кнопка «Далее» заметна, только если на экране нет своего главного действия; иначе она контурная.
-  nextPrimary?: boolean
   className?: string
 }) {
   const navigate = useNavigate()
@@ -68,41 +73,67 @@ export function Screen({
   const step = PROJECT_STEPS[idx]
   const prev = idx > 0 ? PROJECT_STEPS[idx - 1] : null
   const next = idx >= 0 ? PROJECT_STEPS.slice(idx + 1).find((s) => !s.soon) : undefined
-  const goNext = () => navigate(nextTo ?? `${base}/${next?.id}`)
-  const nextText = nextLabel ?? (next ? `Далее: ${next.label.toLowerCase()}` : '')
-  const topNext = next && (
-    <Button variant={(nextPrimary ?? !actions) ? 'default' : 'outline'} disabled={nextDisabled} onClick={goNext}>
-      {nextText} <ArrowRight />
-    </Button>
-  )
+  const nav = {
+    prev: prev ? prev.label : 'Обзор',
+    next: next?.label,
+    nextLabel,
+    nextDisabled,
+    onPrev: () => navigate(prev ? `${base}/${prev.id}` : base),
+    onNext: () => next && navigate(nextTo ?? `${base}/${next.id}`),
+  }
   return (
     <div className={cn('mx-auto w-full pb-16 pt-2', wide ? 'max-w-360' : 'max-w-300', className)}>
+      {idx >= 0 && <StepNav {...nav} compact className="mb-5" />}
       <PageHeader
-        eyebrow={step ? `Шаг ${idx + 1} из ${PROJECT_STEPS.length} · ${step.question}` : undefined}
+        eyebrow={step ? `Шаг ${pad(idx + 1)} / ${pad(PROJECT_STEPS.length)} · ${step.question}` : undefined}
         title={title}
         description={lead}
-        actions={
-          (actions || topNext) && (
-            <>
-              {actions}
-              {topNext}
-            </>
-          )
-        }
+        actions={actions}
         dense={dense}
       />
       {children}
-      {idx >= 0 && (
-        <div className="hairline mt-12 flex items-center justify-between pt-6">
-          <Button variant="ghost" onClick={() => navigate(prev ? `${base}/${prev.id}` : base)}>
-            <ArrowLeft /> {prev ? prev.label : 'Обзор'}
-          </Button>
-          {next && (
-            <Button size="lg" disabled={nextDisabled} onClick={goNext}>
-              {nextText} <ArrowRight />
-            </Button>
-          )}
-        </div>
+      {idx >= 0 && <StepNav {...nav} className="hairline mt-12 pt-6" />}
+    </div>
+  )
+}
+
+/* Переходы назад / дальше по углам экрана шага. Стоят и над заголовком, и под контентом: на длинном шаге
+   не нужно листать до конца, чтобы пойти дальше. */
+function StepNav({
+  prev,
+  next,
+  nextLabel,
+  nextDisabled,
+  onPrev,
+  onNext,
+  compact = false,
+  className,
+}: {
+  prev: string
+  next?: string
+  nextLabel?: string
+  nextDisabled: boolean
+  onPrev: () => void
+  onNext: () => void
+  compact?: boolean
+  className?: string
+}) {
+  return (
+    <div className={cn('flex items-center justify-between gap-4', className)}>
+      <Button variant="ghost" size={compact ? 'default' : 'lg'} className={cn(compact && '-ml-2.5')} onClick={onPrev}>
+        <ArrowLeft /> {prev}
+      </Button>
+      {next && (
+        // Такая же тихая кнопка, как «назад»: главные действия шага — в его заголовке и контенте.
+        <Button
+          variant="ghost"
+          size={compact ? 'default' : 'lg'}
+          className={cn(compact && '-mr-2.5')}
+          disabled={nextDisabled}
+          onClick={onNext}
+        >
+          {nextLabel ?? `Далее: ${next.toLowerCase()}`} <ArrowRight />
+        </Button>
       )}
     </div>
   )
@@ -174,7 +205,9 @@ export function Stat({
   return (
     <div className={cn('min-w-0 px-5 py-4', className)}>
       <div className="truncate text-[13px] text-ink-3">{label}</div>
-      <div className={cn('display num mt-1.5 text-[24px]', valueClassName)}>{value}</div>
+      <div className={cn('display num mt-1.5 text-[24px]', valueClassName)}>
+        {typeof value === 'string' ? <ScrambleText text={value} /> : value}
+      </div>
       {hint && <div className="meta mt-1 truncate">{hint}</div>}
     </div>
   )

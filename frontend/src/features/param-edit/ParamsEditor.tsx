@@ -68,7 +68,7 @@ export function ParamsEditor({
   return (
     <div className="grid grid-cols-[13rem_minmax(0,1fr)] items-start gap-8">
       <nav className="sticky top-40 space-y-0.5" aria-label="Разделы параметров">
-        <SlideHighlight className="rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,24,0.06),0_0_0_1px_rgba(20,20,24,0.04)]" />
+        <SlideHighlight className="rounded-lg bg-white shadow-[0_1px_2px_rgba(20,20,19,0.06),0_0_0_1px_rgba(20,20,19,0.04)]" />
         {views.map((group) => {
           const empty = group.params.length === 0
           const current = group.key === active
@@ -108,7 +108,7 @@ export function ParamsEditor({
               { value: 'edited', label: `Введённые · ${edited}` },
             ]}
           />
-          <label className="relative flex h-8 w-64 items-center rounded-lg bg-black/5 transition-colors focus-within:bg-white focus-within:shadow-[0_0_0_1px_rgba(20,20,24,0.12)]">
+          <label className="relative flex h-8 w-64 items-center rounded-lg bg-black/5 transition-colors focus-within:bg-white focus-within:shadow-[0_0_0_1px_rgba(20,20,19,0.12)]">
             <Search className="pointer-events-none absolute left-3 size-3.5 text-ink-3" />
             <input
               value={query}

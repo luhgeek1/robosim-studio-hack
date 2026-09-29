@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useLayoutEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react'
 import { NavLink, Outlet, useLocation, useMatch } from 'react-router'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
@@ -19,35 +19,72 @@ const subscribeScroll = (onChange: () => void) => {
 }
 const isScrolledDown = () => window.scrollY > DOCK_HIDE_AFTER_PX
 
+// «Рывок вверх» — не меньше 120 px со скоростью от 1,5 px/мс (1500 px/с) за последние 200 мс. Спокойное чтение
+// вверх (колесо по щелчку, трекпад без броска) медленнее и плашку не достаёт.
+const PULL_WINDOW_MS = 200
+const PULL_MIN_PX = 120
+const PULL_MIN_SPEED = 1.5
+
+/* Резкий бросок прокрутки вверх достаёт плашку, следующая прокрутка вниз прячет её снова. */
+function useScrollPull() {
+  const [pulled, setPulled] = useState(false)
+  useEffect(() => {
+    let samples: { t: number; y: number }[] = [{ t: performance.now(), y: window.scrollY }]
+    const onScroll = () => {
+      const t = performance.now()
+      const y = window.scrollY
+      const last = samples[samples.length - 1]
+      if (y > last.y) {
+        samples = [{ t, y }]
+        setPulled(false)
+        return
+      }
+      samples = [...samples.filter((s) => t - s.t <= PULL_WINDOW_MS), { t, y }]
+      const first = samples[0]
+      const distance = first.y - y
+      if (distance >= PULL_MIN_PX && distance / Math.max(t - first.t, 1) >= PULL_MIN_SPEED) setPulled(true)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  return pulled
+}
+
 /* Плашка шагов под шапкой. При прокрутке вниз уезжает под шапку и не закрывает контент; навести курсор на её место
-   (или перейти в неё с клавиатуры) — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
+   (или перейти в неё с клавиатуры, Tab) или резко прокрутить вверх — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
    Шапка и плашка — fixed, а место в потоке держат распорки той же высоты. */
 function StepDock({ projectId }: { projectId: string }) {
   const scrolled = useSyncExternalStore(subscribeScroll, isScrolledDown)
+  const pulled = useScrollPull()
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
-  const hidden = scrolled && !hovered && !focused
+  const hidden = scrolled && !pulled && !hovered && !focused
   return (
     <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-6">
       <div
         className="pointer-events-auto max-w-full pt-3 pb-2"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onFocus={() => setFocused(true)}
+        // Держит плашку только фокус с клавиатуры: после клика мышью фокус остаётся на ссылке шага, и плашка
+        // иначе переставала прятаться при прокрутке.
+        onFocus={(e) => setFocused(e.target.matches(':focus-visible'))}
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false)
         }}
       >
         <nav
           className={cn(
-            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5',
-            'transition-[translate,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+            // Плашка чаще появляется поверх прокрученного контента: без размытия цифры и 3D-карточки лезут сквозь подписи.
+            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
+            // Выезжает с замедлением, уезжает с разгоном: так движение читается целиком, а не вспышкой в первом кадре.
+            'transition-[translate,opacity] duration-320 ease-[cubic-bezier(0.33,1,0.68,1)] motion-reduce:transition-none',
             // Уход — с короткой задержкой: курсор, проскочивший мимо края, не заставляет плашку дёргаться.
-            hidden && 'pointer-events-none -translate-y-[calc(100%+1.5rem)] opacity-0 delay-150',
+            hidden &&
+              'pointer-events-none -translate-y-[calc(100%+1.5rem)] opacity-0 delay-100 duration-220 ease-[cubic-bezier(0.32,0,0.67,0)]',
           )}
           aria-label="Шаги оценки"
         >
-          <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,24,0.08),0_4px_12px_-4px_rgba(20,20,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
+          <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,19,0.08),0_4px_12px_-4px_rgba(20,20,19,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
           {PROJECT_STEPS.map((step, i) => (
             <NavLink
               key={step.id}
