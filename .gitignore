@@ -22,3 +22,14 @@ new_exports/
 # v0 backend kept locally as a logic donor only (full v0 is in tag v0-prototype)
 legacy/
 previous_project_presentation_system/
+
+# Team and assistant context: kept locally, not part of the submission
+AGENTS.md
+CLAUDE.md
+DESIGN.md
+docs/*
+!docs/api/
+!docs/METHOD.md
+case/notes/
+case/org/
+presentation/
