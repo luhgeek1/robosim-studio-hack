@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { calculateWithFleetCheck } from '@/entities/simulation'
 import { api } from '@/shared/api/client'
 import { qk } from '@/shared/api/keys'
 import type {
@@ -86,12 +87,22 @@ export const useNarrative = (id: string | null | undefined) =>
     staleTime: Infinity,
   })
 
-export const useComparison = (projectId: string) =>
-  useQuery({
+// The comparison recalculates stale scenarios on the server: the list and the project headline follow it. The project
+// key is invalidated exactly — a prefix would include this very query and loop.
+export function useComparison(projectId: string) {
+  const queryClient = useQueryClient()
+  return useQuery({
     queryKey: qk.projects.comparison(projectId),
-    queryFn: () => scenarioApi.comparison(projectId),
+    queryFn: async () => {
+      const data = await scenarioApi.comparison(projectId)
+      void queryClient.invalidateQueries({ queryKey: qk.projects.scenarios(projectId) })
+      void queryClient.invalidateQueries({ queryKey: qk.projects.one(projectId), exact: true })
+      void queryClient.invalidateQueries({ queryKey: qk.projects.list })
+      return data
+    },
     retry: false,
   })
+}
 
 // Sensitivity and Monte Carlo are pure functions of the scenario and the request, so they are cached like reads.
 export const useSensitivity = (id: string | undefined, body: SensitivityRequest) =>
@@ -154,19 +165,53 @@ export function useUpdateScenario(projectId: string, id: string) {
     mutationFn: (body: ScenarioUpdate) => scenarioApi.update(id, body),
     onSuccess: (scenario) => {
       queryClient.setQueryData(qk.scenarios.one(id), scenario)
-      return refresh()
+      // Sensitivity, Monte Carlo, survey and the fleet sweep live under the scenario key: they follow the edit.
+      return Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: qk.scenarios.one(id) })])
     },
   })
 }
 
+/* «Рассчитать» = формула + проверка числа роботов имитацией там, где она есть (D-028): пользователь сразу видит N,
+   которое держит SLA, а не число по формуле, которое на шаге «Имитация» вдруг меняется. */
 export function useCalculate(projectId: string, id: string) {
   const queryClient = useQueryClient()
   const refresh = useRefreshScenarios(projectId)
   return useMutation({
-    mutationFn: () => scenarioApi.calculate(id),
+    mutationFn: () => calculateWithFleetCheck(id).then((check) => check.calculation),
     onSuccess: (run) => {
       queryClient.setQueryData(qk.calculations.one(run.id), run)
       return Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: qk.scenarios.one(id) })])
+    },
+  })
+}
+
+/* Откуда сценарий берёт число роботов процесса: «по имитации» (auto — перебор флота) или «по формуле» (ручное число =
+   формула + резерв). Имитация и формула видны рядом, пользователь выбирает, что идёт в экономику. */
+export function useCountSource(projectId: string, scenarioId: string) {
+  const queryClient = useQueryClient()
+  const refresh = useRefreshScenarios(projectId)
+  return useMutation({
+    mutationFn: async ({ processKey, manual }: { processKey: string; manual: number | null }) => {
+      const current = await scenarioApi.get(scenarioId)
+      await scenarioApi.update(current.id, {
+        items: current.items.map((item) => ({
+          process_key: item.process_key,
+          product_id: item.product_id,
+          offer_id: item.offer_id,
+          count_mode: item.process_key === processKey ? (manual ? 'manual' : 'auto') : item.count_mode,
+          count_manual: item.process_key === processKey ? manual : (item.count_manual ?? null),
+          stations: item.stations,
+          notes: item.notes ?? null,
+          price_override_rub: item.price_override_rub ?? null,
+          throughput_override_per_hour: item.throughput_override_per_hour ?? null,
+          override_reason: item.override_reason ?? null,
+        })),
+      })
+      return scenarioApi.calculate(current.id)
+    },
+    onSuccess: (run) => {
+      queryClient.setQueryData(qk.calculations.one(run.id), run)
+      return Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: qk.scenarios.all })])
     },
   })
 }
@@ -198,6 +243,8 @@ export function useBuildComparisonSet(projectId: string) {
           from_recommendation: true,
         })
       }
+      // Число роботов проверяется имитацией до копий: RaaS и лизинг наследуют тот же парк.
+      await calculateWithFleetCheck(main.id)
       for (const kind of ['raas', 'lease'] as const) {
         if (existing.some((s) => s.kind === kind && s.items.length > 0)) continue
         await scenarioApi.copy(main.id, { kind, name: VARIANT_NAME[kind] })

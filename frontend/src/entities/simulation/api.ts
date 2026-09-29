@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { api } from '@/shared/api/client'
 import { qk } from '@/shared/api/keys'
-import type { Res, SimEvent, SimulationReplay } from '@/shared/api/types'
+import { parseApiProblem } from '@/shared/api/problem'
+import type { CalculationRun, Res, SimEvent, SimulationReplay, SizingResult } from '@/shared/api/types'
 import type { components } from '@/shared/api/schema'
 
 export type SimulationRun = Res<'/api/v1/simulations/{simulation_id}', 'get'>
@@ -11,6 +12,10 @@ export type SimulationRequest = components['schemas']['SimulationRequest']
 export type SimulationTimeline = Res<'/api/v1/simulations/{simulation_id}/timeline', 'get'>
 export type FleetSweepResult = Res<'/api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}', 'get'>
 export type FleetSweepRequest = components['schemas']['FleetSweepRequest']
+export type FleetEconomics = components['schemas']['FleetEconomics']
+
+// One seed for every check of the fleet: the sweep, the screen's runs and the report see the same peak days.
+export const SWEEP_SEED = 1
 
 const FINAL = new Set(['done', 'failed', 'cancelled'])
 export const isFinal = (status: string) => FINAL.has(status)
@@ -43,7 +48,17 @@ export const simulationApi = {
       .then((r) => r.data),
   sweepResult: (scenarioId: string, jobId: string) =>
     api.get<FleetSweepResult>(`/scenarios/${scenarioId}/fleet-sweep/${jobId}`).then((r) => r.data),
-  calculate: (scenarioId: string) => api.post(`/scenarios/${scenarioId}/calculate`, {}).then(() => undefined),
+  // 404 — the scenario was never swept for this process.
+  latestSweep: (scenarioId: string, processKey: string) =>
+    api
+      .get<FleetSweepResult>(`/scenarios/${scenarioId}/fleet-sweep`, { params: { process_key: processKey } })
+      .then((r) => r.data)
+      .catch((error: unknown) => {
+        if (isAxiosError(error) && error.response?.status === 404) return null
+        throw error
+      }),
+  calculate: (scenarioId: string) =>
+    api.post<CalculationRun>(`/scenarios/${scenarioId}/calculate`, {}).then((r) => r.data),
 }
 
 const keys = {
@@ -141,9 +156,35 @@ async function runSweep(scenarioId: string, body: FleetSweepRequest): Promise<Fl
   return waitForSweep(scenarioId, job.id)
 }
 
-/* Перебор флота записывает N в сценарий (D-007, D-019). Варианты с тем же процессом (RaaS, лизинг) получают свой
-   перебор — тот же детерминированный день, — чтобы сравнение сопоставляло одинаковые парки. Затем сценарии
-   пересчитываются: экономика сразу берёт N из имитации, а не висит устаревшей. */
+/* Какие процессы имитация умеет проверить: модель цикла (паллеты, G2P, тягачи). Число, заданное вручную, остаётся
+   за пользователем; уже проверенное — не перепроверяем без явной просьбы. */
+export const checkable = (sizing: SizingResult, force = false) =>
+  sizing.robot.cycle_time_s != null &&
+  sizing.count.source !== 'manual' &&
+  (force || sizing.count.source !== 'simulated')
+
+export type FleetCheck = { calculation: CalculationRun; checked: FleetSweepResult[]; skipped: string[] }
+
+/* Расчёт сценария вместе с проверкой числа роботов имитацией (D-028): формула даёт стартовое N, перебор флота на
+   планировке находит минимальное N, которое держит SLA во всех прогонах пика, и записывает его в сценарий, затем
+   экономика пересчитывается. Где имитации нет (нет планировки, аэропорт, больница), остаётся расчёт по формуле. */
+export async function calculateWithFleetCheck(scenarioId: string, force = false): Promise<FleetCheck> {
+  const first = await simulationApi.calculate(scenarioId)
+  const checked: FleetSweepResult[] = []
+  const skipped: string[] = []
+  for (const sizing of first.sizing.filter((s) => checkable(s, force))) {
+    try {
+      checked.push(await runSweep(scenarioId, { process_key: sizing.process_key, mode: 'peak', seed: SWEEP_SEED }))
+    } catch (error) {
+      skipped.push(parseApiProblem(error).detail)
+    }
+  }
+  const calculation = checked.some((r) => r.applied) ? await simulationApi.calculate(scenarioId) : first
+  return { calculation, checked, skipped }
+}
+
+/* Явная перепроверка с экрана «Имитация». Варианты с тем же процессом (RaaS, лизинг) получают свой перебор — тот же
+   детерминированный день, — чтобы сравнение сопоставляло одинаковые парки; затем сценарии пересчитываются. */
 export function useFleetSweep(projectId: string, scenarioId: string, variantIds: string[] = []) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -169,11 +210,11 @@ export function useFleetSweep(projectId: string, scenarioId: string, variantIds:
   })
 }
 
-// The backend keeps a sweep only in its job; the last one of this session stays in the client cache for the screen.
+// Последний перебор хранится на сервере: таблица и «было → стало» остаются после перезагрузки.
 export const useLastSweep = (scenarioId: string | undefined, processKey: string | undefined) =>
   useQuery<FleetSweepResult | null>({
     queryKey: keys.lastSweep(scenarioId ?? '', processKey ?? ''),
-    queryFn: () => null,
-    enabled: false,
-    staleTime: Infinity,
+    queryFn: () => simulationApi.latestSweep(scenarioId!, processKey!),
+    enabled: Boolean(scenarioId && processKey),
+    retry: false,
   })

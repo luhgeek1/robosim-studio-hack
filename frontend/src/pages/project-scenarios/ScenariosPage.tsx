@@ -235,6 +235,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
             : 'добавьте решения в сценарий'}
           {fleet > 0 && scenario.items.length > 1 && ` · всего ${formatNumber(fleet)}`}
         </div>
+        <CountOriginMark scenario={scenario} />
 
         {calc ? (
           <>
@@ -293,6 +294,25 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
         )}
       </div>
     </article>
+  )
+}
+
+// Число роботов проверено имитацией, взято по формуле или задано вручную — одно слово на карточке.
+function CountOriginMark({ scenario }: { scenario: Scenario }) {
+  const sources = new Set(scenario.items.map((i) => i.count_result?.source).filter(Boolean))
+  if (sources.size === 0) return null
+  const [text, dot] = sources.has('simulated')
+    ? sources.size === 1
+      ? ['N проверено имитацией', 'bg-ok']
+      : ['N частично проверено имитацией', 'bg-ok']
+    : sources.has('manual') && sources.size === 1
+      ? ['N задано вручную', 'bg-warn']
+      : ['N по формуле цикла', 'bg-ink-4']
+  return (
+    <div className="mt-1 flex items-center gap-1.5 text-[12px] text-ink-3">
+      <span className={cn('size-1.5 rounded-full', dot)} />
+      {text}
+    </div>
   )
 }
 

@@ -3,7 +3,15 @@ import { useState } from 'react'
 import { SOURCE_KIND_LABEL, SourceLink } from '@/entities/provenance'
 import { BAND_LABEL, RISK_SEVERITY_LABEL, VERDICT_LABEL, useNarrative, type Verdict } from '@/entities/scenario'
 import type { CalculationRun, CostBreakdown } from '@/shared/api/types'
-import { formatDateTime, formatNumber, formatPct, formatRub, formatValue, formatYears } from '@/shared/lib/format'
+import {
+  formatDateTime,
+  formatNumber,
+  formatPct,
+  formatRub,
+  formatValue,
+  formatYears,
+  pluralRu,
+} from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Section, Stat, StatStrip } from '@/shared/ui/page'
@@ -43,7 +51,7 @@ export function CalculationView({
     formula: item.formula,
     formulaRendered: item.formula_rendered,
     inputs: item.inputs,
-    hint: item.fte_released ? `высвобождается ${formatNumber(item.fte_released, 1)} FTE` : null,
+    hint: item.fte_released ? `высвобождается ${formatNumber(item.fte_released, 1)} ставки` : null,
   }))
 
   return (
@@ -56,7 +64,7 @@ export function CalculationView({
           <Stat
             label="TCO за горизонт"
             value={formatRub(m.tco_baseline_rub)}
-            hint={`${m.horizon_years} лет с индексацией`}
+            hint={`${m.horizon_years} ${pluralRu(m.horizon_years, ['год', 'года', 'лет'])} с индексацией`}
           />
           <Stat label="Ставка дисконтирования" value={formatPct(m.discount_rate_pct)} />
         </StatStrip>
@@ -77,7 +85,7 @@ export function CalculationView({
             label="NPV"
             value={formatRub(m.npv_rub)}
             valueClassName={(m.npv_rub ?? 0) < 0 ? 'text-crit' : undefined}
-            hint={`ставка ${formatPct(m.discount_rate_pct)}, ${m.horizon_years} лет`}
+            hint={`ставка ${formatPct(m.discount_rate_pct)}, ${m.horizon_years} ${pluralRu(m.horizon_years, ['год', 'года', 'лет'])}`}
           />
           <Stat label="IRR" value={formatPct(m.irr_pct)} />
           <Stat label="ROI за горизонт" value={formatPct(m.roi_pct)} />
@@ -87,13 +95,13 @@ export function CalculationView({
             hint={`как сейчас: ${formatRub(m.tco_baseline_rub)}`}
           />
           <Stat
-            label="Роботов / высвобождено"
-            value={`${m.robots_total ?? '—'} / ${formatNumber(m.fte_released, 1)} FTE`}
+            label="Роботов / высвобождается ставок"
+            value={`${m.robots_total ?? '—'} / ${formatNumber(m.fte_released, 1)}`}
           />
         </StatStrip>
       )}
 
-      {!isBaseline && <SizingSection sizing={run.sizing} onTrace={onTrace} />}
+      {!isBaseline && <SizingSection scenarioId={run.scenario_id} sizing={run.sizing} onTrace={onTrace} />}
 
       <Section
         title="Из чего складываются деньги"

@@ -7700,7 +7700,7 @@ components:
           type: number
           minimum: 1
           maximum: 168
-          default: 24
+          description: 'Не задано: сутки для normal, пиковое окно `sim_peak_duration_hours` (как у перебора флота) для peak'
         seed:
           type:
             - integer

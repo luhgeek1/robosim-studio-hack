@@ -7,8 +7,9 @@ import { useLayout } from '@/entities/layout'
 import { useProject, useProjectId } from '@/entities/project'
 import { useObjectType } from '@/entities/reference'
 import { useUploadVisual } from '@/entities/report'
-import { SCENARIO_KIND_LABEL, useCalculation, useScenarios } from '@/entities/scenario'
+import { SCENARIO_KIND_LABEL, useCalculation, useCountSource, useScenarios } from '@/entities/scenario'
 import {
+  SWEEP_SEED,
   buildTracks,
   isFinal,
   poseAt,
@@ -21,6 +22,7 @@ import {
   useSimulationTimeline,
   useSimulations,
   useStartSimulation,
+  type FleetEconomics,
   type FleetSweepResult,
   type RobotTrack,
   type SimulationRun,
@@ -29,7 +31,7 @@ import {
 } from '@/entities/simulation'
 import { parseApiProblem, problemText } from '@/shared/api/problem'
 import type { Scenario, SizingResult } from '@/shared/api/types'
-import { formatNumber, formatPct, formatRub, formatYears } from '@/shared/lib/format'
+import { formatDate, formatNumber, formatPct, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Callout, Screen } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
@@ -40,7 +42,7 @@ import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
 
-const SEED = 1
+const SEED = SWEEP_SEED
 // Стресс-тесты шага «Имитация» из docs/PRODUCT.md: +20 % объёма и отказ одного робота на 2 часа в начале смены.
 const STRESS = {
   volumeMultiplier: 1.2,
@@ -117,7 +119,7 @@ export function SimulationPage() {
       <Screen title="Имитация для этого типа объекта — следующим этапом">
         <EmptyState
           title="Число роботов посчитано по времени цикла"
-          description="Дискретно-событийная имитация сейчас построена для склада (D-005). Для аэропорта и больницы количество роботов берётся из расчёта по времени цикла с резервом — его видно в сценариях и сравнении."
+          description="Дискретно-событийная имитация сейчас построена для склада. Для аэропорта и больницы количество роботов берётся из расчёта по времени цикла с резервом — его видно в сценариях и сравнении."
         />
       </Screen>
     )
@@ -196,8 +198,10 @@ function SimulationView({
     calculation.data?.sizing.find((s) => s.count.simulation_id) ??
     calculation.data?.sizing.find((s) => s.robot.cycle_time_s != null) ??
     calculation.data?.sizing[0]
-  // Имитация проверяет рабочий парк: N по перебору флота или по циклу. Резерв на отказы в неё не входит.
-  const working = sizing ? (sizing.count.simulated ?? sizing.count.analytic) : 0
+  // Имитация проверяет рабочий парк, который сейчас в расчёте (без резерва на отказы): по перебору флота, по формуле
+  // или заданный вручную.
+  const working = sizing ? workingCount(sizing) : 0
+  const lastSweep = useLastSweep(scenario.id, sizing?.process_key).data ?? undefined
   const [draft, setDraft] = useState<Omit<RunConfig, 'count'> & { count: number | null }>({
     count: null,
     mode: 'peak',
@@ -240,7 +244,8 @@ function SimulationView({
     start.mutate(
       {
         mode: config.mode,
-        duration_hours: 24,
+        // Пик — окно `sim_peak_duration_hours` бэкенда, то же, что у перебора флота; обычный день — сутки.
+        ...(config.mode === 'normal' ? { duration_hours: 24 } : {}),
         seed: SEED,
         volume_multiplier: config.volume ? STRESS.volumeMultiplier : 1,
         fleet_override: [{ process_key: sizing.process_key, count: config.count }],
@@ -294,7 +299,7 @@ function SimulationView({
       return
     }
     const conditions = [
-      config.mode === 'peak' ? 'пиковый день' : 'обычный день',
+      config.mode === 'peak' ? 'пиковые часы' : 'обычный день',
       config.volume ? '+20 % объёма' : null,
       config.failure ? 'отказ робота на 2 ч' : null,
     ].filter(Boolean)
@@ -312,7 +317,7 @@ function SimulationView({
     'В сценарии нет процесса с моделью цикла — имитировать нечего.'
   ) : summary ? (
     <>
-      {config.mode === 'peak' ? 'Пиковый день' : 'Обычный день'}
+      {config.mode === 'peak' ? 'Пиковые часы' : 'Обычный день'}
       {config.volume ? ' +20 % объёма' : ''}
       {config.failure ? ', отказ робота на 2 ч' : ''}: {formatNumber(summary.duration_hours, 1)} ч, задач{' '}
       {formatNumber(summary.demand_total)}, выполнено {formatNumber(summary.completed)}
@@ -346,12 +351,7 @@ function SimulationView({
               options={counts.map((n) => ({
                 value: n,
                 label: `${n} роб.`,
-                hint:
-                  n === working
-                    ? sizing.count.source === 'simulated'
-                      ? 'подобрано перебором флота'
-                      : 'по расчёту времени цикла'
-                    : undefined,
+                hint: n === working ? COUNT_HINT[sizing.count.source] : undefined,
               }))}
             />
             <Segmented
@@ -359,11 +359,15 @@ function SimulationView({
               value={config.mode}
               onChange={(mode) => change({ mode })}
               options={[
-                { value: 'peak', label: 'Пиковый день', hint: `${formatNumber(sizing.demand_peak_per_hour)} ед/ч` },
+                {
+                  value: 'peak',
+                  label: 'Пиковые часы',
+                  hint: `${formatNumber(sizing.demand_peak_per_hour)} ед/ч без передышки, как в переборе флота`,
+                },
                 {
                   value: 'normal',
                   label: 'Обычный день',
-                  hint: `${formatNumber(sizing.demand_avg_per_hour)} ед/ч в среднем`,
+                  hint: `сутки: ${formatNumber(sizing.demand_avg_per_hour)} ед/ч в среднем, пик в середине смены`,
                 },
               ]}
             />
@@ -387,6 +391,7 @@ function SimulationView({
             </Button>
           </div>
 
+          <WhatIfNote sizing={sizing} config={config} working={working} />
           {error && (
             <Callout tone="crit" className="mb-4">
               Имитация не запустилась: {error}. Сейчас имитация строится для транспортных роботов и «товар к человеку»;
@@ -400,7 +405,7 @@ function SimulationView({
           )}
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]">
-            <div className="card relative h-160 overflow-hidden">
+            <div className="card relative h-[min(640px,calc(100vh-230px))] min-h-110 overflow-hidden">
               {layout ? (
                 <Twin
                   layout={layout}
@@ -475,9 +480,19 @@ function SimulationView({
               {tracks && <PlayerBar />}
             </div>
 
-            <aside className="card scroll-thin flex h-160 flex-col overflow-y-auto">
+            <aside className="card scroll-thin flex h-[min(640px,calc(100vh-230px))] min-h-110 flex-col overflow-y-auto">
               {summary && run.data ? (
-                <RunAside run={run.data} summary={summary} timeline={timeline.data} target={target} />
+                <RunAside
+                  run={run.data}
+                  summary={summary}
+                  timeline={timeline.data}
+                  target={target}
+                  sweepPoint={
+                    run.data.purpose === 'sweep'
+                      ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id)
+                      : undefined
+                  }
+                />
               ) : (
                 <div className="flex flex-1 items-center justify-center p-6 text-center text-[13.5px] text-ink-3">
                   {failed ?? 'Показатели появятся, когда прогон завершится.'}
@@ -488,6 +503,7 @@ function SimulationView({
                 scenarioId={scenario.id}
                 variantIds={variantIds}
                 sizing={sizing}
+                last={lastSweep}
                 shownCount={config.count}
                 onOpen={openRun}
               />
@@ -513,11 +529,13 @@ function RunAside({
   summary,
   timeline,
   target,
+  sweepPoint,
 }: {
   run: SimulationRun
   summary: SimulationSummary
   timeline?: SimulationTimeline
   target: number
+  sweepPoint?: FleetSweepResult['points'][number]
 }) {
   const bucket = usePlayback((s) => Math.floor(s.t / 30))
   const points = timeline?.points ?? []
@@ -564,7 +582,11 @@ function RunAside({
         )}
         {run.purpose === 'sweep' && (
           <p className="meta mt-1">
-            Показан один прогон из перебора флота; число роботов выбрано по среднему нескольких прогонов.
+            Один из {sweepPoint?.runs ?? 'нескольких'} прогонов перебора флота
+            {sweepPoint
+              ? `: в среднем ${formatNumber(sweepPoint.sla_achieved_pct, 1)} %, худший ${formatNumber(sweepPoint.sla_min_pct ?? sweepPoint.sla_achieved_pct, 1)} %`
+              : ''}
+            . Число роботов принято, только если SLA держат все прогоны.
           </p>
         )}
       </div>
@@ -627,14 +649,17 @@ function RunAside({
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
             <div className="display num text-[22px]">{formatNumber(vs.analytic_throughput_per_hour)}</div>
-            <div className="meta">ед/ч по циклу</div>
+            <div className="meta">ед/ч — цикл формулы</div>
           </div>
           <div>
             <div className="display num text-[22px]">{formatNumber(vs.sim_throughput_per_hour)}</div>
-            <div className="meta">ед/ч по имитации ({formatPct(vs.delta_pct, { digits: 0 })})</div>
+            <div className="meta">ед/ч — средний цикл имитации ({formatPct(vs.delta_pct, { digits: 0 })})</div>
           </div>
         </div>
-        <p className="meta mt-2">нужно {formatNumber(target)} ед/ч</p>
+        <p className="meta mt-2">
+          Мощность того же парка при одинаковом запасе (целевая загрузка), без запаса она выше; нужно в пик{' '}
+          {formatNumber(target)} ед/ч.
+        </p>
         {vs.text && <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{vs.text}</p>}
         {summary.bottleneck && summary.bottleneck.resource_kind !== 'none' && (
           <div className="mt-3 rounded-[10px] bg-white p-3 text-[13px] leading-relaxed">
@@ -659,12 +684,48 @@ function RunAside({
   )
 }
 
-/* Перебор флота — это то, что записывает N в сценарий: следующий расчёт берёт число роботов из имитации (D-007). */
+const COUNT_HINT: Record<SizingResult['count']['source'], string> = {
+  simulated: 'в расчёте, проверено имитацией',
+  analytic: 'в расчёте, по формуле цикла',
+  manual: 'в расчёте, задано вручную',
+}
+
+// Рабочий парк сценария без резерва: по перебору флота, по формуле цикла или заданный вручную.
+function workingCount(sizing: SizingResult): number {
+  const { count } = sizing
+  if (count.source === 'simulated' && count.simulated) return count.simulated
+  if (count.source === 'manual') return Math.max(1, Math.min(count.final, count.analytic || count.final))
+  return count.analytic
+}
+
+/* Прогоны экрана — проверка «что если»: они не меняют сценарий. Меняет его только перебор флота (или выбор
+   «по формуле / по имитации»), и это сказано прямо, чтобы новое число на экране не путали с расчётом. */
+function WhatIfNote({ sizing, config, working }: { sizing: SizingResult; config: RunConfig; working: number }) {
+  const differs = config.count !== working || config.mode !== 'peak' || config.volume || config.failure
+  if (!differs) return null
+  const changes = [
+    config.count !== working ? `${config.count} роботов вместо ${working}` : null,
+    config.mode !== 'peak' ? 'обычный день' : null,
+    config.volume ? '+20 % объёма' : null,
+    config.failure ? 'отказ робота на 2 ч' : null,
+  ].filter(Boolean)
+  return (
+    <Callout tone="info" className="mb-4">
+      Проверка «что если» ({changes.join(', ')}): прогон ничего не меняет в сценарии. В расчёте — {working}{' '}
+      {pluralRu(working, ['робот', 'робота', 'роботов'])} в работе + резерв {sizing.count.reserve},{' '}
+      {COUNT_HINT[sizing.count.source]}.
+    </Callout>
+  )
+}
+
+/* Перебор флота записывает N в сценарий: он прогоняет одни и те же пиковые часы для разного N и берёт минимальное,
+   при котором SLA держат все прогоны (D-028). Здесь же — сравнение «по формуле / по имитации» и выбор источника. */
 function FleetSweep({
   projectId,
   scenarioId,
   variantIds,
   sizing,
+  last,
   shownCount,
   onOpen,
 }: {
@@ -672,13 +733,20 @@ function FleetSweep({
   scenarioId: string
   variantIds: string[]
   sizing: SizingResult
+  last: FleetSweepResult | undefined
   shownCount: number
   onOpen: (count: number, simulationId: string | null) => void
 }) {
   const sweep = useFleetSweep(projectId, scenarioId, variantIds)
-  const last = useLastSweep(scenarioId, sizing.process_key).data ?? undefined
+  const source = useCountSource(projectId, scenarioId)
   const result: FleetSweepResult | undefined = sweep.data ?? last
-  const simulated = sizing.count.source === 'simulated'
+  const { count } = sizing
+  const formula = result?.by_formula
+  const simulated = result?.by_simulation
+  const usingSimulation = count.source === 'simulated'
+  const usingFormula = count.source === 'manual' && formula != null && count.final === formula.total
+  const best = result?.points.find((p) => p.count === result.recommended_count)
+  const busy = sweep.isPending || source.isPending
 
   const run = () =>
     sweep.mutate(
@@ -692,53 +760,71 @@ function FleetSweep({
 
   return (
     <div className="p-5">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="h3">
-          {result?.recommended_count != null
-            ? `Почему ${result.recommended_count}, а не ${result.recommended_count - 1}`
-            : 'Сколько роботов нужно на самом деле'}
-        </span>
+      <span className="h3">Сколько роботов нужно на самом деле</span>
+      {!result ? (
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
+          Формула цикла дала {count.analytic} {pluralRu(count.analytic, ['робота', 'роботов', 'роботов'])} с запасами.
+          Перебор прогонит одни и те же пиковые часы на планировке для разного N и найдёт минимальное, при котором SLA
+          держат все прогоны. Найденное число запишется в сценарий, экономика пересчитается.
+        </p>
+      ) : (
+        <>
+          {formula && simulated && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <FleetTile title="По формуле цикла" fleet={formula} active={usingFormula} />
+              <FleetTile title="По имитации" fleet={simulated} active={usingSimulation} />
+            </div>
+          )}
+          {formula && simulated && best && (
+            <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
+          )}
+          <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">{result.explanation}</p>
+        </>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button size="sm" variant={result ? 'outline' : 'default'} disabled={busy} onClick={run}>
+          {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
+          {sweep.isPending
+            ? variantIds.length
+              ? 'Перебираем флот для всех вариантов…'
+              : 'Перебираем флот…'
+            : result
+              ? 'Перепроверить'
+              : 'Подобрать N имитацией'}
+        </Button>
+        {formula && simulated && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onClick={() =>
+              source.mutate({ processKey: sizing.process_key, manual: usingSimulation ? formula.total : null })
+            }
+          >
+            {source.isPending && <Spinner />}
+            {usingSimulation ? `Считать по формуле (${formula.total})` : `Считать по имитации (${simulated.total})`}
+          </Button>
+        )}
       </div>
-      <p className="text-[13px] leading-relaxed text-ink-2">
-        {result?.explanation ??
-          (simulated
-            ? sizing.count.explanation
-            : `Перебор прогоняет один и тот же пиковый день для разного N и ищет минимальное, при котором выполняется SLA. Найденное число записывается в сценарий вместо ${sizing.count.analytic} по циклу, и экономика пересчитывается.`)}
-      </p>
-      <Button
-        size="sm"
-        className="mt-3"
-        variant={result ? 'outline' : 'default'}
-        disabled={sweep.isPending}
-        onClick={run}
-      >
-        {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
-        {sweep.isPending
-          ? variantIds.length
-            ? 'Перебираем флот для всех вариантов…'
-            : 'Перебираем флот…'
-          : result
-            ? 'Перебрать заново'
-            : 'Подобрать N имитацией'}
-      </Button>
       {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
+
       {result && (
-        <div className="mt-4 space-y-3">
-          <div className="flex items-baseline gap-3">
-            <span className="display num text-[32px]">{result.recommended_count ?? '—'}</span>
-            <span className="text-[13px] text-ink-2">
-              {result.recommended_count != null
-                ? `роботов по имитации${result.analytic_count ? ` · по циклу ${result.analytic_count}` : ''}`
-                : 'даже тройной парк не выполняет SLA — ограничение не в роботах'}
-            </span>
-          </div>
+        <div className="mt-4">
           <table className="w-full text-[12.5px]">
             <thead className="text-ink-3">
               <tr>
                 <th className="py-1 text-left font-normal">N</th>
-                <th className="py-1 text-right font-normal">SLA</th>
-                <th className="py-1 text-right font-normal">Загрузка</th>
-                <th className="py-1 text-right font-normal">Окупаемость</th>
+                <th className="py-1 text-right font-normal" title="Среднее по прогонам пика">
+                  SLA
+                </th>
+                <th className="py-1 text-right font-normal" title="Худший из прогонов: он решает, принят ли парк">
+                  худший
+                </th>
+                <th className="py-1 text-right font-normal">загрузка</th>
+                <th className="py-1 text-right font-normal" title="Сценарий с этим N и резервом">
+                  окупаемость
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -757,36 +843,86 @@ function FleetSweep({
                       {p.count}
                     </button>
                   </td>
-                  <td
-                    className={`num py-1 text-right ${p.passed ? 'text-ok' : 'text-crit'}`}
-                    title={`в среднем по ${p.runs} прогонам; худший — ${formatNumber(p.sla_min_pct ?? p.sla_achieved_pct, 1)} %`}
-                  >
-                    {formatPct(p.sla_achieved_pct, { digits: 0 })}
+                  <td className="num py-1 text-right">{formatPct(p.sla_achieved_pct, { digits: 0 })}</td>
+                  <td className={`num py-1 text-right ${p.passed ? 'text-ok' : 'text-crit'}`}>
+                    {formatPct(p.sla_min_pct ?? p.sla_achieved_pct, { digits: 0 })}
                   </td>
                   <td className="num py-1 text-right">{formatPct(p.utilization, { share: true, digits: 0 })}</td>
-                  <td className="num py-1 text-right">
-                    {p.payback_years != null
-                      ? formatYears(p.payback_years)
-                      : p.capex_rub != null
-                        ? formatRub(p.capex_rub)
-                        : '—'}
+                  <td className="num py-1 text-right" title={p.passed ? undefined : 'Парк не держит SLA'}>
+                    {p.passed ? formatYears(p.payback_years) : '—'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {result.applied && (
-            <p className="meta">
-              N записано в сценарий{variantIds.length ? ' и в варианты с тем же процессом' : ''}, экономика пересчитана
-              по имитации.
-            </p>
-          )}
+          <p className="meta mt-2">
+            Цель — {formatNumber(result.target_pct)} % задач в срок в каждом из прогонов. Окупаемость — сценария с этим
+            N и резервом. {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
+          </p>
         </div>
       )}
     </div>
   )
 }
 
+function FleetTile({ title, fleet, active }: { title: string; fleet: FleetEconomics; active: boolean }) {
+  return (
+    <div className={`rounded-[10px] border p-3 ${active ? 'border-ink bg-white' : 'border-line bg-surface-2'}`}>
+      <div className="flex items-baseline justify-between gap-1 text-[12px]">
+        <span className="text-ink-2">{title}</span>
+        {active && <span className="font-medium text-ok">в расчёте</span>}
+      </div>
+      <div className="display num mt-1 text-[22px]">{fleet.total}</div>
+      <div className="num text-[11.5px] text-ink-3">
+        {fleet.working} в работе + {fleet.reserve} резерв
+      </div>
+      <div className="num mt-1.5 text-[12px] text-ink-2">окупаемость {formatYears(fleet.payback_years)}</div>
+      <div className="num text-[12px] text-ink-2">CAPEX {formatRub(fleet.capex_rub)}</div>
+    </div>
+  )
+}
+
+/* Почему формула и имитация расходятся — теми же числами, что в расчёте и в прогонах перебора. */
+function WhyDifferent({
+  sizing,
+  formula,
+  simulated,
+  best,
+}: {
+  sizing: SizingResult
+  formula: FleetEconomics
+  simulated: FleetEconomics
+  best: FleetSweepResult['points'][number]
+}) {
+  const { robot } = sizing
+  if (formula.working === simulated.working) {
+    return (
+      <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
+        Имитация подтвердила формулу: {simulated.working} роботов держат SLA во всех прогонах пика.
+      </p>
+    )
+  }
+  const perRobot = best.throughput_per_hour / Math.max(1, best.count)
+  const fewer = simulated.working < formula.working
+  return (
+    <div className="mt-3 space-y-1.5 text-[13px] leading-relaxed text-ink-2">
+      <p>
+        <span className="font-medium text-ink">Формула</span> считает один робот за{' '}
+        {formatNumber(robot.effective_throughput_per_hour, 1)} ед/ч:{' '}
+        {formatNumber(robot.nominal_throughput_per_hour, 1)} по циклу × доступность{' '}
+        {formatPct(robot.availability, { share: true, digits: 0 })} × целевая загрузка{' '}
+        {formatPct(robot.utilization_target, { share: true, digits: 0 })}; каждый рейс — туда и обратно, обратно пустым.
+      </p>
+      <p>
+        <span className="font-medium text-ink">Имитация</span>: {best.count} роботов реально везут{' '}
+        {formatNumber(perRobot, 1)} ед/ч каждый при загрузке {formatPct(best.utilization, { share: true, digits: 0 })}
+        {fewer
+          ? ' — в пиковые часы они не простаивают на зарядке, берут ближайшую задачу, а норматив срока позволяет короткой очереди рассосаться.'
+          : ' — заторы в проходах, очереди у ворот и зарядка съедают часть производительности.'}
+      </p>
+    </div>
+  )
+}
 function RobotCard({
   track,
   summary,

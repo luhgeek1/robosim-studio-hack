@@ -1,17 +1,31 @@
-import { Bot, Timer } from 'lucide-react'
+import { Bot, Sparkles, Timer } from 'lucide-react'
+import { Link } from 'react-router'
+import { useProjectId } from '@/entities/project'
+import { useCalculate, useCountSource } from '@/entities/scenario'
+import { checkable, useLastSweep, type FleetEconomics } from '@/entities/simulation'
 import type { SizingResult } from '@/shared/api/types'
-import { formatNumber, formatPct, isNum } from '@/shared/lib/format'
+import { formatNumber, formatPct, formatRub, formatYears, isNum } from '@/shared/lib/format'
+import { Button } from '@/shared/ui/button'
 import { Section } from '@/shared/ui/page'
 import { cn } from '@/shared/lib/utils'
+import { Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
 const COUNT_SOURCE_LABEL = {
-  analytic: 'по циклу',
-  simulated: 'по имитации',
+  analytic: 'по формуле цикла',
+  simulated: 'проверено имитацией',
   manual: 'задано вручную',
 } as const
 
-export function SizingSection({ sizing, onTrace }: { sizing: SizingResult[]; onTrace: (query: string) => void }) {
+export function SizingSection({
+  scenarioId,
+  sizing,
+  onTrace,
+}: {
+  scenarioId: string
+  sizing: SizingResult[]
+  onTrace: (query: string) => void
+}) {
   if (sizing.length === 0) return null
   return (
     <Section
@@ -20,14 +34,22 @@ export function SizingSection({ sizing, onTrace }: { sizing: SizingResult[]; onT
     >
       <div className="space-y-4">
         {sizing.map((s) => (
-          <SizingCard key={`${s.process_key}-${s.product_id}`} sizing={s} onTrace={onTrace} />
+          <SizingCard key={`${s.process_key}-${s.product_id}`} scenarioId={scenarioId} sizing={s} onTrace={onTrace} />
         ))}
       </div>
     </Section>
   )
 }
 
-function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query: string) => void }) {
+function SizingCard({
+  scenarioId,
+  sizing,
+  onTrace,
+}: {
+  scenarioId: string
+  sizing: SizingResult
+  onTrace: (query: string) => void
+}) {
   const { robot, count } = sizing
   const cycleTotal = robot.cycle_components?.reduce((sum, c) => sum + c.seconds, 0) ?? 0
 
@@ -129,6 +151,121 @@ function SizingCard({ sizing, onTrace }: { sizing: SizingResult; onTrace: (query
           {count.explanation && <p className="text-xs text-muted-foreground">{count.explanation}</p>}
         </div>
       </div>
+      <CountOrigin scenarioId={scenarioId} sizing={sizing} />
+    </div>
+  )
+}
+
+/* Откуда число роботов: формула цикла даёт стартовое N с запасами, имитация на планировке находит минимальное N,
+   которое держит SLA. Обе оценки и их экономика видны рядом, пользователь выбирает, какую брать в расчёт. */
+function CountOrigin({ scenarioId, sizing }: { scenarioId: string; sizing: SizingResult }) {
+  const projectId = useProjectId()
+  const { count } = sizing
+  const sweep = useLastSweep(scenarioId, sizing.robot.cycle_time_s != null ? sizing.process_key : undefined).data
+  const recheck = useCalculate(projectId, scenarioId)
+  const source = useCountSource(projectId, scenarioId)
+  const formula = sweep?.by_formula
+  const simulated = sweep?.by_simulation
+  const busy = recheck.isPending || source.isPending
+
+  if (sizing.robot.cycle_time_s == null) return null
+  if (count.source === 'analytic' && !sweep) {
+    return (
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-surface-2 px-4 py-3 text-[13px]">
+        <span className="text-ink-2">
+          Число роботов посчитано по формуле цикла и ещё не проверено имитацией на планировке объекта.
+        </span>
+        {checkable(sizing) && (
+          <Button size="sm" variant="outline" onClick={() => recheck.mutate()} disabled={busy}>
+            {recheck.isPending ? <Spinner /> : <Sparkles />} Проверить имитацией
+          </Button>
+        )}
+      </div>
+    )
+  }
+  if (!formula || !simulated) return null
+
+  const usingFormula = count.source === 'manual' && count.final === formula.total
+  const usingSimulation = count.source === 'simulated'
+  return (
+    <div className="mt-4 rounded-[10px] bg-surface-2 p-4 text-[13px]">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+        <span className="font-medium text-ink">Откуда число роботов</span>
+        <Link to={`/projects/${projectId}/simulation`} className="text-[12.5px] text-ink-3 hover:text-ink">
+          Подробнее на шаге «Имитация» →
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <OriginCard
+          title="По формуле цикла"
+          note="Робот доступен и загружен с запасом, каждый рейс — туда и обратно порожняком"
+          fleet={formula}
+          active={usingFormula}
+        />
+        <OriginCard
+          title="По имитации"
+          note={`Минимальный парк, который держит SLA ${formatNumber(sweep?.target_pct)} % во всех прогонах пика`}
+          fleet={simulated}
+          active={usingSimulation}
+        />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {usingSimulation ? (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => source.mutate({ processKey: sizing.process_key, manual: formula.total })}
+          >
+            {source.isPending && <Spinner />} Считать по формуле ({formula.total})
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => source.mutate({ processKey: sizing.process_key, manual: null })}
+          >
+            {source.isPending && <Spinner />} Считать по имитации ({simulated.total})
+          </Button>
+        )}
+        <span className="text-[12px] text-ink-3">
+          {count.source === 'manual' && !usingFormula
+            ? `Сейчас в расчёте — ${count.final}, заданное вручную`
+            : 'Выбранный вариант идёт в экономику, сравнение и отчёт'}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function OriginCard({
+  title,
+  note,
+  fleet,
+  active,
+}: {
+  title: string
+  note: string
+  fleet: FleetEconomics
+  active: boolean
+}) {
+  return (
+    <div className={cn('rounded-[10px] border bg-white p-3', active ? 'border-ink' : 'border-line')}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="font-medium text-ink">{title}</span>
+        {active && <span className="text-[11.5px] font-medium text-ok">в расчёте</span>}
+      </div>
+      <div className="num mt-1 text-[22px] leading-tight font-semibold">
+        {fleet.working} + {fleet.reserve} = {fleet.total}
+        <span className="ml-1 text-[12px] font-normal text-ink-3">в работе + резерв</span>
+      </div>
+      <div className="num mt-1 grid grid-cols-3 gap-2 text-[12px] text-ink-2">
+        <span>CAPEX {formatRub(fleet.capex_rub)}</span>
+        <span>окупаемость {formatYears(fleet.payback_years)}</span>
+        <span>NPV {formatRub(fleet.npv_rub)}</span>
+      </div>
+      <p className="mt-1.5 text-[12px] text-ink-3">{note}</p>
     </div>
   )
 }

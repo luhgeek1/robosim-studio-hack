@@ -1048,7 +1048,11 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    get?: never
+    /**
+     * Последний завершённый перебор флота сценария
+     * @description Кривая «N → SLA, окупаемость» и сравнение «по формуле / по имитации» после перезагрузки экрана.
+     */
+    get: operations['getLatestFleetSweep']
     put?: never
     /** Перебор количества роботов — кривая N → SLA, загрузка, окупаемость (фоновая задача) */
     post: operations['runFleetSweep']
@@ -1907,6 +1911,8 @@ export interface components {
         kind?: 'lead_time' | 'on_time_share' | 'coverage'
         /** @example 20 */
         target_value?: number
+        /** @description Параметр объекта, который задаёт цель (норматив доставки); расчёт сравнивает с ним рейс робота */
+        target_param?: string | null
         /** @example мин */
         unit?: string
       } | null
@@ -3337,7 +3343,7 @@ export interface components {
     ScoreComponent: {
       /** @example cost_efficiency */
       criterion: string
-      /** @example Стоимость конфигурации */
+      /** @example Экономика решения */
       name: string
       /** @example 0.25 */
       weight: number
@@ -3845,8 +3851,8 @@ export interface components {
     DispatchPolicy: 'nearest_idle' | 'fifo' | 'zone_affinity'
     SimulationRequest: {
       mode: components['schemas']['SimulationMode']
-      /** @default 24 */
-      duration_hours: number
+      /** @description Не задано: сутки для normal, пиковое окно `sim_peak_duration_hours` (как у перебора флота) для peak */
+      duration_hours?: number
       /** @description Фиксированный seed = воспроизводимый прогон */
       seed?: number | null
       /**
@@ -3902,17 +3908,18 @@ export interface components {
     SimulationList: {
       items: components['schemas']['SimulationRun'][]
     }
-    /** @description Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость». */
-    FleetSweepRequest: {
-      process_key: string
-      /** @description Вместе с to_count — полный перебор диапазона вместо поиска */
-      from_count?: number | null
-      to_count?: number | null
-      mode?: components['schemas']['SimulationMode']
-      seed?: number | null
+    /** @description Парк процесса и экономика сценария с ним. */
+    FleetEconomics: {
+      /** @description Роботов в работе */
+      working: number
+      reserve: number
+      total: number
+      capex_rub: number
+      payback_years?: number | null
+      npv_rub: number
     }
     /**
-     * @description Минимальное N, при котором среднее SLA по `sim_replications` прогонам пикового режима не ниже цели.
+     * @description Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-028).
      *     Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
      *     Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
      */
@@ -3929,8 +3936,12 @@ export interface components {
         utilization: number
         throughput_per_hour: number
         queue_max?: number
+        /** @description N плюс резерв — как в сценарии после применения */
+        robots_total?: number | null
         capex_rub?: number | null
+        /** @description null, если N не держит SLA: такой парк не выполняет работу */
         payback_years?: number | null
+        npv_rub?: number | null
         /** Format: uuid */
         simulation_id?: string | null
       }[]
@@ -3945,8 +3956,25 @@ export interface components {
       simulation_id?: string | null
       /** @description N записано в сценарий */
       applied?: boolean
+      /** @description N по формуле цикла и его экономика */
+      by_formula?: components['schemas']['FleetEconomics'] | null
+      /** @description N по имитации — то, что берёт расчёт */
+      by_simulation?: components['schemas']['FleetEconomics'] | null
+      /** Format: uuid */
+      job_id?: string | null
+      /** Format: date-time */
+      computed_at?: string | null
       /** @example 12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 % */
       explanation: string
+    }
+    /** @description Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость». */
+    FleetSweepRequest: {
+      process_key: string
+      /** @description Вместе с to_count — полный перебор диапазона вместо поиска */
+      from_count?: number | null
+      to_count?: number | null
+      mode?: components['schemas']['SimulationMode']
+      seed?: number | null
     }
     TimelinePoint: {
       t_min: number
@@ -6429,6 +6457,31 @@ export interface operations {
           'application/json': components['schemas']['Problem']
         }
       }
+    }
+  }
+  getLatestFleetSweep: {
+    parameters: {
+      query?: {
+        process_key?: string
+      }
+      header?: never
+      path: {
+        scenario_id: components['parameters']['ScenarioId']
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['FleetSweepResult']
+        }
+      }
+      404: components['responses']['NotFound']
     }
   }
   runFleetSweep: {

@@ -58,13 +58,20 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
           processName: processName.get(item.process_key) ?? item.process_key,
           working: final - reserve,
           reserve,
-          source: !result ? 'задано вручную' : isNum(result.simulated) ? 'по имитации' : 'по расчёту цикла',
+          source: !result
+            ? 'задано вручную'
+            : result.source === 'simulated'
+              ? 'проверено имитацией'
+              : result.source === 'manual'
+                ? 'задано вручную'
+                : 'по формуле цикла',
           unitPrice: item.price_override_rub ?? item.price_rub,
         }
       }) ?? []
 
   const fromMatching: Pick[] = matching.processes.flatMap((process) => {
-    const best = process.candidates.find((c) => c.status === 'fit')
+    const best =
+      process.candidates.find((c) => c.status === 'fit') ?? process.candidates.find((c) => c.status === 'check')
     if (!best) return []
     return [
       {
@@ -74,7 +81,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
         processName: shortName(process.name),
         working: best.estimate?.robots_count ?? 0,
         reserve: 0,
-        source: best.estimate?.robots_count ? 'оценка по циклу' : 'нет оценки по циклу',
+        source: best.estimate?.robots_count ? 'оценка по формуле, в сценарии уточнит имитация' : 'нет оценки по циклу',
         unknown: !best.estimate?.robots_count,
         unitPrice: best.product.price_from?.amount_rub,
       },

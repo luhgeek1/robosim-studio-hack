@@ -107,7 +107,13 @@ export function ScenarioPage() {
             )}
             <Button onClick={saveAndCalculate} disabled={busy || problems.length > 0}>
               {calculate.isPending ? <Spinner /> : <Calculator />}
-              {dirty ? 'Сохранить и рассчитать' : current.last_calculation ? 'Пересчитать' : 'Рассчитать'}
+              {calculate.isPending
+                ? 'Считаем и проверяем N имитацией…'
+                : dirty
+                  ? 'Сохранить и рассчитать'
+                  : current.last_calculation
+                    ? 'Пересчитать'
+                    : 'Рассчитать'}
             </Button>
           </div>
         </div>

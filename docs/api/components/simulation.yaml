@@ -23,7 +23,7 @@ SimulationRequest:
   required: [mode]
   properties:
     mode: {$ref: '#/SimulationMode'}
-    duration_hours: {type: number, minimum: 1, maximum: 168, default: 24}
+    duration_hours: {type: number, minimum: 1, maximum: 168, description: "Не задано: сутки для normal, пиковое окно `sim_peak_duration_hours` (как у перебора флота) для peak"}
     seed: {type: [integer, "null"], description: "Фиксированный seed = воспроизводимый прогон"}
     volume_multiplier: {type: number, default: 1.0, example: 1.2, description: "Стресс-тест «+20 % объёма»"}
     fleet_override:

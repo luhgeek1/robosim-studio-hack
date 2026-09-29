@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { GitCompareArrows, RotateCw, Sparkles, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from 'react'
@@ -5,6 +6,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useMatching, useRunMatching } from '@/entities/matching'
 import { useProjectId } from '@/entities/project'
 import { useCreateScenario } from '@/entities/scenario'
+import { calculateWithFleetCheck } from '@/entities/simulation'
+import { qk } from '@/shared/api/keys'
 import { parseApiProblem } from '@/shared/api/problem'
 import type { Candidate, CandidateStatus, MatchingResult, ProcessMatching } from '@/shared/api/types'
 import { pluralRu } from '@/shared/lib/format'
@@ -27,16 +30,36 @@ export function MatchingPage() {
   const [includeRnd, setIncludeRnd] = useState(false)
   const [compare, setCompare] = useState<string[]>([])
 
+  // Сценарий сразу считается, а число роботов проверяется имитацией: следующий экран показывает проверенное N.
+  const [checking, setChecking] = useState(false)
+  const queryClient = useQueryClient()
+  const refreshScenarios = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.projects.one(projectId) }),
+      queryClient.invalidateQueries({ queryKey: qk.projects.list }),
+      queryClient.invalidateQueries({ queryKey: qk.scenarios.all }),
+    ])
   const createFromRecommendation = () =>
     createScenario.mutate(
       { name: 'Покупка по рекомендации подбора', kind: 'purchase', from_recommendation: true },
-      { onSuccess: (scenario) => navigate(`/projects/${projectId}/scenarios/${scenario.id}`) },
+      {
+        onSuccess: async (scenario) => {
+          setChecking(true)
+          await calculateWithFleetCheck(scenario.id).catch(() => undefined)
+          await refreshScenarios()
+          setChecking(false)
+          navigate(`/projects/${projectId}/scenarios/${scenario.id}`)
+        },
+      },
     )
 
   const data = matching.data
-  const noFit = data ? (data.totals?.fit ?? 0) === 0 : true
   const fit = data?.totals?.fit ?? 0
-  const total = fit + (data?.totals?.check ?? 0) + (data?.totals?.excluded ?? 0)
+  const check = data?.totals?.check ?? 0
+  // «Требует проверки» — тоже кандидат для сценария (бэкенд их берёт): в аэропорту и больнице «подходит» нет ни у кого.
+  const nothingToBuild = data ? fit + check === 0 : true
+  const total = fit + check + (data?.totals?.excluded ?? 0)
+  const creating = createScenario.isPending || checking
 
   return (
     <Screen
@@ -46,7 +69,9 @@ export function MatchingPage() {
         data
           ? fit
             ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}`
-            : 'Подходящих решений не найдено'
+            : check
+              ? `Требуют проверки ТТХ ${check} ${pluralRu(check, ['решение', 'решения', 'решений'])} из ${total}`
+              : 'Подходящих решений не найдено'
           : 'Подбор роботов'
       }
       actions={
@@ -65,8 +90,9 @@ export function MatchingPage() {
             >
               {run.isPending ? <Spinner /> : <RotateCw />} Пересчитать
             </Button>
-            <Button onClick={createFromRecommendation} disabled={createScenario.isPending || noFit}>
-              {createScenario.isPending ? <Spinner /> : <Sparkles />} Создать сценарий из рекомендации
+            <Button onClick={createFromRecommendation} disabled={creating || nothingToBuild}>
+              {creating ? <Spinner /> : <Sparkles />}{' '}
+              {checking ? 'Считаем и проверяем N имитацией…' : 'Создать сценарий из рекомендации'}
             </Button>
           </>
         )
