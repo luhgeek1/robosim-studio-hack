@@ -3017,7 +3017,7 @@ export interface components {
       /** @example project_param:aisle_width_m */
       entity: string
       /** @enum {string} */
-      action: 'create' | 'update' | 'delete' | 'import' | 'calculate' | 'simulate' | 'export' | 'override'
+      action: 'create' | 'update' | 'delete' | 'copy' | 'import' | 'calculate' | 'simulate' | 'export' | 'override'
       /** @description null при создании */
       before?: {
         [key: string]: unknown

@@ -24,6 +24,7 @@ const AUDIT_ACTION_LABEL: Record<AuditEvent['action'], string> = {
   create: 'создание',
   update: 'изменение',
   delete: 'удаление',
+  copy: 'копия',
   import: 'импорт',
   calculate: 'расчёт',
   simulate: 'имитация',
@@ -89,7 +90,7 @@ export function OverviewPage() {
                     <li key={event.id} className="flex gap-3 px-2 py-2 first:pt-0">
                       <span className="num shrink-0 whitespace-nowrap text-ink-3">{formatDateTime(event.at)}</span>
                       <span className="min-w-0">
-                        <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? event.action}</span>{' '}
+                        <span className="font-medium">{AUDIT_ACTION_LABEL[event.action] ?? 'изменение'}</span>{' '}
                         <span className="text-ink-3">
                           {AUDIT_ENTITY_LABEL[event.entity.split(':')[0]] ?? 'данных проекта'}
                         </span>

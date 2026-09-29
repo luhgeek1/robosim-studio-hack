@@ -116,6 +116,10 @@ async def test_raas_copy_and_comparison_recommends(client: AsyncClient) -> None:
     )
     assert raas.status_code == 201
     assert raas.json()["items"][0]["product_id"] == purchase["items"][0]["product_id"]
+    # The journal lists the copy (the response is checked against the contract's action enum).
+    audit = (await client.get(f"/api/v1/projects/{project_id}/audit", headers=headers)).json()
+    copied = next(e for e in audit["items"] if e["action"] == "copy")
+    assert purchase["name"] in copied["note"]
     table = (await client.get(f"/api/v1/projects/{project_id}/comparison", headers=headers)).json()
     assert len(table["scenarios"]) == 3
     kinds = {s["kind"] for s in table["scenarios"]}

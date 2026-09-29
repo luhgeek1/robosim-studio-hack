@@ -292,7 +292,7 @@ class ScenarioService:
             f"scenario:{copy.id}",
             "copy",
             after=_snapshot(copy),
-            note=f"Копия сценария {source.id}",
+            note=f"Копия сценария «{source.name}»",
         )
         return await self.get(copy.id)
 

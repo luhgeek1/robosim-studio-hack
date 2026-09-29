@@ -5736,6 +5736,7 @@ components:
             - create
             - update
             - delete
+            - copy
             - import
             - calculate
             - simulate

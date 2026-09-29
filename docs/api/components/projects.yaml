@@ -495,7 +495,7 @@ AuditEvent:
     at: {type: string, format: date-time}
     actor: {type: string, example: "mark@example.com"}
     entity: {type: string, example: "project_param:aisle_width_m"}
-    action: {type: string, enum: [create, update, delete, import, calculate, simulate, export, override]}
+    action: {type: string, enum: [create, update, delete, copy, import, calculate, simulate, export, override]}
     before: {type: [object, "null"], additionalProperties: true, description: "null при создании"}
     after: {type: [object, "null"], additionalProperties: true, description: "null при удалении"}
     note: {type: [string, "null"]}
