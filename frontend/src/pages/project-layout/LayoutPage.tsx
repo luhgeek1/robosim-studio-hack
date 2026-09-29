@@ -31,7 +31,6 @@ import { FocusLayer, type Spotlight } from './FocusLayer'
 import { ROUTE_ENDPOINT, ROUTE_USE, TEMPLATE_LABEL, type LayoutRoute } from './labels'
 import { RegenerateDialog } from './RegenerateDialog'
 import { exampleRoute, type ExampleRoute, type RouteKey } from './routes'
-import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
 type Focus = { kind: 'route'; key: RouteKey } | { kind: 'figure'; key: string } | null
 
@@ -174,27 +173,25 @@ function PlanWorkbench({
       left={
         <>
           <PaneTitle>Схема</PaneTitle>
-          <PaneSection title="Цифры геометрии" aside={<span className="meta">клик — на плане</span>}>
-            <ul className="relative -mx-1.5">
-              <SlideHighlight className="rounded-lg bg-card ring-1 ring-line" transition={SPRING} />
+          <PaneSection title="Цифры геометрии">
+            <PickHint>Выберите цифру — это место подсветится на плане</PickHint>
+            <ul className="-mx-1.5 space-y-1" role="radiogroup" aria-label="Цифры геометрии">
               {figures.map((figure) => {
                 const on = activeFigure?.key === figure.key
                 return (
                   <li key={figure.key}>
-                    <button
-                      type="button"
+                    <PickRow
+                      on={on}
                       onClick={() => toggle({ kind: 'figure', key: figure.key })}
-                      aria-pressed={on}
-                      title={on ? 'Снять подсветку' : 'Показать на схеме'}
-                      className={cn(
-                        'relative flex w-full items-baseline justify-between gap-3 rounded-lg px-1.5 py-1.5 text-left transition-colors',
-                        on ? 'text-ink' : 'text-ink-2 hover:bg-black/3',
-                      )}
+                      head={capitalize(figure.label)}
+                      value={figure.value}
                     >
-                      {on && <SlideMark />}
-                      <span className="relative min-w-0 truncate text-[12.5px]">{figure.label}</span>
-                      <span className="num relative shrink-0 text-[14px] font-semibold text-ink">{figure.value}</span>
-                    </button>
+                      {on && (
+                        <span className="mt-0.5 flex justify-end">
+                          <PlanMarker on />
+                        </span>
+                      )}
+                    </PickRow>
                   </li>
                 )
               })}
@@ -202,12 +199,13 @@ function PlanWorkbench({
           </PaneSection>
           {checks.length > 0 && (
             <PaneSection title="Проверки схемы">
-              <ul className="-mx-2 space-y-0.5">
+              <ul className="-mx-1.5 space-y-1">
                 {checks.map((check) => (
                   <li key={check.text}>
                     <CheckRow
                       check={check}
-                      onClick={check.figure ? () => setFocus({ kind: 'figure', key: check.figure! }) : undefined}
+                      on={Boolean(check.figure) && activeFigure?.key === check.figure}
+                      onClick={check.figure ? () => toggle({ kind: 'figure', key: check.figure! }) : undefined}
                       action={
                         check.rebuild && onRegenerate ? (
                           <button
@@ -269,10 +267,7 @@ function PlanWorkbench({
               </Hint>
             }
           >
-            <p className="mb-2.5 flex items-center gap-1.5 text-[12.5px] text-ink-3">
-              <MousePointerClick size={14} className="shrink-0 text-ink-4" />
-              Выберите маршрут — пример пути появится на плане
-            </p>
+            <PickHint>Выберите маршрут — пример пути появится на плане</PickHint>
             <RoutesList routes={routes} active={activeRoute?.key} onPick={(key) => toggle({ kind: 'route', key })} />
           </PaneSection>
         </>
@@ -386,88 +381,132 @@ function RoutesList({
         const share = Math.max(0.08, route.value_m / longest)
         return (
           <li key={route.key}>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={on}
+            <PickRow
+              on={on}
               onClick={() => onPick(route.key)}
-              title={on ? 'Убрать путь с плана' : 'Показать пример пути на плане'}
-              className={cn(
-                'group relative w-full rounded-[10px] border px-2.5 pt-2 pb-2.5 text-left transition-[background-color,border-color,box-shadow] duration-150',
-                on
-                  ? 'border-signal/40 bg-card shadow-[0_1px_2px_rgba(20,20,19,0.05)]'
-                  : 'border-transparent hover:border-line hover:bg-card',
-              )}
+              head={
+                <>
+                  {capitalize(from)}
+                  <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
+                  {to}
+                </>
+              }
+              value={
+                <>
+                  {formatNumber(route.value_m)}
+                  <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
+                </>
+              }
             >
-              <span className="flex items-start gap-2.5">
-                <span
-                  className={cn(
-                    'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors',
-                    on ? 'border-signal' : 'border-ink-4 group-hover:border-ink-3',
-                  )}
-                  aria-hidden
-                >
+              <span className="mt-2 flex h-3.5 items-center gap-2">
+                <span className="flex min-w-0 flex-1 items-center" aria-hidden>
                   <motion.span
-                    className="size-2 rounded-full bg-signal"
+                    className="flex items-center"
                     initial={false}
-                    animate={{ scale: on ? 1 : 0 }}
-                    transition={SPRING}
-                  />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className={cn('min-w-0 text-[13px] leading-snug', on ? 'text-ink' : 'text-ink-2')}>
-                      {capitalize(from)}
-                      <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
-                      {to}
-                    </span>
-                    <span className="num shrink-0 text-[15px] font-semibold text-ink">
-                      {formatNumber(route.value_m)}
-                      <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
-                    </span>
-                  </span>
-                  <span className="mt-2 flex h-3.5 items-center gap-2">
-                    <span className="flex min-w-0 flex-1 items-center" aria-hidden>
-                      <motion.span
-                        className="flex items-center"
-                        initial={false}
-                        animate={{ width: `${share * 100}%` }}
-                        transition={{ type: 'spring', stiffness: 160, damping: 26 }}
-                      >
-                        <span className={cn('size-2 shrink-0 rounded-full', on ? 'bg-signal' : 'bg-ink-4')} />
-                        <span className={cn('h-0.5 flex-1', on ? 'bg-signal' : 'bg-ink-4/60')} />
-                        <span
-                          className={cn(
-                            'size-2 shrink-0 rounded-full border-[1.5px] bg-card',
-                            on ? 'border-signal' : 'border-ink-4',
-                          )}
-                        />
-                      </motion.span>
-                    </span>
+                    animate={{ width: `${share * 100}%` }}
+                    transition={{ type: 'spring', stiffness: 160, damping: 26 }}
+                  >
+                    <span className={cn('size-2 shrink-0 rounded-full', on ? 'bg-signal' : 'bg-ink-4')} />
+                    <span className={cn('h-0.5 flex-1', on ? 'bg-signal' : 'bg-ink-4/60')} />
                     <span
                       className={cn(
-                        'flex w-17 shrink-0 items-center justify-end gap-1 text-[11px] font-medium transition-opacity',
-                        on
-                          ? 'text-signal'
-                          : 'text-ink-3 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100',
+                        'size-2 shrink-0 rounded-full border-[1.5px] bg-card',
+                        on ? 'border-signal' : 'border-ink-4',
                       )}
-                    >
-                      <MapPin size={11} /> {on ? 'на плане' : 'показать'}
-                    </span>
-                  </span>
-                  <span className="mt-1 flex items-center justify-between gap-2 text-[11.5px] text-ink-3">
-                    <span className="truncate">{ROUTE_USE[route.key]}</span>
-                    <span className="num shrink-0">
-                      {formatNumber(route.pairs)} {pluralRu(route.pairs, ['пара', 'пары', 'пар'])}
-                    </span>
-                  </span>
+                    />
+                  </motion.span>
+                </span>
+                <PlanMarker on={on} />
+              </span>
+              <span className="mt-1 flex items-center justify-between gap-2 text-[11.5px] text-ink-3">
+                <span className="truncate">{ROUTE_USE[route.key]}</span>
+                <span className="num shrink-0">
+                  {formatNumber(route.pairs)} {pluralRu(route.pairs, ['пара', 'пары', 'пар'])}
                 </span>
               </span>
-            </button>
+            </PickRow>
           </li>
         )
       })}
     </ul>
+  )
+}
+
+function PickHint({ children }: { children: ReactNode }) {
+  return (
+    <p className="mb-2.5 flex items-center gap-1.5 text-[12.5px] text-ink-3">
+      <MousePointerClick size={14} className="shrink-0 text-ink-4" />
+      {children}
+    </p>
+  )
+}
+
+/* Выбираемая строка панели: радио-кружок, подпись и значение; у выбранной — сигнальная рамка. Повторный клик
+   снимает подсветку с плана. */
+function PickRow({
+  on,
+  onClick,
+  head,
+  value,
+  children,
+}: {
+  on: boolean
+  onClick: () => void
+  head: ReactNode
+  value: ReactNode
+  children?: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      onClick={onClick}
+      title={on ? 'Убрать подсветку с плана' : 'Показать на плане'}
+      className={cn(
+        'group relative w-full rounded-[10px] border px-2.5 pt-2 pb-2 text-left transition-[background-color,border-color,box-shadow] duration-150',
+        on
+          ? 'border-signal/40 bg-card shadow-[0_1px_2px_rgba(20,20,19,0.05)]'
+          : 'border-transparent hover:border-line hover:bg-card',
+      )}
+    >
+      <span className="flex items-start gap-2.5">
+        <span
+          className={cn(
+            'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors',
+            on ? 'border-signal' : 'border-ink-4 group-hover:border-ink-3',
+          )}
+          aria-hidden
+        >
+          <motion.span
+            className="size-2 rounded-full bg-signal"
+            initial={false}
+            animate={{ scale: on ? 1 : 0 }}
+            transition={SPRING}
+          />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-baseline justify-between gap-2">
+            <span className={cn('min-w-0 text-[13px] leading-snug', on ? 'text-ink' : 'text-ink-2')}>{head}</span>
+            <span className="num shrink-0 text-[15px] font-semibold text-ink">{value}</span>
+          </span>
+          {children}
+        </span>
+      </span>
+    </button>
+  )
+}
+
+function PlanMarker({ on }: { on: boolean }) {
+  return (
+    <span
+      className={cn(
+        'flex w-17 shrink-0 items-center justify-end gap-1 text-[11px] font-medium transition-opacity',
+        on ? 'text-signal' : 'text-ink-3 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100',
+      )}
+    >
+      <MapPin size={11} /> {on ? 'на плане' : 'показать'}
+    </span>
   )
 }
 
@@ -490,24 +529,50 @@ function Hint({ children }: { children: ReactNode }) {
 
 type Check = { tone: 'ok' | 'warn' | 'info'; text: string; figure?: string; rebuild?: boolean }
 
-function CheckRow({ check, onClick, action }: { check: Check; onClick?: () => void; action?: ReactNode }) {
+/* Проверка схемы: точка по тону; если у проверки есть место на плане, строка выбирается как цифры и маршруты. */
+function CheckRow({
+  check,
+  on = false,
+  onClick,
+  action,
+}: {
+  check: Check
+  on?: boolean
+  onClick?: () => void
+  action?: ReactNode
+}) {
   const dot = { ok: 'bg-ok', warn: 'bg-warn', info: 'bg-info' }[check.tone]
   const body = (
-    <>
-      <span className={cn('mt-1.75 size-1.5 shrink-0 rounded-full', dot)} />
-      <span className="min-w-0">
-        <span className="block">{check.text}</span>
+    <span className="flex items-start gap-2.5">
+      <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', dot)} />
+      <span className="min-w-0 flex-1">
+        <span className={cn('block', on ? 'text-ink' : 'text-ink-2')}>{check.text}</span>
+        {on && (
+          <span className="mt-0.5 flex justify-end">
+            <PlanMarker on />
+          </span>
+        )}
         {action}
       </span>
-    </>
+    </span>
   )
-  const cls = 'flex w-full gap-2.5 rounded-lg px-2 py-1.5 text-left text-[12.5px] leading-snug text-ink-2'
+  const cls = 'block w-full rounded-[10px] border px-2.5 py-2 text-left text-[12.5px] leading-snug'
   return onClick ? (
-    <button type="button" onClick={onClick} className={cn(cls, 'transition-colors hover:bg-black/3 hover:text-ink')}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      title={on ? 'Убрать подсветку с плана' : 'Показать на плане'}
+      className={cn(
+        cls,
+        'group transition-[background-color,border-color] duration-150',
+        on ? 'border-signal/40 bg-card' : 'border-transparent hover:border-line hover:bg-card',
+      )}
+    >
       {body}
     </button>
   ) : (
-    <div className={cls}>{body}</div>
+    <div className={cn(cls, 'border-transparent')}>{body}</div>
   )
 }
 
