@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion'
 import { Outlet, useLocation } from 'react-router'
 import { useProject, useProjectId } from '@/entities/project'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
@@ -13,18 +12,15 @@ export function ProjectLayout() {
       {project.isPending && <LoadingBlock label="Открываем проект…" />}
       {project.isError && <ErrorBlock error={project.error} onRetry={() => project.refetch()} />}
       {project.data && (
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="flex min-h-0 flex-1 flex-col"
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        /* Only an enter animation, in CSS: AnimatePresence with mode="wait" held the next screen until the old one
+           finished its exit, and leaving the 3D twin (WebGL teardown) could leave the step blank at opacity 0.
+           A CSS animation with no fill mode always ends on the visible element. */
+        <div
+          key={pathname}
+          className="flex min-h-0 flex-1 flex-col animate-in fade-in slide-in-from-bottom-2.5 duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        >
+          <Outlet />
+        </div>
       )}
     </div>
   )
