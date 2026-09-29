@@ -225,29 +225,6 @@ function PlanWorkbench({
               </ul>
             </PaneSection>
           )}
-        </>
-      }
-      center={
-        <PlanStage layout={layout} route={activeRoute} example={example} figure={activeFigure} fitPadding={PLAN_PAD} />
-      }
-      right={
-        <>
-          <PaneTitle>Маршруты роботов</PaneTitle>
-          <PaneSection
-            title="Средние по графу"
-            aside={
-              <Hint>
-                Средняя длина пути робота по графу проездов этой схемы. Она идёт в цикл робота вместо норматива; если в
-                параметрах объекта есть ваш замер, расчёт берёт его.
-              </Hint>
-            }
-          >
-            <p className="mb-2.5 flex items-center gap-1.5 text-[12.5px] text-ink-3">
-              <MousePointerClick size={14} className="shrink-0 text-ink-4" />
-              Выберите маршрут — пример пути появится на плане
-            </p>
-            <RoutesList routes={routes} active={activeRoute?.key} onPick={(key) => toggle({ kind: 'route', key })} />
-          </PaneSection>
           {layout.derivation.length > 0 && (
             <PaneSection title="Как получена геометрия">
               <p className="text-[12.5px] leading-relaxed text-ink-3">
@@ -275,6 +252,29 @@ function PlanWorkbench({
               </div>
             </PaneSection>
           )}
+        </>
+      }
+      center={
+        <PlanStage layout={layout} route={activeRoute} example={example} figure={activeFigure} fitPadding={PLAN_PAD} />
+      }
+      right={
+        <>
+          <PaneTitle>Маршруты роботов</PaneTitle>
+          <PaneSection
+            title="Средние по графу"
+            aside={
+              <Hint>
+                Средняя длина пути робота по графу проездов этой схемы. Она идёт в цикл робота вместо норматива; если в
+                параметрах объекта есть ваш замер, расчёт берёт его.
+              </Hint>
+            }
+          >
+            <p className="mb-2.5 flex items-center gap-1.5 text-[12.5px] text-ink-3">
+              <MousePointerClick size={14} className="shrink-0 text-ink-4" />
+              Выберите маршрут — пример пути появится на плане
+            </p>
+            <RoutesList routes={routes} active={activeRoute?.key} onPick={(key) => toggle({ kind: 'route', key })} />
+          </PaneSection>
         </>
       }
       status={
