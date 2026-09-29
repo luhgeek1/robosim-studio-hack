@@ -1,11 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Camera, Info, Sparkles, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
+import { Camera, Info, Sparkles, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
-import { PROJECT_STEPS, stepIndex, useProject, useProjectId } from '@/entities/project'
+import { useProject, useProjectId } from '@/entities/project'
 import { useObjectType } from '@/entities/reference'
 import { useUploadVisual } from '@/entities/report'
 import { SCENARIO_KIND_LABEL, useCalculation, useCountSource, useScenarios } from '@/entities/scenario'
@@ -44,7 +43,7 @@ import { KpiNumber, Pill, Segmented, type Tone } from '@/shared/ui/v0'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
 import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
-import { PaneSection, PaneTitle, StatusBar, type Panels } from './Workbench'
+import { PaneSection, PaneTitle, StatusBar, WorkbenchFrame, WorkbenchGrid, type Panels } from '@/widgets/workbench'
 
 const SEED = SWEEP_SEED
 // Стресс-тесты шага «Имитация» из docs/PRODUCT.md: +20 % объёма и отказ одного робота на 2 часа в начале смены.
@@ -340,102 +339,46 @@ function SimulationView({
       ? undefined
       : 'Имитация прогонит день на планировке объекта и проверит, успевает ли парк выполнять задачи в срок.'
 
-  const dockHalf = useDockHalf()
-  const stepIdx = stepIndex('simulation')
-  const prevStep = PROJECT_STEPS[stepIdx - 1]
-  const nextStep = PROJECT_STEPS[stepIdx + 1]
-
-  // Рабочая область занимает всё окно под шапкой, плашка шагов плавает поверх середины её верхней строки.
-  // Портал — потому что у контейнера страницы есть анимация с transform, а внутри неё position: fixed
-  // отсчитывается не от окна.
-  return createPortal(
-    <div
-      className="fixed inset-x-0 top-14 bottom-0 z-20 flex flex-col bg-card"
-      style={{ '--dock-half': `${dockHalf}px` } as CSSProperties}
+  return (
+    <WorkbenchFrame
+      projectId={projectId}
+      step="simulation"
+      title={`${config.count} × ${sizing?.product_name ?? '…'}`}
+      titleHint={`${config.count} × ${sizing?.product_name ?? ''}${lead ? `. ${lead}` : ''}`}
+      actions={picker}
     >
-      {/* Строка высотой с зону плашки шагов: середину занимает плашка, содержимое — по краям. */}
-      <div className="flex h-[4.125rem] shrink-0 items-center justify-between gap-3 border-b border-line bg-surface-2 px-2">
-        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
-          {prevStep && (
-            <Button variant="ghost" size="icon-sm" asChild title={`Назад: ${prevStep.label}`}>
-              <Link to={`/projects/${projectId}/${prevStep.id}`} aria-label={`Назад: ${prevStep.label}`}>
-                <ArrowLeft />
-              </Link>
-            </Button>
-          )}
-          <div className="min-w-0">
-            <div className="hud flex items-center gap-1.5">
-              <span className="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden />
-              Шаг {String(stepIdx + 1).padStart(2, '0')} / {String(PROJECT_STEPS.length).padStart(2, '0')}
-            </div>
-            <h1
-              className="truncate text-[14px] font-semibold tracking-[-0.01em]"
-              title={`${config.count} × ${sizing?.product_name ?? ''}${lead ? `. ${lead}` : ''}`}
-            >
-              {config.count} × {sizing?.product_name ?? '…'}
-            </h1>
-          </div>
-        </div>
-        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
-          <div className="min-w-0">{picker}</div>
-          {nextStep && (
-            <Button variant="ghost" size="icon-sm" asChild title={`Далее: ${nextStep.label}`}>
-              <Link to={`/projects/${projectId}/${nextStep.id}`} aria-label={`Далее: ${nextStep.label}`}>
-                <ArrowRight />
-              </Link>
-            </Button>
-          )}
-        </div>
-      </div>
-
       {calculation.isPending && <LoadingBlock label="Загружаем расчёт…" className="m-6" />}
       {calculation.isError && (
         <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} className="m-6" />
       )}
-
       {sizing && (
-        <>
-          {/* Рабочая область как в IDE: слева ход прогона, по центру карта, справа решение для расчёта,
-              внизу плеер и условия прогона, под всем — строка состояния. */}
-          <div
-            style={
-              {
-                '--cols': `${panels.left ? `${LEFT_W}px` : '0px'} minmax(0,1fr) ${panels.right ? `${RIGHT_W}px` : '0px'}`,
-              } as CSSProperties
-            }
-            className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:grid-cols-(--cols) lg:grid-rows-[minmax(0,1fr)_auto_auto] lg:overflow-hidden"
-          >
-            <aside
-              className={cn(
-                'order-2 min-h-0 min-w-0 overflow-hidden bg-surface-2 lg:order-none lg:row-span-2',
-                panels.left && 'lg:border-r lg:border-line',
+        <WorkbenchGrid
+          panels={panels}
+          leftWidth={LEFT_W}
+          rightWidth={RIGHT_W}
+          left={
+            <>
+              <PaneTitle>Прогон</PaneTitle>
+              {summary && run.data ? (
+                <RunLive
+                  run={run.data}
+                  summary={summary}
+                  timeline={timeline.data}
+                  sweepPoint={
+                    run.data.purpose === 'sweep'
+                      ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id)
+                      : undefined
+                  }
+                />
+              ) : (
+                <div className="flex flex-1 items-center justify-center p-6 text-center text-[13px] text-ink-3">
+                  {failed ?? 'Показатели появятся, когда прогон завершится.'}
+                </div>
               )}
-            >
-              <div
-                className="scroll-thin flex h-full flex-col overflow-y-auto lg:w-(--left-w)"
-                style={{ '--left-w': `${LEFT_W}px` } as CSSProperties}
-              >
-                <PaneTitle>Прогон</PaneTitle>
-                {summary && run.data ? (
-                  <RunLive
-                    run={run.data}
-                    summary={summary}
-                    timeline={timeline.data}
-                    sweepPoint={
-                      run.data.purpose === 'sweep'
-                        ? lastSweep?.points.find((p) => p.simulation_id === run.data?.id)
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <div className="flex flex-1 items-center justify-center p-6 text-center text-[13px] text-ink-3">
-                    {failed ?? 'Показатели появятся, когда прогон завершится.'}
-                  </div>
-                )}
-              </div>
-            </aside>
-
-            <main className="relative order-1 h-[60vh] min-h-0 min-w-0 lg:order-none lg:h-auto">
+            </>
+          }
+          center={
+            <>
               {(error || replay.isError) && (
                 <div className="absolute inset-x-3 top-3 z-20 space-y-2">
                   {error && (
@@ -513,123 +456,114 @@ function SimulationView({
                   </motion.div>
                 )}
               </AnimatePresence>
-            </main>
-
-            <aside
-              className={cn(
-                'order-3 min-h-0 min-w-0 overflow-hidden bg-surface-2 lg:order-none lg:col-start-3 lg:row-span-2 lg:row-start-1',
-                panels.right && 'lg:border-l lg:border-line',
-              )}
-            >
-              <div
-                className="scroll-thin flex h-full flex-col overflow-y-auto lg:w-(--right-w)"
-                style={{ '--right-w': `${RIGHT_W}px` } as CSSProperties}
-              >
-                <PaneTitle>Решение для расчёта</PaneTitle>
-                <FleetSweep
-                  projectId={projectId}
-                  scenarioId={scenario.id}
-                  variantIds={variantIds}
-                  sizing={sizing}
-                  last={lastSweep}
-                  shownCount={config.count}
-                  onOpen={openRun}
-                />
-                {summary && <RunCheck summary={summary} target={target} />}
+            </>
+          }
+          right={
+            <>
+              <PaneTitle>Решение для расчёта</PaneTitle>
+              <FleetSweep
+                projectId={projectId}
+                scenarioId={scenario.id}
+                variantIds={variantIds}
+                sizing={sizing}
+                last={lastSweep}
+                shownCount={config.count}
+                onOpen={openRun}
+              />
+              {summary && <RunCheck summary={summary} target={target} />}
+            </>
+          }
+          bottom={
+            <>
+              <div className="flex h-9 items-center gap-4 border-b border-line pr-2 pl-3.5">
+                <span className="hud relative flex h-full shrink-0 items-center text-ink">
+                  Условия прогона
+                  <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ink" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-info" title={whatIf ?? undefined}>
+                  {whatIf}
+                </span>
+                <Toggle
+                  size="sm"
+                  variant="outline"
+                  pressed={heatOn}
+                  onPressedChange={setHeatOn}
+                  disabled={!ready}
+                  className="h-7"
+                >
+                  Заторы
+                </Toggle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!tracks || upload.isPending}
+                  onClick={() => void snapshot()}
+                  title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
+                >
+                  {upload.isPending ? <Spinner /> : <Camera />} Снимок в отчёт
+                </Button>
               </div>
-            </aside>
-
-            {panels.bottom && (
-              <section className="order-4 min-w-0 border-t border-line bg-card lg:order-none lg:col-start-2 lg:row-start-2">
-                <div className="flex h-9 items-center gap-4 border-b border-line pr-2 pl-3.5">
-                  <span className="hud relative flex h-full shrink-0 items-center text-ink">
-                    Условия прогона
-                    <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ink" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-info" title={whatIf ?? undefined}>
-                    {whatIf}
-                  </span>
-                  <Toggle
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-3.5 py-2">
+                <Control label="Роботов">
+                  <Segmented
                     size="sm"
-                    variant="outline"
-                    pressed={heatOn}
-                    onPressedChange={setHeatOn}
-                    disabled={!ready}
-                    className="h-7"
-                  >
-                    Заторы
-                  </Toggle>
-                  <Button
-                    variant="outline"
+                    value={config.count}
+                    onChange={(count) => change({ count })}
+                    options={counts.map((n) => ({
+                      value: n,
+                      label: n === working ? `${n} ●` : String(n),
+                      hint: n === working ? COUNT_HINT[sizing.count.source] : undefined,
+                    }))}
+                  />
+                </Control>
+                <Control label="Режим">
+                  <Segmented
                     size="sm"
-                    disabled={!tracks || upload.isPending}
-                    onClick={() => void snapshot()}
-                    title="Схема или 3D-вид в текущий момент прогона попадёт в PDF-отчёт"
-                  >
-                    {upload.isPending ? <Spinner /> : <Camera />} Снимок в отчёт
-                  </Button>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-3.5 py-2">
-                  <Control label="Роботов">
-                    <Segmented
+                    value={config.mode}
+                    onChange={(mode) => change({ mode })}
+                    options={[
+                      {
+                        value: 'peak',
+                        label: 'Пик',
+                        hint: `Пиковые часы: ${formatNumber(sizing.demand_peak_per_hour)} ед/ч без передышки, как в переборе флота`,
+                      },
+                      {
+                        value: 'normal',
+                        label: 'Сутки',
+                        hint: `Обычный день, сутки: ${formatNumber(sizing.demand_avg_per_hour)} ед/ч в среднем, пик в середине смены`,
+                      },
+                    ]}
+                  />
+                </Control>
+                <Control label="Стресс">
+                  <div className="flex gap-1.5">
+                    <Toggle
                       size="sm"
-                      value={config.count}
-                      onChange={(count) => change({ count })}
-                      options={counts.map((n) => ({
-                        value: n,
-                        label: n === working ? `${n} ●` : String(n),
-                        hint: n === working ? COUNT_HINT[sizing.count.source] : undefined,
-                      }))}
-                    />
-                  </Control>
-                  <Control label="Режим">
-                    <Segmented
+                      variant="outline"
+                      pressed={config.volume}
+                      onPressedChange={(volume) => change({ volume })}
+                      title="Стресс-тест: объём задач на 20 % больше"
+                    >
+                      +20 %
+                    </Toggle>
+                    <Toggle
                       size="sm"
-                      value={config.mode}
-                      onChange={(mode) => change({ mode })}
-                      options={[
-                        {
-                          value: 'peak',
-                          label: 'Пик',
-                          hint: `Пиковые часы: ${formatNumber(sizing.demand_peak_per_hour)} ед/ч без передышки, как в переборе флота`,
-                        },
-                        {
-                          value: 'normal',
-                          label: 'Сутки',
-                          hint: `Обычный день, сутки: ${formatNumber(sizing.demand_avg_per_hour)} ед/ч в среднем, пик в середине смены`,
-                        },
-                      ]}
-                    />
-                  </Control>
-                  <Control label="Стресс">
-                    <div className="flex gap-1.5">
-                      <Toggle
-                        size="sm"
-                        variant="outline"
-                        pressed={config.volume}
-                        onPressedChange={(volume) => change({ volume })}
-                        title="Стресс-тест: объём задач на 20 % больше"
-                      >
-                        +20 %
-                      </Toggle>
-                      <Toggle
-                        size="sm"
-                        variant="outline"
-                        pressed={config.failure}
-                        onPressedChange={(failure) => change({ failure })}
-                        title="Стресс-тест: один робот выходит из строя на 2 часа"
-                      >
-                        Отказ 2 ч
-                      </Toggle>
-                    </div>
-                  </Control>
-                </div>
-                <div className="px-3.5 py-2">
-                  <PlayerBar disabled={!tracks} />
-                </div>
-              </section>
-            )}
-
+                      variant="outline"
+                      pressed={config.failure}
+                      onPressedChange={(failure) => change({ failure })}
+                      title="Стресс-тест: один робот выходит из строя на 2 часа"
+                    >
+                      Отказ 2 ч
+                    </Toggle>
+                  </div>
+                </Control>
+              </div>
+              <div className="px-3.5 py-2">
+                <PlayerBar disabled={!tracks} />
+              </div>
+            </>
+          }
+          status={
             <StatusBar
               status={
                 failed || error
@@ -655,35 +589,17 @@ function SimulationView({
               ]}
               panels={panels}
               onToggle={(key) => setPanels((p) => ({ ...p, [key]: !p[key] }))}
+              labels={{ left: 'Панель прогона', bottom: 'Условия прогона', right: 'Решение для расчёта' }}
             />
-          </div>
-        </>
+          }
+        />
       )}
-    </div>,
-    document.body,
+    </WorkbenchFrame>
   )
 }
 
 const LEFT_W = 272
 const RIGHT_W = 316
-
-// Полуширина плашки шагов с зазором: края строки заголовка заканчиваются там, где начинается плашка.
-const DOCK_GAP_PX = 12
-const DOCK_FALLBACK_HALF_PX = 470
-
-function useDockHalf() {
-  const [half, setHalf] = useState(DOCK_FALLBACK_HALF_PX)
-  useEffect(() => {
-    const dock = document.querySelector<HTMLElement>('nav[aria-label="Шаги оценки"]')
-    if (!dock) return
-    const measure = () => setHalf(Math.ceil(dock.getBoundingClientRect().width / 2) + DOCK_GAP_PX)
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(dock)
-    return () => observer.disconnect()
-  }, [])
-  return half
-}
 
 function pointAt(points: SimulationTimeline['points'], t: number) {
   let found = points[0]

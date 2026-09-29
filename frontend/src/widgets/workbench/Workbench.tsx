@@ -68,6 +68,8 @@ export function StatusBar({
   metrics,
   panels,
   onToggle,
+  labels = { left: 'Левая панель', bottom: 'Нижняя панель', right: 'Правая панель' },
+  toggles: shown = ['left', 'bottom', 'right'],
 }: {
   status: string
   live: boolean
@@ -75,11 +77,13 @@ export function StatusBar({
   metrics: ReactNode[]
   panels: Panels
   onToggle: (key: keyof Panels) => void
+  labels?: Record<keyof Panels, string>
+  toggles?: (keyof Panels)[]
 }) {
   const toggles: { key: keyof Panels; icon: typeof PanelLeft; label: string }[] = [
-    { key: 'left', icon: PanelLeft, label: 'Панель прогона' },
-    { key: 'bottom', icon: PanelBottom, label: 'Панель условий' },
-    { key: 'right', icon: PanelRight, label: 'Панель решения' },
+    { key: 'left', icon: PanelLeft, label: labels.left },
+    { key: 'bottom', icon: PanelBottom, label: labels.bottom },
+    { key: 'right', icon: PanelRight, label: labels.right },
   ]
   return (
     <footer className="col-span-full flex h-7 items-center gap-4 bg-ink px-3 font-mono text-[11px] tracking-[0.04em] text-white/70 uppercase">
@@ -99,22 +103,24 @@ export function StatusBar({
           </span>
         ))}
         <span className="flex items-center gap-0.5 border-l border-white/15 pl-2">
-          {toggles.map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onToggle(key)}
-              aria-pressed={panels[key]}
-              aria-label={label}
-              title={label}
-              className={cn(
-                'flex size-5 items-center justify-center rounded-[4px] transition-colors hover:bg-white/15',
-                panels[key] ? 'text-white' : 'text-white/40',
-              )}
-            >
-              <Icon size={13} />
-            </button>
-          ))}
+          {toggles
+            .filter(({ key }) => shown.includes(key))
+            .map(({ key, icon: Icon, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onToggle(key)}
+                aria-pressed={panels[key]}
+                aria-label={label}
+                title={label}
+                className={cn(
+                  'flex size-5 items-center justify-center rounded-[4px] transition-colors hover:bg-white/15',
+                  panels[key] ? 'text-white' : 'text-white/40',
+                )}
+              >
+                <Icon size={13} />
+              </button>
+            ))}
         </span>
       </span>
     </footer>

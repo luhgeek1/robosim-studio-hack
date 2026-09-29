@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Box, Map as MapIcon, Maximize2, RefreshCw } from 'lucide-react'
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { ArrowDown, ArrowRight, Box, FileText, Map as MapIcon, RefreshCw } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
 import { OBJECT_TYPE_LABEL, useProject, useProjectId } from '@/entities/project'
@@ -10,11 +10,12 @@ import type { Layout } from '@/shared/api/types'
 import { formatNumber, isNum, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
-import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog'
 import { Screen } from '@/shared/ui/page'
-import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
+import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { LayoutMap, type FitPadding } from '@/widgets/layout-map'
-import { Derivation } from './DerivationList'
+import { PaneSection, PaneTitle, StatusBar, WorkbenchFrame, WorkbenchGrid, type Panels } from '@/widgets/workbench'
+import { DerivationSection } from './DerivationList'
+import { useDerivationDownload } from './useDerivationDownload'
 import { FocusLayer, type Spotlight } from './FocusLayer'
 import { ROUTE_ENDPOINT, ROUTE_USE, TEMPLATE_LABEL, type LayoutRoute } from './labels'
 import { RegenerateDialog } from './RegenerateDialog'
@@ -28,7 +29,9 @@ type Figure = { key: string; value: string; label: string; spotlight: Spotlight 
 const SPRING = { type: 'spring', stiffness: 500, damping: 40 } as const
 // At «Целиком» the building stays clear of the caption above and the toolbar below.
 const PLAN_PAD: FitPadding = { x: 36, top: 76, bottom: 92 }
-const MODAL_PLAN_PAD: FitPadding = { x: 56, top: 84, bottom: 96 }
+const DERIVATION_ANCHOR = 'layout-derivation'
+const LEFT_W = 272
+const RIGHT_W = 332
 
 export function LayoutPage() {
   const projectId = useProjectId()
@@ -44,24 +47,51 @@ export function LayoutPage() {
 
   const data = layout.data
   const route = data?.stats.routes?.find((r) => r.key === 'dock_in_to_storage')
+  const title = data
+    ? `Склад ${formatNumber(data.width_m)} × ${formatNumber(data.height_m)} м${route ? `: от ворот до места хранения в среднем ${formatNumber(route.value_m)} м` : ''}`
+    : 'Планировка'
+
+  const dialog = dialogOpen && (
+    <RegenerateDialog
+      projectId={projectId}
+      layout={data}
+      templates={templates.length ? templates : data?.template ? [data.template] : []}
+      open
+      onOpenChange={setDialogOpen}
+    />
+  )
+
+  if (data) {
+    return (
+      <>
+        <WorkbenchFrame
+          projectId={projectId}
+          step="layout"
+          inFlow
+          title={title}
+          titleHint={title}
+          actions={
+            !unsupported && (
+              <Button variant="outline" size="sm" onClick={openDialog}>
+                <RefreshCw /> Перегенерировать
+              </Button>
+            )
+          }
+        >
+          <PlanWorkbench
+            layout={data}
+            projectName={project.data?.name ?? 'Проект'}
+            onRegenerate={unsupported ? undefined : openDialog}
+          />
+        </WorkbenchFrame>
+        {data.derivation.length > 0 && <DerivationSection layout={data} projectName={project.data?.name ?? 'Проект'} />}
+        {dialog}
+      </>
+    )
+  }
 
   return (
-    <Screen
-      dense
-      title={
-        data
-          ? `Склад ${formatNumber(data.width_m)} × ${formatNumber(data.height_m)} м${route ? `: от ворот до места хранения в среднем ${formatNumber(route.value_m)} м` : ''}`
-          : 'Планировка'
-      }
-      actions={
-        data &&
-        !unsupported && (
-          <Button variant="outline" onClick={openDialog}>
-            <RefreshCw /> Перегенерировать
-          </Button>
-        )
-      }
-    >
+    <Screen dense title={title}>
       {layout.isPending && <LoadingBlock label="Строим планировку…" />}
 
       {layout.isError &&
@@ -92,34 +122,29 @@ export function LayoutPage() {
         ) : (
           <ErrorBlock error={layout.error} onRetry={() => layout.refetch()} />
         ))}
-
-      {data && (
-        <>
-          <PlanOverview layout={data} onRegenerate={unsupported ? undefined : openDialog} />
-          {data.derivation.length > 0 && <Derivation layout={data} projectName={project.data?.name ?? 'Проект'} />}
-        </>
-      )}
-
-      {dialogOpen && (
-        <RegenerateDialog
-          projectId={projectId}
-          layout={data}
-          templates={templates.length ? templates : data?.template ? [data.template] : []}
-          open
-          onOpenChange={setDialogOpen}
-        />
-      )}
+      {dialog}
     </Screen>
   )
 }
 
-/* One card like the object overview: the plan with the focus drawn over it, the routes that go into the robot
-   cycle on the right, and the figures the geometry gives under it. Picking a route or a figure lights it up. */
-function PlanOverview({ layout, onRegenerate }: { layout: Layout; onRegenerate?: () => void }) {
+/* Рабочая область как у имитации: слева цифры и проверки схемы, по центру план с подсветкой, справа маршруты,
+   которые идут в цикл робота, внизу — вывод геометрии (по умолчанию свёрнут). Выбор маршрута или цифры
+   подсвечивает её на плане. */
+function PlanWorkbench({
+  layout,
+  projectName,
+  onRegenerate,
+}: {
+  layout: Layout
+  projectName: string
+  onRegenerate?: () => void
+}) {
   const routes = useMemo(() => layout.stats.routes ?? [], [layout.stats.routes])
   const figures = useMemo(() => buildFigures(layout), [layout])
+  const checks = useMemo(() => buildChecks(layout), [layout])
   const [focus, setFocus] = useState<Focus>(routes[0] ? { kind: 'route', key: routes[0].key } : null)
-  const [expanded, setExpanded] = useState(false)
+  const [panels, setPanels] = useState<Panels>({ left: true, right: true, bottom: false })
+  const derivation = useDerivationDownload(layout, projectName)
 
   const activeRoute = focus?.kind === 'route' ? routes.find((r) => r.key === focus.key) : undefined
   const activeFigure = focus?.kind === 'figure' ? figures.find((f) => f.key === focus.key) : undefined
@@ -130,58 +155,128 @@ function PlanOverview({ layout, onRegenerate }: { layout: Layout; onRegenerate?:
   const toggle = (next: NonNullable<Focus>) =>
     setFocus((prev) => (prev?.kind === next.kind && prev.key === next.key ? null : next))
 
-  const stage = (fitPadding: FitPadding, modal: boolean) => (
-    <PlanStage
-      layout={layout}
-      route={activeRoute}
-      example={example}
-      figure={activeFigure}
-      fitPadding={fitPadding}
-      onExpand={modal ? undefined : () => setExpanded(true)}
-    />
-  )
-
   return (
-    <section className="card overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_23rem]">
-        <div className="relative min-h-150">{!expanded && stage(PLAN_PAD, false)}</div>
-        <RoutesPanel
-          layout={layout}
-          routes={routes}
-          active={activeRoute?.key}
-          onPick={(key) => toggle({ kind: 'route', key })}
-          onFigure={(key) => setFocus({ kind: 'figure', key })}
-          onRegenerate={onRegenerate}
+    <WorkbenchGrid
+      panels={panels}
+      leftWidth={LEFT_W}
+      rightWidth={RIGHT_W}
+      left={
+        <>
+          <PaneTitle>Схема</PaneTitle>
+          <PaneSection title="Цифры геометрии" aside={<span className="meta">клик — на плане</span>}>
+            <ul className="relative -mx-1.5">
+              <SlideHighlight className="rounded-lg bg-card ring-1 ring-line" transition={SPRING} />
+              {figures.map((figure) => {
+                const on = activeFigure?.key === figure.key
+                return (
+                  <li key={figure.key}>
+                    <button
+                      type="button"
+                      onClick={() => toggle({ kind: 'figure', key: figure.key })}
+                      aria-pressed={on}
+                      title={on ? 'Снять подсветку' : 'Показать на схеме'}
+                      className={cn(
+                        'relative flex w-full items-baseline justify-between gap-3 rounded-lg px-1.5 py-1.5 text-left transition-colors',
+                        on ? 'text-ink' : 'text-ink-2 hover:bg-black/3',
+                      )}
+                    >
+                      {on && <SlideMark />}
+                      <span className="relative min-w-0 truncate text-[12.5px]">{figure.label}</span>
+                      <span className="num relative shrink-0 text-[14px] font-semibold text-ink">{figure.value}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </PaneSection>
+          {checks.length > 0 && (
+            <PaneSection title="Проверки схемы">
+              <ul className="-mx-2 space-y-0.5">
+                {checks.map((check) => (
+                  <li key={check.text}>
+                    <CheckRow
+                      check={check}
+                      onClick={check.figure ? () => setFocus({ kind: 'figure', key: check.figure! }) : undefined}
+                      action={
+                        check.rebuild && onRegenerate ? (
+                          <button
+                            type="button"
+                            onClick={onRegenerate}
+                            className="mt-1 flex items-center gap-1 text-[12.5px] font-medium text-ink transition-opacity hover:opacity-70"
+                          >
+                            <RefreshCw size={12} /> Перегенерировать
+                          </button>
+                        ) : undefined
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            </PaneSection>
+          )}
+        </>
+      }
+      center={
+        <PlanStage layout={layout} route={activeRoute} example={example} figure={activeFigure} fitPadding={PLAN_PAD} />
+      }
+      right={
+        <>
+          <PaneTitle>Маршруты роботов</PaneTitle>
+          <PaneSection title="Средние по графу">
+            <p className="mb-2 text-[12.5px] leading-relaxed text-ink-3">
+              Идут в цикл робота вместо норматива; ваш замер из параметров объекта важнее.
+            </p>
+            <RoutesList routes={routes} active={activeRoute?.key} onPick={(key) => toggle({ kind: 'route', key })} />
+          </PaneSection>
+          {layout.derivation.length > 0 && (
+            <PaneSection title="Как получена геометрия">
+              <p className="text-[12.5px] leading-relaxed text-ink-3">
+                {layout.derivation.length} {pluralRu(layout.derivation.length, ['шаг', 'шага', 'шагов'])}: каждый размер
+                — формула из параметров объекта и нормативов.
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    document.getElementById(DERIVATION_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }
+                >
+                  <ArrowDown /> Смотреть ниже
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => void derivation.download()}
+                  disabled={derivation.saving}
+                >
+                  {derivation.saving ? <Spinner /> : <FileText />} Документ
+                </Button>
+              </div>
+            </PaneSection>
+          )}
+        </>
+      }
+      status={
+        <StatusBar
+          status={TEMPLATE_LABEL[layout.template ?? ''] ?? 'Планировка'}
+          live={false}
+          items={[
+            layout.generated ? 'сгенерирована' : 'изменена вручную',
+            ...(layout.updated_at ? [SHORT_DATE.format(new Date(layout.updated_at))] : []),
+            `здание ${formatNumber(layout.width_m)} × ${formatNumber(layout.height_m)} м`,
+          ]}
+          metrics={[
+            `${routes.length} ${pluralRu(routes.length, ['маршрут', 'маршрута', 'маршрутов'])}`,
+            `${layout.derivation.length} ${pluralRu(layout.derivation.length, ['шаг', 'шага', 'шагов'])} вывода`,
+          ]}
+          panels={panels}
+          onToggle={(key) => setPanels((p) => ({ ...p, [key]: !p[key] }))}
+          labels={{ left: 'Схема', bottom: 'Вывод геометрии', right: 'Маршруты роботов' }}
+          toggles={['left', 'right']}
         />
-      </div>
-
-      <div
-        className="relative grid grid-cols-3 border-t border-line md:grid-cols-(--cols) md:divide-x md:divide-line"
-        style={{ '--cols': `repeat(${figures.length}, minmax(0, 1fr))` } as CSSProperties}
-      >
-        <SlideHighlight className="z-10 bg-warn" transition={SPRING} />
-        {figures.map((figure) => (
-          <FigureButton
-            key={figure.key}
-            figure={figure}
-            active={activeFigure?.key === figure.key}
-            onClick={() => toggle({ kind: 'figure', key: figure.key })}
-          />
-        ))}
-      </div>
-
-      <Dialog open={expanded} onOpenChange={setExpanded}>
-        <DialogContent
-          className="block h-[90vh] w-[90vw] max-w-none overflow-hidden p-0 sm:max-w-none"
-          overlayClassName="bg-black/25 supports-backdrop-filter:backdrop-blur-md"
-          // Focusing the first control would pop the route-graph tooltip over the map on open.
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          <DialogTitle className="sr-only">Планировка объекта</DialogTitle>
-          {stage(MODAL_PLAN_PAD, true)}
-        </DialogContent>
-      </Dialog>
-    </section>
+      }
+    />
   )
 }
 
@@ -191,14 +286,12 @@ function PlanStage({
   example,
   figure,
   fitPadding,
-  onExpand,
 }: {
   layout: Layout
   route?: LayoutRoute
   example: ExampleRoute | null
   figure?: Figure
   fitPadding: FitPadding
-  onExpand?: () => void
 }) {
   const caption = route ? (
     <>
@@ -248,133 +341,68 @@ function PlanStage({
           )}
         </AnimatePresence>
       </div>
-
-      {onExpand && (
-        <button
-          type="button"
-          onClick={onExpand}
-          title="Открыть крупно"
-          aria-label="Открыть крупно"
-          className="absolute top-4 right-4 z-10 flex size-11 items-center justify-center rounded-[12px] bg-white/90 text-ink-2 shadow-card backdrop-blur transition-colors hover:bg-white hover:text-ink"
-        >
-          <Maximize2 size={17} />
-        </button>
-      )}
     </div>
   )
 }
 
-function RoutesPanel({
-  layout,
+function RoutesList({
   routes,
   active,
   onPick,
-  onFigure,
-  onRegenerate,
 }: {
-  layout: Layout
   routes: LayoutRoute[]
   active?: RouteKey
   onPick: (key: RouteKey) => void
-  onFigure: (key: string) => void
-  onRegenerate?: () => void
 }) {
   const longest = Math.max(...routes.map((r) => r.value_m), 1)
-  const checks = buildChecks(layout)
-
+  if (!routes.length) return <p className="text-[13px] text-ink-3">Маршруты не рассчитаны.</p>
   return (
-    <div className="flex min-w-0 flex-col border-t border-line px-5 py-6 lg:border-t-0 lg:border-l">
-      <div className="flex items-baseline justify-between gap-3 px-2">
-        <h2 className="h3">Маршруты роботов</h2>
-        <span className="meta">средние по графу</span>
-      </div>
-      <p className="mt-1 px-2 text-[12.5px] leading-relaxed text-ink-3">
-        Идут в цикл робота вместо норматива; ваш замер из параметров объекта важнее.
-      </p>
-
-      {routes.length ? (
-        <ul className="relative mt-3">
-          <SlideHighlight className="rounded-lg bg-surface-2 ring-1 ring-line" transition={SPRING} />
-          {routes.map((route) => {
-            const on = route.key === active
-            const [from, to] = ROUTE_ENDPOINT[route.key]
-            const pairs = `${formatNumber(route.pairs)} ${pluralRu(route.pairs, ['пара', 'пары', 'пар'])}`
-            return (
-              <li key={route.key}>
-                <button
-                  type="button"
-                  onClick={() => onPick(route.key)}
-                  aria-pressed={on}
-                  className={cn(
-                    'relative w-full rounded-lg px-2.5 py-1.5 text-left transition-colors',
-                    on ? 'text-ink' : 'text-ink-2 hover:bg-surface-2',
-                  )}
-                  title={`${route.name}: ${ROUTE_USE[route.key]}, ${pairs}`}
-                >
-                  {on && <SlideMark />}
-                  <span className="relative flex items-baseline justify-between gap-3">
-                    <span className="min-w-0 truncate text-[13px]">
-                      {capitalize(from)}
-                      <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
-                      {to}
-                    </span>
-                    <span className="num shrink-0 text-[14px] font-semibold text-ink">
-                      {formatNumber(route.value_m)}
-                      <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
-                    </span>
-                  </span>
-                  <span className="relative mt-1 flex items-center gap-2.5">
-                    <span className="block h-0.75 flex-1 overflow-hidden rounded-full bg-black/5">
-                      <motion.span
-                        className={cn('block h-full rounded-full', on ? 'bg-warn' : 'bg-black/15')}
-                        initial={false}
-                        animate={{ width: `${(route.value_m / longest) * 100}%` }}
-                        transition={{ type: 'spring', stiffness: 160, damping: 26 }}
-                      />
-                    </span>
-                    <span className="num shrink-0 text-[11px] text-ink-4">{pairs}</span>
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      ) : (
-        <p className="mt-4 px-2 text-[13px] text-ink-3">Маршруты не рассчитаны.</p>
-      )}
-
-      {checks.length > 0 && (
-        <div className="hairline mx-2 mt-auto pt-5">
-          <div className="mb-2 text-[13px] text-ink-2">Проверки схемы</div>
-          <ul className="space-y-1">
-            {checks.map((check) => (
-              <li key={check.text}>
-                <CheckRow
-                  check={check}
-                  onClick={check.figure ? () => onFigure(check.figure!) : undefined}
-                  action={
-                    check.rebuild && onRegenerate ? (
-                      <button
-                        type="button"
-                        onClick={onRegenerate}
-                        className="mt-1 flex items-center gap-1 text-[12.5px] font-medium text-ink transition-opacity hover:opacity-70"
-                      >
-                        <RefreshCw size={12} /> Перегенерировать
-                      </button>
-                    ) : undefined
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-          <p className="meta mt-4 px-2">
-            {TEMPLATE_LABEL[layout.template ?? ''] ?? 'Планировка'}
-            {!layout.generated && ', изменена вручную'}
-            {layout.updated_at && ` · ${SHORT_DATE.format(new Date(layout.updated_at))}`}
-          </p>
-        </div>
-      )}
-    </div>
+    <ul className="relative -mx-2.5">
+      <SlideHighlight className="rounded-lg bg-card ring-1 ring-line" transition={SPRING} />
+      {routes.map((route) => {
+        const on = route.key === active
+        const [from, to] = ROUTE_ENDPOINT[route.key]
+        const pairs = `${formatNumber(route.pairs)} ${pluralRu(route.pairs, ['пара', 'пары', 'пар'])}`
+        return (
+          <li key={route.key}>
+            <button
+              type="button"
+              onClick={() => onPick(route.key)}
+              aria-pressed={on}
+              className={cn(
+                'relative w-full rounded-lg px-2.5 py-1.5 text-left transition-colors',
+                on ? 'text-ink' : 'text-ink-2 hover:bg-black/3',
+              )}
+              title={`${route.name}: ${ROUTE_USE[route.key]}, ${pairs}`}
+            >
+              {on && <SlideMark />}
+              <span className="relative flex items-baseline justify-between gap-3">
+                <span className="min-w-0 truncate text-[13px]">
+                  {capitalize(from)}
+                  <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />
+                  {to}
+                </span>
+                <span className="num shrink-0 text-[14px] font-semibold text-ink">
+                  {formatNumber(route.value_m)}
+                  <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
+                </span>
+              </span>
+              <span className="relative mt-1 flex items-center gap-2.5">
+                <span className="block h-0.75 flex-1 overflow-hidden rounded-full bg-black/5">
+                  <motion.span
+                    className={cn('block h-full rounded-full', on ? 'bg-signal' : 'bg-black/15')}
+                    initial={false}
+                    animate={{ width: `${(route.value_m / longest) * 100}%` }}
+                    transition={{ type: 'spring', stiffness: 160, damping: 26 }}
+                  />
+                </span>
+                <span className="num shrink-0 text-[11px] text-ink-4">{pairs}</span>
+              </span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -391,32 +419,13 @@ function CheckRow({ check, onClick, action }: { check: Check; onClick?: () => vo
       </span>
     </>
   )
-  const cls = 'flex w-full gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug text-ink-2'
+  const cls = 'flex w-full gap-2.5 rounded-lg px-2 py-1.5 text-left text-[12.5px] leading-snug text-ink-2'
   return onClick ? (
-    <button type="button" onClick={onClick} className={cn(cls, 'transition-colors hover:bg-surface-2 hover:text-ink')}>
+    <button type="button" onClick={onClick} className={cn(cls, 'transition-colors hover:bg-black/3 hover:text-ink')}>
       {body}
     </button>
   ) : (
     <div className={cls}>{body}</div>
-  )
-}
-
-function FigureButton({ figure, active, onClick }: { figure: Figure; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      title={active ? 'Снять подсветку' : 'Показать на схеме'}
-      className={cn(
-        'relative min-w-0 px-6 py-4 text-left transition-colors',
-        active ? 'bg-surface-2' : 'hover:bg-surface-2',
-      )}
-    >
-      {active && <SlideMark className="absolute inset-x-0 top-0 h-0.5" />}
-      <span className="num block text-[20px] leading-tight font-semibold tracking-[-0.01em]">{figure.value}</span>
-      <span className="mt-0.5 block truncate text-[12.5px] text-ink-3">{figure.label}</span>
-    </button>
   )
 }
 
