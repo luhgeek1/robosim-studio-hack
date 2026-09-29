@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from 'react'
+import { useState } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -13,6 +13,7 @@ import {
 import type { ComparisonTable } from '@/shared/api/types'
 import { formatMln, formatRub } from '@/shared/lib/format'
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
+import { useNarrow } from '@/shared/lib/media'
 
 type Mode = 'cumulative_rub' | 'discounted_cumulative_rub'
 type Row = { period: number } & Record<string, number | null>
@@ -20,19 +21,6 @@ type Row = { period: number } & Record<string, number | null>
 // The baseline is the reference line (neutral, dashed); robotization scenarios take categorical hues in fixed order.
 const SERIES_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)']
 const BASELINE_COLOR = 'var(--chart-5)'
-
-// Узкий экран (телефон): у графика меньше подписей и легенда сама выбирает высоту.
-const NARROW_QUERY = '(max-width: 639px)'
-function useNarrow() {
-  return useSyncExternalStore(
-    (onChange) => {
-      const query = window.matchMedia(NARROW_QUERY)
-      query.addEventListener('change', onChange)
-      return () => query.removeEventListener('change', onChange)
-    },
-    () => window.matchMedia(NARROW_QUERY).matches,
-  )
-}
 
 export function CashflowChart({ table }: { table: ComparisonTable }) {
   const overlay = table.cashflow_overlay ?? {}

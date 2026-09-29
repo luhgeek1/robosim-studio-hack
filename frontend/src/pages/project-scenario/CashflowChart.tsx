@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from 'react'
+import { useState } from 'react'
 import {
   Bar,
   CartesianGrid,
@@ -14,6 +14,7 @@ import {
 import type { CashflowPoint } from '@/shared/api/types'
 import { formatMln } from '@/shared/lib/format'
 import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
+import { useNarrow } from '@/shared/lib/media'
 
 type Grain = 'yearly' | 'monthly'
 
@@ -25,19 +26,6 @@ const SERIES = {
   cumulative: 'Накопленный поток',
   discounted: 'Дисконтированный',
 } as const
-
-// Узкий экран (телефон): у графика меньше подписей и легенда сама выбирает высоту.
-const NARROW_QUERY = '(max-width: 639px)'
-function useNarrow() {
-  return useSyncExternalStore(
-    (onChange) => {
-      const query = window.matchMedia(NARROW_QUERY)
-      query.addEventListener('change', onChange)
-      return () => query.removeEventListener('change', onChange)
-    },
-    () => window.matchMedia(NARROW_QUERY).matches,
-  )
-}
 
 export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; monthly: CashflowPoint[] }) {
   const [grain, setGrain] = useState<Grain>('yearly')

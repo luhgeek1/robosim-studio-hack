@@ -200,11 +200,12 @@ export function Stat({
 }) {
   return (
     <div className={cn('min-w-0 px-4 py-3.5 sm:px-5 sm:py-4', className)}>
-      <div className="truncate text-[13px] text-ink-3">{label}</div>
+      {/* На телефоне ячейка узкая: подпись переносится, а не обрезается многоточием. */}
+      <div className="text-[13px] leading-snug text-ink-3 sm:truncate">{label}</div>
       <div className={cn('display num mt-1.5 text-[21px] sm:text-[24px]', valueClassName)}>
         {typeof value === 'string' ? <ScrambleText text={value} /> : value}
       </div>
-      {hint && <div className="meta mt-1 truncate">{hint}</div>}
+      {hint && <div className="meta mt-1 leading-snug sm:truncate">{hint}</div>}
     </div>
   )
 }
