@@ -80,10 +80,13 @@ def irr(flows: Sequence[float]) -> float | None:
 
 
 def payback_months(cumulative: Sequence[float]) -> float | None:
-    """First moment the cumulative flow reaches zero, interpolated inside the month; index 0 is «now»."""
-    if cumulative and cumulative[0] >= 0:
+    """First moment the cumulative flow climbs back to zero after going negative, interpolated
+    inside the month; index 0 is «now». A flow that never goes negative pays back at once. A loan
+    without a down payment starts at exactly zero and dips with the first instalments: no payback yet."""
+    first_negative = next((month for month, value in enumerate(cumulative) if value < 0), None)
+    if first_negative is None:
         return 0.0
-    for month in range(1, len(cumulative)):
+    for month in range(first_negative + 1, len(cumulative)):
         before, after = cumulative[month - 1], cumulative[month]
         if after >= 0 > before:
             return month - 1 + (-before) / (after - before)

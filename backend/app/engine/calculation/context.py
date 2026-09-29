@@ -179,13 +179,32 @@ class Context:
                 f"У процесса «{process.name}» нет модели спроса — роботизация не считается"
             )
         ns = process.key
+        scaled = self.inp.volume_factor != 1.0
         per_day = self.record_expression(
-            f"{ns}.demand_per_day",
+            f"{ns}.demand_per_day_base" if scaled else f"{ns}.demand_per_day",
             f"Объём в сутки: {process.name}",
             process.demand["per_day"],
             None,
             Section.DEMAND,
         )
+        if scaled:
+            base = per_day.as_quantity()
+            volume = Quantity(
+                "volume_factor",
+                "Изменение объёма операций (анализ чувствительности)",
+                self.inp.volume_factor,
+                "доля",
+                InputKind.METRIC,
+            )
+            per_day = self.tr.record(
+                f"{ns}.demand_per_day",
+                f"Объём в сутки: {process.name} с изменением объёма",
+                base.value * volume.value,
+                None,
+                f"{base.key} × {volume.key}",
+                [base, volume],
+                Section.DEMAND,
+            )
         hours = self.record_expression(
             f"{ns}.hours_per_day",
             "Рабочих часов в сутки",

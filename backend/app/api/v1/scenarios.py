@@ -15,6 +15,7 @@ from app.api.schemas.scenarios import (
 )
 from app.domain.auth import CurrentUser, Permission
 from app.service.scenarios.calculations import CalculationService
+from app.service.scenarios.comparison import ComparisonService
 from app.service.scenarios.service import ScenarioDraft, ScenarioPatch, ScenarioService
 
 router = APIRouter(tags=["scenarios"])
@@ -128,4 +129,5 @@ async def calculate_scenario(
     scenario_id: ScenarioIdPath, user: OwnerDep, uow: UowDep, payload: CalculateRequest | None = None
 ) -> CalculationRun:
     stored = await CalculationService(uow, user).calculate(scenario_id)
+    await ComparisonService(uow, user).refresh_recommendation(stored.run.project_id)
     return CalculationRun.from_stored(stored)

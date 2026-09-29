@@ -6,7 +6,6 @@ from enum import StrEnum
 
 from app.engine.calculation import CalculationError, CalculationInput, calculate
 from app.engine.economics import Metrics
-from app.engine.expressions import parse
 from app.engine.trace import Book, InputKind, Quantity
 
 PERCENT = 100
@@ -105,16 +104,6 @@ def _scale_params(inp: CalculationInput, keys: set[str], factor: float) -> Calcu
     return replace(inp, params=params)
 
 
-def volume_params(inp: CalculationInput) -> set[str]:
-    """Daily volumes that drive demand of the scenario's processes (the `per_day` formulas)."""
-    used = {item.process_key for item in inp.items}
-    keys: set[str] = set()
-    for process in inp.processes:
-        if process.key in used and process.demand:
-            keys |= {name for name in parse(process.demand["per_day"]).names if name in inp.params}
-    return keys
-
-
 def staff_params(inp: CalculationInput) -> set[str]:
     """Headcounts of the staff groups that work in the scenario's processes."""
     used = {item.process_key for item in inp.items}
@@ -152,7 +141,8 @@ def apply(inp: CalculationInput, driver: Driver, value: float) -> CalculationInp
     if driver.key == Group.OPERATIONS_VOLUME:
         # AS-IS has to handle the same volume: without the staff moving too, more work would only add robots,
         # and the heatmap showed NPV falling as volume grows (people handling +20 % at the same headcount).
-        return _scale_params(inp, volume_params(inp) | staff_params(inp), factor)
+        staffed = _scale_params(inp, staff_params(inp), factor)
+        return replace(staffed, volume_factor=inp.volume_factor * factor)
     raise KeyError(driver.key)
 
 

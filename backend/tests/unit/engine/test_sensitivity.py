@@ -106,7 +106,13 @@ def test_more_volume_brings_the_staff_that_handles_it_today() -> None:
     )
     more = apply(INP, volume, 1.2)
     assert more.params["forklift_operators"] == pytest.approx(INP.params["forklift_operators"] * 1.2)
-    assert more.params["pallets_in_per_day"] == pytest.approx(INP.params["pallets_in_per_day"] * 1.2)
+    # The evaluated daily volume moves, not the formula's parameters: in a product they would compound.
+    assert more.params["pallets_in_per_day"] == INP.params["pallets_in_per_day"]
+    assert more.volume_factor == pytest.approx(1.2)
+    trace = {s.key: s.value for s in calculate(more, render=False).trace}
+    base_trace = {s.key: s.value for s in calculate(INP, render=False).trace}
+    per_day = "pallet_transport.demand_per_day"
+    assert trace[per_day] == pytest.approx(base_trace[per_day] * 1.2)
     base, items = tornado(INP, [volume], "effect_rub_year")
     assert items[0].metric_at_high > base > items[0].metric_at_low
     # The whole operation scales, so NPV scales with it and keeps its sign.

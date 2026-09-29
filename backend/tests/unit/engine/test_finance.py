@@ -49,6 +49,9 @@ def test_payback_interpolates_inside_month() -> None:
     assert payback_months([-100.0, -40.0, 20.0]) == pytest.approx(1 + 40 / 60)
     assert payback_months([-100.0, -50.0]) is None
     assert payback_months([0.0, 5.0]) == 0.0
+    # Credit without a down payment: the flow starts at zero, dips with the instalments, then recovers.
+    assert payback_months([-0.0, -30.0, -10.0, 10.0]) == pytest.approx(2.5)
+    assert payback_months([0.0, -30.0, -10.0]) is None
 
 
 def test_simple_payback_and_roi() -> None:

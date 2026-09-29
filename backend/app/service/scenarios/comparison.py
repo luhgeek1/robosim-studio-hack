@@ -187,6 +187,31 @@ class ComparisonService:
         caveats += [f"Высокий риск: {title}" for title in high]
         return {"scenario_id": best.scenario.id, "rationale": rationale, "caveats": caveats}, best
 
+    async def refresh_recommendation(self, project_id: UUID) -> None:
+        """Re-pick the recommended scenario from the stored calculations, so every screen that shows «the»
+        result agrees right after a calculation, not only once the comparison screen was opened."""
+        scenarios = list(await self._repo.for_project(project_id))
+        runs = await self._repo.latest_runs([s.id for s in scenarios])
+        project = await self._loader.project(self._user, project_id)
+        versions = await self._versions.current(project)
+        compared = [
+            ComparedScenario(
+                s,
+                StoredCalculation(
+                    runs[s.id],
+                    RunStatus.STALE if versions.is_stale(runs[s.id], s.version) else RunStatus.FRESH,
+                ),
+            )
+            for s in scenarios
+            if s.id in runs
+        ]
+        if not any(not c.scenario.is_baseline for c in compared):
+            return
+        _, chosen = self._recommend(compared, [])
+        for scenario in scenarios:
+            scenario.is_recommended = chosen is not None and scenario.id == chosen.scenario.id
+        await self._uow.flush()
+
     async def rerun(self, calculation_id: UUID) -> RerunView:
         old = (await self._calculations.get(calculation_id)).run
         new = (await self._calculations.calculate(old.scenario_id)).run

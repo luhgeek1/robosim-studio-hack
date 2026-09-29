@@ -62,6 +62,9 @@ async def scenario_summaries(
     for project_id in project_ids:
         scenario = recommended.get(project_id)
         run = runs.get(scenario.id) if scenario else latest.get(project_id)
+        # Nothing pays back: «как сейчас» is recommended, the headline still shows the robotized case.
+        if run is None or run.scenario_kind == ScenarioKind.BASELINE:
+            run = await repo.latest_robotized_run(project_id) or run
         headline = (
             {
                 "payback_years": run.payback_years,

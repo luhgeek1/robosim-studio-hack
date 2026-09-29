@@ -58,6 +58,9 @@ class CalculationInput:
     site_costs: Sequence[SiteCostDef]
     items: Sequence[ItemInput]
     layout: Book = field(default_factory=lambda: Book(InputKind.LAYOUT, {}))
+    # Sensitivity «объём операций»: scales each process's evaluated daily volume, not the parameters of the
+    # formula — in a product of parameters scaling every factor would move the demand by 1.2², 1.2³.
+    volume_factor: float = 1.0
 
 
 @dataclass(frozen=True, slots=True)
