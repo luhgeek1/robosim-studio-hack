@@ -1,0 +1,20 @@
+app = "robomera-db"
+primary_region = "arn"
+
+[build]
+  image = "postgres:17-alpine"
+
+[env]
+  POSTGRES_USER = "robomera"
+  POSTGRES_DB = "robomera"
+  # The volume root holds lost+found, which initdb refuses.
+  PGDATA = "/var/lib/postgresql/data/pgdata"
+
+[[mounts]]
+  source = "pgdata"
+  destination = "/var/lib/postgresql/data"
+  initial_size = "3gb"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
