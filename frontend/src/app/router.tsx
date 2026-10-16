@@ -8,6 +8,11 @@ const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: l
 
 const router = createBrowserRouter([
   {
+    path: '/',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))),
+  },
+  {
     Component: AppShell,
     HydrateFallback: () => null,
     children: [
@@ -15,7 +20,7 @@ const router = createBrowserRouter([
         // Pathless layout: a crash in any screen renders RouteError inside the shell, the header stays.
         errorElement: <RouteError />,
         children: [
-          { index: true, Component: RootRedirect },
+          { path: 'app', Component: RootRedirect },
           {
             Component: RequireAdmin,
             children: [

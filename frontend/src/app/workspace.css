@@ -1,0 +1,58 @@
+/* Shared chrome: the graphite header and the project step dock. */
+/* The workbench uses a body portal; keep header and dock z-indexes in that same stacking context. */
+.workspace-header {
+  --canvas: #171d1e;
+  --foreground: #f1f4ec;
+  --ink-2: #c2ccc2;
+  --ink-4: #7d8b80;
+  --muted-foreground: #9da99d;
+  --border: #ffffff14;
+  --input: #ffffff24;
+  --muted: #ffffff0d;
+  --ring: #d65a32;
+  --signal: #f56a40;
+  background: #171d1ef7;
+  box-shadow: 0 2px 8px #17231a0a;
+}
+.workspace-header a:hover,
+.workspace-header button:hover {
+  color: #ff9b74;
+}
+.workspace-header [data-slot='button'][data-variant='default']:hover {
+  color: #24251e;
+}
+.workspace-logo {
+  color: #f1f4ec;
+}
+.workspace-skip {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 100;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.workspace-skip:focus {
+  top: 8px;
+}
+.workspace-header :where(a, button, [tabindex]):focus-visible,
+.workspace-step-dock a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+#workspace-main:focus-visible {
+  outline: none;
+}
+.workspace-step-dock.glass {
+  --foreground: #242c2b;
+  --muted-foreground: #657164;
+  --ink-4: #929b91;
+  --ring: #d65a32;
+  border-color: #dce1d5;
+  background: #fffefaf2;
+  box-shadow:
+    0 6px 18px -10px #22332740,
+    inset 0 1px #ffffff;
+}

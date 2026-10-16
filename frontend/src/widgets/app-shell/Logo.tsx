@@ -2,13 +2,22 @@ import { Link } from 'react-router'
 
 export function Logo() {
   return (
-    <Link to="/" className="-mx-1 flex items-center gap-2.5 rounded-md px-1 select-none" title="РобоМера — на главную">
+    <Link
+      to="/"
+      className="workspace-logo -mx-1 flex items-center gap-2.5 rounded-md px-1 select-none"
+      title="РобоМера — на главную"
+    >
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
-        <rect x="1" y="1" width="20" height="20" rx="6" fill="#141413" />
-        <circle cx="11" cy="11" r="4.2" stroke="#fff" strokeWidth="1.8" />
-        <path d="M11 3.5v3M11 15.5v3M3.5 11h3M15.5 11h3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+        <path
+          d="M8 2H4a2 2 0 0 0-2 2v4m12-6h4a2 2 0 0 1 2 2v4M2 14v4a2 2 0 0 0 2 2h4m6 0h4a2 2 0 0 0 2-2v-4M7 11h8"
+          stroke="#ff784e"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </svg>
-      <span className="text-[15px] font-semibold tracking-[-0.02em]">РобоМера</span>
+      <span className="text-[16px] font-semibold tracking-[-0.035em]">
+        РобоМера<span className="text-[#ff784e]">.</span>
+      </span>
     </Link>
   )
 }
