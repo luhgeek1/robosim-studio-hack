@@ -78,59 +78,58 @@
   --shadow-float: 0 2px 4px rgba(20, 20, 19, 0.05), 0 24px 48px -16px rgba(20, 20, 19, 0.22);
 }
 
-/* DESIGN.md: тёплый бумажный холст и чернила (Claude DESIGN.md), один сигнальный оранжевый и жёлтый — из шоурила,
-   синий — только ссылки и фокус. Ошибка темнее сигнала, чтобы их не путать. */
+/* The workspace shares the landing's graphite, paper and orange. Semantic states stay distinct. */
 :root {
-  --canvas: #f5f2ec;
-  --background: #f5f2ec;
-  --foreground: #141413;
-  --ink-2: #3d3d3a;
-  --ink-4: #aaa69d;
-  --card: #fffefb;
-  --card-foreground: #141413;
-  --surface-2: #faf8f3;
-  --popover: #fffefb;
-  --popover-foreground: #141413;
-  --primary: #141413;
-  --primary-foreground: #ffffff;
-  --secondary: #ede8df;
-  --secondary-foreground: #141413;
-  --muted: #efeae1;
-  --muted-foreground: #6c6a64;
-  --accent: #e6ebfb;
-  --accent-foreground: #223f9e;
+  --canvas: #f5f4ef;
+  --background: #f5f4ef;
+  --foreground: #242c2b;
+  --ink-2: #4c5852;
+  --ink-4: #929b91;
+  --card: #fffefa;
+  --card-foreground: #242c2b;
+  --surface-2: #f1f2eb;
+  --popover: #fffefa;
+  --popover-foreground: #242c2b;
+  --primary: #ff6b42;
+  --primary-foreground: #24251e;
+  --secondary: #e9ece4;
+  --secondary-foreground: #303d34;
+  --muted: #eceee6;
+  --muted-foreground: #657164;
+  --accent: #fff0e7;
+  --accent-foreground: #a74727;
   --destructive: #c64545;
-  --border: #e6dfd8;
-  --input: #d8d1c7;
-  --ring: #2f55d4;
+  --border: #dfe3d8;
+  --input: #cbd2c4;
+  --ring: #d65a32;
   --ok: #447e4c;
   --ok-soft: #e9f1e6;
-  --warn: #c9820f;
+  --warn: #916008;
   --warn-soft: #fbefd9;
   --crit: #c64545;
   --crit-soft: #fbe4e1;
-  --info: #2f55d4;
-  --info-soft: #e6ebfb;
-  --signal: #f24a24;
-  --signal-soft: #fde4dc;
+  --info: #a74727;
+  --info-soft: #fff0e7;
+  --signal: #f56a40;
+  --signal-soft: #fff0e7;
   --sun: #efb51a;
   --sun-soft: #fbf0cf;
-  --night: #0b1030;
-  --night-2: #151b40;
-  --chart-1: #2f55d4;
-  --chart-2: #447e4c;
+  --night: #171d1e;
+  --night-2: #293831;
+  --chart-1: #e96c42;
+  --chart-2: #526d5d;
   --chart-3: #efb51a;
   --chart-4: #f24a24;
   --chart-5: #6c6a64;
   --radius: 0.625rem;
-  --sidebar: #faf8f3;
-  --sidebar-foreground: #141413;
-  --sidebar-primary: #141413;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ecece8;
-  --sidebar-accent-foreground: #141413;
-  --sidebar-border: #e6dfd8;
-  --sidebar-ring: #2f55d4;
+  --sidebar: #f1f2eb;
+  --sidebar-foreground: #242c2b;
+  --sidebar-primary: #ff6b42;
+  --sidebar-primary-foreground: #24251e;
+  --sidebar-accent: #fff0e7;
+  --sidebar-accent-foreground: #a74727;
+  --sidebar-border: #dfe3d8;
+  --sidebar-ring: #d65a32;
   color-scheme: light;
 }
 
@@ -175,8 +174,8 @@
   }
   .display {
     letter-spacing: -0.04em;
-    line-height: 0.98;
-    font-weight: 800;
+    line-height: 1.06;
+    font-weight: 620;
   }
   /* HUD-подпись шоурила: моноширинный верхний регистр для шагов, таймкодов и статусов. */
   .hud {
@@ -191,7 +190,7 @@
     font-size: 34px;
     letter-spacing: -0.032em;
     line-height: 1.1;
-    font-weight: 700;
+    font-weight: 620;
   }
   .h2 {
     font-size: 22px;
@@ -222,6 +221,7 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 14px;
+    box-shadow: 0 2px 4px -3px #26372a1a;
   }
   .hairline {
     border-top: 1px solid var(--border);

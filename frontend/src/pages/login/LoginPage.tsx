@@ -87,14 +87,19 @@ export function LoginPage() {
         <motion.section
           layout
           transition={SWAP}
-          className="relative flex min-h-90 flex-col items-center justify-center overflow-hidden bg-surface-2 px-6 py-10 lg:w-1/2 lg:px-8"
+          className="workspace-login-visual relative flex min-h-90 flex-col items-center justify-center overflow-hidden px-6 py-10 lg:w-1/2 lg:px-8"
           style={{
             backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
             backgroundSize: '18px 18px',
           }}
         >
+          <span className="mb-5 font-mono text-[9px] tracking-[0.1em] text-[#ffb18f] uppercase">
+            РобоМера / Рабочее пространство
+          </span>
           <h1 className="display max-w-150 text-center text-[32px] leading-[1.05] tracking-[-0.035em] lg:text-[40px]">
-            Стоит ли роботизировать ваш объект?
+            Ваш объект.
+            <br />
+            <span className="text-[#ff996f]">Обоснованное решение.</span>
           </h1>
           <div className="mt-10 w-full max-w-190 sm:mt-16 lg:mt-28">
             <DeliveryScene />
@@ -104,7 +109,7 @@ export function LoginPage() {
         <motion.aside
           layout
           transition={SWAP}
-          className="flex flex-col items-center justify-center bg-canvas px-6 py-8 lg:w-1/2 lg:px-12"
+          className="workspace-login-form flex flex-col items-center justify-center px-6 py-8 lg:w-1/2 lg:px-12"
         >
           <div className="w-full max-w-110">
             <div className="h1 mb-2">{mode === 'login' ? 'Вход' : 'Регистрация'}</div>

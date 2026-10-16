@@ -47,14 +47,13 @@ export function VendorLayout() {
   const badges: Record<string, number> = { '/vendor/proposals': pending, '/vendor/rfqs': incoming }
 
   return (
-    <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-20">
+    <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-10 pb-20">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <div className="hud mb-3 flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-signal" aria-hidden />
-            Кабинет производителя · {manufacturer.country ?? 'RU'}
+          <div className="workspace-eyebrow mb-3">
+            Кабинет производителя <span>/</span> {manufacturer.country ?? 'RU'}
           </div>
-          <h1 className="display truncate text-[44px] leading-[1.05] tracking-[-0.035em]">{manufacturer.name}</h1>
+          <h1 className="h1 break-words">{manufacturer.name}</h1>
         </div>
         {version.data && (
           <div className="text-[12.5px] text-ink-3">
@@ -63,9 +62,9 @@ export function VendorLayout() {
         )}
       </div>
 
-      <nav className="mb-8 flex items-center gap-4 border-b border-line" aria-label="Разделы кабинета">
-        <div className="relative flex items-center gap-1">
-          <SlideHighlight className="z-10 rounded-full bg-ink" transition={SPRING} />
+      <nav className="mb-8 overflow-x-auto border-b border-line [scrollbar-width:none]" aria-label="Разделы кабинета">
+        <div className="relative flex w-max items-center gap-1">
+          <SlideHighlight className="z-10 rounded-full bg-signal" transition={SPRING} />
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
@@ -74,13 +73,13 @@ export function VendorLayout() {
               className={({ isActive }) =>
                 cn(
                   'relative flex h-11 items-center gap-2 px-3 text-[14px] font-medium transition-colors',
-                  isActive ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
+                  isActive ? 'text-accent-ink' : 'text-ink-3 hover:text-ink-2',
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <tab.icon size={15} className={isActive ? 'text-ink' : 'text-ink-4'} />
+                  <tab.icon size={15} className={isActive ? 'text-signal' : 'text-ink-4'} />
                   {tab.label}
                   {(badges[tab.to] ?? 0) > 0 && (
                     <motion.span

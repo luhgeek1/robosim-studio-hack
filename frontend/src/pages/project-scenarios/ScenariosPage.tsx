@@ -198,7 +198,12 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
   }
 
   return (
-    <article className="card group relative flex flex-col overflow-hidden transition-shadow hover:shadow-card">
+    <article
+      className={cn(
+        'card group relative flex flex-col overflow-hidden transition-shadow hover:shadow-card',
+        scenario.is_recommended && 'border-[#e7a381]',
+      )}
+    >
       <div className="relative h-44 border-b border-line bg-[radial-gradient(ellipse_at_50%_65%,#ffffff_0%,var(--surface-2)_55%,var(--canvas)_100%)]">
         {lead?.product_id ? (
           <RobotPreview3D productId={lead.product_id} framing={{ scale: 1.2, lower: 0.06 }} />
@@ -210,8 +215,8 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
             {SCENARIO_KIND_LABEL[scenario.kind]}
           </span>
           {scenario.is_recommended && (
-            <span className="flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink shadow-card backdrop-blur">
-              <Star size={12} className="fill-warn text-warn" /> рекомендуем
+            <span className="flex items-center gap-1 rounded-full bg-signal-soft px-2.5 py-1 text-[12px] font-medium text-accent-ink shadow-card backdrop-blur">
+              <Star size={12} className="fill-signal text-signal" /> рекомендуем
             </span>
           )}
         </div>
@@ -241,7 +246,9 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
           <>
             <div className="mt-5 flex items-end justify-between gap-3">
               <div>
-                <div className="display num text-[32px]">{isNum(payback) ? formatYears(payback) : 'не окупается'}</div>
+                <div className={cn('display num text-[32px]', scenario.is_recommended && 'text-accent-ink')}>
+                  {isNum(payback) ? formatYears(payback) : 'не окупается'}
+                </div>
                 <div className="meta mt-1">окупаемость</div>
               </div>
               {verdict && (

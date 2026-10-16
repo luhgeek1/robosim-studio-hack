@@ -4,7 +4,6 @@ import { Link, useMatch, useNavigate } from 'react-router'
 import { PROJECT_STEPS, stepIndex } from '@/entities/project/steps'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
-import { ScrambleText } from './kinetics'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -26,7 +25,7 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-end justify-between gap-x-6 gap-y-4',
+        'workspace-page-header flex flex-wrap items-end justify-between gap-x-6 gap-y-4',
         dense ? 'mb-4' : 'mb-5 sm:mb-7',
         className,
       )}
@@ -34,7 +33,7 @@ export function PageHeader({
       <div className="min-w-0 max-w-190">
         {eyebrow && (
           <div className={cn('hud flex items-center gap-2', dense ? 'mb-1.5' : 'mb-3')}>
-            <span className="size-1.5 rounded-full bg-signal" aria-hidden />
+            <span className="size-1.5 bg-signal" aria-hidden />
             {eyebrow}
           </div>
         )}
@@ -178,7 +177,7 @@ export function StatStrip({
   return (
     <div
       className={cn(
-        'card grid gap-px overflow-hidden bg-line *:bg-card md:grid-cols-(--cols)',
+        'workspace-stat-strip card grid gap-px overflow-hidden bg-line *:bg-card md:grid-cols-(--cols)',
         cols % 2 === 0 ? 'grid-cols-2' : 'grid-cols-1',
         className,
       )}
@@ -203,12 +202,10 @@ export function Stat({
   valueClassName?: string
 }) {
   return (
-    <div className={cn('min-w-0 px-4 py-3.5 sm:px-5 sm:py-4', className)}>
+    <div className={cn('workspace-stat min-w-0 px-4 py-3.5 sm:px-5 sm:py-4', className)}>
       {/* На телефоне ячейка узкая: подпись переносится, а не обрезается многоточием. */}
       <div className="text-[13px] leading-snug text-ink-3 sm:truncate">{label}</div>
-      <div className={cn('display num mt-1.5 text-[21px] sm:text-[24px]', valueClassName)}>
-        {typeof value === 'string' ? <ScrambleText text={value} /> : value}
-      </div>
+      <div className={cn('display num mt-1.5 text-[21px] sm:text-[24px]', valueClassName)}>{value}</div>
       {hint && <div className="meta mt-1 leading-snug sm:truncate">{hint}</div>}
     </div>
   )

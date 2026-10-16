@@ -54,7 +54,7 @@ export function RobotCard({
     <article
       className={cn(
         // На сенсорном экране наведения нет: панель с цифрами стоит под сценой постоянно, карточка растёт по высоте.
-        'group card relative aspect-[5/6] w-full cursor-pointer overflow-hidden pointer-coarse:flex pointer-coarse:h-auto pointer-coarse:flex-col pointer-coarse:aspect-auto',
+        'workspace-robot-card group card relative aspect-[5/6] w-full cursor-pointer overflow-hidden pointer-coarse:flex pointer-coarse:h-auto pointer-coarse:flex-col pointer-coarse:aspect-auto',
         className,
       )}
       onPointerDownCapture={(e) => (press.current = { x: e.clientX, y: e.clientY })}
@@ -120,7 +120,7 @@ export function RobotStage({
     <div className="absolute inset-0 bg-surface-2" data-solution-type={solutionType} data-product-id={productId}>
       <div
         className="absolute inset-0"
-        style={{ background: 'radial-gradient(110% 80% at 50% 38%, #ffffff 0%, #f1f4f6 60%, #e9edf0 100%)' }}
+        style={{ background: 'radial-gradient(110% 80% at 50% 38%, #fffefa 0%, #f3f3ed 65%, #e9ece3 100%)' }}
         aria-hidden
       />
       <RobotPreview3D productId={productId} framing={{ scale: 1.3, lower: 0.12 }} className={className} />

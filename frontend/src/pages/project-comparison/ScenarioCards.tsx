@@ -58,7 +58,7 @@ function ScenarioCard({
     <div
       className={cn(
         'group card relative flex flex-col p-5 transition-shadow hover:shadow-[0_8px_28px_-14px_rgba(20,20,19,0.25)]',
-        recommended && 'border-ink ring-1 ring-ink',
+        recommended && 'border-[#e7a381] bg-[#fffbf5] shadow-[0_3px_12px_-8px_#bc5e3540]',
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -68,10 +68,10 @@ function ScenarioCard({
             type="button"
             onClick={onExplain}
             title="Почему рекомендуем этот вариант"
-            className="relative z-10 flex items-center gap-1.5 rounded-full bg-ink py-0.5 pr-1 pl-2.5 text-[11.5px] font-medium text-white transition-colors hover:bg-ink-2"
+            className="relative z-10 flex items-center gap-1.5 rounded-full bg-signal-soft py-0.5 pr-1 pl-2.5 text-[11.5px] font-medium text-accent-ink transition-colors hover:bg-[#ffe0ce]"
           >
             Рекомендуем
-            <span className="flex items-center gap-1 rounded-full bg-white/15 px-1.5 py-px">
+            <span className="flex items-center gap-1 rounded-full bg-white/60 px-1.5 py-px">
               <Info className="size-3" /> почему
             </span>
           </button>
@@ -90,7 +90,13 @@ function ScenarioCard({
       </h3>
 
       <div className="mt-5">
-        <div className={cn('display num text-[32px]', !isNum(m.payback_years) && 'text-crit')}>
+        <div
+          className={cn(
+            'display num text-[32px]',
+            recommended && 'text-accent-ink',
+            !isNum(m.payback_years) && 'text-crit',
+          )}
+        >
           {isNum(m.payback_years) ? formatYears(m.payback_years) : 'не окупается'}
         </div>
         <div className="meta mt-1">окупаемость</div>
@@ -105,7 +111,7 @@ function ScenarioCard({
         </div>
         <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-black/5">
           <div
-            className={cn('h-full rounded-full', recommended ? 'bg-ink' : 'bg-ink-3')}
+            className={cn('h-full rounded-full', recommended ? 'bg-signal' : 'bg-ink-3')}
             style={{ width: `${share * 100}%` }}
           />
         </div>

@@ -131,7 +131,9 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
               to={`/projects/${projectId}/scenarios/${scenario.id}`}
               className={cn(
                 'group col-span-2 inline-flex items-center gap-2 justify-self-start rounded-full px-4 py-2 text-[13px] font-medium whitespace-nowrap transition-colors md:col-span-1 md:justify-self-end',
-                stale ? 'bg-warn-soft text-warn hover:bg-warn-soft/70' : 'bg-ink text-white hover:bg-ink/85',
+                stale
+                  ? 'bg-warn-soft text-warn hover:bg-warn-soft/70'
+                  : 'bg-primary text-primary-foreground hover:bg-[#ef6038]',
               )}
             >
               {stale && <span className="size-1.5 rounded-full bg-warn" />}
