@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type PointerEvent, type ReactNode } from 'react'
 import {
   animate,
   AnimatePresence,
@@ -14,7 +14,7 @@ import {
   type MotionProps,
   type MotionStyle,
 } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 export const EASE = [0.22, 1, 0.36, 1] as const
 const visible = { opacity: 1, y: 0 }
@@ -160,8 +160,19 @@ export function SceneTransition({ sceneKey, children }: { sceneKey: string; chil
   )
 }
 
-export function AnimatedFaq({ question, answer, index }: { question: string; answer: string; index: number }) {
-  const [open, setOpen] = useState(false)
+export function AnimatedFaq({
+  question,
+  answer,
+  index,
+  open,
+  onToggle,
+}: {
+  question: string
+  answer: string
+  index: number
+  open: boolean
+  onToggle: () => void
+}) {
   const id = useId()
   const { reduced, reveal } = useLandingMotion()
   return (
@@ -172,16 +183,19 @@ export function AnimatedFaq({ question, answer, index }: { question: string; ans
           id={`${id}-question`}
           type="button"
           aria-expanded={open}
-          aria-controls={`${id}-answer`}
-          onClick={() => setOpen(!open)}
+          aria-controls={open ? `${id}-answer` : undefined}
+          onClick={onToggle}
         >
-          <span>{question}</span>
+          <span className="landing-faq-number" aria-hidden="true">
+            0{index + 1}
+          </span>
+          <span className="landing-faq-question-text">{question}</span>
           <motion.span
-            className="landing-faq-chevron"
-            animate={{ rotate: open ? 180 : 0 }}
+            className="landing-faq-toggle"
+            animate={{ rotate: open ? 45 : 0 }}
             transition={{ duration: reduced ? 0 : 0.25 }}
           >
-            <ChevronDown size={18} />
+            <Plus size={21} strokeWidth={1.5} />
           </motion.span>
         </button>
       </h3>

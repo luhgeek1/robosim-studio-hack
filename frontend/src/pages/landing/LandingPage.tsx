@@ -9,8 +9,6 @@ import {
   ChartNoAxesCombined,
   Check,
   CircleHelp,
-  FileCheck2,
-  Fingerprint,
   Hospital,
   Layers3,
   Menu,
@@ -28,16 +26,9 @@ import {
 import { Link } from 'react-router'
 import { useSession } from '@/entities/session'
 import type { ObjectKind } from './LandingScene'
-import {
-  Accent,
-  AnimatedFaq,
-  AnimatedNumber,
-  EASE,
-  SceneTransition,
-  ScrollProgress,
-  TiltCard,
-  useLandingMotion,
-} from './motion'
+import { Accent, AnimatedNumber, EASE, SceneTransition, ScrollProgress, TiltCard, useLandingMotion } from './motion'
+import { EvidenceSection } from './EvidenceSection'
+import { QuestionsSection } from './QuestionsSection'
 import './landing.css'
 
 const LandingScene = lazy(() => import('./LandingScene'))
@@ -96,34 +87,6 @@ const STEPS = [
     lead: 'Покупка, RaaS или лизинг.',
     text: 'Сравните сценарии, узнайте окупаемость и подготовьте отчёт для принятия решения.',
     tag: 'Расчёт и отчёт',
-  },
-]
-
-const QUESTIONS = [
-  {
-    question: 'Нужно ли разбираться в робототехнике?',
-    answer:
-      'Для начала достаточно знать параметры своего объекта: площадь, объём работ, число сотрудников и смен. У полей есть единицы измерения и подсказки. Можно начать с готового демо-объекта и посмотреть весь путь до отчёта.',
-  },
-  {
-    question: 'Откуда берутся роботы и данные для расчёта?',
-    answer:
-      'Подбор использует каталог решений и их технические характеристики. Нормативы хранятся в отдельном реестре с источниками и версиями. Если характеристика отсутствует, система отмечает необходимость проверки. Допущения команды помечены явно.',
-  },
-  {
-    question: 'Чем имитация отличается от обычной формулы?',
-    answer:
-      'Формула даёт стартовое число роботов. Имитация проверяет их работу на графе проездов: учитывает очереди, узкие проходы, станции и зарядку. Перебор парка ищет минимальное число, которое выдерживает все пять прогонов пика. Результат можно использовать для пересчёта экономики.',
-  },
-  {
-    question: 'Можно ли использовать результат для внедрения?',
-    answer:
-      'РобоМера помогает провести предварительную оценку и сравнить сценарии. Результат зависит от качества исходных данных, характеристик роботов и допущений. Перед внедрением нужны обследование объекта, уточнение условий с поставщиком и пилот.',
-  },
-  {
-    question: 'Что можно выгрузить для обсуждения с командой?',
-    answer:
-      'PDF и Excel с расчётами, исходными параметрами, допущениями, источниками и снимками имитации. В отчёт также входит список данных, которые стоит уточнить при обследовании объекта.',
   },
 ]
 
@@ -612,107 +575,8 @@ export function LandingPage() {
             </div>
           </section>
 
-          <section className="landing-trust landing-container" aria-labelledby="trust-title">
-            <div className="landing-section-label">
-              <span>03 / ПОНЯТНО, ОТКУДА КАЖДОЕ ЧИСЛО</span>
-              <Fingerprint size={20} strokeWidth={1.3} />
-            </div>
-            <div className="landing-trust-grid">
-              <motion.div {...reveal()}>
-                <h2 id="trust-title">
-                  За результатом —<br />
-                  <Accent>прозрачная логика.</Accent>
-                </h2>
-                <p className="landing-trust-intro">
-                  Решение можно <strong>проверить,</strong>
-                  <br />
-                  <strong>обсудить и защитить</strong> перед командой.
-                </p>
-                <div className="landing-trace">
-                  <div className="landing-trace-label">
-                    <span className="landing-square" /> ТРАССА РАСЧЁТА <Fingerprint size={17} />
-                  </div>
-                  <div className="landing-trace-flow">
-                    <span>Данные</span>
-                    <ArrowRight size={15} />
-                    <span>Формула</span>
-                    <ArrowRight size={15} />
-                    <strong>Результат</strong>
-                  </div>
-                  <p>
-                    От ключевого результата —<br />
-                    <strong>к исходным значениям и источникам.</strong>
-                  </p>
-                </div>
-              </motion.div>
-              <div className="landing-proof-list">
-                <motion.article {...reveal(0.06)}>
-                  <span className="landing-proof-icon">
-                    <Fingerprint size={22} strokeWidth={1.4} />
-                  </span>
-                  <div>
-                    <h3>Расчёты с источниками</h3>
-                    <p>
-                      От итоговой цифры — <strong>к формуле и исходным значениям.</strong> Допущения видны, нормативы
-                      имеют версии.
-                    </p>
-                  </div>
-                  <span className="landing-proof-number">01</span>
-                </motion.article>
-                <motion.article {...reveal(0.14)}>
-                  <span className="landing-proof-icon">
-                    <ShieldCheck size={22} strokeWidth={1.4} />
-                  </span>
-                  <div>
-                    <h3>Проверка на устойчивость</h3>
-                    <p>
-                      Пиковая нагрузка, сбои и изменение условий.{' '}
-                      <strong>Стресс-тесты и анализ чувствительности</strong> показывают границы сценария.
-                    </p>
-                  </div>
-                  <span className="landing-proof-number">02</span>
-                </motion.article>
-                <motion.article {...reveal(0.22)}>
-                  <span className="landing-proof-icon">
-                    <FileCheck2 size={22} strokeWidth={1.4} />
-                  </span>
-                  <div>
-                    <h3>Готово к обсуждению</h3>
-                    <p>
-                      Сценарии покупки, RaaS и лизинга рядом. <strong>PDF и Excel</strong> с экономикой, допущениями и
-                      снимками имитации.
-                    </p>
-                  </div>
-                  <span className="landing-proof-number">03</span>
-                </motion.article>
-              </div>
-            </div>
-          </section>
-
-          <section className="landing-faq-section" id="questions" aria-labelledby="faq-title">
-            <div className="landing-container landing-faq-grid">
-              <motion.div {...reveal()}>
-                <div className="landing-section-label">
-                  <span>04 / ЧАСТЫЕ ВОПРОСЫ</span>
-                </div>
-                <h2 id="faq-title">
-                  Перед первым
-                  <br />
-                  <Accent>расчётом.</Accent>
-                </h2>
-                <p>
-                  Несколько вещей,
-                  <br />
-                  которые полезно знать.
-                </p>
-              </motion.div>
-              <div className="landing-faq-list">
-                {QUESTIONS.map(({ question, answer }, i) => (
-                  <AnimatedFaq key={question} question={question} answer={answer} index={i} />
-                ))}
-              </div>
-            </div>
-          </section>
+          <EvidenceSection workspace={workspace} />
+          <QuestionsSection workspace={workspace} />
 
           <section className="landing-final-cta">
             <div className="landing-container landing-cta-content">
