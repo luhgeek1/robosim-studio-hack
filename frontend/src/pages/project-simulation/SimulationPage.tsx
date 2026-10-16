@@ -861,6 +861,8 @@ function FleetSweep({
 }) {
   const sweep = useFleetSweep(projectId, scenarioId, variantIds)
   const source = useCountSource(projectId, scenarioId)
+  const project = useProject(projectId).data
+  const processDefs = useObjectType(project?.object_type ?? '').data?.processes ?? []
   const result: FleetSweepResult | undefined = sweep.data ?? last
   const { count } = sizing
   const formula = result?.by_formula
@@ -902,8 +904,8 @@ function FleetSweep({
         {!result ? (
           <p className="text-[13px] leading-relaxed text-ink-2">
             Формула цикла дала {count.analytic} {pluralRu(count.analytic, ['робота', 'роботов', 'роботов'])} с запасами.
-            Перебор прогонит одни и те же пиковые часы на планировке для разного N и найдёт минимальное, при котором SLA
-            держат все прогоны. Найденное число запишется в сценарий, экономика пересчитается.
+            Перебор найдёт кандидат N для процесса, затем проверит весь моделируемый парк вместе, с общими лифтами,
+            проходами и зарядками. Число попадёт в расчёт, только если каждый процесс выдержит SLA во всех повторах.
           </p>
         ) : (
           formula &&
@@ -948,10 +950,51 @@ function FleetSweep({
           )}
         </div>
         {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
+        {result && (
+          <div className="mt-3 space-y-2 text-[12.5px]">
+            <p className={result.applied && usingSimulation ? 'text-ok' : 'text-warn'}>{result.explanation}</p>
+            {result.joint_validation && (
+              <div className="rounded-lg border border-line p-3">
+                <div className="font-medium">
+                  Совместная проверка парка · {result.joint_validation.replications} повторов
+                </div>
+                <p className="mt-1 text-ink-3">
+                  {result.joint_validation.status === 'passed'
+                    ? 'Все моделируемые процессы выдержали SLA с общими ресурсами.'
+                    : result.joint_validation.status === 'failed'
+                      ? 'Общий парк не выдержал SLA. Кандидат отдельного поиска не подтверждён для расчёта.'
+                      : 'Совместная проверка не выполнена; парк не подтверждён.'}
+                </p>
+                {result.joint_validation.processes.map((process) => (
+                  <div key={process.process_key} className="mt-1 flex justify-between gap-3">
+                    <span>
+                      {processDefs.find((definition) => definition.key === process.process_key)?.name ??
+                        'Процесс сценария'}
+                    </span>
+                    <span className={process.passed ? 'text-ok' : 'text-crit'}>
+                      {formatPct(process.sla_min_pct)} / цель {formatPct(process.target_pct)}
+                    </span>
+                  </div>
+                ))}
+                {result.joint_validation.skipped_processes.map((process) => (
+                  <p key={process.process_key} className="mt-1 text-ink-3">
+                    {process.reason}
+                  </p>
+                ))}
+                {!usingSimulation && result.applied && (
+                  <p className="mt-2 text-warn">
+                    Сохранённый результат не используется текущим расчётом. Перепроверьте парк после изменения
+                    физических входов или выбора ручного количества.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </PaneSection>
 
       {result && (
-        <PaneSection title="Перебор флота" aside={<span className="meta">клик — открыть прогон</span>}>
+        <PaneSection title="Поиск по одному процессу" aside={<span className="meta">без совместной нагрузки</span>}>
           <table className="w-full text-[12.5px]">
             <thead className="text-ink-3">
               <tr>
