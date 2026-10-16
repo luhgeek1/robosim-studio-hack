@@ -1,6 +1,6 @@
 import hashlib
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 from uuid import UUID
 
@@ -22,6 +22,12 @@ from app.service.layouts.reader import LayoutReader, layout_book
 from app.service.matching.candidates import ProcessSizing, build_candidate, choose_offer, spec_book
 from app.service.projects.context import ProjectContext
 from app.service.projects.norms import NormLoader
+from app.service.scenarios.simulation_evidence import (
+    PHYSICAL_NORM_CATEGORIES,
+    PHYSICAL_NORM_KEYS,
+    physical_fingerprint,
+    simulated_count,
+)
 from app.service.scenarios.views import Versions, financing_from_json, financing_to_json, overrides_from_json
 
 PERCENT = 100
@@ -47,6 +53,11 @@ class Snapshot:
     inputs: dict[str, Any] = field(default_factory=dict)
     survey_hints: dict[str, str | None] = field(default_factory=dict)
     layout_version: int | None = None
+    physical_layout: dict[str, Any] | None = None
+
+    @property
+    def physical_fingerprint(self) -> str:
+        return physical_fingerprint(self)
 
     @property
     def inputs_hash(self) -> str:
@@ -140,6 +151,11 @@ class SnapshotBuilder:
             site_costs=object_type.site_costs,
             items=items,
             layout=layout_book(layout),
+            physical_norm_keys=frozenset(
+                key
+                for key, row in rows.items()
+                if row.category in PHYSICAL_NORM_CATEGORIES or key in PHYSICAL_NORM_KEYS
+            ),
         )
         sources = await self._reference.sources({norm.source_id for norm in rows.values()})
         budget = values.get("capex_budget_mln_rub")
@@ -161,6 +177,31 @@ class SnapshotBuilder:
                 for param in group.parameters
             },
             layout_version=layout.version if layout else None,
+            physical_layout={
+                key: getattr(layout, key)
+                for key in ("width_m", "height_m", "zones", "racks", "nodes", "edges")
+            }
+            if layout
+            else None,
+        )
+        fingerprint = snapshot.physical_fingerprint
+        stored = {item.process_key: item for item in scenario.items}
+        snapshot.input = replace(
+            engine_input,
+            items=[
+                replace(
+                    item,
+                    simulated_robots=(count := simulated_count(stored[item.process_key], fingerprint)),
+                    simulation_id=stored[item.process_key].simulation_id if count else None,
+                    simulated_basis=stored[item.process_key].simulated_basis if count else None,
+                    simulation_outdated=(
+                        item.count_mode == CountMode.AUTO
+                        and bool(stored[item.process_key].simulated_count)
+                        and count is None
+                    ),
+                )
+                for item in items
+            ],
         )
         snapshot.inputs = _inputs_json(snapshot, financing_to_json(financing))
         return snapshot
@@ -195,10 +236,7 @@ class SnapshotBuilder:
                 status = CandidateStatus.MANUAL
             statuses[item.process_key] = status.value
             spec_status[item.process_key] = {s.key: s.status for s in own_specs if s.is_primary}
-            simulated = _simulated(item, context.project.version)
-            result.append(
-                self._item_input(item, product, offer, spec_book(own_specs, keys), models, status, simulated)
-            )
+            result.append(self._item_input(item, product, offer, spec_book(own_specs, keys), models, status))
         return result, spec_status, statuses
 
     @staticmethod
@@ -213,7 +251,6 @@ class SnapshotBuilder:
         specs: Book,
         models: dict[str, Any],
         status: CandidateStatus,
-        simulated: int | None,
     ) -> ItemInput:
         catalog_price = offer.price_rub if offer else product.price_from_rub
         return ItemInput(
@@ -230,20 +267,7 @@ class SnapshotBuilder:
             stations_manual=item.stations_count if item.stations_mode == CountMode.MANUAL else None,
             throughput_override=item.throughput_override_per_hour,
             candidate_status=status.value,
-            simulated_robots=simulated,
-            simulation_id=item.simulation_id if simulated else None,
-            simulated_basis=item.simulated_basis if simulated else None,
-            simulation_outdated=(
-                item.count_mode == CountMode.AUTO and bool(item.simulated_count) and simulated is None
-            ),
         )
-
-
-def _simulated(item: ScenarioItem, project_version: int) -> int | None:
-    """The fleet sweep's N counts only for the project version it was computed on and for automatic count."""
-    if item.count_mode != CountMode.AUTO or not item.simulated_count:
-        return None
-    return item.simulated_count if item.simulated_project_version == project_version else None
 
 
 def _inputs_json(snapshot: Snapshot, financing: dict[str, Any]) -> dict[str, Any]:

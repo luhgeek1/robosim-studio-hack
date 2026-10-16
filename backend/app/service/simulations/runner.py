@@ -1,24 +1,25 @@
 import asyncio
 import logging
 import time
-from dataclasses import asdict, dataclass, field, replace
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy import select
+
 from app.core.errors import ErrorCode, job_problem
-from app.db.models import Job, Scenario, ScenarioItem, SimulationRun
+from app.db.models import DataVersion, Job, Layout, NormSet, Project, Scenario, SimulationRun
 from app.db.repositories.users import to_current_user
 from app.db.session import Database
 from app.db.uow import UnitOfWork
 from app.domain.jobs import JobStatus
-from app.domain.scenario.models import CountMode, CountSource
-from app.engine.calculation import CalculationError, CalculationInput, calculate
 from app.engine.simulation import SimMode, SimResult, SimulationError, prepare, simulate
-from app.engine.simulation.sweep import Sweep, SweepResult
+from app.engine.simulation.joint import JointSweep, joint_sweep, with_fleet
 from app.service.scenarios.calculations import CalculationService
 from app.service.simulations.inputs import load_input
 from app.service.simulations.results import pack_events, robots_json, summary_json, timeline_json
+from app.service.simulations.sweep_results import SweepEconomics, apply_sweep, price_sweep, sweep_json
 
 logger = logging.getLogger(__name__)
 CRASHED = "Имитация прервалась из-за внутренней ошибки"
@@ -130,12 +131,22 @@ class _Progress:
                 await uow.commit()
 
 
-async def _sweep(db: Database, job_id: UUID, payload: dict[str, Any]) -> SweepResult:
+async def _sweep(db: Database, job_id: UUID, payload: dict[str, Any]) -> JointSweep:
     inp = load_input(payload["engine_input"])
     prepared = prepare(inp.plan, inp.settings.two_way_width_m)
     progress = _Progress(db, job_id)
-    sweep = Sweep(inp, payload["process_key"], int(payload["replications"]), prepared, progress)
-    task = asyncio.create_task(asyncio.to_thread(sweep.run, payload.get("low"), payload.get("high")))
+    task = asyncio.create_task(
+        asyncio.to_thread(
+            joint_sweep,
+            inp,
+            payload["process_key"],
+            int(payload["replications"]),
+            prepared,
+            progress,
+            (payload.get("low"), payload.get("high")),
+            payload.get("fixed_fleet"),
+        )
+    )
     while not task.done():
         await asyncio.sleep(0.5)
         await progress.flush()
@@ -172,32 +183,72 @@ async def _finish_sweep(
     db: Database,
     job_id: UUID,
     payload: dict[str, Any],
-    result: SweepResult,
+    result: JointSweep,
     best: tuple[SimResult, int] | None,
 ) -> None:
     async with UnitOfWork(db.session()) as uow:
         job = await uow.jobs.get(job_id)
-        scenario = await uow.session.get(Scenario, UUID(payload["scenario_id"]))
+        scenario = await uow.session.scalar(
+            select(Scenario).where(Scenario.id == UUID(payload["scenario_id"])).with_for_update()
+        )
         if job is None or scenario is None:
             return
+        await uow.session.scalar(select(Project).where(Project.id == scenario.project_id).with_for_update())
+        await uow.session.scalar(
+            select(Layout).where(Layout.project_id == scenario.project_id).with_for_update()
+        )
+        await uow.session.scalars(select(DataVersion).with_for_update(read=True))
+        await uow.session.scalars(
+            select(NormSet).where(NormSet.is_current.is_(True)).with_for_update(read=True)
+        )
+        user = await uow.users.get(job.owner_id) if job.owner_id else None
+        if user is None:
+            raise SimulationError("Пользователь перебора недоступен")
+        snapshot = await CalculationService(uow, to_current_user(user)).snapshot(scenario)
+        current = scenario.version == payload.get(
+            "scenario_version"
+        ) and snapshot.physical_fingerprint == payload.get("physical_fingerprint")
         run = _sweep_run(uow, job, scenario, payload, result, best)
         await uow.flush()
-        points = await _economics(uow, job, scenario, payload["process_key"], result)
-        _apply(scenario, payload, result, run)
-        job.result = _sweep_json(result, points, run)
+        points = (
+            await price_sweep(uow, job, scenario, payload["process_key"], result)
+            if current
+            else SweepEconomics()
+        )
+        applied = current and apply_sweep(snapshot, payload, result, run)
+        if applied:
+            job.payload = {**job.payload, "applied_fingerprint": snapshot.physical_fingerprint}
+        job.result = {
+            **sweep_json(result.result, points, run),
+            "candidate_count": result.candidate_count,
+            "joint_validation": {
+                **asdict(result.validation),
+                "skipped_processes": [
+                    {"process_key": key, "reason": reason}
+                    for key, reason in payload["engine_input"].get("skipped", {}).items()
+                ],
+            },
+            "applied": applied,
+        }
+        if not current:
+            job.result["explanation"] += (
+                " Сценарий или физические входы изменились во время перебора: результат не применён, "
+                "запустите перебор ещё раз."
+            )
+            job.result["recommended_count"] = None
+            job.result["by_simulation"] = None
         job.status, job.progress, job.finished_at = JobStatus.DONE, 1.0, _now()
         job.result_url = f"{API_PREFIX}/scenarios/{scenario.id}/fleet-sweep/{job.id}"
         await uow.commit()
 
 
-async def _best_run(result: SweepResult, payload: dict[str, Any]) -> tuple[SimResult, int] | None:
+async def _best_run(result: JointSweep, payload: dict[str, Any]) -> tuple[SimResult, int] | None:
     """The recommended fleet once more, with events, in the requested mode — for the player and the report."""
-    if result.recommended_count is None:
+    if not result.validation.fleet or result.validation.status == "not_run":
         return None
     inp = load_input(payload["engine_input"])
-    mode = inp.config.mode if inp.config.mode != SimMode.NORMAL else SimMode.PEAK
-    fleet = {**inp.config.fleet, result.process_key: result.recommended_count}
-    config = replace(inp.config, mode=mode, fleet=fleet, record_events=True)
+    inp = with_fleet(inp, result.validation.fleet, result.fixed_fleet)
+    config = replace(inp.config, mode=SimMode.PEAK, record_events=True)
     started = time.perf_counter()
     best = await asyncio.to_thread(simulate, replace(inp, config=config))
     return best, int((time.perf_counter() - started) * MS_PER_S)
@@ -208,15 +259,17 @@ def _sweep_run(
     job: Job,
     scenario: Scenario,
     payload: dict[str, Any],
-    result: SweepResult,
+    result: JointSweep,
     best: tuple[SimResult, int] | None,
 ) -> SimulationRun | None:
-    if best is None or result.recommended_count is None:
+    if best is None:
         return None
     outcome, duration = best
-    engine_input = payload["engine_input"]
-    mode = engine_input["config"]["mode"]
-    mode = SimMode.PEAK.value if mode == SimMode.NORMAL.value else mode
+    engine_input = dict(payload["engine_input"])
+    physical = with_fleet(load_input(engine_input), result.validation.fleet, result.fixed_fleet)
+    engine_input["config"] = asdict(physical.config)
+    mode = SimMode.PEAK.value
+    engine_input["config"] = {**engine_input["config"], "mode": mode, "record_events": True}
     run = SimulationRun(
         scenario_id=scenario.id,
         project_id=scenario.project_id,
@@ -229,10 +282,7 @@ def _sweep_run(
         layout_id=UUID(payload["layout_id"]),
         layout_version=payload["versions"]["layout_version"],
         seed=engine_input["config"]["seed"],
-        fleet=[
-            {**f, "count": result.recommended_count} if f["process_key"] == result.process_key else f
-            for f in _fleet(engine_input)
-        ],
+        fleet=_fleet(engine_input),
         events_count=0,
         created_by="fleet-sweep",
     )
@@ -251,122 +301,3 @@ def _fleet(engine_input: dict[str, Any]) -> list[dict[str, Any]]:
         }
         for p in engine_input["processes"]
     ]
-
-
-@dataclass(frozen=True, slots=True)
-class FleetEconomics:
-    working: int
-    reserve: int
-    total: int
-    capex_rub: float
-    payback_years: float | None
-    npv_rub: float
-
-
-@dataclass(slots=True)
-class SweepEconomics:
-    """The fleet curve priced the way the scenario will be once the sweep's N applies, plus both
-    answers side by side: N by the cycle formula and N confirmed by the simulation («было → стало»)."""
-
-    points: dict[int, FleetEconomics | None] = field(default_factory=dict)
-    by_formula: FleetEconomics | None = None
-    by_simulation: FleetEconomics | None = None
-
-
-def _priced(base: CalculationInput, process_key: str, change: dict[str, Any]) -> FleetEconomics | None:
-    items = [replace(item, **change) if item.process_key == process_key else item for item in base.items]
-    try:
-        result = calculate(replace(base, items=items), render=False)
-    except CalculationError:
-        return None
-    count = next((s.count for s in result.sizing if s.item.process_key == process_key), None)
-    if count is None:
-        return None
-    metrics = result.economics.metrics
-    working = count.simulated if count.simulated and count.source == CountSource.SIMULATED else count.analytic
-    return FleetEconomics(
-        working, count.reserve, count.final, metrics.capex_rub, metrics.payback_years, metrics.npv_rub
-    )
-
-
-async def _economics(
-    uow: UnitOfWork, job: Job, scenario: Scenario, process_key: str, result: SweepResult
-) -> SweepEconomics:
-    """A fleet that holds SLA is priced as the simulated count plus reserve with the peak covered —
-    exactly what the scenario gets when that N applies. A fleet that fails SLA gets no payback."""
-    user = await uow.users.get(job.owner_id) if job.owner_id else None
-    if user is None:
-        return SweepEconomics()
-    evaluation = await CalculationService(uow, to_current_user(user)).evaluate(scenario.id)
-    base = evaluation.snapshot.input
-    auto = {"count_mode": CountMode.AUTO, "count_manual": None}
-    out = SweepEconomics(
-        by_formula=_priced(base, process_key, {**auto, "simulated_robots": None, "simulated_basis": None})
-    )
-    for point in result.points:
-        priced = _priced(
-            base,
-            process_key,
-            {**auto, "simulated_robots": point.count, "simulated_basis": result.analytic_count},
-        )
-        out.points[point.count] = (
-            priced if point.passed or priced is None else replace(priced, payback_years=None)
-        )
-    if result.recommended_count is not None:
-        out.by_simulation = out.points.get(result.recommended_count)
-    return out
-
-
-def _apply(
-    scenario: Scenario, payload: dict[str, Any], result: SweepResult, run: SimulationRun | None
-) -> None:
-    """The sweep's answer becomes the scenario's N: the next calculation takes it (count source simulated).
-    Asking for the sweep also replaces a count set by hand — that is what the button promises."""
-    item: ScenarioItem | None = next((i for i in scenario.items if i.process_key == result.process_key), None)
-    if item is None or result.recommended_count is None:
-        return
-    item.simulated_count = result.recommended_count
-    item.simulated_basis = result.analytic_count
-    item.simulation_id = run.id if run else None
-    item.simulated_project_version = payload["project_version"]
-    item.simulation_note = result.explanation
-    item.count_mode = CountMode.AUTO
-    item.count_manual = None
-    scenario.version += 1
-
-
-def _fleet_json(fleet: FleetEconomics | None) -> dict[str, Any] | None:
-    return asdict(fleet) if fleet else None
-
-
-def _sweep_json(result: SweepResult, economics: SweepEconomics, run: SimulationRun | None) -> dict[str, Any]:
-    def priced(count: int, attr: str) -> float | None:
-        fleet = economics.points.get(count)
-        return getattr(fleet, attr) if fleet else None
-
-    return {
-        "process_key": result.process_key,
-        "points": [
-            {
-                **{k: v for k, v in asdict(p).items() if k not in {"passed", "runs", "sla_min_pct"}},
-                "sla_min_pct": p.sla_min_pct,
-                "passed": p.passed,
-                "runs": p.runs,
-                "robots_total": priced(p.count, "total"),
-                "capex_rub": priced(p.count, "capex_rub"),
-                "payback_years": priced(p.count, "payback_years"),
-                "npv_rub": priced(p.count, "npv_rub"),
-                "simulation_id": str(run.id) if run and p.count == result.recommended_count else None,
-            }
-            for p in result.points
-        ],
-        "recommended_count": result.recommended_count,
-        "analytic_count": result.analytic_count,
-        "target_pct": result.target_pct,
-        "explanation": result.explanation,
-        "simulation_id": str(run.id) if run else None,
-        "applied": result.recommended_count is not None,
-        "by_formula": _fleet_json(economics.by_formula),
-        "by_simulation": _fleet_json(economics.by_simulation),
-        "computed_at": _now().isoformat(),
-    }

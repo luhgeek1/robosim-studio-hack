@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -10,13 +10,15 @@ from app.db.repositories.simulations import SimulationRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.jobs import JobStatus, JobType
-from app.engine.simulation import SimInput
+from app.domain.scenario.models import CountMode
+from app.engine.simulation import SimInput, SimMode
 from app.service.layouts.mapping import plan_from
 from app.service.layouts.reader import LayoutReader
 from app.service.scenarios.calculations import CalculationService, Evaluation
 from app.service.scenarios.service import ScenarioService
 from app.service.simulations.inputs import InputBuilder, RunRequest, config_from, dump_input
 from app.service.simulations.results import resample, unpack_events, window
+from app.service.simulations.sweep_results import reprice_view
 
 SIMULATION_NOT_FOUND = "Прогон имитации не найден или недоступен"
 REPLAY_WINDOW_S = 3600.0
@@ -206,7 +208,7 @@ class SimulationService:
 
     async def start_sweep(self, scenario_id: UUID, sweep: SweepRequest, raw: dict[str, Any]) -> Job:
         scenario = await self._scenarios.owned(scenario_id)
-        draft = await self._prepare(scenario, sweep.request)
+        draft = await self._prepare(scenario, replace(sweep.request, mode=SimMode.PEAK))
         evaluation, layout = draft.evaluation, draft.layout
         if sweep.process_key not in {p.key for p in draft.inp.processes}:
             reason = draft.skipped.get(sweep.process_key, "процесса нет в сценарии")
@@ -225,6 +227,13 @@ class SimulationService:
                 "request": raw,
                 "replications": int(evaluation.snapshot.input.norms.value("sim_replications")),
                 "project_version": evaluation.snapshot.versions.project_version,
+                "scenario_version": scenario.version,
+                "physical_fingerprint": evaluation.snapshot.physical_fingerprint,
+                "fixed_fleet": {
+                    item.process_key: item.count_manual
+                    for item in scenario.items
+                    if item.count_mode == CountMode.MANUAL and item.process_key != sweep.process_key
+                },
                 "layout_id": str(layout.id),
                 "versions": self._versions(evaluation, layout),
                 "engine_input": {**dump_input(draft.inp, plan_json(layout)), "skipped": draft.skipped},
@@ -240,7 +249,7 @@ class SimulationService:
         job = await self._uow.jobs.latest_sweep(scenario_id, process_key)
         if job is None or job.result is None:
             raise NotFoundError("Перебор флота для этого сценария ещё не запускался")
-        return {**job.result, "job_id": str(job.id)}
+        return await self._sweep_view(scenario_id, job)
 
     async def sweep_result(self, scenario_id: UUID, job_id: UUID) -> dict[str, Any]:
         await self._scenarios.owned(scenario_id)
@@ -252,4 +261,19 @@ class SimulationService:
             raise ConflictError((job.error or {}).get("detail", "Перебор завершился ошибкой"))
         if job.status != JobStatus.DONE or job.result is None:
             raise ConflictError("Перебор ещё считается", error_code=ErrorCode.JOB_NOT_READY)
-        return {**job.result, "job_id": str(job.id)}
+        return await self._sweep_view(scenario_id, job)
+
+    async def _sweep_view(self, scenario_id: UUID, job: Job) -> dict[str, Any]:
+        result = {**(job.result or {}), "job_id": str(job.id)}
+        if not result.get("applied"):
+            return result
+        scenario = await self._scenarios.owned(scenario_id)
+        snapshot = await self._calculations.snapshot(scenario)
+        if snapshot.physical_fingerprint != job.payload.get("applied_fingerprint"):
+            result.update(applied=False, recommended_count=None, by_simulation=None)
+            result["explanation"] += (
+                " Физические входы изменились после проверки: подтверждение устарело, "
+                "используется аналитический парк. Запустите перебор ещё раз."
+            )
+            return result
+        return reprice_view(snapshot, result)

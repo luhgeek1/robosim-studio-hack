@@ -227,10 +227,32 @@ class FleetEconomics(ApiModel):
     npv_rub: float
 
 
+class JointProcessValidation(ApiModel):
+    process_key: str
+    target_pct: float
+    sla_min_pct: float | None
+    passed: bool
+
+
+class SkippedProcess(ApiModel):
+    process_key: str
+    reason: str
+
+
+class JointFleetValidation(ApiModel):
+    status: Literal["passed", "failed", "not_run"]
+    replications: int
+    fleet: dict[str, int]
+    processes: list[JointProcessValidation]
+    skipped_processes: list[SkippedProcess]
+
+
 class FleetSweepResult(ApiModel):
     process_key: str
     points: list[FleetSweepPoint]
     recommended_count: int | None
+    candidate_count: int | None = None
+    joint_validation: JointFleetValidation | None = None
     analytic_count: int | None = None
     target_pct: float | None = None
     explanation: str

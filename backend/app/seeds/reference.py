@@ -201,8 +201,9 @@ def _formula_problems(object_type: ObjectTypeSeed, norm_keys: set[str]) -> list[
                 "manual_rate",
             ):
                 if getattr(process.demand, field):
+                    known = names | {key.param_key for key in RouteKey} if field == "manual_rate" else names
                     problems += _expression_problems(
-                        f"{process.key}.{field}", getattr(process.demand, field), names
+                        f"{process.key}.{field}", getattr(process.demand, field), known
                     )
         if process.labor_allocation and set(process.labor_allocation) != set(process.labor_groups):
             problems.append(f"{process.key}: labor_allocation keys differ from labor_groups")

@@ -968,7 +968,15 @@ processes:
     порций питания в сутки»: в датасете 1 950 = 650 × 3 без учёта занятости, организаторы на Q&A разрешили считать по своей
     формуле. Строка датасета проверяется правилом meal_portions_match_beds.'
   demand_params: [feedings_per_day, beds, bed_occupancy_pct, operating_hours_per_day]
-  demand: {per_day: beds * bed_occupancy_pct * feedings_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: beds * bed_occupancy_pct / meal_points}
+  demand:
+    per_day: beds * bed_occupancy_pct * feedings_per_day
+    hours_per_day: operating_hours_per_day
+    peak_factor: hospital_peak_factor
+    load_per_trip: beds * bed_occupancy_pct / meal_points
+    manual_rate: h_to_s(beds * bed_occupancy_pct / meal_points) / ((coalesce(layout_route_service_to_ward_m,
+      kitchen_to_ward_distance_m)) / manual_cart_speed_mps + (coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m))
+      / manual_cart_speed_mps + manual_transfer_time_s + (elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min),
+      elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)))
   sla: {kind: lead_time, target_value: 20, unit: мин, target_param: meal_delivery_norm_min}
   labor_groups: [kitchen_staff]
   labor_allocation: {kitchen_staff: 1.0}
@@ -1038,7 +1046,16 @@ processes:
   demand_unit: kg
   demand_formula: грязное + чистое бельё, кг/сут; рейсов ≈ кг ÷ масса контейнера
   demand_params: [linen_dirty_kg_per_day, linen_clean_kg_per_day, operating_hours_per_day]
-  demand: {per_day: 'max(linen_dirty_kg_per_day + linen_clean_kg_per_day, linen_points * linen_min_visits_per_point_day * linen_container_weight_kg)', hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: linen_container_weight_kg}
+  demand:
+    per_day: max(linen_dirty_kg_per_day + linen_clean_kg_per_day, linen_points * linen_min_visits_per_point_day
+      * linen_container_weight_kg)
+    hours_per_day: operating_hours_per_day
+    peak_factor: hospital_peak_factor
+    load_per_trip: linen_container_weight_kg
+    manual_rate: h_to_s(linen_container_weight_kg) / ((coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m))
+      / manual_cart_speed_mps + (coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)) /
+      manual_cart_speed_mps + manual_transfer_time_s + (elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min),
+      elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)))
   sla: {kind: coverage, target_value: 1.3, unit: раз/сут}
   labor_groups: [laundry_staff]
   labor_allocation: {laundry_staff: 1.0}
@@ -1108,7 +1125,16 @@ processes:
   demand_unit: kg
   demand_formula: отходы класса А + класса Б, кг/сут; рейсов = точек сбора × вывозов в сутки
   demand_params: [waste_class_a_kg_per_day, waste_class_b_kg_per_day, operating_hours_per_day]
-  demand: {per_day: waste_class_a_kg_per_day + waste_class_b_kg_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: (waste_class_a_kg_per_day + waste_class_b_kg_per_day) / (waste_points * waste_pickups_per_day)}
+  demand:
+    per_day: waste_class_a_kg_per_day + waste_class_b_kg_per_day
+    hours_per_day: operating_hours_per_day
+    peak_factor: hospital_peak_factor
+    load_per_trip: (waste_class_a_kg_per_day + waste_class_b_kg_per_day) / (waste_points * waste_pickups_per_day)
+    manual_rate: h_to_s((waste_class_a_kg_per_day + waste_class_b_kg_per_day) / (waste_points * waste_pickups_per_day))
+      / ((coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)) / manual_cart_speed_mps
+      + (coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)) / manual_cart_speed_mps +
+      manual_transfer_time_s + (elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s
+      + floors * elevator_ride_floor_share * elevator_floor_travel_s)))
   sla: {kind: coverage, target_value: 2, unit: раз/сут}
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}
@@ -1176,7 +1202,14 @@ processes:
   demand_unit: trip
   demand_formula: заявок на медикаменты + рейсов расходных материалов в сутки
   demand_params: [medication_orders_per_day, supply_trips_per_day, operating_hours_per_day]
-  demand: {per_day: 'max(medication_orders_per_day + supply_trips_per_day, medication_delivery_points * medication_min_rounds_per_point_day)', hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor}
+  demand:
+    per_day: max(medication_orders_per_day + supply_trips_per_day, medication_delivery_points * medication_min_rounds_per_point_day)
+    hours_per_day: operating_hours_per_day
+    peak_factor: hospital_peak_factor
+    manual_rate: h_to_s(manual_containers_per_trip) / ((coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m))
+      / manual_cart_speed_mps + (coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m)) /
+      manual_cart_speed_mps + manual_transfer_time_s + (elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min),
+      elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)))
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}
@@ -1232,7 +1265,15 @@ processes:
   demand_unit: item
   demand_formula: проб в сутки; рейсы с результатами анализов учитываются отдельно как попутная нагрузка
   demand_params: [lab_samples_per_day, operating_hours_per_day]
-  demand: {per_day: lab_samples_per_day, hours_per_day: operating_hours_per_day, peak_factor: hospital_peak_factor, load_per_trip: lab_samples_per_day / lab_results_trips_per_day}
+  demand:
+    per_day: lab_samples_per_day
+    hours_per_day: operating_hours_per_day
+    peak_factor: hospital_peak_factor
+    load_per_trip: lab_samples_per_day / lab_results_trips_per_day
+    manual_rate: h_to_s(lab_samples_per_day / lab_results_trips_per_day) / ((coalesce(layout_route_service_to_ward_m,
+      kitchen_to_ward_distance_m)) / manual_cart_speed_mps + (coalesce(layout_route_service_to_ward_m, kitchen_to_ward_distance_m))
+      / manual_cart_speed_mps + manual_transfer_time_s + (elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min),
+      elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)))
   sla: {kind: lead_time, target_value: 30, unit: мин, target_param: lab_delivery_norm_min}
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}

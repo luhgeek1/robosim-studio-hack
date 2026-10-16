@@ -136,13 +136,10 @@ def _drivers(result: CalculationResult) -> list[str]:
 
 
 def _caveats(result: CalculationResult, ctx: VerdictContext) -> list[str]:
-    caveats: list[str] = []
-    vat = ctx.norms.optional("vat_rate")
-    if vat is not None:
-        caveats.append(
-            "Все суммы с НДС (единая база, Q&A 16.09). Если НДС принимается к вычету, CAPEX и OPEX ниже на "
-            f"{fmt(round(vat.value / (1 + vat.value) * PERCENT, 1))} %"
-        )
+    caveats = [
+        "Цены оборудования и облагаемых услуг учитываются с НДС; вычет НДС не моделируется. "
+        "ФОТ не содержит НДС. Денежные потоки рассчитаны до налога на прибыль."
+    ]
     if any(s.count.source == CountSource.ANALYTIC for s in result.sizing):
         caveats.append("Число роботов — аналитическая оценка по времени цикла; имитация уточнит N и резерв")
     used = {q.key: q.name for step in result.trace for q in step.inputs}
@@ -182,7 +179,8 @@ def interpret(result: CalculationResult, ctx: VerdictContext) -> Interpretation:
         headline = f"{scope} не окупается за горизонт {horizon} лет — {VERDICT_LABELS[verdict]}"
     else:
         headline = f"{scope} окупается за {_years(metrics.payback_years)} — {VERDICT_LABELS[verdict]}"
-    irr = f", IRR {fmt(round(metrics.irr_pct, 1))} %" if metrics.irr_pct is not None else ""
+    irr = f", IRR проекта {fmt(round(metrics.irr_pct, 1))} %" if metrics.irr_pct is not None else ""
+    roi = f"{fmt(round(metrics.roi_pct))} %" if metrics.roi_pct is not None else "не определён"
     discounted = (
         f", дисконтированная окупаемость {_years(metrics.discounted_payback_years)}"
         if metrics.discounted_payback_years is not None
@@ -190,10 +188,11 @@ def interpret(result: CalculationResult, ctx: VerdictContext) -> Interpretation:
     )
     summary = (
         f"CAPEX {mln(metrics.capex_rub)} млн ₽, OPEX роботизации {mln(metrics.opex_rub_year)} млн ₽/год, "
-        f"чистый эффект {mln(metrics.effect_rub_year)} млн ₽/год. "
-        f"NPV {mln(metrics.npv_rub)} млн ₽ при ставке {fmt(round(metrics.discount_rate_pct, 1))} %"
-        f"{irr}{discounted}. ROI за {horizon} лет {fmt(round(metrics.roi_pct))} %; "
-        f"TCO {mln(metrics.tco_rub)} против {mln(metrics.tco_baseline_rub)} млн ₽. "
+        f"чистый эффект с процентами {mln(metrics.effect_rub_year)} млн ₽/год. "
+        f"NPV проекта до финансирования {mln(metrics.npv_rub)} млн ₽ "
+        f"при ставке до налога {fmt(round(metrics.discount_rate_pct, 1))} %"
+        f"{irr}{discounted}. ROI проекта за {horizon} лет {roi}; "
+        f"TCO с процентами {mln(metrics.tco_rub)} против {mln(metrics.tco_baseline_rub)} млн ₽. "
         f"Роботов {metrics.robots_total}, высвобождается {fmt(round(metrics.fte_released, 1))} FTE."
     )
     return Interpretation(verdict, band, headline, summary, _drivers(result), _caveats(result, ctx))

@@ -109,8 +109,8 @@ scenarioCalculate:
     operationId: calculateScenario
     summary: Рассчитать экономику сценария (синхронно, ≤ 10 с)
     description: |
-      Считает количество роботов (аналитически + по последней симуляции сценария, если она есть), CAPEX, OPEX, эффект,
-      денежный поток, метрики, интерпретацию и риски. Результат сохраняется с версиями входов.
+      Считает количество роботов (аналитически + по актуальному совместному подтверждению имитацией), CAPEX, OPEX,
+      эффект, потоки проекта и собственных средств, метрики, интерпретацию и риски. Результат сохраняется с версиями входов.
     parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
     requestBody:
       required: false
@@ -119,7 +119,7 @@ scenarioCalculate:
           schema:
             type: object
             properties:
-              use_simulation: {type: boolean, default: true, description: "Брать N из последней успешной симуляции"}
+              use_simulation: {type: boolean, default: true, description: "Брать N из совместной проверки парка с совпадающим отпечатком физических входов"}
     responses:
       '200': {description: "Готово", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/CalculationRun'}}}}
       '409': {description: "Сценарий не полон (нет продуктов) или параметры невалидны", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
@@ -221,6 +221,10 @@ projectComparison:
     tags: [calculations]
     operationId: getComparison
     summary: Сводная таблица сценариев и рекомендация (ТЗ 3.5.5, 3.7.1)
+    description: |
+      NPV, IRR, ROI и наложение потоков относятся к проекту; показатели собственных средств выделены отдельно.
+      При recalculate_stale=false несовместимые старые финансовые результаты исключаются с пояснением.
+      Устаревшие результаты текущего формата видны, но не участвуют в рекомендации до пересчёта.
     parameters:
       - {$ref: '../components/common.yaml#/parameters/ProjectId'}
       - {name: recalculate_stale, in: query, schema: {type: boolean, default: true}}

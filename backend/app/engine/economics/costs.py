@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 
 from app.domain.scenario.models import ScenarioKind
+from app.engine.economics.labor import labor_savings
 from app.engine.economics.lines import MONTHS_PER_YEAR, q
-from app.engine.economics.models import Breakdown, EffectKind, FleetItem, Line
+from app.engine.economics.models import Breakdown, Line
 from app.engine.economics.opex import OpexLines
 from app.engine.trace import InputKind, Quantity, Section, TraceStep
 
@@ -21,6 +22,9 @@ class AnnualCosts:
     fee_year: float
     ownership_opex_year: float
     warnings: list[str] = field(default_factory=list)
+    potential_savings_year: float = 0.0
+    labor_hours_released_year: float = 0.0
+    cash_realization_share: float = 0.0
 
     @property
     def savings_year(self) -> float:
@@ -180,59 +184,6 @@ class CostModel(OpexLines):
         )
         return Breakdown(total.value, lines)
 
-    def savings(self) -> list[Line]:
-        lines: list[Line] = []
-        for item in self.inp.items:
-            if item.release is None:
-                self.warnings.append(
-                    f"{item.process_name}: не задана доля высвобождения персонала — экономия ФОТ не считается"
-                )
-                continue
-            share = self._released_share(item)
-            step = self.tr.record(
-                f"labor_savings.{item.key}",
-                f"Высвобождение ФОТ: {item.process_name}",
-                item.labor_cost.value * share.value,
-                "₽/год",
-                f"{item.labor_cost.key} × {share.key}",
-                [item.labor_cost, share],
-                Section.EFFECT,
-            )
-            lines.append(Line(step, EffectKind.COST_REDUCTION, fte=item.labor_fte * share.value))
-        return lines
-
-    def _released_share(self, item: FleetItem) -> Quantity:
-        """Share of payroll released: release × coverage, capped by the work the robots actually take over."""
-        assert item.release is not None
-        wanted = item.release.value * item.coverage.value
-        cap = item.release_cap_fte
-        if cap is None or item.labor_fte <= 0:
-            return self.tr.record(
-                f"{item.key}.released_share",
-                "Доля ФОТ процесса, которая высвобождается",
-                wanted,
-                "доля",
-                f"{item.release.key} × {item.coverage.key}",
-                [item.release, item.coverage],
-                Section.EFFECT,
-            ).as_quantity()
-        fte = Quantity(f"{item.key}.labor_fte", "Персонал процесса", item.labor_fte, "FTE", InputKind.METRIC)
-        share = min(wanted, cap.value / item.labor_fte)
-        if share < wanted:
-            self.warnings.append(
-                f"{item.process_name}: высвобождение ограничено объёмом работ — {cap.value:.1f} FTE "
-                f"вместо {item.labor_fte * wanted:.1f} по численности из датасета"
-            )
-        return self.tr.record(
-            f"{item.key}.released_share",
-            "Доля ФОТ процесса, которая высвобождается",
-            share,
-            "доля",
-            f"min({item.release.key} × {item.coverage.key}, {cap.key} / {fte.key})",
-            [item.release, item.coverage, cap, fte],
-            Section.EFFECT,
-        ).as_quantity()
-
     def evaluate(self) -> AnnualCosts:
         baseline = self.baseline()
         if self.kind == ScenarioKind.BASELINE:
@@ -243,11 +194,12 @@ class CostModel(OpexLines):
         hardware_lines, equipment, hardware, robots = self.hardware()
         capex = self.capex(hardware_lines, hardware, robots)
         opex, parts = self.opex(equipment, hardware, robots)
+        labor = labor_savings(self.inp.items, self.norms, self.tr, self.warnings)
         return AnnualCosts(
             capex=capex,
             opex=opex,
             baseline=baseline,
-            savings=self.savings(),
+            savings=labor.lines,
             equipment=equipment.value,
             hardware=hardware.value,
             robots_total=int(robots.value),
@@ -256,4 +208,7 @@ class CostModel(OpexLines):
             fee_year=parts["fee"],
             ownership_opex_year=parts["ownership"],
             warnings=self.warnings,
+            potential_savings_year=labor.potential_year,
+            labor_hours_released_year=labor.hours_year,
+            cash_realization_share=labor.cash_realization_share,
         )

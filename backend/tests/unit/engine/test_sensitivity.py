@@ -1,4 +1,3 @@
-import math
 from dataclasses import replace
 
 import pytest
@@ -81,8 +80,8 @@ def test_discount_rate_driver_moves_npv() -> None:
     assert low > high
 
 
-def test_simulated_fleet_keeps_its_correction_when_inputs_move() -> None:
-    """N_sim = 8 at an analytic 14: slower robots raise the analytic N, and the simulated N follows it."""
+def test_physical_sensitivity_invalidates_the_simulated_fleet() -> None:
+    """An old successful N must not be scaled and presented as a new successful simulation."""
     base = calculate(INP)
     analytic = base.sizing[0].count.analytic
     simulated = replace(INP, items=[replace(INP.items[0], simulated_robots=8, simulated_basis=analytic)])
@@ -90,7 +89,13 @@ def test_simulated_fleet_keeps_its_correction_when_inputs_move() -> None:
     assert (same.source.value, same.simulated) == ("simulated", 8)
     slower = calculate(apply(simulated, SPEED, 0.5)).sizing[0].count
     assert slower.analytic > analytic
-    assert slower.simulated == math.ceil(8 * slower.analytic / analytic)
+    assert slower.source.value == "analytic"
+    assert slower.simulated is None
+    tiny_change = apply(simulated, SPEED, SPEED.base + 0.000001)
+    assert tiny_change.items[0].simulated_robots is None
+    assert tiny_change.items[0].simulation_outdated
+    assert calculate(tiny_change).sizing[0].count.source.value == "analytic"
+    assert calculate(apply(simulated, PRICE, 0.8)).sizing[0].count.source.value == "simulated"
 
 
 def test_more_volume_brings_the_staff_that_handles_it_today() -> None:

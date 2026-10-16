@@ -106,6 +106,8 @@ class SimSettings:
     utilization_target: float
     # Runs stored before tow trains have no such norm; they never simulate a tow train, so 0 is never read.
     tow_dispatch_wait_s: float = 0.0
+    robots_per_charger: float | None = None
+    fleet_reserve_share: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)

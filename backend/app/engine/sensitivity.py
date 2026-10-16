@@ -121,8 +121,45 @@ def salary_params(inp: CalculationInput) -> set[str]:
     return {group.salary_param for group in inp.labor_groups if group.salary_param}
 
 
+def _without_evidence(inp: CalculationInput) -> CalculationInput:
+    """Changing physics is an analytical what-if, never a new verified simulation."""
+    return replace(
+        inp,
+        items=[
+            replace(
+                item,
+                simulated_robots=None,
+                simulated_basis=None,
+                simulation_id=None,
+                simulation_outdated=item.simulation_outdated or item.simulated_robots is not None,
+            )
+            for item in inp.items
+        ],
+    )
+
+
+def _physical_driver(inp: CalculationInput, driver: Driver) -> bool:
+    if driver.kind == DriverKind.NORM and inp.physical_norm_keys is not None:
+        return driver.key in inp.physical_norm_keys
+    if driver.key in {
+        Group.EQUIPMENT_PRICE,
+        Group.LABOR_COST,
+        "discount_rate",
+        "owner_discount_rate",
+        "horizon_years",
+        "payroll_tax_coeff",
+        "working_days_per_year",
+    }:
+        return False
+    if driver.key in salary_params(inp) | staff_params(inp):
+        return False
+    return not ("rub" in driver.key or "₽" in (driver.unit or "") or "руб" in (driver.unit or ""))
+
+
 def apply(inp: CalculationInput, driver: Driver, value: float) -> CalculationInput:
     """Returns the input with one driver moved to `value` (groups scale all their members by value / base)."""
+    if value != driver.base and _physical_driver(inp, driver):
+        inp = _without_evidence(inp)
     if driver.kind == DriverKind.NORM:
         items = dict(inp.norms.items)
         items[driver.key] = replace(items[driver.key], value=value)

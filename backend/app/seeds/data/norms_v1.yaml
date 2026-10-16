@@ -1,6 +1,12 @@
 version: v1
 notes: "Первый набор нормативов расчётной модели на 22.09.2026: легенда датасета организатора, методика ФЦ БАС, данные Банка России и НК РФ, сайты вендоров и явные допущения команды. Денежные нормативы указаны с НДС, как цены каталога (Доп. 3.1), кроме случаев, оговорённых в обосновании."
 sources:
+  - key: team_core_audit
+    kind: team_assumption
+    title: "Допущения команды: независимая ручная база и разделение денежных потоков"
+    url: null
+    retrieved_at: 2026-10-17
+    note: "Явные исходные оценки для обследования; не измерения объекта и не подтверждённые ТТХ. Значения и границы операций обоснованы у каждого норматива."
   - key: dataset_legend
     kind: organizer_dataset
     title: "Датасеты_хакатон.xlsx, лист «Легенда и использование», раздел «Важные допущения»"
@@ -1870,3 +1876,124 @@ norms:
     affects: [robot_count, capex]
     editable_by_user: true
     object_types: [warehouse]
+  - key: manual_forklift_speed_mps
+    name: Средняя скорость погрузчика с водителем при горизонтальном перемещении
+    value: 1.5
+    unit: м/с
+    category: labor
+    range: {min: 0.5, max: 3}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026 для независимой ручной базы: 1,5 м/с (5,4 км/ч) — средняя скорость с манёврами, а не паспортная максимальная скорость техники. Замеряется на объекте; не меняется при выборе робота. Цикл включает путь туда и обратно и передачу паллеты на уровне пола. Подъём в стеллаж считается только процессом высотного хранения."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: manual_cart_speed_mps
+    name: Средняя скорость человека с тележкой
+    value: 1
+    unit: м/с
+    category: labor
+    range: {min: 0.3, max: 1.5}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: 1 м/с (3,6 км/ч) для движения с тележкой по коридору или терминалу; ниже обычного свободного шага. Требуется хронометраж. Время лифта добавляется отдельно; раздача еды, погрузка багажа, стирка и работа с пациентами в перевозку не включаются."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [airport, hospital]
+  - key: manual_tow_speed_mps
+    name: Средняя скорость багажной сцепки с водителем
+    value: 3
+    unit: м/с
+    category: labor
+    range: {min: 1, max: 6}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: средние 3 м/с (10,8 км/ч) на маршруте сортировка–стоянка с манёврами и ограничениями перрона. Это параметр исходного человеческого процесса, не ТТХ выбранного тягача. Замеряется отдельно для объекта; загрузка и разгрузка багажа людьми остаются за границами вождения."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [airport]
+  - key: manual_transfer_time_s
+    name: Приём и передача готовой грузовой единицы человеком за рейс
+    value: 60
+    unit: с
+    category: labor
+    range: {min: 15, max: 300}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: по 30 с на приём и передачу готовой паллеты или контейнера, либо сцепку/расцепку тележек. Не включает укладку отдельных вещей, обслуживание пациента, раздачу питания и подъём в ячейку; эти операции нельзя одновременно приписывать перевозке и другому процессу. Подтвердить хронометражем."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: manual_pallets_per_trip
+    name: Паллет за рейс погрузчика с водителем
+    value: 1
+    unit: палл/рейс
+    category: labor
+    range: {min: 1, max: 2}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: обычный ручной цикл на фронтальном складе обслуживает одну паллету. Двухпаллетная техника требует явного изменения предпосылки. Вместимость робота или его буксируемой сцепки не меняет ручную базу сравнения."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: manual_containers_per_trip
+    name: Готовых транспортных заданий за ручной рейс
+    value: 1
+    unit: рейс/задание
+    category: labor
+    range: {min: 1, max: 4}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: одно задание с готовым контейнером или заявкой на ручной рейс терминальной и больничной логистики. Для потоков в килограммах, порциях и пробах используется масса или количество груза из параметров процесса, а не грузоподъёмность выбранного робота."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [airport, hospital]
+  - key: manual_lift_time_s
+    name: Подъём и размещение паллеты человеком в ячейке
+    value: 60
+    unit: с/палл
+    category: labor
+    range: {min: 30, max: 180}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: 60 с на подъём, доводку и опускание вил для яруса 4–6 м. Исходное обоснование разделения работы операторов — 70% транспорт, 30% высотное хранение. Здесь только вертикальная операция; горизонтальный маршрут и передача на уровне пола учтены в перемещении паллет и повторно не прибавляются."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: manual_sorting_items_per_hour
+    name: Ручная сортировка готовых коробов по направлениям
+    value: 300
+    unit: короб/ч
+    category: labor
+    range: {min: 100, max: 600}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: 12 с на готовый короб (прочитать направление, перенести и уложить), то есть 300 коробов/ч. Не включает комплектацию содержимого и производство упаковки; требуется замер по массе и геометрии коробов. До замера это явно обозначенная ручная база, независимая от производительности роборуки."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: manual_inventory_m2_per_hour
+    name: Ручная инвентаризация в эквиваленте обследованной площади
+    value: 200
+    unit: м²/ч
+    category: labor
+    range: {min: 50, max: 500}
+    source: team_core_audit
+    rationale: "Допущение команды 17.10.2026: обход и проверка зоны 200 м² за человеко-час, учитывая остановки и сканирование ячеек. Это укрупнённая площадь процесса, а не число ячеек или строк заказа; значение требует хронометража при фактической плотности хранения. Потенциал дополнительно ограничен выделенным штатом инвентаризации."
+    affects: [labor_savings, effect, payback, npv]
+    editable_by_user: true
+    object_types: [warehouse]
+  - key: labor_cash_realization_share
+    name: Доля высвобождённого труда, превращающаяся в денежную экономию
+    value: 1
+    unit: доля
+    category: labor
+    range: {min: 0, max: 1}
+    source: team_core_audit
+    rationale: "Явное оптимистичное допущение команды 17.10.2026, сохраняющее прежнее предположение экономики: 100% стоимости высвобождённой мощности реализуется снижением ФОТ, сверхурочных, подрядных затрат или предотвращённым наймом. Это не автоматическое увольнение и не результат имитации. При переводе сотрудников на другие задачи без сокращения затрат укажите 0: часы и FTE высвободятся, денежной экономии не будет. Нужен подтверждённый кадровый план."
+    affects: [labor_savings, effect, payback, npv, irr, roi, tco]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]
+  - key: owner_discount_rate
+    name: Ставка дисконтирования собственных средств до налога
+    value: 0.18
+    unit: доля/год
+    category: finance
+    range: {min: 0, max: 0.5}
+    source: team_core_audit
+    rationale: "Самостоятельное допущение команды 17.10.2026: требуемая доходность собственных средств до налога 18% годовых. Это не текущая рыночная ставка, не WACC и не ставка проекта; владелец задаёт её отдельно. Используется только для потока собственника после финансирования, не для сопоставления инвестиционной эффективности самих решений."
+    affects: [owner_npv, owner_discounted_payback]
+    editable_by_user: true
+    object_types: [warehouse, airport, hospital]

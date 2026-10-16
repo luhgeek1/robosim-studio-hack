@@ -299,6 +299,12 @@ def payload(
             "upfront_rub": economics.upfront,
         },
         "cashflow_overlay": serializer.cashflow(economics.overlay),
+        "owner_cashflow": {
+            "monthly": serializer.cashflow(economics.owner_monthly),
+            "yearly": serializer.cashflow(economics.owner_yearly),
+            "ramp_up_months": economics.ramp_up_months,
+            "upfront_rub": economics.owner_upfront,
+        },
         "metrics": asdict(economics.metrics),
         "interpretation": {
             **asdict(interpretation),

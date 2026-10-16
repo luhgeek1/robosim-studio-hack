@@ -68,6 +68,7 @@ class EconomicsInput:
     payroll: Quantity
     working_days: Quantity
     norms: Book
+    owner_discount_rate: Quantity | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,7 +107,7 @@ class Metrics:
     effect_rub_year: float
     payback_years: float | None
     discounted_payback_years: float | None
-    roi_pct: float
+    roi_pct: float | None
     npv_rub: float
     irr_pct: float | None
     tco_rub: float
@@ -115,6 +116,17 @@ class Metrics:
     robots_total: int
     discount_rate_pct: float
     horizon_years: int
+    project_effect_rub_year: float
+    owner_upfront_rub: float
+    owner_discount_rate_pct: float
+    owner_npv_rub: float
+    owner_roi_pct: float | None
+    owner_irr_pct: float | None
+    owner_discounted_payback_years: float | None
+    labor_potential_savings_rub_year: float
+    labor_savings_rub_year: float
+    labor_cash_realization_pct: float
+    labor_hours_released_year: float
     throughput_gain_pct: float | None = None
     sla_after: float | None = None
 
@@ -131,5 +143,9 @@ class EconomicsResult:
     overlay: list[CashflowRow]
     ramp_up_months: int
     metrics: Metrics
+    owner_monthly: list[CashflowRow] = field(default_factory=list)
+    owner_yearly: list[CashflowRow] = field(default_factory=list)
+    owner_overlay: list[CashflowRow] = field(default_factory=list)
+    owner_upfront: float = 0.0
     upfront: float = 0.0
     warnings: list[str] = field(default_factory=list)
