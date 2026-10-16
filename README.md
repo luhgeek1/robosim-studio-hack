@@ -94,6 +94,10 @@ fly tokens create deploy --app robomera --name github-actions --expiry 8760h | g
 
 Срок токенов — год; перед истечением повторите команды. Секреты приложения (БД, JWT, CSRF) остаются в Fly Secrets.
 Postgres `robomera-db` и Redis `robomera-redis` обслуживаются отдельно: автодеплой не пересоздаёт их и не трогает тома.
+Redis слушает приватную IPv6-сеть Fly.io; публичных сервисов у него нет. Его конфиг можно применить отдельно:
+`flyctl deploy . --config deploy/fly/redis.toml --ha=false --yes`.
+Очередь Redis хранится без постоянного тома; при пересоздании машины временные задачи могут потеряться,
+проекты, расчёты и записи о задачах остаются в Postgres.
 После выкладки проверяются главная страница, готовность БД/Redis/воркера и соответствие `build_sha` коммиту GitHub.
 Старые `deploy/deploy.sh` и `deploy/docker-compose.prod.yml` сохранены для ручного стенда на ВМ и в Actions не вызываются.
 
