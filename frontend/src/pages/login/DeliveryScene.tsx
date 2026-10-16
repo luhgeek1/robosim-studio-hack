@@ -343,14 +343,7 @@ function Rack({ x, code, levels, pallet }: { x: number; code: string; levels: St
   const holes = Array.from({ length: Math.floor((FLOOR - RACK_TOP - 8) / 8) }, (_, i) => RACK_TOP + 6 + i * 8)
   return (
     <g>
-      <rect
-        x={x + RACK_W / 2 - 17}
-        y={RACK_TOP - 18}
-        width="34"
-        height="13"
-        rx="2.5"
-        fill="var(--scene-tag-bg, var(--ink-2))"
-      />
+      <rect x={x + RACK_W / 2 - 17} y={RACK_TOP - 18} width="34" height="13" rx="2.5" fill="var(--ink-2)" />
       <text x={x + RACK_W / 2} y={RACK_TOP - 8.5} textAnchor="middle" fontSize="8.5" fontWeight="600" fill="#fff">
         {code}
       </text>

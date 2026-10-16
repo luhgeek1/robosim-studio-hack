@@ -1,17 +1,5 @@
-import {
-  ArrowRight,
-  ArrowRightLeft,
-  Copy,
-  HeartPulse,
-  MoreHorizontal,
-  Plane,
-  Plus,
-  Search,
-  Trash2,
-  Users,
-  Warehouse,
-} from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { ArrowRightLeft, Copy, HeartPulse, MoreHorizontal, Plane, Plus, Trash2, Users, Warehouse } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { quoted, useWorkspace } from '@/entities/organization'
@@ -34,7 +22,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
-import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
+import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { Stagger } from '@/shared/ui/kinetics'
 import { ConfidenceRing } from '@/shared/ui/v0'
 
@@ -47,34 +35,21 @@ const ICONS: Record<string, ReactNode> = {
 export function ProjectsPage() {
   const projects = useProjects()
   const { organization } = useWorkspace()
-  const [query, setQuery] = useState('')
-  const items = projects.data?.items ?? []
-  const scenariosCount = items.reduce((sum, project) => sum + project.scenarios_count, 0)
-  const filtered = items.filter((project) =>
-    `${project.name} ${OBJECT_TYPE_LABEL[project.object_type]}`
-      .toLocaleLowerCase('ru')
-      .includes(query.trim().toLocaleLowerCase('ru')),
-  )
   // «Добавить проект» из меню вкладок ведёт сюда с ?new=1 — модалка создания открывается сразу.
   const [params, setParams] = useSearchParams()
   const creating = params.get('new') === '1'
   const setCreating = (next: boolean) => setParams(next ? { new: '1' } : {}, { replace: true })
   const newProject = (
-    <Button>
+    <Button size="sm">
       <Plus /> Новый проект
     </Button>
   )
 
   return (
-    <div className="workspace-projects mx-auto w-full max-w-7xl px-4 pt-7 sm:px-6 sm:pt-10 pb-16">
-      <div className="workspace-projects-heading flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto w-full max-w-275 px-4 pt-7 sm:px-6 sm:pt-12 pb-16">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <div className="workspace-eyebrow">
-            Рабочее пространство <span>/</span> {organization ? 'Команда' : 'Личное'}
-          </div>
-          <h1 className="h1 mt-3">
-            Проекты<span className="text-signal">.</span>
-          </h1>
+          <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Проекты</h1>
           {/* Чьи это проекты: переключатель рабочих областей — в меню профиля. */}
           <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[14px] text-ink-3">
             {organization ? (
@@ -99,76 +74,19 @@ export function ProjectsPage() {
         <CreateProjectDialog trigger={newProject} open={creating} onOpenChange={setCreating} />
       </div>
 
-      {projects.data && (
-        <div className="workspace-portfolio-summary">
-          <div>
-            <strong>{items.length}</strong>
-            <span>
-              {pluralRu(items.length, ['проект', 'проекта', 'проектов'])}
-              <small>в рабочей области</small>
-            </span>
-          </div>
-          <div>
-            <strong>{scenariosCount}</strong>
-            <span>
-              {pluralRu(scenariosCount, ['сценарий', 'сценария', 'сценариев'])}
-              <small>для сравнения</small>
-            </span>
-          </div>
-          <div>
-            <strong>{items.filter((project) => project.headline_metrics).length}</strong>
-            <span>
-              с расчётом<small>экономики проекта</small>
-            </span>
-          </div>
-          <Link to="/catalog">
-            Подобрать решения <ArrowRight size={16} />
-          </Link>
-        </div>
-      )}
-
-      <section aria-label="Список проектов">
-        <div className="workspace-projects-toolbar">
-          <h2>
-            Все проекты <span>{filtered.length}</span>
-          </h2>
-          <label className="workspace-project-search">
-            <Search size={15} aria-hidden="true" />
-            <input
-              type="search"
-              aria-label="Поиск проектов"
-              placeholder="Найти проект…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
-        </div>
+      <section>
         {projects.isPending && <LoadingBlock label="Загружаем проекты…" />}
         {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
         {projects.data && projects.data.items.length === 0 && (
-          <EmptyState
-            title="Здесь начнётся ваш первый расчёт"
-            description={
-              organization
-                ? 'В организации пока нет проектов. Создайте первый или перенесите сюда личный — через меню «…» у проекта.'
-                : 'Создайте проект с параметрами своего объекта или начните с готового демо-набора.'
-            }
-          />
+          <div className="rounded-[12px] border border-dashed border-line px-5 py-10 text-center text-[14px] text-ink-3">
+            {organization
+              ? 'В организации пока нет проектов. Создайте первый или перенесите сюда личный — через меню «…» у проекта.'
+              : 'Проектов пока нет. Создайте первый — демо-склад организатора считается за минуту.'}
+          </div>
         )}
-        {projects.data && items.length > 0 && !filtered.length && (
-          <EmptyState
-            title="Такого проекта пока нет"
-            description="Попробуйте другое название или тип объекта."
-            action={
-              <Button variant="outline" onClick={() => setQuery('')}>
-                Сбросить поиск
-              </Button>
-            }
-          />
-        )}
-        {projects.data && filtered.length > 0 && (
-          <Stagger className="workspace-project-list card divide-y divide-line overflow-hidden">
-            {filtered.map((project) => (
+        {projects.data && projects.data.items.length > 0 && (
+          <Stagger className="card divide-y divide-line overflow-hidden">
+            {projects.data.items.map((project) => (
               <ProjectRow key={project.id} project={project} />
             ))}
           </Stagger>
@@ -189,18 +107,18 @@ function ProjectRow({ project }: { project: Project }) {
   const canManage = project.organization_id === null || project.owner_id === user?.id || organization?.role === 'owner'
 
   return (
-    <div className="workspace-project-row group relative flex items-start gap-3 px-4 py-5 transition-colors max-md:flex-wrap sm:gap-4 sm:px-5 md:items-center">
-      <span className="workspace-project-icon flex size-9 shrink-0 items-center justify-center text-ink-2">
+    <div className="group relative flex items-start gap-3 px-4 py-4 transition-colors hover:bg-surface-2 max-md:flex-wrap sm:gap-4 sm:px-5 md:items-center">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-black/5 text-ink-2">
         {ICONS[project.object_type] ?? <Warehouse size={18} />}
       </span>
       <span className="min-w-0 flex-1">
         <Link
           to={`/projects/${project.id}`}
-          className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-[-0.02em] after:absolute after:inset-0 group-hover:text-accent-ink"
+          className="block text-[15px] font-semibold after:absolute after:inset-0 max-md:line-clamp-2 md:truncate"
         >
           {project.name}
         </Link>
-        <span className="mt-1 block text-[12px] text-ink-3 md:truncate">
+        <span className="block text-[13px] text-ink-3 md:truncate">
           {OBJECT_TYPE_LABEL[project.object_type]} · обновлён {formatDateTime(project.updated_at)}
         </span>
       </span>
@@ -214,12 +132,7 @@ function ProjectRow({ project }: { project: Project }) {
         </span>
       ) : (
         <span className="hidden w-92 text-[13px] text-ink-3 md:inline">
-          <span className="block text-[13px] font-medium text-ink-2">Ожидает расчёта</span>
-          <span className="text-[12px]">
-            {project.scenarios_count > 0
-              ? `${project.scenarios_count} ${pluralRu(project.scenarios_count, ['сценарий', 'сценария', 'сценариев'])}`
-              : 'Добавьте первый сценарий'}
-          </span>
+          {project.scenarios_count > 0 ? `Сценариев: ${project.scenarios_count}, расчёта нет` : 'Расчёта ещё нет'}
         </span>
       )}
       <DataScore score={score} className="hidden w-28 md:flex" />

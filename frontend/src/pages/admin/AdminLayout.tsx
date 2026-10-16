@@ -23,16 +23,9 @@ export function AdminLayout() {
   const pending = useProposalQueue('pending').data?.total ?? 0
 
   return (
-    <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-10 pb-20">
+    <div className="mx-auto w-full max-w-300 px-4 pt-7 sm:px-6 sm:pt-12 pb-20">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div>
-          <div className="workspace-eyebrow">
-            Платформа <span>/</span> Управление
-          </div>
-          <h1 className="h1 mt-3">
-            Админ-панель<span className="text-signal">.</span>
-          </h1>
-        </div>
+        <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Админ-панель</h1>
         {version.data && (
           <div className="flex items-center gap-4 text-[12.5px] text-ink-3">
             <span>
@@ -46,13 +39,13 @@ export function AdminLayout() {
       </div>
 
       <nav
-        className="mb-8 flex flex-col-reverse gap-1 border-b border-line lg:flex-row lg:items-center lg:justify-between lg:gap-4"
+        className="mb-8 flex flex-col-reverse gap-1 border-b border-line sm:flex-row sm:items-center sm:justify-between sm:gap-4"
         aria-label="Разделы админки"
       >
         {/* На телефоне четыре вкладки не помещаются — лента прокручивается вбок, а не раздвигает страницу. */}
-        <div className="-mx-4 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 [scrollbar-width:none] lg:contents">
-          <div className="relative flex w-max items-center gap-1 lg:w-auto">
-            <SlideHighlight className="z-10 rounded-full bg-signal" transition={SPRING} />
+        <div className="-mx-4 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 [scrollbar-width:none] sm:contents">
+          <div className="relative flex w-max items-center gap-1 sm:w-auto">
+            <SlideHighlight className="z-10 rounded-full bg-ink" transition={SPRING} />
             {TABS.map((tab) => (
               <NavLink
                 key={tab.to}
@@ -61,13 +54,13 @@ export function AdminLayout() {
                 className={({ isActive }) =>
                   cn(
                     'relative flex h-11 shrink-0 items-center gap-2 px-3 text-[14px] font-medium whitespace-nowrap transition-colors',
-                    isActive ? 'text-accent-ink' : 'text-ink-3 hover:text-ink-2',
+                    isActive ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
                   )
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <tab.icon size={15} className={isActive ? 'text-signal' : 'text-ink-4'} />
+                    <tab.icon size={15} className={isActive ? 'text-ink' : 'text-ink-4'} />
                     {tab.label}
                     {tab.to === '/admin/proposals' && pending > 0 && (
                       <motion.span
@@ -89,7 +82,7 @@ export function AdminLayout() {
         </div>
         <Link
           to="/robots-3d"
-          className="flex items-center gap-1 self-end text-[13px] font-medium text-ink-3 transition-colors hover:text-ink max-lg:h-8 lg:self-auto"
+          className="flex items-center gap-1 self-end text-[13px] font-medium text-ink-3 transition-colors hover:text-ink max-sm:h-8 sm:self-auto"
         >
           3D-модели каталога <ArrowUpRight size={14} />
         </Link>

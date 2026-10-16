@@ -55,7 +55,7 @@ export function WorkbenchFrame({
   const frame = (
     <div
       className={cn(
-        'workspace-workbench flex flex-col bg-card',
+        'flex flex-col bg-card',
         inFlow
           ? // Под шапкой, поверх распорки плашки шагов (66 px) и верхнего отступа страницы проекта (20 px).
             '-mx-6 -mt-[5.375rem] h-[calc(100dvh-3.5rem)] shrink-0 border-b border-line'

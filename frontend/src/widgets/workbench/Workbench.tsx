@@ -52,7 +52,7 @@ export function PaneSection({
 
 export function PaneTitle({ children }: { children: ReactNode }) {
   return (
-    <div className="workspace-pane-title flex h-9 shrink-0 items-center border-b border-line px-3.5 text-[12.5px] font-semibold tracking-[-0.01em]">
+    <div className="flex h-9 shrink-0 items-center border-b border-line px-3.5 text-[12.5px] font-semibold tracking-[-0.01em]">
       {children}
     </div>
   )

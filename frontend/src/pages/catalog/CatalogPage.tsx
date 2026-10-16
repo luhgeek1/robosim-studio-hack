@@ -162,23 +162,13 @@ export function CatalogPage() {
 
   return (
     <div className="mx-auto w-full max-w-360 px-4 pt-7 sm:px-6 sm:pt-12 pb-28">
-      <div className="workspace-catalog-heading mb-6 sm:mb-7">
-        <div className="workspace-eyebrow">
-          Библиотека решений <span>/</span> Роботы и системы
-        </div>
-        <div className="mt-3 flex flex-wrap items-baseline gap-x-3">
-          <h1 className="h1">
-            Каталог решений<span className="text-signal">.</span>
-          </h1>
-          {data && <span className="num font-mono text-[13px] text-ink-3">{formatNumber(data.total)} найдено</span>}
-        </div>
-        <p className="mt-3 text-[14px] text-ink-3">
-          Характеристики, готовность и стоимость — для выбора под ваш объект.
-        </p>
+      <div className="mb-6 flex flex-wrap items-baseline gap-x-3 sm:mb-8">
+        <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Каталог решений</h1>
+        {data && <span className="display num text-[22px] text-ink-4 sm:text-[28px]">{formatNumber(data.total)}</span>}
       </div>
 
       <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[232px_minmax(0,1fr)]">
-        <aside className="workspace-catalog-filters scroll-thin sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto lg:block">
+        <aside className="scroll-thin sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 pb-4 lg:block">
           {filters}
         </aside>
 
@@ -315,7 +305,7 @@ function SearchBox({ value, onCommit }: { value: string; onCommit: (q: string) =
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Название, производитель или описание — например, «AMR» или «Ronavi»"
-        className="h-11 w-full rounded-xl bg-card pr-4 pl-11 text-[14px] shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-ink-4 focus:ring-2 focus:ring-ring/60"
+        className="h-11 w-full rounded-xl bg-card pr-4 pl-11 text-[14.5px] shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80"
         aria-label="Поиск по каталогу"
       />
     </label>
@@ -362,14 +352,14 @@ function OptionList({
             onClick={() => onToggle(option.key)}
             className={cn(
               'flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13.5px] leading-snug transition-colors max-lg:py-2.5',
-              active ? 'bg-signal-soft font-medium text-accent-ink' : 'text-ink-2 hover:bg-black/4 hover:text-ink',
+              active ? 'bg-black/5 font-medium text-ink' : 'text-ink-2 hover:bg-black/4 hover:text-ink',
             )}
           >
             <span
               className={cn(
                 'mt-0.5 grid size-3.5 shrink-0 place-items-center transition-colors',
                 kind === 'radio' ? 'rounded-full' : 'rounded-[4px]',
-                active ? 'bg-signal text-white' : 'bg-card ring-1 ring-line-2',
+                active ? 'bg-ink text-white' : 'bg-card ring-1 ring-line-2',
               )}
             >
               {active &&

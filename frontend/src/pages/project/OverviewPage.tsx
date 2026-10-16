@@ -1,11 +1,11 @@
 import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { OBJECT_TYPE_LABEL, useAudit, useProcesses, useProject, useProjectId } from '@/entities/project'
+import { useAudit, useProcesses, useProject, useProjectId } from '@/entities/project'
 import { VERDICT_LABEL, VERDICT_TONE, pickMainScenario, useScenarios, type Verdict } from '@/entities/scenario'
 import type { ProjectStepId } from '@/entities/project/steps'
 import type { AuditEvent, Scenario } from '@/shared/api/types'
-import { formatDateTime, formatNumber, formatPct, formatRub, formatYears, isNum, pluralRu } from '@/shared/lib/format'
+import { formatDateTime, formatNumber, formatRub, formatYears, isNum } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { LoadingBlock } from '@/shared/ui/states'
@@ -63,34 +63,14 @@ export function OverviewPage() {
   const verdict = metrics?.verdict && metrics.verdict in VERDICT_LABEL ? (metrics.verdict as Verdict) : null
 
   return (
-    <div className="mx-auto w-full max-w-300 pt-3 pb-12">
-      <div>
-        <div className="workspace-overview-header">
-          <div className="min-w-0">
-            <div className="workspace-eyebrow">
-              Проект <span>/</span> Обзор
-            </div>
-            <h1 className="workspace-overview-title">{project.name}</h1>
-            <div className="workspace-overview-meta">
-              <span>{OBJECT_TYPE_LABEL[project.object_type]}</span>
-              <span>·</span>
-              <span>
-                {project.scenarios_count} {pluralRu(project.scenarios_count, ['сценарий', 'сценария', 'сценариев'])}
-              </span>
-              <span>·</span>
-              <span>Данные заполнены на {formatPct(project.data_quality.score, { share: true, digits: 0 })}</span>
-            </div>
-          </div>
-          <Button asChild variant="outline">
-            <Link to="object">
-              Параметры объекта <ArrowRight />
-            </Link>
-          </Button>
-        </div>
+    // The panel sits in the middle of the space under the header, however tall the window is.
+    <div className="flex flex-1 items-center justify-center pt-4 pb-10">
+      <div className="card w-full max-w-6xl p-5 shadow-card sm:p-8">
+        <h1 className="h1 text-[26px] sm:text-[34px]">{project.name}</h1>
 
         {metrics ? (
           <>
-            <div className="workspace-overview-metrics">
+            <div className="mt-7 grid grid-cols-1 divide-y divide-line rounded-xl bg-surface-2 ring-1 ring-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
               <Figure label="Окупаемость рекомендованного сценария" value={formatYears(metrics.payback_years)}>
                 {verdict && (
                   <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
@@ -172,7 +152,7 @@ function Start({ scenario }: { scenario?: Scenario }) {
     ? { to: `scenarios/${scenario.id}`, label: 'Рассчитать сценарий' }
     : { to: 'object', label: 'Начать оценку' }
   return (
-    <div className="workspace-start">
+    <div className="mt-5">
       <p className="text-[14px] text-ink-3">
         Расчёта ещё нет. Четыре шага ведут к окупаемости, остальные проверяют её и собирают отчёт.
       </p>
@@ -182,16 +162,16 @@ function Start({ scenario }: { scenario?: Scenario }) {
             <Link
               to={step.id}
               className={cn(
-                'workspace-start-path group flex h-full flex-col px-4 py-4',
-                !scenario && i === 0 && 'is-next',
+                'group flex h-full flex-col rounded-xl bg-surface-2 px-4 py-4 ring-1 ring-line transition-shadow hover:ring-line-2',
+                !scenario && i === 0 && 'bg-card ring-ink/80 hover:ring-ink',
               )}
             >
               <span className="flex items-center justify-between text-[12.5px] text-ink-3">
-                <span className="font-mono text-[10px]">0{i + 1}</span>
-                <ArrowRight className="size-3.5 text-signal/70 transition-transform group-hover:translate-x-0.5" />
+                <span className="num">Шаг {i + 1}</span>
+                <ArrowRight className="size-3.5 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
               </span>
-              <span className="mt-3 text-[17px] font-semibold tracking-[-0.035em]">{step.label}</span>
-              <span className="mt-2 text-[12px] leading-relaxed text-ink-3">{step.text}</span>
+              <span className="mt-1.5 text-[15px] font-semibold tracking-[-0.01em]">{step.label}</span>
+              <span className="mt-1 text-[13px] leading-snug text-ink-3">{step.text}</span>
             </Link>
           </li>
         ))}
@@ -212,9 +192,9 @@ function Start({ scenario }: { scenario?: Scenario }) {
 
 function Figure({ label, value, children }: { label: string; value: string; children: ReactNode }) {
   return (
-    <div className="workspace-overview-figure min-w-0 px-5 py-5 sm:px-6 sm:py-6">
+    <div className="min-w-0 px-5 py-4 sm:px-6 sm:py-5">
       <div className="text-[13px] text-ink-3 sm:truncate">{label}</div>
-      <div className="workspace-figure-value num">{value}</div>
+      <div className="display num mt-2 text-[28px]">{value}</div>
       <div className="mt-2">{children}</div>
     </div>
   )
@@ -296,7 +276,7 @@ function Panel({
   children: ReactNode
 }) {
   return (
-    <section className={cn('workspace-overview-panel rounded-xl px-5 py-5 ring-1 ring-line', fill && 'flex flex-col')}>
+    <section className={cn('rounded-xl bg-surface-2 px-5 py-5 ring-1 ring-line', fill && 'flex flex-col')}>
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="h3">{title}</h2>
         {action}
