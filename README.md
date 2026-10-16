@@ -69,6 +69,34 @@ docker compose up -d --build
 
 Задеплоенная версия всегда открыта на **[prooood.ru](https://prooood.ru/)**, там всё то же самое.
 
+## Автодеплой на Fly.io
+
+Push в `main` запускает `.github/workflows/deploy.yml`: после успешного `make check` сначала приложение `robomera-api` (API и воркер arq),
+затем `robomera` (фронтенд). Перед обновлением API выполняется `alembic upgrade head`; ошибка миграции останавливает
+выкладку. Сборка обоих образов идёт из корня репозитория на удалённом сборщике Fly.io. Запуски выполняются по очереди.
+Изменения только Markdown и `docs/` не запускают деплой; файлы `case/dataset/` и `research/` входят в образ API.
+Ручной запуск — Actions → deploy → Run workflow, ветка `main`.
+
+В GitHub Actions нужны два repository secret с отдельными deploy-токенами Fly.io:
+
+| Секрет | Приложение |
+|---|---|
+| `FLY_API_TOKEN_BACKEND` | `robomera-api` |
+| `FLY_API_TOKEN_WEB` | `robomera` |
+
+Создать или обновить токены можно из авторизованных `flyctl` и `gh`, без сохранения в файлы:
+
+```bash
+set -o pipefail
+fly tokens create deploy --app robomera-api --name github-actions --expiry 8760h | gh secret set FLY_API_TOKEN_BACKEND
+fly tokens create deploy --app robomera --name github-actions --expiry 8760h | gh secret set FLY_API_TOKEN_WEB
+```
+
+Срок токенов — год; перед истечением повторите команды. Секреты приложения (БД, JWT, CSRF) остаются в Fly Secrets.
+Postgres `robomera-db` и Redis `robomera-redis` обслуживаются отдельно: автодеплой не пересоздаёт их и не трогает тома.
+После выкладки проверяются главная страница, готовность БД/Redis/воркера и соответствие `build_sha` коммиту GitHub.
+Старые `deploy/deploy.sh` и `deploy/docker-compose.prod.yml` сохранены для ручного стенда на ВМ и в Actions не вызываются.
+
 ## Демо-доступ
 
 Ничего вводить не нужно. На странице входа внизу блок **Демо-доступ для жюри**, там три кнопки, нажали и вы внутри под нужной ролью.
