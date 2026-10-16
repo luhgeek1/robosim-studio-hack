@@ -1,4 +1,4 @@
-import { Braces, Download, FileSpreadsheet, FileText, ImageIcon, X } from 'lucide-react'
+import { Braces, Download, FileSpreadsheet, FileText, ImageIcon, Info, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useProject, useProjectId } from '@/entities/project'
 import { downloadReport, useMakeReport, useProjectVisuals, useReportVisuals, useReports } from '@/entities/report'
@@ -10,8 +10,6 @@ import { Button } from '@/shared/ui/button'
 import { Callout, Screen, Section } from '@/shared/ui/page'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Pill } from '@/shared/ui/v0'
-
-const DISCLAIMER = 'Предварительная оценка. Результат требует верификации при обследовании объекта.'
 
 const FORMATS: { format: ReportFormat; title: string; text: string; icon: typeof FileText }[] = [
   {
@@ -64,7 +62,15 @@ export function ReportPage() {
   return (
     <Screen title={comparison.data?.verdict.headline ?? 'Отчёт для инвесткомитета'}>
       <div className="space-y-6">
-        <Callout tone="info">{DISCLAIMER}</Callout>
+        <aside aria-label="Статус оценки" className="flex items-start gap-3 border-y border-line py-4">
+          <Info className="mt-0.5 size-4 shrink-0 text-[#d6633c]" strokeWidth={1.7} aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="text-[13.5px] font-semibold text-ink">Предварительная оценка</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-3">
+              Результат требует верификации при обследовании объекта.
+            </p>
+          </div>
+        </aside>
         {noCalculations && (
           <Callout>Нет рассчитанных сценариев: отчёт соберётся, когда появится хотя бы один расчёт.</Callout>
         )}

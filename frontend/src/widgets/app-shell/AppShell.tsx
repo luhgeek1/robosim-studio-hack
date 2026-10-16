@@ -54,11 +54,13 @@ function useScrollPull() {
    (или перейти в неё с клавиатуры, Tab) или резко прокрутить вверх — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
    Шапка и плашка — fixed, а место в потоке держат распорки той же высоты. */
 function StepDock({ projectId }: { projectId: string }) {
+  // Имитация занимает всё окно: переходы между шагами должны всегда оставаться доступны.
+  const pinned = Boolean(useMatch('/projects/:projectId/simulation'))
   const scrolled = useSyncExternalStore(subscribeScroll, isScrolledDown)
   const pulled = useScrollPull()
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
-  const hidden = scrolled && !pulled && !hovered && !focused
+  const hidden = !pinned && scrolled && !pulled && !hovered && !focused
   const { pathname } = useLocation()
   const nav = useRef<HTMLElement>(null)
   // На узком экране плашка прокручивается вбок — активный шаг держим в видимой части.
@@ -85,7 +87,7 @@ function StepDock({ projectId }: { projectId: string }) {
           ref={nav}
           className={cn(
             // Плашка чаще появляется поверх прокрученного контента: без размытия цифры и 3D-карточки лезут сквозь подписи.
-            'glass relative flex max-w-full items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
+            'workspace-step-dock glass relative flex max-w-full items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
             // Выезжает с замедлением, уезжает с разгоном: так движение читается целиком, а не вспышкой в первом кадре.
             'transition-[translate,opacity] duration-320 ease-[cubic-bezier(0.33,1,0.68,1)] motion-reduce:transition-none',
             // Уход — с короткой задержкой: курсор, проскочивший мимо края, не заставляет плашку дёргаться.
@@ -94,15 +96,15 @@ function StepDock({ projectId }: { projectId: string }) {
           )}
           aria-label="Шаги оценки"
         >
-          <SlideHighlight className="rounded-full bg-white shadow-[0_1px_2px_rgba(20,20,19,0.08),0_4px_12px_-4px_rgba(20,20,19,0.18),inset_0_0_0_1px_rgba(255,255,255,0.9)]" />
+          <SlideHighlight className="rounded-full bg-[#293831] shadow-[0_2px_4px_rgba(20,30,23,0.14)]" />
           {PROJECT_STEPS.map((step, i) => (
             <NavLink
               key={step.id}
               to={`/projects/${projectId}/${step.id}`}
               className={({ isActive }) =>
                 cn(
-                  'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap text-ink transition-colors',
-                  !isActive && 'hover:bg-white/50',
+                  'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors',
+                  isActive ? 'text-white' : 'text-ink-3 hover:bg-white/50 hover:text-ink',
                 )
               }
             >
@@ -110,7 +112,9 @@ function StepDock({ projectId }: { projectId: string }) {
                 <>
                   {isActive && <SlideMark />}
                   <span className="relative z-10 flex items-center gap-1.5">
-                    <span className="num text-[11px] text-ink">{i + 1}</span>
+                    <span className={cn('num text-[10px]', isActive ? 'text-[#ff956f]' : 'text-ink-4')}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
                     {step.label}
                   </span>
                 </>
@@ -136,11 +140,14 @@ export function AppShell() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [pathname])
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="app-workspace flex min-h-full flex-col">
+      <a href="#workspace-main" className="workspace-skip">
+        Перейти к содержимому
+      </a>
       <div className="h-14 shrink-0" aria-hidden />
       <motion.header
         layoutRoot
-        className="fixed inset-x-0 top-0 z-40 h-14 border-b border-line bg-canvas/85 backdrop-blur-md"
+        className="workspace-header fixed inset-x-0 top-0 z-40 h-14 border-b border-line backdrop-blur-md"
       >
         <div
           ref={setHeaderRow}
@@ -174,7 +181,7 @@ export function AppShell() {
           <StepDock projectId={projectId} />
         </>
       )}
-      <main className="flex min-h-0 flex-1 flex-col">
+      <main id="workspace-main" className="flex min-h-0 flex-1 flex-col" tabIndex={-1}>
         <Outlet />
       </main>
     </div>

@@ -93,9 +93,9 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
               width: box.w,
               height: box.h,
               opacity: 1,
-              backgroundColor: tab ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,0.06)',
+              backgroundColor: tab ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.07)',
               boxShadow: tab
-                ? '0 1px 2px rgba(20,20,19,0.06), 0 0 0 1px rgba(230,223,216,1)'
+                ? '0 1px 2px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.08)'
                 : '0 0 0 0 rgba(0,0,0,0), 0 0 0 0 rgba(0,0,0,0)',
             }
           : { opacity: 0 }
@@ -155,7 +155,7 @@ export function Sections({ projectId }: { projectId?: string }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
               transition={SPRING}
-              className="num flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ink px-1 text-[10.5px] text-white"
+              className="num flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#ff996e] px-1 text-[10.5px] text-[#243027]"
             >
               {selection.items.length}
             </motion.span>
@@ -204,9 +204,9 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
       ) : active ? (
         // Закрытая активная вкладка сразу отдаёт метку, и подсветка летит к новой цели, а не ждёт конца исчезновения;
         // свой белый фон вкладка рисует сама и гаснет вместе с ним.
-        <span className="absolute inset-0 rounded-[10px] bg-white shadow-[0_1px_2px_rgba(20,20,19,0.06),0_0_0_1px_rgba(230,223,216,1)]" />
+        <span className="absolute inset-0 rounded-[10px] bg-white/10 ring-1 ring-white/8" />
       ) : (
-        <span className="absolute inset-0 rounded-[10px] bg-black/4 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.03)] transition-colors group-hover:bg-black/7" />
+        <span className="absolute inset-0 rounded-[10px] bg-white/3 transition-colors group-hover:bg-white/6" />
       )}
       <Link
         to={tab.path}
@@ -216,7 +216,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
         <span
           className={cn(
             'flex size-6 shrink-0 items-center justify-center rounded-md transition-colors',
-            active ? 'bg-black/5 text-ink-2' : 'text-ink-3',
+            active ? 'text-[#ff9068]' : 'text-ink-3',
           )}
         >
           {objectIcon(project.data?.object_type, 14)}
@@ -249,7 +249,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
           // У неактивной вкладки крестик всплывает поверх названия и не отнимает у него место.
           active
             ? 'relative mr-1.5'
-            : 'absolute right-1.5 bg-[#ede8df] opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+            : 'absolute right-1.5 bg-[#29342f] opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
         )}
       >
         <X size={13} />
@@ -491,6 +491,11 @@ export function MobileNav({ projectId }: { projectId?: string }) {
             {user?.role === 'admin' && (
               <MobileLink to="/admin" onGo={go}>
                 Админ-панель
+              </MobileLink>
+            )}
+            {user?.role === 'vendor' && (
+              <MobileLink to="/vendor" onGo={go}>
+                Кабинет производителя
               </MobileLink>
             )}
             <MobileLink to={compareTo} onGo={go}>

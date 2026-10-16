@@ -22,7 +22,7 @@ function Avatar({ letter, shared, size = 'sm' }: { letter: string; shared: boole
       className={cn(
         'flex shrink-0 items-center justify-center font-semibold',
         size === 'sm' ? 'size-6 rounded-[7px] text-[11.5px]' : 'size-8 rounded-[9px] text-[13px]',
-        shared ? 'bg-ink text-white' : 'bg-black/6 text-ink-2',
+        shared ? 'bg-[#293831] text-white' : 'bg-signal/15 text-signal',
       )}
       aria-hidden
     >
