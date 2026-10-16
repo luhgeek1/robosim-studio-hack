@@ -96,16 +96,9 @@ class OrganizationService:
         invitee = (await self._repo.users_by_email([address])).get(address)
         if invitee and await self._repo.membership(organization_id, invitee.id):
             raise ConflictError("Этот пользователь уже в организации")
-        if await self._repo.pending_invitation(organization_id, address):
+        invitation = await self._repo.create_pending_invitation(organization_id, address, self._user.id)
+        if invitation is None:
             raise ConflictError("Приглашение на этот адрес уже отправлено и ждёт ответа")
-        invitation = OrganizationInvitation(
-            organization_id=organization_id,
-            email=address,
-            invited_by=self._user.id,
-            status=InvitationStatus.PENDING,
-        )
-        self._repo.add(invitation)
-        await self._uow.flush()
         inviter = await self._uow.users.get(self._user.id)
         return InvitationInfo(
             id=invitation.id,

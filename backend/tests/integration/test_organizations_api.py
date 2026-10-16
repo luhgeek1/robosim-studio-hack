@@ -132,14 +132,20 @@ async def test_unregistered_email_is_invited(client: AsyncClient) -> None:
     assert [i["email"] for i in detail["invitations"]] == ["new.person@example.com"]
 
 
-async def test_concurrent_duplicate_invitation_returns_conflict(client: AsyncClient) -> None:
+@pytest.mark.parametrize("attempts", [2, 8])
+async def test_concurrent_duplicate_invitation_returns_conflict(client: AsyncClient, attempts: int) -> None:
     owner = await _auth(client, OWNER)
     org = (await client.post(ORGS, json={"name": "Параллельные приглашения"}, headers=owner)).json()
     responses = await asyncio.gather(
-        client.post(f"{ORGS}/{org['id']}/invitations", json={"email": INVITEE}, headers=owner),
-        client.post(f"{ORGS}/{org['id']}/invitations", json={"email": INVITEE}, headers=owner),
+        *(
+            client.post(f"{ORGS}/{org['id']}/invitations", json={"email": INVITEE}, headers=owner)
+            for _ in range(attempts)
+        )
     )
-    assert sorted(response.status_code for response in responses) == [201, 409]
+    assert sorted(response.status_code for response in responses) == [201] + [409] * (attempts - 1)
+    detail = (await client.get(f"{ORGS}/{org['id']}", headers=owner)).json()
+    assert len(detail["invitations"]) == 1
+    assert detail["invitations"][0]["email"] == INVITEE
 
 
 async def test_invitation_is_case_insensitive_and_private(client: AsyncClient) -> None:
