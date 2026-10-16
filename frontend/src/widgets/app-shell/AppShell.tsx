@@ -54,11 +54,13 @@ function useScrollPull() {
    (или перейти в неё с клавиатуры, Tab) или резко прокрутить вверх — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
    Шапка и плашка — fixed, а место в потоке держат распорки той же высоты. */
 function StepDock({ projectId }: { projectId: string }) {
+  // Имитация занимает всё окно: переходы между шагами должны всегда оставаться доступны.
+  const pinned = Boolean(useMatch('/projects/:projectId/simulation'))
   const scrolled = useSyncExternalStore(subscribeScroll, isScrolledDown)
   const pulled = useScrollPull()
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
-  const hidden = scrolled && !pulled && !hovered && !focused
+  const hidden = !pinned && scrolled && !pulled && !hovered && !focused
   const { pathname } = useLocation()
   const nav = useRef<HTMLElement>(null)
   // На узком экране плашка прокручивается вбок — активный шаг держим в видимой части.

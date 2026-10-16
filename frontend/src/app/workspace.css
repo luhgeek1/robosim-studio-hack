@@ -1,7 +1,5 @@
 /* Shared chrome: the graphite header and the project step dock. */
-.app-workspace {
-  isolation: isolate;
-}
+/* The workbench uses a body portal; keep header and dock z-indexes in that same stacking context. */
 .workspace-header {
   --canvas: #171d1e;
   --foreground: #f1f4ec;
