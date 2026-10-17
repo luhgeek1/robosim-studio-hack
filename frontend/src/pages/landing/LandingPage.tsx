@@ -598,34 +598,25 @@ export function LandingPage() {
           <EvidenceSection workspace="/demo/warehouse_demo_01?step=evidence" demo={demo} />
           <QuestionsSection workspace="/demo" />
 
-          <section className="landing-final-cta">
-            <div className="landing-container landing-cta-content">
-              <motion.div {...reveal()}>
-                <span className="landing-eyebrow">
-                  <span className="landing-square" /> ВАШ СЛЕДУЮЩИЙ ШАГ
-                </span>
-                <h2>
-                  Узнайте, что роботы
+          <section className="landing-final-cta" aria-labelledby="create-project-title">
+            <div className="landing-container landing-cta-card">
+              <motion.div className="landing-cta-copy" {...reveal()}>
+                <h2 id="create-project-title">
+                  Посчитайте,
                   <br />
-                  могут дать вашему бизнесу<span>.</span>
+                  прежде чем
+                  <br />
+                  покупать
                 </h2>
-                <p>Начните с готового демо-объекта или создайте свой.</p>
-              </motion.div>
-              <motion.div {...reveal(0.12)}>
-                <Link to="/demo" className="landing-button landing-button-cream">
-                  Попробовать без регистрации <ArrowUpRight size={23} />
+                <p>Первый расчёт объекта займёт около 15 минут. Без звонков менеджеру.</p>
+                <Link
+                  to={status === 'authenticated' ? '/projects?new=1' : '/login?mode=register'}
+                  state={{ from: '/projects?new=1' }}
+                  className="landing-cta-button"
+                >
+                  Создать проект <ArrowRight size={20} />
                 </Link>
               </motion.div>
-              <motion.span
-                className="landing-cta-decoration"
-                aria-hidden="true"
-                initial={reduced ? false : { x: -50, y: 50, opacity: 0 }}
-                whileInView={{ x: 0, y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: reduced ? 0 : 1.1, ease: EASE }}
-              >
-                ↗
-              </motion.span>
             </div>
           </section>
         </main>
