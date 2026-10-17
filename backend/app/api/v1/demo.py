@@ -3,6 +3,11 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Response
 
+from app.api.demo.build import card
+from app.api.demo.cache import RETRY_SECONDS, DemoCache, revision
+from app.api.demo.prepare import claim, prepare
+from app.api.demo.registry import DEMO_OWNER, EXAMPLES, example
+from app.api.demo.what_if import what_if
 from app.api.deps import RedisDep, UowDep, get_database, rate_limited
 from app.api.files import content_disposition
 from app.api.schemas.demo import (
@@ -16,17 +21,13 @@ from app.api.schemas.simulations import SimulationReplay
 from app.core.errors import InvalidInputError, NotFoundError
 from app.db.session import Database
 from app.domain.reports.models import ReportFormat, ReportSection
-from app.service.demo.build import card
-from app.service.demo.cache import RETRY_SECONDS, DemoCache, revision
-from app.service.demo.prepare import claim, prepare
-from app.service.demo.registry import DEMO_OWNER, EXAMPLES, example
-from app.service.demo.what_if import what_if
 from app.service.reports.collect import ReportCollector, ReportRequest
 from app.service.reports.service import MEDIA_TYPES, render
 from app.service.simulations.service import SimulationService
 
 router = APIRouter(prefix="/demo/projects", tags=["demo"])
 DatabaseDep = Annotated[Database, Depends(get_database)]
+ExpectedRevision = Annotated[str | None, Query(alias="revision", max_length=64)]
 
 
 @router.get("", operation_id="listDemoProjects", summary="Примеры без регистрации")
@@ -73,10 +74,14 @@ async def get_example(
     dependencies=[Depends(rate_limited("demo-what-if"))],
 )
 async def calculate_example(
-    demo_key: str, payload: DemoWhatIfRequest, uow: UowDep, redis: RedisDep
+    demo_key: str,
+    payload: DemoWhatIfRequest,
+    uow: UowDep,
+    redis: RedisDep,
+    expected_revision: ExpectedRevision = None,
 ) -> DemoWhatIfResult:
     item = example(demo_key)
-    snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready()
+    snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready(expected_revision)
     return await what_if(uow, snapshot, payload)
 
 
@@ -85,13 +90,14 @@ async def replay_example(
     demo_key: str,
     uow: UowDep,
     redis: RedisDep,
+    expected_revision: ExpectedRevision = None,
     from_s: Annotated[float, Query(ge=0)] = 0,
     to_s: Annotated[float | None, Query(gt=0)] = None,
 ) -> SimulationReplay:
     item = example(demo_key)
     if to_s is not None and not from_s < to_s <= from_s + 3600:
         raise InvalidInputError("Окно воспроизведения — от 1 до 3600 секунд")
-    snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready()
+    snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready(expected_revision)
     if snapshot.simulation is None:
         raise NotFoundError("У примера нет имитации")
     replay = await SimulationService(uow, DEMO_OWNER).replay(snapshot.simulation.id, from_s, to_s, None)
@@ -105,10 +111,14 @@ async def replay_example(
     dependencies=[Depends(rate_limited("demo-report"))],
 )
 async def report_example(
-    demo_key: str, format: Literal["pdf", "xlsx"], uow: UowDep, redis: RedisDep
+    demo_key: str,
+    format: Literal["pdf", "xlsx"],
+    uow: UowDep,
+    redis: RedisDep,
+    expected_revision: ExpectedRevision = None,
 ) -> Response:
     item = example(demo_key)
-    snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready()
+    snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready(expected_revision)
     sections: list[ReportSection] = [
         s for s in ReportSection if s not in {ReportSection.SENSITIVITY, ReportSection.MONTE_CARLO}
     ]

@@ -4,6 +4,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.api.demo.cache import DemoCache
+from app.api.demo.registry import DEMO_OWNER, DEMO_OWNER_ID, Example
 from app.api.schemas.calculations import CalculationRun, CalculationTrace, ComparisonTable, TraceItem
 from app.api.schemas.demo import DemoHeadline, DemoProject, DemoSnapshot
 from app.api.schemas.layouts import Layout
@@ -20,8 +22,6 @@ from app.domain.project.models import InitMode
 from app.domain.scenario.models import ScenarioItemSpec, ScenarioKind
 from app.engine.matching import CandidateStatus
 from app.engine.simulation import SimMode
-from app.service.demo.cache import DemoCache
-from app.service.demo.registry import DEMO_OWNER, DEMO_OWNER_ID, Example
 from app.service.layouts.service import LayoutService
 from app.service.matching.service import MatchingService
 from app.service.projects.context import ProjectLoader

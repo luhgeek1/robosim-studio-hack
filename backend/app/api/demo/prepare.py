@@ -5,10 +5,10 @@ from contextlib import suppress
 from typing import cast
 from uuid import uuid4
 
+from app.api.demo.build import build
+from app.api.demo.cache import LOCK_SECONDS, RETRY_SECONDS, DemoCache
+from app.api.demo.registry import Example
 from app.db.session import Database
-from app.service.demo.build import build
-from app.service.demo.cache import LOCK_SECONDS, RETRY_SECONDS, DemoCache
-from app.service.demo.registry import Example
 
 logger = logging.getLogger(__name__)
 _RELEASE = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) end"

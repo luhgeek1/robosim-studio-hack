@@ -1,15 +1,16 @@
 import hashlib
 import json
+from dataclasses import asdict
 from typing import Any
 
 from redis.asyncio import Redis
 
+from app.api.demo.registry import DEMO_REVISION, Example
 from app.api.schemas.demo import DemoSnapshot
 from app.core.errors import ConflictError
 from app.core.versions import ENGINE_VERSION
 from app.db.repositories.reference import ReferenceRepository
 from app.db.uow import UnitOfWork
-from app.service.demo.registry import DEMO_REVISION, Example
 
 CACHE_SECONDS = 7 * 24 * 60 * 60
 LOCK_SECONDS = 60
@@ -28,6 +29,7 @@ async def revision(uow: UnitOfWork, item: Example) -> str:
     rows.extend(await repo.processes([item.object_type]))
     data = [
         DEMO_REVISION,
+        asdict(item),
         ENGINE_VERSION,
         await repo.data_version("catalog"),
         norm.version if norm else None,
@@ -45,10 +47,12 @@ class DemoCache:
         raw = await self.redis.get(self.prefix)
         return DemoSnapshot.model_validate_json(raw) if raw else None
 
-    async def ready(self) -> DemoSnapshot:
+    async def ready(self, expected_revision: str | None = None) -> DemoSnapshot:
         snapshot = await self.get()
         if snapshot is None:
             raise ConflictError("Пример ещё готовится: откройте его и дождитесь расчёта")
+        if expected_revision is not None and snapshot.revision != expected_revision:
+            raise ConflictError("Пример обновился: откройте его заново, чтобы сравнивать одну версию данных")
         return snapshot
 
     async def publish(self, snapshot: DemoSnapshot) -> None:

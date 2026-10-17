@@ -8217,7 +8217,10 @@ export interface operations {
   }
   demoWhatIf: {
     parameters: {
-      query?: never
+      query?: {
+        /** @description Версия открытого примера; при несовпадении — 409 */
+        revision?: string
+      }
       header?: never
       path: {
         demo_key: string
@@ -8255,7 +8258,9 @@ export interface operations {
   }
   downloadDemoReport: {
     parameters: {
-      query?: never
+      query?: {
+        revision?: string
+      }
       header?: never
       path: {
         demo_key: string
@@ -8292,6 +8297,7 @@ export interface operations {
   getDemoReplay: {
     parameters: {
       query?: {
+        revision?: string
         from_s?: number
         to_s?: number
       }

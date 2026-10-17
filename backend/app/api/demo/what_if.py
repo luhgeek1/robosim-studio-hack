@@ -3,18 +3,44 @@ from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from app.api.demo.registry import DEMO_OWNER
 from app.api.schemas.calculations import CalculationRun
 from app.api.schemas.demo import DemoSnapshot, DemoWhatIfRequest, DemoWhatIfResult
 from app.db.uow import UnitOfWork
-from app.engine.calculation import calculate
+from app.domain.common.provenance import Provenance, ProvenanceStatus
+from app.domain.scenario.models import NormOverride
+from app.engine.calculation import CalculationInput, calculate
 from app.engine.sensitivity import Driver, DriverKind, Group, apply
 from app.engine.verdict import assess_risks, interpret
-from app.service.demo.registry import DEMO_OWNER
 from app.service.scenarios.calculations import CalculationService, verdict_context
 from app.service.scenarios.serialize import payload
 from app.service.scenarios.service import ScenarioService
+from app.service.scenarios.snapshot import Snapshot
 
 CASH_SHARE = "labor_cash_realization_share"
+
+
+def _guest_snapshot(snapshot: Snapshot, inp: CalculationInput, request: DemoWhatIfRequest) -> Snapshot:
+    provenance = dict(snapshot.param_provenance)
+    for key, value in inp.params.items():
+        if value != snapshot.input.params.get(key):
+            provenance[key] = Provenance(
+                status=ProvenanceStatus.USER,
+                note="Изменено гостем относительно исходного примера; не сохраняется",
+            )
+    overrides = dict(snapshot.overrides)
+    share = request.labor_cash_realization_share
+    if share is not None and share != snapshot.input.norms.value(CASH_SHARE):
+        overrides[CASH_SHARE] = NormOverride(CASH_SHARE, share, "Пробное допущение гостя без сохранения")
+    if request.robot_price_multiplier != 1:
+        inp = replace(inp, items=[replace(item, price_overridden=True) for item in inp.items])
+    return replace(
+        snapshot,
+        input=inp,
+        param_provenance=provenance,
+        overrides=overrides,
+        inputs={**snapshot.inputs, "guest_changes": request.model_dump()},
+    )
 
 
 async def what_if(uow: UnitOfWork, demo: DemoSnapshot, request: DemoWhatIfRequest) -> DemoWhatIfResult:
@@ -37,9 +63,9 @@ async def what_if(uow: UnitOfWork, demo: DemoSnapshot, request: DemoWhatIfReques
         )
     if request.horizon_years is not None:
         inp = replace(inp, horizon_years=request.horizon_years)
-    snapshot = replace(snapshot, input=inp, inputs={**snapshot.inputs, "guest_changes": request.model_dump()})
+    snapshot = _guest_snapshot(snapshot, inp, request)
     started = time.perf_counter()
-    result = calculate(inp)
+    result = calculate(snapshot.input)
     context = verdict_context(snapshot)
     body, _ = payload(result, snapshot, interpret(result, context), assess_risks(result, context), [])
     body.pop("cashflow_overlay", None)

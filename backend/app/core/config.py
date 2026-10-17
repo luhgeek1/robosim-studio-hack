@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     )
     job_timeout_s: int = 300
 
+    demo_warm_on_startup: bool = True
     seed_on_startup: bool = True
     data_root: Path = Field(default=REPO_ROOT, description="Folder with case/dataset and research/")
     demo_password: SecretStr = SecretStr("Demo12345!")

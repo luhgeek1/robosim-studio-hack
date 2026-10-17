@@ -2458,6 +2458,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: revision
+          in: query
+          schema:
+            type: string
+            maxLength: 64
+          description: Версия открытого примера; при несовпадении — 409
       requestBody:
         required: true
         content:
@@ -2497,6 +2503,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: revision
+          in: query
+          schema:
+            type: string
+            maxLength: 64
         - name: format
           in: path
           required: true
@@ -2542,6 +2553,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: revision
+          in: query
+          schema:
+            type: string
+            maxLength: 64
         - name: from_s
           in: query
           schema:

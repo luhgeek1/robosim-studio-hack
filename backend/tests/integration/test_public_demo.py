@@ -27,6 +27,9 @@ async def test_guest_journey_is_isolated_and_reuses_calculation_engine(client: A
     assert volume.json()["simulation_valid"] is False
     assert all(s["count"]["source"] != "simulated" for s in volume.json()["calculation"]["sizing"])
     assert (await client.get(url)).json() == demo
+    assert (await client.post(f"{url}/what-if?revision=outdated", json={})).status_code == 409
+    assert (await client.get(f"{url}/replay?revision=outdated")).status_code == 409
+    assert (await client.get(f"{url}/report/pdf?revision=outdated")).status_code == 409
     replay = await client.get(f"{url}/replay", params={"from_s": 0, "to_s": 600})
     assert replay.status_code == 200, replay.text
     assert replay.json()["events"]
@@ -63,3 +66,21 @@ async def test_additional_examples_are_complete_and_guest_inputs_are_transient(c
         assert result.json()["metrics"]["labor_savings_rub_year"] == 0
         assert result.json()["metrics"]["horizon_years"] == 3
         assert (await client.get(url)).json() == demo
+
+
+async def test_guest_price_override_has_user_provenance(client: AsyncClient) -> None:
+    url = f"{BASE}/warehouse_demo_01"
+    await client.get(url)
+    result = await client.post(
+        f"{url}/what-if", json={"robot_price_multiplier": 1.5, "salary_multiplier": 1.2}
+    )
+    assert result.status_code == 200, result.text
+    calculation = result.json()["calculation"]
+    prices = [
+        value
+        for item in calculation["capex"]["items"]
+        for value in item["inputs"]
+        if value["key"].endswith(".price_rub")
+    ]
+    assert prices
+    assert all(value["provenance"]["status"] == "user" for value in prices)
