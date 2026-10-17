@@ -249,26 +249,35 @@ AssumptionReview:
 
 DemoProject:
   type: object
-  required: [key, name, object_type, description, headline]
+  required: [key, name, object_type, description, headline, scope]
   properties:
     key: {type: string, example: "warehouse_demo_01"}
     name: {type: string}
     object_type: {$ref: './reference.yaml#/ObjectTypeKey'}
     description: {type: string}
+    scope: {type: string, description: "Границы процесса и допущения примера"}
     headline:
       type: object
       properties:
-        robots_total: {type: integer}
-        capex_rub: {type: number}
-        payback_years: {type: number}
-        effect_rub_year: {type: number}
-        verdict: {type: string}
+        robots_total: {type: [integer, "null"]}
+        capex_rub: {type: [number, "null"]}
+        payback_years: {type: [number, "null"]}
+        effect_rub_year: {type: [number, "null"]}
+        verdict: {type: [string, "null"]}
     image_url: {type: [string, "null"]}
+
+DemoPreparation:
+  type: object
+  required: [status, stage, retry_after_s]
+  properties:
+    status: {type: string, enum: [preparing, failed]}
+    stage: {type: string}
+    retry_after_s: {type: integer}
 
 DemoSnapshot:
   type: object
-  description: Предрассчитанный демо-проект целиком, только чтение.
-  required: [demo, params, processes, matching, scenarios, comparison]
+  description: Общий пример только для чтения. Пересобирается при изменении версии исходных данных или ядра.
+  required: [demo, params, processes, matching, scenarios, comparison, calculations, trace, primary_scenario_id, prepared_at, revision]
   properties:
     demo: {$ref: '#/DemoProject'}
     params: {type: array, items: {$ref: './projects.yaml#/ProjectParam'}}
@@ -276,26 +285,37 @@ DemoSnapshot:
     matching: {$ref: './analysis.yaml#/MatchingResult'}
     scenarios: {type: array, items: {$ref: './analysis.yaml#/Scenario'}}
     comparison: {$ref: './analysis.yaml#/ComparisonTable'}
+    calculations: {type: array, items: {$ref: './analysis.yaml#/CalculationRun'}}
+    trace: {$ref: './analysis.yaml#/CalculationTrace'}
+    primary_scenario_id: {type: string, format: uuid}
+    prepared_at: {type: string, format: date-time}
+    revision: {type: string}
     simulation: {oneOf: [{$ref: './simulation.yaml#/SimulationRun'}, {type: "null"}]}
     layout: {oneOf: [{$ref: './projects.yaml#/Layout'}, {type: "null"}]}
+    sweep: {oneOf: [{$ref: './simulation.yaml#/FleetSweepResult'}, {type: "null"}]}
 
 DemoWhatIfRequest:
   type: object
-  description: Ограниченный what-if для гостя — несколько множителей без сохранения.
+  additionalProperties: false
+  description: Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией.
   properties:
     salary_multiplier: {type: number, minimum: 0.5, maximum: 2, default: 1}
     volume_multiplier: {type: number, minimum: 0.5, maximum: 2, default: 1}
     robot_price_multiplier: {type: number, minimum: 0.5, maximum: 2, default: 1}
-    horizon_years: {type: integer, minimum: 3, maximum: 10}
-    scenario_kind: {$ref: './analysis.yaml#/ScenarioKind'}
+    labor_cash_realization_share: {type: [number, "null"], minimum: 0, maximum: 1}
+    horizon_years: {type: [integer, "null"], minimum: 3, maximum: 10}
+    scenario_kind: {type: string, enum: [purchase, raas, lease], default: purchase}
 
 DemoWhatIfResult:
   type: object
-  required: [metrics, interpretation]
+  required: [metrics, interpretation, cashflow_yearly, calculation, simulation_valid, notes]
   properties:
     metrics: {$ref: './analysis.yaml#/Metrics'}
     interpretation: {$ref: './analysis.yaml#/Interpretation'}
     cashflow_yearly: {type: array, items: {$ref: './analysis.yaml#/CashflowPoint'}}
+    calculation: {$ref: './analysis.yaml#/CalculationRun'}
+    simulation_valid: {type: boolean}
+    notes: {type: array, items: {type: string}}
 
 # ---------------- Меры господдержки ----------------
 

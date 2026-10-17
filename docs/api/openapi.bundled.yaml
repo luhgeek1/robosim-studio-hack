@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.9.0
+  version: 0.10.0
   license:
     name: MIT
     identifier: MIT
@@ -2437,6 +2437,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DemoSnapshot'
+        '202':
+          description: Подготовка примера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoPreparation'
         '404':
           $ref: '#/components/responses/NotFound'
   /api/v1/demo/projects/{demo_key}/what-if:
@@ -9583,6 +9589,7 @@ components:
         - object_type
         - description
         - headline
+        - scope
       properties:
         key:
           type: string
@@ -9593,26 +9600,39 @@ components:
           $ref: '#/components/schemas/ObjectTypeKey'
         description:
           type: string
+        scope:
+          type: string
+          description: Границы процесса и допущения примера
         headline:
           type: object
           properties:
             robots_total:
-              type: integer
+              type:
+                - integer
+                - 'null'
             capex_rub:
-              type: number
+              type:
+                - number
+                - 'null'
             payback_years:
-              type: number
+              type:
+                - number
+                - 'null'
             effect_rub_year:
-              type: number
+              type:
+                - number
+                - 'null'
             verdict:
-              type: string
+              type:
+                - string
+                - 'null'
         image_url:
           type:
             - string
             - 'null'
     DemoSnapshot:
       type: object
-      description: Предрассчитанный демо-проект целиком, только чтение.
+      description: Общий пример только для чтения. Пересобирается при изменении версии исходных данных или ядра.
       required:
         - demo
         - params
@@ -9620,6 +9640,11 @@ components:
         - matching
         - scenarios
         - comparison
+        - calculations
+        - trace
+        - primary_scenario_id
+        - prepared_at
+        - revision
       properties:
         demo:
           $ref: '#/components/schemas/DemoProject'
@@ -9639,6 +9664,20 @@ components:
             $ref: '#/components/schemas/Scenario'
         comparison:
           $ref: '#/components/schemas/ComparisonTable'
+        calculations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalculationRun'
+        trace:
+          $ref: '#/components/schemas/CalculationTrace'
+        primary_scenario_id:
+          type: string
+          format: uuid
+        prepared_at:
+          type: string
+          format: date-time
+        revision:
+          type: string
         simulation:
           oneOf:
             - $ref: '#/components/schemas/SimulationRun'
@@ -9647,9 +9686,30 @@ components:
           oneOf:
             - $ref: '#/components/schemas/Layout'
             - type: 'null'
+        sweep:
+          oneOf:
+            - $ref: '#/components/schemas/FleetSweepResult'
+            - type: 'null'
+    DemoPreparation:
+      type: object
+      required:
+        - status
+        - stage
+        - retry_after_s
+      properties:
+        status:
+          type: string
+          enum:
+            - preparing
+            - failed
+        stage:
+          type: string
+        retry_after_s:
+          type: integer
     DemoWhatIfRequest:
       type: object
-      description: Ограниченный what-if для гостя — несколько множителей без сохранения.
+      additionalProperties: false
+      description: Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией.
       properties:
         salary_multiplier:
           type: number
@@ -9666,17 +9726,34 @@ components:
           minimum: 0.5
           maximum: 2
           default: 1
+        labor_cash_realization_share:
+          type:
+            - number
+            - 'null'
+          minimum: 0
+          maximum: 1
         horizon_years:
-          type: integer
+          type:
+            - integer
+            - 'null'
           minimum: 3
           maximum: 10
         scenario_kind:
-          $ref: '#/components/schemas/ScenarioKind'
+          type: string
+          enum:
+            - purchase
+            - raas
+            - lease
+          default: purchase
     DemoWhatIfResult:
       type: object
       required:
         - metrics
         - interpretation
+        - cashflow_yearly
+        - calculation
+        - simulation_valid
+        - notes
       properties:
         metrics:
           $ref: '#/components/schemas/Metrics'
@@ -9686,6 +9763,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CashflowPoint'
+        calculation:
+          $ref: '#/components/schemas/CalculationRun'
+        simulation_valid:
+          type: boolean
+        notes:
+          type: array
+          items:
+            type: string
     SupportMeasure:
       type: object
       required:

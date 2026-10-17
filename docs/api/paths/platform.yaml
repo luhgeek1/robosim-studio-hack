@@ -126,6 +126,7 @@ demoProject:
     parameters: [{name: demo_key, in: path, required: true, schema: {type: string}}]
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoSnapshot'}}}}
+      '202': {description: Подготовка примера, content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoPreparation'}}}}
       '404': {$ref: '../components/common.yaml#/responses/NotFound'}
 
 demoWhatIf:
