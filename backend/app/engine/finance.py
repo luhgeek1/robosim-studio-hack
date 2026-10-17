@@ -1,10 +1,12 @@
 import math
+import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 
 MONTHS_PER_YEAR = 12
-_IRR_LOW = -0.99
-_IRR_HIGH = 10.0
+_IRR_LOG_LOW = math.log1p(math.nextafter(-1.0, 0.0)) / MONTHS_PER_YEAR
+_IRR_LOG_HIGH = math.log1p(10.0) / MONTHS_PER_YEAR
+_IRR_LOG_MAX = math.log(sys.float_info.max) / MONTHS_PER_YEAR
 _IRR_TOLERANCE = 1e-10
 _IRR_ITERATIONS = 200
 
@@ -51,32 +53,38 @@ def discount_factor(rate: float, months: float) -> float:
 
 
 def npv(rate: float, flows: Sequence[float]) -> float:
-    """flows[0] happens now, flows[m] at the end of month m; nominal annual rate."""
+    """flows[0] happens now, flows[m] at the end of month m; effective annual discount rate."""
     return sum(flow * discount_factor(rate, month) for month, flow in enumerate(flows))
 
 
-def _monthly_npv(rate: float, flows: Sequence[float]) -> float:
-    return sum(flow / (1 + rate) ** month for month, flow in enumerate(flows))
+def _scaled_npv(growth: float, flows: list[tuple[int, float]]) -> float:
+    """Scale NPV by a positive factor so its sign stays correct without extreme-rate overflow."""
+    anchor = flows[0][0] if growth >= 0 else flows[-1][0]
+    return math.fsum(flow * math.exp(-growth * (month - anchor)) for month, flow in flows)
 
 
 def irr(flows: Sequence[float]) -> float | None:
-    """Annual IRR of monthly flows by bisection; None when the flows never change sign."""
+    """Annual IRR from monthly log growth; None without a bracketed root in the annual domain > −100%."""
     if not any(f < 0 for f in flows) or not any(f > 0 for f in flows):
         return None
-    low, high = _IRR_LOW / MONTHS_PER_YEAR, _IRR_HIGH / MONTHS_PER_YEAR
-    f_low, f_high = _monthly_npv(low, flows), _monthly_npv(high, flows)
+    nonzero = [(month, flow) for month, flow in enumerate(flows) if flow != 0]
+    low, high = _IRR_LOG_LOW, _IRR_LOG_HIGH
+    f_low, f_high = _scaled_npv(low, nonzero), _scaled_npv(high, nonzero)
+    while f_low * f_high > 0 and high < _IRR_LOG_MAX:
+        high = min(high * 2, _IRR_LOG_MAX)
+        f_high = _scaled_npv(high, nonzero)
     if f_low * f_high > 0:
         return None
     for _ in range(_IRR_ITERATIONS):
         middle = (low + high) / 2
-        f_middle = _monthly_npv(middle, flows)
-        if abs(f_middle) < _IRR_TOLERANCE or high - low < _IRR_TOLERANCE:
+        f_middle = _scaled_npv(middle, nonzero)
+        if f_middle == 0 or high - low < _IRR_TOLERANCE:
             break
         if f_low * f_middle < 0:
             high = middle
         else:
             low, f_low = middle, f_middle
-    return float((1 + (low + high) / 2) ** MONTHS_PER_YEAR - 1)
+    return math.expm1((low + high) / 2 * MONTHS_PER_YEAR)
 
 
 def payback_months(cumulative: Sequence[float]) -> float | None:

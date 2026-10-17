@@ -1,16 +1,17 @@
 import math
 
-from app.domain.reference import ProcessDef
+from app.domain.reference import ProcessDef, SizingModel
 from app.domain.scenario.models import CountMode, CountSource
 from app.engine.calculation.context import Context
+from app.engine.calculation.labor import release_cap
 from app.engine.calculation.models import CalculationError, CountResult, ItemInput, ItemSizing
+from app.engine.calculation.stations import fleet_capacity, station_capacity, station_count, station_share
 from app.engine.economics import FleetItem
 from app.engine.expressions import ExpressionError, MissingValueError
 from app.engine.sizing import DemandInput, SizingOptions, SizingOutcome, size
 from app.engine.trace import InputKind, Quantity, Section, TraceStep, display_formula, namespaced
 
 FMR_SOLUTION_TYPE = "fmr_forklift"
-HOURS_PER_YEAR = 24 * 365
 
 
 def _optional_expression(ctx: Context, source: str | None) -> tuple[float, list[Quantity]] | None:
@@ -22,65 +23,12 @@ def _optional_expression(ctx: Context, source: str | None) -> tuple[float, list[
         return None
 
 
-def _load(ctx: Context, process: ProcessDef) -> float | None:
-    source = (process.demand or {}).get("load_per_trip")
+def _sizing_expression(
+    ctx: Context, process: ProcessDef, key: str, name: str, source: str | None, unit: str
+) -> float | None:
     if not source or _optional_expression(ctx, source) is None:
         return None
-    return ctx.record_expression(
-        f"{process.key}.load_per_trip", "Единиц спроса за рейс", source, "ед", Section.SIZING
-    ).value
-
-
-def _release_cap(
-    ctx: Context,
-    process: ProcessDef,
-    demand: dict[str, TraceStep],
-    outcome: SizingOutcome | None,
-    days: Quantity,
-) -> Quantity | None:
-    """FTE the demanded work needs when done by hand — robots cannot release more than that.
-
-    Manual rate: the process's own norm (уборка м²/ч, отбор строк/ч); for transport the robot's own nominal
-    cycle — a person with a cart or a forklift is not assumed faster than the robot on the same route.
-    """
-    ns = process.key
-    source = (process.demand or {}).get("manual_rate")
-    if source and _optional_expression(ctx, source) is not None:
-        rate = ctx.record_expression(
-            f"{ns}.manual_rate", "Выработка человека вручную", source, "ед/ч", Section.EFFECT
-        ).as_quantity()
-    elif outcome is not None and outcome.nominal_per_hour:
-        rate = Quantity(
-            f"{ns}.nominal_per_hour",
-            "Выработка на том же цикле (человек не быстрее робота)",
-            outcome.nominal_per_hour,
-            "ед/ч",
-            InputKind.METRIC,
-        )
-    else:
-        return None
-    post = ctx.books.norms.get("fte_per_24x7_post")
-    hours = ctx.tr.record(
-        "fte_annual_hours",
-        "Годовой фонд времени одной штатной единицы",
-        HOURS_PER_YEAR / post.value,
-        "ч",
-        f"24 × 365 / {post.key}",
-        [post],
-        Section.EFFECT,
-    ).as_quantity()
-    per_day = demand["per_day"].as_quantity()
-    # The annual fund is working time; vacations, sick leave and turnover add staff on top (dataset: +25 %).
-    loss = ctx.books.norms.get("labor_time_loss_share")
-    return ctx.tr.record(
-        f"{ns}.release_cap_fte",
-        "Потолок высвобождения по объёму работ",
-        per_day.value * days.value / rate.value / hours.value * (1 + loss.value),
-        "FTE",
-        f"{per_day.key} × {days.key} / {rate.key} / {hours.key} × (1 + {loss.key})",
-        [per_day, days, rate, hours, loss],
-        Section.EFFECT,
-    ).as_quantity()
+    return ctx.record_expression(f"{process.key}.{key}", name, source, unit, Section.SIZING).value
 
 
 def size_item(
@@ -89,9 +37,20 @@ def size_item(
     if item.sizing_model is None:
         return None
     ns = process.key
-    weight = _optional_expression(ctx, process.unit_weight)
-    load = _load(ctx, process)
-    tare = _optional_expression(ctx, (process.demand or {}).get("trip_tare_kg"))
+    weight = _sizing_expression(
+        ctx, process, "unit_weight_kg", "Масса единицы спроса", process.unit_weight, "кг"
+    )
+    load = _sizing_expression(
+        ctx,
+        process,
+        "load_per_trip",
+        "Единиц спроса за рейс",
+        (process.demand or {}).get("load_per_trip"),
+        "ед",
+    )
+    tare = _sizing_expression(
+        ctx, process, "trip_tare_kg", "Масса пустых тележек", (process.demand or {}).get("trip_tare_kg"), "кг"
+    )
     route = _optional_expression(ctx, process.route_length)
     distance = None
     if route is not None:
@@ -132,9 +91,9 @@ def size_item(
             avg_per_hour=demand["avg"].value,
             demand_per_day=demand["per_day"].value,
             hours_per_day=demand["hours"].value,
-            unit_weight_kg=weight[0] if weight else None,
+            unit_weight_kg=weight,
             units_per_trip=load,
-            trip_tare_kg=tare[0] if tare else None,
+            trip_tare_kg=tare,
         ),
         item.specs,
         ctx.books.norms,
@@ -172,9 +131,9 @@ def resolve_count(
         ctx.tr.record(
             f"{ns}.robots_total", "Роботов в процессе", final, "шт", manual.key, [manual], Section.SIZING
         )
-    elif item.simulated_robots:
+    elif _valid_simulation(item, analytic):
         share = ctx.books.norms.get("fleet_reserve_share")
-        simulated = _simulated(ctx, ns, item, analytic)
+        simulated = _simulated(item)
         count = int(simulated.value)
         reserve = math.ceil(count * share.value)
         final, source = count + reserve, CountSource.SIMULATED
@@ -209,35 +168,28 @@ def resolve_count(
             ],
             Section.SIZING,
         )
-    return CountResult(analytic, reserve, final, source, text, item.simulated_robots, item.simulation_id)
+    return CountResult(analytic, reserve, final, source, text)
 
 
-def _simulated(ctx: Context, ns: str, item: ItemInput, analytic: int) -> Quantity:
-    """The sweep's fleet; when inputs move (sensitivity, Monte Carlo) it keeps the simulation's correction
-    to the cycle model: N = ⌈N_sim × N_cycle now / N_cycle at the sweep⌉ — unchanged inputs give N_sim."""
-    simulated = Quantity(
+def _valid_simulation(item: ItemInput, analytic: int) -> bool:
+    """Only an unchanged, successful fleet may retain its simulation evidence."""
+    return bool(
+        item.simulated_robots
+        and not item.simulation_outdated
+        and not (item.sizing_model == SizingModel.GOODS_TO_PERSON and item.stations_manual == 0)
+        and (item.simulated_basis is None or item.simulated_basis == analytic)
+    )
+
+
+def _simulated(item: ItemInput) -> Quantity:
+    """Use the verified fleet verbatim; analytical scaling is not another simulation."""
+    return Quantity(
         "simulated_robots",
         "Роботов по имитации (SLA выполнен)",
         float(item.simulated_robots or 0),
         "шт",
         InputKind.SIMULATION,
     )
-    basis = item.simulated_basis
-    if not basis or not analytic or analytic == basis:
-        return simulated
-    at_sweep = Quantity(
-        "simulated_basis", "Роботов по циклу при переборе флота", float(basis), "шт", InputKind.SIMULATION
-    )
-    now = Quantity(f"{ns}.robots_analytic", "Роботов по расчёту", float(analytic), "шт", InputKind.METRIC)
-    return ctx.tr.record(
-        f"{ns}.simulated_robots",
-        "Роботов по имитации с поправкой к текущему расчёту",
-        float(max(1, math.ceil(simulated.value * analytic / basis))),
-        "шт",
-        f"⌈simulated_robots × {now.key} / simulated_basis⌉",
-        [simulated, now, at_sweep],
-        Section.SIZING,
-    ).as_quantity()
 
 
 def build_fleet_item(
@@ -252,9 +204,9 @@ def build_fleet_item(
     outcome = size_item(ctx, item, process, demand)
     count = resolve_count(ctx, item, process, outcome)
     warnings = list(outcome.warnings) if outcome else []
-    if item.simulation_outdated:
+    if item.simulation_outdated or (item.simulated_robots and not _valid_simulation(item, count.analytic)):
         warnings.append(
-            "Число роботов по имитации получено для прежних параметров объекта, поэтому взято по циклу: "
+            "Число роботов по имитации получено для прежних входных данных, поэтому взято по циклу: "
             "перезапустите перебор флота"
         )
     effective = outcome.effective_per_hour if outcome else None
@@ -278,6 +230,12 @@ def build_fleet_item(
         Section.SIZING,
     ).as_quantity()
     peak = demand["peak"].as_quantity()
+    stations = (
+        item.stations_manual if item.stations_manual is not None else (outcome.stations if outcome else None)
+    )
+    stations_q = station_count(ctx, item, outcome)
+    station_limit = station_capacity(ctx, item, stations_q, simulated=simulated)
+    station_fraction = station_share(station_limit, peak, warnings)
     if simulated:
         # The sweep checked this fleet against the peak demand in time, so it covers the peak by definition.
         met = Quantity(
@@ -286,10 +244,10 @@ def build_fleet_item(
         coverage = ctx.tr.record(
             f"{ns}.coverage",
             "Доля пикового спроса, которую закрывает парк (по имитации)",
-            met.value,
+            min(met.value, station_fraction),
             "доля",
-            met.key,
-            [met],
+            f"min({met.key}, {station_limit.key} / {peak.key})" if station_limit else met.key,
+            [met, station_limit, peak] if station_limit else [met],
             Section.SIZING,
         ).as_quantity()
     elif effective:
@@ -299,19 +257,26 @@ def build_fleet_item(
         coverage = ctx.tr.record(
             f"{ns}.coverage",
             "Доля пикового спроса, которую закрывает парк",
-            min(1.0, working * effective / peak.value) if peak.value else 1.0,
+            min(station_fraction, working * effective / peak.value) if peak.value else 1.0,
             "доля",
-            f"min(1, {working_q.key} × {per_robot.key} / {peak.key})",
-            [working_q, per_robot, peak],
+            f"min(1, {working_q.key} × {per_robot.key} / {peak.key}"
+            + (f", {station_limit.key} / {peak.key}" if station_limit else "")
+            + ")",
+            [working_q, per_robot, peak, *([station_limit] if station_limit else [])],
             Section.SIZING,
         ).as_quantity()
     else:
-        warnings.append("Покрытие спроса не проверено: нет модели производительности, берём 100 %")
-        coverage = Quantity(f"{ns}.coverage", "Доля пикового спроса (не проверена)", 1.0, "доля", metric)
+        warnings.append("Покрытие спроса роботами не проверено: нет модели производительности")
+        coverage = ctx.tr.record(
+            f"{ns}.coverage",
+            "Доля пикового спроса (роботы не проверены)",
+            station_fraction,
+            "доля",
+            f"min(1, {station_limit.key} / {peak.key})" if station_limit else "1",
+            [station_limit, peak] if station_limit else [],
+            Section.SIZING,
+        ).as_quantity()
     chargers = _chargers(ctx, ns, count, outcome, robots)
-    stations = (
-        item.stations_manual if item.stations_manual is not None else (outcome.stations if outcome else None)
-    )
     release_formula = process.release_formula(item.solution_type)
     release = (
         ctx.record_expression(
@@ -324,7 +289,7 @@ def build_fleet_item(
         if release_formula
         else None
     )
-    cap = _release_cap(ctx, process, demand, outcome, days)
+    cap = release_cap(ctx, process, demand, days)
     operations = ctx.tr.record(
         f"{ns}.annual_operations",
         "Операций в год",
@@ -350,7 +315,7 @@ def build_fleet_item(
         robots=robots,
         robots_working=working_q,
         chargers=chargers,
-        stations=Quantity(f"{ns}.stations", "Станций отбора", float(stations or 0), "шт", metric),
+        stations=stations_q,
         hours_per_day=demand["hours"].as_quantity(),
         coverage=coverage,
         labor_cost=labor_cost,
@@ -372,7 +337,7 @@ def build_fleet_item(
         stations=stations,
         chargers=int(chargers.value),
         # A simulated fleet held the peak in the DES; the cycle model's derated rate would understate it.
-        fleet_per_hour=peak.value if simulated else (working * effective if effective else None),
+        fleet_per_hour=fleet_capacity(working, effective, peak.value, simulated, station_limit),
         coverage=coverage.value,
         warnings=warnings,
     )

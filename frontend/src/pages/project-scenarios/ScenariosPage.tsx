@@ -62,8 +62,8 @@ export function ScenariosPage() {
   }
 
   const robotized = scenarios.data?.filter((s) => !s.is_baseline) ?? []
-  const recommended =
-    robotized.find((s) => s.is_recommended && s.last_calculation) ?? robotized.find((s) => s.last_calculation)
+  const fresh = robotized.filter((s) => s.last_calculation?.status === 'fresh')
+  const recommended = fresh.find((s) => s.is_recommended) ?? fresh[0]
   const calc = recommended?.last_calculation
   // Для сравнения нужны два рассчитанных варианта роботизации (ТЗ 3.5.5): предлагаем собрать их одной кнопкой.
   const needsSet = scenarios.data !== undefined && robotized.filter((s) => s.last_calculation).length < 2
@@ -209,7 +209,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
           <span className="rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink-2 shadow-card backdrop-blur">
             {SCENARIO_KIND_LABEL[scenario.kind]}
           </span>
-          {scenario.is_recommended && (
+          {scenario.is_recommended && calc?.status === 'fresh' && (
             <span className="flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-medium text-ink shadow-card backdrop-blur">
               <Star size={12} className="fill-warn text-warn" /> рекомендуем
             </span>
@@ -237,7 +237,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
         </div>
         <CountOriginMark scenario={scenario} />
 
-        {calc ? (
+        {calc && !stale ? (
           <>
             <div className="mt-5 flex items-end justify-between gap-3">
               <div>
@@ -274,14 +274,16 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
               <Cell label="CAPEX" value={formatRub(calc.capex_rub)} />
               <Cell label="эффект в год" value={formatRub(calc.effect_rub_year)} tone="ok" />
               <Cell
-                label={`NPV за ${horizon} ${pluralRu(horizon, ['год', 'года', 'лет'])}`}
+                label={`NPV проекта за ${horizon} ${pluralRu(horizon, ['год', 'года', 'лет'])}`}
                 value={formatRub(calc.npv_rub)}
                 tone={isNum(calc.npv_rub) && calc.npv_rub < 0 ? 'crit' : undefined}
               />
             </dl>
           </>
         ) : (
-          <p className="mt-5 text-[13.5px] text-ink-3">Сценарий ещё не рассчитан.</p>
+          <p className="mt-5 text-[13.5px] text-ink-3">
+            {stale ? 'Нужен пересчёт на актуальных данных и финансовой модели.' : 'Сценарий ещё не рассчитан.'}
+          </p>
         )}
 
         {(stale || !calc) && scenario.items.length > 0 && (
@@ -299,6 +301,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
 
 // Число роботов проверено имитацией, взято по формуле или задано вручную — одно слово на карточке.
 function CountOriginMark({ scenario }: { scenario: Scenario }) {
+  if (scenario.last_calculation?.status !== 'fresh') return null
   const sources = new Set(scenario.items.map((i) => i.count_result?.source).filter(Boolean))
   if (sources.size === 0) return null
   const [text, dot] = sources.has('simulated')

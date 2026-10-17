@@ -198,7 +198,7 @@ class _Sizer:
 def _load(s: _Sizer) -> Quantity | None:
     """Demand units one trip carries (порций на отделение, кг в контейнере); None — one unit per trip."""
     units = s.demand.units_per_trip
-    return _metric("units_per_trip", "Единиц спроса за рейс", units, "ед") if units else None
+    return _metric("load_per_trip", "Единиц спроса за рейс", units, "ед") if units else None
 
 
 def _transport(s: _Sizer, out: SizingOutcome) -> None:
@@ -286,14 +286,19 @@ def _effective(s: _Sizer, value: float, formula: str, inputs: list[Quantity]) ->
 
 def _station(s: _Sizer, out: SizingOutcome) -> None:
     throughput = s.specs.get("throughput_units_h")
-    s.count(
-        out,
-        s.per_robot(out, _metric("units_per_cycle", "Единиц за цикл", throughput.value, "ед"), _one_hour()),
-    )
-
-
-def _one_hour() -> Quantity:
-    return _metric("hour_s", "Час работы", SECONDS_PER_HOUR, "с")
+    units = s.trace.record(
+        "units_per_cycle",
+        "Единиц за часовой цикл",
+        throughput.value,
+        "ед",
+        throughput.key,
+        [throughput],
+        Section.SIZING,
+    ).as_quantity()
+    hour = s.trace.record(
+        "hour_s", "Час работы в секундах", SECONDS_PER_HOUR, "с", "60 × 60", [], Section.SIZING
+    ).as_quantity()
+    s.count(out, s.per_robot(out, units, hour))
 
 
 def _tow(s: _Sizer, out: SizingOutcome) -> None:
@@ -306,18 +311,25 @@ def _tow(s: _Sizer, out: SizingOutcome) -> None:
     by_mass = max(1.0, math.floor((towing.value - tare) / weight))
     capacity = s.demand.units_per_trip
     units = min(by_mass, capacity) if capacity else by_mass
+    weight_q = _metric("unit_weight_kg", "Масса единицы", weight, "кг")
+    inputs = [towing, weight_q]
+    mass_formula = towing.key
+    if s.demand.trip_tare_kg is not None:
+        tare_q = _metric("trip_tare_kg", "Масса пустых тележек", tare, "кг")
+        inputs.append(tare_q)
+        mass_formula = f"({mass_formula} − {tare_q.key})"
+    formula = f"max(1, ⌊{mass_formula} / {weight_q.key}⌋)"
+    if capacity:
+        capacity_q = _metric("load_per_trip", "Вместимость сцепки", capacity, "ед")
+        inputs.append(capacity_q)
+        formula = f"min({capacity_q.key}, {formula})"
     load = s.trace.record(
         "units_per_trip",
         "Единиц за рейс сцепки",
         units,
         "ед",
-        f"min(train_capacity, ⌊({towing.key} − train_tare_kg) / unit_weight_kg⌋)",
-        [
-            towing,
-            _metric("train_capacity", "Вместимость сцепки", capacity or by_mass, "ед"),
-            _metric("train_tare_kg", "Масса пустых тележек", tare, "кг"),
-            _metric("unit_weight_kg", "Масса единицы", weight, "кг"),
-        ],
+        formula,
+        inputs,
         Section.SIZING,
     )
     if capacity and by_mass < capacity:

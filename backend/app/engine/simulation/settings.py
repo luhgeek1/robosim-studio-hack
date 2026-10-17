@@ -34,4 +34,6 @@ def settings_from(norms: Book, params: Mapping[str, float | None] | None = None)
         bottleneck_utilization=value("sim_bottleneck_utilization"),
         utilization_target=value("amr_utilization_target"),
         tow_dispatch_wait_s=value("sim_tow_dispatch_wait_min") * SECONDS_PER_MINUTE,
+        robots_per_charger=value("robots_per_charging_station"),
+        fleet_reserve_share=value("fleet_reserve_share"),
     )

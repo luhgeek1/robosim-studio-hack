@@ -43,9 +43,8 @@ class Sweep:
     87 % worst on the demo warehouse): the fleet has to hold on each of the days. Runs share random
     streams per replication (common random numbers): fleets are compared on the same days.
 
-    Each run holds only the swept process: its own SLA decides, not a scenario total where another
-    process's backlog (147 G2P robots next to 15 pallet AMRs) would hide it, and a large fleet of
-    another type does not multiply the run time. The processes use separate zones of the plan.
+    Each run holds only the swept process. This search only proposes candidates: joint_sweep must
+    validate the complete fleet with shared resources before any result can be applied.
     """
 
     def __init__(
@@ -72,16 +71,26 @@ class Sweep:
         if count in self.points:
             return self.points[count]
         runs: list[SimResult] = []
+        per_charger = self.inp.settings.robots_per_charger
+        chargers = (
+            math.ceil((count + math.ceil(count * self.inp.settings.fleet_reserve_share)) / per_charger)
+            if per_charger
+            else self.inp.config.chargers
+        )
         for replication in range(self.replications):
             config = replace(
                 self.inp.config,
-                mode=self.inp.config.mode if self.inp.config.mode != SimMode.NORMAL else SimMode.PEAK,
+                mode=SimMode.PEAK,
                 fleet={**self.inp.config.fleet, self.process.key: count},
                 seed=self.inp.config.seed + replication,
                 record_events=False,
+                chargers=chargers,
             )
             runs.append(simulate(replace(self.inp, config=config), self.prepared))
-        slas = [r.summary.sla["achieved_pct"] for r in runs]
+        outcomes = [
+            next(p for p in run.record.processes if p.process_key == self.process.key) for run in runs
+        ]
+        slas = [PERCENT * p.on_time / p.demand if p.demand > 0 else 0.0 for p in outcomes]
         mean_sla = sum(slas) / len(slas)
         point = SweepPoint(
             count=count,
@@ -107,7 +116,8 @@ class Sweep:
             passing = sorted(c for c, p in self.points.items() if p.passed)
             return self._result(passing[0] if passing else None, analytic)
         self.evaluate(analytic)
-        found = self._search(self._estimate(analytic) or analytic, analytic * SEARCH_LIMIT_FACTOR)
+        limit = analytic * SEARCH_LIMIT_FACTOR
+        found = self._search(min(self._estimate(analytic) or analytic, limit), limit)
         if found is None:
             return self._result(None, analytic)
         if found > 1:
@@ -143,7 +153,7 @@ class Sweep:
                 lo = hi - step
             lo = max(lo, 0)
         else:
-            lo, hi = start, start + step
+            lo, hi = start, min(limit, start + step)
             while not self.evaluate(hi).passed:
                 if hi >= limit:
                     return None

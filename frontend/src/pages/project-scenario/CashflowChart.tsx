@@ -27,20 +27,37 @@ const SERIES = {
   discounted: 'Дисконтированный',
 } as const
 
-export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; monthly: CashflowPoint[] }) {
+export function CashflowChart({
+  yearly,
+  monthly,
+  upfront = 0,
+}: {
+  yearly: CashflowPoint[]
+  monthly: CashflowPoint[]
+  upfront?: number
+}) {
   const [grain, setGrain] = useState<Grain>('yearly')
   const narrow = useNarrow()
   const points = grain === 'yearly' ? yearly : monthly
   // Outflows are drawn below zero so the bars read as a cash-flow waterfall per period.
-  const data = points.map((p) => ({
+  const data = points.map((p, index) => ({
     period: p.period,
     savings: p.savings_rub / 1e6,
-    capex: -p.capex_rub / 1e6,
+    capex: -(p.capex_rub - (index === 0 ? upfront : 0)) / 1e6,
     opex: -p.opex_rub / 1e6,
     financing: -(p.financing_rub ?? 0) / 1e6,
     cumulative: p.cumulative_rub / 1e6,
     discounted: p.discounted_cumulative_rub == null ? null : p.discounted_cumulative_rub / 1e6,
   }))
+  data.unshift({
+    period: 0,
+    savings: 0,
+    capex: -upfront / 1e6,
+    opex: 0,
+    financing: 0,
+    cumulative: -upfront / 1e6,
+    discounted: -upfront / 1e6,
+  })
   const hasFinancing = points.some((p) => (p.financing_rub ?? 0) !== 0)
 
   return (
@@ -63,7 +80,7 @@ export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; mo
             tickLine={false}
             axisLine={false}
             fontSize={12}
-            tickFormatter={(v: number) => (grain === 'yearly' ? `${v} г.` : String(v))}
+            tickFormatter={(v: number) => (v === 0 ? 'Старт' : grain === 'yearly' ? `${v} г.` : String(v))}
             interval={grain === 'monthly' ? (narrow ? 11 : 5) : 0}
           />
           <YAxis
@@ -85,7 +102,9 @@ export function CashflowChart({ yearly, monthly }: { yearly: CashflowPoint[]; mo
               `${formatMln(Number(value) * 1e6)} млн ₽`,
               SERIES[name as keyof typeof SERIES] ?? name,
             ]}
-            labelFormatter={(label) => (grain === 'yearly' ? `Год ${label}` : `Месяц ${label}`)}
+            labelFormatter={(label) =>
+              Number(label) === 0 ? 'Вложения в момент 0' : grain === 'yearly' ? `Год ${label}` : `Месяц ${label}`
+            }
             contentStyle={{ borderRadius: 8, borderColor: 'var(--border)', fontSize: 12 }}
           />
           <Legend

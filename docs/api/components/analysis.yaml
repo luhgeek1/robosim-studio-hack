@@ -343,20 +343,40 @@ Metrics:
     baseline_cost_rub_year: {type: number}
     scenario_cost_rub_year: {type: number}
     opex_delta_rub_year: {type: number, description: "Изменение OPEX относительно базы (отрицательное = экономия)"}
-    effect_rub_year: {type: number, description: "Чистый годовой экономический эффект"}
+    effect_rub_year: {type: number, description: "Годовой эффект после OPEX и процентов по финансированию (Доп. 2.1)"}
     payback_years: {type: [number, "null"], description: "null — не окупается в горизонте"}
-    discounted_payback_years: {type: [number, "null"]}
-    roi_pct: {type: number, description: "(Σэффект за горизонт − CAPEX) / CAPEX × 100"}
-    npv_rub: {type: number}
-    irr_pct: {type: [number, "null"]}
+    discounted_payback_years: {type: [number, "null"], description: "По потоку проекта без долга и его обслуживания"}
+    roi_pct: {type: [number, "null"], description: "Накопленный поток проекта (CAPEX уже вычтен) / CAPEX × 100; null при нулевых вложениях"}
+    npv_rub: {type: number, description: "NPV проекта: весь CAPEX в момент 0, без кредитных поступлений и платежей"}
+    irr_pct: {type: [number, "null"], description: "IRR проекта, годовая"}
     tco_rub: {type: number, description: "CAPEX + ΣOPEX за горизонт с заменами"}
     tco_baseline_rub: {type: number}
-    fte_released: {type: number}
+    fte_released: {type: number, description: "Высвобождаемая трудоёмкость в эквиваленте полных ставок; не гарантированное сокращение штата"}
     robots_total: {type: integer}
     throughput_gain_pct: {type: [number, "null"]}
     sla_after: {type: [number, "null"]}
     discount_rate_pct: {type: number}
+    project_effect_rub_year: {type: [number, "null"], description: "Годовой эффект проекта до процентов"}
+    owner_upfront_rub: {type: [number, "null"], description: "Собственные вложения в момент 0"}
+    owner_discount_rate_pct: {type: [number, "null"], description: "Отдельная ставка для потока собственника"}
+    owner_npv_rub: {type: [number, "null"], description: "NPV собственных средств: первый взнос и полное обслуживание долга"}
+    owner_roi_pct: {type: [number, "null"], description: "Накопленный поток собственника / собственные вложения × 100; null при нулевых вложениях"}
+    owner_irr_pct: {type: [number, "null"], description: "IRR собственных средств, годовая"}
+    owner_discounted_payback_years: {type: [number, "null"]}
+    labor_potential_savings_rub_year: {type: [number, "null"], description: "Стоимость высвобождаемой трудоёмкости до денежной реализации"}
+    labor_savings_rub_year: {type: [number, "null"], description: "Ожидаемая денежная экономия ФОТ с учётом доли реализации"}
+    labor_cash_realization_pct: {type: [number, "null"], description: "Доля высвобождаемого ФОТ, которая уменьшит затраты, %"}
+    labor_hours_released_year: {type: [number, "null"], description: "Высвобождаемая трудоёмкость, человеко-часы в год"}
     horizon_years: {type: integer}
+
+Cashflow:
+  type: object
+  required: [monthly, yearly]
+  properties:
+    monthly: {type: array, items: {$ref: '#/CashflowPoint'}}
+    yearly: {type: array, items: {$ref: '#/CashflowPoint'}}
+    ramp_up_months: {type: integer, description: "Месяцы внедрения и разгона до полного эффекта"}
+    upfront_rub: {type: number, description: "Вложения в момент 0; в monthly включены в месяц 1 только для сводки, дисконтируются в момент 0"}
 
 Interpretation:
   type: object
@@ -441,13 +461,11 @@ CalculationRun:
         total_rub_year: {type: number}
         items: {type: array, items: {$ref: '#/EffectItem'}}
     cashflow:
-      type: object
-      required: [monthly, yearly]
-      properties:
-        monthly: {type: array, items: {$ref: '#/CashflowPoint'}}
-        yearly: {type: array, items: {$ref: '#/CashflowPoint'}}
-        ramp_up_months: {type: integer, description: "Месяцы внедрения и разгона до полного эффекта"}
-        upfront_rub: {type: number, description: "Вложения в момент 0 (свои средства или первый взнос); в monthly они входят в месяц 1"}
+      $ref: '#/Cashflow'
+      description: "Поток проекта: полный CAPEX, без кредитных поступлений и обслуживания долга; плата RaaS остаётся затратой"
+    owner_cashflow:
+      oneOf: [{$ref: '#/Cashflow'}, {type: "null"}]
+      description: "Поток собственника: собственный взнос, полные кредитные/лизинговые платежи и остаток обязательств на горизонте; null для старых расчётов"
     metrics: {$ref: '#/Metrics'}
     interpretation: {$ref: '#/Interpretation'}
     risks: {type: array, items: {$ref: '#/Risk'}}

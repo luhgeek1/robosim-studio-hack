@@ -171,8 +171,7 @@ function SizingCard({
   )
 }
 
-/* Откуда число роботов: формула цикла даёт стартовое N с запасами, имитация на планировке находит минимальное N,
-   которое держит SLA. Обе оценки и их экономика видны рядом, пользователь выбирает, какую брать в расчёт. */
+/* Обе оценки видны рядом; имитация подтверждает количество только после совместной проверки парка. */
 function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizing: SizingResult; locked: boolean }) {
   const projectId = useProjectId()
   const project = useProject(projectId).data
@@ -193,8 +192,7 @@ function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizin
     recheck.mutate(force, {
       onSuccess: ({ checked, skipped }) => {
         if (!checked.length && skipped.length) toast.warning(`Имитация не проверила число роботов: ${skipped[0]}`)
-        else if (checked.some((r) => r.recommended_count == null))
-          toast.warning('Даже тройной парк не держит SLA: ограничение не в числе роботов — смотрите узкое место')
+        else if (checked.some((r) => !r.applied)) toast.warning(checked.find((r) => !r.applied)!.explanation)
       },
     })
   const checkButton = (force: boolean, label: string) => (
@@ -216,16 +214,31 @@ function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizin
     return (
       <Note action={checkable(sizing) ? checkButton(false, 'Проверить имитацией') : null}>
         {sweep
-          ? 'Параметры объекта менялись после проверки имитацией: число роботов сейчас по формуле цикла. Проверьте заново.'
+          ? `${sweep.explanation} Число роботов сейчас по формуле цикла.`
           : 'Число роботов посчитано по формуле цикла и ещё не проверено имитацией на планировке объекта.'}
       </Note>
     )
   }
   if (!formula || !simulated) {
     return (
-      <Note action={checkButton(true, 'Перепроверить')}>
+      <Note
+        action={
+          count.source === 'manual' ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => source.mutate({ processKey: sizing.process_key, manual: null })}
+            >
+              {source.isPending && <Spinner />} Подобрать и проверить парк
+            </Button>
+          ) : (
+            checkButton(true, 'Перепроверить')
+          )
+        }
+      >
         {count.source === 'simulated'
-          ? 'Число роботов проверено имитацией по прежнему правилу. Перепроверьте: теперь парк принят, только если SLA держат все прогоны.'
+          ? 'Количество входит в совместно проверенный парк: каждый моделируемый процесс выдержал SLA во всех повторах. Кривая поиска сохранена у процесса, с которого запускалась проверка.'
           : 'Число роботов задано вручную.'}
       </Note>
     )
@@ -256,7 +269,7 @@ function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizin
         />
         <OriginCard
           title="По имитации"
-          note={`Минимальный парк, который держит SLA ${formatNumber(sweep?.target_pct)} % во всех прогонах пика`}
+          note={`Парк выдержал SLA ${formatNumber(sweep?.target_pct)} % во всех повторах пика вместе с остальными моделируемыми процессами`}
           fleet={simulated}
           active={usingSimulation}
         />

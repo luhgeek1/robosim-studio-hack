@@ -122,9 +122,15 @@ class Model(Actions):
 
     def _chargers(self, nodes: list[Node]) -> dict[str, Tracked]:
         """Charger count comes from the scenario; the layout's charging places share it evenly."""
-        wanted = self.inp.config.chargers
-        capacity = max(1, math.ceil(wanted / len(nodes))) if wanted and nodes else 1
-        return {n.id: tracked(self.env, ResourceKind.CHARGER, n.id, n.label or n.id, capacity) for n in nodes}
+        wanted = self.inp.config.chargers or len(nodes)
+        if not nodes:
+            return {}
+        base, remainder = divmod(wanted, len(nodes))
+        return {
+            node.id: tracked(self.env, ResourceKind.CHARGER, node.id, node.label or node.id, capacity)
+            for index, node in enumerate(nodes)
+            if (capacity := base + int(index < remainder)) > 0
+        }
 
     def _lifts(self) -> dict[str, Tracked]:
         """One shared resource per lift hop; its capacity is the lifts of the hall (the node capacity)."""
@@ -165,6 +171,7 @@ class Model(Actions):
 
     def _processes(self) -> list[SimProcess]:
         result: list[SimProcess] = []
+        self.stations_by_process: dict[str, list[Tracked]] = {}
         for process in self.inp.processes:
             if process.model not in SUPPORTED:
                 self.skipped.append(process.key)
@@ -180,9 +187,15 @@ class Model(Actions):
                 raise SimulationError("На планировке нет ворот или мест хранения для перевозки паллет")
             result.append(process)
             if process.model == ProcessModel.GOODS_TO_PERSON:
-                wanted = self.inp.config.stations.get(process.key, process.stations) or len(self.station_pool)
-                for station_id in list(self.station_pool)[:wanted]:
-                    self.stations[station_id] = self.station_pool[station_id]
+                wanted = self.inp.config.stations.get(process.key, process.stations)
+                if wanted <= 0:
+                    raise SimulationError(
+                        f"«{process.name}»: задано 0 станций отбора — выполнить SLA невозможно. "
+                        "Укажите хотя бы одну станцию."
+                    )
+                selected = list(self.station_pool.values())[:wanted]
+                self.stations_by_process[process.key] = selected
+                self.stations.update({station.id: station for station in selected})
             if count <= 0:
                 self.skipped.append(process.key)
         return [p for p in result if p.key not in self.skipped]
@@ -223,7 +236,7 @@ class Model(Actions):
         return threshold + (1 - threshold) * (at - work) / charge, True
 
     def process_stations(self, process_key: str) -> list[Tracked]:
-        return list(self.stations.values())
+        return self.stations_by_process.get(process_key, [])
 
     def unit_done(self, process_key: str, created: float, *, by_humans: bool) -> None:
         """One pallet or one order line finished — by a robot or handed over to people."""

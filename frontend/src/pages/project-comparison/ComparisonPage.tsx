@@ -104,9 +104,9 @@ export function ComparisonPage() {
               hint={`с дисконтом — ${isNum(m.discounted_payback_years) ? formatYears(m.discounted_payback_years) : 'нет'}`}
             />
             <Stat label="Вложения" value={formatRub(m.capex_rub)} hint="CAPEX, с НДС" />
-            <Stat label="Эффект в год" value={formatRub(m.effect_rub_year)} hint="минус затраты на роботов" />
+            <Stat label="Эффект в год" value={formatRub(m.effect_rub_year)} hint="после OPEX и процентов" />
             <Stat
-              label="NPV"
+              label="NPV проекта"
               value={formatRub(m.npv_rub)}
               hint={`ставка ${formatPct(m.discount_rate_pct, { digits: 0 })}${isNum(m.irr_pct) ? ` · IRR ${formatPct(m.irr_pct, { digits: 0 })}` : ''}`}
             />
@@ -117,8 +117,8 @@ export function ComparisonPage() {
         <WhySheet table={table!} open={whyOpen} onOpenChange={setWhyOpen} />
 
         <Section
-          title="Накопленный денежный поток"
-          description="«Как сейчас» — пунктир; чем выше линия сценария, тем меньше он стоит объекту за горизонт"
+          title="Накопленный денежный поток проекта"
+          description="Полный CAPEX, без долга и его обслуживания; RaaS учтён. «Как сейчас» — пунктир. Выше линия — меньше затраты за горизонт"
         >
           <CashflowChart table={table!} />
         </Section>

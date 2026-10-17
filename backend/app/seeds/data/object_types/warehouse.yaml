@@ -907,8 +907,18 @@ processes:
   demand_unit: pallet
   demand_formula: приёмка + отгрузка + внутрискладские перемещения, палл/сут; в пик × пиковый коэффициент
   demand_params: [pallets_internal_per_day, pallets_in_per_day, pallets_out_per_day, shifts_per_day, shift_hours, peak_factor]
-  demand: {per_day: pallets_in_per_day + pallets_out_per_day + pallets_internal_per_day, hours_per_day: shifts_per_day * shift_hours,
-    peak_factor: peak_factor}
+  demand:
+    per_day: pallets_in_per_day + pallets_out_per_day + pallets_internal_per_day
+    hours_per_day: shifts_per_day * shift_hours
+    peak_factor: peak_factor
+    manual_rate: h_to_s(manual_pallets_per_trip) / ((coalesce(pallet_route_length_m, (pallets_in_per_day
+      * layout_route_dock_in_to_storage_m + pallets_out_per_day * layout_route_storage_to_dock_out_m + pallets_internal_per_day
+      * layout_route_storage_to_storage_m) / (pallets_in_per_day + pallets_out_per_day + pallets_internal_per_day),
+      transport_default_one_way_distance_m)) / manual_forklift_speed_mps + (coalesce(pallet_route_length_m,
+      (pallets_in_per_day * layout_route_dock_in_to_storage_m + pallets_out_per_day * layout_route_storage_to_dock_out_m
+      + pallets_internal_per_day * layout_route_storage_to_storage_m) / (pallets_in_per_day + pallets_out_per_day
+      + pallets_internal_per_day), transport_default_one_way_distance_m)) / manual_forklift_speed_mps +
+      manual_transfer_time_s)
   sla: {kind: lead_time, target_value: 20, unit: мин, target_param: pallet_lead_time_min}
   labor_groups: [forklift_operators]
   labor_allocation: {forklift_operators: 0.7}
@@ -1063,7 +1073,11 @@ processes:
   demand_unit: pallet
   demand_formula: размещение (= приёмка) + выдача (= отгрузка), палл/сут; ёмкость — паллетомест
   demand_params: [pallets_in_per_day, pallets_out_per_day, shifts_per_day, shift_hours, peak_factor]
-  demand: {per_day: pallets_in_per_day + pallets_out_per_day, hours_per_day: shifts_per_day * shift_hours, peak_factor: peak_factor}
+  demand:
+    per_day: pallets_in_per_day + pallets_out_per_day
+    hours_per_day: shifts_per_day * shift_hours
+    peak_factor: peak_factor
+    manual_rate: h_to_s(manual_pallets_per_trip) / manual_lift_time_s
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [forklift_operators]
   labor_allocation: {forklift_operators: 0.3}
@@ -1140,7 +1154,11 @@ processes:
   demand_unit: item
   demand_formula: отгрузка паллет в сутки × коробов на паллете, коробов/сут
   demand_params: [pallets_out_per_day, boxes_per_pallet, shifts_per_day, shift_hours, peak_factor]
-  demand: {per_day: pallets_out_per_day * boxes_per_pallet, hours_per_day: shifts_per_day * shift_hours, peak_factor: peak_factor}
+  demand:
+    per_day: pallets_out_per_day * boxes_per_pallet
+    hours_per_day: shifts_per_day * shift_hours
+    peak_factor: peak_factor
+    manual_rate: manual_sorting_items_per_hour
   sla: {kind: on_time_share, target_value: 0.95, unit: доля}
   labor_groups: [packers]
   labor_allocation: {packers: 1.0}
@@ -1176,8 +1194,11 @@ processes:
   demand_unit: m2
   demand_formula: площадь склада × полных инвентаризаций в год ÷ рабочих дней в году, м²/сут
   demand_params: [working_days_per_year, area_m2, inventory_counts_per_year, shifts_per_day, shift_hours, scheduled_peak_factor]
-  demand: {per_day: area_m2 * inventory_counts_per_year / working_days_per_year, hours_per_day: shifts_per_day * shift_hours,
-    peak_factor: scheduled_peak_factor}
+  demand:
+    per_day: area_m2 * inventory_counts_per_year / working_days_per_year
+    hours_per_day: shifts_per_day * shift_hours
+    peak_factor: scheduled_peak_factor
+    manual_rate: manual_inventory_m2_per_hour
   sla: {kind: coverage, target_value: 12, unit: раз/год}
   labor_groups: [inventory_staff]
   labor_allocation: {inventory_staff: 1.0}

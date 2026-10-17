@@ -299,15 +299,17 @@ FleetSweepRequest:
     process_key: {type: string}
     from_count: {type: [integer, "null"], minimum: 1, description: "Вместе с to_count — полный перебор диапазона вместо поиска"}
     to_count: {type: [integer, "null"], minimum: 1}
-    mode: {$ref: '#/SimulationMode'}
+    mode:
+      $ref: '#/SimulationMode'
+      description: "Подтверждение парка всегда выполняется в peak; прежние значения normal/custom принимаются и приводятся к peak"
     seed: {type: [integer, "null"]}
 
 FleetSweepResult:
   type: object
   description: |
-    Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-029).
-    Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
-    Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
+    Кандидат N находится отдельным поиском процесса. Затем весь моделируемый парк проверяется совместно:
+    SLA каждого процесса должен выдерживаться в каждом повторе при общих ресурсах.
+    Только совместно прошедший парк атомарно записывается в сценарий, если физические входы и версия сценария не изменились.
   required: [process_key, points, recommended_count, explanation]
   properties:
     process_key: {type: string}
@@ -330,16 +332,45 @@ FleetSweepResult:
           payback_years: {type: [number, "null"], description: "null, если N не держит SLA: такой парк не выполняет работу"}
           npv_rub: {type: [number, "null"]}
           simulation_id: {type: [string, "null"], format: uuid}
-    recommended_count: {type: [integer, "null"], description: "null — даже тройной парк не выполняет SLA: ограничение не в роботах"}
+    recommended_count: {type: [integer, "null"], description: "N после совместной проверки всех моделируемых процессов; null — парк не подтверждён"}
+    candidate_count: {type: [integer, "null"], description: "Кандидат отдельного поиска, ещё без совместного SLA"}
+    joint_validation:
+      oneOf: [{$ref: '#/JointFleetValidation'}, {type: "null"}]
     analytic_count: {type: [integer, "null"]}
     target_pct: {type: [number, "null"]}
     simulation_id: {type: [string, "null"], format: uuid, description: "Прогон рекомендованного N с журналом для плеера"}
-    applied: {type: boolean, description: "N записано в сценарий"}
+    applied: {type: boolean, description: "Совместно проверенные количества атомарно записаны в актуальный сценарий"}
     by_formula: {oneOf: [{$ref: '#/FleetEconomics'}, {type: "null"}], description: "N по формуле цикла и его экономика"}
     by_simulation: {oneOf: [{$ref: '#/FleetEconomics'}, {type: "null"}], description: "N по имитации — то, что берёт расчёт"}
     job_id: {type: [string, "null"], format: uuid}
     computed_at: {type: [string, "null"], format: date-time}
     explanation: {type: string, example: "12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 %"}
+
+JointFleetValidation:
+  type: object
+  required: [status, replications, fleet, processes, skipped_processes]
+  properties:
+    status: {type: string, enum: [passed, failed, not_run]}
+    replications: {type: integer}
+    fleet: {type: object, additionalProperties: {type: integer}}
+    processes:
+      type: array
+      items:
+        type: object
+        required: [process_key, target_pct, sla_min_pct, passed]
+        properties:
+          process_key: {type: string}
+          target_pct: {type: number}
+          sla_min_pct: {type: [number, "null"]}
+          passed: {type: boolean}
+    skipped_processes:
+      type: array
+      items:
+        type: object
+        required: [process_key, reason]
+        properties:
+          process_key: {type: string}
+          reason: {type: string}
 
 FleetEconomics:
   type: object

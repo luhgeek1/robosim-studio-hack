@@ -61,6 +61,7 @@ class CalculationInput:
     # Sensitivity «объём операций»: scales each process's evaluated daily volume, not the parameters of the
     # formula — in a product of parameters scaling every factor would move the demand by 1.2², 1.2³.
     volume_factor: float = 1.0
+    physical_norm_keys: frozenset[str] | None = None
 
 
 @dataclass(frozen=True, slots=True)

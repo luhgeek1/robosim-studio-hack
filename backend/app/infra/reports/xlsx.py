@@ -94,13 +94,20 @@ def _metric_row(name: str, key: str, unit: str) -> tuple[str, str, str]:
 _SUMMARY_METRICS = [
     _metric_row("CAPEX", "capex_rub", "₽"),
     _metric_row("OPEX роботизации в год", "opex_rub_year", "₽/год"),
-    _metric_row("Чистый годовой эффект", "effect_rub_year", "₽/год"),
+    _metric_row("Годовой эффект с процентами", "effect_rub_year", "₽/год"),
+    _metric_row("Годовой эффект до финансирования", "project_effect_rub_year", "₽/год"),
     _metric_row("Простой срок окупаемости (ТЗ)", "payback_years", "лет"),
-    _metric_row("Дисконтированная окупаемость", "discounted_payback_years", "лет"),
-    _metric_row("ROI за горизонт", "roi_pct", "%"),
-    _metric_row("NPV", "npv_rub", "₽"),
-    _metric_row("IRR", "irr_pct", "%"),
-    _metric_row("TCO за горизонт", "tco_rub", "₽"),
+    _metric_row("Дисконтированная окупаемость проекта", "discounted_payback_years", "лет"),
+    _metric_row("ROI проекта за горизонт", "roi_pct", "%"),
+    _metric_row("NPV проекта до финансирования", "npv_rub", "₽"),
+    _metric_row("IRR проекта до финансирования", "irr_pct", "%"),
+    _metric_row("Ставка проекта до налога", "discount_rate_pct", "%"),
+    _metric_row("Первоначальные собственные вложения", "owner_upfront_rub", "₽"),
+    _metric_row("Ставка собственника до налога", "owner_discount_rate_pct", "%"),
+    _metric_row("NPV собственника", "owner_npv_rub", "₽"),
+    _metric_row("IRR собственника", "owner_irr_pct", "%"),
+    _metric_row("ROI первоначальных собственных вложений", "owner_roi_pct", "%"),
+    _metric_row("TCO с процентами за горизонт", "tco_rub", "₽"),
     _metric_row("Роботов", "robots_total", "шт"),
     _metric_row("Высвобождается персонала", "fte_released", "FTE"),
 ]
@@ -251,50 +258,20 @@ class CalculationSheet:
             self.values[key] = value
 
 
-def _rate_ref(calc: CalculationSheet) -> str | None:
-    for key in ("scenario_discount_rate", "discount_rate"):
+def _rate_ref(calc: CalculationSheet, *, owner: bool) -> str | None:
+    keys = (
+        ("scenario_owner_discount_rate", "owner_discount_rate")
+        if owner
+        else ("scenario_discount_rate", "discount_rate")
+    )
+    for key in keys:
         if key in calc.cells:
             return calc.ref(key)
     return None
 
 
-def _cashflow(
-    book: Workbook, scenario: ScenarioReport, calc: CalculationSheet | None, *, live: bool = True
-) -> None:
-    cashflow = scenario.result.get("cashflow", {})
-    monthly = cashflow.get("monthly", [])
-    if not monthly:
-        return
-    sheet = Sheet(book, f"Поток — {scenario.name}", [10, 18, 18, 18, 18, 18, 20, 14, 18, 20])
-    sheet.title(f"Денежный поток относительно «как сейчас»: {scenario.name}")
-    sheet.note(
-        "Помесячно, с внедрением, разгоном, индексацией и заменами. "
-        + (
-            "Накопленный поток, дисконтирование, NPV и IRR — живые формулы Excel; "
-            "ставка связана с листом расчёта."
-            if live
-            else "Значения платформы без формул."
-        )
-    )
-    rate_row = sheet.line(["Ставка дисконтирования", None], {2: "0.00%"})
-    rate = _rate_ref(calc) if calc else None
-    npv_row = sheet.line(["NPV", None], {2: _RUB})
-    irr_row = sheet.line(["IRR (годовая)", None], {2: "0.0%"})
-    sheet.row += 1
-    sheet.header(
-        [
-            "Месяц",
-            "CAPEX",
-            "OPEX",
-            "Экономия ФОТ",
-            "Финансирование",
-            "Чистый поток",
-            "Накопленный",
-            "Коэф. дисконт.",
-            "Дисконт. поток",
-            "Дисконт. накопленный",
-        ]
-    )
+def _cashflow_points(cashflow: dict[str, Any]) -> list[dict[str, Any]]:
+    monthly = cashflow["monthly"]
     upfront = float(cashflow.get("upfront_rub") or 0.0)
     rows = [
         {
@@ -315,8 +292,58 @@ def _cashflow(
                 "net_rub": point["net_rub"] + (upfront if first else 0.0),
             }
         )
+    return rows
+
+
+def _cashflow(
+    book: Workbook,
+    scenario: ScenarioReport,
+    calc: CalculationSheet | None,
+    *,
+    live: bool = True,
+    owner: bool = False,
+) -> None:
+    cashflow = scenario.result.get("owner_cashflow" if owner else "cashflow", {})
+    if not cashflow.get("monthly"):
+        return
+    label = "Поток собственника" if owner else "Поток проекта"
+    sheet = Sheet(book, f"{label} — {scenario.name}", [10, 18, 18, 18, 18, 18, 20, 14, 18, 20])
+    sheet.title(f"{label} относительно «как сейчас»: {scenario.name}")
+    sheet.note(
+        "С НДС, до налога на прибыль. "
+        + ("Собственные вложения и платежи долга. " if owner else "Полный CAPEX, без платежей долга. ")
+        + "Плата RaaS включена; внедрение, разгон, индексация и замены учтены. "
+        + (
+            "Накопленный поток, дисконтирование, NPV и IRR — живые формулы Excel; "
+            "ставка связана с листом расчёта."
+            if live
+            else "Значения платформы без формул."
+        )
+    )
+    rate_row = sheet.line(["Ставка дисконтирования", None], {2: "0.00%"})
+    rate = _rate_ref(calc, owner=owner) if calc else None
+    npv_row = sheet.line(["NPV", None], {2: _RUB})
+    irr_row = sheet.line(["IRR (годовая)", None], {2: "0.0%"})
+    roi_row = sheet.line(["ROI исходного вложения", None], {2: "0.0%"})
+    sheet.row += 1
+    sheet.header(
+        [
+            "Месяц",
+            "CAPEX",
+            "OPEX",
+            "Экономия ФОТ",
+            "Финансирование",
+            "Чистый поток",
+            "Накопленный",
+            "Коэф. дисконт.",
+            "Дисконт. поток",
+            "Дисконт. накопленный",
+        ]
+    )
+    rows = _cashflow_points(cashflow)
     first_row = sheet.row
-    rate_value = scenario.result["metrics"]["discount_rate_pct"] / PERCENT
+    prefix = "owner_" if owner else ""
+    rate_value = scenario.result["metrics"][f"{prefix}discount_rate_pct"] / PERCENT
     cumulative_value = discounted_value = 0.0
     for point in rows:
         r = sheet.row
@@ -345,15 +372,23 @@ def _cashflow(
             {**dict.fromkeys((2, 3, 4, 5, 6, 7, 9, 10), _RUB), 8: "0.0000"},
         )
     last = sheet.row - 1
-    irr = scenario.result["metrics"].get("irr_pct")
+    irr = scenario.result["metrics"].get(f"{prefix}irr_pct")
+    roi = scenario.result["metrics"].get(f"{prefix}roi_pct")
     if live:
         sheet.ws.cell(rate_row, 2, f"={rate}" if rate else rate_value)
         sheet.ws.cell(npv_row, 2, f"=J{last}")
-        sheet.ws.cell(irr_row, 2, f"=(1+IRR(F{first_row}:F{last}))^12-1")
+        # A positive default guess fails for some negative returns in LibreOffice; seed with the known root.
+        sheet.ws.cell(
+            irr_row,
+            2,
+            f'=IFERROR((1+IRR(F{first_row}:F{last},(1+{irr or 0}/100)^(1/12)-1))^12-1,"")',
+        )
+        sheet.ws.cell(roi_row, 2, f'=IF(F{first_row}<0,SUM(F{first_row}:F{last})/(-F{first_row}),"")')
     else:
         sheet.ws.cell(rate_row, 2, rate_value)
         sheet.ws.cell(npv_row, 2, discounted_value)
         sheet.ws.cell(irr_row, 2, irr / PERCENT if irr is not None else None)
+        sheet.ws.cell(roi_row, 2, roi / PERCENT if roi is not None else None)
 
 
 def _comparison(book: Workbook, model: ReportModel) -> None:
@@ -464,6 +499,7 @@ def _simulation(book: Workbook, model: ReportModel) -> None:
     sheet = Sheet(book, "Имитация", [44, 24, 24, 24, 24])
     sheet.title("Имитация (DES на планировке объекта)")
     sheet.header(["Показатель", *[s.name for s in runs]])
+    sheet.line(["Актуальность доказательства", *[(r.simulation or {}).get("note") for r in runs]])
     sheet.line(["Режим", *[(r.simulation or {}).get("config", {}).get("mode") for r in runs]])
     sheet.line(["Роботов", *[_fleet(r) for r in runs]])
     summaries = [(r.simulation or {}).get("summary") or {} for r in runs]
@@ -500,6 +536,7 @@ def render_xlsx(model: ReportModel) -> bytes:
             calc.write()
         if model.has(ReportSection.ECONOMICS) and not scenario.is_baseline:
             _cashflow(book, scenario, calc, live=model.live_formulas)
+            _cashflow(book, scenario, calc, live=model.live_formulas, owner=True)
     if model.has(ReportSection.COMPARISON):
         _comparison(book, model)
     if model.has(ReportSection.OBJECT_PARAMS):
