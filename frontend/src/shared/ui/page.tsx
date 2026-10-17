@@ -62,6 +62,7 @@ export function Screen({
   dense = false,
   className,
   headerClassName,
+  eyebrow,
 }: {
   title: ReactNode
   lead?: ReactNode
@@ -77,6 +78,7 @@ export function Screen({
   className?: string
   // Широкий экран может держать шапку в обычной колонке, как у остальных шагов.
   headerClassName?: string
+  eyebrow?: ReactNode
 }) {
   const navigate = useNavigate()
   const match = useMatch('/projects/:projectId/:step/*')
@@ -101,7 +103,9 @@ export function Screen({
   return (
     <div className={cn('mx-auto w-full pt-2 pb-12 sm:pb-16', wide ? 'max-w-360' : 'max-w-300', className)}>
       <PageHeader
-        eyebrow={step ? `Шаг ${pad(idx + 1)} / ${pad(PROJECT_STEPS.length)} · ${step.question}` : undefined}
+        eyebrow={
+          eyebrow ?? (step ? `Шаг ${pad(idx + 1)} / ${pad(PROJECT_STEPS.length)} · ${step.question}` : undefined)
+        }
         title={title}
         description={lead}
         actions={
