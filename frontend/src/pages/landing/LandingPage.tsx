@@ -25,8 +25,10 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router'
 import { useSession } from '@/entities/session'
+import { useDemo } from '@/entities/demo/api'
+import { formatNumber, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
 import type { ObjectKind } from './LandingScene'
-import { Accent, AnimatedNumber, EASE, SceneTransition, ScrollProgress, TiltCard, useLandingMotion } from './motion'
+import { Accent, EASE, SceneTransition, ScrollProgress, TiltCard, useLandingMotion } from './motion'
 import { EvidenceSection } from './EvidenceSection'
 import { QuestionsSection } from './QuestionsSection'
 import './landing.css'
@@ -191,6 +193,13 @@ export function LandingPage() {
           ? '/vendor'
           : '/projects'
       : '/login'
+  const demoQuery = useDemo('warehouse_demo_01')
+  const demo = demoQuery.data && 'demo' in demoQuery.data ? demoQuery.data : undefined
+  const sweep = demo?.sweep
+  const selectedFleet = calculation === 'simulation' && sweep?.applied ? sweep.by_simulation : sweep?.by_formula
+  const before = sweep?.by_formula
+  const after = sweep?.by_simulation
+  const fleetDelta = (after?.total ?? 0) - (before?.total ?? 0)
   const activeObject = OBJECTS.find((item) => item.id === kind)!
   const simulation = calculation === 'simulation'
 
@@ -284,18 +293,18 @@ export function LandingPage() {
                   <br className="landing-desktop-break" /> когда окупятся инвестиции.
                 </motion.p>
                 <motion.div className="landing-hero-actions" {...enter(0.62)}>
-                  <Link className="landing-button landing-button-orange" to={workspace}>
-                    Рассчитать мой объект <ArrowUpRight size={20} />
+                  <Link className="landing-button landing-button-orange" to="/demo">
+                    Попробовать без регистрации <ArrowUpRight size={20} />
                   </Link>
-                  <a className="landing-demo-link" href="#economics">
+                  <Link className="landing-demo-link" to={workspace}>
                     <span>
                       <Play size={12} fill="currentColor" />
                     </span>
-                    Посмотреть пример
-                  </a>
+                    Рассчитать свой объект
+                  </Link>
                 </motion.div>
                 <motion.div className="landing-hero-note" {...enter(0.72)}>
-                  <span /> Без установки. С готовыми демо-объектами.
+                  <span /> Готовый расчёт, имитация и отчёт. Сразу, без аккаунта.
                 </motion.div>
               </div>
               <motion.div className="landing-visual" id="simulation" {...enter(0.25)}>
@@ -480,7 +489,12 @@ export function LandingPage() {
                         />
                       )}
                       <span className="landing-result-tab-label">
-                        По имитации <span>−4 робота</span>
+                        По имитации{' '}
+                        <span>
+                          {sweep?.applied
+                            ? `${formatNumber(fleetDelta)} ${pluralRu(Math.abs(fleetDelta), ['робот', 'робота', 'роботов'])}`
+                            : 'проверка'}
+                        </span>
                       </span>
                     </button>
                   </div>
@@ -489,32 +503,31 @@ export function LandingPage() {
                     <div>
                       <span>Парк с резервом</span>
                       <strong>
-                        <AnimatedNumber value={simulation ? 13 : 17} />
+                        {formatNumber(selectedFleet?.total)}
                         <small> роботов</small>
                       </strong>
                     </div>
                     <div>
                       <span>Инвестиции</span>
                       <strong>
-                        <AnimatedNumber value={simulation ? 40.3 : 50.2} decimals={1} />
+                        {selectedFleet ? formatNumber(selectedFleet.capex_rub / 1e6, 1) : '—'}
                         <small> млн ₽</small>
                       </strong>
                     </div>
                     <div>
                       <span>Окупаемость</span>
                       <strong className="landing-result-highlight">
-                        <AnimatedNumber value={simulation ? 2.2 : 3} decimals={1} />
-                        <small> года</small>
+                        <small>{selectedFleet ? formatYears(selectedFleet.payback_years) : 'Готовим расчёт…'}</small>
                       </strong>
                     </div>
                   </div>
                   <div className="landing-result-status">
-                    {simulation ? (
+                    {simulation && sweep?.applied ? (
                       <>
                         <ShieldCheck size={15} />
-                        <span>Парк выдержал 5 из 5 прогонов пика</span>
+                        <span>Совместная проверка пройдена: {sweep.joint_validation?.replications} повторений</span>
                         <span className="landing-run-checks">
-                          {[1, 2, 3, 4, 5].map((n) => (
+                          {Array.from({ length: sweep.joint_validation?.replications ?? 0 }, (_, n) => (
                             <motion.span
                               key={n}
                               initial={reduced ? false : { opacity: 0, scale: 0.6 }}
@@ -547,15 +560,22 @@ export function LandingPage() {
                     объекта, очередями и пиками нагрузки.
                   </p>
                   <p>
-                    В демо-проекте проверка позволила сократить парк <mark>с 17 до 13 роботов</mark> с резервом.
-                    Экономика пересчиталась следом.
+                    {before && after ? (
+                      <>
+                        В текущем примере парк с резервом:{' '}
+                        <mark>
+                          {before.total} → {after.total} роботов
+                        </mark>
+                        . Экономика пересчиталась следом.
+                      </>
+                    ) : (
+                      'Имитация проверяет рабочий парк; результат влияет на количество роботов и экономику.'
+                    )}
                   </p>
                   <div className="landing-saving">
                     <div>
-                      <span className="landing-saving-label">МЕНЬШЕ ИНВЕСТИЦИЙ</span>
-                      <strong>
-                        <AnimatedNumber value={-9.9} decimals={1} /> <small>млн ₽</small>
-                      </strong>
+                      <span className="landing-saving-label">ИЗМЕНЕНИЕ ИНВЕСТИЦИЙ</span>
+                      <strong>{before && after ? formatRub(after.capex_rub - before.capex_rub) : '—'}</strong>
                     </div>
                     <p>
                       в демо-сценарии
@@ -563,8 +583,8 @@ export function LandingPage() {
                       <strong>после проверки имитацией</strong>
                     </p>
                   </div>
-                  <Link to={workspace} className="landing-text-link">
-                    Проверить свой сценарий <ArrowUpRight size={20} />
+                  <Link to="/demo/warehouse_demo_01?step=simulation" className="landing-text-link">
+                    Открыть проверенный пример <ArrowUpRight size={20} />
                   </Link>
                   <p className="landing-disclaimer">
                     Пример на данных демонстрационного склада. Результат для вашего объекта зависит от исходных данных и
@@ -575,8 +595,8 @@ export function LandingPage() {
             </div>
           </section>
 
-          <EvidenceSection workspace={workspace} />
-          <QuestionsSection workspace={workspace} />
+          <EvidenceSection workspace="/demo/warehouse_demo_01?step=evidence" demo={demo} />
+          <QuestionsSection workspace="/demo" />
 
           <section className="landing-final-cta">
             <div className="landing-container landing-cta-content">
@@ -592,8 +612,8 @@ export function LandingPage() {
                 <p>Начните с готового демо-объекта или создайте свой.</p>
               </motion.div>
               <motion.div {...reveal(0.12)}>
-                <Link to={workspace} className="landing-button landing-button-cream">
-                  Открыть платформу <ArrowUpRight size={23} />
+                <Link to="/demo" className="landing-button landing-button-cream">
+                  Попробовать без регистрации <ArrowUpRight size={23} />
                 </Link>
               </motion.div>
               <motion.span

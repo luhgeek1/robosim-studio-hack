@@ -107,6 +107,19 @@ export function LoginPage() {
           className="flex flex-col items-center justify-center bg-canvas px-6 py-8 lg:w-1/2 lg:px-12"
         >
           <div className="w-full max-w-110">
+            <div className="mb-6 rounded-xl border border-border bg-surface-2 p-4">
+              <p className="mb-2 text-sm text-ink-2">
+                {back?.from?.startsWith('/demo/')
+                  ? 'После входа вернём вас к примеру — сможете создать личный проект с его исходными данными.'
+                  : 'Сначала оцените платформу: готовый расчёт, имитация и отчёт доступны без аккаунта.'}
+              </p>
+              <Link
+                className="text-sm font-medium underline underline-offset-4"
+                to={back?.from?.startsWith('/demo/') ? back.from : '/demo'}
+              >
+                Попробовать без регистрации →
+              </Link>
+            </div>
             <div className="h1 mb-2">{mode === 'login' ? 'Вход' : 'Регистрация'}</div>
             <p className="mb-6 text-[15px] text-ink-3">
               {mode === 'login' ? 'Продолжите работу с проектами.' : 'Создайте учётную запись для своих проектов.'}

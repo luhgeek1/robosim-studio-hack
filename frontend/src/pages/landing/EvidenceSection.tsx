@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowUpRight, Check, FileCheck2, Fingerprint, Route } from 'lucide-react'
 import { Link } from 'react-router'
+import type { DemoSnapshot } from '@/entities/demo/api'
+import { formatNumber, formatRub, formatYears } from '@/shared/lib/format'
 import { EASE, useLandingMotion } from './motion'
 
 const METRICS = [
@@ -9,10 +11,9 @@ const METRICS = [
     id: 'fleet',
     tab: 'Парк роботов',
     label: 'Рекомендуемый парк',
-    value: '13',
     unit: 'роботов',
-    reason: 'Минимальный парк, выдержавший пиковую нагрузку.',
-    status: 'Проверено в 5 прогонах',
+    reason: 'Парк, проверенный в пределах заданной нагрузки и конфигурации.',
+    status: 'Результат проверки открыт',
     steps: [
       ['Данные объекта', 'Планировка, поток задач и параметры AMR'],
       ['Проверка на пике', 'Маршруты, очереди и зарядка под нагрузкой'],
@@ -22,12 +23,11 @@ const METRICS = [
     id: 'investment',
     tab: 'Инвестиции',
     label: 'Инвестиции в сценарий',
-    value: '40,3',
     unit: 'млн ₽',
     reason: 'Стоимость запуска по ценам каталога и нормативам сценария.',
     status: 'Состав затрат раскрыт',
     steps: [
-      ['Роботы', '13 AMR, включая резерв по итогам имитации'],
+      ['Роботы', 'Цена оборудования × парк, включая резерв'],
       ['Запуск', 'Инфраструктура и интеграция на объекте'],
     ],
   },
@@ -35,7 +35,6 @@ const METRICS = [
     id: 'payback',
     tab: 'Окупаемость',
     label: 'Срок окупаемости',
-    value: '2,2',
     unit: 'года',
     reason: 'Возврат инвестиций по денежному потоку сценария покупки.',
     status: 'С учётом расходов на эксплуатацию',
@@ -67,9 +66,16 @@ const PRINCIPLES = [
   },
 ]
 
-export function EvidenceSection({ workspace }: { workspace: string }) {
+export function EvidenceSection({ workspace, demo }: { workspace: string; demo?: DemoSnapshot }) {
   const [active, setActive] = useState(0)
-  const metric = METRICS[active]
+  const metrics = demo?.calculations.find((c) => c.scenario_id === demo.primary_scenario_id)?.metrics
+  const fleet = demo?.sweep?.by_simulation ?? demo?.sweep?.by_formula
+  const values = [
+    formatNumber(metrics?.robots_total),
+    formatRub(metrics?.capex_rub),
+    metrics ? formatYears(metrics.payback_years) : '—',
+  ]
+  const metric = { ...METRICS[active], value: values[active], unit: active === 0 ? 'роботов' : '' }
   const { reduced, reveal } = useLandingMotion()
   return (
     <section className="landing-evidence landing-container" id="method" aria-labelledby="trust-title">
@@ -110,7 +116,7 @@ export function EvidenceSection({ workspace }: { workspace: string }) {
             ))}
           </div>
           <Link className="landing-evidence-link" to={workspace}>
-            Разобрать свой объект <ArrowUpRight size={19} />
+            Разобрать расчёт примера <ArrowUpRight size={19} />
           </Link>
         </motion.div>
         <motion.figure className="landing-calculation" {...reveal(0.12)}>
@@ -179,16 +185,16 @@ export function EvidenceSection({ workspace }: { workspace: string }) {
                   {metric.id === 'fleet' && (
                     <div className="landing-calculation-fleet">
                       <div className="landing-calculation-fleet-bar" aria-hidden="true">
-                        {Array.from({ length: 13 }, (_, i) => (
-                          <span key={i} className={i > 10 ? 'is-reserve' : undefined} />
+                        {Array.from({ length: Math.min(metrics?.robots_total ?? 0, 100) }, (_, i) => (
+                          <span key={i} className={i >= (fleet?.working ?? 0) ? 'is-reserve' : undefined} />
                         ))}
                       </div>
                       <div className="landing-calculation-fleet-legend">
                         <span>
-                          <i aria-hidden="true" /> <strong>11</strong> в работе
+                          <i aria-hidden="true" /> <strong>{formatNumber(fleet?.working)}</strong> в работе
                         </span>
                         <span>
-                          <i aria-hidden="true" /> <strong>2</strong> в резерве
+                          <i aria-hidden="true" /> <strong>{formatNumber(fleet?.reserve)}</strong> в резерве
                         </span>
                       </div>
                     </div>
