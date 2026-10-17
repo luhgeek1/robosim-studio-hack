@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { NavLink, Outlet, useLocation, useMatch } from 'react-router'
+import { Link, Outlet, matchPath, useLocation, useMatch } from 'react-router'
+import { DEMO_STEPS, demoStep, demoUrl } from '@/entities/demo/navigation'
+import { GuestHeaderActions, GuestProjectTab } from './GuestNavigation'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
@@ -53,15 +55,23 @@ function useScrollPull() {
 /* Плашка шагов под шапкой. При прокрутке вниз уезжает под шапку и не закрывает контент; навести курсор на её место
    (или перейти в неё с клавиатуры, Tab) или резко прокрутить вверх — выезжает обратно. Зона наведения остаётся на месте плашки, пока та спрятана.
    Шапка и плашка — fixed, а место в потоке держат распорки той же высоты. */
-function StepDock({ projectId }: { projectId: string }) {
+function StepDock({ projectId, demoKey }: { projectId?: string; demoKey?: string }) {
   // Имитация занимает всё окно: переходы между шагами должны всегда оставаться доступны.
-  const pinned = Boolean(useMatch('/projects/:projectId/simulation'))
+  const pinned = Boolean(useMatch('/projects/:projectId/simulation')) || Boolean(demoKey)
   const scrolled = useSyncExternalStore(subscribeScroll, isScrolledDown)
   const pulled = useScrollPull()
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
   const hidden = !pinned && scrolled && !pulled && !hovered && !focused
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+  const activeDemoStep = demoStep(new URLSearchParams(search).get('step'))
+  const steps = demoKey
+    ? DEMO_STEPS.map((s) => ({ ...s, to: demoUrl(demoKey, s.id), active: s.id === activeDemoStep }))
+    : PROJECT_STEPS.map((s) => ({
+        ...s,
+        to: `/projects/${projectId}/${s.id}`,
+        active: Boolean(matchPath({ path: `/projects/${projectId}/${s.id}`, end: false }, pathname)),
+      }))
   const nav = useRef<HTMLElement>(null)
   // На узком экране плашка прокручивается вбок — активный шаг держим в видимой части.
   useEffect(() => {
@@ -69,7 +79,7 @@ function StepDock({ projectId }: { projectId: string }) {
     const active = el?.querySelector<HTMLElement>('a[aria-current="page"]')
     if (!el || !active) return
     el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' })
-  }, [pathname])
+  }, [pathname, search])
   return (
     <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-3 sm:px-6">
       <div
@@ -97,29 +107,24 @@ function StepDock({ projectId }: { projectId: string }) {
           aria-label="Шаги оценки"
         >
           <SlideHighlight className="rounded-full bg-[#293831] shadow-[0_2px_4px_rgba(20,30,23,0.14)]" />
-          {PROJECT_STEPS.map((step, i) => (
-            <NavLink
+          {steps.map((step, i) => (
+            <Link
               key={step.id}
-              to={`/projects/${projectId}/${step.id}`}
-              className={({ isActive }) =>
-                cn(
-                  'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors',
-                  isActive ? 'text-white' : 'text-ink-3 hover:bg-white/50 hover:text-ink',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && <SlideMark />}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    <span className={cn('num text-[10px]', isActive ? 'text-[#ff956f]' : 'text-ink-4')}>
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    {step.label}
-                  </span>
-                </>
+              to={step.to}
+              aria-current={step.active ? 'page' : undefined}
+              className={cn(
+                'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors',
+                step.active ? 'text-white' : 'text-ink-3 hover:bg-white/50 hover:text-ink',
               )}
-            </NavLink>
+            >
+              {step.active && <SlideMark />}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <span className={cn('num text-[10px]', step.active ? 'text-[#ff956f]' : 'text-ink-4')}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                {step.label}
+              </span>
+            </Link>
           ))}
         </nav>
       </div>
@@ -132,13 +137,16 @@ export function AppShell() {
   // привязывается позже эффектов детей).
   const [headerRow, setHeaderRow] = useState<HTMLDivElement | null>(null)
   const { user } = useSession()
+  const guest = useMatch('/demo/:demoKey?')
+  const demoKey = guest ? (guest.params.demoKey ?? 'warehouse_demo_01') : undefined
   const match = useMatch('/projects/:projectId/*')
   const projectId = match?.params.projectId
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+  const navigationKey = demoKey ? pathname + search : pathname
   // Каждый экран открывается сверху: положение прокрутки предыдущего не переносится на следующий.
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-  }, [pathname])
+  }, [navigationKey])
   return (
     <div className="app-workspace flex min-h-full flex-col">
       <a href="#workspace-main" className="workspace-skip">
@@ -154,31 +162,43 @@ export function AppShell() {
           className="relative mx-auto flex h-full max-w-360 items-center gap-2 px-3 sm:px-4 lg:gap-5 lg:px-6"
         >
           <HeaderHighlight container={headerRow} />
-          <div className="lg:hidden">
-            <MobileNav projectId={projectId} />
-          </div>
+          {!demoKey && (
+            <div className="lg:hidden">
+              <MobileNav projectId={projectId} />
+            </div>
+          )}
           <Logo />
           <div className="hidden h-5 w-px shrink-0 bg-line-2 lg:block" />
           <div className="hidden lg:contents">
-            <Sections projectId={projectId} />
+            <Sections projectId={projectId} demoKey={demoKey} />
             <div className="h-5 w-px shrink-0 bg-line-2" />
           </div>
-          {user ? (
+          {demoKey ? (
+            <div className="min-w-0 flex-1">
+              <GuestProjectTab demoKey={demoKey} />
+            </div>
+          ) : user ? (
             <div className="hidden min-w-0 flex-1 lg:flex">
               <ProjectTabs activeId={projectId} />
             </div>
           ) : null}
-          <div className={cn('min-w-0 flex-1', user && 'lg:hidden')} />
+          {!demoKey && <div className={cn('min-w-0 flex-1', user && 'lg:hidden')} />}
           <div className="flex shrink-0 items-center gap-1">
-            <Notifications />
-            <WorkspaceMenu />
+            {demoKey ? (
+              <GuestHeaderActions demoKey={demoKey} />
+            ) : (
+              <>
+                <Notifications />
+                <WorkspaceMenu />
+              </>
+            )}
           </div>
         </div>
       </motion.header>
-      {projectId && (
+      {(projectId || demoKey) && (
         <>
           <div className="h-16.5 shrink-0" aria-hidden />
-          <StepDock projectId={projectId} />
+          <StepDock projectId={projectId} demoKey={demoKey} />
         </>
       )}
       <main id="workspace-main" className="flex min-h-0 flex-1 flex-col" tabIndex={-1}>

@@ -1,162 +1,168 @@
-import type { DemoResult, DemoSnapshot } from '@/entities/demo/api'
+import { useState } from 'react'
+import { Check, Info, RotateCcw } from 'lucide-react'
+import type { DemoChanges, DemoResult, DemoSnapshot } from '@/entities/demo/api'
 import type { CalculationRun } from '@/shared/api/types'
-import { formatNumber as n, formatRub as rub, formatYears, formatPct } from '@/shared/lib/format'
-import { CashflowChart } from '@/widgets/cashflow/ComparisonCashflowChart'
+import { formatNumber, formatRub, formatYears } from '@/shared/lib/format'
+import { Button } from '@/shared/ui/button'
+import { Section, Stat, StatStrip } from '@/shared/ui/page'
+import { Spinner } from '@/shared/ui/states'
+import { Segmented } from '@/shared/ui/v0'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
+import { GuestScreen } from './GuestScreen'
+import { Evidence } from './Evidence'
+import { DemoField } from './DemoField'
+import { INITIAL } from './defaults'
 
 export function Decision({
   demo,
   current,
   result,
-  changed,
   pending,
+  failed,
+  value,
+  onChange,
+  onRetry,
 }: {
   demo: DemoSnapshot
   current: CalculationRun
   result?: DemoResult
-  changed: boolean
   pending: boolean
+  failed: string | null
+  value: DemoChanges
+  onChange: (v: DemoChanges) => void
+  onRetry: () => void
 }) {
+  const [comparing, setComparing] = useState(false)
   const m = current.metrics
-  const original = demo.calculations.find((c) => c.scenario_id === demo.primary_scenario_id)!
   return (
-    <div className="demo-decision" aria-busy={pending}>
-      <div className="demo-panel demo-verdict">
-        <div className="demo-eyebrow">
-          {changed ? 'ПРОБНЫЙ РАСЧЁТ · ' : 'ИСХОДНЫЙ ПРИМЕР · '}
-          {current.scenario_kind === 'raas' ? 'УСЛУГА' : current.scenario_kind === 'lease' ? 'ЛИЗИНГ' : 'ПОКУПКА'}
-        </div>
-        <h2>{current.interpretation.headline}</h2>
-        <p>
-          {changed
-            ? 'Проверьте, как ваши допущения повлияли на результат.'
-            : 'Один и тот же парк сравнивается в покупке, лизинге и услуге. Ниже — затраты и результат каждого варианта.'}
-        </p>
-        {pending && (
-          <div className="demo-notice" role="status">
-            Показан последний результат. Новые условия ещё рассчитываются.
+    <GuestScreen
+      title="Подбор роботов и расчёт эффекта"
+      lead="Подобранный парк, стоимость и окупаемость — в одном месте."
+    >
+      <div className="space-y-6">
+        {failed && (
+          <div className="rounded-lg border border-crit/20 bg-crit-soft p-4 text-[13px] text-crit" role="alert">
+            Новые условия не рассчитаны: {failed}. Ниже — исходный пример.{' '}
+            <Button variant="outline" size="sm" onClick={onRetry}>
+              Повторить
+            </Button>
           </div>
         )}
-        <div className="demo-metrics">
-          <div>
-            <span>Парк с резервом</span>
-            <strong>
-              {n(m.robots_total)} <small>роботов</small>
-            </strong>
+        <Section
+          title="Способ внедрения"
+          actions={
+            <span className="flex items-center gap-2 text-[12px] text-ink-3" role="status">
+              {pending ? (
+                <>
+                  <Spinner />
+                  Пересчитываем…
+                </>
+              ) : failed ? (
+                'Не рассчитано'
+              ) : (
+                <>
+                  <Check size={14} className="text-ok" />
+                  Расчёт готов
+                </>
+              )}
+            </span>
+          }
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Segmented
+              value={value.scenario_kind ?? 'purchase'}
+              onChange={(scenario_kind) => onChange({ ...value, scenario_kind })}
+              options={[
+                { value: 'purchase', label: 'Покупка' },
+                { value: 'raas', label: 'Робот как услуга' },
+                { value: 'lease', label: 'Лизинг' },
+              ]}
+            />
+            <Button variant="ghost" size="sm" onClick={() => onChange(INITIAL)}>
+              <RotateCcw />
+              Исходные условия
+            </Button>
           </div>
-          <div>
-            <span>Вложения собственника</span>
-            <strong>{rub(m.owner_upfront_rub ?? m.capex_rub)}</strong>
-          </div>
-          <div>
-            <span>Годовой денежный эффект</span>
-            <strong>{rub(m.effect_rub_year)}</strong>
-          </div>
-          <div>
-            <span>NPV проекта за {m.horizon_years} лет</span>
-            <strong>{rub(m.npv_rub)}</strong>
-          </div>
-        </div>
-        <p className="demo-fleet-line">
-          {current.sizing.map((s) => `${s.count.final} × ${s.product_name} (резерв ${s.count.reserve})`).join(' · ')}
-        </p>
-        <details className="demo-details">
-          <summary>Как читать финансовый результат</summary>
-          <p>{current.interpretation.summary}</p>
-        </details>
-        <div className="demo-facts">
-          <span>
-            Окупаемость: <b>{formatYears(m.payback_years)}</b>
-          </span>
-          <span>
-            Денежная реализация труда: <b>{formatPct(m.labor_cash_realization_pct)}</b>
-          </span>
-          <span>
-            Высвобождение: <b>{n(m.labor_hours_released_year)} чел·ч/год</b>
-          </span>
-        </div>
-        {result && (
-          <p className="demo-small">
-            {result.simulation_valid
-              ? 'Физические условия прежние: подтверждение парка имитацией сохранено.'
-              : 'Текущий парк не подтверждён сохранённой имитацией.'}
-          </p>
-        )}
-        {(result?.notes ?? [demo.demo.scope]).map((note) => (
-          <p className="demo-small" key={note}>
-            {note}
-          </p>
-        ))}
-        {current.risks
-          .filter((r) => r.severity === 'high')
-          .slice(0, 2)
-          .map((r) => (
-            <div className="demo-notice" key={r.code}>
-              <b>{r.title}.</b> {r.description}
-            </div>
-          ))}
-      </div>
-      <section className="demo-panel">
-        <div className="demo-section-heading">
-          <div>
-            <div className="demo-eyebrow">ОДИН ОБЪЕКТ · ОДИН ПАРК</div>
-            <h2>Как внедрять — и стоит ли вообще</h2>
-          </div>
-        </div>
-        <p>
-          Сравнение исходного примера. Все варианты начинают денежный поток с нулевого периода. Пробный расчёт выше
-          показан отдельно.
-        </p>
-        <p className="demo-fleet-line">
-          {original.sizing
-            .map(
-              (s) =>
-                `${s.product_name}: ${s.count.final} шт., резерв ${s.count.reserve}, станций ${s.stations_count ?? '—'}, зарядных мест ${s.chargers_count ?? '—'}`,
-            )
-            .join(' · ')}
-        </p>
-        <div className="demo-comparison">
-          {demo.comparison.scenarios.map((s) => (
-            <article
-              key={s.scenario_id}
-              className={s.scenario_id === demo.comparison.recommendation?.scenario_id ? 'is-recommended' : ''}
-            >
-              <div className="demo-eyebrow">
-                {s.scenario_id === demo.comparison.recommendation?.scenario_id
-                  ? 'РЕКОМЕНДАЦИЯ РАСЧЁТА'
-                  : s.kind === 'baseline'
-                    ? 'ТОЧКА СРАВНЕНИЯ'
-                    : 'ВАРИАНТ ВНЕДРЕНИЯ'}
+          <details className="mt-4 border-t border-line pt-3 text-[13px] text-ink-3">
+            <summary className="cursor-pointer">Изменить стоимость оборудования</summary>
+            <div className="mt-4">
+              {' '}
+              <div className="max-w-96">
+                <DemoField
+                  id="demo-price"
+                  label="Стоимость роботов относительно каталога"
+                  value={value.robot_price_multiplier ?? 1}
+                  onChange={(robot_price_multiplier) => onChange({ ...value, robot_price_multiplier })}
+                />
               </div>
-              <h3>{s.name}</h3>
-              <strong>{rub(s.metrics.tco_rub)}</strong>
-              <small>все затраты за {s.metrics.horizon_years} лет</small>
-              <dl>
-                <div>
-                  <dt>На старте</dt>
-                  <dd>{rub((s.metrics.owner_upfront_rub ?? s.metrics.capex_rub) || 0)}</dd>
-                </div>
-                <div>
-                  <dt>NPV проекта</dt>
-                  <dd>{s.kind === 'baseline' ? '—' : rub(s.metrics.npv_rub)}</dd>
-                </div>
-                <div>
-                  <dt>Эффект в год</dt>
-                  <dd>{s.kind === 'baseline' ? '—' : rub(s.metrics.effect_rub_year)}</dd>
-                </div>
-              </dl>
-              <p className="demo-small">
-                {s.kind === 'baseline' ? 'Текущий ручной процесс' : `${s.metrics.robots_total} роботов с резервом`}
-              </p>
-              {s.kind === 'raas' && <p className="demo-small">Тариф — модельное допущение, уточняется в КП.</p>}
-            </article>
-          ))}
+            </div>
+          </details>
+        </Section>
+        <div aria-busy={pending}>
+          <StatStrip columns={3}>
+            <Stat label="Окупаемость" value={formatYears(m.payback_years)} hint="при выбранных условиях" />
+            <Stat label="Вложения на старте" value={formatRub(m.owner_upfront_rub ?? m.capex_rub)} />
+            <Stat
+              label="Денежный эффект в год"
+              value={formatRub(m.effect_rub_year)}
+              hint="после расходов на роботизацию"
+            />
+          </StatStrip>
         </div>
-        <p className="demo-small">{demo.comparison.recommendation?.rationale?.join(' ')}</p>
-        <details className="demo-details">
-          <summary>Посмотреть денежные потоки всех вариантов</summary>
-          <CashflowChart table={demo.comparison} />
-        </details>
-      </section>
-    </div>
+        <div className="flex items-start gap-2 text-[13px] leading-relaxed text-ink-2">
+          <Info size={16} className="mt-0.5 shrink-0 text-ink-3" />
+          <p>
+            {current.interpretation.headline}
+            {result && !result.simulation_valid && (
+              <span className="mt-1 block text-warn">
+                Нагрузка изменилась: этот парк нужно заново проверить имитацией.
+              </span>
+            )}
+          </p>
+        </div>
+        <Evidence demo={demo} calculation={current} />
+        <Section
+          title="Сравнение способов внедрения"
+          actions={
+            <Button variant="outline" size="sm" onClick={() => setComparing(!comparing)} aria-expanded={comparing}>
+              {comparing ? 'Свернуть' : 'Показать сравнение'}
+            </Button>
+          }
+          description="Покупка, услуга, лизинг и работа без роботов. Исходные условия примера."
+        >
+          {comparing ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Вариант</TableHead>
+                  <TableHead>Вложения на старте</TableHead>
+                  <TableHead>Эффект в год</TableHead>
+                  <TableHead>Окупаемость</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {demo.comparison.scenarios.map((s) => (
+                  <TableRow key={s.scenario_id}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>{formatRub(s.metrics.owner_upfront_rub ?? s.metrics.capex_rub)}</TableCell>
+                    <TableCell>{s.kind === 'baseline' ? '—' : formatRub(s.metrics.effect_rub_year)}</TableCell>
+                    <TableCell>{s.kind === 'baseline' ? '—' : formatYears(s.metrics.payback_years)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-[13px] text-ink-3">
+              Для первого расчёта достаточно выбрать способ внедрения выше. Подробное сравнение можно раскрыть отдельно.
+            </p>
+          )}
+        </Section>
+        <span className="sr-only" role="status">
+          {pending
+            ? 'Расчёт обновляется'
+            : `Парк ${formatNumber(m.robots_total)} роботов, окупаемость ${formatYears(m.payback_years)}`}
+        </span>
+      </div>
+    </GuestScreen>
   )
 }

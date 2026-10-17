@@ -128,15 +128,15 @@ function SectionLink({ to, end, children }: { to: string; end?: boolean; childre
 }
 
 /* Разделы платформы видны всегда; внутри проекта сравнение сразу проверяет совместимость с его объектом. */
-export function Sections({ projectId }: { projectId?: string }) {
+export function Sections({ projectId, demoKey }: { projectId?: string; demoKey?: string }) {
   const { user } = useSession()
   const selection = useCompareSelection()
   const compareTo = `${compareUrl(selection.ids)}${projectId ? `&project=${projectId}` : ''}`
   return (
     <nav className="flex shrink-0 items-center gap-1" aria-label="Разделы">
-      {user && (
-        <SectionLink to="/projects" end>
-          Проекты
+      {(user || demoKey) && (
+        <SectionLink to={demoKey ? `/demo/${demoKey}` : '/projects'} end>
+          {demoKey ? 'Демо-проект' : 'Проекты'}
         </SectionLink>
       )}
       <SectionLink to="/catalog" end>
@@ -145,23 +145,25 @@ export function Sections({ projectId }: { projectId?: string }) {
       {/* Каталог, нормативы, пользователи и галерея 3D-моделей — инструменты администратора. */}
       {user?.role === 'admin' && <SectionLink to="/admin">Админ-панель</SectionLink>}
       {user?.role === 'vendor' && <SectionLink to="/vendor">Кабинет производителя</SectionLink>}
-      <SectionLink to={compareTo}>
-        Сравнение решений
-        <AnimatePresence>
-          {selection.items.length > 0 && (
-            <motion.span
-              key="count"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={SPRING}
-              className="num flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#ff996e] px-1 text-[10.5px] text-[#243027]"
-            >
-              {selection.items.length}
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </SectionLink>
+      {!demoKey && (
+        <SectionLink to={compareTo}>
+          Сравнение решений
+          <AnimatePresence>
+            {selection.items.length > 0 && (
+              <motion.span
+                key="count"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={SPRING}
+                className="num flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#ff996e] px-1 text-[10.5px] text-[#243027]"
+              >
+                {selection.items.length}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </SectionLink>
+      )}
     </nav>
   )
 }

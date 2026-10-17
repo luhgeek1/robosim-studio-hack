@@ -13,11 +13,6 @@ const router = createBrowserRouter([
     ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))),
   },
   {
-    path: '/demo/:demoKey?',
-    errorElement: <RouteError />,
-    ...page(() => import('@/pages/demo/DemoPage').then((m) => ({ Component: m.DemoPage }))),
-  },
-  {
     Component: AppShell,
     HydrateFallback: () => null,
     children: [
@@ -25,6 +20,10 @@ const router = createBrowserRouter([
         // Pathless layout: a crash in any screen renders RouteError inside the shell, the header stays.
         errorElement: <RouteError />,
         children: [
+          {
+            path: 'demo/:demoKey?',
+            ...page(() => import('@/pages/demo/DemoPage').then((m) => ({ Component: m.DemoPage }))),
+          },
           { path: 'app', Component: RootRedirect },
           {
             Component: RequireAdmin,
