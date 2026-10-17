@@ -41,7 +41,7 @@ import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/state
 import { Toggle } from '@/shared/ui/toggle'
 import { Dot, KpiNumber, Segmented, type Tone } from '@/shared/ui/v0'
 import { Twin, type TwinCapture, type TwinView } from '@/widgets/twin'
-import { PlayerBar, clock, usePlaybackDriver } from './PlayerBar'
+import { PlayerBar, clock, usePlaybackDriver } from '@/widgets/twin/PlayerBar'
 import { QueueSparkline } from './QueueSparkline'
 import { PaneSection, PaneTitle, StatusBar, WorkbenchFrame, WorkbenchGrid, type Panels } from '@/widgets/workbench'
 

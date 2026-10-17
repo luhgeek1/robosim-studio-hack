@@ -1530,6 +1530,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/demo/projects/{demo_key}/report/{format}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Скачать отчёт по исходному публичному примеру
+     * @description Пробные изменения гостя в этот отчёт не входят.
+     */
+    get: operations['downloadDemoReport']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/demo/projects/{demo_key}/replay': {
     parameters: {
       query?: never
@@ -4851,16 +4871,18 @@ export interface components {
       name: string
       object_type: components['schemas']['ObjectTypeKey']
       description: string
+      /** @description Границы процесса и допущения примера */
+      scope: string
       headline: {
-        robots_total?: number
-        capex_rub?: number
-        payback_years?: number
-        effect_rub_year?: number
-        verdict?: string
+        robots_total?: number | null
+        capex_rub?: number | null
+        payback_years?: number | null
+        effect_rub_year?: number | null
+        verdict?: string | null
       }
       image_url?: string | null
     }
-    /** @description Предрассчитанный демо-проект целиком, только чтение. */
+    /** @description Общий пример только для чтения. Пересобирается при изменении версии исходных данных или ядра. */
     DemoSnapshot: {
       demo: components['schemas']['DemoProject']
       params: components['schemas']['ProjectParam'][]
@@ -4868,10 +4890,24 @@ export interface components {
       matching: components['schemas']['MatchingResult']
       scenarios: components['schemas']['Scenario'][]
       comparison: components['schemas']['ComparisonTable']
+      calculations: components['schemas']['CalculationRun'][]
+      trace: components['schemas']['CalculationTrace']
+      /** Format: uuid */
+      primary_scenario_id: string
+      /** Format: date-time */
+      prepared_at: string
+      revision: string
       simulation?: components['schemas']['SimulationRun'] | null
       layout?: components['schemas']['Layout'] | null
+      sweep?: components['schemas']['FleetSweepResult'] | null
     }
-    /** @description Ограниченный what-if для гостя — несколько множителей без сохранения. */
+    DemoPreparation: {
+      /** @enum {string} */
+      status: 'preparing' | 'failed'
+      stage: string
+      retry_after_s: number
+    }
+    /** @description Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией. */
     DemoWhatIfRequest: {
       /** @default 1 */
       salary_multiplier: number
@@ -4879,13 +4915,21 @@ export interface components {
       volume_multiplier: number
       /** @default 1 */
       robot_price_multiplier: number
-      horizon_years?: number
-      scenario_kind?: components['schemas']['ScenarioKind']
+      labor_cash_realization_share?: number | null
+      horizon_years?: number | null
+      /**
+       * @default purchase
+       * @enum {string}
+       */
+      scenario_kind: 'purchase' | 'raas' | 'lease'
     }
     DemoWhatIfResult: {
       metrics: components['schemas']['Metrics']
       interpretation: components['schemas']['Interpretation']
-      cashflow_yearly?: components['schemas']['CashflowPoint'][]
+      cashflow_yearly: components['schemas']['CashflowPoint'][]
+      calculation: components['schemas']['CalculationRun']
+      simulation_valid: boolean
+      notes: string[]
     }
     SupportMeasure: {
       /** @example minpromtorg_cashback_20 */
@@ -8159,6 +8203,15 @@ export interface operations {
           'application/json': components['schemas']['DemoSnapshot']
         }
       }
+      /** @description Подготовка примера */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DemoPreparation']
+        }
+      }
       404: components['responses']['NotFound']
     }
   }
@@ -8186,6 +8239,53 @@ export interface operations {
           'application/json': components['schemas']['DemoWhatIfResult']
         }
       }
+      404: components['responses']['NotFound']
+      /** @description Пример ещё готовится */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+      422: components['responses']['ValidationError']
+      429: components['responses']['RateLimited']
+    }
+  }
+  downloadDemoReport: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        demo_key: string
+        format: 'pdf' | 'xlsx'
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Файл исходного примера */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/pdf': string
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string
+        }
+      }
+      404: components['responses']['NotFound']
+      /** @description Пример ещё готовится */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+      422: components['responses']['ValidationError']
       429: components['responses']['RateLimited']
     }
   }
@@ -8212,6 +8312,17 @@ export interface operations {
           'application/json': components['schemas']['SimulationReplay']
         }
       }
+      404: components['responses']['NotFound']
+      /** @description Пример ещё готовится */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+      422: components['responses']['ValidationError']
     }
   }
   listSupportMeasures: {
