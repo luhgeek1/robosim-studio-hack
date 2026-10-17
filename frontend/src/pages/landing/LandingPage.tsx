@@ -596,7 +596,6 @@ export function LandingPage() {
           </section>
 
           <EvidenceSection workspace="/demo/warehouse_demo_01?step=evidence" demo={demo} />
-          <QuestionsSection workspace="/demo" />
 
           <section className="landing-final-cta" aria-labelledby="create-project-title">
             <div className="landing-container landing-cta-card">
@@ -619,6 +618,7 @@ export function LandingPage() {
               </motion.div>
             </div>
           </section>
+          <QuestionsSection workspace="/demo" />
         </main>
         <footer className="landing-footer">
           <div className="landing-container">
