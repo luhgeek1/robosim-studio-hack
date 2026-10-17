@@ -140,6 +140,9 @@ demoWhatIf:
       required: true
       content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoWhatIfRequest'}}}
     responses:
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {description: Пример ещё готовится, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoWhatIfResult'}}}}
       '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
 
@@ -154,7 +157,31 @@ demoReplay:
       - {name: from_s, in: query, schema: {type: number, default: 0}}
       - {name: to_s, in: query, schema: {type: number}}
     responses:
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {description: Пример ещё готовится, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationReplay'}}}}
+
+demoReport:
+  get:
+    tags: [demo]
+    operationId: downloadDemoReport
+    summary: Скачать отчёт по исходному публичному примеру
+    description: Пробные изменения гостя в этот отчёт не входят.
+    security: []
+    parameters:
+      - {name: demo_key, in: path, required: true, schema: {type: string}}
+      - {name: format, in: path, required: true, schema: {type: string, enum: [pdf, xlsx]}}
+    responses:
+      '200':
+        description: Файл исходного примера
+        content:
+          application/pdf: {schema: {type: string, format: binary}}
+          application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {schema: {type: string, format: binary}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {description: Пример ещё готовится, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
 
 # ---------------- Меры господдержки и RFQ ----------------
 

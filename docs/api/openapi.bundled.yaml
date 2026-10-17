@@ -2471,6 +2471,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DemoWhatIfResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Пример ещё готовится
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/demo/projects/{demo_key}/report/{format}:
+    get:
+      tags:
+        - demo
+      operationId: downloadDemoReport
+      summary: Скачать отчёт по исходному публичному примеру
+      description: Пробные изменения гостя в этот отчёт не входят.
+      security: []
+      parameters:
+        - name: demo_key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - pdf
+              - xlsx
+      responses:
+        '200':
+          description: Файл исходного примера
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Пример ещё готовится
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/ValidationError'
         '429':
           $ref: '#/components/responses/RateLimited'
   /api/v1/demo/projects/{demo_key}/replay:
@@ -2502,6 +2558,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimulationReplay'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Пример ещё готовится
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/v1/support-measures:
     get:
       tags:

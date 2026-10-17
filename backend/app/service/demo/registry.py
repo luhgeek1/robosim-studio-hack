@@ -4,7 +4,7 @@ from uuid import NAMESPACE_URL, uuid5
 from app.core.errors import NotFoundError
 from app.domain.auth import CurrentUser, Role
 
-DEMO_REVISION = "public-demo-v1"
+DEMO_REVISION = "public-demo-v2"
 DEMO_OWNER_ID = uuid5(NAMESPACE_URL, "https://robomera.demo/public-examples")
 DEMO_OWNER = CurrentUser(DEMO_OWNER_ID, "public-examples@robomera.invalid", Role.USER, 1)
 
