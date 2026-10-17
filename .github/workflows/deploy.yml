@@ -29,6 +29,11 @@ jobs:
           version: 0.11.8
       - name: Run backend and API contract checks
         run: make check
+      - name: Check frontend types, lint, formatting and production build
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
       - name: Show service logs on failure
         if: failure()
         run: docker compose logs --tail 60 db redis
@@ -84,6 +89,15 @@ jobs:
                   with urllib.request.urlopen(base + "/api/v1/version", timeout=15) as response:
                       version = json.load(response)
                   assert version["build_sha"] == expected_sha, version
+                  with urllib.request.urlopen(base + "/demo/warehouse_demo_01", timeout=15) as response:
+                      assert response.status == 200, "Public demo page is unavailable"
+                  with urllib.request.urlopen(base + "/api/v1/demo/projects", timeout=15) as response:
+                      examples = json.load(response)
+                  assert len(examples["items"]) >= 4, "Public examples are missing"
+                  with urllib.request.urlopen(base + "/api/v1/demo/projects/warehouse_demo_01", timeout=15) as response:
+                      assert response.status == 200, "Public demo is still preparing"
+                      demo = json.load(response)
+                  assert demo["calculations"] and demo["simulation"], "Public demo is incomplete"
                   print(f"Deployment verified: {expected_sha}")
                   break
               except Exception as error:
