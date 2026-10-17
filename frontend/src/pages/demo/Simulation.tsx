@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
 import { Link } from 'react-router'
 import { useDemoReplay, type DemoSnapshot } from '@/entities/demo/api'
 import { demoUrl } from '@/entities/demo/navigation'
@@ -125,8 +126,11 @@ export function Simulation({ demo, fleet }: { demo: DemoSnapshot; fleet: FleetCh
                 <p className="mt-2 text-[12px] leading-relaxed text-ink-3">
                   Сохранённый прогон на сгенерированной планировке. Движение, очереди и зарядка участвуют в расчёте.
                 </p>
-                <details className="mt-3 text-[12px] text-ink-3">
-                  <summary className="cursor-pointer">Подробнее</summary>
+                <details className="group mt-3 text-[12px] text-ink-3">
+                  <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                    Подробнее
+                    <ChevronDown size={13} aria-hidden="true" className="transition-transform group-open:rotate-180" />
+                  </summary>
                   <p className="mt-2 leading-relaxed">{sweep?.explanation}</p>
                   {sweep?.joint_validation?.skipped_processes.map((p) => (
                     <p key={p.process_key} className="mt-2">
