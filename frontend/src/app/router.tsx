@@ -13,6 +13,11 @@ const router = createBrowserRouter([
     ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))),
   },
   {
+    path: '/demo/:demoKey?',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/demo/DemoPage').then((m) => ({ Component: m.DemoPage }))),
+  },
+  {
     Component: AppShell,
     HydrateFallback: () => null,
     children: [
