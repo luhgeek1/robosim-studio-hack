@@ -34,20 +34,22 @@ export const useDemoWhatIf = (demo: DemoSnapshot, changes: DemoChanges, enabled:
   useQuery<DemoResult>({
     queryKey: ['public-demo-what-if', demo.demo.key, demo.revision, changes],
     queryFn: ({ signal }) =>
-      apiPublic.post<DemoResult>(`${path(demo.demo.key)}/what-if`, changes, { signal }).then((r) => r.data),
+      apiPublic
+        .post<DemoResult>(`${path(demo.demo.key)}/what-if`, changes, { signal, params: { revision: demo.revision } })
+        .then((r) => r.data),
     enabled,
     placeholderData: keepPreviousData,
     staleTime: 60_000,
     retry: false,
   })
 
-export const useDemoReplay = (key: string, from: number, enabled: boolean) =>
+export const useDemoReplay = (key: string, revision: string, from: number, enabled: boolean) =>
   useQuery({
-    queryKey: ['public-demo-replay', key, from],
+    queryKey: ['public-demo-replay', key, revision, from],
     queryFn: ({ signal }) =>
       apiPublic
         .get<SimulationReplay>(`${path(key)}/replay`, {
-          params: { from_s: from, to_s: from + 3600 },
+          params: { from_s: from, to_s: from + 3600, revision },
           signal,
         })
         .then((r) => r.data),
