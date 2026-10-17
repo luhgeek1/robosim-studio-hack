@@ -13,6 +13,7 @@ export function PageHeader({
   description,
   actions,
   eyebrow,
+  badge,
   dense = false,
   className,
 }: {
@@ -20,6 +21,7 @@ export function PageHeader({
   description?: ReactNode
   actions?: ReactNode
   eyebrow?: ReactNode
+  badge?: ReactNode
   dense?: boolean
   className?: string
 }) {
@@ -32,10 +34,15 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0 max-w-190">
-        {eyebrow && (
-          <div className={cn('hud flex items-center gap-2', dense ? 'mb-1.5' : 'mb-3')}>
-            <span className="size-1.5 rounded-full bg-signal" aria-hidden />
-            {eyebrow}
+        {(badge || eyebrow) && (
+          <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-2', dense ? 'mb-1.5' : 'mb-3')}>
+            {badge}
+            {eyebrow && (
+              <div className="hud flex items-center gap-2">
+                <span className="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden />
+                {eyebrow}
+              </div>
+            )}
           </div>
         )}
         <h1 className="h1">{title}</h1>
@@ -63,6 +70,7 @@ export function Screen({
   className,
   headerClassName,
   eyebrow,
+  badge,
 }: {
   title: ReactNode
   lead?: ReactNode
@@ -79,6 +87,7 @@ export function Screen({
   // Широкий экран может держать шапку в обычной колонке, как у остальных шагов.
   headerClassName?: string
   eyebrow?: ReactNode
+  badge?: ReactNode
 }) {
   const navigate = useNavigate()
   const match = useMatch('/projects/:projectId/:step/*')
@@ -103,6 +112,7 @@ export function Screen({
   return (
     <div className={cn('mx-auto w-full pt-2 pb-12 sm:pb-16', wide ? 'max-w-360' : 'max-w-300', className)}>
       <PageHeader
+        badge={badge}
         eyebrow={
           eyebrow ?? (step ? `Шаг ${pad(idx + 1)} / ${pad(PROJECT_STEPS.length)} · ${step.question}` : undefined)
         }

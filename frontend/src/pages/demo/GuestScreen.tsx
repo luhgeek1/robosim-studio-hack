@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router'
 import { DEMO_STEPS, demoStep, demoUrl } from '@/entities/demo/navigation'
 import { Screen } from '@/shared/ui/page'
 import { Button } from '@/shared/ui/button'
+import { DemoBadge } from './DemoBadge'
 
 export function GuestScreen({ title, lead, children }: { title: ReactNode; lead?: ReactNode; children: ReactNode }) {
   const { demoKey = 'warehouse_demo_01' } = useParams()
@@ -23,6 +24,7 @@ export function GuestScreen({ title, lead, children }: { title: ReactNode; lead?
   return (
     <Screen
       dense
+      badge={<DemoBadge />}
       title={title}
       lead={lead}
       eyebrow={`Шаг 0${index + 1} / 04 · ${current.question}`}

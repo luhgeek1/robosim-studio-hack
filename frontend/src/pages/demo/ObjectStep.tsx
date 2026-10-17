@@ -34,6 +34,15 @@ export function ObjectStep({
   const param = (key: string) => demo.params.find((p) => p.key === key)
   const area = param('area_m2')
   const shifts = param('shifts_per_day')
+  const summary = [
+    { label: 'Процессов в расчёте', value: String(tasks.length), hint: 'выбрано для роботизации' },
+    { label: 'Рабочих смен в сутки', value: formatValue(shifts?.value), hint: 'режим работы объекта' },
+    {
+      label: 'Нагрузка в демо',
+      value: `${Math.round((value.volume_multiplier ?? 1) * 100)}%`,
+      hint: 'от исходного объёма задач',
+    },
+  ]
   return (
     <GuestScreen
       title={demo.demo.name}
@@ -115,13 +124,14 @@ export function ObjectStep({
         </div>
         <div className="border-t border-line">
           <StatStrip columns={3} className="rounded-none border-0">
-            <Stat label="Процессов в расчёте" value={String(tasks.length)} />
-            <Stat label="Рабочих смен в сутки" value={formatValue(shifts?.value)} />
-            <Stat
-              label="Нагрузка в демо"
-              value={`${Math.round((value.volume_multiplier ?? 1) * 100)}%`}
-              hint="от исходного объёма задач"
-            />
+            {summary.map((stat) => (
+              <Stat
+                key={stat.label}
+                {...stat}
+                className="px-5 py-5 sm:px-7 sm:py-5 [&>div:last-child]:mt-2"
+                valueClassName="mt-2 text-[30px] leading-none tracking-[-0.035em] sm:text-[30px]"
+              />
+            ))}
           </StatStrip>
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router'
-import { Info } from 'lucide-react'
 import { useDemo, useDemoWhatIf, type DemoChanges, type DemoSnapshot } from '@/entities/demo/api'
 import { demoStep, demoUrl } from '@/entities/demo/navigation'
 import { useDemoWorkspace } from '@/entities/demo/workspace'
@@ -12,6 +11,7 @@ import { ObjectStep } from './ObjectStep'
 import { Decision } from './Decision'
 import { Simulation } from './Simulation'
 import { Report } from './Report'
+import type { FleetCheckState } from './FleetCheck'
 import { INITIAL } from './defaults'
 
 export function DemoPage() {
@@ -65,40 +65,68 @@ function Journey({ demo }: { demo: DemoSnapshot }) {
     const timer = setTimeout(() => setApplied(changes), 350)
     return () => clearTimeout(timer)
   }, [changes])
-  const changed = JSON.stringify(applied) !== JSON.stringify(INITIAL)
-  const result = useDemoWhatIf(demo, applied, changed)
-  const base = demo.calculations.find((c) => c.scenario_id === demo.primary_scenario_id)!
-  const preview = changed && !result.isError ? result.data : undefined
-  const pending = JSON.stringify(changes) !== JSON.stringify(applied) || (changed && result.isFetching)
+  const formula = useDemoWhatIf(demo, { ...applied, fleet_source: 'formula' }, true)
+  const simulation = useDemoWhatIf(demo, applied, applied.fleet_source === 'simulation')
+  const result = applied.fleet_source === 'simulation' ? simulation : formula
+  const pending = JSON.stringify(changes) !== JSON.stringify(applied) || result.isFetching || formula.isFetching
+  const retry = () => {
+    void formula.refetch()
+    if (applied.fleet_source === 'simulation') void simulation.refetch()
+  }
+  const update = (next: DemoChanges) =>
+    setChanges({ ...next, fleet_source: (next.volume_multiplier ?? 1) !== 1 ? 'formula' : next.fleet_source })
+  const fleet: FleetCheckState = {
+    formula: formula.data?.calculation,
+    current: result.data?.calculation,
+    applied:
+      changes.fleet_source === 'simulation' &&
+      applied.fleet_source === 'simulation' &&
+      !!result.data?.simulation_valid &&
+      !result.isPlaceholderData &&
+      !result.isError,
+    busy: pending,
+    changedVolume: (changes.volume_multiplier ?? 1) !== 1,
+    error: result.isError ? problemText(result.error) : formula.isError ? problemText(formula.error) : null,
+    onApply: () => {
+      if (result.isError || formula.isError) retry()
+      else if (applied.fleet_source === 'simulation') void result.refetch()
+      else update({ ...changes, fleet_source: 'simulation' })
+    },
+    onUseFormula: () => update({ ...changes, fleet_source: 'formula' }),
+    onResetVolume: () => update({ ...changes, volume_multiplier: 1, fleet_source: 'formula' }),
+  }
   return (
     <>
-      {step !== 'simulation' && (
-        <aside
-          aria-label="Ознакомительный режим"
-          className="mx-auto mb-6 flex w-full max-w-300 items-start gap-2.5 rounded-lg border border-line bg-surface-2 px-4 py-3 text-[12.5px] leading-relaxed text-ink-3"
-        >
-          <Info size={16} className="mt-0.5 shrink-0" />
-          <p>
-            <strong className="font-medium text-ink-2">Демо-проект · 4 основных шага.</strong> В своём проекте появятся
-            все 9 шагов, собственные параметры, планировка и сохранение результатов.
-          </p>
-        </aside>
-      )}
-      {step === 'object' && <ObjectStep demo={demo} value={changes} onChange={setChanges} />}
-      {step === 'decision' && (
-        <Decision
+      {step === 'object' && <ObjectStep demo={demo} value={changes} onChange={update} />}
+      {step === 'decision' &&
+        (result.data ? (
+          <Decision
+            demo={demo}
+            current={result.data.calculation}
+            result={result.data}
+            pending={pending}
+            failed={fleet.error}
+            value={changes}
+            onChange={update}
+            onRetry={retry}
+            fleet={fleet}
+          />
+        ) : (
+          <GuestScreen title="Подбор роботов и расчёт эффекта">
+            {result.isError ? (
+              <ErrorBlock error={result.error} onRetry={retry} />
+            ) : (
+              <LoadingBlock label="Считаем исходный парк по формуле…" />
+            )}
+          </GuestScreen>
+        ))}
+      {step === 'simulation' && <Simulation demo={demo} fleet={fleet} />}
+      {step === 'report' && (
+        <Report
           demo={demo}
-          current={preview?.calculation ?? base}
-          result={preview}
-          pending={pending}
-          failed={changed && result.isError ? problemText(result.error) : null}
-          value={changes}
-          onChange={setChanges}
-          onRetry={() => void result.refetch()}
+          changed={JSON.stringify({ ...changes, fleet_source: 'formula' }) !== JSON.stringify(INITIAL)}
         />
       )}
-      {step === 'simulation' && <Simulation demo={demo} changedVolume={(changes.volume_multiplier ?? 1) !== 1} />}
-      {step === 'report' && <Report demo={demo} changed={JSON.stringify(changes) !== JSON.stringify(INITIAL)} />}
     </>
   )
 }

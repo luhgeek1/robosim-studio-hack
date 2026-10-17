@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { useDemoReplay, type DemoSnapshot } from '@/entities/demo/api'
 import { demoUrl } from '@/entities/demo/navigation'
 import { buildTracks, usePlayback } from '@/entities/simulation'
-import { formatNumber, formatRub } from '@/shared/lib/format'
+import { formatNumber } from '@/shared/lib/format'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { Callout } from '@/shared/ui/page'
 import { LayoutMap } from '@/widgets/layout-map'
@@ -12,10 +12,12 @@ import type { TwinView } from '@/widgets/twin'
 import { PlayerBar, usePlaybackDriver } from '@/widgets/twin/PlayerBar'
 import { WorkbenchFrame, WorkbenchGrid, PaneSection, PaneTitle, StatusBar } from '@/widgets/workbench'
 import { GuestScreen } from './GuestScreen'
+import { FleetCheckPanel, type FleetCheckState } from './FleetCheck'
+import { DemoBadge } from './DemoBadge'
 const Twin = lazy(() => import('@/widgets/twin').then((m) => ({ default: m.Twin })))
 const PANELS = { left: false, right: true, bottom: true }
 
-export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; changedVolume: boolean }) {
+export function Simulation({ demo, fleet }: { demo: DemoSnapshot; fleet: FleetCheckState }) {
   const [view, setView] = useState<TwinView>('3d')
   const reduced = useReducedMotion()
   const total = Number(demo.simulation?.summary?.duration_hours ?? 0) * 3600
@@ -70,7 +72,8 @@ export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; change
       step="simulation"
       title={demo.demo.name}
       titleHint={demo.demo.name}
-      className="top-25 xl:top-14"
+      eyebrow={<DemoBadge compact />}
+      className="top-[10.375rem] xl:top-14"
       navigation={{
         index: 2,
         total: 4,
@@ -78,11 +81,11 @@ export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; change
         next: { label: 'Отчёт', to: demoUrl(demo.demo.key, 'report') },
       }}
     >
-      <div className="guest-simulation-grid flex min-h-0 flex-1 flex-col [@media(max-width:1023px)]:[&>div>section]:order-2">
+      <div className="guest-simulation-grid flex min-h-0 flex-1 flex-col max-lg:[&>div]:auto-rows-max max-lg:[&>div>aside>div]:h-auto max-lg:[&>div>aside>div]:overflow-visible [@media(max-width:1023px)]:[&>div>section]:order-2">
         <WorkbenchGrid
           panels={PANELS}
           leftWidth={0}
-          rightWidth={300}
+          rightWidth={320}
           left={null}
           center={
             <Suspense
@@ -101,13 +104,9 @@ export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; change
           }
           right={
             <>
-              <PaneTitle>Результат проверки</PaneTitle>
-              {changedVolume && (
-                <div className="border-b border-line p-3.5 text-[12px] leading-relaxed text-warn">
-                  Вы изменили нагрузку. Этот прогон относится к исходному примеру и не подтверждает новые условия.
-                </div>
-              )}
-              <PaneSection title="Задачи в срок">
+              <PaneTitle>От формулы — к проверенному парку</PaneTitle>
+              <FleetCheckPanel demo={demo} fleet={fleet} />
+              <PaneSection title="Сохранённый прогон · задачи в срок">
                 <div className="display num text-[36px]">
                   {formatNumber(sla?.achieved_pct)}
                   <span className="ml-1 text-[20px] text-ink-3">%</span>
@@ -116,25 +115,6 @@ export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; change
                 <p className="mt-3 text-[12px] leading-relaxed text-ink-3">
                   Доля задач, которые парк успел выполнить за необходимое время.
                 </p>
-              </PaneSection>
-              <PaneSection title="Сколько роботов нужно">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-line p-3">
-                    <p className="text-[11px] text-ink-3">По формуле</p>
-                    <p className="num mt-1 text-[26px] font-semibold">{formatNumber(sweep?.by_formula?.total)}</p>
-                    <p className="meta mt-1">{formatRub(sweep?.by_formula?.capex_rub)}</p>
-                  </div>
-                  <div className="rounded-lg border border-ink bg-card p-3">
-                    <p className="text-[11px] text-ink-3">По имитации</p>
-                    <p className="num mt-1 text-[26px] font-semibold">
-                      {sweep?.applied ? formatNumber(sweep.by_simulation?.total) : '—'}
-                    </p>
-                    <p className="meta mt-1">
-                      {sweep?.applied ? formatRub(sweep.by_simulation?.capex_rub) : 'Не подтверждено'}
-                    </p>
-                  </div>
-                </div>
-                <p className="meta mt-3">Парк указан с резервом.</p>
               </PaneSection>
               <PaneSection title="Условия проверки">
                 <p className="text-[13px]">
@@ -168,6 +148,9 @@ export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; change
           }
           bottom={
             <div className="guest-simulation-player px-4 py-3 [&>div]:flex-wrap [&_input[type=range]]:basis-[28%] [@media(max-width:720px)]:[&>div]:gap-2 [@media(max-width:720px)]:[&_input[type=range]]:basis-1/5">
+              <p className="mb-2 text-[11px] text-ink-3">
+                На карте — подготовленный прогон проверенного парка, а не текущая оценка по формуле.
+              </p>
               <PlayerBar disabled={replay.isFetching} speeds={[60, 120, 300]} />
             </div>
           }

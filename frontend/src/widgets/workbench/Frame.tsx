@@ -36,6 +36,7 @@ export function WorkbenchFrame({
   step,
   title,
   titleHint,
+  eyebrow,
   actions,
   inFlow = false,
   navigation,
@@ -46,6 +47,7 @@ export function WorkbenchFrame({
   step: string
   title: ReactNode
   titleHint?: string
+  eyebrow?: ReactNode
   actions?: ReactNode
   inFlow?: boolean
   navigation?: {
@@ -85,7 +87,12 @@ export function WorkbenchFrame({
       style={{ '--dock-half': `${dockHalf}px` } as CSSProperties}
     >
       <div className="flex h-[4.125rem] shrink-0 items-center justify-between gap-3 border-b border-line bg-surface-2 px-2">
-        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
+        <div
+          className={cn(
+            'flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5',
+            eyebrow && 'max-xl:max-w-[calc(100%-3rem)]',
+          )}
+        >
           {prev && (
             <Button variant="ghost" size="icon-sm" asChild title={`Назад: ${prev.label}`}>
               <Link to={prev.to} aria-label={`Назад: ${prev.label}`}>
@@ -94,16 +101,23 @@ export function WorkbenchFrame({
             </Button>
           )}
           <div className="min-w-0">
-            <div className="hud flex items-center gap-1.5">
-              <span className="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden />
-              Шаг {pad(idx + 1)} / {pad(total)}
-            </div>
+            {eyebrow ?? (
+              <div className="hud flex items-center gap-1.5">
+                <span className="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden />
+                Шаг {pad(idx + 1)} / {pad(total)}
+              </div>
+            )}
             <h1 className="truncate text-[14px] font-semibold tracking-[-0.01em]" title={titleHint}>
               {title}
             </h1>
           </div>
         </div>
-        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
+        <div
+          className={cn(
+            'flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5',
+            eyebrow && 'max-xl:max-w-none',
+          )}
+        >
           <div className="flex min-w-0 items-center gap-1.5">{actions}</div>
           {next && (
             <Button variant="ghost" size="icon-sm" asChild title={`Далее: ${next.label}`}>

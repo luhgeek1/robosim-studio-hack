@@ -84,3 +84,28 @@ async def test_guest_price_override_has_user_provenance(client: AsyncClient) -> 
     ]
     assert prices
     assert all(value["provenance"]["status"] == "user" for value in prices)
+
+
+async def test_guest_can_apply_prepared_fleet_without_changing_shared_demo(client: AsyncClient) -> None:
+    url = f"{BASE}/warehouse_demo_01"
+    await client.get(url)
+    demo = (await client.get(url)).json()
+    primary = next(c for c in demo["calculations"] if c["scenario_id"] == demo["primary_scenario_id"])
+    formula = await client.post(f"{url}/what-if", json={"fleet_source": "formula"})
+    assert formula.status_code == 200, formula.text
+    assert formula.json()["simulation_valid"] is False
+    assert all(s["count"]["source"] != "simulated" for s in formula.json()["calculation"]["sizing"])
+    assert formula.json()["metrics"]["robots_total"] == demo["sweep"]["by_formula"]["total"]
+    confirmed = await client.post(f"{url}/what-if", json={"fleet_source": "simulation"})
+    assert confirmed.status_code == 200, confirmed.text
+    assert confirmed.json()["simulation_valid"] is True
+    assert confirmed.json()["metrics"] == primary["metrics"]
+    assert confirmed.json()["metrics"]["robots_total"] < formula.json()["metrics"]["robots_total"]
+    assert confirmed.json()["metrics"]["capex_rub"] < formula.json()["metrics"]["capex_rub"]
+    volume = await client.post(
+        f"{url}/what-if", json={"fleet_source": "simulation", "volume_multiplier": 1.5}
+    )
+    assert volume.json()["simulation_valid"] is False
+    assert all(s["count"]["source"] != "simulated" for s in volume.json()["calculation"]["sizing"])
+    assert (await client.get(url)).json() == demo
+    assert (await client.post(f"{url}/what-if", json={"fleet_source": "unknown"})).status_code == 422

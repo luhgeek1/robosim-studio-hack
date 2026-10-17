@@ -4909,6 +4909,12 @@ export interface components {
     }
     /** @description Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией. */
     DemoWhatIfRequest: {
+      /**
+       * @description Расчёт по формуле или применение заранее проверенного парка. Изменённая нагрузка всегда считается по формуле.
+       * @default simulation
+       * @enum {string}
+       */
+      fleet_source: 'formula' | 'simulation'
       /** @default 1 */
       salary_multiplier: number
       /** @default 1 */

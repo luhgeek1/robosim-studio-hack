@@ -80,8 +80,8 @@ export function Report({ demo, changed }: { demo: DemoSnapshot; changed: boolean
             ))}
           </div>
           <p className="meta mt-4">
-            Файлы относятся к исходному примеру{changed ? ', без ваших пробных изменений' : ''}. Расчёт от{' '}
-            {formatDateTime(demo.prepared_at)}.
+            Файлы относятся к исходному примеру после проверки имитацией{changed ? ', без ваших пробных изменений' : ''}
+            . Расчёт от {formatDateTime(demo.prepared_at)}.
           </p>
           {error && (
             <p className="mt-3 text-[13px] text-crit" role="alert">
