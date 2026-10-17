@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Info, Sparkles } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router'
 import type { DemoSnapshot } from '@/entities/demo/api'
@@ -33,28 +33,31 @@ function outcome(fleet: FleetCheckState) {
   return 'Количество роботов подтверждено'
 }
 
-export function FleetCheckTeaser({ demo, fleet }: { demo: DemoSnapshot; fleet: FleetCheckState }) {
+export function FleetCheckStatus({ demo, fleet }: { demo: DemoSnapshot; fleet: FleetCheckState }) {
   return (
     <section
-      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-signal/20 bg-card px-5 py-4"
+      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line px-4 py-2.5"
       aria-label="Проверка парка имитацией"
     >
-      <div className="flex min-w-0 flex-1 items-start gap-3">
-        <Sparkles size={20} className="mt-0.5 shrink-0 text-signal" />
-        <div>
-          <h2 className="text-[14px] font-semibold">
-            {fleet.applied ? outcome(fleet) : 'А если проверить парк в движении?'}
-          </h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-3">
-            {fleet.applied
-              ? 'Проверенный парк уже учтён в количестве роботов и экономике выше.'
-              : 'Формула даёт первую оценку. Имитация проверяет, сколько роботов действительно нужно для задач в срок.'}
-          </p>
-        </div>
+      <div className="flex min-w-0 items-start gap-2 text-[11px] leading-relaxed text-ink-3">
+        {fleet.applied ? (
+          <Check size={14} className="mt-0.5 shrink-0 text-ok" />
+        ) : (
+          <Info size={14} className="mt-0.5 shrink-0" />
+        )}
+        <p>
+          {fleet.busy
+            ? 'Количество роботов пересчитывается…'
+            : fleet.applied
+              ? 'Применён парк из подготовленной проверки имитацией.'
+              : fleet.changedVolume
+                ? 'Новая нагрузка: нужна отдельная проверка имитацией.'
+                : 'Парк рассчитан по формуле. Проверка имитацией не применена.'}
+        </p>
       </div>
-      <Button asChild variant={fleet.applied ? 'outline' : 'default'} className="h-auto min-h-8 whitespace-normal">
+      <Button asChild variant="outline" size="sm" className="h-auto min-h-7 whitespace-normal text-[11px]">
         <Link to={`${demoUrl(demo.demo.key, 'simulation')}#fleet-check`}>
-          {fleet.applied ? 'Посмотреть проверку' : 'Уточнить парк имитацией'}
+          {fleet.applied ? 'Открыть проверку' : 'Проверить парк'}
           <ArrowRight />
         </Link>
       </Button>

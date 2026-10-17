@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react'
-import { Fragment, useState } from 'react'
+import { Fragment, useId, useState } from 'react'
 import { Formula } from '@/entities/provenance'
 import type { TraceInput } from '@/shared/api/types'
 import { formatRub } from '@/shared/lib/format'
@@ -30,6 +30,7 @@ export function CostTable({
   unitSuffix?: string
 }) {
   const [open, setOpen] = useState<string | null>(null)
+  const id = useId()
   const max = Math.max(...rows.map((r) => Math.abs(r.amount)), 1)
 
   return (
@@ -54,7 +55,14 @@ export function CostTable({
                         expanded && 'rotate-90',
                       )}
                     />
-                    <span>{row.name}</span>
+                    <button
+                      type="button"
+                      aria-expanded={expanded}
+                      aria-controls={`${id}-${row.key}`}
+                      className="rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    >
+                      {row.name}
+                    </button>
                   </div>
                   {row.hint && <div className="pl-5 text-xs text-muted-foreground">{row.hint}</div>}
                 </td>
@@ -73,7 +81,7 @@ export function CostTable({
               </tr>
               {expanded && (
                 <tr className="bg-raised/30">
-                  <td colSpan={3} className="px-2 pt-1 pb-4 sm:px-6">
+                  <td id={`${id}-${row.key}`} colSpan={3} className="px-2 pt-1 pb-4 sm:px-6">
                     <Formula formula={row.formula} rendered={row.formulaRendered} inputs={row.inputs} note={row.note} />
                     {row.normKey && (
                       <div className="mt-2 text-xs text-muted-foreground">
