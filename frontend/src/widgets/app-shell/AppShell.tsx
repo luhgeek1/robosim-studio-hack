@@ -2,7 +2,8 @@ import { motion } from 'framer-motion'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, Outlet, matchPath, useLocation, useMatch } from 'react-router'
 import { DEMO_STEPS, demoStep, demoUrl } from '@/entities/demo/navigation'
-import { GuestHeaderActions, GuestProjectTab } from './GuestNavigation'
+import { useDemoWorkspace } from '@/entities/demo/workspace'
+import { GuestHeaderActions, GuestProjectTabs } from './GuestNavigation'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
@@ -81,7 +82,12 @@ function StepDock({ projectId, demoKey }: { projectId?: string; demoKey?: string
     el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' })
   }, [pathname, search])
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-3 sm:px-6">
+    <div
+      className={cn(
+        'pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-3 sm:px-6',
+        demoKey && 'top-25 xl:top-14',
+      )}
+    >
       <div
         className="pointer-events-auto max-w-full pt-3 pb-2"
         onMouseEnter={() => setHovered(true)}
@@ -138,10 +144,17 @@ export function AppShell() {
   const [headerRow, setHeaderRow] = useState<HTMLDivElement | null>(null)
   const { user } = useSession()
   const guest = useMatch('/demo/:demoKey?')
-  const demoKey = guest ? (guest.params.demoKey ?? 'warehouse_demo_01') : undefined
+  const catalog = useMatch('/catalog/*')
+  const activeDemoKey = useDemoWorkspace((s) => s.activeKey)
+  const visitDemo = useDemoWorkspace((s) => s.visit)
+  const routeDemoKey = guest ? (guest.params.demoKey ?? activeDemoKey) : undefined
+  const demoKey = routeDemoKey ?? (!user && catalog ? activeDemoKey : undefined)
   const match = useMatch('/projects/:projectId/*')
   const projectId = match?.params.projectId
   const { pathname, search } = useLocation()
+  useLayoutEffect(() => {
+    if (guest?.params.demoKey) visitDemo(guest.params.demoKey, demoStep(new URLSearchParams(search).get('step')))
+  }, [guest?.params.demoKey, search, visitDemo])
   const navigationKey = demoKey ? pathname + search : pathname
   // Каждый экран открывается сверху: положение прокрутки предыдущего не переносится на следующий.
   useLayoutEffect(() => {
@@ -152,14 +165,20 @@ export function AppShell() {
       <a href="#workspace-main" className="workspace-skip">
         Перейти к содержимому
       </a>
-      <div className="h-14 shrink-0" aria-hidden />
+      <div className={cn('h-14 shrink-0', demoKey && 'h-25 xl:h-14')} aria-hidden />
       <motion.header
         layoutRoot
-        className="workspace-header fixed inset-x-0 top-0 z-40 h-14 border-b border-line backdrop-blur-md"
+        className={cn(
+          'workspace-header fixed inset-x-0 top-0 z-40 h-14 border-b border-line backdrop-blur-md',
+          demoKey && 'h-25 xl:h-14',
+        )}
       >
         <div
           ref={setHeaderRow}
-          className="relative mx-auto flex h-full max-w-360 items-center gap-2 px-3 sm:px-4 lg:gap-5 lg:px-6"
+          className={cn(
+            'relative mx-auto h-full max-w-360 items-center gap-x-2 px-3 sm:px-4 lg:gap-x-5 lg:px-6',
+            demoKey ? 'grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[3.5rem_2.75rem] xl:flex' : 'flex',
+          )}
         >
           <HeaderHighlight container={headerRow} />
           {!demoKey && (
@@ -168,14 +187,14 @@ export function AppShell() {
             </div>
           )}
           <Logo />
-          <div className="hidden h-5 w-px shrink-0 bg-line-2 lg:block" />
-          <div className="hidden lg:contents">
+          <div className={cn('hidden h-5 w-px shrink-0 bg-line-2', demoKey ? 'xl:block' : 'lg:block')} />
+          <div className={demoKey ? 'min-w-0 xl:contents' : 'hidden lg:contents'}>
             <Sections projectId={projectId} demoKey={demoKey} />
-            <div className="h-5 w-px shrink-0 bg-line-2" />
+            <div className={cn('h-5 w-px shrink-0 bg-line-2', demoKey && 'hidden xl:block')} />
           </div>
           {demoKey ? (
-            <div className="min-w-0 flex-1">
-              <GuestProjectTab demoKey={demoKey} />
+            <div className="col-span-full row-start-2 min-w-0 self-start xl:flex-1 xl:self-auto">
+              <GuestProjectTabs demoKey={demoKey} inProject={Boolean(guest)} />
             </div>
           ) : user ? (
             <div className="hidden min-w-0 flex-1 lg:flex">
@@ -183,7 +202,7 @@ export function AppShell() {
             </div>
           ) : null}
           {!demoKey && <div className={cn('min-w-0 flex-1', user && 'lg:hidden')} />}
-          <div className="flex shrink-0 items-center gap-1">
+          <div className={cn('flex shrink-0 items-center gap-1', demoKey && 'col-start-3 row-start-1')}>
             {demoKey ? (
               <GuestHeaderActions demoKey={demoKey} />
             ) : (
@@ -195,10 +214,10 @@ export function AppShell() {
           </div>
         </div>
       </motion.header>
-      {(projectId || demoKey) && (
+      {(projectId || routeDemoKey) && (
         <>
           <div className="h-16.5 shrink-0" aria-hidden />
-          <StepDock projectId={projectId} demoKey={demoKey} />
+          <StepDock projectId={projectId} demoKey={routeDemoKey} />
         </>
       )}
       <main id="workspace-main" className="flex min-h-0 flex-1 flex-col" tabIndex={-1}>

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Navigate, useParams, useSearchParams } from 'react-router'
 import { Info } from 'lucide-react'
 import { useDemo, useDemoWhatIf, type DemoChanges, type DemoSnapshot } from '@/entities/demo/api'
-import { demoStep } from '@/entities/demo/navigation'
+import { demoStep, demoUrl } from '@/entities/demo/navigation'
+import { useDemoWorkspace } from '@/entities/demo/workspace'
 import { problemText } from '@/shared/api/problem'
 import { Button } from '@/shared/ui/button'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
@@ -15,7 +16,9 @@ import { INITIAL } from './defaults'
 
 export function DemoPage() {
   const { demoKey } = useParams()
-  const snapshot = useDemo(demoKey ?? 'warehouse_demo_01')
+  const activeKey = useDemoWorkspace((s) => s.activeKey)
+  const activeStep = useDemoWorkspace((s) => s.steps[s.activeKey] ?? 'object')
+  const snapshot = useDemo(demoKey ?? activeKey)
   useEffect(() => {
     const previous = document.title
     document.title = 'Демо-проект — РобоМера'
@@ -23,7 +26,7 @@ export function DemoPage() {
       document.title = previous
     }
   }, [])
-  if (!demoKey) return <Navigate to="/demo/warehouse_demo_01?step=object" replace />
+  if (!demoKey) return <Navigate to={demoUrl(activeKey, activeStep)} replace />
   return (
     <div className="flex min-h-0 flex-1 flex-col px-4 pt-5 sm:px-6">
       {snapshot.isError ? (

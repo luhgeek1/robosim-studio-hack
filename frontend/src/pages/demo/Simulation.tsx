@@ -70,6 +70,7 @@ export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; change
       step="simulation"
       title={demo.demo.name}
       titleHint={demo.demo.name}
+      className="top-25 xl:top-14"
       navigation={{
         index: 2,
         total: 4,

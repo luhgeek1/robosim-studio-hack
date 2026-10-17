@@ -1,3 +1,10 @@
+export const DEMO_PROJECTS = [
+  { key: 'warehouse_demo_01', label: 'Демо-склад', objectType: 'warehouse' },
+  { key: 'warehouse_showcase_24x7', label: 'Демо-фулфилмент', objectType: 'warehouse' },
+  { key: 'hospital_demo_01', label: 'Демо-больница', objectType: 'hospital' },
+  { key: 'airport_demo_01', label: 'Демо-аэропорт', objectType: 'airport' },
+] as const
+
 export const DEMO_STEPS = [
   { id: 'object', label: 'Объект', question: 'Какую задачу решаем' },
   { id: 'decision', label: 'Подбор и экономика', question: 'Какие роботы нужны и что это даст' },

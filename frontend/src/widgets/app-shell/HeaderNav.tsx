@@ -134,9 +134,9 @@ export function Sections({ projectId, demoKey }: { projectId?: string; demoKey?:
   const compareTo = `${compareUrl(selection.ids)}${projectId ? `&project=${projectId}` : ''}`
   return (
     <nav className="flex shrink-0 items-center gap-1" aria-label="Разделы">
-      {(user || demoKey) && (
-        <SectionLink to={demoKey ? `/demo/${demoKey}` : '/projects'} end>
-          {demoKey ? 'Демо-проект' : 'Проекты'}
+      {user && !demoKey && (
+        <SectionLink to="/projects" end>
+          Проекты
         </SectionLink>
       )}
       <SectionLink to="/catalog" end>

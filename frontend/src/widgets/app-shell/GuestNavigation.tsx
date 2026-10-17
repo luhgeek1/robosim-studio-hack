@@ -1,48 +1,64 @@
-import { Check, ChevronDown, Warehouse } from 'lucide-react'
+import { HeartPulse, PackageOpen, Plane, Warehouse } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
-import { useDemoList } from '@/entities/demo/api'
-import { demoUrl } from '@/entities/demo/navigation'
+import { DEMO_PROJECTS, demoUrl } from '@/entities/demo/navigation'
+import { useDemoWorkspace } from '@/entities/demo/workspace'
 import { useSession } from '@/entities/session'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/ui/dropdown-menu'
 
-export function GuestProjectTab({ demoKey }: { demoKey: string }) {
-  const examples = useDemoList()
-  const current = examples.data?.find((d) => d.key === demoKey)
+const ICONS = [Warehouse, PackageOpen, HeartPulse, Plane]
+
+export function GuestProjectTabs({ demoKey, inProject }: { demoKey: string; inProject: boolean }) {
+  const steps = useDemoWorkspace((s) => s.steps)
+  const visit = useDemoWorkspace((s) => s.visit)
+  const strip = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = strip.current
+    const reveal = () => {
+      const active = el?.querySelector<HTMLElement>('[data-selected="true"]')
+      if (!el || !active) return
+      if (active.offsetLeft < el.scrollLeft) el.scrollLeft = active.offsetLeft
+      else if (active.offsetLeft + active.offsetWidth > el.scrollLeft + el.clientWidth)
+        el.scrollLeft = active.offsetLeft + active.offsetWidth - el.clientWidth
+    }
+    reveal()
+    const observer = new ResizeObserver(reveal)
+    if (el) observer.observe(el)
+    return () => observer.disconnect()
+  }, [demoKey])
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex h-9 w-full min-w-0 max-w-80 overflow-hidden items-center gap-2 rounded-[10px] bg-white/10 px-3 text-[13px] text-ink ring-1 ring-white/8"
-          aria-label="Выбрать демо-объект"
-        >
-          <Warehouse size={15} className="shrink-0 text-[#ff996e]" />
-          <span className="truncate">{current?.name ?? 'Демонстрационный проект'}</span>
-          <span className="hidden shrink-0 text-[10px] text-ink-3 sm:inline">ДЕМО</span>
-          <ChevronDown size={12} className="shrink-0 text-ink-3" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-w-[calc(100vw-2rem)] w-80">
-        {examples.data?.map((item) => (
-          <DropdownMenuItem asChild key={item.key}>
-            <Link to={demoUrl(item.key, 'object')}>
-              <span className="min-w-0 flex-1">
-                <span className="block">{item.name}</span>
-                <span className="mt-1 block text-[11px] text-ink-3">
-                  {item.object_type === 'warehouse'
-                    ? 'Склад'
-                    : item.object_type === 'hospital'
-                      ? 'Больница'
-                      : 'Аэропорт'}
-                </span>
-              </span>
-              {item.key === demoKey && <Check className="size-4" />}
-            </Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <nav
+      ref={strip}
+      className="relative flex min-w-0 gap-1 overflow-x-auto overscroll-x-contain px-px py-0.5 [scrollbar-width:none]"
+      aria-label="Демо-проекты"
+    >
+      {DEMO_PROJECTS.map((demo, i) => {
+        const Icon = ICONS[i]
+        const selected = demo.key === demoKey
+        return (
+          <Link
+            key={demo.key}
+            to={demoUrl(demo.key, steps[demo.key] ?? 'object')}
+            onClick={(event) => {
+              if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0)
+                visit(demo.key, steps[demo.key] ?? 'object')
+            }}
+            data-selected={selected}
+            aria-current={selected && inProject ? 'page' : undefined}
+            className={cn(
+              'relative flex h-9 shrink-0 items-center justify-center gap-2 rounded-[10px] px-3 text-[12px] font-medium whitespace-nowrap transition-colors xl:flex-1',
+              selected
+                ? 'bg-white/10 text-ink ring-1 ring-white/8'
+                : 'bg-white/3 text-ink-3 hover:bg-white/6 hover:text-ink',
+            )}
+          >
+            <Icon size={14} className={cn('shrink-0', selected && 'text-[#ff996e]')} />
+            {demo.label}
+          </Link>
+        )
+      })}
+    </nav>
   )
 }
 
