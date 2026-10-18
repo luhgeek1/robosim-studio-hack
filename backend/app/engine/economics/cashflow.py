@@ -88,6 +88,9 @@ class _Model:
     def owned(self, month: int) -> bool:
         return self.p.ownership_from_month is not None and month >= self.p.ownership_from_month
 
+    def owns_at_month_end(self, month: int) -> bool:
+        return self.owned(month) or self.p.buyout_month == month
+
     def paying_fees(self, month: int) -> bool:
         return self.p.fees_until_month is not None and month <= self.p.fees_until_month
 
@@ -101,13 +104,17 @@ class _Model:
         interval = self.p.battery_interval_months
         if not interval or self.p.battery_cost <= 0:
             return []
-        months = range(self.p.implementation_months + interval, self.p.months + 1, interval)
+        starts = [self.p.implementation_months, *replacements]
+        ends = [*replacements, self.p.months + 1]
+        months = [
+            m for start, end in zip(starts, ends, strict=True) for m in range(start + interval, end, interval)
+        ]
         # a battery bought a year before the whole fleet is replaced is wasted — skip it
         return [m for m in months if not any(0 <= r - m < MONTHS_PER_YEAR for r in replacements)]
 
     def residual(self, replacements: list[int]) -> float:
         life = self.p.service_life_months
-        if not life or self.p.fleet_cost <= 0 or self.p.buyout_month is not None:
+        if not life or self.p.fleet_cost <= 0:
             return 0.0
         start = replacements[-1] if replacements else self.p.implementation_months
         cost = self.p.fleet_cost * (self.prices(start) if replacements else 1.0)
@@ -185,8 +192,9 @@ def _schedule(model: _Model) -> _Schedule:
     within = [p for p in plan.debt if p.month <= plan.months]
     outstanding = within[-1].balance if within else sum(p.principal for p in plan.debt)
     return _Schedule(
-        replacements=replacements,
-        batteries=model.battery_months(replacements),
+        # RaaS supplier pays replacements strictly before buyout; month-end replacements belong to buyer.
+        replacements=[m for m in replacements if model.owns_at_month_end(m)],
+        batteries=[m for m in model.battery_months(replacements) if model.owns_at_month_end(m)],
         debt={p.month: p for p in within},
         outstanding=outstanding,
         residual=model.residual(replacements),

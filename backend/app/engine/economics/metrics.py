@@ -18,7 +18,9 @@ def build_metrics(
     effect: Breakdown,
     scenario_cost: Breakdown,
     outcome: CashflowOutcome,
+    owner: CashflowOutcome,
 ) -> Metrics:
+    owner_rate = inp.owner_discount_rate or inp.norms.get("owner_discount_rate")
     capex = _metric("capex_total", "CAPEX", annual.capex.total, "₽")
     effect_q = _metric("effect_total", "Чистый годовой эффект", effect.total, "₽/год")
     payback = simple_payback_years(capex.value, effect.total) if capex.value > 0 else None
@@ -35,18 +37,18 @@ def build_metrics(
     horizon = Quantity("horizon_years", "Горизонт расчёта", float(inp.horizon_years), "лет", InputKind.PARAM)
     cumulative = tracer.record(
         "cumulative_net",
-        "Накопленный чистый поток за горизонт",
+        "Накопленный поток проекта до финансирования за горизонт",
         outcome.cumulative_net,
         "₽",
         "Σ поток_m, m = 0…horizon_years × 12 (помесячный поток, лист «Денежный поток»)",
         [horizon],
         Section.CASHFLOW,
     ).as_quantity()
-    roi = roi_pct(outcome.cumulative_net, capex.value) or 0.0
-    if capex.value > 0:
+    roi = roi_pct(outcome.cumulative_net, capex.value)
+    if roi is not None:
         tracer.record(
             "roi_pct",
-            "ROI за горизонт",
+            "ROI проекта за горизонт",
             roi,
             "%",
             "cumulative_net / capex_total × 100",
@@ -56,15 +58,15 @@ def build_metrics(
     for key, name, value, unit, formula in (
         (
             "npv_rub",
-            "Чистая приведённая стоимость (NPV)",
+            "NPV проекта до финансирования",
             outcome.npv,
             "₽",
-            "Σ поток_m × (1 + discount_rate)^(−m / 12), m = 0…horizon_years × 12",
+            f"Σ поток проекта_m × (1 + {inp.discount_rate.key})^(−m / 12), m = 0…horizon_years × 12",
         ),
         (
             "tco_rub",
             "TCO сценария за горизонт",
-            outcome.tco,
+            owner.tco,
             "₽",
             "capex_total + Σ (ФОТ после роботизации + OPEX + плата RaaS + проценты + замены)",
         ),
@@ -78,7 +80,11 @@ def build_metrics(
     ):
         tracer.record(key, name, value, unit, formula, [horizon, inp.discount_rate], Section.METRICS)
     for key, name, years in (
-        ("discounted_payback_years", "Дисконтированный срок окупаемости", outcome.discounted_payback_years),
+        (
+            "discounted_payback_years",
+            "Дисконтированный срок окупаемости проекта",
+            outcome.discounted_payback_years,
+        ),
         (
             "cash_payback_years",
             "Окупаемость по денежному потоку (с внедрением и разгоном)",
@@ -98,7 +104,7 @@ def build_metrics(
     if outcome.irr is not None:
         tracer.record(
             "irr_pct",
-            "Внутренняя норма доходности (IRR)",
+            "IRR проекта до финансирования",
             outcome.irr * PERCENT,
             "%",
             "ставка, при которой NPV = 0",
@@ -106,6 +112,20 @@ def build_metrics(
             Section.METRICS,
         )
     record_accounting(inp, tracer, annual, effect)
+    owner_upfront = -owner.flows[0]
+    owner_roi = roi_pct(owner.cumulative_net, owner_upfront)
+    record_owner_metrics(tracer, owner, owner_rate, horizon, capex, owner_roi)
+    savings = _metric("labor_savings_total", "Высвобождение ФОТ", annual.savings_year, "₽/год")
+    opex = _metric("opex_total", "OPEX роботизации", annual.opex.total, "₽/год")
+    tracer.record(
+        "project_effect_rub_year",
+        "Годовой эффект проекта до финансирования",
+        annual.savings_year - annual.opex.total,
+        "₽/год",
+        "labor_savings_total − opex_total",
+        [savings, opex],
+        Section.METRICS,
+    )
     return Metrics(
         capex_rub=annual.capex.total,
         opex_rub_year=annual.opex.total,
@@ -118,13 +138,90 @@ def build_metrics(
         roi_pct=roi,
         npv_rub=outcome.npv,
         irr_pct=None if outcome.irr is None else outcome.irr * PERCENT,
-        tco_rub=outcome.tco,
+        tco_rub=owner.tco,
         tco_baseline_rub=outcome.tco_baseline,
         fte_released=annual.fte_released,
         robots_total=annual.robots_total,
         discount_rate_pct=inp.discount_rate.value * PERCENT,
         horizon_years=inp.horizon_years,
+        project_effect_rub_year=annual.savings_year - annual.opex.total,
+        owner_upfront_rub=owner_upfront,
+        owner_discount_rate_pct=owner_rate.value * PERCENT,
+        owner_npv_rub=owner.npv,
+        owner_roi_pct=owner_roi,
+        owner_irr_pct=None if owner.irr is None else owner.irr * PERCENT,
+        owner_discounted_payback_years=owner.discounted_payback_years,
+        labor_potential_savings_rub_year=annual.potential_savings_year,
+        labor_savings_rub_year=annual.savings_year,
+        labor_cash_realization_pct=annual.cash_realization_share * PERCENT,
+        labor_hours_released_year=annual.labor_hours_released_year,
     )
+
+
+def record_owner_metrics(
+    tracer: Tracer,
+    owner: CashflowOutcome,
+    rate: Quantity,
+    horizon: Quantity,
+    capex: Quantity,
+    roi: float | None,
+) -> None:
+    """Owner cash flow subtracts repayments; ROI uses initial equity, with no ratio at zero equity."""
+    financed = next((step.as_quantity() for step in tracer.steps if step.key == "financed_amount"), None)
+    upfront = tracer.record(
+        "owner_upfront_rub",
+        "Первоначальные собственные вложения",
+        -owner.flows[0],
+        "₽",
+        "capex_total − financed_amount" if financed else "capex_total",
+        [capex, *([financed] if financed else [])],
+        Section.CASHFLOW,
+    ).as_quantity()
+    cumulative = tracer.record(
+        "owner_cumulative_net",
+        "Накопленный поток собственника за горизонт",
+        owner.cumulative_net,
+        "₽",
+        "Σ поток собственника_m, m = 0…horizon_years × 12 (лист «Поток собственника»)",
+        [horizon],
+        Section.CASHFLOW,
+    ).as_quantity()
+    for key, name, value, unit, formula, inputs in (
+        (
+            "owner_npv_rub",
+            "NPV собственника после финансирования",
+            owner.npv,
+            "₽",
+            f"Σ поток собственника_m × (1 + {rate.key})^(−m / 12), m = 0…horizon_years × 12",
+            [horizon, rate],
+        ),
+        (
+            "owner_roi_pct",
+            "ROI первоначальных собственных вложений",
+            roi,
+            "%",
+            "owner_cumulative_net / owner_upfront_rub × 100",
+            [cumulative, upfront],
+        ),
+        (
+            "owner_irr_pct",
+            "IRR собственника после финансирования",
+            None if owner.irr is None else owner.irr * PERCENT,
+            "%",
+            "ставка собственника, при которой NPV собственника = 0",
+            [horizon],
+        ),
+        (
+            "owner_discounted_payback_years",
+            "Дисконтированная окупаемость собственных вложений",
+            owner.discounted_payback_years,
+            "лет",
+            "первый момент, когда накопленный дисконтированный поток собственника ≥ 0",
+            [horizon, rate],
+        ),
+    ):
+        if value is not None:
+            tracer.record(key, name, value, unit, formula, inputs, Section.METRICS)
 
 
 def record_accounting(inp: EconomicsInput, tracer: Tracer, annual: AnnualCosts, effect: Breakdown) -> None:

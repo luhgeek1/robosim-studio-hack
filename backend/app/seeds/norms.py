@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from app.core.config import Settings
 from app.db.models import Norm, NormSet
 from app.db.uow import UnitOfWork
+from app.seeds.norm_upgrade import complete_current_norm_set
 from app.seeds.reference import SeedDataError
 from app.seeds.schemas import NormSetSeed, load_norm_set
 from app.seeds.sources import SourceRegistry, SourceSpec
@@ -36,8 +37,8 @@ async def _source_ids(uow: UnitOfWork, seed: NormSetSeed) -> dict[str, Any]:
 async def seed_norms(uow: UnitOfWork, _: Settings) -> int:
     """Keeps the system norm set in sync with its YAML.
 
-    Admin-published sets are never touched. Calculations store a snapshot of the norms they used, so editing
-    the system set does not change past results.
+    Admin-published sets remain immutable; missing inputs are added in a new revision. Calculations store
+    a snapshot of the norms they used, so editing the system set does not change past results.
     """
     seed = load_norm_set("v1")
     norm_set = await uow.session.scalar(select(NormSet).where(NormSet.version == seed.version))
@@ -75,4 +76,6 @@ async def seed_norms(uow: UnitOfWork, _: Settings) -> int:
     await uow.session.execute(statement.on_conflict_do_update(index_elements=natural_key, set_=updated))
     kept = [norm.key for norm in seed.norms]
     await uow.session.execute(delete(Norm).where(Norm.norm_set_id == norm_set.id, Norm.key.not_in(kept)))
+    system_norms = list(await uow.session.scalars(select(Norm).where(Norm.norm_set_id == norm_set.id)))
+    await complete_current_norm_set(uow, system_norms)
     return len(rows)

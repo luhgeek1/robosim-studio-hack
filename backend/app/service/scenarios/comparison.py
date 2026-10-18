@@ -22,14 +22,20 @@ COMPARISON_ROWS: tuple[tuple[str, str, str | None, str], ...] = (
     ("capex_rub", "CAPEX", "₽", "lower"),
     ("opex_rub_year", "OPEX роботизации в год", "₽/год", "lower"),
     ("scenario_cost_rub_year", "Затраты в год после внедрения", "₽/год", "lower"),
-    ("effect_rub_year", "Чистый годовой эффект", "₽/год", "higher"),
-    ("payback_years", "Простой срок окупаемости", "лет", "lower"),
-    ("discounted_payback_years", "Дисконтированный срок окупаемости", "лет", "lower"),
-    ("roi_pct", "ROI за горизонт", "%", "higher"),
-    ("npv_rub", "NPV", "₽", "higher"),
-    ("irr_pct", "IRR", "%", "higher"),
-    ("tco_rub", "TCO за горизонт", "₽", "lower"),
-    ("fte_released", "Высвобождается персонала", "FTE", "higher"),
+    ("effect_rub_year", "Годовой эффект с учётом процентов", "₽/год", "higher"),
+    ("project_effect_rub_year", "Годовой эффект проекта до процентов", "₽/год", "higher"),
+    ("payback_years", "Простая окупаемость по годовому эффекту", "лет", "lower"),
+    ("discounted_payback_years", "Дисконтированная окупаемость проекта", "лет", "lower"),
+    ("roi_pct", "ROI проекта за горизонт", "%", "higher"),
+    ("npv_rub", "NPV проекта", "₽", "higher"),
+    ("irr_pct", "IRR проекта", "%", "higher"),
+    ("owner_npv_rub", "NPV собственных средств", "₽", "higher"),
+    ("owner_roi_pct", "ROI собственных средств", "%", "higher"),
+    ("owner_upfront_rub", "Собственные вложения в момент 0", "₽", "lower"),
+    ("tco_rub", "TCO за горизонт, включая проценты", "₽", "lower"),
+    ("fte_released", "Высвобождаемая трудоёмкость", "FTE", "none"),
+    ("labor_savings_rub_year", "Ожидаемая денежная экономия ФОТ", "₽/год", "higher"),
+    ("labor_cash_realization_pct", "Доля реализации экономии ФОТ", "%", "none"),
     ("robots_total", "Роботов", "шт", "none"),
 )
 DIFF_METRICS = (
@@ -75,6 +81,10 @@ def _best(values: dict[UUID, float | None], better: str) -> UUID | None:
     return pick(known, key=lambda sid: known[sid])
 
 
+def _current_financial_model(run: CalculationRun) -> bool:
+    return isinstance(run.result.get("owner_cashflow"), dict)
+
+
 class ComparisonService:
     def __init__(self, uow: UnitOfWork, user: CurrentUser) -> None:
         self._uow = uow
@@ -95,7 +105,9 @@ class ComparisonService:
         skipped: list[str] = []
         for scenario in scenarios:
             run = runs.get(scenario.id)
-            stale = run is not None and versions.is_stale(run, scenario.version)
+            stale = run is not None and (
+                versions.is_stale(run, scenario.version) or not _current_financial_model(run)
+            )
             if run is None or (stale and recalculate_stale):
                 try:
                     compared.append(
@@ -103,6 +115,12 @@ class ComparisonService:
                     )
                 except ScenarioIncompleteError as exc:
                     skipped.append(f"«{scenario.name}» не рассчитан: {exc.detail}")
+                continue
+            if not _current_financial_model(run):
+                skipped.append(
+                    f"«{scenario.name}» исключён из сравнения: прежняя финансовая модель смешивала "
+                    "поток проекта и собственника. Пересчитайте сценарий."
+                )
                 continue
             compared.append(
                 ComparedScenario(
@@ -112,17 +130,23 @@ class ComparisonService:
         robotized = [c for c in compared if not c.scenario.is_baseline]
         if not robotized:
             raise ConflictError(
-                "Нет рассчитанных сценариев роботизации: создайте сценарий и добавьте решения"
+                " ".join(skipped)
+                or "Нет рассчитанных сценариев роботизации: создайте сценарий и добавьте решения"
             )
         rows = self._rows(compared)
         recommendation, chosen = self._recommend(compared, skipped)
-        for item in compared:
-            item.scenario.is_recommended = chosen is not None and item.scenario.id == chosen.scenario.id
+        await self._repo.set_recommended(project_id, chosen.scenario.id if chosen else None)
         await self._uow.flush()
         verdict = (
             chosen.stored.run.result["interpretation"]
             if chosen
-            else robotized[0].stored.run.result["interpretation"]
+            else {
+                "verdict": "insufficient_data",
+                "band": "none",
+                "headline": "Для рекомендации нужны актуальные расчёты",
+                "summary": " ".join(recommendation["rationale"]),
+                "caveats": recommendation["caveats"],
+            }
         )
         overlay = {str(c.scenario.id): c.stored.run.result.get("cashflow_overlay", []) for c in compared}
         return ComparisonView(project.id, compared, rows, recommendation, verdict, overlay)
@@ -133,9 +157,9 @@ class ComparisonService:
         for key, name, unit, better in COMPARISON_ROWS:
             values = {c.scenario.id: c.stored.run.result["metrics"].get(key) for c in compared}
             robot_values = {
-                sid: v
-                for sid, v in values.items()
-                if not next(c for c in compared if c.scenario.id == sid).scenario.is_baseline
+                c.scenario.id: values[c.scenario.id]
+                for c in compared
+                if not c.scenario.is_baseline and c.stored.status == RunStatus.FRESH
             }
             best = _best(robot_values, better)
             rows.append(
@@ -154,8 +178,13 @@ class ComparisonService:
     def _recommend(
         compared: list[ComparedScenario], skipped: list[str]
     ) -> tuple[dict[str, Any], ComparedScenario | None]:
-        baseline = next((c for c in compared if c.scenario.is_baseline), None)
-        good = [c for c in compared if not c.scenario.is_baseline and c.stored.run.verdict in _GOOD]
+        fresh = [
+            c
+            for c in compared
+            if c.stored.status == RunStatus.FRESH and _current_financial_model(c.stored.run)
+        ]
+        baseline = next((c for c in fresh if c.scenario.is_baseline), None)
+        good = [c for c in fresh if not c.scenario.is_baseline and c.stored.run.verdict in _GOOD]
         caveats = list(skipped)
         if len(compared) < MIN_SCENARIOS:
             caveats.append("ТЗ 3.5.5: для сравнения нужны база и не менее двух сценариев роботизации")
@@ -164,6 +193,15 @@ class ComparisonService:
             for c in compared
             if c.stored.status == RunStatus.STALE
         ]
+        if not any(not c.scenario.is_baseline for c in fresh):
+            return {
+                "scenario_id": None,
+                "rationale": [
+                    "Нет актуальных расчётов роботизации для рекомендации",
+                    "Пересчитайте сценарии",
+                ],
+                "caveats": caveats,
+            }, None
         if not good:
             rationale = [
                 "Ни один сценарий роботизации не окупается в пределах интервалов ТЗ 3.5.7",
@@ -177,10 +215,10 @@ class ComparisonService:
         best = max(good, key=lambda c: (c.stored.run.npv_rub, -(c.stored.run.payback_years or 0)))
         metrics = best.stored.run.result["metrics"]
         rationale = [
-            f"Максимальный NPV среди окупаемых сценариев: {mln(metrics['npv_rub'])} млн ₽",
+            f"Максимальный NPV проекта среди актуальных окупаемых сценариев: {mln(metrics['npv_rub'])} млн ₽",
             f"Окупаемость {fmt(round(metrics['payback_years'], 1))} лет, "
-            f"ROI {fmt(round(metrics['roi_pct']))} %",
-            f"TCO за {metrics['horizon_years']} лет ниже базы на "
+            f"ROI проекта {fmt(round(metrics['roi_pct']))} %",
+            f"TCO с процентами за {metrics['horizon_years']} лет ниже базы на "
             f"{mln(metrics['tco_baseline_rub'] - metrics['tco_rub'])} млн ₽",
         ]
         high = [r["title"] for r in best.stored.run.result.get("risks", []) if r["severity"] == "high"]

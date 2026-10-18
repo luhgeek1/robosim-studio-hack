@@ -160,11 +160,14 @@ def test_raas_with_buyout_switches_to_ownership() -> None:
 def test_lease_and_loan_pay_annuity_and_cost_interest() -> None:
     lease = calculate(scenario(ScenarioKind.LEASE)).economics
     purchase = calculate(scenario()).economics
-    assert lease.monthly[0].capex < purchase.monthly[0].capex
+    assert lease.owner_monthly[0].capex < purchase.monthly[0].capex
+    assert lease.monthly == purchase.monthly
+    assert lease.metrics.npv_rub == pytest.approx(purchase.metrics.npv_rub)
     assert lease.metrics.effect_rub_year < purchase.metrics.effect_rub_year
     assert any(line.step.key == "effect_financing_cost" for line in lease.effect.lines)
     loan = calculate(scenario(financing=Financing(kind=FinancingKind.LOAN, down_payment_pct=30))).economics
-    assert loan.monthly[0].capex == pytest.approx(purchase.metrics.capex_rub * 0.3, rel=1e-6)
+    assert loan.owner_monthly[0].capex == pytest.approx(purchase.metrics.capex_rub * 0.3, rel=1e-6)
+    assert loan.monthly == purchase.monthly
     assert loan.metrics.tco_rub > purchase.metrics.tco_rub
 
 
@@ -198,12 +201,14 @@ def test_missing_specs_require_manual_count() -> None:
 
 def test_release_is_capped_by_the_work_itself() -> None:
     # 400 pallets a day need far fewer than the 17.5 forklift drivers of the dataset:
-    # cap = 400 × 365 / nominal 7.137 per hour / (24 × 365 / 4.2) × (1 + 0.25 time loss) ≈ 12.3 FTE
+    # Independent human cycle: 2 × 200 / 1.5 + 60 = 326.67 s; workload cap ≈ 7.94 FTE.
     params = {**PARAMS, "pallets_in_per_day": 200.0, "pallets_out_per_day": 200.0}
     result = calculate(scenario(params=params))
     savings = result.economics.effect.lines[0]
     cap = next(step for step in result.trace if step.key == "pallet_transport.release_cap_fte")
-    assert cap.value == pytest.approx(400 * 365 / (3600 / 504.44) / (24 * 365 / 4.2) * 1.25, rel=1e-3)
+    assert cap.value == pytest.approx(
+        400 * 365 / (3600 / (2 * 200 / 1.5 + 60)) / (24 * 365 / 4.2) * 1.25, rel=1e-3
+    )
     assert savings.fte == pytest.approx(cap.value)
     assert any("ограничено объёмом работ" in w for w in result.warnings)
 

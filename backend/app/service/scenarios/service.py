@@ -281,6 +281,7 @@ class ScenarioService:
                 simulation_id=item.simulation_id,
                 simulated_project_version=item.simulated_project_version,
                 simulated_basis=item.simulated_basis,
+                simulated_fingerprint=item.simulated_fingerprint,
                 simulation_note=item.simulation_note,
             )
             for item in source.items
@@ -441,7 +442,7 @@ def _npv(view: CandidateView) -> float:
 
 
 def _keep_simulation(old: list[ScenarioItem], new: list[ScenarioItem]) -> None:
-    """A fleet sweep stays valid while the process keeps the same product; any other change drops it."""
+    """Keep historical evidence; SnapshotBuilder checks the complete physical fingerprint before use."""
     previous = {(item.process_key, item.product_id): item for item in old}
     for item in new:
         source = previous.get((item.process_key, item.product_id))
@@ -450,4 +451,5 @@ def _keep_simulation(old: list[ScenarioItem], new: list[ScenarioItem]) -> None:
             item.simulation_id = source.simulation_id
             item.simulated_project_version = source.simulated_project_version
             item.simulated_basis = source.simulated_basis
+            item.simulated_fingerprint = source.simulated_fingerprint
             item.simulation_note = source.simulation_note

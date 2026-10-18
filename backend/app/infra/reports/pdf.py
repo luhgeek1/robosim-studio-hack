@@ -47,15 +47,16 @@ ASSUMPTIONS_SHOWN = 60
 MODE_LABELS = {"normal": "обычный день", "peak": "пиковый режим", "custom": "стресс-тест"}
 _SUMMARY_ROWS = (
     ("CAPEX", "capex_rub"),
-    ("Чистый эффект в год", "effect_rub_year"),
+    ("Годовой эффект с процентами", "effect_rub_year"),
     ("Окупаемость (ТЗ), лет", "payback_years"),
-    ("NPV", "npv_rub"),
-    ("IRR, %", "irr_pct"),
-    ("ROI за горизонт, %", "roi_pct"),
+    ("NPV проекта", "npv_rub"),
+    ("IRR проекта, %", "irr_pct"),
+    ("ROI проекта за горизонт, %", "roi_pct"),
+    ("NPV собственника", "owner_npv_rub"),
     ("Роботов", "robots_total"),
     ("Высвобождается, FTE", "fte_released"),
 )
-_MONEY_KEYS = frozenset({"capex_rub", "effect_rub_year", "npv_rub"})
+_MONEY_KEYS = frozenset({"capex_rub", "effect_rub_year", "npv_rub", "owner_npv_rub"})
 
 
 @cache
@@ -364,7 +365,10 @@ class Builder:
         self.h1("Экономика сценариев")
         self.add(
             p(
-                "Суммы с НДС, до налога на прибыль. Каждая строка раскрывается в формулу "
+                "Суммы с НДС, до налога на прибыль. NPV, IRR и ROI проекта считаются на полном CAPEX "
+                "до финансирования; показатели собственника — на собственном взносе и платежах долга "
+                "с отдельной ставкой. RaaS входит в оба потока. Годовой эффект, простая окупаемость "
+                "по ТЗ и TCO включают проценты. Каждая строка раскрывается в формулу "
                 "с подставленными значениями; "
                 "полная трасса с источниками — в Excel-версии отчёта.",
                 "small",
@@ -380,14 +384,7 @@ class Builder:
             self._lines("CAPEX", result["capex"]["items"], "amount_rub")
             self._lines("OPEX в год", result["opex_year"]["items"], "amount_rub")
             self._lines("Эффект в год", result["effect_year"]["items"], "amount_rub_year")
-            cashflow = result.get("cashflow", {})
-            if cashflow.get("monthly"):
-                self.add(p("Денежный поток относительно «как сейчас»", "h2"))
-                self.add(
-                    picture(
-                        charts.cashflow_chart(cashflow["monthly"], float(cashflow.get("upfront_rub") or 0.0))
-                    )
-                )
+            self._financial_perspectives(result)
             caveats = result["interpretation"].get("caveats", [])
             if caveats:
                 self.add(p("Оговорки", "h2"))
@@ -395,6 +392,36 @@ class Builder:
             calibration = result.get("calibration")
             if calibration and calibration.get("note"):
                 self.add(p("Сверка с методикой ФЦ БАС", "h2"), p(calibration["note"], "small"))
+
+    def _financial_perspectives(self, result: dict[str, Any]) -> None:
+        metrics = result["metrics"]
+        rows: list[list[Any]] = [["Показатель", "Проект", "Собственник"]]
+        rows.append(
+            ["Вложение в момент 0", money(metrics["capex_rub"]), money(metrics.get("owner_upfront_rub"))]
+        )
+        for label, key, is_money in (
+            ("Ставка дисконтирования до налога, %", "discount_rate_pct", False),
+            ("NPV", "npv_rub", True),
+            ("IRR, %", "irr_pct", False),
+            ("ROI исходного вложения, %", "roi_pct", False),
+            ("Дисконтированная окупаемость, лет", "discounted_payback_years", False),
+        ):
+            fmt = money if is_money else number
+            rows.append([label, fmt(metrics.get(key)), fmt(metrics.get(f"owner_{key}"))])
+        self.add(p("Проект и собственные средства", "h2"), table(rows, [0.46, 0.27, 0.27]))
+        self.add(p("При нулевом первоначальном взносе ROI собственника не определён (—).", "small"))
+        for key, title in (
+            ("cashflow", "Поток проекта до финансирования относительно «как сейчас»"),
+            ("owner_cashflow", "Поток собственника после финансирования относительно «как сейчас»"),
+        ):
+            cashflow = result.get(key, {})
+            if cashflow.get("monthly"):
+                self.add(p(title, "h2"))
+                self.add(
+                    picture(
+                        charts.cashflow_chart(cashflow["monthly"], float(cashflow.get("upfront_rub") or 0.0))
+                    )
+                )
 
     def comparison(self) -> None:
         comparison = self.m.comparison
@@ -412,7 +439,7 @@ class Builder:
         self.add(table(rows, [0.3, *[0.7 / max(1, len(names))] * len(names)]))
         curves = {names[sid]: points for sid, points in comparison.get("overlay", {}).items() if sid in names}
         if curves:
-            self.add(p("Накопленный поток относительно «как сейчас»: пересечение нуля — окупаемость", "h2"))
+            self.add(p("Накопленный поток проекта до финансирования: пересечение нуля — окупаемость", "h2"))
             self.add(picture(charts.comparison_chart(curves)))
 
     def risks(self) -> None:
@@ -492,9 +519,11 @@ class Builder:
     def _simulation(self, scenario: ScenarioReport) -> None:
         sim = scenario.simulation or {}
         summary = sim.get("summary") or {}
-        if not summary:
-            return
         self.add(p(f"Имитация: {scenario.name}", "h2"))
+        if not summary:
+            self.add(p(sim.get("note") or "Нет актуального подтверждения парка имитацией.", "small"))
+            self._simulation_sweep(sim)
+            return
         fleet = ", ".join(f"{f['product_name']} × {f['count']}" for f in sim.get("fleet", []))
         sla = summary["sla"]
         rows = [
@@ -517,9 +546,17 @@ class Builder:
         if summary.get("vs_analytic"):
             rows.append(["Расчёт против имитации", summary["vs_analytic"]["text"]])
         self.add(table(rows, [0.35, 0.65]))
+        self._simulation_sweep(sim)
+
+    def _simulation_sweep(self, sim: dict[str, Any]) -> None:
         sweep = sim.get("sweep")
         if sweep and sweep.get("points"):
-            self.add(p("Перебор флота: минимальное число роботов с выполнением SLA", "h2"))
+            title = (
+                "Перебор флота: минимальное число роботов с выполнением SLA"
+                if sweep.get("applied")
+                else "Диагностика перебора флота: не применяется к расчёту"
+            )
+            self.add(p(title, "h2"))
             self.add(
                 picture(
                     charts.sweep_chart(
@@ -557,7 +594,7 @@ class Builder:
                 )
                 rows.append(
                     [
-                        "NPV, млн ₽",
+                        "NPV проекта, млн ₽",
                         number(formula["npv_rub"] / MILLION, 1),
                         number(simulated["npv_rub"] / MILLION, 1),
                     ]

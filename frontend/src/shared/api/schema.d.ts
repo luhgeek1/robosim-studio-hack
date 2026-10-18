@@ -964,7 +964,12 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Сводная таблица сценариев и рекомендация (ТЗ 3.5.5, 3.7.1) */
+    /**
+     * Сводная таблица сценариев и рекомендация (ТЗ 3.5.5, 3.7.1)
+     * @description NPV, IRR, ROI и наложение потоков относятся к проекту; показатели собственных средств выделены отдельно.
+     *     При recalculate_stale=false несовместимые старые финансовые результаты исключаются с пояснением.
+     *     Устаревшие результаты текущего формата видны, но не участвуют в рекомендации до пересчёта.
+     */
     get: operations['getComparison']
     put?: never
     post?: never
@@ -1023,8 +1028,8 @@ export interface paths {
     put?: never
     /**
      * Рассчитать экономику сценария (синхронно, ≤ 10 с)
-     * @description Считает количество роботов (аналитически + по последней симуляции сценария, если она есть), CAPEX, OPEX, эффект,
-     *     денежный поток, метрики, интерпретацию и риски. Результат сохраняется с версиями входов.
+     * @description Считает количество роботов (аналитически + по актуальному совместному подтверждению имитацией), CAPEX, OPEX,
+     *     эффект, потоки проекта и собственных средств, метрики, интерпретацию и риски. Результат сохраняется с версиями входов.
      */
     post: operations['calculateScenario']
     delete?: never
@@ -1519,6 +1524,26 @@ export interface paths {
     put?: never
     /** Ограниченный what-if для гостя (без сохранения, с лимитом запросов) */
     post: operations['demoWhatIf']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/demo/projects/{demo_key}/report/{format}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Скачать отчёт по исходному публичному примеру
+     * @description Пробные изменения гостя в этот отчёт не входят.
+     */
+    get: operations['downloadDemoReport']
+    put?: never
+    post?: never
     delete?: never
     options?: never
     head?: never
@@ -2735,14 +2760,10 @@ export interface components {
         total_rub_year: number
         items: components['schemas']['EffectItem'][]
       }
-      cashflow: {
-        monthly: components['schemas']['CashflowPoint'][]
-        yearly: components['schemas']['CashflowPoint'][]
-        /** @description Месяцы внедрения и разгона до полного эффекта */
-        ramp_up_months?: number
-        /** @description Вложения в момент 0 (свои средства или первый взнос); в monthly они входят в месяц 1 */
-        upfront_rub?: number
-      }
+      /** @description Поток проекта: полный CAPEX, без кредитных поступлений и обслуживания долга; плата RaaS остаётся затратой */
+      cashflow: components['schemas']['Cashflow']
+      /** @description Поток собственника: собственный взнос, полные кредитные/лизинговые платежи и остаток обязательств на горизонте; null для старых расчётов */
+      owner_cashflow?: components['schemas']['Cashflow'] | null
       metrics: components['schemas']['Metrics']
       interpretation: components['schemas']['Interpretation']
       risks: components['schemas']['Risk'][]
@@ -2786,23 +2807,48 @@ export interface components {
       scenario_cost_rub_year?: number
       /** @description Изменение OPEX относительно базы (отрицательное = экономия) */
       opex_delta_rub_year?: number
-      /** @description Чистый годовой экономический эффект */
+      /** @description Годовой эффект после OPEX и процентов по финансированию (Доп. 2.1) */
       effect_rub_year: number
       /** @description null — не окупается в горизонте */
       payback_years: number | null
+      /** @description По потоку проекта без долга и его обслуживания */
       discounted_payback_years?: number | null
-      /** @description (Σэффект за горизонт − CAPEX) / CAPEX × 100 */
-      roi_pct: number
+      /** @description Накопленный поток проекта (CAPEX уже вычтен) / CAPEX × 100; null при нулевых вложениях */
+      roi_pct: number | null
+      /** @description NPV проекта: весь CAPEX в момент 0, без кредитных поступлений и платежей */
       npv_rub?: number
+      /** @description IRR проекта, годовая */
       irr_pct?: number | null
       /** @description CAPEX + ΣOPEX за горизонт с заменами */
       tco_rub: number
       tco_baseline_rub?: number
+      /** @description Высвобождаемая трудоёмкость в эквиваленте полных ставок; не гарантированное сокращение штата */
       fte_released?: number
       robots_total?: number
       throughput_gain_pct?: number | null
       sla_after?: number | null
       discount_rate_pct?: number
+      /** @description Годовой эффект проекта до процентов */
+      project_effect_rub_year?: number | null
+      /** @description Собственные вложения в момент 0 */
+      owner_upfront_rub?: number | null
+      /** @description Отдельная ставка для потока собственника */
+      owner_discount_rate_pct?: number | null
+      /** @description NPV собственных средств: первый взнос и полное обслуживание долга */
+      owner_npv_rub?: number | null
+      /** @description Накопленный поток собственника / собственные вложения × 100; null при нулевых вложениях */
+      owner_roi_pct?: number | null
+      /** @description IRR собственных средств, годовая */
+      owner_irr_pct?: number | null
+      owner_discounted_payback_years?: number | null
+      /** @description Стоимость высвобождаемой трудоёмкости до денежной реализации */
+      labor_potential_savings_rub_year?: number | null
+      /** @description Ожидаемая денежная экономия ФОТ с учётом доли реализации */
+      labor_savings_rub_year?: number | null
+      /** @description Доля высвобождаемого ФОТ, которая уменьшит затраты, % */
+      labor_cash_realization_pct?: number | null
+      /** @description Высвобождаемая трудоёмкость, человеко-часы в год */
+      labor_hours_released_year?: number | null
       horizon_years: number
     }
     /** @description Сводная таблица сценариев (ТЗ 2.1.3, 3.5.5, 3.7.1): база + не менее двух сценариев роботизации. */
@@ -4325,6 +4371,14 @@ export interface components {
       /** @enum {string} */
       kind?: 'cost_reduction' | 'extra_revenue' | 'avoided_loss' | 'extra_opex'
     }
+    Cashflow: {
+      monthly: components['schemas']['CashflowPoint'][]
+      yearly: components['schemas']['CashflowPoint'][]
+      /** @description Месяцы внедрения и разгона до полного эффекта */
+      ramp_up_months?: number
+      /** @description Вложения в момент 0; в monthly включены в месяц 1 только для сводки, дисконтируются в момент 0 */
+      upfront_rub?: number
+    }
     Risk: {
       /** @example AISLE_CONGESTION */
       code: string
@@ -4536,6 +4590,24 @@ export interface components {
     SimulationList: {
       items: components['schemas']['SimulationRun'][]
     }
+    JointFleetValidation: {
+      /** @enum {string} */
+      status: 'passed' | 'failed' | 'not_run'
+      replications: number
+      fleet: {
+        [key: string]: number
+      }
+      processes: {
+        process_key: string
+        target_pct: number
+        sla_min_pct: number | null
+        passed: boolean
+      }[]
+      skipped_processes: {
+        process_key: string
+        reason: string
+      }[]
+    }
     /** @description Парк процесса и экономика сценария с ним. */
     FleetEconomics: {
       /** @description Роботов в работе */
@@ -4547,9 +4619,9 @@ export interface components {
       npv_rub: number
     }
     /**
-     * @description Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-029).
-     *     Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
-     *     Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
+     * @description Кандидат N находится отдельным поиском процесса. Затем весь моделируемый парк проверяется совместно:
+     *     SLA каждого процесса должен выдерживаться в каждом повторе при общих ресурсах.
+     *     Только совместно прошедший парк атомарно записывается в сценарий, если физические входы и версия сценария не изменились.
      */
     FleetSweepResult: {
       process_key: string
@@ -4573,8 +4645,11 @@ export interface components {
         /** Format: uuid */
         simulation_id?: string | null
       }[]
-      /** @description null — даже тройной парк не выполняет SLA: ограничение не в роботах */
+      /** @description N после совместной проверки всех моделируемых процессов; null — парк не подтверждён */
       recommended_count: number | null
+      /** @description Кандидат отдельного поиска, ещё без совместного SLA */
+      candidate_count?: number | null
+      joint_validation?: components['schemas']['JointFleetValidation'] | null
       analytic_count?: number | null
       target_pct?: number | null
       /**
@@ -4582,7 +4657,7 @@ export interface components {
        * @description Прогон рекомендованного N с журналом для плеера
        */
       simulation_id?: string | null
-      /** @description N записано в сценарий */
+      /** @description Совместно проверенные количества атомарно записаны в актуальный сценарий */
       applied?: boolean
       /** @description N по формуле цикла и его экономика */
       by_formula?: components['schemas']['FleetEconomics'] | null
@@ -4601,6 +4676,7 @@ export interface components {
       /** @description Вместе с to_count — полный перебор диапазона вместо поиска */
       from_count?: number | null
       to_count?: number | null
+      /** @description Подтверждение парка всегда выполняется в peak; прежние значения normal/custom принимаются и приводятся к peak */
       mode?: components['schemas']['SimulationMode']
       seed?: number | null
     }
@@ -4795,16 +4871,18 @@ export interface components {
       name: string
       object_type: components['schemas']['ObjectTypeKey']
       description: string
+      /** @description Границы процесса и допущения примера */
+      scope: string
       headline: {
-        robots_total?: number
-        capex_rub?: number
-        payback_years?: number
-        effect_rub_year?: number
-        verdict?: string
+        robots_total?: number | null
+        capex_rub?: number | null
+        payback_years?: number | null
+        effect_rub_year?: number | null
+        verdict?: string | null
       }
       image_url?: string | null
     }
-    /** @description Предрассчитанный демо-проект целиком, только чтение. */
+    /** @description Общий пример только для чтения. Пересобирается при изменении версии исходных данных или ядра. */
     DemoSnapshot: {
       demo: components['schemas']['DemoProject']
       params: components['schemas']['ProjectParam'][]
@@ -4812,24 +4890,52 @@ export interface components {
       matching: components['schemas']['MatchingResult']
       scenarios: components['schemas']['Scenario'][]
       comparison: components['schemas']['ComparisonTable']
+      calculations: components['schemas']['CalculationRun'][]
+      trace: components['schemas']['CalculationTrace']
+      /** Format: uuid */
+      primary_scenario_id: string
+      /** Format: date-time */
+      prepared_at: string
+      revision: string
       simulation?: components['schemas']['SimulationRun'] | null
       layout?: components['schemas']['Layout'] | null
+      sweep?: components['schemas']['FleetSweepResult'] | null
     }
-    /** @description Ограниченный what-if для гостя — несколько множителей без сохранения. */
+    DemoPreparation: {
+      /** @enum {string} */
+      status: 'preparing' | 'failed'
+      stage: string
+      retry_after_s: number
+    }
+    /** @description Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией. */
     DemoWhatIfRequest: {
+      /**
+       * @description Расчёт по формуле или применение заранее проверенного парка. Изменённая нагрузка всегда считается по формуле.
+       * @default simulation
+       * @enum {string}
+       */
+      fleet_source: 'formula' | 'simulation'
       /** @default 1 */
       salary_multiplier: number
       /** @default 1 */
       volume_multiplier: number
       /** @default 1 */
       robot_price_multiplier: number
-      horizon_years?: number
-      scenario_kind?: components['schemas']['ScenarioKind']
+      labor_cash_realization_share?: number | null
+      horizon_years?: number | null
+      /**
+       * @default purchase
+       * @enum {string}
+       */
+      scenario_kind: 'purchase' | 'raas' | 'lease'
     }
     DemoWhatIfResult: {
       metrics: components['schemas']['Metrics']
       interpretation: components['schemas']['Interpretation']
-      cashflow_yearly?: components['schemas']['CashflowPoint'][]
+      cashflow_yearly: components['schemas']['CashflowPoint'][]
+      calculation: components['schemas']['CalculationRun']
+      simulation_valid: boolean
+      notes: string[]
     }
     SupportMeasure: {
       /** @example minpromtorg_cashback_20 */
@@ -7268,7 +7374,7 @@ export interface operations {
       content: {
         'application/json': {
           /**
-           * @description Брать N из последней успешной симуляции
+           * @description Брать N из совместной проверки парка с совпадающим отпечатком физических входов
            * @default true
            */
           use_simulation?: boolean
@@ -8103,12 +8209,24 @@ export interface operations {
           'application/json': components['schemas']['DemoSnapshot']
         }
       }
+      /** @description Подготовка примера */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DemoPreparation']
+        }
+      }
       404: components['responses']['NotFound']
     }
   }
   demoWhatIf: {
     parameters: {
-      query?: never
+      query?: {
+        /** @description Версия открытого примера; при несовпадении — 409 */
+        revision?: string
+      }
       header?: never
       path: {
         demo_key: string
@@ -8130,12 +8248,62 @@ export interface operations {
           'application/json': components['schemas']['DemoWhatIfResult']
         }
       }
+      404: components['responses']['NotFound']
+      /** @description Пример ещё готовится */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+      422: components['responses']['ValidationError']
+      429: components['responses']['RateLimited']
+    }
+  }
+  downloadDemoReport: {
+    parameters: {
+      query?: {
+        revision?: string
+      }
+      header?: never
+      path: {
+        demo_key: string
+        format: 'pdf' | 'xlsx'
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Файл исходного примера */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/pdf': string
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string
+        }
+      }
+      404: components['responses']['NotFound']
+      /** @description Пример ещё готовится */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+      422: components['responses']['ValidationError']
       429: components['responses']['RateLimited']
     }
   }
   getDemoReplay: {
     parameters: {
       query?: {
+        revision?: string
         from_s?: number
         to_s?: number
       }
@@ -8156,6 +8324,17 @@ export interface operations {
           'application/json': components['schemas']['SimulationReplay']
         }
       }
+      404: components['responses']['NotFound']
+      /** @description Пример ещё готовится */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+      422: components['responses']['ValidationError']
     }
   }
   listSupportMeasures: {

@@ -86,7 +86,7 @@ class Metrics(ApiModel):
     effect_rub_year: float
     payback_years: float | None
     discounted_payback_years: float | None = None
-    roi_pct: float
+    roi_pct: float | None
     npv_rub: float | None = None
     irr_pct: float | None = None
     tco_rub: float
@@ -96,6 +96,17 @@ class Metrics(ApiModel):
     throughput_gain_pct: float | None = None
     sla_after: float | None = None
     discount_rate_pct: float | None = None
+    project_effect_rub_year: float | None = None
+    owner_upfront_rub: float | None = None
+    owner_discount_rate_pct: float | None = None
+    owner_npv_rub: float | None = None
+    owner_roi_pct: float | None = None
+    owner_irr_pct: float | None = None
+    owner_discounted_payback_years: float | None = None
+    labor_potential_savings_rub_year: float | None = None
+    labor_savings_rub_year: float | None = None
+    labor_cash_realization_pct: float | None = None
+    labor_hours_released_year: float | None = None
     horizon_years: int
 
 
@@ -192,6 +203,7 @@ class CalculationRun(ApiModel):
     scenario_cost_year: CostBreakdown | None = None
     effect_year: EffectBreakdown
     cashflow: Cashflow
+    owner_cashflow: Cashflow | None = None
     metrics: Metrics
     interpretation: Interpretation
     risks: list[Risk]

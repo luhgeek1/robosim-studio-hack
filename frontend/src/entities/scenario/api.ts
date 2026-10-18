@@ -205,8 +205,10 @@ export function useCountSource(projectId: string, scenarioId: string) {
       for (const scenario of [current, ...siblings]) {
         await scenarioApi.update(scenario.id, { items: withCount(scenario, processKey, manual) })
       }
-      const run = await scenarioApi.calculate(current.id)
-      for (const scenario of siblings) await scenarioApi.calculate(scenario.id)
+      const recalculate = async (id: string) =>
+        manual == null ? (await calculateWithFleetCheck(id)).calculation : scenarioApi.calculate(id)
+      const run = await recalculate(current.id)
+      for (const scenario of siblings) await recalculate(scenario.id)
       return run
     },
     onSuccess: (run) => {

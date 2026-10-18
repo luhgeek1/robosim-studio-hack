@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from app.core.errors import ConflictError, ScenarioIncompleteError
+from app.core.errors import ConflictError, NotFoundError, ScenarioIncompleteError
 from app.db.models import CalculationRun, Scenario, StoredFile
 from app.db.repositories.layouts import LayoutRepository
 from app.db.repositories.simulations import SimulationRepository
@@ -11,27 +11,28 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.jobs import JobStatus
 from app.domain.reports.models import ParamRow, ReportModel, ReportSection, ScenarioReport, Visual
-from app.domain.scenario.models import CountMode
+from app.domain.scenario.models import CountSource
 from app.engine.calculation import CalculationError
 from app.service.layouts.reader import LayoutReader
 from app.service.matching.service import MatchingService
 from app.service.projects.context import ProjectLoader
 from app.service.projects.processes import ProcessService
 from app.service.scenarios.analysis import AnalysisService
+from app.service.scenarios.calculations import CalculationService
 from app.service.scenarios.comparison import ComparisonService
 from app.service.scenarios.narrative import narrative
-from app.service.simulations.service import plan_json
+from app.service.simulations.service import SimulationService, plan_json
 
 REPORT_SEED = 1
 TOP_CANDIDATES = 3
 _PROBABILITY_LABELS = {"npv_positive": "Вероятность NPV > 0"}
 _BASE_LIMITATIONS = [
     "Экспресс-оценка по параметрам объекта: не заменяет проектирование и обследование.",
-    "Схема склада построена генератором, а не по чертежу: маршруты и узкие места "
+    "Схема объекта построена генератором, а не по чертежу: маршруты и узкие места "
     "уточняются по плану объекта.",
     "Суммы с НДС (единая база ТЗ); налог на прибыль и амортизация приведены справочно.",
-    "Имитация покрывает перевозку паллет и отбор «товар к человеку»; число роботов "
-    "прочих процессов — по циклу.",
+    "Имитация покрывает поддерживаемые транспортные процессы и отбор «товар к человеку». "
+    "Пропущенные процессы указаны в результатах; их парк рассчитан аналитически.",
 ]
 
 
@@ -71,6 +72,8 @@ class ReportCollector:
         self._comparison = ComparisonService(uow, user)
         self._analysis = AnalysisService(uow, user)
         self._simulations = SimulationRepository(uow.session)
+        self._simulation_service = SimulationService(uow, user)
+        self._calculations = CalculationService(uow, user)
         self._layouts = LayoutReader(uow)
 
     async def collect(self, project_id: UUID, request: ReportRequest) -> ReportModel:
@@ -166,35 +169,36 @@ class ReportCollector:
         return report
 
     async def _simulation(self, scenario: Scenario) -> dict[str, Any] | None:
-        """The run the scenario's N rests on (the fleet sweep's), not the last what-if run of the screen."""
-        used = next((i.simulation_id for i in scenario.items if i.simulation_id), None)
+        """Export only the evidence the current calculation accepts; retain rejected sweeps as diagnostics."""
+        evaluation = await self._calculations.evaluate(scenario.id)
+        counts = {s.item.process_key: s.count for s in evaluation.result.sizing}
+        used = next(
+            (count.simulation_id for count in counts.values() if count.source == CountSource.SIMULATED),
+            None,
+        )
         run = await self._simulations.get(used) if used else None
         if run is None or run.status != JobStatus.DONE:
-            run = await self._simulations.latest_done(scenario.id)
-        sweep = await self._uow.jobs.latest_sweep(scenario.id)
+            run = None
+        try:
+            sweep = await self._simulation_service.latest_sweep(scenario.id, None)
+        except NotFoundError:
+            sweep = None
         if run is None and sweep is None:
             return None
-        swept = next(
-            (i for i in scenario.items if sweep and i.process_key == sweep.payload.get("process_key")), None
-        )
-        # Which of «по формуле / по имитации» the scenario uses: a manual count is the formula choice (D-029).
-        count_source = (
-            None
-            if swept is None
-            else "manual"
-            if swept.count_mode == CountMode.MANUAL
-            else "simulated"
-            if swept.simulated_count
-            else "analytic"
-        )
+        swept = counts.get(sweep["process_key"]) if sweep else None
         return {
-            "count_source": count_source,
+            "count_source": swept.source.value if swept else ("simulated" if used else None),
+            "count_sources": {key: count.source.value for key, count in counts.items()},
+            "evidence_current": run is not None,
+            "note": None
+            if run
+            else "Нет актуального подтверждения парка имитацией; показана диагностика перебора.",
             "id": str(run.id) if run else None,
             "summary": run.summary if run else None,
             "fleet": run.fleet if run else [],
             "config": run.config if run else {},
             "heatmap": run.heatmap if run else None,
-            "sweep": sweep.result if sweep else None,
+            "sweep": sweep,
         }
 
     @staticmethod

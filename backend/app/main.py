@@ -1,9 +1,11 @@
+import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.demo.warm import warm_examples
 from app.api.v1 import api_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
@@ -30,9 +32,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.redis = create_redis(settings)
         if settings.seed_on_startup:
             await run_seeds(app.state.db, settings)
+        warmup = (
+            asyncio.create_task(warm_examples(app.state.db, app.state.redis))
+            if settings.demo_warm_on_startup
+            else None
+        )
         try:
             yield
         finally:
+            if warmup is not None:
+                warmup.cancel()
+                with suppress(asyncio.CancelledError):
+                    await warmup
             await app.state.redis.aclose()
             await app.state.db.dispose()
 

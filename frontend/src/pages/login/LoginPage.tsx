@@ -48,7 +48,9 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [organization, setOrganization] = useState('')
-  const [mode, setMode] = useState<Mode>('login')
+  const [mode, setMode] = useState<Mode>(() =>
+    new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login',
+  )
 
   if (status === 'authenticated' && user) return <Navigate to={target(user)} replace />
 

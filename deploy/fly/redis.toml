@@ -1,0 +1,12 @@
+app = "robomera-redis"
+primary_region = "arn"
+
+[build]
+  image = "redis:7-alpine"
+
+[processes]
+  app = "redis-server --bind :: --protected-mode no"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

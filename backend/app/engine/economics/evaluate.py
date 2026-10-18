@@ -1,5 +1,8 @@
+from dataclasses import replace
+
 from app.domain.scenario.models import ScenarioKind
 from app.engine.economics.cashflow import CashflowPlan, simulate
+from app.engine.economics.cashflow_trace import record_lifecycle
 from app.engine.economics.costs import AnnualCosts, CostModel
 from app.engine.economics.financing import PERCENT, FinancingPlan, plan_financing
 from app.engine.economics.metrics import build_metrics
@@ -206,11 +209,12 @@ class _Assembler:
                 if terms.contract_years
                 else int(norms.value("raas_min_contract_months"))
             )
-            if terms.buyout_pct is not None and implementation + contract < self.months:
+            if terms.buyout_pct is not None and implementation + contract <= self.months:
                 buyout_month = implementation + contract
                 fee_until = buyout_month
                 ownership_from = buyout_month + 1
                 buyout_cost = annual.hardware * terms.buyout_pct / PERCENT
+        owns_during_horizon = owned or buyout_month is not None
         return CashflowPlan(
             months=self.months,
             implementation_months=implementation,
@@ -230,10 +234,14 @@ class _Assembler:
             upfront=financing.upfront,
             capex_total=annual.capex.total,
             debt=financing.debt,
-            battery_cost=annual.equipment * norms.value("battery_cost_share_of_hardware") if owned else 0.0,
+            battery_cost=(
+                annual.equipment * norms.value("battery_cost_share_of_hardware")
+                if owns_during_horizon
+                else 0.0
+            ),
             battery_interval_months=int(norms.value("battery_replacement_interval_years") * MONTHS_PER_YEAR),
-            fleet_cost=annual.equipment if owned else 0.0,
-            service_life_months=int(life * MONTHS_PER_YEAR) if owned else None,
+            fleet_cost=annual.equipment if owns_during_horizon else 0.0,
+            service_life_months=int(life * MONTHS_PER_YEAR) if owns_during_horizon else None,
             buyout_month=buyout_month,
             buyout_cost=buyout_cost,
             ownership_opex_year=annual.ownership_opex_year - (0.0 if owned else in_opex),
@@ -256,19 +264,27 @@ def evaluate(inp: EconomicsInput, tracer: Tracer) -> EconomicsResult:
     financing = plan_financing(inp, tracer, capex, assembler.lease_subject())
     effect, interest_year = assembler.effect(financing)
     scenario_cost = assembler.scenario_cost(interest_year)
-    outcome = simulate(assembler.plan(financing))
-    metrics = build_metrics(inp, tracer, annual, effect, scenario_cost, outcome)
+    owner_rate = inp.owner_discount_rate or inp.norms.get("owner_discount_rate")
+    plan = assembler.plan(financing)
+    record_lifecycle(inp, tracer, plan)
+    owner = simulate(replace(plan, discount_rate=owner_rate.value))
+    project = simulate(replace(plan, upfront=annual.capex.total, debt=[]))
+    metrics = build_metrics(inp, tracer, annual, effect, scenario_cost, project, owner)
     return EconomicsResult(
         capex=annual.capex,
         opex=annual.opex,
         baseline=annual.baseline,
         scenario_cost=scenario_cost,
         effect=effect,
-        monthly=outcome.monthly,
-        yearly=outcome.yearly,
-        overlay=outcome.overlay,
+        monthly=project.monthly,
+        yearly=project.yearly,
+        overlay=project.overlay,
         ramp_up_months=int(inp.norms.value("implementation_months") + inp.norms.value("ramp_up_months")),
         metrics=metrics,
-        upfront=financing.upfront,
-        warnings=[*annual.warnings, *outcome.events],
+        upfront=annual.capex.total,
+        owner_monthly=owner.monthly,
+        owner_yearly=owner.yearly,
+        owner_overlay=owner.overlay,
+        owner_upfront=financing.upfront,
+        warnings=[*annual.warnings, *owner.events],
     )

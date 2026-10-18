@@ -50,6 +50,7 @@ SEEDED_TABLES = frozenset(
 def make_settings(**overrides: object) -> Settings:
     values: dict[str, object] = {
         "stage": "test",
+        "demo_warm_on_startup": False,
         "database_url": _BASE_DB_URL,
         "redis_url": _REDIS_URL,
         "log_json": False,

@@ -16,7 +16,7 @@ import { cn } from '@/shared/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Section, Stat, StatStrip } from '@/shared/ui/page'
 import { Segmented } from '@/shared/ui/v0'
-import { CashflowChart } from './CashflowChart'
+import { FinancialFlows, LaborEffect } from './FinancialFlows'
 import { CostTable, type CostRow } from './CostTable'
 import { SizingSection } from './SizingSection'
 
@@ -45,6 +45,17 @@ export function CalculationView({
   onTrace: (query: string) => void
   locked?: boolean
 }) {
+  if (!isBaseline && !run.owner_cashflow) {
+    return (
+      <Section title="Сохранённый расчёт прежней финансовой модели">
+        <p className="text-sm text-ink-3">
+          Этот результат рассчитан до разделения потоков проекта и собственных средств. Нажмите «Пересчитать» вверху
+          страницы, чтобы получить сопоставимые NPV, IRR и ROI, актуальную базу труда и проверку парка. Исходный расчёт
+          сохранён; его формулы доступны в трассе.
+        </p>
+      </Section>
+    )
+  }
   const m = run.metrics
   const effectRows: CostRow[] = run.effect_year.items.map((item) => ({
     key: item.key,
@@ -53,7 +64,7 @@ export function CalculationView({
     formula: item.formula,
     formulaRendered: item.formula_rendered,
     inputs: item.inputs,
-    hint: item.fte_released ? `высвобождается ${formatNumber(item.fte_released, 1)} ставки` : null,
+    hint: item.fte_released ? `высвобождаемая трудоёмкость: ${formatNumber(item.fte_released, 1)} FTE` : null,
   }))
 
   return (
@@ -78,23 +89,23 @@ export function CalculationView({
             label="Чистый эффект"
             value={formatRub(m.effect_rub_year)}
             valueClassName="text-ok"
-            hint="в год, после OPEX"
+            hint="в год, после OPEX и процентов"
           />
           <Stat
-            label="NPV"
+            label="NPV проекта"
             value={formatRub(m.npv_rub)}
             valueClassName={(m.npv_rub ?? 0) < 0 ? 'text-crit' : undefined}
             hint={`ставка ${formatPct(m.discount_rate_pct)}, ${m.horizon_years} ${pluralRu(m.horizon_years, ['год', 'года', 'лет'])}`}
           />
-          <Stat label="IRR" value={formatPct(m.irr_pct)} />
-          <Stat label="ROI за горизонт" value={formatPct(m.roi_pct)} />
+          <Stat label="IRR проекта" value={formatPct(m.irr_pct)} />
+          <Stat label="ROI проекта за горизонт" value={formatPct(m.roi_pct)} />
           <Stat
             label="TCO за горизонт"
             value={formatRub(m.tco_rub)}
             hint={`как сейчас: ${formatRub(m.tco_baseline_rub)}`}
           />
           <Stat
-            label="Роботов / высвобождается ставок"
+            label="Роботов / высвобождается FTE"
             value={`${m.robots_total ?? '—'} / ${formatNumber(m.fte_released, 1)}`}
           />
         </StatStrip>
@@ -103,6 +114,7 @@ export function CalculationView({
       {!isBaseline && (
         <SizingSection scenarioId={run.scenario_id} sizing={run.sizing} onTrace={onTrace} locked={locked} />
       )}
+      {!isBaseline && <LaborEffect run={run} />}
 
       <Section
         title="Из чего складываются деньги"
@@ -120,18 +132,7 @@ export function CalculationView({
         <CostTabs run={run} isBaseline={isBaseline} effectRows={effectRows} />
       </Section>
 
-      {!isBaseline && (
-        <Section
-          title="Денежный поток"
-          description={
-            run.cashflow.ramp_up_months
-              ? `Разгон до полного эффекта ${run.cashflow.ramp_up_months} мес.; индексация и замены АКБ учтены помесячно`
-              : undefined
-          }
-        >
-          <CashflowChart yearly={run.cashflow.yearly} monthly={run.cashflow.monthly} />
-        </Section>
-      )}
+      {!isBaseline && <FinancialFlows run={run} />}
 
       {(run.risks.length > 0 || (run.warnings?.length ?? 0) > 0) && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

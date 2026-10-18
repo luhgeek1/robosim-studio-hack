@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Organization, OrganizationInvitation, OrganizationMember, Project, User
@@ -104,11 +105,21 @@ class OrganizationRepository:
         invitation: OrganizationInvitation | None = await self._session.scalar(statement)
         return invitation
 
-    async def pending_invitation(self, organization_id: UUID, email: str) -> OrganizationInvitation | None:
-        statement = select(OrganizationInvitation).where(
-            OrganizationInvitation.organization_id == organization_id,
-            OrganizationInvitation.email == email,
-            OrganizationInvitation.status == InvitationStatus.PENDING,
+    async def create_pending_invitation(
+        self, organization_id: UUID, email: str, invited_by: UUID
+    ) -> OrganizationInvitation | None:
+        statement = (
+            insert(OrganizationInvitation)
+            .values(
+                organization_id=organization_id,
+                email=email,
+                invited_by=invited_by,
+                status=InvitationStatus.PENDING,
+            )
+            .on_conflict_do_nothing(
+                index_elements=["organization_id", "email"], index_where=text("status = 'pending'")
+            )
+            .returning(OrganizationInvitation)
         )
         invitation: OrganizationInvitation | None = await self._session.scalar(statement)
         return invitation

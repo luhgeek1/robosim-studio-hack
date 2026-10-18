@@ -2,49 +2,45 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowUpRight, Check, FileCheck2, Fingerprint, Route } from 'lucide-react'
 import { Link } from 'react-router'
+import type { DemoSnapshot } from '@/entities/demo/api'
+import { formatNumber, formatRub, formatYears } from '@/shared/lib/format'
 import { EASE, useLandingMotion } from './motion'
 
 const METRICS = [
   {
     id: 'fleet',
     tab: 'Парк роботов',
-    label: 'Парк с учётом резерва',
-    value: '13',
+    label: 'Рекомендуемый парк',
     unit: 'роботов',
-    breakdown: '11 в работе + 2 в резерве',
-    status: 'Проверено в 5 прогонах пика',
+    reason: 'Парк, проверенный совместно в пределах заданной нагрузки и конфигурации.',
+    status: 'Результат проверки открыт',
     steps: [
-      ['Входные данные', 'Планировка, поток задач и характеристики AMR'],
-      ['Проверка', 'Маршруты, очереди, зарядка и пиковая нагрузка'],
-      ['Основание', 'Минимальный парк, выдержавший все пять прогонов'],
+      ['Данные объекта', 'Планировка, поток задач и параметры AMR'],
+      ['Проверка на пике', 'Маршруты, очереди и зарядка под нагрузкой'],
     ],
   },
   {
     id: 'investment',
     tab: 'Инвестиции',
     label: 'Инвестиции в сценарий',
-    value: '40,3',
     unit: 'млн ₽',
-    breakdown: 'Парк + инфраструктура + интеграция',
-    status: 'Состав затрат раскрывается в расчёте',
+    reason: 'Стоимость запуска по ценам каталога и нормативам сценария.',
+    status: 'Состав затрат раскрыт',
     steps: [
-      ['Парк', '13 AMR с учётом резерва по результатам имитации'],
-      ['Дополнительно', 'Инфраструктура и интеграция на объекте'],
-      ['Основание', 'Цены каталога и нормативы выбранного сценария'],
+      ['Роботы', 'Цена оборудования × парк, включая резерв'],
+      ['Запуск', 'Инфраструктура и интеграция на объекте'],
     ],
   },
   {
     id: 'payback',
     tab: 'Окупаемость',
     label: 'Срок окупаемости',
-    value: '2,2',
     unit: 'года',
-    breakdown: 'Экономика сценария покупки',
-    status: 'Покупка, RaaS и лизинг сравниваются отдельно',
+    reason: 'Простая окупаемость по чистому годовому эффекту сценария покупки.',
+    status: 'С учётом расходов на эксплуатацию',
     steps: [
       ['Затраты', 'Инвестиции и эксплуатационные расходы'],
       ['Эффект', 'Высвобождаемые трудозатраты и стоимость труда'],
-      ['Основание', 'Денежный поток и допущения сценария покупки'],
     ],
   },
 ] as const
@@ -70,9 +66,16 @@ const PRINCIPLES = [
   },
 ]
 
-export function EvidenceSection({ workspace }: { workspace: string }) {
+export function EvidenceSection({ workspace, demo }: { workspace: string; demo?: DemoSnapshot }) {
   const [active, setActive] = useState(0)
-  const metric = METRICS[active]
+  const metrics = demo?.calculations.find((c) => c.scenario_id === demo.primary_scenario_id)?.metrics
+  const fleet = demo?.sweep?.by_simulation ?? demo?.sweep?.by_formula
+  const values = [
+    formatNumber(metrics?.robots_total),
+    formatRub(metrics?.capex_rub),
+    metrics ? formatYears(metrics.payback_years) : '—',
+  ]
+  const metric = { ...METRICS[active], value: values[active], unit: active === 0 ? 'роботов' : '' }
   const { reduced, reveal } = useLandingMotion()
   return (
     <section className="landing-evidence landing-container" id="method" aria-labelledby="trust-title">
@@ -113,7 +116,7 @@ export function EvidenceSection({ workspace }: { workspace: string }) {
             ))}
           </div>
           <Link className="landing-evidence-link" to={workspace}>
-            Разобрать свой объект <ArrowUpRight size={19} />
+            Разобрать расчёт примера <ArrowUpRight size={19} />
           </Link>
         </motion.div>
         <motion.figure className="landing-calculation" {...reveal(0.12)}>
@@ -158,6 +161,7 @@ export function EvidenceSection({ workspace }: { workspace: string }) {
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={metric.id}
+                className="landing-calculation-result"
                 initial={reduced ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: reduced ? 0 : -8 }}
@@ -170,42 +174,44 @@ export function EvidenceSection({ workspace }: { workspace: string }) {
                       {metric.value}
                       <small>{metric.unit}</small>
                     </strong>
-                    <p>{metric.breakdown}</p>
                   </div>
-                  <div className="landing-calculation-fleet" aria-hidden="true">
-                    <span>ПАРК СЦЕНАРИЯ</span>
-                    <div>
-                      {Array.from({ length: 13 }, (_, i) => (
-                        <svg key={i} viewBox="0 0 20 24" className={i > 10 ? 'is-reserve' : undefined}>
-                          <rect x="3" y="5" width="14" height="15" rx="4" />
-                          <path d="M7 3h6M6 22h1m6 0h1" />
-                          <path className="landing-mini-robot-eye" d="M8 11h4" />
-                        </svg>
-                      ))}
+                  <div className="landing-calculation-reason">
+                    <p>{metric.reason}</p>
+                    <div className="landing-calculation-status">
+                      <Check size={14} aria-hidden="true" />
+                      <span>{metric.status}</span>
                     </div>
-                    <small>
-                      11 в работе <span>+ 2 в резерве</span>
-                    </small>
                   </div>
-                </div>
-                <div className="landing-calculation-divider">
-                  <span>ОТКУДА ЭТО ЧИСЛО</span>
-                  <ArrowUpRight size={14} />
-                </div>
-                <ol className="landing-calculation-steps">
-                  {metric.steps.map(([label, value], i) => (
-                    <li key={label}>
-                      <span>0{i + 1}</span>
-                      <div>
-                        <span>{label}</span>
-                        <p>{value}</p>
+                  {metric.id === 'fleet' && (
+                    <div className="landing-calculation-fleet">
+                      <div className="landing-calculation-fleet-bar" aria-hidden="true">
+                        {Array.from({ length: Math.min(metrics?.robots_total ?? 0, 100) }, (_, i) => (
+                          <span key={i} className={i >= (fleet?.working ?? 0) ? 'is-reserve' : undefined} />
+                        ))}
                       </div>
-                    </li>
-                  ))}
-                </ol>
-                <div className="landing-calculation-status">
-                  <Check size={15} />
-                  <span>{metric.status}</span>
+                      <div className="landing-calculation-fleet-legend">
+                        <span>
+                          <i aria-hidden="true" /> <strong>{formatNumber(fleet?.working)}</strong> в работе
+                        </span>
+                        <span>
+                          <i aria-hidden="true" /> <strong>{formatNumber(fleet?.reserve)}</strong> в резерве
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="landing-calculation-detail">
+                  <ol className="landing-calculation-steps">
+                    {metric.steps.map(([label, value], i) => (
+                      <li key={label}>
+                        <span>0{i + 1}</span>
+                        <div>
+                          <span>{label}</span>
+                          <p>{value}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
               </motion.div>
             </AnimatePresence>

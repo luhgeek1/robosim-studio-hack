@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.8.0
+  version: 0.10.0
   license:
     name: MIT
     identifier: MIT
@@ -1621,6 +1621,10 @@ paths:
         - calculations
       operationId: getComparison
       summary: Сводная таблица сценариев и рекомендация (ТЗ 3.5.5, 3.7.1)
+      description: |
+        NPV, IRR, ROI и наложение потоков относятся к проекту; показатели собственных средств выделены отдельно.
+        При recalculate_stale=false несовместимые старые финансовые результаты исключаются с пояснением.
+        Устаревшие результаты текущего формата видны, но не участвуют в рекомендации до пересчёта.
       parameters:
         - $ref: '#/components/parameters/ProjectId'
         - name: recalculate_stale
@@ -1721,8 +1725,8 @@ paths:
       operationId: calculateScenario
       summary: Рассчитать экономику сценария (синхронно, ≤ 10 с)
       description: |
-        Считает количество роботов (аналитически + по последней симуляции сценария, если она есть), CAPEX, OPEX, эффект,
-        денежный поток, метрики, интерпретацию и риски. Результат сохраняется с версиями входов.
+        Считает количество роботов (аналитически + по актуальному совместному подтверждению имитацией), CAPEX, OPEX,
+        эффект, потоки проекта и собственных средств, метрики, интерпретацию и риски. Результат сохраняется с версиями входов.
       parameters:
         - $ref: '#/components/parameters/ScenarioId'
       requestBody:
@@ -1735,7 +1739,7 @@ paths:
                 use_simulation:
                   type: boolean
                   default: true
-                  description: Брать N из последней успешной симуляции
+                  description: Брать N из совместной проверки парка с совпадающим отпечатком физических входов
       responses:
         '200':
           description: Готово
@@ -2433,6 +2437,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DemoSnapshot'
+        '202':
+          description: Подготовка примера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoPreparation'
         '404':
           $ref: '#/components/responses/NotFound'
   /api/v1/demo/projects/{demo_key}/what-if:
@@ -2448,6 +2458,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: revision
+          in: query
+          schema:
+            type: string
+            maxLength: 64
+          description: Версия открытого примера; при несовпадении — 409
       requestBody:
         required: true
         content:
@@ -2461,6 +2477,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DemoWhatIfResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Пример ещё готовится
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/demo/projects/{demo_key}/report/{format}:
+    get:
+      tags:
+        - demo
+      operationId: downloadDemoReport
+      summary: Скачать отчёт по исходному публичному примеру
+      description: Пробные изменения гостя в этот отчёт не входят.
+      security: []
+      parameters:
+        - name: demo_key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revision
+          in: query
+          schema:
+            type: string
+            maxLength: 64
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - pdf
+              - xlsx
+      responses:
+        '200':
+          description: Файл исходного примера
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Пример ещё готовится
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/ValidationError'
         '429':
           $ref: '#/components/responses/RateLimited'
   /api/v1/demo/projects/{demo_key}/replay:
@@ -2476,6 +2553,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: revision
+          in: query
+          schema:
+            type: string
+            maxLength: 64
         - name: from_s
           in: query
           schema:
@@ -2492,6 +2574,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimulationReplay'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Пример ещё готовится
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/v1/support-measures:
     get:
       tags:
@@ -4704,25 +4796,13 @@ components:
               items:
                 $ref: '#/components/schemas/EffectItem'
         cashflow:
-          type: object
-          required:
-            - monthly
-            - yearly
-          properties:
-            monthly:
-              type: array
-              items:
-                $ref: '#/components/schemas/CashflowPoint'
-            yearly:
-              type: array
-              items:
-                $ref: '#/components/schemas/CashflowPoint'
-            ramp_up_months:
-              type: integer
-              description: Месяцы внедрения и разгона до полного эффекта
-            upfront_rub:
-              type: number
-              description: Вложения в момент 0 (свои средства или первый взнос); в monthly они входят в месяц 1
+          $ref: '#/components/schemas/Cashflow'
+          description: 'Поток проекта: полный CAPEX, без кредитных поступлений и обслуживания долга; плата RaaS остаётся затратой'
+        owner_cashflow:
+          oneOf:
+            - $ref: '#/components/schemas/Cashflow'
+            - type: 'null'
+          description: 'Поток собственника: собственный взнос, полные кредитные/лизинговые платежи и остаток обязательств на горизонте; null для старых расчётов'
         metrics:
           $ref: '#/components/schemas/Metrics'
         interpretation:
@@ -4836,7 +4916,7 @@ components:
           description: Изменение OPEX относительно базы (отрицательное = экономия)
         effect_rub_year:
           type: number
-          description: Чистый годовой экономический эффект
+          description: Годовой эффект после OPEX и процентов по финансированию (Доп. 2.1)
         payback_years:
           type:
             - number
@@ -4846,15 +4926,20 @@ components:
           type:
             - number
             - 'null'
+          description: По потоку проекта без долга и его обслуживания
         roi_pct:
-          type: number
-          description: (Σэффект за горизонт − CAPEX) / CAPEX × 100
+          type:
+            - number
+            - 'null'
+          description: Накопленный поток проекта (CAPEX уже вычтен) / CAPEX × 100; null при нулевых вложениях
         npv_rub:
           type: number
+          description: 'NPV проекта: весь CAPEX в момент 0, без кредитных поступлений и платежей'
         irr_pct:
           type:
             - number
             - 'null'
+          description: IRR проекта, годовая
         tco_rub:
           type: number
           description: CAPEX + ΣOPEX за горизонт с заменами
@@ -4862,6 +4947,7 @@ components:
           type: number
         fte_released:
           type: number
+          description: Высвобождаемая трудоёмкость в эквиваленте полных ставок; не гарантированное сокращение штата
         robots_total:
           type: integer
         throughput_gain_pct:
@@ -4874,6 +4960,60 @@ components:
             - 'null'
         discount_rate_pct:
           type: number
+        project_effect_rub_year:
+          type:
+            - number
+            - 'null'
+          description: Годовой эффект проекта до процентов
+        owner_upfront_rub:
+          type:
+            - number
+            - 'null'
+          description: Собственные вложения в момент 0
+        owner_discount_rate_pct:
+          type:
+            - number
+            - 'null'
+          description: Отдельная ставка для потока собственника
+        owner_npv_rub:
+          type:
+            - number
+            - 'null'
+          description: 'NPV собственных средств: первый взнос и полное обслуживание долга'
+        owner_roi_pct:
+          type:
+            - number
+            - 'null'
+          description: Накопленный поток собственника / собственные вложения × 100; null при нулевых вложениях
+        owner_irr_pct:
+          type:
+            - number
+            - 'null'
+          description: IRR собственных средств, годовая
+        owner_discounted_payback_years:
+          type:
+            - number
+            - 'null'
+        labor_potential_savings_rub_year:
+          type:
+            - number
+            - 'null'
+          description: Стоимость высвобождаемой трудоёмкости до денежной реализации
+        labor_savings_rub_year:
+          type:
+            - number
+            - 'null'
+          description: Ожидаемая денежная экономия ФОТ с учётом доли реализации
+        labor_cash_realization_pct:
+          type:
+            - number
+            - 'null'
+          description: Доля высвобождаемого ФОТ, которая уменьшит затраты, %
+        labor_hours_released_year:
+          type:
+            - number
+            - 'null'
+          description: Высвобождаемая трудоёмкость, человеко-часы в год
         horizon_years:
           type: integer
     ComparisonTable:
@@ -8416,6 +8556,26 @@ components:
             - extra_revenue
             - avoided_loss
             - extra_opex
+    Cashflow:
+      type: object
+      required:
+        - monthly
+        - yearly
+      properties:
+        monthly:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashflowPoint'
+        yearly:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashflowPoint'
+        ramp_up_months:
+          type: integer
+          description: Месяцы внедрения и разгона до полного эффекта
+        upfront_rub:
+          type: number
+          description: Вложения в момент 0; в monthly включены в месяц 1 только для сводки, дисконтируются в момент 0
     Risk:
       type: object
       required:
@@ -8886,6 +9046,59 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SimulationRun'
+    JointFleetValidation:
+      type: object
+      required:
+        - status
+        - replications
+        - fleet
+        - processes
+        - skipped_processes
+      properties:
+        status:
+          type: string
+          enum:
+            - passed
+            - failed
+            - not_run
+        replications:
+          type: integer
+        fleet:
+          type: object
+          additionalProperties:
+            type: integer
+        processes:
+          type: array
+          items:
+            type: object
+            required:
+              - process_key
+              - target_pct
+              - sla_min_pct
+              - passed
+            properties:
+              process_key:
+                type: string
+              target_pct:
+                type: number
+              sla_min_pct:
+                type:
+                  - number
+                  - 'null'
+              passed:
+                type: boolean
+        skipped_processes:
+          type: array
+          items:
+            type: object
+            required:
+              - process_key
+              - reason
+            properties:
+              process_key:
+                type: string
+              reason:
+                type: string
     FleetEconomics:
       type: object
       description: Парк процесса и экономика сценария с ним.
@@ -8914,9 +9127,9 @@ components:
     FleetSweepResult:
       type: object
       description: |
-        Минимальное N, при котором каждый из `sim_replications` прогонов пикового режима держит SLA не ниже цели (D-029).
-        Поиск идёт от оценки по первому прогону; прогоны разных N видят одинаковый поток задач (общие случайные числа).
-        Результат записывается в позицию сценария: следующий расчёт берёт N из имитации (`count_result.source = simulated`).
+        Кандидат N находится отдельным поиском процесса. Затем весь моделируемый парк проверяется совместно:
+        SLA каждого процесса должен выдерживаться в каждом повторе при общих ресурсах.
+        Только совместно прошедший парк атомарно записывается в сценарий, если физические входы и версия сценария не изменились.
       required:
         - process_key
         - points
@@ -8982,7 +9195,16 @@ components:
           type:
             - integer
             - 'null'
-          description: 'null — даже тройной парк не выполняет SLA: ограничение не в роботах'
+          description: N после совместной проверки всех моделируемых процессов; null — парк не подтверждён
+        candidate_count:
+          type:
+            - integer
+            - 'null'
+          description: Кандидат отдельного поиска, ещё без совместного SLA
+        joint_validation:
+          oneOf:
+            - $ref: '#/components/schemas/JointFleetValidation'
+            - type: 'null'
         analytic_count:
           type:
             - integer
@@ -8999,7 +9221,7 @@ components:
           description: Прогон рекомендованного N с журналом для плеера
         applied:
           type: boolean
-          description: N записано в сценарий
+          description: Совместно проверенные количества атомарно записаны в актуальный сценарий
         by_formula:
           oneOf:
             - $ref: '#/components/schemas/FleetEconomics'
@@ -9044,6 +9266,7 @@ components:
           minimum: 1
         mode:
           $ref: '#/components/schemas/SimulationMode'
+          description: Подтверждение парка всегда выполняется в peak; прежние значения normal/custom принимаются и приводятся к peak
         seed:
           type:
             - integer
@@ -9448,6 +9671,7 @@ components:
         - object_type
         - description
         - headline
+        - scope
       properties:
         key:
           type: string
@@ -9458,26 +9682,39 @@ components:
           $ref: '#/components/schemas/ObjectTypeKey'
         description:
           type: string
+        scope:
+          type: string
+          description: Границы процесса и допущения примера
         headline:
           type: object
           properties:
             robots_total:
-              type: integer
+              type:
+                - integer
+                - 'null'
             capex_rub:
-              type: number
+              type:
+                - number
+                - 'null'
             payback_years:
-              type: number
+              type:
+                - number
+                - 'null'
             effect_rub_year:
-              type: number
+              type:
+                - number
+                - 'null'
             verdict:
-              type: string
+              type:
+                - string
+                - 'null'
         image_url:
           type:
             - string
             - 'null'
     DemoSnapshot:
       type: object
-      description: Предрассчитанный демо-проект целиком, только чтение.
+      description: Общий пример только для чтения. Пересобирается при изменении версии исходных данных или ядра.
       required:
         - demo
         - params
@@ -9485,6 +9722,11 @@ components:
         - matching
         - scenarios
         - comparison
+        - calculations
+        - trace
+        - primary_scenario_id
+        - prepared_at
+        - revision
       properties:
         demo:
           $ref: '#/components/schemas/DemoProject'
@@ -9504,6 +9746,20 @@ components:
             $ref: '#/components/schemas/Scenario'
         comparison:
           $ref: '#/components/schemas/ComparisonTable'
+        calculations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalculationRun'
+        trace:
+          $ref: '#/components/schemas/CalculationTrace'
+        primary_scenario_id:
+          type: string
+          format: uuid
+        prepared_at:
+          type: string
+          format: date-time
+        revision:
+          type: string
         simulation:
           oneOf:
             - $ref: '#/components/schemas/SimulationRun'
@@ -9512,10 +9768,38 @@ components:
           oneOf:
             - $ref: '#/components/schemas/Layout'
             - type: 'null'
+        sweep:
+          oneOf:
+            - $ref: '#/components/schemas/FleetSweepResult'
+            - type: 'null'
+    DemoPreparation:
+      type: object
+      required:
+        - status
+        - stage
+        - retry_after_s
+      properties:
+        status:
+          type: string
+          enum:
+            - preparing
+            - failed
+        stage:
+          type: string
+        retry_after_s:
+          type: integer
     DemoWhatIfRequest:
       type: object
-      description: Ограниченный what-if для гостя — несколько множителей без сохранения.
+      additionalProperties: false
+      description: Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией.
       properties:
+        fleet_source:
+          type: string
+          enum:
+            - formula
+            - simulation
+          default: simulation
+          description: Расчёт по формуле или применение заранее проверенного парка. Изменённая нагрузка всегда считается по формуле.
         salary_multiplier:
           type: number
           minimum: 0.5
@@ -9531,17 +9815,34 @@ components:
           minimum: 0.5
           maximum: 2
           default: 1
+        labor_cash_realization_share:
+          type:
+            - number
+            - 'null'
+          minimum: 0
+          maximum: 1
         horizon_years:
-          type: integer
+          type:
+            - integer
+            - 'null'
           minimum: 3
           maximum: 10
         scenario_kind:
-          $ref: '#/components/schemas/ScenarioKind'
+          type: string
+          enum:
+            - purchase
+            - raas
+            - lease
+          default: purchase
     DemoWhatIfResult:
       type: object
       required:
         - metrics
         - interpretation
+        - cashflow_yearly
+        - calculation
+        - simulation_valid
+        - notes
       properties:
         metrics:
           $ref: '#/components/schemas/Metrics'
@@ -9551,6 +9852,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CashflowPoint'
+        calculation:
+          $ref: '#/components/schemas/CalculationRun'
+        simulation_valid:
+          type: boolean
+        notes:
+          type: array
+          items:
+            type: string
     SupportMeasure:
       type: object
       required:

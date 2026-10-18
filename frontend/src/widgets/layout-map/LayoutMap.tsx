@@ -53,6 +53,8 @@ export type LayoutMapProps = {
   children?: ReactNode | ((view: LayoutMapView) => ReactNode)
   /** More map layers next to «Граф маршрутов» (the simulation's congestion layer). */
   toolbarExtra?: ReactNode
+  /** Hide route graph tools when only viewing a prepared example. */
+  simplified?: boolean
 }
 
 const nonScaling = { vectorEffect: 'non-scaling-stroke' } as const
@@ -72,6 +74,7 @@ export function LayoutMap({
   fitPadding,
   children,
   toolbarExtra,
+  simplified = false,
 }: LayoutMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [ownGraph, setOwnGraph] = useState(defaultShowGraph)
@@ -125,20 +128,22 @@ export function LayoutMap({
           )}
         >
           {toolbarExtra}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Toggle
-                size="sm"
-                variant="outline"
-                pressed={graph}
-                onPressedChange={setGraph}
-                aria-label="Граф маршрутов"
-              >
-                <Waypoints /> <span className="@max-[28rem]:sr-only">Граф маршрутов</span>
-              </Toggle>
-            </TooltipTrigger>
-            <TooltipContent>Узлы и рёбра, по которым считаются маршруты роботов</TooltipContent>
-          </Tooltip>
+          {!simplified && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  size="sm"
+                  variant="outline"
+                  pressed={graph}
+                  onPressedChange={setGraph}
+                  aria-label="Граф маршрутов"
+                >
+                  <Waypoints /> <span className="@max-[28rem]:sr-only">Граф маршрутов</span>
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent>Узлы и рёбра, по которым считаются маршруты роботов</TooltipContent>
+            </Tooltip>
+          )}
           <Button size="icon-sm" variant="ghost" onClick={() => zoomCenter(1.4)} aria-label="Приблизить">
             <Plus />
           </Button>

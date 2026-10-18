@@ -126,6 +126,7 @@ demoProject:
     parameters: [{name: demo_key, in: path, required: true, schema: {type: string}}]
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoSnapshot'}}}}
+      '202': {description: Подготовка примера, content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoPreparation'}}}}
       '404': {$ref: '../components/common.yaml#/responses/NotFound'}
 
 demoWhatIf:
@@ -134,11 +135,16 @@ demoWhatIf:
     operationId: demoWhatIf
     summary: Ограниченный what-if для гостя (без сохранения, с лимитом запросов)
     security: []
-    parameters: [{name: demo_key, in: path, required: true, schema: {type: string}}]
+    parameters:
+      - {name: demo_key, in: path, required: true, schema: {type: string}}
+      - {name: revision, in: query, schema: {type: string, maxLength: 64}, description: "Версия открытого примера; при несовпадении — 409"}
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoWhatIfRequest'}}}
     responses:
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {description: Пример ещё готовится, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoWhatIfResult'}}}}
       '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
 
@@ -150,10 +156,36 @@ demoReplay:
     security: []
     parameters:
       - {name: demo_key, in: path, required: true, schema: {type: string}}
+      - {name: revision, in: query, schema: {type: string, maxLength: 64}}
       - {name: from_s, in: query, schema: {type: number, default: 0}}
       - {name: to_s, in: query, schema: {type: number}}
     responses:
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {description: Пример ещё готовится, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationReplay'}}}}
+
+demoReport:
+  get:
+    tags: [demo]
+    operationId: downloadDemoReport
+    summary: Скачать отчёт по исходному публичному примеру
+    description: Пробные изменения гостя в этот отчёт не входят.
+    security: []
+    parameters:
+      - {name: demo_key, in: path, required: true, schema: {type: string}}
+      - {name: revision, in: query, schema: {type: string, maxLength: 64}}
+      - {name: format, in: path, required: true, schema: {type: string, enum: [pdf, xlsx]}}
+    responses:
+      '200':
+        description: Файл исходного примера
+        content:
+          application/pdf: {schema: {type: string, format: binary}}
+          application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {schema: {type: string, format: binary}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {description: Пример ещё готовится, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
 
 # ---------------- Меры господдержки и RFQ ----------------
 

@@ -27,7 +27,7 @@ export function usePlaybackDriver() {
 }
 
 // ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения — первая строка нижней панели, под картой.
-export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
+export function PlayerBar({ disabled = false, speeds = SPEEDS }: { disabled?: boolean; speeds?: readonly number[] }) {
   const playing = usePlayback((s) => s.playing)
   const speed = usePlayback((s) => s.speed)
   const total = usePlayback((s) => s.total)
@@ -63,7 +63,7 @@ export function PlayerBar({ disabled = false }: { disabled?: boolean }) {
         size="sm"
         value={speed}
         onChange={setSpeed}
-        options={SPEEDS.map((s) => ({ value: s, label: `×${s}`, hint: `1 секунда = ${s} с имитации` }))}
+        options={speeds.map((s) => ({ value: s, label: `×${s}`, hint: `1 секунда = ${s} с имитации` }))}
       />
     </div>
   )

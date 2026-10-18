@@ -2,13 +2,23 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Line, OrbitControls, RoundedBox } from '@react-three/drei'
 import { useReducedMotion } from 'framer-motion'
-import { Group, MathUtils, Vector3 } from 'three'
+import { Group, MathUtils, PCFShadowMap, Vector3 } from 'three'
 import type { ReactNode } from 'react'
 import { SceneBoundary } from '@/shared/ui/boundary'
 
 export type ObjectKind = 'warehouse' | 'hospital' | 'airport'
 type Point = [number, number, number]
 const ORANGE = '#ff653b'
+const FLOOR_GRID: Point[] = [
+  ...Array.from({ length: 14 }, (_, i): Point[] => [
+    [i - 6.5, 0.013, -4.95],
+    [i - 6.5, 0.013, 4.95],
+  ]).flat(),
+  ...Array.from({ length: 10 }, (_, i): Point[] => [
+    [-6.65, 0.013, i - 4.5],
+    [6.65, 0.013, i - 4.5],
+  ]).flat(),
+]
 
 function Block({
   at,
@@ -36,11 +46,21 @@ function Block({
 }
 
 function Package({ at, size = 0.57 }: { at: Point; size?: number }) {
+  const tapeThickness = 0.008
   return (
     <group position={at}>
       <Block at={[0, size / 2, 0]} size={[size, size, size * 0.8]} color="#b7a28a" />
-      <Block at={[0, size + 0.004, 0]} size={[size * 0.15, 0.008, size * 0.81]} color="#dfccb2" />
-      <Block at={[0, size * 0.58, size * 0.402]} size={[size * 0.15, size * 0.84, 0.008]} color="#dfccb2" />
+      {/* The tape sits outside the carton; its top and front strips meet at the edge. */}
+      <Block
+        at={[0, size + tapeThickness / 2, tapeThickness / 2]}
+        size={[size * 0.15, tapeThickness, size * 0.8 + tapeThickness]}
+        color="#dfccb2"
+      />
+      <Block
+        at={[0, size * 0.58, size * 0.4 + tapeThickness / 2]}
+        size={[size * 0.15, size * 0.84, tapeThickness]}
+        color="#dfccb2"
+      />
     </group>
   )
 }
@@ -56,7 +76,7 @@ function Rack({ at, index }: { at: Point; index: number }) {
       {[0.15, 1.13, 2.11, 3.09].map((y, level) => (
         <group key={y}>
           <Block at={[0, y, 0]} size={[2.82, 0.08, 1.13]} color="#606c73" />
-          <Block at={[0, y - 0.05, 0.57]} size={[2.82, 0.12, 0.045]} color={ORANGE} />
+          <Block at={[0, y - 0.05, (1.13 + 0.045) / 2]} size={[2.82, 0.12, 0.045]} color={ORANGE} />
           {level < 3 &&
             [-0.95, -0.27, 0.48].map((x, i) => (
               <Package
@@ -206,21 +226,17 @@ function Floor({ children }: { children: ReactNode }) {
         <meshStandardMaterial color="#3b484c" roughness={0.85} />
       </RoundedBox>
       <Block at={[0, -0.015, 0]} size={[13.35, 0.04, 9.95]} color="#546064" />
-      {Array.from({ length: 14 }, (_, i) => (
-        <Block key={`x${i}`} at={[i - 6.5, 0.013, 0]} size={[0.012, 0.005, 9.9]} color="#647174" />
-      ))}
-      {Array.from({ length: 10 }, (_, i) => (
-        <Block key={`z${i}`} at={[0, 0.013, i - 4.5]} size={[13.3, 0.005, 0.012]} color="#647174" />
-      ))}
+      <Line points={FLOOR_GRID} segments color="#647174" lineWidth={0.7} transparent opacity={0.8} depthWrite={false} />
       <Block at={[0, 0.8, -4.95]} size={[13.4, 1.6, 0.12]} color="#859295" />
-      <Block at={[-6.65, 0.8, -1.7]} size={[0.12, 1.6, 6.6]} color="#748387" />
-      <Block at={[0, 1.62, -4.95]} size={[13.4, 0.045, 0.14]} color="#c6d8d4" />
+      {/* Join the walls at z = -4.89 and place the trim above their top faces. */}
+      <Block at={[-6.65, 0.8, -1.645]} size={[0.12, 1.6, 6.49]} color="#748387" />
+      <Block at={[0, 1.6 + 0.045 / 2, -4.95]} size={[13.4, 0.045, 0.14]} color="#c6d8d4" />
       {children}
       <Block at={[0, -0.2, 5.105]} size={[4, 0.04, 0.015]} color={ORANGE} glow />
       {[-5.5, 5.5].map((x) => (
         <group key={x} position={[x, 0, 4.3]}>
           <Block at={[0, 0.1, 0]} size={[0.7, 0.2, 0.65]} color="#28383b" />
-          <Block at={[0, 0.25, -0.25]} size={[0.7, 0.5, 0.12]} color="#89989a" />
+          <Block at={[0, 0.35, -0.25]} size={[0.7, 0.3, 0.12]} color="#89989a" />
           <Block at={[0, 0.35, -0.18]} size={[0.36, 0.045, 0.02]} color="#a5efc2" glow />
         </group>
       ))}
@@ -276,6 +292,7 @@ function Hospital() {
 }
 
 function Airport() {
+  const openingHeight = 3.15 - 0.35 / 2
   return (
     <>
       {[-2.8, 0.3].map((z) => (
@@ -289,8 +306,11 @@ function Airport() {
               <meshStandardMaterial color={i % 2 ? '#a7b5ac' : ORANGE} />
             </RoundedBox>
           ))}
-          <Block at={[-3.5, 1.85, 0]} size={[0.14, 2.7, 1.5]} color="#a6b5b4" />
-          <Block at={[-3.5, 3.15, 0]} size={[0.5, 0.35, 1.5]} color="#354c50" />
+          {/* Separate posts leave the belt clear and end at the beam's underside. */}
+          {[-0.76, 0.76].map((side) => (
+            <Block key={side} at={[-3.5, openingHeight / 2, side]} size={[0.14, openingHeight, 0.16]} color="#a6b5b4" />
+          ))}
+          <Block at={[-3.5, 3.15, 0]} size={[0.5, 0.35, 1.68]} color="#354c50" />
         </group>
       ))}
       {[1.5, 3.4, 5.3].map((x) => (
@@ -379,7 +399,7 @@ export default function LandingScene({ kind, paused }: { kind: ObjectKind; pause
       <SceneBoundary fallback={<SceneFallback />}>
         <Canvas
           orthographic
-          shadows
+          shadows={{ type: PCFShadowMap }}
           dpr={[1, 1.5]}
           frameloop={playing ? 'always' : 'demand'}
           camera={{ position: [16, 16, 20], near: 0.1, far: 100, zoom: 35 }}

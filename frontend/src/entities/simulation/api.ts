@@ -175,18 +175,19 @@ export async function calculateWithFleetCheck(scenarioId: string, force = false)
   const targets: SizingResult[] = []
   for (const sizing of first.sizing) {
     if (checkable(sizing, force)) targets.push(sizing)
-    // A sweep from before the every-run criterion (no «по формуле / по имитации» pair) is redone once.
-    else if (checkable(sizing, true) && !(await simulationApi.latestSweep(scenarioId, sizing.process_key))?.by_formula)
-      targets.push(sizing)
   }
   for (const sizing of targets) {
     try {
-      checked.push(await runSweep(scenarioId, { process_key: sizing.process_key, mode: 'peak', seed: SWEEP_SEED }))
+      const result = await runSweep(scenarioId, { process_key: sizing.process_key, mode: 'peak', seed: SWEEP_SEED })
+      checked.push(result)
+      if (!result.applied) skipped.push(result.explanation)
+      // The server checks and applies the whole modeled fleet atomically; another process sweep would repeat it.
+      if (result.joint_validation) break
     } catch (error) {
       skipped.push(parseApiProblem(error).detail)
     }
   }
-  const calculation = checked.some((r) => r.applied) ? await simulationApi.calculate(scenarioId) : first
+  const calculation = checked.length ? await simulationApi.calculate(scenarioId) : first
   return { calculation, checked, skipped }
 }
 

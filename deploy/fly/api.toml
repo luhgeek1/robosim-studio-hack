@@ -1,0 +1,39 @@
+app = "robomera-api"
+primary_region = "arn"
+
+[build]
+  dockerfile = "../../backend/Dockerfile"
+
+[env]
+  RS_STAGE = "prod"
+  RS_COOKIE_SECURE = "true"
+  RS_DOCS_ENABLED = "true"
+  RS_JOBS_BACKEND = "arq"
+  RS_REDIS_URL = "redis://robomera-redis.internal:6379/0"
+
+[deploy]
+  release_command = "alembic upgrade head"
+
+[processes]
+  app = "uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers"
+  worker = "arq app.worker.WorkerSettings"
+
+# Private only: reachable from the frontend app over Flycast, no public IPs.
+[http_service]
+  internal_port = 8000
+  force_https = false
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "60s"
+    interval = "15s"
+    timeout = "5s"
+    method = "GET"
+    path = "/api/v1/health"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "1gb"
