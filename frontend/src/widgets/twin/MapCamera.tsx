@@ -84,6 +84,7 @@ export function MapToolbar({
   onHeat,
   placement = 'top-left',
   clearTopRight = false,
+  basic = false,
 }: {
   onAction: (action: CameraAction) => void
   routes: boolean
@@ -94,6 +95,7 @@ export function MapToolbar({
   placement?: ToolbarPlacement
   /** The host keeps its own control in the top-right corner: on a narrow scene the toolbar drops below it. */
   clearTopRight?: boolean
+  basic?: boolean
 }) {
   const [help, setHelp] = useState(false)
   const button =
@@ -112,13 +114,17 @@ export function MapToolbar({
         aria-label="Управление картой"
         className="flex items-center gap-0.5 rounded-xl border border-white/80 bg-white/95 p-1 shadow-lg shadow-slate-900/5 backdrop-blur"
       >
-        <button className={button} title="Общий 3D-вид" aria-label="Общий 3D-вид" onClick={() => onAction('home')}>
-          <Box size={17} />
-        </button>
-        <button className={button} title="Вид сверху" aria-label="Вид сверху" onClick={() => onAction('top')}>
-          <Map size={17} />
-        </button>
-        <span className="mx-1 h-5 w-px bg-slate-200" />
+        {!basic && (
+          <>
+            <button className={button} title="Общий 3D-вид" aria-label="Общий 3D-вид" onClick={() => onAction('home')}>
+              <Box size={17} />
+            </button>
+            <button className={button} title="Вид сверху" aria-label="Вид сверху" onClick={() => onAction('top')}>
+              <Map size={17} />
+            </button>
+            <span className="mx-1 h-5 w-px bg-slate-200" />
+          </>
+        )}
         <button className={button} title="Приблизить" aria-label="Приблизить" onClick={() => onAction('in')}>
           <Plus size={17} />
         </button>
@@ -133,38 +139,42 @@ export function MapToolbar({
         >
           <RotateCcw size={16} />
         </button>
-        <span className="mx-1 h-5 w-px bg-slate-200" />
-        <button
-          className={`${button} ${routes ? 'bg-sky-50 !text-sky-700' : ''}`}
-          title="Маршруты"
-          aria-label="Маршруты"
-          aria-pressed={routes}
-          onClick={onRoutes}
-        >
-          <Route size={17} />
-        </button>
-        {heat !== undefined && (
-          <button
-            className={`${button} ${heat ? 'bg-rose-50 !text-rose-700' : ''}`}
-            title="Поток и заторы"
-            aria-label="Поток и заторы"
-            aria-pressed={heat}
-            onClick={onHeat}
-          >
-            <Flame size={17} />
-          </button>
+        {!basic && (
+          <>
+            <span className="mx-1 h-5 w-px bg-slate-200" />
+            <button
+              className={`${button} ${routes ? 'bg-sky-50 !text-sky-700' : ''}`}
+              title="Маршруты"
+              aria-label="Маршруты"
+              aria-pressed={routes}
+              onClick={onRoutes}
+            >
+              <Route size={17} />
+            </button>
+            {heat !== undefined && (
+              <button
+                className={`${button} ${heat ? 'bg-rose-50 !text-rose-700' : ''}`}
+                title="Поток и заторы"
+                aria-label="Поток и заторы"
+                aria-pressed={heat}
+                onClick={onHeat}
+              >
+                <Flame size={17} />
+              </button>
+            )}
+            <button
+              className={button}
+              title="Как управлять картой"
+              aria-label="Как управлять картой"
+              aria-expanded={help}
+              onClick={() => setHelp((v) => !v)}
+            >
+              <HelpCircle size={17} />
+            </button>
+          </>
         )}
-        <button
-          className={button}
-          title="Как управлять картой"
-          aria-label="Как управлять картой"
-          aria-expanded={help}
-          onClick={() => setHelp((v) => !v)}
-        >
-          <HelpCircle size={17} />
-        </button>
       </div>
-      {help && (
+      {!basic && help && (
         <div className="max-w-[290px] rounded-xl border border-slate-200 bg-white/95 p-4 text-[12px] leading-6 text-slate-600 shadow-lg">
           <p className="font-semibold text-slate-900">Управление картой</p>
           <p>

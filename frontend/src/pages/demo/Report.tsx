@@ -1,31 +1,22 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router'
-import { Download, ArrowUpRight } from 'lucide-react'
-import { useSession } from '@/entities/session'
-import { projectApi } from '@/entities/project/api'
+import { Download, FileSpreadsheet, FileText, Info } from 'lucide-react'
 import type { DemoSnapshot } from '@/entities/demo/api'
 import { apiPublic } from '@/shared/api/client'
 import { problemText } from '@/shared/api/problem'
 import { formatDateTime } from '@/shared/lib/format'
+import { Button } from '@/shared/ui/button'
+import { Section } from '@/shared/ui/page'
+import { Spinner } from '@/shared/ui/states'
+import { FullAccess } from './ProjectCTA'
+import { GuestScreen } from './GuestScreen'
 
 export function Report({ demo, changed }: { demo: DemoSnapshot; changed: boolean }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { status } = useSession()
-  const navigate = useNavigate()
-  const run = async (key: string, action: () => Promise<void>) => {
-    setBusy(key)
+  const download = async (format: 'pdf' | 'xlsx') => {
+    setBusy(format)
     setError(null)
     try {
-      await action()
-    } catch (e) {
-      setError(problemText(e))
-    } finally {
-      setBusy(null)
-    }
-  }
-  const download = (format: 'pdf' | 'xlsx') =>
-    run(format, async () => {
       const response = await apiPublic.get<Blob>(`/demo/projects/${demo.demo.key}/report/${format}`, {
         responseType: 'blob',
         params: { revision: demo.revision },
@@ -36,64 +27,70 @@ export function Report({ demo, changed }: { demo: DemoSnapshot; changed: boolean
       anchor.download = `Робомера_${demo.demo.key}.${format}`
       anchor.click()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
-    })
-  const create = () =>
-    run('create', async () => {
-      const project = await projectApi.create({
-        name: demo.demo.name,
-        object_type: demo.demo.object_type,
-        init: { mode: 'demo', demo_key: demo.demo.key },
-      })
-      navigate(`/projects/${project.id}/object`)
-    })
+    } catch (e) {
+      setError(problemText(e))
+    } finally {
+      setBusy(null)
+    }
+  }
   return (
-    <section className="demo-panel demo-report">
-      <div className="demo-eyebrow">РЕЗУЛЬТАТ МОЖНО ЗАБРАТЬ С СОБОЙ</div>
-      <h2>Отчёт, который можно проверить</h2>
-      <p>
-        Исходные параметры, выбранные решения, состав затрат, четыре варианта экономики, имитация, источники и допущения
-        — в одном документе.
-      </p>
-      <div className="demo-notice">
-        {changed ? 'Вы меняли условия. ' : ''}PDF и Excel относятся к исходному примеру. Пробные изменения в них не
-        входят.
+    <GuestScreen
+      title="Результаты оценки и отчёт"
+      lead="Скачайте расчёт демонстрационного объекта или продолжите работу в личном проекте."
+    >
+      <div className="space-y-6">
+        <aside className="flex items-start gap-3 border-y border-line py-4" aria-label="Статус оценки">
+          <Info size={16} className="mt-0.5 shrink-0 text-[#d6633c]" />
+          <div>
+            <p className="text-[13.5px] font-semibold">Предварительная оценка</p>
+            <p className="mt-1 text-[13px] text-ink-3">Результат требует проверки при обследовании объекта.</p>
+          </div>
+        </aside>
+        <Section title="Скачать отчёт" description="Оба формата доступны без аккаунта.">
+          <div className="grid gap-4 md:grid-cols-2">
+            {(
+              [
+                {
+                  format: 'pdf',
+                  title: 'ПредТЭО, PDF',
+                  text: 'Объект, подобранные роботы, экономика, результаты имитации и основания решения.',
+                  Icon: FileText,
+                },
+                {
+                  format: 'xlsx',
+                  title: 'Расчёт, Excel',
+                  text: 'Исходные параметры, формулы, денежные потоки, допущения и источники.',
+                  Icon: FileSpreadsheet,
+                },
+              ] as const
+            ).map(({ format, title, text, Icon }) => (
+              <div key={format} className="flex flex-col rounded-xl border border-line bg-surface-2 p-5">
+                <Icon size={22} className="text-ink-3" />
+                <h3 className="h3 mt-3">{title}</h3>
+                <p className="mt-2 flex-1 text-[13px] leading-relaxed text-ink-3">{text}</p>
+                <Button
+                  variant="outline"
+                  className="mt-5 self-start"
+                  onClick={() => void download(format)}
+                  disabled={!!busy}
+                >
+                  {busy === format ? <Spinner /> : <Download />}Скачать {format === 'pdf' ? 'PDF' : 'Excel'}
+                </Button>
+              </div>
+            ))}
+          </div>
+          <p className="meta mt-4">
+            Файлы относятся к исходному примеру после проверки имитацией{changed ? ', без ваших пробных изменений' : ''}
+            . Расчёт от {formatDateTime(demo.prepared_at)}.
+          </p>
+          {error && (
+            <p className="mt-3 text-[13px] text-crit" role="alert">
+              {error}
+            </p>
+          )}
+        </Section>
+        <FullAccess demo={demo} />
       </div>
-      <div className="demo-actions">
-        <button className="demo-button" disabled={!!busy} onClick={() => void download('pdf')}>
-          <Download size={17} />
-          {busy === 'pdf' ? 'Готовим PDF…' : 'Скачать PDF'}
-        </button>
-        <button className="demo-button demo-button-secondary" disabled={!!busy} onClick={() => void download('xlsx')}>
-          <Download size={17} />
-          {busy === 'xlsx' ? 'Готовим Excel…' : 'Excel с формулами'}
-        </button>
-      </div>
-      <p className="demo-small">
-        Пример рассчитан {formatDateTime(demo.prepared_at)}. Ядро {demo.calculations[0].versions.engine_version}.
-        Предварительная оценка, требующая обследования объекта.
-      </p>
-      <hr />
-      <h3>Теперь — ваш объект</h3>
-      <p>
-        Создайте личный проект с исходными данными этого примера. Замените параметры своими, выполните подбор и
-        запустите собственную имитацию. Пробные изменения гостя не переносятся.
-      </p>
-      {status === 'authenticated' ? (
-        <button className="demo-button" disabled={!!busy} onClick={() => void create()}>
-          {busy === 'create' ? 'Создаём проект…' : 'Создать проект по исходному примеру'}
-          <ArrowUpRight size={17} />
-        </button>
-      ) : (
-        <Link className="demo-button" to="/login" state={{ from: `/demo/${demo.demo.key}?step=report` }}>
-          Войти или зарегистрироваться для своего проекта
-          <ArrowUpRight size={17} />
-        </Link>
-      )}
-      {error && (
-        <p className="demo-notice" role="alert">
-          {error}
-        </p>
-      )}
-    </section>
+    </GuestScreen>
   )
 }

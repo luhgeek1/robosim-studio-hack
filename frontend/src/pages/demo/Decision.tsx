@@ -1,162 +1,94 @@
-import type { DemoResult, DemoSnapshot } from '@/entities/demo/api'
+import { ArrowLeft, ArrowRight, Info } from 'lucide-react'
+import { Link } from 'react-router'
+import type { DemoChanges, DemoResult, DemoSnapshot } from '@/entities/demo/api'
+import { demoUrl } from '@/entities/demo/navigation'
 import type { CalculationRun } from '@/shared/api/types'
-import { formatNumber as n, formatRub as rub, formatYears, formatPct } from '@/shared/lib/format'
-import { CashflowChart } from '@/widgets/cashflow/ComparisonCashflowChart'
+import { Button } from '@/shared/ui/button'
+import { DemoBadge } from './DemoBadge'
+import { Evidence } from './Evidence'
+import { Economy } from './Economy'
+import { DemoCosts } from './DemoCosts'
+import type { FleetCheckState } from './FleetCheck'
 
 export function Decision({
   demo,
   current,
   result,
-  changed,
   pending,
+  failed,
+  value,
+  onChange,
+  onRetry,
+  fleet,
 }: {
   demo: DemoSnapshot
   current: CalculationRun
   result?: DemoResult
-  changed: boolean
   pending: boolean
+  failed: string | null
+  value: DemoChanges
+  onChange: (v: DemoChanges) => void
+  onRetry: () => void
+  fleet: FleetCheckState
 }) {
-  const m = current.metrics
-  const original = demo.calculations.find((c) => c.scenario_id === demo.primary_scenario_id)!
   return (
-    <div className="demo-decision" aria-busy={pending}>
-      <div className="demo-panel demo-verdict">
-        <div className="demo-eyebrow">
-          {changed ? 'ПРОБНЫЙ РАСЧЁТ · ' : 'ИСХОДНЫЙ ПРИМЕР · '}
-          {current.scenario_kind === 'raas' ? 'УСЛУГА' : current.scenario_kind === 'lease' ? 'ЛИЗИНГ' : 'ПОКУПКА'}
+    <div className="mx-auto w-full max-w-300 space-y-4 pt-1 pb-10">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 pb-1">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.025em]">Подбор и экономика</h1>
+            <DemoBadge compact />
+          </div>
+          <p className="mt-1.5 text-[12px] text-ink-3">{demo.demo.name}</p>
         </div>
-        <h2>{current.interpretation.headline}</h2>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to={demoUrl(demo.demo.key, 'object')}>
+              <ArrowLeft /> Объект
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to={demoUrl(demo.demo.key, 'simulation')}>
+              Имитация <ArrowRight />
+            </Link>
+          </Button>
+        </div>
+      </header>
+      {failed && (
+        <div
+          className="flex flex-wrap items-center gap-2 rounded-md border border-crit/20 bg-crit-soft px-3 py-2 text-[12px] text-crit"
+          role="alert"
+        >
+          <span className="min-w-0 flex-1">
+            Не удалось пересчитать: {failed}. Показан последний успешный результат.
+          </span>
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            Повторить
+          </Button>
+        </div>
+      )}
+      <Economy metrics={current.metrics} value={value} pending={pending} failed={failed} onChange={onChange} />
+      <div className="flex items-start gap-2 px-1 text-[12px] leading-relaxed text-ink-2">
+        <Info size={14} className="mt-0.5 shrink-0 text-ink-3" />
         <p>
-          {changed
-            ? 'Проверьте, как ваши допущения повлияли на результат.'
-            : 'Один и тот же парк сравнивается в покупке, лизинге и услуге. Ниже — затраты и результат каждого варианта.'}
+          {current.interpretation.headline}
+          {result && !result.simulation_valid && fleet.changedVolume && (
+            <span className="ml-1 text-warn">Новая нагрузка не проверена имитацией.</span>
+          )}
         </p>
-        {pending && (
-          <div className="demo-notice" role="status">
-            Показан последний результат. Новые условия ещё рассчитываются.
-          </div>
-        )}
-        <div className="demo-metrics">
-          <div>
-            <span>Парк с резервом</span>
-            <strong>
-              {n(m.robots_total)} <small>роботов</small>
-            </strong>
-          </div>
-          <div>
-            <span>Вложения собственника</span>
-            <strong>{rub(m.owner_upfront_rub ?? m.capex_rub)}</strong>
-          </div>
-          <div>
-            <span>Годовой денежный эффект</span>
-            <strong>{rub(m.effect_rub_year)}</strong>
-          </div>
-          <div>
-            <span>NPV проекта за {m.horizon_years} лет</span>
-            <strong>{rub(m.npv_rub)}</strong>
-          </div>
-        </div>
-        <p className="demo-fleet-line">
-          {current.sizing.map((s) => `${s.count.final} × ${s.product_name} (резерв ${s.count.reserve})`).join(' · ')}
-        </p>
-        <details className="demo-details">
-          <summary>Как читать финансовый результат</summary>
-          <p>{current.interpretation.summary}</p>
-        </details>
-        <div className="demo-facts">
-          <span>
-            Окупаемость: <b>{formatYears(m.payback_years)}</b>
-          </span>
-          <span>
-            Денежная реализация труда: <b>{formatPct(m.labor_cash_realization_pct)}</b>
-          </span>
-          <span>
-            Высвобождение: <b>{n(m.labor_hours_released_year)} чел·ч/год</b>
-          </span>
-        </div>
-        {result && (
-          <p className="demo-small">
-            {result.simulation_valid
-              ? 'Физические условия прежние: подтверждение парка имитацией сохранено.'
-              : 'Текущий парк не подтверждён сохранённой имитацией.'}
-          </p>
-        )}
-        {(result?.notes ?? [demo.demo.scope]).map((note) => (
-          <p className="demo-small" key={note}>
-            {note}
-          </p>
-        ))}
-        {current.risks
-          .filter((r) => r.severity === 'high')
-          .slice(0, 2)
-          .map((r) => (
-            <div className="demo-notice" key={r.code}>
-              <b>{r.title}.</b> {r.description}
-            </div>
-          ))}
       </div>
-      <section className="demo-panel">
-        <div className="demo-section-heading">
-          <div>
-            <div className="demo-eyebrow">ОДИН ОБЪЕКТ · ОДИН ПАРК</div>
-            <h2>Как внедрять — и стоит ли вообще</h2>
-          </div>
-        </div>
-        <p>
-          Сравнение исходного примера. Все варианты начинают денежный поток с нулевого периода. Пробный расчёт выше
-          показан отдельно.
+      <Evidence demo={demo} calculation={current} fleet={fleet} pending={pending} />
+      <DemoCosts demo={demo} calculation={current} pending={pending} />
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+        <p className="text-[11px] leading-relaxed text-ink-3">
+          Пробные изменения действуют в этой вкладке. Исходный пример и отчёт не изменяются.
         </p>
-        <p className="demo-fleet-line">
-          {original.sizing
-            .map(
-              (s) =>
-                `${s.product_name}: ${s.count.final} шт., резерв ${s.count.reserve}, станций ${s.stations_count ?? '—'}, зарядных мест ${s.chargers_count ?? '—'}`,
-            )
-            .join(' · ')}
-        </p>
-        <div className="demo-comparison">
-          {demo.comparison.scenarios.map((s) => (
-            <article
-              key={s.scenario_id}
-              className={s.scenario_id === demo.comparison.recommendation?.scenario_id ? 'is-recommended' : ''}
-            >
-              <div className="demo-eyebrow">
-                {s.scenario_id === demo.comparison.recommendation?.scenario_id
-                  ? 'РЕКОМЕНДАЦИЯ РАСЧЁТА'
-                  : s.kind === 'baseline'
-                    ? 'ТОЧКА СРАВНЕНИЯ'
-                    : 'ВАРИАНТ ВНЕДРЕНИЯ'}
-              </div>
-              <h3>{s.name}</h3>
-              <strong>{rub(s.metrics.tco_rub)}</strong>
-              <small>все затраты за {s.metrics.horizon_years} лет</small>
-              <dl>
-                <div>
-                  <dt>На старте</dt>
-                  <dd>{rub((s.metrics.owner_upfront_rub ?? s.metrics.capex_rub) || 0)}</dd>
-                </div>
-                <div>
-                  <dt>NPV проекта</dt>
-                  <dd>{s.kind === 'baseline' ? '—' : rub(s.metrics.npv_rub)}</dd>
-                </div>
-                <div>
-                  <dt>Эффект в год</dt>
-                  <dd>{s.kind === 'baseline' ? '—' : rub(s.metrics.effect_rub_year)}</dd>
-                </div>
-              </dl>
-              <p className="demo-small">
-                {s.kind === 'baseline' ? 'Текущий ручной процесс' : `${s.metrics.robots_total} роботов с резервом`}
-              </p>
-              {s.kind === 'raas' && <p className="demo-small">Тариф — модельное допущение, уточняется в КП.</p>}
-            </article>
-          ))}
-        </div>
-        <p className="demo-small">{demo.comparison.recommendation?.rationale?.join(' ')}</p>
-        <details className="demo-details">
-          <summary>Посмотреть денежные потоки всех вариантов</summary>
-          <CashflowChart table={demo.comparison} />
-        </details>
-      </section>
+        <Button asChild size="sm" variant="outline">
+          <Link to={demoUrl(demo.demo.key, 'simulation')}>
+            К проверке парка <ArrowRight />
+          </Link>
+        </Button>
+      </footer>
     </div>
   )
 }

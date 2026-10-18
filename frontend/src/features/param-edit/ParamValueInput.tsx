@@ -4,6 +4,7 @@ import { cn } from '@/shared/lib/utils'
 import { Input } from '@/shared/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Switch } from '@/shared/ui/switch'
+import { DimensionsValueInput } from './DimensionsValueInput'
 import { parseDraft, sameValue, toDraft, type ParamType, type ParamValue } from './parse'
 
 export function ParamValueInput({
@@ -19,6 +20,19 @@ export function ParamValueInput({
 }) {
   const type: ParamType = param.definition?.type ?? 'string'
   const label = `${param.name}${param.unit ? `, ${param.unit}` : ''}`
+
+  if (type === 'dimensions') {
+    return (
+      <DimensionsValueInput
+        key={`${param.key}:${String(param.value)}`}
+        param={param}
+        label={label}
+        pending={pending}
+        onCommit={onCommit}
+        suffix={suffix ?? param.unit}
+      />
+    )
+  }
 
   if (type === 'boolean') {
     return (

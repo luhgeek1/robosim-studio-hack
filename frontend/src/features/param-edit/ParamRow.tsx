@@ -21,6 +21,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
   const check = param.validation
   const flagged = check.status !== 'ok'
   const error = check.status === 'error'
+  const dimensions = def?.type === 'dimensions'
 
   const commit = (value: ParamValue) => update.mutateAsync({ key: param.key, value, unit: param.unit ?? null })
 
@@ -63,13 +64,23 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
         )}
       </div>
 
-      {/* На телефоне поле во всю ширину под названием, а история и сброс — справа от него. */}
-      <div className="flex items-start gap-1.5">
-        <span className="mt-1 flex h-6 shrink-0 items-center justify-end max-sm:order-last max-sm:mt-2 sm:w-14">
+      {/* На телефоне поле под названием; у габаритов история и сброс ниже, чтобы размеры помещались целиком. */}
+      <div className={cn('flex items-start gap-1.5', dimensions && 'max-sm:flex-wrap max-sm:gap-y-1')}>
+        <span
+          className={cn(
+            'mt-1 flex h-6 shrink-0 items-center justify-end max-sm:order-last max-sm:mt-2 sm:w-14',
+            dimensions && 'max-sm:mt-0 max-sm:ml-auto',
+          )}
+        >
           {pending ? (
             <Spinner className="size-3 text-ink-3" />
           ) : (
-            <span className="flex items-center opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100">
+            <span
+              className={cn(
+                'flex items-center opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100',
+                dimensions && 'max-sm:opacity-100',
+              )}
+            >
               {param.history_count > 0 && <ParamHistory projectId={projectId} param={param} />}
               {RESETTABLE.has(param.provenance.status) && (
                 <Tooltip>
@@ -90,7 +101,12 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
             </span>
           )}
         </span>
-        <div className="min-w-0 flex-1 sm:w-50 sm:flex-none sm:shrink-0">
+        <div
+          className={cn(
+            'min-w-0 flex-1 sm:flex-none sm:shrink-0',
+            dimensions ? 'max-sm:basis-full sm:w-72' : 'sm:w-50',
+          )}
+        >
           <ParamValueInput param={param} pending={pending} onCommit={commit} suffix={param.unit} />
         </div>
       </div>

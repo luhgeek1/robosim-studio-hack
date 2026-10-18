@@ -36,22 +36,44 @@ export function WorkbenchFrame({
   step,
   title,
   titleHint,
+  eyebrow,
   actions,
   inFlow = false,
+  navigation,
+  className,
   children,
 }: {
   projectId: string
   step: string
   title: ReactNode
   titleHint?: string
+  eyebrow?: ReactNode
   actions?: ReactNode
   inFlow?: boolean
+  navigation?: {
+    index: number
+    total: number
+    previous?: { label: string; to: string }
+    next?: { label: string; to: string }
+  }
+  className?: string
   children: ReactNode
 }) {
   const dockHalf = useDockHalf()
-  const idx = stepIndex(step)
-  const prev = PROJECT_STEPS[idx - 1]
-  const next = PROJECT_STEPS[idx + 1]
+  const idx = navigation?.index ?? stepIndex(step)
+  const total = navigation?.total ?? PROJECT_STEPS.length
+  const mainPrevious = PROJECT_STEPS[idx - 1]
+  const mainNext = PROJECT_STEPS[idx + 1]
+  const prev = navigation
+    ? navigation.previous
+    : mainPrevious
+      ? { label: mainPrevious.label, to: `/projects/${projectId}/${mainPrevious.id}` }
+      : undefined
+  const next = navigation
+    ? navigation.next
+    : mainNext
+      ? { label: mainNext.label, to: `/projects/${projectId}/${mainNext.id}` }
+      : undefined
   const frame = (
     <div
       className={cn(
@@ -60,33 +82,46 @@ export function WorkbenchFrame({
           ? // Под шапкой, поверх распорки плашки шагов (66 px) и верхнего отступа страницы проекта (20 px).
             '-mx-6 -mt-[5.375rem] h-[calc(100dvh-3.5rem)] shrink-0 border-b border-line'
           : 'fixed inset-x-0 top-14 bottom-0 z-20',
+        className,
       )}
       style={{ '--dock-half': `${dockHalf}px` } as CSSProperties}
     >
       <div className="flex h-[4.125rem] shrink-0 items-center justify-between gap-3 border-b border-line bg-surface-2 px-2">
-        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
+        <div
+          className={cn(
+            'flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5',
+            eyebrow && 'max-xl:max-w-[calc(100%-3rem)]',
+          )}
+        >
           {prev && (
             <Button variant="ghost" size="icon-sm" asChild title={`Назад: ${prev.label}`}>
-              <Link to={`/projects/${projectId}/${prev.id}`} aria-label={`Назад: ${prev.label}`}>
+              <Link to={prev.to} aria-label={`Назад: ${prev.label}`}>
                 <ArrowLeft />
               </Link>
             </Button>
           )}
           <div className="min-w-0">
-            <div className="hud flex items-center gap-1.5">
-              <span className="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden />
-              Шаг {pad(idx + 1)} / {pad(PROJECT_STEPS.length)}
-            </div>
+            {eyebrow ?? (
+              <div className="hud flex items-center gap-1.5">
+                <span className="size-1.5 shrink-0 rounded-full bg-signal" aria-hidden />
+                Шаг {pad(idx + 1)} / {pad(total)}
+              </div>
+            )}
             <h1 className="truncate text-[14px] font-semibold tracking-[-0.01em]" title={titleHint}>
               {title}
             </h1>
           </div>
         </div>
-        <div className="flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5">
+        <div
+          className={cn(
+            'flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5',
+            eyebrow && 'max-xl:max-w-none',
+          )}
+        >
           <div className="flex min-w-0 items-center gap-1.5">{actions}</div>
           {next && (
             <Button variant="ghost" size="icon-sm" asChild title={`Далее: ${next.label}`}>
-              <Link to={`/projects/${projectId}/${next.id}`} aria-label={`Далее: ${next.label}`}>
+              <Link to={next.to} aria-label={`Далее: ${next.label}`}>
                 <ArrowRight />
               </Link>
             </Button>

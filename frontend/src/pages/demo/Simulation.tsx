@@ -1,126 +1,178 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useReducedMotion } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
+import { Link } from 'react-router'
 import { useDemoReplay, type DemoSnapshot } from '@/entities/demo/api'
+import { demoUrl } from '@/entities/demo/navigation'
 import { buildTracks, usePlayback } from '@/entities/simulation'
-import { LayoutMap } from '@/widgets/layout-map'
-import { RobotsLayer, ROBOT_LEGEND } from '@/widgets/twin/Robots2D'
-import { PlayerBar, usePlaybackDriver } from '@/widgets/twin/PlayerBar'
-import { formatNumber as n, formatRub as rub } from '@/shared/lib/format'
+import { formatNumber } from '@/shared/lib/format'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
+import { Callout } from '@/shared/ui/page'
+import { LayoutMap } from '@/widgets/layout-map'
+import type { TwinView } from '@/widgets/twin'
+import { PlayerBar, usePlaybackDriver } from '@/widgets/twin/PlayerBar'
+import { WorkbenchFrame, WorkbenchGrid, PaneSection, PaneTitle, StatusBar } from '@/widgets/workbench'
+import { GuestScreen } from './GuestScreen'
+import { FleetCheckPanel, type FleetCheckState } from './FleetCheck'
+import { DemoBadge } from './DemoBadge'
+const Twin = lazy(() => import('@/widgets/twin').then((m) => ({ default: m.Twin })))
+const PANELS = { left: false, right: true, bottom: true }
 
-export function Simulation({ demo, changedVolume }: { demo: DemoSnapshot; changedVolume: boolean }) {
-  const t = usePlayback((s) => (s.runId === demo.simulation?.id ? s.t : 0))
+export function Simulation({ demo, fleet }: { demo: DemoSnapshot; fleet: FleetCheckState }) {
+  const [view, setView] = useState<TwinView>('3d')
+  const reduced = useReducedMotion()
   const total = Number(demo.simulation?.summary?.duration_hours ?? 0) * 3600
-  const window = Math.floor(Math.min(t, Math.max(0, total - 1)) / 3600) * 3600
-  const replay = useDemoReplay(demo.demo.key, demo.revision, window, !!demo.simulation)
+  const replayWindow = usePlayback((s) =>
+    s.runId === demo.simulation?.id ? Math.floor(Math.min(s.t, Math.max(0, total - 1)) / 3600) * 3600 : 0,
+  )
+  const replay = useDemoReplay(demo.demo.key, demo.revision, replayWindow, !!demo.simulation)
   const tracks = useMemo(() => (replay.data ? buildTracks(replay.data, replay.data.layout) : []), [replay.data])
   usePlaybackDriver()
   useEffect(() => {
-    if (replay.data) usePlayback.getState().load(replay.data.simulation_id, replay.data.total_seconds)
-  }, [replay.data])
+    if (replay.data) {
+      const c = usePlayback.getState()
+      c.load(replay.data.simulation_id, replay.data.total_seconds)
+      if (reduced) c.setPlaying(false)
+    }
+  }, [replay.data, reduced])
   const resume = useRef(false)
   useEffect(() => {
-    const clock = usePlayback.getState()
-    if (replay.isFetching && clock.playing) {
+    const c = usePlayback.getState()
+    if (replay.isFetching && c.playing) {
       resume.current = true
-      clock.setPlaying(false)
+      c.setPlaying(false)
     } else if (!replay.isFetching && !replay.isError && resume.current) {
       resume.current = false
-      clock.setPlaying(true)
+      c.setPlaying(true)
     }
   }, [replay.isFetching, replay.isError])
   useEffect(() => () => usePlayback.getState().setPlaying(false), [])
   const sweep = demo.sweep
-  return (
-    <section className="demo-panel">
-      <div className="demo-eyebrow">СОХРАНЁННЫЙ ПРОГОН · SEED {demo.simulation?.seed}</div>
-      <h2>Имитация меняет решение</h2>
-      <p>
-        Движение на карте воспроизводит события расчётной модели. Маршруты, очереди, зарядка и общие ресурсы участвуют в
-        проверке парка.
-      </p>
-      {changedVolume && (
-        <div className="demo-notice">
-          Вы изменили нагрузку. Здесь показан исходный пример: этот прогон не подтверждает ваши новые условия.
-        </div>
-      )}
-      {sweep && (
-        <>
-          <div className="demo-sim-metrics">
-            <div>
-              <span>Парк с резервом по формуле</span>
-              <strong>{n(sweep.by_formula?.total)}</strong>
-              <small>{rub(sweep.by_formula?.capex_rub)}</small>
-            </div>
-            <div>
-              <span>{sweep.applied ? 'Парк с резервом после проверки' : 'Парк не подтверждён'}</span>
-              <strong>{sweep.applied ? n(sweep.by_simulation?.total) : '—'}</strong>
-              <small>{sweep.applied ? rub(sweep.by_simulation?.capex_rub) : 'Сохранён аналитический расчёт'}</small>
-            </div>
-            <div>
-              <span>Совместная проверка</span>
-              <strong>{sweep.joint_validation?.status === 'passed' ? 'Пройдена' : 'Не пройдена'}</strong>
-              <small>{sweep.joint_validation?.replications} повторений</small>
-            </div>
-          </div>
-          <p className="demo-small">{sweep.explanation}</p>
-        </>
-      )}
-      {replay.isError ? (
+  const sla = demo.simulation?.summary?.sla as { achieved_pct?: number; target_pct?: number } | undefined
+  if (replay.isError)
+    return (
+      <GuestScreen title="Имитация">
         <ErrorBlock error={replay.error} onRetry={() => replay.refetch()} />
-      ) : replay.data ? (
-        <>
-          <LayoutMap layout={replay.data.layout} className="h-[400px]" legend={false}>
-            {(view) => <RobotsLayer tracks={tracks} k={view.k} />}
-          </LayoutMap>
-          <div className="demo-player">
-            <PlayerBar disabled={replay.isFetching} />
-          </div>
-          <div className="demo-facts">
-            {ROBOT_LEGEND.map(([color, label]) => (
-              <span key={label}>
-                <i style={{ background: color }} />
-                {label}
-              </span>
-            ))}
-          </div>
-        </>
-      ) : (
-        <LoadingBlock label="Загружаем события имитации…" />
-      )}
-      <details className="demo-details">
-        <summary>Кривая «количество роботов → уровень сервиса»</summary>
-        <div className="demo-table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Рабочих роботов процесса</th>
-                <th>Минимальный SLA</th>
-                <th>Проверка</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sweep?.points.map((point) => (
-                <tr key={point.count}>
-                  <td>{point.count}</td>
-                  <td>{n(point.sla_min_pct ?? point.sla_achieved_pct)}%</td>
-                  <td>{point.passed ? 'Пройдена' : 'Не пройдена'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="demo-small">
-          Проверен диапазон кандидатов. Результат не доказывает глобальный минимум среди всех возможных конфигураций.
-        </p>
-      </details>
-      {sweep?.joint_validation?.skipped_processes.map((process) => (
-        <p key={process.process_key} className="demo-notice">
-          {process.reason}
-        </p>
-      ))}
-      <p className="demo-small">
-        Планировка сгенерирована по параметрам объекта. Для внедрения нужно обследование и проверка на реальном плане.
-      </p>
-    </section>
+      </GuestScreen>
+    )
+  if (!demo.simulation)
+    return (
+      <GuestScreen title="Имитация">
+        <Callout>Для этого примера прогон пока недоступен. Подбор и расчёт можно посмотреть в предыдущем шаге.</Callout>
+      </GuestScreen>
+    )
+  if (!replay.data)
+    return (
+      <GuestScreen title="Имитация">
+        <LoadingBlock label="Загружаем сохранённый прогон…" />
+      </GuestScreen>
+    )
+  return (
+    <WorkbenchFrame
+      projectId={demo.demo.key}
+      step="simulation"
+      title={demo.demo.name}
+      titleHint={demo.demo.name}
+      eyebrow={<DemoBadge compact />}
+      className="top-[10.375rem] xl:top-14"
+      navigation={{
+        index: 2,
+        total: 4,
+        previous: { label: 'Подбор и экономика', to: demoUrl(demo.demo.key, 'decision') },
+        next: { label: 'Отчёт', to: demoUrl(demo.demo.key, 'report') },
+      }}
+    >
+      <div className="guest-simulation-grid flex min-h-0 flex-1 flex-col max-lg:[&>div]:auto-rows-max max-lg:[&>div>aside>div]:h-auto max-lg:[&>div>aside>div]:overflow-visible [@media(max-width:1023px)]:[&>div>section]:order-2">
+        <WorkbenchGrid
+          panels={PANELS}
+          leftWidth={0}
+          rightWidth={320}
+          left={null}
+          center={
+            <Suspense
+              fallback={
+                <LayoutMap
+                  layout={replay.data.layout}
+                  fill
+                  legend={false}
+                  simplified
+                  className="h-full rounded-none border-0"
+                />
+              }
+            >
+              <Twin layout={replay.data.layout} tracks={tracks} view={view} onViewChange={setView} controls="basic" />
+            </Suspense>
+          }
+          right={
+            <>
+              <PaneTitle>От формулы — к проверенному парку</PaneTitle>
+              <FleetCheckPanel demo={demo} fleet={fleet} />
+              <PaneSection title="Сохранённый прогон · задачи в срок">
+                <div className="display num text-[36px]">
+                  {formatNumber(sla?.achieved_pct)}
+                  <span className="ml-1 text-[20px] text-ink-3">%</span>
+                </div>
+                <p className="meta mt-1">при цели {formatNumber(sla?.target_pct)}%</p>
+                <p className="mt-3 text-[12px] leading-relaxed text-ink-3">
+                  Доля задач, которые парк успел выполнить за необходимое время.
+                </p>
+              </PaneSection>
+              <PaneSection title="Условия проверки">
+                <p className="text-[13px]">
+                  {sweep?.joint_validation?.status === 'passed'
+                    ? `Проверка пройдена в ${sweep.joint_validation.replications} прогонах.`
+                    : 'Совместная проверка не подтверждена.'}
+                </p>
+                <p className="mt-2 text-[12px] leading-relaxed text-ink-3">
+                  Сохранённый прогон на сгенерированной планировке. Движение, очереди и зарядка участвуют в расчёте.
+                </p>
+                <details className="group mt-3 text-[12px] text-ink-3">
+                  <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                    Подробнее
+                    <ChevronDown size={13} aria-hidden="true" className="transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="mt-2 leading-relaxed">{sweep?.explanation}</p>
+                  {sweep?.joint_validation?.skipped_processes.map((p) => (
+                    <p key={p.process_key} className="mt-2">
+                      {p.reason}
+                    </p>
+                  ))}
+                </details>
+              </PaneSection>
+              <div className="mt-auto border-t border-line p-3.5 text-[12px] leading-relaxed text-ink-3">
+                В своём проекте можно редактировать план, менять парк и проверять пиковую нагрузку.
+                <Link
+                  to={demoUrl(demo.demo.key, 'report')}
+                  className="mt-2 block font-medium text-ink underline underline-offset-4"
+                >
+                  Продолжить в своём проекте
+                </Link>
+              </div>
+            </>
+          }
+          bottom={
+            <div className="guest-simulation-player px-4 py-3 [&>div]:flex-wrap [&_input[type=range]]:basis-[28%] [@media(max-width:720px)]:[&>div]:gap-2 [@media(max-width:720px)]:[&_input[type=range]]:basis-1/5">
+              <p className="mb-2 text-[11px] text-ink-3">
+                На карте — подготовленный прогон проверенного парка, а не текущая оценка по формуле.
+              </p>
+              <PlayerBar disabled={replay.isFetching} speeds={[60, 120, 300]} />
+            </div>
+          }
+          status={
+            <div className="order-5 col-span-full lg:order-none">
+              <StatusBar
+                status="Демо-прогон"
+                live={false}
+                items={['Исходные условия']}
+                metrics={[`SLA ${formatNumber(sla?.achieved_pct)}%`]}
+                panels={PANELS}
+                onToggle={() => {}}
+                toggles={[]}
+              />
+            </div>
+          }
+        />
+      </div>
+    </WorkbenchFrame>
   )
 }

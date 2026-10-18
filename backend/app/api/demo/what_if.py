@@ -8,7 +8,7 @@ from app.api.schemas.calculations import CalculationRun
 from app.api.schemas.demo import DemoSnapshot, DemoWhatIfRequest, DemoWhatIfResult
 from app.db.uow import UnitOfWork
 from app.domain.common.provenance import Provenance, ProvenanceStatus
-from app.domain.scenario.models import NormOverride
+from app.domain.scenario.models import CountMode, NormOverride
 from app.engine.calculation import CalculationInput, calculate
 from app.engine.sensitivity import Driver, DriverKind, Group, apply
 from app.engine.verdict import assess_risks, interpret
@@ -48,6 +48,27 @@ async def what_if(uow: UnitOfWork, demo: DemoSnapshot, request: DemoWhatIfReques
     scenario = await ScenarioService(uow, DEMO_OWNER).owned(scenario_id)
     snapshot = await CalculationService(uow, DEMO_OWNER).snapshot(scenario)
     inp = snapshot.input
+    confirmed = (
+        request.fleet_source == "simulation"
+        and request.volume_multiplier == 1
+        and bool(demo.sweep and demo.sweep.applied)
+    )
+    if not confirmed:
+        inp = replace(
+            inp,
+            items=[
+                replace(
+                    item,
+                    count_mode=CountMode.AUTO,
+                    count_manual=None,
+                    simulated_robots=None,
+                    simulated_basis=None,
+                    simulation_id=None,
+                    simulation_outdated=False,
+                )
+                for item in inp.items
+            ],
+        )
     for group, value in (
         (Group.LABOR_COST, request.salary_multiplier),
         (Group.EQUIPMENT_PRICE, request.robot_price_multiplier),
@@ -85,8 +106,15 @@ async def what_if(uow: UnitOfWork, demo: DemoSnapshot, request: DemoWhatIfReques
             },
         }
     )
-    confirmed = request.volume_multiplier == 1 and bool(demo.sweep and demo.sweep.applied)
     notes = ["Пробный расчёт в текущей вкладке. Общий пример и его отчёт не изменены."]
+    if request.fleet_source == "formula":
+        notes.append(
+            "Парк и экономика рассчитаны по формуле, без применения подготовленной проверки имитацией."
+        )
+    elif confirmed:
+        notes.append(
+            "Применён парк из подготовленной проверки исходной нагрузки; новая имитация не запускалась."
+        )
     if request.volume_multiplier != 1:
         notes.append(
             "Изменилась нагрузка: парк рассчитан аналитически. "

@@ -36,6 +36,8 @@ export type TwinProps = {
   /** Where the 3D camera toolbar sits; a host with its own top-left overlays moves it to the bottom corner. */
   toolbarPlacement?: ToolbarPlacement
   className?: string
+  /** Basic viewing controls for the introductory workspace. */
+  controls?: 'full' | 'basic'
 }
 
 // The twin is drawn from the generated layout (zones, racks, docks, chargers, route graph) and moved only by the
@@ -52,6 +54,7 @@ export function Twin({
   capture,
   toolbarPlacement,
   className = '',
+  controls = 'full',
 }: TwinProps) {
   const [ownView, setOwnView] = useState<TwinView>('3d')
   const view = controlledView ?? ownView
@@ -116,6 +119,7 @@ export function Twin({
         <div ref={planRef} className="absolute inset-0">
           <LayoutMap
             layout={layout}
+            simplified={controls === 'basic'}
             fill
             legend={false}
             showGraph={routes}
@@ -138,6 +142,7 @@ export function Twin({
       ) : (
         <>
           <MapToolbar
+            basic={controls === 'basic'}
             onAction={(action) => setCommand((c) => ({ action, id: c.id + 1 }))}
             routes={routes}
             onRoutes={() => setLayer((v) => (v === 'graph' ? 'none' : 'graph'))}

@@ -9793,6 +9793,13 @@ components:
       additionalProperties: false
       description: Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией.
       properties:
+        fleet_source:
+          type: string
+          enum:
+            - formula
+            - simulation
+          default: simulation
+          description: Расчёт по формуле или применение заранее проверенного парка. Изменённая нагрузка всегда считается по формуле.
         salary_multiplier:
           type: number
           minimum: 0.5

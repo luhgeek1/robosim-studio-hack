@@ -67,6 +67,7 @@ class DemoSnapshot(ApiModel):
 
 
 class DemoWhatIfRequest(ApiModel):
+    fleet_source: Literal["formula", "simulation"] = "simulation"
     salary_multiplier: float = Field(default=1, ge=0.5, le=2, allow_inf_nan=False)
     volume_multiplier: float = Field(default=1, ge=0.5, le=2, allow_inf_nan=False)
     robot_price_multiplier: float = Field(default=1, ge=0.5, le=2, allow_inf_nan=False)
