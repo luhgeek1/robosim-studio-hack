@@ -21,12 +21,12 @@ export function PaneSection({
   const [open, setOpen] = useState(defaultOpen)
   return (
     <section className={cn('border-b border-line last:border-b-0', className)}>
-      <div className="flex h-8 items-center gap-1 pr-2 pl-1.5">
+      <div className="flex min-h-11 items-center gap-1 pr-2 pl-1.5 lg:min-h-8">
         <button
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="hud flex min-w-0 flex-1 items-center gap-1 rounded-[6px] py-1 text-left text-ink-2 transition-colors hover:text-ink"
+          className="hud flex min-h-11 min-w-0 flex-1 items-center gap-1 rounded-[6px] py-1 text-left text-ink-2 transition-colors hover:text-ink lg:min-h-0"
         >
           <ChevronRight size={13} className={cn('shrink-0 transition-transform duration-200', open && 'rotate-90')} />
           <span className="truncate">{title}</span>
@@ -86,7 +86,7 @@ export function StatusBar({
     { key: 'right', icon: PanelRight, label: labels.right },
   ]
   return (
-    <footer className="col-span-full flex h-7 items-center gap-4 bg-ink px-3 font-mono text-[11px] tracking-[0.04em] text-white/70 uppercase">
+    <footer className="order-5 col-span-full flex min-h-9 flex-wrap items-center gap-x-4 gap-y-1 bg-ink px-3 py-2 font-mono text-[11px] tracking-[0.04em] text-white/70 uppercase lg:order-none lg:h-7 lg:min-h-0 lg:flex-nowrap lg:py-0">
       <span className="flex items-center gap-2 text-white">
         {live ? <PulseDot /> : <span className="size-1.5 rounded-full bg-white/50" />}
         {status}
@@ -102,7 +102,7 @@ export function StatusBar({
             {item}
           </span>
         ))}
-        <span className="flex items-center gap-0.5 border-l border-white/15 pl-2">
+        <span className="hidden items-center gap-0.5 border-l border-white/15 pl-2 lg:flex">
           {toggles
             .filter(({ key }) => shown.includes(key))
             .map(({ key, icon: Icon, label }) => (

@@ -13,7 +13,7 @@ import { ProductStatusMark } from '@/pages/catalog/parts'
 import { stagger } from '@/pages/admin/motion'
 import { ProposalEditor, type ProposalTarget } from './ProposalEditor'
 
-const COLUMNS = 'grid-cols-[minmax(0,1fr)_110px_110px_84px_176px]'
+const COLUMNS = 'grid-cols-3 lg:grid-cols-[minmax(0,1fr)_110px_110px_84px_176px]'
 const GAP_CHIPS = 3
 
 export function VendorProductsTab() {
@@ -32,7 +32,7 @@ export function VendorProductsTab() {
           Правки не меняют каталог сразу: администратор сверяет их с источником, и после одобрения карточка обновится у
           всех покупателей, а их расчёты предложат пересчёт.
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-[12.5px] text-ink-2">
             <Switch
               size="sm"
@@ -59,7 +59,7 @@ export function VendorProductsTab() {
       ) : (
         <div className="card overflow-hidden">
           <div
-            className={`grid ${COLUMNS} items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3`}
+            className={`hidden ${COLUMNS} items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3 lg:grid`}
           >
             <span>Продукт</span>
             <span className="text-right">Цена от</span>
@@ -107,17 +107,17 @@ function ProductRow({
       transition={stagger(index)}
       className={`grid ${COLUMNS} items-center gap-4 px-5 py-3.5`}
     >
-      <span className="min-w-0">
+      <span className="col-span-full min-w-0 lg:col-span-1">
         <span className="flex items-center gap-2">
           <Link
             to={`/catalog/${product.id}`}
-            className="truncate text-[14px] font-medium underline-offset-2 hover:underline"
+            className="text-[14px] leading-snug font-medium underline-offset-2 hover:underline lg:truncate"
           >
             {product.name}
           </Link>
           <ArrowUpRight size={13} className="shrink-0 text-ink-4" />
         </span>
-        <span className="flex items-center gap-1.5 truncate text-[12.5px] text-ink-3">
+        <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[12.5px] text-ink-3 lg:flex-nowrap lg:truncate">
           {product.solution_type_name} · <ProductStatusMark status={product.status} />
         </span>
         {gaps.length > 0 && (
@@ -139,17 +139,22 @@ function ProductRow({
           </span>
         )}
       </span>
-      <span className="num text-right text-[13.5px]">
+      <span className="num min-w-0 text-[13.5px] lg:text-right">
+        <span className="mb-1 block text-[11px] text-ink-3 lg:hidden">Цена от</span>
         {product.price_from.amount_rub > 0 ? formatRub(product.price_from.amount_rub) : '—'}
       </span>
-      <span className="num text-right text-[13px] text-ink-2">
+      <span className="num min-w-0 text-[13px] text-ink-2 lg:text-right">
+        <span className="mb-1 block text-[11px] text-ink-3 lg:hidden">Проекты / сценарии</span>
         {formatNumber(item.relevant_projects)} / {formatNumber(item.scenarios_count)}
       </span>
-      <span className="flex items-center justify-end gap-1.5 text-[12.5px] text-ink-2">
-        <ConfidenceRing value={product.completeness * 100} size={14} />
-        <span className="num">{formatPct(product.completeness, { share: true, digits: 0 })}</span>
+      <span className="text-[12.5px] text-ink-2">
+        <span className="mb-1 block text-[11px] text-ink-3 lg:hidden">Полнота</span>
+        <span className="flex items-center gap-1.5 lg:justify-end">
+          <ConfidenceRing value={product.completeness * 100} size={14} />
+          <span className="num">{formatPct(product.completeness, { share: true, digits: 0 })}</span>
+        </span>
       </span>
-      <span className="flex justify-end">
+      <span className="col-span-full flex justify-end max-lg:[&>button]:w-full lg:col-span-1">
         {pending ? (
           <Pill tone="warn">
             <Clock /> На модерации

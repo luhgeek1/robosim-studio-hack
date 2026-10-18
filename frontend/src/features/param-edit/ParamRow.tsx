@@ -68,7 +68,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
       <div className={cn('flex items-start gap-1.5', dimensions && 'max-sm:flex-wrap max-sm:gap-y-1')}>
         <span
           className={cn(
-            'mt-1 flex h-6 shrink-0 items-center justify-end max-sm:order-last max-sm:mt-2 sm:w-14',
+            'mt-1 flex h-6 shrink-0 items-center justify-end max-sm:order-last max-sm:mt-0 max-sm:h-10 sm:w-14',
             dimensions && 'max-sm:mt-0 max-sm:ml-auto',
           )}
         >

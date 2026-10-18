@@ -1,17 +1,20 @@
 import { motion } from 'framer-motion'
+import { ArrowLeft, ArrowRight, Check, ChevronDown } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, Outlet, matchPath, useLocation, useMatch } from 'react-router'
 import { DEMO_STEPS, demoStep, demoUrl } from '@/entities/demo/navigation'
 import { useDemoWorkspace } from '@/entities/demo/workspace'
-import { GuestHeaderActions, GuestProjectTabs } from './GuestNavigation'
+import { GuestHeaderActions, GuestProjectMenu, GuestProjectTabs } from './GuestNavigation'
 import { PROJECT_STEPS } from '@/entities/project'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
+import { useNarrow } from '@/shared/lib/media'
 import { HeaderHighlight, MobileNav, ProjectTabs, Sections } from './HeaderNav'
 import { Logo } from './Logo'
 import { Notifications } from './Notifications'
 import { WorkspaceMenu } from './WorkspaceMenu'
 import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/ui/dropdown-menu'
 
 // Плашка прячется, как только страницу прокрутили дальше этого порога; вверху страницы она видна всегда.
 const DOCK_HIDE_AFTER_PX = 24
@@ -58,7 +61,8 @@ function useScrollPull() {
    Шапка и плашка — fixed, а место в потоке держат распорки той же высоты. */
 function StepDock({ projectId, demoKey }: { projectId?: string; demoKey?: string }) {
   // Имитация занимает всё окно: переходы между шагами должны всегда оставаться доступны.
-  const pinned = Boolean(useMatch('/projects/:projectId/simulation')) || Boolean(demoKey)
+  const narrow = useNarrow()
+  const pinned = Boolean(useMatch('/projects/:projectId/simulation')) || Boolean(demoKey) || narrow
   const scrolled = useSyncExternalStore(subscribeScroll, isScrolledDown)
   const pulled = useScrollPull()
   const [hovered, setHovered] = useState(false)
@@ -74,6 +78,7 @@ function StepDock({ projectId, demoKey }: { projectId?: string; demoKey?: string
         active: Boolean(matchPath({ path: `/projects/${projectId}/${s.id}`, end: false }, pathname)),
       }))
   const nav = useRef<HTMLElement>(null)
+  const activeIndex = steps.findIndex((step) => step.active)
   // На узком экране плашка прокручивается вбок — активный шаг держим в видимой части.
   useEffect(() => {
     const el = nav.current
@@ -85,7 +90,7 @@ function StepDock({ projectId, demoKey }: { projectId?: string; demoKey?: string
     <div
       className={cn(
         'pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-3 sm:px-6',
-        demoKey && 'top-25 xl:top-14',
+        demoKey && 'sm:top-25 xl:top-14',
       )}
     >
       <div
@@ -99,11 +104,70 @@ function StepDock({ projectId, demoKey }: { projectId?: string; demoKey?: string
           if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false)
         }}
       >
+        {!demoKey && (
+          <div
+            className={cn(
+              'glass flex w-[calc(100vw-1.5rem)] items-center gap-1 rounded-full p-1.5 sm:hidden',
+              hidden && 'pointer-events-none invisible',
+            )}
+          >
+            <Link
+              to={activeIndex > 0 ? steps[activeIndex - 1].to : `/projects/${projectId}`}
+              aria-label="Предыдущий шаг"
+              className="flex size-10 shrink-0 items-center justify-center rounded-full text-ink-3 hover:bg-black/5"
+            >
+              <ArrowLeft size={17} />
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Выбрать шаг оценки"
+                  className="flex h-10 min-w-0 flex-1 items-center justify-between gap-2 rounded-full bg-[#293831] px-3.5 text-[13px] font-medium text-white"
+                >
+                  <span className="truncate">
+                    {activeIndex >= 0
+                      ? `${String(activeIndex + 1).padStart(2, '0')} · ${steps[activeIndex].label}`
+                      : 'Обзор проекта'}
+                  </span>
+                  <ChevronDown size={15} className="shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 max-w-[calc(100vw-2rem)]">
+                <DropdownMenuItem asChild>
+                  <Link to={`/projects/${projectId}`}>Обзор проекта</Link>
+                </DropdownMenuItem>
+                {steps.map((step, i) => (
+                  <DropdownMenuItem key={step.id} asChild>
+                    <Link to={step.to}>
+                      <span className="num text-ink-3">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="flex-1">{step.label}</span>
+                      {step.active && <Check className="text-ok" />}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {activeIndex < steps.length - 1 ? (
+              <Link
+                to={steps[activeIndex + 1].to}
+                aria-label="Следующий шаг"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full text-ink-3 hover:bg-black/5"
+              >
+                <ArrowRight size={17} />
+              </Link>
+            ) : (
+              <span className="size-10 shrink-0" />
+            )}
+          </div>
+        )}
         <nav
           ref={nav}
           className={cn(
             // Плашка чаще появляется поверх прокрученного контента: без размытия цифры и 3D-карточки лезут сквозь подписи.
             'workspace-step-dock glass relative flex max-w-full items-center gap-0.5 overflow-x-auto overscroll-x-contain rounded-full p-1.5 backdrop-blur-xl backdrop-saturate-150',
+            demoKey && 'max-sm:w-[calc(100vw-1.5rem)]',
+            !demoKey && 'max-sm:hidden',
             // Выезжает с замедлением, уезжает с разгоном: так движение читается целиком, а не вспышкой в первом кадре.
             'transition-[translate,opacity] duration-320 ease-[cubic-bezier(0.33,1,0.68,1)] motion-reduce:transition-none',
             // Уход — с короткой задержкой: курсор, проскочивший мимо края, не заставляет плашку дёргаться.
@@ -120,15 +184,29 @@ function StepDock({ projectId, demoKey }: { projectId?: string; demoKey?: string
               aria-current={step.active ? 'page' : undefined}
               className={cn(
                 'relative flex h-9 items-center rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors',
+                demoKey && 'max-sm:h-10 max-sm:flex-1 max-sm:justify-center max-sm:px-2 max-sm:text-[12px]',
                 step.active ? 'text-white' : 'text-ink-3 hover:bg-white/50 hover:text-ink',
               )}
             >
               {step.active && <SlideMark />}
               <span className="relative z-10 flex items-center gap-1.5">
-                <span className={cn('num text-[10px]', step.active ? 'text-[#ff956f]' : 'text-ink-4')}>
+                <span
+                  className={cn(
+                    'num text-[10px]',
+                    demoKey && 'max-sm:hidden',
+                    step.active ? 'text-[#ff956f]' : 'text-ink-4',
+                  )}
+                >
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                {step.label}
+                {demoKey && step.id === 'decision' ? (
+                  <>
+                    <span className="sm:hidden">Подбор</span>
+                    <span className="hidden sm:inline">{step.label}</span>
+                  </>
+                ) : (
+                  step.label
+                )}
               </span>
             </Link>
           ))}
@@ -165,19 +243,21 @@ export function AppShell() {
       <a href="#workspace-main" className="workspace-skip">
         Перейти к содержимому
       </a>
-      <div className={cn('h-14 shrink-0', demoKey && 'h-25 xl:h-14')} aria-hidden />
+      <div className={cn('h-14 shrink-0', demoKey && 'sm:h-25 xl:h-14')} aria-hidden />
       <motion.header
         layoutRoot
         className={cn(
           'workspace-header fixed inset-x-0 top-0 z-40 h-14 border-b border-line backdrop-blur-md',
-          demoKey && 'h-25 xl:h-14',
+          demoKey && 'sm:h-25 xl:h-14',
         )}
       >
         <div
           ref={setHeaderRow}
           className={cn(
             'relative mx-auto h-full max-w-360 items-center gap-x-2 px-3 sm:px-4 lg:gap-x-5 lg:px-6',
-            demoKey ? 'grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[3.5rem_2.75rem] xl:flex' : 'flex',
+            demoKey
+              ? 'grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[3.5rem] sm:grid-rows-[3.5rem_2.75rem] xl:flex'
+              : 'flex',
           )}
         >
           <HeaderHighlight container={headerRow} />
@@ -186,14 +266,19 @@ export function AppShell() {
               <MobileNav projectId={projectId} />
             </div>
           )}
-          <Logo />
+          <Logo compact={Boolean(demoKey)} />
+          {demoKey && (
+            <div className="col-start-2 row-start-1 min-w-0 sm:hidden">
+              <GuestProjectMenu demoKey={demoKey} />
+            </div>
+          )}
           <div className={cn('hidden h-5 w-px shrink-0 bg-line-2', demoKey ? 'xl:block' : 'lg:block')} />
-          <div className={demoKey ? 'min-w-0 xl:contents' : 'hidden lg:contents'}>
+          <div className={demoKey ? 'hidden min-w-0 sm:block xl:contents' : 'hidden lg:contents'}>
             <Sections projectId={projectId} demoKey={demoKey} />
             <div className={cn('h-5 w-px shrink-0 bg-line-2', demoKey && 'hidden xl:block')} />
           </div>
           {demoKey ? (
-            <div className="col-span-full row-start-2 min-w-0 self-start xl:flex-1 xl:self-auto">
+            <div className="col-span-full row-start-2 hidden min-w-0 self-start sm:block xl:flex-1 xl:self-auto">
               <GuestProjectTabs demoKey={demoKey} inProject={Boolean(guest)} />
             </div>
           ) : user ? (

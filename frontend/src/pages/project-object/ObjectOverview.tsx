@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion'
-import { Check, ChevronLeft, ChevronRight, CircleAlert, TriangleAlert } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, TriangleAlert } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
 import { useDataQuality, useUpdateParam, useValidation } from '@/entities/project'
 import { PROVENANCE_LABEL } from '@/entities/provenance'
@@ -7,6 +7,7 @@ import { ParamValueInput, displayRange, parseDraft, shortHint, toDraft } from '@
 import type { DataQualityReport, ObjectType, ProjectParam, ProvenanceStatus, ValidationIssue } from '@/shared/api/types'
 import { formatNumber, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
+import { useNarrow } from '@/shared/lib/media'
 import { Button } from '@/shared/ui/button'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
@@ -69,17 +70,32 @@ export function ObjectOverview({
   objectType: ObjectType | undefined
   params: ProjectParam[] | undefined
 }) {
+  const narrow = useNarrow()
+  const [showTwin, setShowTwin] = useState(false)
   return (
     <section className="card overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="flex min-w-0 flex-col px-5 py-6 sm:px-7 sm:py-7">
           {params ? <Readiness projectId={projectId} params={params} /> : <LoadingBlock rows={4} />}
         </div>
-        <div className="relative min-h-110 border-t border-line sm:min-h-140 lg:border-t-0 lg:border-l">
-          {objectType ? (
-            <ObjectTwin projectId={projectId} objectType={objectType} />
-          ) : (
-            <div className="absolute inset-0 animate-pulse bg-surface-2" />
+        <div className="min-w-0 border-t border-line lg:border-t-0 lg:border-l">
+          <button
+            type="button"
+            aria-expanded={showTwin}
+            aria-controls="object-twin"
+            onClick={() => setShowTwin(!showTwin)}
+            className="flex min-h-12 w-full items-center justify-between gap-3 px-5 text-left text-[13px] font-medium sm:hidden"
+          >
+            Модель объекта <ChevronDown size={16} className={cn('transition-transform', showTwin && 'rotate-180')} />
+          </button>
+          {(!narrow || showTwin) && (
+            <div id="object-twin" className="relative min-h-80 sm:min-h-140 lg:h-full">
+              {objectType ? (
+                <ObjectTwin projectId={projectId} objectType={objectType} />
+              ) : (
+                <div className="absolute inset-0 animate-pulse bg-surface-2" />
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -89,6 +105,7 @@ export function ObjectOverview({
 }
 
 function Readiness({ projectId, params }: { projectId: string; params: ProjectParam[] }) {
+  const narrow = useNarrow()
   const quality = useDataQuality(projectId)
   const validation = useValidation(projectId)
 
@@ -137,7 +154,17 @@ function Readiness({ projectId, params }: { projectId: string; params: ProjectPa
         </div>
       </div>
 
-      <ParamMap params={params} />
+      {narrow ? (
+        <details className="group mt-4 mb-3 rounded-lg border border-line bg-surface-2 px-3">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-[13px] text-ink-3 [&::-webkit-details-marker]:hidden">
+            Качество исходных данных{' '}
+            <ChevronDown size={15} className="shrink-0 transition-transform group-open:rotate-180" />
+          </summary>
+          <ParamMap params={params} />
+        </details>
+      ) : (
+        <ParamMap params={params} />
+      )}
 
       {errors.length > 0 && (
         <ul className="mt-5 space-y-1.5">

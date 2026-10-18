@@ -34,7 +34,12 @@ export function PlayerBar({ disabled = false, speeds = SPEEDS }: { disabled?: bo
   const t = usePlayback((s) => Math.floor(s.t / 20) * 20)
   const { setPlaying, setSpeed, setT } = usePlayback.getState()
   return (
-    <div className={cn('flex items-center gap-3', disabled && 'pointer-events-none opacity-45')}>
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-x-2 gap-y-3 sm:flex-nowrap sm:gap-3',
+        disabled && 'pointer-events-none opacity-45',
+      )}
+    >
       <Button
         size="icon-sm"
         className="rounded-full"
@@ -53,7 +58,7 @@ export function PlayerBar({ disabled = false, speeds = SPEEDS }: { disabled?: bo
         step={1}
         value={t}
         onChange={(e) => setT(Number(e.target.value))}
-        className="h-1 min-w-0 flex-1 cursor-pointer accent-ink"
+        className="h-6 min-w-10 flex-1 cursor-pointer accent-ink sm:h-1"
         aria-label="Время имитации"
       />
       <span className="num w-23 shrink-0 text-center font-mono text-[12px] text-ink-2">

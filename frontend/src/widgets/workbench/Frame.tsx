@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
 import { PROJECT_STEPS, stepIndex } from '@/entities/project'
 import { cn } from '@/shared/lib/utils'
+import { useMediaQuery } from '@/shared/lib/media'
 import { Button } from '@/shared/ui/button'
 import type { Panels } from './Workbench'
 
@@ -60,6 +61,7 @@ export function WorkbenchFrame({
   children: ReactNode
 }) {
   const dockHalf = useDockHalf()
+  const mobile = useMediaQuery('(max-width: 1023px)')
   const idx = navigation?.index ?? stepIndex(step)
   const total = navigation?.total ?? PROJECT_STEPS.length
   const mainPrevious = PROJECT_STEPS[idx - 1]
@@ -76,20 +78,23 @@ export function WorkbenchFrame({
       : undefined
   const frame = (
     <div
+      data-slot="workbench-frame"
       className={cn(
         'flex flex-col bg-card',
-        inFlow
-          ? // Под шапкой, поверх распорки плашки шагов (66 px) и верхнего отступа страницы проекта (20 px).
-            '-mx-6 -mt-[5.375rem] h-[calc(100dvh-3.5rem)] shrink-0 border-b border-line'
-          : 'fixed inset-x-0 top-14 bottom-0 z-20',
+        mobile
+          ? '-mx-4 -mt-5 min-h-[calc(100svh-7.625rem)] border-b border-line sm:-mx-6'
+          : inFlow
+            ? // Под шапкой, поверх распорки плашки шагов (66 px) и верхнего отступа страницы проекта (20 px).
+              '-mx-6 -mt-[5.375rem] h-[calc(100dvh-3.5rem)] shrink-0 border-b border-line'
+            : 'fixed inset-x-0 top-14 bottom-0 z-20',
         className,
       )}
       style={{ '--dock-half': `${dockHalf}px` } as CSSProperties}
     >
-      <div className="flex h-[4.125rem] shrink-0 items-center justify-between gap-3 border-b border-line bg-surface-2 px-2">
+      <div className="flex min-h-[4.125rem] shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-2 px-2 py-2 lg:h-[4.125rem] lg:flex-nowrap lg:py-0">
         <div
           className={cn(
-            'flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5',
+            'flex min-w-0 items-center gap-1.5 max-lg:flex-1 lg:max-w-[calc(50%-var(--dock-half))]',
             eyebrow && 'max-xl:max-w-[calc(100%-3rem)]',
           )}
         >
@@ -114,11 +119,12 @@ export function WorkbenchFrame({
         </div>
         <div
           className={cn(
-            'flex max-w-[calc(50%-var(--dock-half))] min-w-0 items-center gap-1.5',
+            'flex min-w-0 items-center gap-1.5 lg:max-w-[calc(50%-var(--dock-half))]',
+            actions && 'max-lg:basis-full',
             eyebrow && 'max-xl:max-w-none',
           )}
         >
-          <div className="flex min-w-0 items-center gap-1.5">{actions}</div>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">{actions}</div>
           {next && (
             <Button variant="ghost" size="icon-sm" asChild title={`Далее: ${next.label}`}>
               <Link to={next.to} aria-label={`Далее: ${next.label}`}>
@@ -131,7 +137,7 @@ export function WorkbenchFrame({
       {children}
     </div>
   )
-  return inFlow ? frame : createPortal(frame, document.body)
+  return inFlow || mobile ? frame : createPortal(frame, document.body)
 }
 
 /* Сетка как в IDE: боковые панели на всю высоту, центр, нижняя панель под центром, строка состояния под всем.
@@ -155,6 +161,7 @@ export function WorkbenchGrid({
   bottom?: ReactNode
   status: ReactNode
 }) {
+  const mobile = useMediaQuery('(max-width: 1023px)')
   return (
     <div
       style={
@@ -164,27 +171,29 @@ export function WorkbenchGrid({
           '--right-w': `${rightWidth}px`,
         } as CSSProperties
       }
-      className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:grid-cols-(--cols) lg:grid-rows-[minmax(0,1fr)_auto_auto] lg:overflow-hidden"
+      className="grid min-h-0 flex-1 grid-cols-1 auto-rows-max transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:auto-rows-auto lg:grid-cols-(--cols) lg:grid-rows-[minmax(0,1fr)_auto_auto] lg:overflow-hidden"
     >
       <aside
         className={cn(
-          'order-2 min-h-0 min-w-0 overflow-hidden bg-surface-2 lg:order-none lg:row-span-2',
+          'order-3 min-h-0 min-w-0 overflow-hidden bg-surface-2 lg:order-none lg:row-span-2',
           panels.left && 'lg:border-r lg:border-line',
         )}
       >
-        <div className="scroll-thin flex h-full flex-col overflow-y-auto lg:w-(--left-w)">{left}</div>
+        <div className="scroll-thin flex flex-col lg:h-full lg:w-(--left-w) lg:overflow-y-auto">{left}</div>
       </aside>
-      <main className="relative order-1 h-[60vh] min-h-0 min-w-0 lg:order-none lg:h-auto">{center}</main>
+      <main className="relative order-1 h-[clamp(18rem,48svh,30rem)] min-h-0 min-w-0 sm:h-[60svh] lg:order-none lg:h-auto">
+        {center}
+      </main>
       <aside
         className={cn(
-          'order-3 min-h-0 min-w-0 overflow-hidden bg-surface-2 lg:order-none lg:col-start-3 lg:row-span-2 lg:row-start-1',
+          'order-4 min-h-0 min-w-0 overflow-hidden bg-surface-2 lg:order-none lg:col-start-3 lg:row-span-2 lg:row-start-1',
           panels.right && 'lg:border-l lg:border-line',
         )}
       >
-        <div className="scroll-thin flex h-full flex-col overflow-y-auto lg:w-(--right-w)">{right}</div>
+        <div className="scroll-thin flex flex-col lg:h-full lg:w-(--right-w) lg:overflow-y-auto">{right}</div>
       </aside>
-      {panels.bottom && bottom && (
-        <section className="order-4 min-w-0 border-t border-line bg-card lg:order-none lg:col-start-2 lg:row-start-2">
+      {(panels.bottom || mobile) && bottom && (
+        <section className="order-2 min-w-0 border-t border-line bg-card lg:order-none lg:col-start-2 lg:row-start-2">
           {bottom}
         </section>
       )}

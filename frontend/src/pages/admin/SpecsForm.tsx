@@ -58,8 +58,8 @@ export function SpecsList({
                     )}
                   >
                     <span className="col-span-2 min-w-0 sm:col-span-1">
-                      <span className="flex items-center gap-1.5 text-[13px] font-medium">
-                        <span className="truncate">{key.name}</span>
+                      <span className="flex flex-wrap items-center gap-1.5 text-[13px] font-medium sm:flex-nowrap">
+                        <span className="max-sm:wrap-anywhere sm:truncate">{key.name}</span>
                         {missing.has(key.key) && (
                           <span className="shrink-0 text-[11px] font-normal text-crit">ключевая, пусто</span>
                         )}
@@ -74,7 +74,7 @@ export function SpecsList({
                       value={draft?.text ?? ''}
                       onChange={(e) => onEdit(key.key, { text: e.target.value })}
                       placeholder={key.unit ? `новое, ${key.unit}` : 'новое'}
-                      className="h-8 rounded-[9px] text-[13px]"
+                      className={cn('h-8 rounded-[9px] text-[13px]', lockedStatus && 'max-sm:col-span-2')}
                     />
                     {!lockedStatus && (
                       <Select

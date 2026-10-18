@@ -68,7 +68,7 @@ export function ComparePage() {
   const header = (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
       <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Сравнение решений</h1>
-      <div className="flex items-center gap-2">
+      <div className="flex max-w-full flex-wrap items-center gap-2">
         <Button asChild variant="ghost" className="text-ink-3">
           <Link to="/catalog">
             <ArrowLeft /> К каталогу

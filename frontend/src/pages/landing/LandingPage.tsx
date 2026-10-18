@@ -231,7 +231,11 @@ export function LandingPage() {
               </Link>
             </nav>
             <Link className="landing-header-login" to={workspace}>
-              {status === 'authenticated' ? 'В кабинет' : 'Войти в платформу'} <ArrowUpRight size={17} />
+              <span className="hidden min-[701px]:inline">
+                {status === 'authenticated' ? 'В кабинет' : 'Войти в платформу'}
+              </span>
+              <span className="min-[701px]:hidden">{status === 'authenticated' ? 'Кабинет' : 'Войти'}</span>
+              <ArrowUpRight size={17} />
             </Link>
             <button
               className="landing-menu-toggle"

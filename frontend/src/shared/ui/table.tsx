@@ -1,12 +1,40 @@
 'use client'
 
 import * as React from 'react'
+import { ArrowLeftRight } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
+  const container = React.useRef<HTMLDivElement>(null)
+  const table = React.useRef<HTMLTableElement>(null)
+  const [scrollable, setScrollable] = React.useState(false)
+  React.useEffect(() => {
+    const measure = () =>
+      setScrollable(Boolean(container.current && container.current.scrollWidth > container.current.clientWidth + 1))
+    const observer = new ResizeObserver(measure)
+    if (container.current) observer.observe(container.current)
+    if (table.current) observer.observe(table.current)
+    measure()
+    return () => observer.disconnect()
+  }, [])
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
-      <table data-slot="table" className={cn('w-full caption-bottom text-sm', className)} {...props} />
+    <div className="min-w-0">
+      <div
+        ref={container}
+        data-slot="table-container"
+        className="scroll-thin relative w-full overflow-x-auto overscroll-x-contain"
+        tabIndex={scrollable ? 0 : undefined}
+        role={scrollable ? 'region' : undefined}
+        aria-label={scrollable ? 'Таблица с горизонтальной прокруткой' : undefined}
+      >
+        <table ref={table} data-slot="table" className={cn('w-full caption-bottom text-sm', className)} {...props} />
+      </div>
+      {scrollable && (
+        <p className="flex items-center gap-1.5 px-3 py-2 text-[11px] text-ink-3 sm:hidden">
+          <ArrowLeftRight size={13} />
+          Листайте таблицу вбок
+        </p>
+      )}
     </div>
   )
 }

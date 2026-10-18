@@ -105,7 +105,7 @@ export function CreateProjectDialog({
                   }}
                 >
                   <span className="font-medium">{d.name}</span>
-                  <span className="text-xs text-muted-foreground">{d.description}</span>
+                  <span className="text-xs text-muted-foreground max-sm:line-clamp-3">{d.description}</span>
                 </Choice>
               ))}
               {demos.length === 0 && (

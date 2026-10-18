@@ -1,11 +1,12 @@
 import { Link } from 'react-router'
 
-export function Logo() {
+export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       to="/"
-      className="workspace-logo -mx-1 flex items-center gap-2.5 rounded-md px-1 select-none"
+      className="workspace-logo -mx-1 flex min-h-10 min-w-10 shrink-0 items-center gap-2.5 rounded-md px-1 select-none"
       title="РобоМера — на главную"
+      aria-label="РобоМера — на главную"
     >
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
         <path
@@ -15,7 +16,7 @@ export function Logo() {
           strokeLinecap="round"
         />
       </svg>
-      <span className="text-[16px] font-semibold tracking-[-0.035em]">
+      <span className={`text-[16px] font-semibold tracking-[-0.035em] ${compact ? 'hidden sm:inline' : ''}`}>
         РобоМера<span className="text-[#ff784e]">.</span>
       </span>
     </Link>

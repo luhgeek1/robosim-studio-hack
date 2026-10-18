@@ -35,7 +35,7 @@ export function Notifications() {
         <button
           type="button"
           className={cn(
-            'relative flex size-8 shrink-0 items-center justify-center rounded-[10px] text-ink-3 transition-colors hover:bg-black/5 hover:text-ink',
+            'relative flex size-8 shrink-0 items-center justify-center rounded-[10px] text-ink-3 transition-colors hover:bg-black/5 hover:text-ink max-sm:size-10',
             open && 'bg-black/6 text-ink',
           )}
           aria-label={items.length ? `Уведомления: ${items.length}` : 'Уведомления'}

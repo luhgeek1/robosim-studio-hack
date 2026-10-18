@@ -10,6 +10,7 @@ import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Skeleton } from '@/shared/ui/skeleton'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/shared/ui/sheet'
 import { EmptyState, ErrorBlock, Spinner } from '@/shared/ui/states'
 import { CardChip, CardFigures, RobotCard } from '@/widgets/robot-card'
 import { ProductStatusMark, VerifiedMarks } from './parts'
@@ -82,7 +83,7 @@ export function CatalogPage() {
   const resetAll = () =>
     update({ q: null, object_type: null, industry: null, solution_type: null, status: null, badge: null })
 
-  // На телефоне и планшете фильтры не помещаются колонкой слева — они раскрываются панелью над выдачей.
+  // На телефоне фильтры открываются отдельно от выдачи, с доступной внизу кнопкой возврата к результатам.
   const [filtersOpen, setFiltersOpen] = useState(false)
   const activeCount =
     [query.object_type, query.industry].filter(Boolean).length +
@@ -216,21 +217,23 @@ export function CatalogPage() {
             </Select>
           </div>
 
-          {filtersOpen && (
-            <div className="mb-5 rounded-2xl bg-card px-4 pt-4 pb-1 ring-1 ring-line lg:hidden">
-              {filters}
-              <button
-                type="button"
-                onClick={() => setFiltersOpen(false)}
-                className="mb-3 h-10 w-full rounded-xl bg-ink text-[13.5px] font-medium text-white"
-              >
-                Показать{' '}
-                {data
-                  ? `${formatNumber(data.total)} ${pluralRu(data.total, ['решение', 'решения', 'решений'])}`
-                  : 'решения'}
-              </button>
-            </div>
-          )}
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetContent side="left" className="gap-0 p-0 lg:hidden">
+              <SheetHeader className="shrink-0 border-b border-line pr-14">
+                <SheetTitle>Фильтры каталога</SheetTitle>
+                <SheetDescription>Уточните параметры и вернитесь к подходящим решениям.</SheetDescription>
+              </SheetHeader>
+              <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-4 pt-4">{filters}</div>
+              <div className="shrink-0 border-t border-line bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <Button onClick={() => setFiltersOpen(false)} className="h-11 w-full">
+                  Показать{' '}
+                  {data
+                    ? `${formatNumber(data.total)} ${pluralRu(data.total, ['решение', 'решения', 'решений'])}`
+                    : 'решения'}
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
 
           {products.isError && <ErrorBlock error={products.error} onRetry={() => products.refetch()} />}
           {products.isPending && (

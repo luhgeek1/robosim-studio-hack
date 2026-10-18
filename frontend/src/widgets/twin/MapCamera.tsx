@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState, type ComponentRef } from 'react'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { Box, HelpCircle, Flame, Map, Minus, Plus, RotateCcw, Route } from 'lucide-react'
+import { Box, HelpCircle, Flame, Map, Minus, MoreHorizontal, Plus, RotateCcw, Route } from 'lucide-react'
 import { PerspectiveCamera, Vector3 } from 'three'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/ui/dropdown-menu'
 
 export type CameraAction = 'home' | 'top' | 'in' | 'out'
 
@@ -85,6 +92,7 @@ export function MapToolbar({
   placement = 'top-left',
   clearTopRight = false,
   basic = false,
+  compact = false,
 }: {
   onAction: (action: CameraAction) => void
   routes: boolean
@@ -96,10 +104,11 @@ export function MapToolbar({
   /** The host keeps its own control in the top-right corner: on a narrow scene the toolbar drops below it. */
   clearTopRight?: boolean
   basic?: boolean
+  compact?: boolean
 }) {
   const [help, setHelp] = useState(false)
   const button =
-    'flex h-9 w-9 items-center justify-center rounded-lg @max-[26rem]:w-8 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600'
+    'flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:h-9 sm:w-9 sm:@max-[26rem]:w-8'
   return (
     // In the bottom corner the help card opens upwards, above the toolbar.
     <div
@@ -114,7 +123,7 @@ export function MapToolbar({
         aria-label="Управление картой"
         className="flex items-center gap-0.5 rounded-xl border border-white/80 bg-white/95 p-1 shadow-lg shadow-slate-900/5 backdrop-blur"
       >
-        {!basic && (
+        {!basic && !compact && (
           <>
             <button className={button} title="Общий 3D-вид" aria-label="Общий 3D-вид" onClick={() => onAction('home')}>
               <Box size={17} />
@@ -139,7 +148,38 @@ export function MapToolbar({
         >
           <RotateCcw size={16} />
         </button>
-        {!basic && (
+        {!basic && compact && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={button} aria-label="Дополнительные настройки карты">
+                <MoreHorizontal size={18} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-60" align="start">
+              <DropdownMenuItem onSelect={() => onAction('home')}>
+                <Box />
+                Общий 3D-вид
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAction('top')}>
+                <Map />
+                Вид сверху
+              </DropdownMenuItem>
+              <DropdownMenuCheckboxItem checked={routes} onCheckedChange={onRoutes}>
+                Маршруты
+              </DropdownMenuCheckboxItem>
+              {heat !== undefined && (
+                <DropdownMenuCheckboxItem checked={heat} onCheckedChange={() => onHeat?.()}>
+                  Поток и заторы
+                </DropdownMenuCheckboxItem>
+              )}
+              <DropdownMenuItem onSelect={() => setHelp(!help)}>
+                <HelpCircle />
+                Как управлять картой
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {!basic && !compact && (
           <>
             <span className="mx-1 h-5 w-px bg-slate-200" />
             <button

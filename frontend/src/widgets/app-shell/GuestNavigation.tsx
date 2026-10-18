@@ -1,4 +1,4 @@
-import { HeartPulse, PackageOpen, Plane, Warehouse } from 'lucide-react'
+import { Check, ChevronDown, HeartPulse, PackageOpen, Plane, Warehouse } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { DEMO_PROJECTS, demoUrl } from '@/entities/demo/navigation'
@@ -6,8 +6,61 @@ import { useDemoWorkspace } from '@/entities/demo/workspace'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/ui/dropdown-menu'
 
 const ICONS = [Warehouse, PackageOpen, HeartPulse, Plane]
+
+export function GuestProjectMenu({ demoKey }: { demoKey: string }) {
+  const steps = useDemoWorkspace((s) => s.steps)
+  const visit = useDemoWorkspace((s) => s.visit)
+  const { status } = useSession()
+  const current = DEMO_PROJECTS.find((demo) => demo.key === demoKey) ?? DEMO_PROJECTS[0]
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Демо-проекты: ${current.label}`}
+          className="flex h-10 min-w-0 w-full items-center gap-1.5 rounded-lg bg-white/6 px-2.5 text-[13px] font-medium text-ink"
+        >
+          <span className="min-w-0 flex-1 truncate text-left">{current.label}</span>
+          <ChevronDown size={14} className="shrink-0 text-ink-3" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-64 max-w-[calc(100vw-2rem)]" align="start">
+        {DEMO_PROJECTS.map((demo, index) => {
+          const Icon = ICONS[index]
+          return (
+            <DropdownMenuItem key={demo.key} asChild>
+              <Link
+                to={demoUrl(demo.key, steps[demo.key] ?? 'object')}
+                onClick={() => visit(demo.key, steps[demo.key] ?? 'object')}
+              >
+                <Icon /> <span className="flex-1">{demo.label}</span>
+                {demo.key === demoKey && <Check className="text-ok" />}
+              </Link>
+            </DropdownMenuItem>
+          )
+        })}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/catalog">Каталог решений</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to={status === 'authenticated' ? '/projects' : '/login'}>
+            {status === 'authenticated' ? 'Мои проекты' : 'Войти в аккаунт'}
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 export function GuestProjectTabs({ demoKey, inProject }: { demoKey: string; inProject: boolean }) {
   const steps = useDemoWorkspace((s) => s.steps)

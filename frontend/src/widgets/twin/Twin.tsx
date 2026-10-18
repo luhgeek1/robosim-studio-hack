@@ -14,6 +14,7 @@ import { Building, Markers, Racks, RouteLines, Robots3D, sceneFrame, zoneLabels 
 import { LabelLayer, LabelProjector } from './SceneLabels'
 import { svgToPng } from './snapshot'
 import { SceneBoundary } from '@/shared/ui/boundary'
+import { useNarrow } from '@/shared/lib/media'
 
 export type TwinView = '3d' | '2d'
 
@@ -56,6 +57,8 @@ export function Twin({
   className = '',
   controls = 'full',
 }: TwinProps) {
+  const narrow = useNarrow()
+  const [interactive, setInteractive] = useState(false)
   const [ownView, setOwnView] = useState<TwinView>('3d')
   const view = controlledView ?? ownView
   const setView = (next: TwinView) => {
@@ -141,7 +144,18 @@ export function Twin({
         </div>
       ) : (
         <>
+          {narrow && (
+            <button
+              type="button"
+              aria-pressed={interactive}
+              onClick={() => setInteractive(!interactive)}
+              className="absolute top-4 left-4 z-20 flex h-10 items-center rounded-lg border border-line bg-white/95 px-3 text-[12px] font-medium text-ink shadow-card"
+            >
+              {interactive ? 'Готово' : 'Вращать 3D'}
+            </button>
+          )}
           <MapToolbar
+            compact={narrow}
             basic={controls === 'basic'}
             onAction={(action) => setCommand((c) => ({ action, id: c.id + 1 }))}
             routes={routes}
@@ -166,6 +180,7 @@ export function Twin({
             }
           >
             <Canvas
+              style={narrow && !interactive ? { pointerEvents: 'none' } : undefined}
               shadows={{ type: THREE.PCFSoftShadowMap }}
               dpr={[1, 1.75]}
               // Layout size, not the transformed box: inside a dialog that opens with a zoom the canvas would stay at 95 %.

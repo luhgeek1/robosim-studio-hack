@@ -89,7 +89,7 @@ export function LoginPage() {
         <motion.section
           layout
           transition={SWAP}
-          className="relative flex min-h-90 flex-col items-center justify-center overflow-hidden bg-surface-2 px-6 py-10 lg:w-1/2 lg:px-8"
+          className="relative hidden min-h-90 flex-col items-center justify-center overflow-hidden bg-surface-2 px-6 py-10 lg:flex lg:w-1/2 lg:px-8"
           style={{
             backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
             backgroundSize: '18px 18px',

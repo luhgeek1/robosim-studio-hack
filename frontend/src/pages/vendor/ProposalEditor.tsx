@@ -6,6 +6,7 @@ import { useProduct } from '@/entities/catalog'
 import { useCreateProposal, useVendorOverview } from '@/entities/vendor'
 import type { ProductDetail, ProductWrite } from '@/shared/api/types'
 import { pluralRu } from '@/shared/lib/format'
+import { useNarrow } from '@/shared/lib/media'
 import { Button } from '@/shared/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/shared/ui/sheet'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
@@ -48,6 +49,7 @@ function Form({
   detail: ProductDetail | null
   onClose: () => void
 }) {
+  const narrow = useNarrow()
   const overview = useVendorOverview()
   const specKeys = useSpecKeys()
   const create = useCreateProposal()
@@ -116,6 +118,32 @@ function Form({
   ]
     .filter(Boolean)
     .join(' и ')
+  const notes = (
+    <>
+      <AnimatePresence initial={false}>
+        {specs.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <SourceFields source={source} onChange={setSource} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <Field label="Комментарий для модератора">
+        <Textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Что изменилось и почему: новая прошивка, прайс с 1 октября, паспорт 2026 года…"
+          className="min-h-16 rounded-[10px] bg-card"
+          maxLength={2000}
+          required
+        />
+      </Field>
+    </>
+  )
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -124,7 +152,7 @@ function Form({
         <SheetTitle className="truncate pr-8 text-[20px] font-semibold tracking-[-0.02em]">
           {form.name.trim() || detail?.name || 'Новый продукт'}
         </SheetTitle>
-        <SheetDescription className="mt-0.5 text-[12.5px]">
+        <SheetDescription className="mt-0.5 text-[12.5px] max-sm:sr-only">
           {company?.name} · значения ТТХ уйдут со статусом «заявка производителя»
         </SheetDescription>
         <div className="mt-4">
@@ -166,7 +194,7 @@ function Form({
             )}
             {tab === 'specs' && detail && (
               <>
-                <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="meta max-w-sm">
                     Укажите источник — паспорт изделия или страницу на сайте. Ключевые ТТХ участвуют в проверках
                     подбора.
@@ -191,41 +219,24 @@ function Form({
             )}
           </motion.div>
         </AnimatePresence>
+        {narrow && <div className="space-y-3 border-t border-line pt-4 pb-6">{notes}</div>}
       </div>
 
       <div className="space-y-3 border-t border-line bg-surface-2 px-6 pt-4 pb-4">
-        <AnimatePresence initial={false}>
-          {specs.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
-            >
-              <SourceFields source={source} onChange={setSource} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <Field label="Комментарий для модератора">
-          <Textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Что изменилось и почему: новая прошивка, прайс с 1 октября, паспорт 2026 года…"
-            className="min-h-16 rounded-[10px] bg-card"
-            maxLength={2000}
-          />
-        </Field>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[12.5px] text-ink-3">
+        {!narrow && notes}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="min-w-0 text-[12.5px] text-ink-3 max-sm:basis-full">
             {hasChanges ? `В заявке: ${summary}` : 'Измените карточку, цены или характеристики'}
             {needsSource && <span className="text-crit"> · укажите источник ТТХ</span>}
+            {hasChanges && !comment.trim() && <span> · добавьте комментарий</span>}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-sm:w-full max-sm:[&>button]:flex-1">
             <Button variant="ghost" onClick={onClose}>
               Отмена
             </Button>
             <Button onClick={submit} disabled={!hasChanges || needsSource || !comment.trim() || create.isPending}>
-              {create.isPending && <Spinner />} Отправить на модерацию
+              {create.isPending && <Spinner />} <span className="sm:hidden">Отправить</span>
+              <span className="hidden sm:inline">Отправить на модерацию</span>
             </Button>
           </div>
         </div>

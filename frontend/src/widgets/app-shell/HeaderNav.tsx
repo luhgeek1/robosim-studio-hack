@@ -469,7 +469,7 @@ export function MobileNav({ projectId }: { projectId?: string }) {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="flex size-9 shrink-0 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-black/5 hover:text-ink"
+          className="flex size-10 shrink-0 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-black/5 hover:text-ink sm:size-9"
           aria-label="Меню"
         >
           <Menu size={19} />

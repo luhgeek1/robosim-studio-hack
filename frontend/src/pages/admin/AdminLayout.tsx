@@ -39,12 +39,12 @@ export function AdminLayout() {
       </div>
 
       <nav
-        className="mb-8 flex flex-col-reverse gap-1 border-b border-line sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+        className="mb-6 flex min-w-0 flex-col-reverse gap-1 border-b border-line lg:mb-8 lg:flex-row lg:items-center lg:justify-between lg:gap-4"
         aria-label="Разделы админки"
       >
         {/* На телефоне четыре вкладки не помещаются — лента прокручивается вбок, а не раздвигает страницу. */}
-        <div className="-mx-4 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 [scrollbar-width:none] sm:contents">
-          <div className="relative flex w-max items-center gap-1 sm:w-auto">
+        <div className="-mx-4 min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 [scrollbar-width:none] lg:contents">
+          <div className="relative flex w-max items-center gap-1 lg:w-auto">
             <SlideHighlight className="z-10 rounded-full bg-ink" transition={SPRING} />
             {TABS.map((tab) => (
               <NavLink
@@ -82,7 +82,7 @@ export function AdminLayout() {
         </div>
         <Link
           to="/robots-3d"
-          className="flex items-center gap-1 self-end text-[13px] font-medium text-ink-3 transition-colors hover:text-ink max-sm:h-8 sm:self-auto"
+          className="flex min-h-10 items-center gap-1 self-end text-[13px] font-medium text-ink-3 transition-colors hover:text-ink lg:self-auto"
         >
           3D-модели каталога <ArrowUpRight size={14} />
         </Link>

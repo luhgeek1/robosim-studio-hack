@@ -9,10 +9,10 @@ export function CompareSelectionBar() {
   const enough = selection.items.length >= 2
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 sm:bottom-5 sm:px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 flex justify-center px-3 sm:bottom-5 sm:px-4">
       <div className="glass pointer-events-auto flex w-full max-w-4xl flex-wrap items-center gap-x-3 gap-y-2 rounded-[18px] py-2 pr-2 pl-4 sm:flex-nowrap">
         <div className="shrink-0 text-[12.5px] leading-tight text-ink-3">
-          Сравнение
+          <span className="max-sm:sr-only">Сравнение</span>
           <div className="num text-[14px] font-semibold text-ink">
             {selection.items.length} <span className="font-normal text-ink-4">из {COMPARE_LIMIT}</span>
           </div>
@@ -31,7 +31,7 @@ export function CompareSelectionBar() {
               <button
                 type="button"
                 onClick={() => selection.remove(item.id)}
-                className="rounded-md p-0.5 text-ink-3 transition-colors hover:bg-black/8 hover:text-ink max-sm:p-1.5"
+                className="flex items-center justify-center rounded-md p-0.5 text-ink-3 transition-colors hover:bg-black/8 hover:text-ink max-sm:size-8 max-sm:shrink-0"
                 aria-label={`Убрать «${item.name}» из сравнения`}
               >
                 <X className="size-3" />
@@ -45,7 +45,8 @@ export function CompareSelectionBar() {
           className="rounded-lg text-ink-3 max-sm:ml-auto"
           onClick={() => selection.clear()}
         >
-          Очистить
+          <X className="sm:hidden" />
+          <span className="max-sm:sr-only">Очистить</span>
         </Button>
         {enough ? (
           <Button asChild className="rounded-[12px]">

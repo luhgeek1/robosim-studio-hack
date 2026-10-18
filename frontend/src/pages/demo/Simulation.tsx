@@ -74,7 +74,7 @@ export function Simulation({ demo, fleet }: { demo: DemoSnapshot; fleet: FleetCh
       title={demo.demo.name}
       titleHint={demo.demo.name}
       eyebrow={<DemoBadge compact />}
-      className="top-[10.375rem] xl:top-14"
+      className="lg:top-[10.375rem] xl:top-14"
       navigation={{
         index: 2,
         total: 4,

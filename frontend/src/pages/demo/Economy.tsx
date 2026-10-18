@@ -35,9 +35,9 @@ export function Economy({
           <span aria-hidden="true" className="text-[12px] text-ink-3">
             Внедрение
           </span>
-          <div className="flex rounded-md border border-line bg-surface-2 p-0.5">
+          <div className="flex max-w-full rounded-md border border-line bg-surface-2 p-0.5 max-sm:w-full">
             {METHODS.map((method) => (
-              <label key={method.value} className="cursor-pointer">
+              <label key={method.value} className="min-w-0 cursor-pointer max-sm:flex-1">
                 <input
                   type="radio"
                   name="demo-financing"
@@ -47,7 +47,7 @@ export function Economy({
                   className="peer sr-only"
                   aria-label={method.label}
                 />
-                <span className="block rounded border border-transparent px-2.5 py-1 text-[12px] text-ink-3 transition-colors hover:text-ink peer-checked:border-line peer-checked:bg-card peer-checked:font-medium peer-checked:text-ink peer-checked:shadow-sm peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
+                <span className="flex min-h-10 items-center justify-center rounded border border-transparent px-2 py-1 text-center text-[12px] text-ink-3 transition-colors hover:text-ink sm:min-h-0 sm:px-2.5 peer-checked:border-line peer-checked:bg-card peer-checked:font-medium peer-checked:text-ink peer-checked:shadow-sm peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring">
                   {method.label}
                 </span>
               </label>
@@ -103,7 +103,7 @@ export function Economy({
             <dd className="mt-1.5">
               <span
                 className={cn(
-                  'num block text-[23px] leading-tight font-semibold tracking-[-0.03em] sm:text-[25px]',
+                  'num block text-[clamp(1.125rem,5.5vw,1.4375rem)] leading-tight font-semibold tracking-[-0.03em] wrap-anywhere sm:text-[25px]',
                   pending && 'opacity-40',
                 )}
               >

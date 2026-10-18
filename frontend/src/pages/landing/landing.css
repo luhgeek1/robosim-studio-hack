@@ -1593,7 +1593,8 @@
   }
   .landing-header-login {
     margin-left: auto;
-    font-size: 10px;
+    min-height: 44px;
+    font-size: 12px;
     padding: 9px 11px;
   }
   .landing-menu-toggle {
@@ -1642,19 +1643,23 @@
     line-height: 1.75;
   }
   .landing-hero-actions {
-    flex-direction: row;
-    gap: 22px;
+    flex-direction: column;
+    gap: 12px;
     margin-top: 27px;
-    align-items: center;
+    align-items: stretch;
   }
   .landing-hero-actions .landing-button {
-    font-size: 11px;
-    padding: 17px 16px;
-    gap: 20px;
+    justify-content: center;
+    min-height: 48px;
+    font-size: 14px;
+    padding: 14px 16px;
+    gap: 16px;
   }
   .landing-demo-link {
-    font-size: 9px;
-    gap: 8px;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 13px;
+    gap: 10px;
   }
   .landing-hero-note {
     margin-top: 17px;
@@ -1893,7 +1898,7 @@
   }
   .landing-header-login {
     padding: 8px;
-    font-size: 9px;
+    font-size: 12px;
     gap: 5px;
   }
   .landing-header-login svg {
@@ -1907,11 +1912,11 @@
   }
   .landing-hero-actions .landing-button {
     gap: 12px;
-    font-size: 10px;
+    font-size: 13px;
     padding: 15px 13px;
   }
   .landing-demo-link {
-    font-size: 8px;
+    font-size: 13px;
     gap: 6px;
   }
   .landing-demo-link > span {

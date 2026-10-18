@@ -45,12 +45,12 @@ export function PageHeader({
             )}
           </div>
         )}
-        <h1 className="h1">{title}</h1>
+        <h1 className="h1 wrap-anywhere">{title}</h1>
         {description && (
           <p className={cn('text-[15.5px] leading-relaxed text-ink-2', dense ? 'mt-1.5' : 'mt-3')}>{description}</p>
         )}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 max-sm:w-full">{actions}</div>}
     </div>
   )
 }
@@ -131,7 +131,7 @@ export function Screen({
       />
       {children}
       {idx >= 0 && (
-        <div className="hairline mt-10 flex flex-wrap-reverse items-center justify-between gap-3 pt-6 sm:mt-12">
+        <div className="hairline mt-10 flex flex-wrap-reverse items-center justify-between gap-3 pt-6 max-sm:[&>button:last-child]:w-full sm:mt-12">
           <Button variant="ghost" onClick={() => navigate(prev ? `${base}/${prev.id}` : base)}>
             <ArrowLeft /> {prev ? prev.label : 'Обзор'}
           </Button>
@@ -169,7 +169,7 @@ export function Section({
             {title && <h2 className="h3">{title}</h2>}
             {description && <p className="meta">{description}</p>}
           </div>
-          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+          {actions && <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{actions}</div>}
         </div>
       )}
       <div className={cn(title || actions ? 'px-4 pb-4 sm:px-5 sm:pb-5' : 'p-4 sm:p-5', bodyClassName)}>{children}</div>
@@ -220,7 +220,12 @@ export function Stat({
     <div className={cn('min-w-0 px-4 py-3.5 sm:px-5 sm:py-4', className)}>
       {/* На телефоне ячейка узкая: подпись переносится, а не обрезается многоточием. */}
       <div className="text-[13px] leading-snug text-ink-3 sm:truncate">{label}</div>
-      <div className={cn('display num mt-1.5 text-[21px] sm:text-[24px]', valueClassName)}>
+      <div
+        className={cn(
+          'display num mt-1.5 text-[clamp(1.125rem,5.2vw,1.3125rem)] leading-tight wrap-anywhere sm:text-[24px]',
+          valueClassName,
+        )}
+      >
         {typeof value === 'string' ? <ScrambleText text={value} /> : value}
       </div>
       {hint && <div className="meta mt-1 leading-snug sm:truncate">{hint}</div>}

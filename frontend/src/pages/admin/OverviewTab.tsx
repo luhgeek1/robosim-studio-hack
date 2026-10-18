@@ -75,7 +75,7 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-5">
-      <div className="card grid grid-cols-3 overflow-hidden lg:grid-cols-6 lg:divide-x lg:divide-line">
+      <div className="card grid grid-cols-2 overflow-hidden sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-line">
         <Kpi
           label="Проектов"
           value={projectsTotal}
@@ -163,7 +163,7 @@ export function OverviewTab() {
 
       {gaps.length > 0 && (
         <Panel title="Пробелы каталога" note="Процессы, где подбор не находит решений — сигнал для ФЦ БАС">
-          <ul className="grid gap-x-8 divide-line sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-x-8 divide-line sm:grid-cols-2">
             {gaps.slice(0, 10).map((gap, i) => (
               <motion.li
                 key={`${gap.object_type}-${gap.process_key}`}

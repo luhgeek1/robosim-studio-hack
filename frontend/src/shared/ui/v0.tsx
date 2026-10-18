@@ -174,7 +174,7 @@ export function Segmented<T extends string | number>({
   const h = size === 'sm' ? 'h-8 text-[13px]' : 'h-10 text-[14px]'
   return (
     // Не шире родителя: на телефоне лишние варианты прокручиваются вбок, а не раздвигают страницу.
-    <div className="relative inline-flex max-w-full items-center overflow-x-auto overscroll-x-contain rounded-[10px] bg-black/[0.05] p-[3px] [scrollbar-width:none]">
+    <div className="relative inline-flex min-w-0 max-w-full items-center overflow-x-auto overscroll-x-contain rounded-[10px] bg-black/[0.05] p-[3px] [scrollbar-width:none]">
       <SlideHighlight className="rounded-[8px] bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.04)]" />
       {options.map((o) => {
         const active = o.value === value
@@ -184,9 +184,10 @@ export function Segmented<T extends string | number>({
             type="button"
             title={o.hint}
             disabled={o.disabled}
+            aria-pressed={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              'relative shrink-0 rounded-[8px] px-2.5 font-medium transition-colors sm:px-3.5 duration-150 disabled:opacity-40',
+              'relative shrink-0 rounded-[8px] px-2.5 font-medium transition-colors max-sm:min-h-10 sm:px-3.5 duration-150 disabled:opacity-40',
               h,
               active ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
             )}

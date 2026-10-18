@@ -27,7 +27,7 @@ export function VendorLayout() {
   if (overview.isError) {
     const problem = parseApiProblem(overview.error)
     return (
-      <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-20">
+      <div className="mx-auto w-full min-w-0 max-w-300 px-4 pt-7 pb-20 sm:px-6 sm:pt-12">
         {problem.status === 409 ? (
           <EmptyState
             icon={<Building2 size={22} />}
@@ -47,14 +47,16 @@ export function VendorLayout() {
   const badges: Record<string, number> = { '/vendor/proposals': pending, '/vendor/rfqs': incoming }
 
   return (
-    <div className="mx-auto w-full max-w-300 px-6 pt-12 pb-20">
+    <div className="mx-auto w-full min-w-0 max-w-300 px-4 pt-7 pb-20 sm:px-6 sm:pt-12">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           <div className="hud mb-3 flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-signal" aria-hidden />
             Кабинет производителя · {manufacturer.country ?? 'RU'}
           </div>
-          <h1 className="display truncate text-[44px] leading-[1.05] tracking-[-0.035em]">{manufacturer.name}</h1>
+          <h1 className="display text-[30px] leading-[1.1] tracking-[-0.035em] wrap-anywhere sm:text-[44px]">
+            {manufacturer.name}
+          </h1>
         </div>
         {version.data && (
           <div className="text-[12.5px] text-ink-3">
@@ -63,8 +65,11 @@ export function VendorLayout() {
         )}
       </div>
 
-      <nav className="mb-8 flex items-center gap-4 border-b border-line" aria-label="Разделы кабинета">
-        <div className="relative flex items-center gap-1">
+      <nav
+        className="scroll-thin -mx-4 mb-6 overflow-x-auto overscroll-x-contain border-b border-line px-4 sm:mx-0 sm:mb-8 sm:px-0"
+        aria-label="Разделы кабинета"
+      >
+        <div className="relative flex w-max items-center gap-1">
           <SlideHighlight className="z-10 rounded-full bg-ink" transition={SPRING} />
           {TABS.map((tab) => (
             <NavLink
@@ -73,7 +78,7 @@ export function VendorLayout() {
               end={tab.end}
               className={({ isActive }) =>
                 cn(
-                  'relative flex h-11 items-center gap-2 px-3 text-[14px] font-medium transition-colors',
+                  'relative flex h-11 shrink-0 items-center gap-2 px-3 text-[14px] font-medium whitespace-nowrap transition-colors',
                   isActive ? 'text-ink' : 'text-ink-3 hover:text-ink-2',
                 )
               }
