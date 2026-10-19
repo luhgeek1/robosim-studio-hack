@@ -83,7 +83,7 @@ function ScenarioCard({
           <ArrowUpRight size={16} className="text-ink-4 transition-colors group-hover:text-ink" />
         )}
       </div>
-      <h3 className="h3 mt-1 line-clamp-2 min-h-[2.6em]">
+      <h3 className="h3 mt-1 min-h-[2.6em] wrap-anywhere lg:line-clamp-2">
         <Link to={`../scenarios/${s.scenario_id}`} className="after:absolute after:inset-0 after:rounded-[14px]">
           {s.name}
         </Link>
@@ -131,7 +131,7 @@ function BaselineCard({ scenario: s }: { scenario: Scenario }) {
         <span className="meta">база сравнения</span>
         <ArrowUpRight size={16} className="text-ink-4 transition-colors group-hover:text-ink" />
       </div>
-      <h3 className="h3 mt-1 line-clamp-2 min-h-[2.6em]">{s.name}</h3>
+      <h3 className="h3 mt-1 min-h-[2.6em] wrap-anywhere lg:line-clamp-2">{s.name}</h3>
 
       <div className="mt-5">
         <div className="display num text-[32px] text-ink-2">{formatRub(m.scenario_cost_rub_year)}</div>
@@ -154,7 +154,7 @@ function BaselineCard({ scenario: s }: { scenario: Scenario }) {
 function Fact({ label, value, tone }: { label: string; value: string; tone?: 'crit' }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="min-w-0 truncate text-[12.5px] text-ink-3">{label}</dt>
+      <dt className="min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">{label}</dt>
       <dd
         className={cn(
           'num text-[14px] font-semibold whitespace-nowrap tracking-[-0.01em]',

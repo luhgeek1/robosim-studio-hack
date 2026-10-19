@@ -122,9 +122,9 @@ export function WhySheet({
 function Figure({ value, label, note }: { value: string; label: string; note: string }) {
   return (
     <div className="flex min-w-0 flex-col px-4 py-4">
-      <dt className="order-2 mt-1.5 truncate text-[12.5px] text-ink-2">{label}</dt>
-      <dd className="display num order-1 truncate text-[22px]">{value}</dd>
-      <dd className="order-3 truncate text-[11.5px] text-ink-3">{note}</dd>
+      <dt className="order-2 mt-1.5 min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-2">{label}</dt>
+      <dd className="display num order-1 min-w-0 wrap-anywhere lg:truncate text-[22px]">{value}</dd>
+      <dd className="order-3 min-w-0 wrap-anywhere lg:truncate text-[11.5px] text-ink-3">{note}</dd>
     </div>
   )
 }
@@ -266,7 +266,10 @@ function Bars({
               className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,11.5rem)_minmax(0,1fr)_5.5rem] sm:gap-3"
             >
               <span
-                className={cn('truncate text-[12.5px]', best ? 'font-medium text-ink' : 'text-ink-2')}
+                className={cn(
+                  'min-w-0 wrap-anywhere lg:truncate text-[12.5px]',
+                  best ? 'font-medium text-ink' : 'text-ink-2',
+                )}
                 title={s.name}
               >
                 {s.name}

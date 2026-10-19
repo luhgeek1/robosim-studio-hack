@@ -67,13 +67,18 @@ export function ScenariosPage() {
   const calc = recommended?.last_calculation
   // Для сравнения нужны два рассчитанных варианта роботизации (ТЗ 3.5.5): предлагаем собрать их одной кнопкой.
   const needsSet = scenarios.data !== undefined && robotized.filter((s) => s.last_calculation).length < 2
-  const buildSetButton = (
+  const buildSetButton = (compact = false) => (
     <Button
       variant={robotized.length ? 'default' : 'outline'}
       onClick={() => buildSet.mutate()}
       disabled={buildSet.isPending}
+      className="max-sm:text-[13px]"
+      aria-label="Собрать покупку, RaaS и лизинг"
+      title="Собрать покупку, RaaS и лизинг"
     >
-      {buildSet.isPending ? <Spinner /> : <Layers />} Собрать покупку, RaaS и лизинг
+      {buildSet.isPending ? <Spinner /> : <Layers />}
+      <span className="sm:hidden">{compact ? 'Три варианта' : 'Собрать варианты'}</span>
+      <span className="hidden sm:inline">Собрать покупку, RaaS и лизинг</span>
     </Button>
   )
 
@@ -87,16 +92,23 @@ export function ScenariosPage() {
       dense
       nextDisabled={!robotized.some((s) => s.last_calculation)}
       actions={
-        <>
+        <div className="flex max-w-full flex-wrap items-center gap-2 max-sm:flex-nowrap">
           <NewScenarioDialog projectId={projectId} />
           {needsSet && robotized.length > 0 ? (
-            buildSetButton
+            buildSetButton()
           ) : (
-            <Button onClick={fromRecommendation} disabled={create.isPending}>
-              {create.isPending ? <Spinner /> : <Sparkles />} Из рекомендации подбора
+            <Button
+              onClick={fromRecommendation}
+              disabled={create.isPending}
+              className="max-sm:text-[13px]"
+              aria-label="Из рекомендации подбора"
+            >
+              {create.isPending ? <Spinner /> : <Sparkles />}
+              <span className="sm:hidden">Из подбора</span>
+              <span className="hidden sm:inline">Из рекомендации подбора</span>
             </Button>
           )}
-        </>
+        </div>
       }
     >
       {scenarios.isPending && <LoadingBlock label="Загружаем сценарии…" />}
@@ -119,15 +131,22 @@ export function ScenariosPage() {
       )}
       {scenarios.data && robotized.length === 0 && (
         <EmptyState
-          className="mt-6"
+          className="mt-6 max-sm:px-3"
           title="Сценариев роботизации пока нет"
           description="Быстрее всего — собрать сценарий из лучших подходящих решений по каждому процессу. Состав потом можно поменять."
           action={
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button onClick={fromRecommendation} disabled={create.isPending}>
-                <Sparkles /> Из рекомендации подбора
+            <div className="flex flex-wrap items-center justify-center gap-2 max-sm:flex-nowrap">
+              <Button
+                onClick={fromRecommendation}
+                disabled={create.isPending}
+                className="max-sm:text-[13px]"
+                aria-label="Из рекомендации подбора"
+              >
+                <Sparkles />
+                <span className="sm:hidden">Из подбора</span>
+                <span className="hidden sm:inline">Из рекомендации подбора</span>
               </Button>
-              {buildSetButton}
+              {buildSetButton(true)}
             </div>
           }
         />
@@ -221,10 +240,13 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
       </div>
 
       <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
-        <Link to={href} className="truncate text-[16px] font-semibold tracking-[-0.015em] after:absolute after:inset-0">
+        <Link
+          to={href}
+          className="min-w-0 wrap-anywhere lg:truncate text-[16px] font-semibold tracking-[-0.015em] after:absolute after:inset-0"
+        >
           {scenario.name}
         </Link>
-        <div className="mt-0.5 truncate text-[12.5px] text-ink-3">
+        <div className="mt-0.5 min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
           {scenario.items.length
             ? scenario.items
                 .map(
@@ -376,10 +398,10 @@ function ScenarioMenu({
 function Cell({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'crit' }) {
   return (
     <div className="flex min-w-0 flex-col-reverse">
-      <dt className="mt-0.5 truncate text-[12px] text-ink-3">{label}</dt>
+      <dt className="mt-0.5 min-w-0 wrap-anywhere lg:truncate text-[12px] text-ink-3">{label}</dt>
       <dd
         className={cn(
-          'num truncate text-[15px] font-semibold tracking-[-0.01em]',
+          'num min-w-0 wrap-anywhere lg:truncate text-[15px] font-semibold tracking-[-0.01em]',
           tone === 'ok' && 'text-ok',
           tone === 'crit' && 'text-crit',
         )}
@@ -413,8 +435,10 @@ function NewScenarioDialog({ projectId }: { projectId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus /> Пустой сценарий
+        <Button variant="outline" className="max-sm:text-[13px]" aria-label="Пустой сценарий">
+          <Plus />
+          <span className="sm:hidden">Пустой</span>
+          <span className="hidden sm:inline">Пустой сценарий</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

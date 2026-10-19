@@ -22,8 +22,17 @@ export function ComparisonPage() {
   const [whyOpen, setWhyOpen] = useState(false)
   const table = comparison.data
   const buildSetButton = (size?: 'sm') => (
-    <Button size={size} onClick={() => buildSet.mutate()} disabled={buildSet.isPending}>
-      {buildSet.isPending ? <Spinner /> : <Layers />} Собрать покупку, RaaS и лизинг
+    <Button
+      size={size}
+      onClick={() => buildSet.mutate()}
+      disabled={buildSet.isPending}
+      className="max-sm:text-[13px]"
+      aria-label="Собрать покупку, RaaS и лизинг"
+      title="Собрать покупку, RaaS и лизинг"
+    >
+      {buildSet.isPending ? <Spinner /> : <Layers />}
+      <span className="sm:hidden">Три варианта</span>
+      <span className="hidden sm:inline">Собрать покупку, RaaS и лизинг</span>
     </Button>
   )
 
@@ -41,13 +50,14 @@ export function ComparisonPage() {
       <Screen title="Как сейчас против роботизации" nextDisabled>
         {noScenarios ? (
           <EmptyState
+            className="max-sm:px-3"
             icon={<Scale className="size-6" />}
             title="Нет рассчитанных сценариев роботизации"
             description="Для сравнения нужен рассчитанный сценарий «как сейчас» и хотя бы два сценария роботизации. Их можно собрать одной кнопкой: покупка по рекомендации подбора, её копии как RaaS и лизинг — все сразу рассчитаются."
             action={
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2 max-sm:flex-nowrap">
                 {buildSetButton()}
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="max-sm:text-[13px]">
                   <Link to="../scenarios">
                     К сценариям <ArrowRight />
                   </Link>
