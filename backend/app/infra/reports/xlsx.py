@@ -139,8 +139,9 @@ def _summary(book: Workbook, model: ReportModel) -> None:
         )
     )
     sheet.note(
-        "Как пользоваться: на листах «Расчёт» жёлтые ячейки — входные данные, зелёные — живые формулы. "
-        "Измените вход — пересчитаются количество роботов, CAPEX, OPEX, эффект и окупаемость."
+        "Снимок расчёта на дату экспорта. Для изменения исходных данных и пересчёта измените сценарий "
+        "в РобоМере и скачайте новый файл. Листы защищены от случайных правок; "
+        "снятие защиты не превращает файл в самостоятельную финансовую модель."
     )
     scenarios = model.scenarios
     sheet.section("Сценарии")
@@ -164,7 +165,7 @@ def _summary(book: Workbook, model: ReportModel) -> None:
 
 
 class CalculationSheet:
-    """Inputs block (yellow, editable) above the calculation block (green: live formulas from the trace)."""
+    """Input facts and trace; optional formulas are for verification in a protected snapshot."""
 
     def __init__(self, book: Workbook, scenario: ScenarioReport, *, live: bool = True) -> None:
         self.scenario = scenario
@@ -181,7 +182,8 @@ class CalculationSheet:
         sheet, scenario = self.sheet, self.scenario
         sheet.title(f"Расчёт: {scenario.name} ({scenario_kind(scenario.kind)})")
         sheet.note(
-            "Жёлтые ячейки — входные данные: их можно менять. Зелёные — формулы, пересчитываются сами."
+            "Снимок: жёлтые ячейки — исходные данные, зелёные — проверочные формулы. "
+            "Изменять входы и пересчитывать весь сценарий нужно в приложении."
             if self.live
             else "Значения платформы без формул: формула каждого шага — текстом в столбце «Формула»."
         )
@@ -314,8 +316,8 @@ def _cashflow(
         + ("Собственные вложения и платежи долга. " if owner else "Полный CAPEX, без платежей долга. ")
         + "Плата RaaS включена; внедрение, разгон, индексация и замены учтены. "
         + (
-            "Накопленный поток, дисконтирование, NPV и IRR — живые формулы Excel; "
-            "ставка связана с листом расчёта."
+            "Накопленный поток, дисконтирование, NPV и IRR — проверочные формулы Excel. "
+            "Месячные потоки зафиксированы; для нового сценария нужен новый экспорт."
             if live
             else "Значения платформы без формул."
         )
@@ -432,6 +434,11 @@ def _sensitivity(book: Workbook, model: ReportModel) -> None:
     sheet = Sheet(book, "Риски", [44, 18, 18, 18, 18, 18, 60])
     analysed = model.analysed
     sheet.title(f"Риски и чувствительность: {analysed.name if analysed else ''}")
+    sheet.note(
+        "Объём операций меняется вместе с пропорциональным штатом без роботов (допущение о найме). "
+        "При изменении физики парк рассчитывается аналитически; SLA новых условий требует имитации.",
+        span=7,
+    )
     if model.sensitivity:
         sheet.section("Торнадо (NPV, ₽)", 7)
         sheet.header(["Драйвер", "Низ", "Верх", "NPV при низе", "NPV при верхе", "Размах", "Вид"])
@@ -547,6 +554,8 @@ def render_xlsx(model: ReportModel) -> bytes:
         _simulation(book, model)
     if model.has(ReportSection.ASSUMPTIONS) or model.has(ReportSection.SOURCES):
         _assumptions(book, model)
+    for sheet in book.worksheets:
+        sheet.protection.sheet = True
     buffer = BytesIO()
     book.save(buffer)
     return buffer.getvalue()

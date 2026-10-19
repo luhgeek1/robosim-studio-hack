@@ -4092,6 +4092,13 @@ export interface components {
       candidates: components['schemas']['Candidate'][]
       /** @description Текст, если подходящих нет (допустимый ответ по Q&A) */
       no_fit_message?: string | null
+      /**
+       * Format: uuid
+       * @description Продукт для сценария из рекомендации; тот же выбор, что при создании
+       */
+      recommended_product_id?: string | null
+      /** @description Причина выбора с учётом NPV и статуса проверок */
+      selection_reason?: string | null
     }
     MatchingRunRequest: {
       weights?: {
@@ -4806,8 +4813,8 @@ export interface components {
       visual_ids?: string[]
       title?: string | null
       /**
-       * @description Для xlsx — формулы, а не значения
-       * @default true
+       * @description Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении
+       * @default false
        */
       live_formulas: boolean
     }

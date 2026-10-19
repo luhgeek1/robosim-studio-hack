@@ -164,8 +164,12 @@ function SensitivitySections({
               className="-mt-1 -mr-1 -ml-1 max-sm:-mt-2 max-sm:-ml-2"
             >
               <p>
-                Каждый параметр по очереди меняется к границам своего диапазона. Остальные значения остаются как в
-                базовом расчёте.
+                Каждый параметр по очереди меняется к границам своего диапазона. Для объёма операций одновременно
+                пропорционально меняется штат без роботов: это допущение о найме при росте нагрузки.
+              </p>
+              <p className="mt-2">
+                При изменении физики парк определяется по формуле цикла; прежнее подтверждение имитацией не переносится
+                на новые условия. Поэтому результат может отличаться и из-за способа подбора парка.
               </p>
               <p className="mt-2">
                 Сверху — параметры с самым большим разбросом результата. Это чувствительность расчёта к параметру, а не
@@ -176,6 +180,10 @@ function SensitivitySections({
           <div className="min-w-0 max-w-full max-sm:w-full">{metricSwitch}</div>
         </div>
         <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+          <p className="mb-4 text-sm text-ink-3">
+            Объём меняется вместе со штатом без роботов. Для роста нагрузки при прежнем штате создайте копию сценария и
+            измените только объёмы. Новые физические условия требуют повторной имитации.
+          </p>
           {tornado.isPending && <LoadingBlock rows={4} />}
           {tornado.isError && <ErrorBlock error={tornado.error} onRetry={() => tornado.refetch()} />}
           {tornado.data && <Tornado result={tornado.data} metric={metric} />}
@@ -184,7 +192,7 @@ function SensitivitySections({
 
       <Section
         title="Если зарплаты и объёмы изменятся вместе"
-        description={`${METRIC[metric].label} при одновременном сдвиге ФОТ и объёма операций`}
+        description={`${METRIC[metric].label} при изменении зарплат и объёма; штат без роботов растёт пропорционально объёму`}
       >
         {heatmap.isPending && <LoadingBlock rows={3} />}
         {heatmap.isError && <ErrorBlock error={heatmap.error} onRetry={() => heatmap.refetch()} />}

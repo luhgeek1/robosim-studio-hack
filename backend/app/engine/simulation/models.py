@@ -55,6 +55,7 @@ class RobotSpec:
     runtime_h: float | None = None
     charge_min: float | None = None
     footprint_m: tuple[float, float] | None = None
+    min_passage_m: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +86,8 @@ class SimProcess:
     sources: tuple[str, ...] = ()
     destinations: tuple[str, ...] = ()
     ride_s: float = 0.0
+    # Occupies the robot after delivery, before it can accept another task (e.g. disinfection).
+    turnaround_s: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)

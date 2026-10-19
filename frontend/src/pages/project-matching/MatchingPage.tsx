@@ -59,7 +59,7 @@ export function MatchingPage() {
   const fit = data?.totals?.fit ?? 0
   const check = data?.totals?.check ?? 0
   // «Требует проверки» — тоже кандидат для сценария (бэкенд их берёт): в аэропорту и больнице «подходит» нет ни у кого.
-  const nothingToBuild = data ? fit + check === 0 : true
+  const nothingToBuild = !data?.processes.some((p) => p.recommended_product_id)
   const total = fit + check + (data?.totals?.excluded ?? 0)
   const creating = createScenario.isPending || checking
 
@@ -74,7 +74,7 @@ export function MatchingPage() {
           ? fit
             ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}`
             : check
-              ? `Требуют проверки ТТХ ${check} ${pluralRu(check, ['решение', 'решения', 'решений'])} из ${total}`
+              ? `Требуют проверки ${check} ${pluralRu(check, ['решение', 'решения', 'решений'])} из ${total}`
               : 'Подходящих решений не найдено'
           : 'Подбор роботов'
       }

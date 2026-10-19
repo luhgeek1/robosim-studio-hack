@@ -127,7 +127,7 @@ def _skipped(result: CandidateResult, requirement: Requirement) -> None:
         Reason(
             "OBJECT_PARAM_MISSING",
             f"{requirement.message}: у объекта не задан параметр, проверка пропущена",
-            Severity.INFO,
+            Severity.WARNING,
             requirement.spec,
         )
     )
@@ -158,8 +158,13 @@ def _check_requirement(
     result: CandidateResult, requirement: Requirement, values: Mapping[str, float | None]
 ) -> None:
     candidate = result.candidate
-    if requirement.when is not None and not _holds(requirement.when, values):
-        return
+    if requirement.when is not None:
+        applies = _holds(requirement.when, values)
+        if applies is None:
+            _skipped(result, requirement)
+            return
+        if not applies:
+            return
     if requirement.kind == "object":
         _check_object(result, requirement, values)
         return

@@ -29,7 +29,7 @@ class Group(StrEnum):
 GROUP_NAMES = {
     Group.EQUIPMENT_PRICE: "Цена оборудования",
     Group.LABOR_COST: "Стоимость труда (все зарплаты)",
-    Group.OPERATIONS_VOLUME: "Объём операций",
+    Group.OPERATIONS_VOLUME: "Объём операций и пропорциональный штат",
 }
 
 

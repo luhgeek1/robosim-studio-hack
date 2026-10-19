@@ -12,9 +12,12 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.catalog import ProductSummary
 from app.domain.reference import ProcessDef
+from app.engine.layout import Plan
 from app.engine.matching import CRITERIA, CandidateResult, CandidateStatus, QuickEstimate, evaluate, rank
 from app.engine.trace import fmt
 from app.service.catalog.mappers import to_summary
+from app.service.layouts.mapping import plan_from
+from app.service.layouts.reader import LayoutReader
 from app.service.matching.candidates import (
     CandidateData,
     ProcessSizing,
@@ -26,6 +29,7 @@ from app.service.matching.candidates import (
     specs_by_product,
 )
 from app.service.matching.economics import QuickEconomics, payback_limit_years, quick_economics
+from app.service.matching.geometry import check_geometry
 from app.service.projects.context import ProjectContext, ProjectLoader
 from app.service.projects.processes import ProcessAnalysis, ProcessService, ProcessView
 
@@ -94,6 +98,51 @@ def _demand_summary(view: ProcessView) -> str | None:
     return f"{fmt(math.ceil(result.peak_per_hour))} {unit}/ч в пик, {fmt(result.demand_per_day)} {unit}/сут"
 
 
+def recommended_candidates(processes: list[ProcessMatchingView]) -> list[tuple[str, CandidateView]]:
+    """One selection policy for the preview, scenario creation and report."""
+    chosen: list[tuple[str, CandidateView]] = []
+    fallback: tuple[str, CandidateView] | None = None
+    for process in processes:
+        priced = [
+            c
+            for c in process.candidates
+            if c.economics is not None and c.result.status in {CandidateStatus.FIT, CandidateStatus.CHECK}
+        ]
+        for status in (CandidateStatus.FIT, CandidateStatus.CHECK):
+            good = [
+                c for c in priced if c.result.status == status and c.economics and c.economics.npv_rub > 0
+            ]
+            if good:
+                chosen.append((process.process_key, good[0]))
+                break
+        for candidate in priced:
+            if (
+                candidate.economics
+                and candidate.economics.effect_rub_year > 0
+                and (
+                    fallback is None
+                    or (fallback[1].economics and candidate.economics.npv_rub > fallback[1].economics.npv_rub)
+                )
+            ):
+                fallback = (process.process_key, candidate)
+    return chosen or ([fallback] if fallback else [])
+
+
+def selection_reason(view: CandidateView) -> str:
+    economics = view.economics
+    reason = (
+        "Лучший по рейтингу вариант с положительным NPV; сначала рассматриваются подходящие решения."
+        if economics and economics.npv_rub > 0
+        else "Вариант с наибольшим NPV среди решений с положительным годовым эффектом; "
+        "за горизонт инвестиции не окупаются."
+    )
+    if economics:
+        reason += f" NPV покупки: {fmt(economics.npv_rub / 1e6)} млн ₽."
+    if view.result.status == CandidateStatus.CHECK:
+        reason += " До внедрения подтвердите пропущенные проверки объекта и ТТХ."
+    return reason
+
+
 class MatchingService:
     def __init__(self, uow: UnitOfWork, user: CurrentUser) -> None:
         self._uow = uow
@@ -138,7 +187,9 @@ class MatchingService:
         selected = set(settings.process_keys) if settings and settings.process_keys else None
         rnd = settings.include_rnd if settings else False
         views = [v for v in analysis.views if selected is None or v.result.process_key in selected]
-        processes = [await self._process(analysis, view, effective, rnd) for view in views]
+        layout = await LayoutReader(self._uow).layout(context.project.id)
+        plan = plan_from(layout) if layout else None
+        processes = [await self._process(analysis, view, effective, rnd, plan) for view in views]
         totals = {
             status.value: 0
             for status in (CandidateStatus.FIT, CandidateStatus.CHECK, CandidateStatus.EXCLUDED)
@@ -178,7 +229,12 @@ class MatchingService:
         return settings
 
     async def _process(
-        self, analysis: ProcessAnalysis, view: ProcessView, weights: dict[str, float], include_rnd: bool
+        self,
+        analysis: ProcessAnalysis,
+        view: ProcessView,
+        weights: dict[str, float],
+        include_rnd: bool,
+        plan: Plan | None,
     ) -> ProcessMatchingView:
         definition = next(
             p for p in analysis.context.object_type.processes if p.key == view.result.process_key
@@ -202,6 +258,16 @@ class MatchingService:
         results: list[CandidateResult] = []
         for data in candidates:
             result = evaluate(data.input, definition.requirements, analysis.values, include_rnd=include_rnd)
+            check_geometry(
+                result,
+                data,
+                definition,
+                plan,
+                analysis.norms,
+                (analysis.values.get("pallet_dims_mm_width") or 0.0)
+                if analysis.context.project.object_type == "warehouse"
+                else 0.0,
+            )
             if data.product.id in manual_ids:
                 result.status = CandidateStatus.MANUAL
             results.append(result)

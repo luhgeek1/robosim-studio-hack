@@ -67,7 +67,7 @@ const VS_LABEL: Record<string, { text: string; tone: Tone }> = {
 const STATE_LABEL: Record<string, string> = {
   moving: 'в пути',
   loading: 'погрузка',
-  unloading: 'выгрузка',
+  unloading: 'выгрузка и обработка',
   charging: 'зарядка',
   waiting: 'ожидание в заторе',
   idle: 'простой',
@@ -336,6 +336,12 @@ function SimulationView({
       titleHint={`${config.count} × ${sizing?.product_name ?? ''}${lead ? `. ${lead}` : ''}`}
       actions={picker}
     >
+      {scenario.items.some((item) => item.process_key === 'meal_delivery') && (
+        <p className="border-b border-line px-5 py-3 text-sm text-ink-3">
+          Питание моделируется потоком рейсов с пиковым коэффициентом. Одновременная развозка по отделениям в заданное
+          окно приёма пищи требует отдельной проверки расписания.
+        </p>
+      )}
       {calculation.isPending && <LoadingBlock label="Загружаем расчёт…" className="m-6" />}
       {calculation.isError && (
         <ErrorBlock error={calculation.error} onRetry={() => calculation.refetch()} className="m-6" />

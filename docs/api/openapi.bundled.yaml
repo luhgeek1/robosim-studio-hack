@@ -7883,6 +7883,17 @@ components:
             - string
             - 'null'
           description: Текст, если подходящих нет (допустимый ответ по Q&A)
+        recommended_product_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: Продукт для сценария из рекомендации; тот же выбор, что при создании
+        selection_reason:
+          type:
+            - string
+            - 'null'
+          description: Причина выбора с учётом NPV и статуса проверок
     MatchingRunRequest:
       type: object
       properties:
@@ -9529,8 +9540,8 @@ components:
             - 'null'
         live_formulas:
           type: boolean
-          default: true
-          description: Для xlsx — формулы, а не значения
+          default: false
+          description: Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении
     AssistStatus:
       type: object
       required:

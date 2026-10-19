@@ -201,6 +201,7 @@ class Model(Actions):
         return [p for p in result if p.key not in self.skipped]
 
     def _robots(self) -> list[Robot]:
+        process_networks = {p.key: self._network(p) for p in self.processes}
         homes = [n.id for n in self.nodes[NodeKind.CHARGER]] or list(self.docks)
         robots: list[Robot] = []
         for process in self.processes:
@@ -210,7 +211,7 @@ class Model(Actions):
                 robot = Robot(
                     id=f"R{len(robots) + 1:02d}",
                     process=process,
-                    network=self.networks[process.model],
+                    network=process_networks[process.key],
                     node=homes[len(robots) % len(homes)],
                     battery=battery,
                     next_failure=self.next_failure_gap(),
@@ -218,6 +219,26 @@ class Model(Actions):
                 )
                 robots.append(robot)
         return robots
+
+    def _network(self, process: SimProcess) -> Network:
+        spec = process.robot
+        width = max(spec.min_passage_m, spec.footprint_m[1] if spec.footprint_m else 0.0)
+        network = self.networks[process.model].for_width(width)
+        points = {n.id for n in self.nodes[NodeKind.CHARGER]} or set(self.docks)
+        if process.sources:
+            origins, destinations = self.points[process.key]
+            points.update(origins.ids + destinations.ids)
+        elif process.model == ProcessModel.GOODS_TO_PERSON:
+            points.update(self.pod_picker.ids)
+            points.update(s.id for s in self.process_stations(process.key))
+        else:
+            points.update(self.face_picker.ids)
+            if process.inbound_per_day > 0:
+                points.update(n.id for n in self.nodes[NodeKind.DOCK_IN])
+            if process.outbound_per_day > 0:
+                points.update(n.id for n in self.nodes[NodeKind.DOCK_OUT])
+        network.require_connected(points, process.name, width)
+        return network
 
     def _start_battery(self, process: SimProcess, phase: float) -> tuple[float, bool]:
         """A fleet mid-day, not a fleet fresh off the chargers: robots are spread evenly over one

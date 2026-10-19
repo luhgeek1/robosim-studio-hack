@@ -51,9 +51,11 @@ async def test_pdf_excel_and_json_reports_are_built_and_downloaded(client: Async
     assert {"Сводка", "Сравнение", "Параметры объекта", "Нормативы"} <= set(book.sheetnames)
     calc = next(book[name] for name in book.sheetnames if name.startswith("Расчёт — Покупка"))
     formulas = [c.value for c in calc["C"] if isinstance(c.value, str) and c.value.startswith("=")]
-    assert len(formulas) > 20
+    assert not formulas
+    assert all(sheet.protection.sheet for sheet in book.worksheets)
+    assert "Снимок расчёта" in book["Сводка"]["A5"].value
     flow = next(book[name] for name in book.sheetnames if name.startswith("Поток"))
-    assert str(flow["B4"].value).startswith("=J")
+    assert isinstance(flow["B4"].value, float)
 
     data = await _report(client, headers, project_id, format="json", sections=["economics"])
     assert data["sections"] == ["economics"]

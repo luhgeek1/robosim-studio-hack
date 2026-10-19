@@ -19,9 +19,8 @@ from app.domain.scenario.models import (
     ScenarioItemSpec,
     ScenarioKind,
 )
-from app.engine.matching import CandidateStatus
 from app.service.matching.candidates import choose_offer
-from app.service.matching.service import CandidateView, MatchingService
+from app.service.matching.service import MatchingService, recommended_candidates, selection_reason
 from app.service.projects.audit import AuditLog
 from app.service.projects.context import ProjectLoader
 from app.service.projects.norms import NormLoader
@@ -405,20 +404,7 @@ class ScenarioService:
         If no process pays back, the least unprofitable one is taken so the user sees why robotization loses.
         """
         outcome = await MatchingService(self._uow, self._user).run(project_id)
-        chosen: list[tuple[str, CandidateView]] = []
-        fallback: tuple[str, CandidateView] | None = None
-        for process in outcome.processes:
-            priced = [c for c in process.candidates if c.economics is not None]
-            for status in (CandidateStatus.FIT, CandidateStatus.CHECK):
-                good = [c for c in priced if c.result.status == status and _npv(c) > 0]
-                if good:
-                    chosen.append((process.process_key, good[0]))
-                    break
-            for candidate in (c for c in priced if c.economics and c.economics.effect_rub_year > 0):
-                if fallback is None or _npv(candidate) > _npv(fallback[1]):
-                    fallback = (process.process_key, candidate)
-        if not chosen and fallback is not None:
-            chosen = [fallback]
+        chosen = recommended_candidates(outcome.processes)
         if not chosen:
             raise ConflictError(
                 "Ни одно решение из подбора не даёт положительного эффекта на этом объекте — "
@@ -429,16 +415,10 @@ class ScenarioService:
                 process_key=key,
                 product_id=view.data.product.id,
                 offer_id=view.data.offer.id if view.data.offer else None,
-                notes="Требует проверки ТТХ у вендора"
-                if view.result.status == CandidateStatus.CHECK
-                else None,
+                notes=selection_reason(view),
             )
             for key, view in chosen
         ]
-
-
-def _npv(view: CandidateView) -> float:
-    return view.economics.npv_rub if view.economics else float("-inf")
 
 
 def _keep_simulation(old: list[ScenarioItem], new: list[ScenarioItem]) -> None:

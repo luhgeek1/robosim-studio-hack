@@ -33,6 +33,9 @@ _BASE_LIMITATIONS = [
     "Суммы с НДС (единая база ТЗ); налог на прибыль и амортизация приведены справочно.",
     "Имитация покрывает поддерживаемые транспортные процессы и отбор «товар к человеку». "
     "Пропущенные процессы указаны в результатах; их парк рассчитан аналитически.",
+    "В чувствительности объём операций меняется вместе с пропорциональным штатом без роботов "
+    "(допущение о найме). При изменении физики парк рассчитывается аналитически: "
+    "это не подтверждение SLA имитацией для новых условий.",
 ]
 
 
@@ -42,7 +45,7 @@ class ReportRequest:
     scenario_ids: list[UUID]
     visual_ids: list[UUID]
     title: str | None
-    live_formulas: bool = True
+    live_formulas: bool = False
 
 
 def _shown(value: Any, options: list[dict[str, str]] | None) -> Any:
@@ -125,7 +128,10 @@ class ReportCollector:
             live_formulas=request.live_formulas,
         )
         model.processes = await self._processes(context.project.id)
-        model.matching = await self._matching(project_id)
+        selected_products = {
+            item.product_id for c in compared for item in c.scenario.items if item.product_id
+        }
+        model.matching = await self._matching(project_id, selected_products)
         await self._risks(model)
         await self._layout(model, project_id)
         model.visuals = await self._visuals(request.visual_ids, project_id)
@@ -159,7 +165,7 @@ class ReportCollector:
             trace=run.trace,
             narrative={
                 "executive_summary": story.executive_summary,
-                "key_findings": story.key_findings,
+                "key_findings": [*story.key_findings, *[item.notes for item in scenario.items if item.notes]],
                 "next_steps": story.next_steps,
                 "risks_text": story.risks_text,
             },
@@ -226,7 +232,7 @@ class ReportCollector:
             for v in overview.processes
         ]
 
-    async def _matching(self, project_id: UUID) -> list[dict[str, Any]]:
+    async def _matching(self, project_id: UUID, selected: set[UUID]) -> list[dict[str, Any]]:
         outcome = await MatchingService(self._uow, self._user).run(project_id)
         return [
             {
@@ -238,9 +244,13 @@ class ReportCollector:
                         "score": c.result.score,
                         "robots": c.result.candidate.robots_estimate,
                         "payback_years": c.economics.payback_years if c.economics else None,
-                        "reasons": [r.text for r in c.result.reasons],
+                        "reasons": (
+                            ["Выбран в одном из сценариев отчёта"] if c.data.product.id in selected else []
+                        )
+                        + [r.text for r in c.result.reasons],
                     }
-                    for c in process.candidates[:TOP_CANDIDATES]
+                    for index, c in enumerate(process.candidates)
+                    if index < TOP_CANDIDATES or c.data.product.id in selected
                 ],
             }
             for process in outcome.processes
@@ -332,6 +342,11 @@ class ReportCollector:
     def _limitations(model: ReportModel) -> list[str]:
         team = sum(1 for n in model.assumptions if (n.get("source") or {}).get("kind") == "team_assumption")
         result = [*_BASE_LIMITATIONS]
+        if "meal_delivery" in model.process_names:
+            result.append(
+                "Доставка питания моделируется потоком рейсов со средним спросом и пиковым коэффициентом. "
+                "Одновременная развозка по отделениям в заданные окна приёма пищи отдельно не проверяется."
+            )
         if team:
             result.append(
                 f"В расчёте {team} нормативов — допущения команды с обоснованием; их нужно подтвердить."

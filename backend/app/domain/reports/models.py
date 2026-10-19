@@ -93,7 +93,7 @@ class ReportModel:
     sources: list[dict[str, Any]] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     disclaimer: str = DISCLAIMER
-    live_formulas: bool = True
+    live_formulas: bool = False
 
     def has(self, section: ReportSection) -> bool:
         return section in self.sections
