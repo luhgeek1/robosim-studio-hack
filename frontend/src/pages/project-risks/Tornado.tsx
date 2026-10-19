@@ -98,12 +98,12 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
         )}
       </div>
 
-      {/* На узком экране строка параметра — два ряда: имя и разброс сверху, полоса во всю ширину под ними. */}
-      <div className="mt-5 grid grid-cols-[1.25rem_minmax(0,1fr)_5rem] gap-x-3 lg:grid-cols-[1.5rem_minmax(0,16rem)_minmax(0,1fr)_6.5rem] lg:gap-x-4">
+      {/* На узком экране значения стоят под полосой: их длина не влияет на шкалу и не вызывает наложений. */}
+      <div className="mt-5 grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-2 lg:grid-cols-[1.5rem_minmax(0,16rem)_minmax(0,1fr)_6.5rem] lg:gap-x-4">
         <div className="hidden lg:col-span-2 lg:block" />
-        <div className="relative col-span-3 mx-6 h-8 lg:col-span-1 lg:mx-0">
+        <div className="relative col-span-2 flex min-w-0 justify-center pb-2 lg:col-span-1 lg:block lg:h-8 lg:pb-0">
           <span
-            className="num absolute bottom-2 -translate-x-1/2 rounded-full bg-ink px-2.5 py-0.5 text-[12px] font-medium whitespace-nowrap text-white transition-[left] duration-300"
+            className="num max-w-full rounded-full bg-ink px-2.5 py-0.5 text-center text-[12px] font-medium wrap-anywhere text-white lg:absolute lg:bottom-2 lg:-translate-x-1/2 lg:whitespace-nowrap lg:transition-[left] lg:duration-300"
             style={{ left: `${basePos * 100}%` }}
           >
             база {fmt(base)}
@@ -161,51 +161,69 @@ function Row({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="group col-span-3 grid grid-cols-subgrid items-center gap-y-2 rounded-xl py-3 transition-colors hover:bg-black/2.5 lg:col-span-4 lg:gap-y-0">
-          <span className="num row-start-1 pl-1 text-[12.5px] text-ink-4 lg:row-auto lg:pl-2">{index}</span>
+        <div
+          role="group"
+          aria-label={item.name}
+          className="group col-span-2 grid grid-cols-subgrid items-center gap-y-2 border-b border-line/60 py-4 transition-colors last:border-b-0 hover:bg-black/2.5 lg:col-span-4 lg:gap-y-0 lg:rounded-xl lg:border-b-0 lg:py-3"
+        >
+          <span
+            aria-hidden="true"
+            className="num row-start-1 self-start pt-0.5 pl-1 text-[12.5px] text-ink-4 lg:row-auto lg:self-center lg:pt-0 lg:pl-2"
+          >
+            {index}
+          </span>
           <div className="row-start-1 min-w-0 lg:row-auto">
-            <div className="truncate text-[13.5px] leading-snug font-medium" title={item.name}>
+            <div className="text-[13.5px] leading-snug font-medium wrap-anywhere lg:truncate" title={item.name}>
               {item.name}
             </div>
-            <div className="mt-0.5 flex min-w-0 items-center gap-2 text-[12px] text-ink-3">
+            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-ink-3 lg:flex-nowrap">
               <ProvenanceBadge status={item.provenance_status} />
-              <span className="num truncate">
+              <span className="num min-w-0 wrap-anywhere lg:truncate">
                 {inputText(item, item.low_input)} … {inputText(item, item.high_input)}
               </span>
             </div>
           </div>
 
-          <div className="relative col-span-3 row-start-2 mx-6 h-11 lg:col-auto lg:row-auto lg:mx-0">
-            <span className="absolute -top-1 -bottom-3 w-px bg-ink lg:-top-3" style={{ left: `${basePos * 100}%` }} />
-            {zeroPos !== null && (
-              <span
-                className="absolute -top-1 -bottom-3 w-0 border-l border-dashed lg:-top-3 border-ink-4"
-                style={{ left: `${zeroPos * 100}%` }}
+          <div className="relative col-span-2 row-start-2 min-w-0 lg:col-auto lg:row-auto">
+            <div aria-hidden="true" className="relative h-7 lg:h-11">
+              <span className="absolute inset-y-0 w-px bg-ink lg:-inset-y-3" style={{ left: `${basePos * 100}%` }} />
+              {zeroPos !== null && (
+                <span
+                  className="absolute inset-y-0 w-0 border-l border-dashed border-ink-4 lg:-inset-y-3"
+                  style={{ left: `${zeroPos * 100}%` }}
+                />
+              )}
+              <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line" />
+              <Segment from={basePos} to={pos(left.value)} good={isBetter(left.value)} open={left.value === null} />
+              <Segment from={basePos} to={pos(right.value)} good={isBetter(right.value)} open={right.value === null} />
+            </div>
+            <div className="mt-1.5 grid grid-cols-2 gap-4 lg:contents">
+              <EndLabel
+                side="left"
+                at={pos(left.value)}
+                value={left.value}
+                input={inputText(item, left.input)}
+                fmt={fmt}
               />
-            )}
-            <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line" />
-            <Segment from={basePos} to={pos(left.value)} good={isBetter(left.value)} open={left.value === null} />
-            <Segment from={basePos} to={pos(right.value)} good={isBetter(right.value)} open={right.value === null} />
-            <EndLabel
-              side="left"
-              at={pos(left.value)}
-              value={left.value}
-              input={inputText(item, left.input)}
-              fmt={fmt}
-            />
-            <EndLabel
-              side="right"
-              at={pos(right.value)}
-              value={right.value}
-              input={inputText(item, right.input)}
-              fmt={fmt}
-            />
+              <EndLabel
+                side="right"
+                at={pos(right.value)}
+                value={right.value}
+                input={inputText(item, right.input)}
+                fmt={fmt}
+              />
+            </div>
           </div>
 
-          <div className="col-start-3 row-start-1 pr-1 text-right lg:col-auto lg:row-auto lg:pr-2">
+          <div className="col-span-2 row-start-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 lg:col-auto lg:row-auto lg:block lg:pr-2 lg:text-right">
             <div className="text-[11px] text-ink-3 lg:hidden">разброс</div>
-            <div className="num text-[13.5px] font-semibold tracking-[-0.01em]">{swing}</div>
-            <div className="mt-1 ml-auto h-1 w-16 overflow-hidden rounded-full bg-black/6">
+            <div className="num text-[12px] font-semibold tracking-[-0.01em] wrap-anywhere lg:text-[13.5px]">
+              {swing}
+            </div>
+            <div
+              aria-hidden="true"
+              className="ml-auto h-1 w-16 shrink-0 overflow-hidden rounded-full bg-black/6 lg:mt-1"
+            >
               <motion.div
                 className="h-full rounded-full bg-ink"
                 initial={false}
@@ -266,8 +284,8 @@ function EndLabel({
   return (
     <motion.span
       className={cn(
-        'absolute top-1/2 -translate-y-1/2 leading-tight whitespace-nowrap',
-        side === 'left' ? 'pr-2.5 text-right' : 'pl-2.5',
+        'block min-w-0 leading-snug wrap-anywhere lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:leading-tight lg:whitespace-nowrap',
+        side === 'left' ? 'text-left lg:pr-2.5 lg:text-right' : 'text-right lg:pl-2.5 lg:text-left',
       )}
       initial={false}
       animate={side === 'left' ? { right: `${(1 - at) * 100}%` } : { left: `${at * 100}%` }}

@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { ArrowLeftRight } from 'lucide-react'
 import type { SensitivityResult } from '@/shared/api/types'
 import { formatPct, isNum } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
@@ -75,6 +76,20 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
   const xs = hm?.x_values ?? []
   const ys = hm?.y_values ?? []
   const z = hm?.z ?? []
+  const viewport = useRef<HTMLDivElement>(null)
+  const content = useRef<HTMLDivElement>(null)
+  const [scrollable, setScrollable] = useState(false)
+
+  useEffect(() => {
+    const measure = () =>
+      setScrollable(Boolean(viewport.current && viewport.current.scrollWidth > viewport.current.clientWidth + 1))
+    const observer = new ResizeObserver(measure)
+    if (viewport.current) observer.observe(viewport.current)
+    if (content.current) observer.observe(content.current)
+    measure()
+    return () => observer.disconnect()
+  }, [xs.length, ys.length])
+
   if (!hm || !xs.length || !ys.length) {
     return <div className="text-ink-3">Сервер не вернул сетку для этой пары параметров.</div>
   }
@@ -86,60 +101,77 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
-        <div className="flex w-6 shrink-0 items-center justify-center">
-          <span className="-rotate-90 text-xs whitespace-nowrap text-ink-3">{nameOf(hm.y_key)}, % от текущего</span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <div
-            className="grid gap-0.5 [--y-axis:2.75rem] sm:[--y-axis:3.5rem]"
-            style={{ gridTemplateColumns: `var(--y-axis) repeat(${xs.length}, minmax(0, 1fr))` }}
-          >
-            {rows.map(({ y, yi }) => (
-              <Row key={yi} y={y}>
-                {xs.map((x, xi) => {
-                  const v = z[yi]?.[xi] ?? null
-                  const base = isOne(x) && isOne(y)
-                  const cell = cellOf(metric, v, result.base_value, spread)
-                  return (
-                    <div
-                      key={xi}
-                      title={`${nameOf(hm.x_key)}: ${asPct(x)}; ${nameOf(hm.y_key)}: ${asPct(y)} → ${METRIC[metric].short}: ${METRIC[metric].format(v)}`}
-                      style={cell}
-                      className={cn(
-                        'num flex h-10 items-center justify-center rounded-md text-[12px] font-semibold transition-transform hover:scale-[1.04] sm:text-[13px]',
-                        base && 'ring-2 ring-ink ring-offset-2 ring-offset-surface',
-                      )}
-                    >
-                      {formatCompact(metric, v)}
-                    </div>
-                  )
-                })}
-              </Row>
-            ))}
-            <div />
-            {xs.map((x, xi) => (
-              <div key={xi} className="num pt-1 text-center text-[10px] whitespace-nowrap text-ink-3 sm:text-xs">
-                {asPct(x)}
-              </div>
-            ))}
+      <div
+        ref={viewport}
+        className="scroll-thin max-w-full overflow-x-auto overscroll-x-contain pb-2"
+        role={scrollable ? 'region' : undefined}
+        tabIndex={scrollable ? 0 : undefined}
+        aria-label={scrollable ? 'Тепловая карта с горизонтальной прокруткой' : undefined}
+      >
+        <div ref={content} className="flex w-max min-w-full">
+          <div className="sticky left-0 z-10 flex w-8 shrink-0 items-center justify-center bg-card">
+            <span className="-rotate-90 text-xs whitespace-nowrap text-ink-3">{nameOf(hm.y_key)}, % от текущего</span>
           </div>
-          <div className="mt-1 pl-11 text-center text-xs text-ink-3 sm:pl-14">{nameOf(hm.x_key)}, % от текущего</div>
+          <div className="min-w-0 flex-1">
+            <div
+              className="grid gap-0.5 [--y-axis:2.75rem] sm:[--y-axis:3.5rem]"
+              style={{ gridTemplateColumns: `var(--y-axis) repeat(${xs.length}, minmax(max-content, 1fr))` }}
+            >
+              {rows.map(({ y, yi }) => (
+                <Row key={yi} y={y}>
+                  {xs.map((x, xi) => {
+                    const v = z[yi]?.[xi] ?? null
+                    const base = isOne(x) && isOne(y)
+                    const cell = cellOf(metric, v, result.base_value, spread)
+                    return (
+                      <div
+                        key={xi}
+                        title={`${nameOf(hm.x_key)}: ${asPct(x)}; ${nameOf(hm.y_key)}: ${asPct(y)} → ${METRIC[metric].short}: ${METRIC[metric].format(v)}`}
+                        style={cell}
+                        className={cn(
+                          'num flex h-10 min-w-11 items-center justify-center rounded-md px-1 text-[12px] font-semibold whitespace-nowrap transition-transform hover:scale-[1.04] sm:text-[13px]',
+                          base && 'ring-2 ring-ink ring-offset-2 ring-offset-surface',
+                        )}
+                      >
+                        {formatCompact(metric, v)}
+                      </div>
+                    )
+                  })}
+                </Row>
+              ))}
+              <div />
+              {xs.map((x, xi) => (
+                <div
+                  key={xi}
+                  className="num min-w-11 px-1 pt-1 text-center text-[10px] whitespace-nowrap text-ink-3 sm:text-xs"
+                >
+                  {asPct(x)}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+      <div className="text-center text-xs text-ink-3">{nameOf(hm.x_key)}, % от текущего</div>
+
+      {scrollable && (
+        <p className="flex items-center gap-1.5 text-[11px] text-ink-3">
+          <ArrowLeftRight size={13} aria-hidden="true" /> Листайте карту вбок
+        </p>
+      )}
 
       <div className="meta flex flex-wrap items-center gap-3">
         <span>
           В ячейках — {METRIC[metric].short}, {COMPACT_UNIT[metric]}
           {metric === 'payback_years' && ' (∞ — не окупается в горизонте)'}.
         </span>
-        <span className="flex items-center gap-2">
-          {LEGEND[metric].from}
+        <span className="grid w-full grid-cols-2 gap-x-3 gap-y-1 sm:flex sm:w-auto sm:items-center sm:gap-2">
+          <span>{LEGEND[metric].from}</span>
           <span
-            className="inline-block h-2.5 w-28 rounded-full"
+            className="col-span-2 row-start-2 inline-block h-2.5 w-full rounded-full sm:w-28"
             style={{ background: `linear-gradient(90deg, ${LEGEND[metric].stops.join(', ')})` }}
           />
-          {LEGEND[metric].to}
+          <span className="col-start-2 row-start-1 text-right sm:text-left">{LEGEND[metric].to}</span>
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block size-3 rounded-[4px] ring-2 ring-ink" />
@@ -153,7 +185,7 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
 function Row({ y, children }: { y: number; children: ReactNode }) {
   return (
     <>
-      <div className="num flex items-center justify-end pr-1.5 text-[11px] whitespace-nowrap text-ink-3 sm:pr-2 sm:text-xs">
+      <div className="num sticky left-8 z-10 flex items-center justify-end bg-card pr-1.5 text-[11px] whitespace-nowrap text-ink-3 sm:pr-2 sm:text-xs">
         {asPct(y)}
       </div>
       {children}

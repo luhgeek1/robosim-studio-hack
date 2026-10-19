@@ -87,10 +87,10 @@ function MonteCarloBody({ result, metric, horizon }: { result: MonteCarloResult;
 function Figure({ value, label, strong }: { value: string; label: string; strong?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col-reverse justify-end">
-      <dt className="mt-0.5 text-[12px] leading-snug text-ink-3 sm:truncate sm:text-[12.5px]">{label}</dt>
+      <dt className="mt-0.5 text-[12px] leading-snug text-ink-3 lg:truncate sm:text-[12.5px]">{label}</dt>
       <dd
         className={cn(
-          'num leading-tight font-semibold tracking-[-0.01em]',
+          'num leading-tight font-semibold tracking-[-0.01em] wrap-anywhere',
           strong ? 'text-[19px] sm:text-[22px]' : 'text-[16px] text-ink-2 sm:text-[19px]',
         )}
       >
@@ -174,8 +174,11 @@ function Drivers({ result }: { result: MonteCarloResult }) {
         const c = d.correlation ?? 0
         const width = Math.min(Math.abs(c), 1) * 50
         return (
-          <li key={d.key ?? i} className="grid grid-cols-[minmax(0,1fr)_6rem_2.5rem] items-center gap-3">
-            <span className="truncate text-[13px] text-ink-2" title={d.name}>
+          <li
+            key={d.key ?? i}
+            className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-x-3 gap-y-1.5 sm:grid-cols-[minmax(0,1fr)_6rem_2.5rem]"
+          >
+            <span className="col-span-2 text-[13px] wrap-anywhere text-ink-2 sm:col-span-1 lg:truncate" title={d.name}>
               {d.name ?? d.key}
             </span>
             <span className="relative h-1.5 rounded-full bg-black/5">
