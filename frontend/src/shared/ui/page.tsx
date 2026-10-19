@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Link, useMatch, useNavigate } from 'react-router'
-import { PROJECT_STEPS, stepIndex } from '@/entities/project/steps'
+import { useJourney } from '@/entities/project/journey'
 import { cn } from '@/shared/lib/utils'
 import { Button } from './button'
 import { ScrambleText } from './kinetics'
@@ -92,10 +92,11 @@ export function Screen({
   const navigate = useNavigate()
   const match = useMatch('/projects/:projectId/:step/*')
   const base = `/projects/${match?.params.projectId ?? ''}`
-  const idx = stepIndex(match?.params.step)
-  const step = PROJECT_STEPS[idx]
-  const prev = idx > 0 ? PROJECT_STEPS[idx - 1] : null
-  const next = idx >= 0 ? PROJECT_STEPS.slice(idx + 1).find((s) => !s.soon) : undefined
+  const { steps } = useJourney(match?.params.projectId)
+  const idx = steps.findIndex((s) => s.id === match?.params.step)
+  const step = steps[idx]
+  const prev = idx > 0 ? steps[idx - 1] : null
+  const next = idx >= 0 ? steps.slice(idx + 1).find((s) => !s.soon) : undefined
   const goNext = () => navigate(nextTo ?? `${base}/${next?.id}`)
   const nextText = nextLabel ?? (next ? `Далее: ${next.label.toLowerCase()}` : '')
   const topNext = next && (
@@ -113,9 +114,7 @@ export function Screen({
     <div className={cn('mx-auto w-full pt-2 pb-12 sm:pb-16', wide ? 'max-w-360' : 'max-w-300', className)}>
       <PageHeader
         badge={badge}
-        eyebrow={
-          eyebrow ?? (step ? `Шаг ${pad(idx + 1)} / ${pad(PROJECT_STEPS.length)} · ${step.question}` : undefined)
-        }
+        eyebrow={eyebrow ?? (step ? `Шаг ${pad(idx + 1)} / ${pad(steps.length)} · ${step.question}` : undefined)}
         title={title}
         description={lead}
         actions={

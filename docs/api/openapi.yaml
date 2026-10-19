@@ -52,6 +52,7 @@ paths:
   /api/v1/version: {$ref: './paths/auth.yaml#/version'}
   /api/v1/jobs/{job_id}: {$ref: './paths/auth.yaml#/jobs'}
   /api/v1/jobs/{job_id}/stream: {$ref: './paths/auth.yaml#/jobStream'}
+  /api/v1/auth/guest: {$ref: './paths/auth.yaml#/guestSession'}
   /api/v1/auth/register: {$ref: './paths/auth.yaml#/register'}
   /api/v1/auth/login: {$ref: './paths/auth.yaml#/login'}
   /api/v1/auth/refresh: {$ref: './paths/auth.yaml#/refresh'}
@@ -143,6 +144,7 @@ paths:
   /api/v1/scenarios/{scenario_id}/assist/review-assumptions: {$ref: './paths/platform.yaml#/assistReviewAssumptions'}
   /api/v1/demo/projects: {$ref: './paths/platform.yaml#/demoProjects'}
   /api/v1/demo/projects/{demo_key}: {$ref: './paths/platform.yaml#/demoProject'}
+  /api/v1/demo/projects/{demo_key}/open: {$ref: './paths/platform.yaml#/demoOpen'}
   /api/v1/demo/projects/{demo_key}/what-if: {$ref: './paths/platform.yaml#/demoWhatIf'}
   /api/v1/demo/projects/{demo_key}/report/{format}: {$ref: './paths/platform.yaml#/demoReport'}
   /api/v1/demo/projects/{demo_key}/replay: {$ref: './paths/platform.yaml#/demoReplay'}

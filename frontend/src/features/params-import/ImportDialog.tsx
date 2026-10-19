@@ -2,6 +2,7 @@ import { ArrowRight, FileCheck2, FileUp, Info, TriangleAlert } from 'lucide-reac
 import { useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useApplyImport, useImportFile, useProjectParams } from '@/entities/project'
+import { useSession } from '@/entities/session'
 import { ProvenanceBadge } from '@/entities/provenance'
 import type { ImportResult, ProjectParam } from '@/shared/api/types'
 import { formatPct, formatValue, pluralRu } from '@/shared/lib/format'
@@ -43,6 +44,8 @@ export function ImportDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { user } = useSession()
+  const maxMb = user?.role === 'guest' ? 5 : 20
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
@@ -70,6 +73,10 @@ export function ImportDialog({
 
   const onFile = (file: File | undefined) => {
     if (!file) return
+    if (file.size > maxMb * 1024 * 1024) {
+      toast.error(`Максимальный размер файла — ${maxMb} МБ`)
+      return
+    }
     setFileName(file.name)
     setResult(null)
     parse.mutate(file, {
@@ -121,7 +128,7 @@ export function ImportDialog({
           <DialogDescription className="text-[13px] leading-relaxed">
             {result
               ? 'Проверьте сопоставление полей и выберите значения для импорта.'
-              : 'Добавьте Excel, CSV или JSON с данными вашего объекта.'}
+              : `Добавьте Excel, CSV или JSON с данными вашего объекта, до ${maxMb} МБ.`}
           </DialogDescription>
         </DialogHeader>
 

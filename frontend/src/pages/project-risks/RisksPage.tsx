@@ -1,4 +1,5 @@
 import { ArrowRight, ShieldAlert } from 'lucide-react'
+import { useSession } from '@/entities/session'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useProjectId } from '@/entities/project'
@@ -21,6 +22,8 @@ import { Tornado } from './Tornado'
 const HEATMAP = { x_key: 'labor_cost', y_key: 'operations_volume', steps: 7 }
 
 export function RisksPage() {
+  const { user } = useSession()
+  const request = { ...MC_REQUEST, n: user?.role === 'guest' ? 1000 : MC_REQUEST.n }
   const projectId = useProjectId()
   const scenarios = useScenarios(projectId)
   const [picked, setPicked] = useState<string>()
@@ -31,7 +34,7 @@ export function RisksPage() {
     options.find((s) => s.id === picked) ?? options.find((s) => s.is_recommended) ?? options.at(0) ?? null
 
   // Same request as the panel's default view, so the title and the panel share one cached run.
-  const mc = useMonteCarlo(scenario?.id, { ...MC_REQUEST, metric: 'payback_years' })
+  const mc = useMonteCarlo(scenario?.id, { ...request, metric: 'payback_years' })
   const probability = mc.data?.probability ?? {}
   const title = isNum(probability.payback_le_5y)
     ? `В ${formatPct(probability.payback_le_5y, { share: true, digits: 0 })} случаев окупится быстрее 5 лет`

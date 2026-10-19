@@ -26,6 +26,7 @@ def to_profile(user: User) -> UserProfile:
         created_at=user.created_at,
         last_login_at=user.last_login_at,
         is_active=user.is_active,
+        guest_expires_at=user.guest_expires_at,
     )
 
 

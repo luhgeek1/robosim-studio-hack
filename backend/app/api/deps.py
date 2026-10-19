@@ -5,15 +5,18 @@ from fastapi import Depends, Header, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from redis.asyncio import Redis
 
+from app.api.guest_limits import guard_guest
 from app.core.config import Settings
 from app.core.errors import ForbiddenError, RateLimitedError, UnauthorizedError
 from app.core.security.tokens import ClientKind, TokenCodec
 from app.db.repositories.users import to_current_user
 from app.db.session import Database
 from app.db.uow import UnitOfWork
-from app.domain.auth import CurrentUser, Permission
+from app.domain.auth import CurrentUser, Permission, Role
+from app.infra.client_ip import client_ip
 from app.infra.rate_limit import RateLimiter
 from app.infra.revocation import RevocationStore
+from app.service.auth.guests import ensure_guest_active
 
 _bearer = HTTPBearer(auto_error=False, description="Access-токен из /auth/login или /auth/refresh")
 
@@ -68,6 +71,8 @@ ClientDep = Annotated[ClientKind, Depends(client_kind)]
 
 
 async def current_user(
+    request: Request,
+    redis: RedisDep,
     creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
     codec: CodecDep,
     uow: UowDep,
@@ -80,6 +85,9 @@ async def current_user(
         raise UnauthorizedError("Сессия недействительна, войдите снова")
     if not user.is_active:
         raise ForbiddenError("Учётная запись отключена администратором")
+    ensure_guest_active(user)
+    if user.role == Role.GUEST:
+        await guard_guest(request, user, uow, redis)
     return to_current_user(user)
 
 
@@ -87,6 +95,8 @@ CurrentUserDep = Annotated[CurrentUser, Depends(current_user)]
 
 
 async def optional_user(
+    request: Request,
+    redis: RedisDep,
     creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
     codec: CodecDep,
     uow: UowDep,
@@ -94,7 +104,7 @@ async def optional_user(
     """Guest endpoints that show more to a signed-in user (e.g. compatibility with their project)."""
     if creds is None:
         return None
-    return await current_user(creds, codec, uow)
+    return await current_user(request, redis, creds, codec, uow)
 
 
 OptionalUserDep = Annotated[CurrentUser | None, Depends(optional_user)]
@@ -109,13 +119,18 @@ def require(permission: Permission) -> Callable[[CurrentUser], Awaitable[Current
     return dependency
 
 
+async def registered_user(user: CurrentUserDep) -> CurrentUser:
+    if user.role == Role.GUEST:
+        raise ForbiddenError("Для совместной работы сохраните проект в аккаунте")
+    return user
+
+
 def rate_limited(bucket: str) -> Callable[[Request, RedisDep, SettingsDep], Awaitable[None]]:
     """Per-client-IP limit for unauthenticated endpoints (login, register)."""
 
     async def dependency(request: Request, redis: RedisDep, settings: SettingsDep) -> None:
         limiter = RateLimiter(redis, limit=settings.auth_rate_limit_per_min, window_s=60)
-        client_ip = request.client.host if request.client else "unknown"
-        if not await limiter.hit(f"{bucket}:{client_ip}"):
+        if not await limiter.hit(f"{bucket}:{client_ip(request, settings)}"):
             raise RateLimitedError()
 
     return dependency

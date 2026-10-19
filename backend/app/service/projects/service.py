@@ -4,20 +4,30 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from app.core.errors import ConflictError, DomainError, ErrorCode, ForbiddenError, NotFoundError
-from app.db.models import Project
+from sqlalchemy import func, select
+
+from app.core.errors import (
+    ConflictError,
+    DomainError,
+    ErrorCode,
+    ForbiddenError,
+    NotFoundError,
+    RateLimitedError,
+)
+from app.db.models import Project, Scenario
 from app.db.repositories.layouts import LayoutRepository
 from app.db.repositories.organizations import OrganizationRepository
 from app.db.repositories.projects import ProjectFilter, ProjectRepository, ProjectSort
 from app.db.repositories.scenarios import ScenarioRepository
 from app.db.uow import UnitOfWork
-from app.domain.auth import CurrentUser
+from app.domain.auth import CurrentUser, Role
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.organization import OrganizationRole
 from app.domain.project.models import AuditEntry, InitMode, ProjectInfo, ProjectStatus
 from app.domain.project.params import data_quality
 from app.domain.reference import DemoProjectRef
 from app.domain.scenario.models import ScenarioKind
+from app.service.auth.guests import MAX_GUEST_SCENARIOS
 from app.service.layouts.service import LayoutService
 from app.service.projects.audit import AuditLog
 from app.service.projects.context import ProjectContext, ProjectLoader
@@ -269,6 +279,16 @@ class ProjectService:
 
     async def copy(self, project_id: UUID, name: str | None) -> ProjectInfo:
         source = await self._loader.project(self._user, project_id)
+        if self._user.role == Role.GUEST:
+            total = await self._uow.session.scalar(
+                select(func.count())
+                .select_from(Scenario)
+                .join(Project)
+                .where(Project.owner_id == self._user.id)
+            )
+            source_count = (await self._scenarios.counts([source.id])).get(source.id, 0)
+            if (total or 0) + source_count > MAX_GUEST_SCENARIOS:
+                raise RateLimitedError("Копия превысит лимит 30 сценариев. Удалите лишние сценарии.")
         copy = Project(
             owner_id=self._user.id,
             organization_id=source.organization_id,

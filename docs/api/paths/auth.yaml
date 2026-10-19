@@ -21,6 +21,7 @@ login:
     tags: [auth]
     operationId: login
     summary: Вход
+    description: X-Keep-Guest-CSRF с CSRF-токеном текущей гостевой cookie переносит все временные проекты и результаты в аккаунт. Дождитесь завершения фоновых задач перед переносом.
     security: []
     parameters: [{$ref: '../components/common.yaml#/parameters/XClient'}]
     requestBody:
@@ -28,6 +29,7 @@ login:
       content: {application/json: {schema: {$ref: '../components/platform.yaml#/LoginRequest'}}}
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/platform.yaml#/TokenPair'}}}}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
       '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
       '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
       '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
@@ -161,3 +163,32 @@ jobStream:
         description: Поток событий
         content: {text/event-stream: {schema: {type: string}}}
       '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+
+guestSession:
+  post:
+    tags: [auth]
+    operationId: startGuestSession
+    summary: Начать гостевую сессию на 24 часа
+    description: Обычные проекты и API, изолированные по владельцу. До 10 сессий в час на IP. Данные удаляются через 24 часа; фоновая очистка раз в минуту. Access-токен в памяти, refresh в httpOnly-cookie для web. Продление не сдвигает срок удаления.
+    security: []
+    parameters:
+      - name: X-Client
+        in: header
+        required: true
+        schema: {type: string, enum: [web, mobile]}
+    responses:
+      '200':
+        description: Временная сессия
+        content:
+          application/json:
+            schema: {$ref: '../components/platform.yaml#/TokenPair'}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
+  delete:
+    tags: [auth]
+    operationId: resetGuestSession
+    summary: Удалить все данные текущего гостя
+    responses:
+      '204': {description: "Гостевые проекты, файлы, задачи и сессия удалены"}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+      '403': {$ref: '../components/common.yaml#/responses/Forbidden'}

@@ -19,12 +19,13 @@ def _base(settings: Settings) -> dict[str, Any]:
     return kwargs
 
 
-def set_auth_cookies(response: Response, settings: Settings, *, refresh_token: str, csrf_token: str) -> None:
+def set_auth_cookies(
+    response: Response, settings: Settings, *, refresh_token: str, csrf_token: str, ttl_s: int | None = None
+) -> None:
     base = _base(settings)
-    response.set_cookie(REFRESH_COOKIE, refresh_token, max_age=settings.refresh_ttl_s, httponly=True, **base)
-    response.set_cookie(
-        CSRF_COOKIE, csrf_token, max_age=settings.refresh_ttl_s, httponly=False, **{**base, "path": "/"}
-    )
+    max_age = ttl_s if ttl_s is not None else settings.refresh_ttl_s
+    response.set_cookie(REFRESH_COOKIE, refresh_token, max_age=max_age, httponly=True, **base)
+    response.set_cookie(CSRF_COOKIE, csrf_token, max_age=max_age, httponly=False, **{**base, "path": "/"})
 
 
 def clear_auth_cookies(response: Response, settings: Settings) -> None:

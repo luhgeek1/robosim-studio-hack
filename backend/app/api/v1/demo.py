@@ -8,9 +8,12 @@ from app.api.demo.cache import RETRY_SECONDS, DemoCache, revision
 from app.api.demo.prepare import claim, prepare
 from app.api.demo.registry import DEMO_OWNER, EXAMPLES, example
 from app.api.demo.what_if import what_if
-from app.api.deps import RedisDep, UowDep, get_database, rate_limited
+from app.api.demo.workspace import open_example
+from app.api.deps import RedisDep, UowDep, get_database, rate_limited, require
 from app.api.files import content_disposition
 from app.api.schemas.demo import (
+    DemoOpenRequest,
+    DemoOpenResult,
     DemoPreparation,
     DemoProjectList,
     DemoSnapshot,
@@ -20,6 +23,7 @@ from app.api.schemas.demo import (
 from app.api.schemas.simulations import SimulationReplay
 from app.core.errors import InvalidInputError, NotFoundError
 from app.db.session import Database
+from app.domain.auth import CurrentUser, Permission
 from app.domain.reports.models import ReportFormat, ReportSection
 from app.service.reports.collect import ReportCollector, ReportRequest
 from app.service.reports.service import MEDIA_TYPES, render
@@ -27,6 +31,7 @@ from app.service.simulations.service import SimulationService
 
 router = APIRouter(prefix="/demo/projects", tags=["demo"])
 DatabaseDep = Annotated[Database, Depends(get_database)]
+OwnerDep = Annotated[CurrentUser, Depends(require(Permission.PROJECTS_OWN))]
 ExpectedRevision = Annotated[str | None, Query(alias="revision", max_length=64)]
 
 
@@ -136,3 +141,12 @@ async def report_example(
             "Cache-Control": "no-store",
         },
     )
+
+
+@router.post("/{demo_key}/open", operation_id="openDemoProject", summary="Личная копия готового примера")
+async def open_prepared_example(
+    demo_key: str, payload: DemoOpenRequest, user: OwnerDep, uow: UowDep, redis: RedisDep
+) -> DemoOpenResult:
+    item = example(demo_key)
+    snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready(payload.revision)
+    return await open_example(uow, user, snapshot, payload)

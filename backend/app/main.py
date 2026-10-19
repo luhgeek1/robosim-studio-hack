@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.demo.warm import warm_examples
 from app.api.v1 import api_router
+from app.core.body_limits import BodyLimitMiddleware
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.core.middleware import RequestTracingMiddleware
@@ -15,6 +16,7 @@ from app.core.security.tokens import TokenCodec
 from app.db.session import Database
 from app.infra.redis import create_redis
 from app.seeds.runner import run_seeds
+from app.service.auth.guests import guest_cleanup_loop
 
 API_DESCRIPTION = (
     "Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1). "
@@ -37,9 +39,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if settings.demo_warm_on_startup
             else None
         )
+        cleanup = asyncio.create_task(guest_cleanup_loop(app.state.db))
         try:
             yield
         finally:
+            cleanup.cancel()
+            with suppress(asyncio.CancelledError):
+                await cleanup
             if warmup is not None:
                 warmup.cancel()
                 with suppress(asyncio.CancelledError):
@@ -60,6 +66,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.token_codec = TokenCodec(settings)
 
     register_problem_handlers(app, expose_internal=settings.stage == "dev")
+    app.add_middleware(BodyLimitMiddleware, codec=app.state.token_codec)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

@@ -36,7 +36,11 @@ export const organizationApi = {
 
 export function useOrganizations() {
   const { user } = useSession()
-  return useQuery({ queryKey: qk.organizations.list, queryFn: organizationApi.list, enabled: !!user })
+  return useQuery({
+    queryKey: qk.organizations.list,
+    queryFn: organizationApi.list,
+    enabled: !!user && user.role !== 'guest',
+  })
 }
 
 export const useOrganization = (id: string) =>
@@ -48,7 +52,7 @@ export function useIncomingInvitations() {
   return useQuery({
     queryKey: qk.organizations.invitations,
     queryFn: organizationApi.incoming,
-    enabled: !!user,
+    enabled: !!user && user.role !== 'guest',
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   })

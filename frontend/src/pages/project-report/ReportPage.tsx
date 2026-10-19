@@ -1,3 +1,4 @@
+import { KeepProject } from './KeepProject'
 import { ChevronDown, Download, History, ImageIcon, X } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -72,6 +73,8 @@ export function ReportPage() {
           busyFormat={make.isPending ? make.variables?.format : null}
           disabled={comparison.isPending || noCalculations}
         />
+
+        <KeepProject />
 
         <div className="divide-y divide-line/60 rounded-xl bg-surface/60 px-4 sm:px-5">
           <details className="group">

@@ -18,6 +18,7 @@ import { EmptyState, ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/state
 import { Segmented } from '@/shared/ui/v0'
 import { CandidateCard } from './CandidateCard'
 import { MAX_COMPARE, STATUS_ORDER } from './labels'
+import { useJourney } from '@/entities/project/journey'
 import { RecommendedBlock } from './RecommendedBlock'
 import { WeightsPopover } from './WeightsPopover'
 
@@ -25,6 +26,7 @@ const TOP_COLUMN = 'mx-auto w-full max-w-300'
 
 export function MatchingPage() {
   const projectId = useProjectId()
+  const { guided } = useJourney(projectId)
   const matching = useMatching(projectId)
   const run = useRunMatching(projectId)
   const createScenario = useCreateScenario(projectId)
@@ -69,17 +71,25 @@ export function MatchingPage() {
       dense
       // Шапка и рекомендация — в обычной колонке шагов, список кандидатов ниже — во всю ширину экрана.
       headerClassName={TOP_COLUMN}
+      lead={
+        guided
+          ? 'Парк из текущего сценария: количество, резерв и стоимость. Ограничения выбранных моделей показаны ниже.'
+          : undefined
+      }
       title={
-        data
-          ? fit
-            ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}`
-            : check
-              ? `Требуют проверки ${check} ${pluralRu(check, ['решение', 'решения', 'решений'])} из ${total}`
-              : 'Подходящих решений не найдено'
-          : 'Подбор роботов'
+        guided
+          ? 'Роботы для вашего объекта'
+          : data
+            ? fit
+              ? `Подходят ${fit} ${pluralRu(fit, ['решение', 'решения', 'решений'])} из ${total}`
+              : check
+                ? `Требуют проверки ${check} ${pluralRu(check, ['решение', 'решения', 'решений'])} из ${total}`
+                : 'Подходящих решений не найдено'
+            : 'Подбор роботов'
       }
       actions={
-        data && (
+        data &&
+        !guided && (
           <>
             <WeightsPopover
               projectId={projectId}
@@ -126,19 +136,26 @@ export function MatchingPage() {
           <RecommendedBlock projectId={projectId} matching={data} />
         </div>
       )}
-      {data && <h2 className="h2 mb-5">Все кандидаты</h2>}
+      {data && <h2 className="h2 mb-5">{guided ? 'Почему выбраны эти роботы' : 'Все кандидаты'}</h2>}
 
       {data && (
-        <MatchingView
-          projectId={projectId}
-          data={data}
-          compare={compare}
-          onToggleCompare={(id, on) =>
-            setCompare((prev) =>
-              on ? [...new Set([...prev, id])].slice(0, MAX_COMPARE) : prev.filter((x) => x !== id),
-            )
-          }
-        />
+        <details open={!guided} className="rounded-xl border border-line p-5">
+          <summary className="cursor-pointer text-sm font-medium">
+            Кандидаты, ограничения и сравнение характеристик
+          </summary>
+          <div className="mt-6">
+            <MatchingView
+              projectId={projectId}
+              data={data}
+              compare={compare}
+              onToggleCompare={(id, on) =>
+                setCompare((prev) =>
+                  on ? [...new Set([...prev, id])].slice(0, MAX_COMPARE) : prev.filter((x) => x !== id),
+                )
+              }
+            />
+          </div>
+        </details>
       )}
 
       {compare.length > 0 && (

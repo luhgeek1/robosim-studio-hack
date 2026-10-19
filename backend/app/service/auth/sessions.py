@@ -9,6 +9,7 @@ from app.db.repositories.users import to_profile
 from app.db.uow import UnitOfWork
 from app.domain.auth import Role, UserProfile
 from app.infra.revocation import RevocationStore
+from app.service.auth.guests import ensure_guest_active
 
 _BAD_CREDENTIALS = "Неверный email или пароль"
 
@@ -78,6 +79,7 @@ class AuthService:
         user = await self._uow.users.get(claims.user_id)
         if user is None or not user.is_active or user.auth_version != claims.auth_version:
             raise UnauthorizedError("Сессия недействительна, войдите снова")
+        ensure_guest_active(user)
         await self._revocations.revoke(claims.jti, claims.expires_at)
         return self._session(user, claims.client)
 

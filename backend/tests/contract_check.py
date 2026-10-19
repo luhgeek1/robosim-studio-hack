@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator
 CONTRACT = Path(__file__).resolve().parents[2] / "docs" / "api" / "openapi.bundled.yaml"
 METHODS = {"get", "post", "put", "patch", "delete"}
 # docs/api/README.md: any operation may answer these with a Problem; the contract lists only specific ones.
-GENERIC_ERRORS = {"400", "401", "403", "404", "422", "429"}
+GENERIC_ERRORS = {"400", "401", "403", "404", "413", "422", "429"}
 
 
 @cache

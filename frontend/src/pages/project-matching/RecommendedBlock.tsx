@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useProduct } from '@/entities/catalog'
+import { useJourney } from '@/entities/project/journey'
 import { useProject } from '@/entities/project'
 import { VERDICT_LABEL, VERDICT_TONE, pickMainScenario, useScenarios, type Verdict } from '@/entities/scenario'
 import type { MatchingResult } from '@/shared/api/types'
@@ -38,6 +39,7 @@ const shortName = (name: string) => name.split(' (')[0]
 /* The robots the assessment recommends, above the full candidate list: the same fleet as on the overview
    (the recommended scenario), or — before any scenario exists — the top fitting candidate of each process. */
 export function RecommendedBlock({ projectId, matching }: { projectId: string; matching: MatchingResult }) {
+  const { guided } = useJourney(projectId)
   const project = useProject(projectId).data
   const scenarios = useScenarios(projectId)
   const scenario =
@@ -120,6 +122,35 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
         </ul>
       )}
 
+      {guided && scenario && (
+        <div className="space-y-3 border-t border-line px-5 py-4 text-sm">
+          {scenario.items.map((item) => {
+            const process = matching.processes.find((p) => p.process_key === item.process_key)
+            const candidate = process?.candidates.find((c) => c.product.id === item.product_id)
+            const concerns = candidate?.reasons.filter((r) => r.severity !== 'info') ?? []
+            return (
+              <div key={item.id}>
+                <p className="font-medium">
+                  {process?.name ?? item.process_key} ·{' '}
+                  {candidate?.status === 'fit'
+                    ? 'Соответствует проверенным требованиям'
+                    : 'Предварительный подбор — есть условия для проверки'}
+                </p>
+                {concerns.slice(0, 2).map((reason) => (
+                  <p className="mt-1 text-ink-3" key={reason.code}>
+                    {reason.text}
+                  </p>
+                ))}
+                {(candidate?.missing_data.length ?? 0) > 0 && (
+                  <p className="mt-1 text-ink-3">
+                    Часть характеристик требует уточнения у производителя. Полный список — в карточке кандидата ниже.
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
       {(calc || scenario) && (
         <footer className="grid grid-cols-2 items-center gap-x-5 gap-y-5 border-t border-line bg-surface-2 px-5 py-5 sm:gap-x-8 sm:px-8 md:grid-cols-[repeat(3,auto)_1fr]">
           {calc && (

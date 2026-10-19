@@ -17,7 +17,14 @@ function ToLogin() {
 export function RequireAuth() {
   const { status } = useSession()
   if (status === 'restoring') return <LoadingBlock className="p-8" />
-  if (status === 'guest') return <ToLogin />
+  if (status === 'guest') return <Navigate to="/demo" replace />
+  return <Outlet />
+}
+
+export function RequireAccount() {
+  const { status, user } = useSession()
+  if (status === 'restoring') return <LoadingBlock className="p-8" />
+  if (!user || user.role === 'guest') return <ToLogin />
   return <Outlet />
 }
 
