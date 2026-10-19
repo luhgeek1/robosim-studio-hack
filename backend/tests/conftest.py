@@ -15,13 +15,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from app.core.config import Settings
 from app.main import create_app
 from tests.contract_check import violations
+from tests.worker_resources import worker_urls
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = BACKEND_DIR.parent
-_BASE_DB_URL = os.environ.get(
-    "RS_TEST_DATABASE_URL", "postgresql+asyncpg://robomera:robomera@localhost:5432/robomera_test"
+_BASE_DB_URL, _REDIS_URL = worker_urls(
+    os.environ.get(
+        "RS_TEST_DATABASE_URL", "postgresql+asyncpg://robomera:robomera@localhost:5432/robomera_test"
+    ),
+    os.environ.get("RS_TEST_REDIS_URL", "redis://localhost:6379/15"),
+    os.environ.get("PYTEST_XDIST_WORKER", "master"),
+    int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", "1")),
 )
-_REDIS_URL = os.environ.get("RS_TEST_REDIS_URL", "redis://localhost:6379/15")
 DEMO_PASSWORD = "Demo12345!"
 # Every response of the integration tests is checked against docs/api; set to a file path to collect instead.
 _CONTRACT_LOG = os.environ.get("RS_CONTRACT_LOG")

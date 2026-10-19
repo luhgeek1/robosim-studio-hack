@@ -1,6 +1,7 @@
 .PHONY: infra up down lint fmt typecheck test check migrate migration contract-lint contract-bundle
 
 BACKEND = cd backend &&
+TEST_WORKERS ?= 2
 
 infra:            ## Postgres + Redis for local runs and tests
 	docker compose up -d db redis
@@ -21,7 +22,7 @@ typecheck:
 	$(BACKEND) uv run mypy app
 
 test: infra       ## Unit + integration + contract tests (real Postgres/Redis)
-	$(BACKEND) uv run pytest -q --durations=20
+	$(BACKEND) uv run pytest -q -n $(TEST_WORKERS) --dist worksteal --durations=20
 
 check: lint typecheck test contract-lint   ## What CI runs; must be green before a commit
 

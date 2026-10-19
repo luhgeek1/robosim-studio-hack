@@ -1,3 +1,4 @@
+import pytest
 from httpx import AsyncClient
 
 from tests.conftest import bearer, login
@@ -49,23 +50,25 @@ async def test_guest_journey_is_isolated_and_reuses_calculation_engine(client: A
     assert (await client.post(f"{url}/what-if", json={"project_id": project_id})).status_code == 422
 
 
-async def test_additional_examples_are_complete_and_guest_inputs_are_transient(client: AsyncClient) -> None:
-    for key in ("warehouse_showcase_24x7", "hospital_demo_01", "airport_demo_01"):
-        url = f"{BASE}/{key}"
-        await client.get(url)
-        response = await client.get(url)
-        assert response.status_code == 200, (key, response.text)
-        demo = response.json()
-        assert demo["matching"]["processes"]
-        assert demo["calculations"]
-        result = await client.post(
-            f"{url}/what-if",
-            json={"scenario_kind": "raas", "labor_cash_realization_share": 0, "horizon_years": 3},
-        )
-        assert result.status_code == 200, result.text
-        assert result.json()["metrics"]["labor_savings_rub_year"] == 0
-        assert result.json()["metrics"]["horizon_years"] == 3
-        assert (await client.get(url)).json() == demo
+@pytest.mark.parametrize("key", ["warehouse_showcase_24x7", "hospital_demo_01", "airport_demo_01"])
+async def test_additional_examples_are_complete_and_guest_inputs_are_transient(
+    client: AsyncClient, key: str
+) -> None:
+    url = f"{BASE}/{key}"
+    await client.get(url)
+    response = await client.get(url)
+    assert response.status_code == 200, (key, response.text)
+    demo = response.json()
+    assert demo["matching"]["processes"]
+    assert demo["calculations"]
+    result = await client.post(
+        f"{url}/what-if",
+        json={"scenario_kind": "raas", "labor_cash_realization_share": 0, "horizon_years": 3},
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()["metrics"]["labor_savings_rub_year"] == 0
+    assert result.json()["metrics"]["horizon_years"] == 3
+    assert (await client.get(url)).json() == demo
 
 
 async def test_guest_price_override_has_user_provenance(client: AsyncClient) -> None:
