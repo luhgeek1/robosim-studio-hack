@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { ArrowUpRight, Check, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router'
 import { useDemo } from '@/entities/demo/api'
+import { useSession } from '@/entities/session'
 import { formatDate, formatNumber, formatRub, formatYears } from '@/shared/lib/format'
 import './evidence.css'
 
 export function DemoEvidence() {
-  const demo = useDemo('warehouse_demo_01')
+  const { status } = useSession()
+  // Session restoration clears the query cache; start the public request after that boundary.
+  const demo = useDemo('warehouse_demo_01', { timeoutMs: 8_000, enabled: status !== 'restoring' })
   const [mode, setMode] = useState<'formula' | 'simulation'>('simulation')
   const snapshot = demo.data && !('status' in demo.data) ? demo.data : undefined
   const sweep = snapshot?.sweep
@@ -100,8 +103,7 @@ export function DemoEvidence() {
         <div className="lab-evidence-foot">
           <p>
             Демонстрационные входные данные, не обещание экономии.{' '}
-            {snapshot && <>Снимок от {formatDate(snapshot.prepared_at)}. </>}Условия и границы модели раскрыты в
-            расчёте.
+            {snapshot && <>Снимок от {formatDate(snapshot.prepared_at)} </>}Условия и границы модели раскрыты в расчёте.
           </p>
           <Link to="/demo/warehouse_demo_01?step=decision">
             Разобрать результат <ArrowUpRight size={20} />
