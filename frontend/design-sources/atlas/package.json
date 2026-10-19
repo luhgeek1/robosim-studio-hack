@@ -1,0 +1,17 @@
+{
+  "name": "robomera-atlas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "three": "0.186.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.11",
+    "fontkit": "2.0.4",
+    "linkedom": "0.18.12"
+  }
+}
