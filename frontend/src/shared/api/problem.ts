@@ -10,7 +10,7 @@ export type ApiProblem = {
 }
 
 const FALLBACK_TEXT: Partial<Record<ApiProblem['code'], string>> = {
-  NETWORK_ERROR: 'Сервер недоступен. Проверьте, что бэкенд запущен.',
+  NETWORK_ERROR: 'Нет соединения с сервером. Проверьте подключение и попробуйте снова.',
   UNAUTHORIZED: 'Нужно войти в систему',
   TOKEN_EXPIRED: 'Сессия истекла, войдите снова',
   FORBIDDEN: 'Недостаточно прав',

@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
   },
   mutationCache: new MutationCache({
     onError: (error, _vars, _ctx, mutation) => {
-      if (!mutation.meta?.silent) toast.error(problemText(error))
+      if (!mutation.meta?.silent) toast.error('Действие не выполнено', { description: problemText(error) })
     },
   }),
 })
@@ -23,7 +23,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <SessionProvider>
         <TooltipProvider delayDuration={200}>
           {children}
-          <Toaster position="bottom-right" richColors closeButton />
+          <Toaster position="bottom-right" closeButton />
         </TooltipProvider>
       </SessionProvider>
     </QueryClientProvider>
