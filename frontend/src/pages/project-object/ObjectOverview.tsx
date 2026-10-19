@@ -1,10 +1,10 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, TriangleAlert } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
 import { useDataQuality, useUpdateParam, useValidation } from '@/entities/project'
 import { PROVENANCE_LABEL } from '@/entities/provenance'
 import { ParamValueInput, displayRange, parseDraft, toDraft } from '@/features/param-edit'
-import type { DataQualityReport, ObjectType, ProjectParam, ProvenanceStatus, ValidationIssue } from '@/shared/api/types'
+import type { DataQualityReport, ObjectType, ProjectParam, ProvenanceStatus } from '@/shared/api/types'
 import { formatNumber, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { useNarrow } from '@/shared/lib/media'
@@ -12,6 +12,7 @@ import { Button } from '@/shared/ui/button'
 import { InfoHint } from '@/shared/ui/info-hint'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 import { ObjectTwin } from './ObjectTwin'
+import { ValidationCarousel } from './ValidationCarousel'
 import { scrollToParam } from './scroll'
 
 type Item = DataQualityReport['items'][number]
@@ -166,13 +167,7 @@ function Readiness({ projectId, params }: { projectId: string; params: ProjectPa
         <ParamMap params={params} />
       )}
 
-      {errors.length > 0 && (
-        <ul className="mt-5 space-y-1.5">
-          {errors.map((issue, index) => (
-            <IssueRow key={`${issue.key}-${issue.code}-${index}`} issue={issue} />
-          ))}
-        </ul>
-      )}
+      <ValidationCarousel key={projectId} issues={errors} />
 
       <Focus projectId={projectId} queue={queue} params={params} />
     </div>
@@ -452,30 +447,6 @@ function FocusCard({
         </button>
       </div>
     </div>
-  )
-}
-
-function IssueRow({ issue }: { issue: ValidationIssue }) {
-  const error = issue.severity === 'error'
-  const Icon = error ? CircleAlert : TriangleAlert
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={() => scrollToParam(issue.key)}
-        className={cn(
-          'flex w-full gap-2.5 rounded-lg px-3 py-2.5 text-left text-[13px] transition-colors',
-          error ? 'bg-crit-soft/70 hover:bg-crit-soft' : 'bg-warn-soft/60 hover:bg-warn-soft',
-        )}
-      >
-        <Icon className={cn('mt-0.5 size-4 shrink-0', error ? 'text-crit' : 'text-warn')} />
-        <span className="min-w-0">
-          <span className="block font-medium text-ink">{issue.name ?? issue.message}</span>
-          {issue.name && <span className="block text-ink-2">{issue.message}</span>}
-          {issue.how_to_fix && <span className="mt-0.5 block text-ink-3">{issue.how_to_fix}</span>}
-        </span>
-      </button>
-    </li>
   )
 }
 
