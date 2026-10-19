@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, LogOut, Plus, Users } from 'lucide-react'
+import { Building2, Check, ChevronDown, ChevronRight, LockKeyhole, LogOut, Plus, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { ROLE_LABEL, initialOf, useWorkspace } from '@/entities/organization'
@@ -10,6 +10,7 @@ import { Button } from '@/shared/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -21,8 +22,12 @@ function Avatar({ letter, shared, size = 'sm' }: { letter: string; shared: boole
     <span
       className={cn(
         'flex shrink-0 items-center justify-center font-semibold',
-        size === 'sm' ? 'size-6 rounded-[7px] text-[11.5px]' : 'size-8 rounded-[9px] text-[13px]',
-        shared ? 'bg-[#293831] text-white' : 'bg-signal/15 text-signal',
+        size === 'sm' ? 'size-6 rounded-[7px] text-[11.5px]' : 'size-8 rounded-[10px] text-sm ring-1 ring-white/10',
+        size === 'md'
+          ? 'bg-[#ff956e]/15 text-[#ffab88]'
+          : shared
+            ? 'bg-[#293831] text-white'
+            : 'bg-signal/15 text-signal',
       )}
       aria-hidden
     >
@@ -59,55 +64,100 @@ export function WorkspaceMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-9 gap-2 pr-2 pl-1.5 text-ink-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Профиль и рабочие области"
+            className="group/profile h-9 gap-2 rounded-xl bg-white/4 pr-2.5 pl-1.5 text-ink-2 transition-colors hover:bg-white/8 data-[state=open]:bg-white/10 data-[state=open]:ring-1 data-[state=open]:ring-white/12"
+          >
             <Avatar letter={initialOf(current?.name ?? user.name ?? user.email)} shared={!!current} />
             <span className="hidden max-w-40 truncate text-[13px] font-medium text-ink xl:inline">
               {current?.name ?? (user.name || user.email)}
             </span>
-            <ChevronsUpDown className="text-ink-4" />
+            <ChevronDown className="size-3.5 text-ink-4 transition-transform duration-200 group-data-[state=open]/profile:rotate-180" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72">
-          <DropdownMenuLabel className="space-y-0.5">
-            <div className="truncate">{user.name || user.email}</div>
-            <div className="truncate text-xs font-normal text-ink-3">{user.email}</div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="pb-1 text-[11.5px] font-medium text-ink-3">Рабочая область</DropdownMenuLabel>
-          <WorkspaceItem
-            letter={initialOf(user.name || user.email)}
-            title="Личное пространство"
-            subtitle="Проекты видны только вам"
-            active={!current}
-            onSelect={() => switchTo(null)}
-          />
-          {workspace.organizations.map((org) => (
-            <WorkspaceItem
-              key={org.id}
-              shared
-              letter={initialOf(org.name)}
-              title={org.name}
-              subtitle={`${ROLE_LABEL[org.role]} · ${org.members_count} ${pluralRu(org.members_count, ['участник', 'участника', 'участников'])}`}
-              active={current?.id === org.id}
-              onSelect={() => switchTo(org.id)}
+        <DropdownMenuContent
+          align="end"
+          sideOffset={6}
+          collisionPadding={12}
+          aria-label="Профиль и рабочие области"
+          className="w-72 max-w-[calc(100vw-24px)] rounded-2xl p-1.5 shadow-float ring-1 ring-black/6"
+        >
+          <DropdownMenuLabel className="relative overflow-hidden rounded-[10px] bg-[#222d29] px-3 py-2.5 font-normal">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -top-10 -right-6 size-28 rounded-full border border-white/5 bg-white/3"
             />
-          ))}
-          <DropdownMenuItem onSelect={() => setCreating(true)} className="text-ink-2">
-            <Plus /> Создать организацию
+            <div className="relative flex items-center gap-2.5">
+              <Avatar letter={initialOf(user.name || user.email)} shared={false} size="md" />
+              <div className="min-w-0 flex-1">
+                <div
+                  className="min-w-0 text-[12.5px] font-semibold wrap-anywhere text-[#f1f4ec] lg:truncate"
+                  title={user.name || user.email}
+                >
+                  {user.name || user.email}
+                </div>
+                <div className="mt-0.5 min-w-0 text-[11px] wrap-anywhere text-[#b7c4b9] lg:truncate" title={user.email}>
+                  {user.email}
+                </div>
+              </div>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuLabel className="px-2 pt-2.5 pb-1.5 text-[9.5px] font-medium tracking-[0.1em] text-ink-3 uppercase">
+            Рабочая область
+          </DropdownMenuLabel>
+          <DropdownMenuGroup aria-label="Рабочая область" className="space-y-0.5">
+            <WorkspaceItem
+              title="Личное пространство"
+              subtitle="Проекты видны только вам"
+              active={!current}
+              onSelect={() => switchTo(null)}
+            />
+            {workspace.organizations.map((org) => (
+              <WorkspaceItem
+                key={org.id}
+                shared
+                title={org.name}
+                subtitle={`${ROLE_LABEL[org.role]} · ${org.members_count} ${pluralRu(org.members_count, ['участник', 'участника', 'участников'])}`}
+                active={current?.id === org.id}
+                onSelect={() => switchTo(org.id)}
+              />
+            ))}
+          </DropdownMenuGroup>
+          <DropdownMenuItem
+            onSelect={() => setCreating(true)}
+            textValue="Создать организацию"
+            className="mt-1.5 cursor-pointer gap-2.5 rounded-[10px] border border-dashed border-line px-2 py-1.5 text-[12.5px] text-ink-2 transition-colors"
+          >
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-ink-3">
+              <Plus className="size-3.5" />
+            </span>
+            <span className="min-w-0 flex-1 font-medium">Создать организацию</span>
+            <ChevronRight className="size-3 text-ink-4" />
           </DropdownMenuItem>
           {current && (
-            <DropdownMenuItem onSelect={() => navigate(`/organizations/${current.id}`)} className="text-ink-2">
-              <Users /> Участники и приглашения
+            <DropdownMenuItem
+              onSelect={() => navigate(`/organizations/${current.id}`)}
+              className="mt-0.5 cursor-pointer gap-2.5 rounded-[10px] px-2 py-1.5 text-[12px] text-ink-2 transition-colors"
+            >
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-ink-3">
+                <Users className="size-3.5" />
+              </span>
+              <span className="flex-1">Участники и приглашения</span>
+              <ChevronRight className="size-3 text-ink-4" />
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="mx-1 mt-1.5 mb-1" />
           <DropdownMenuItem
+            variant="destructive"
+            className="cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[12px] transition-colors"
             onSelect={async () => {
               await logout()
               navigate('/login')
             }}
           >
-            <LogOut /> Выйти
+            <LogOut className="size-3.5" /> Выйти из аккаунта
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -117,14 +167,12 @@ export function WorkspaceMenu() {
 }
 
 function WorkspaceItem({
-  letter,
   title,
   subtitle,
   active,
   shared = false,
   onSelect,
 }: {
-  letter: string
   title: string
   subtitle: string
   active: boolean
@@ -132,13 +180,38 @@ function WorkspaceItem({
   onSelect: () => void
 }) {
   return (
-    <DropdownMenuItem onSelect={onSelect} className="gap-2.5 py-1.5">
-      <Avatar letter={letter} shared={shared} size="md" />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13.5px] font-medium text-ink">{title}</span>
-        <span className="block truncate text-[12px] text-ink-3">{subtitle}</span>
+    <DropdownMenuItem
+      onSelect={onSelect}
+      textValue={title}
+      aria-current={active ? 'true' : undefined}
+      className={cn(
+        'cursor-pointer gap-2.5 rounded-[10px] border px-2 py-2 transition-colors',
+        active ? 'border-signal/20 bg-signal/5' : 'border-transparent',
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'flex size-7 shrink-0 items-center justify-center rounded-lg',
+          active ? 'bg-signal-soft text-signal' : 'bg-surface-2 text-ink-3',
+        )}
+      >
+        {shared ? <Building2 className="size-3.5" /> : <LockKeyhole className="size-3.5" />}
       </span>
-      {active && <Check className="text-ok" />}
+      <span className="min-w-0 flex-1">
+        <span className="block min-w-0 text-[12px] font-medium wrap-anywhere text-ink lg:truncate" title={title}>
+          {title}
+        </span>
+        <span className="mt-0.5 block min-w-0 text-[10.5px] wrap-anywhere text-ink-3 lg:truncate" title={subtitle}>
+          {subtitle}
+        </span>
+      </span>
+      {active && (
+        <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-signal/10 text-signal">
+          <Check className="size-2.5" />
+          <span className="sr-only">Текущая рабочая область</span>
+        </span>
+      )}
     </DropdownMenuItem>
   )
 }
