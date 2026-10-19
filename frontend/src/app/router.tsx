@@ -8,6 +8,16 @@ const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: l
 
 const router = createBrowserRouter([
   {
+    path: '/design-lab',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-lab/DesignLabPage').then((m) => ({ Component: m.DesignLabPage }))),
+  },
+  {
+    path: '/design-lab/editorial',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-lab/EditorialPage').then((m) => ({ Component: m.EditorialPage }))),
+  },
+  {
     path: '/',
     errorElement: <RouteError />,
     ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))),
