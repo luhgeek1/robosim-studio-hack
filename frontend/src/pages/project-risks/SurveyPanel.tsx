@@ -4,7 +4,7 @@ import { ProvenanceBadge } from '@/entities/provenance'
 import { useSurvey } from '@/entities/scenario'
 import { formatRub, formatValue } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
-import { InfoHint } from '@/shared/ui/info-hint'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible'
 import { Section } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 
@@ -49,18 +49,32 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
                   {item.rank}
                 </span>
                 <div className="min-w-0">
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[14px] font-medium wrap-anywhere">{item.name}</div>
-                      <ProvenanceBadge status={item.status} />
-                    </div>
-                    <InfoHint title={`Как замерить: ${item.name}`} className="-mt-1 -mr-1">
-                      {item.how_to_measure ?? item.recommendation}
-                    </InfoHint>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-[14px] font-medium">{item.name}</span>
+                    <ProvenanceBadge status={item.status} />
                   </div>
-                  <p className="mt-1 text-[13px] leading-relaxed wrap-anywhere text-ink-3">
-                    <span className="num text-ink-2">сейчас {formatValue(item.current_value, item.unit)}</span>
-                  </p>
+                  <Collapsible className="mt-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <p className="num min-w-0 text-[13px] leading-relaxed wrap-anywhere text-ink-2">
+                        сейчас {formatValue(item.current_value, item.unit)}
+                      </p>
+                      {(item.how_to_measure ?? item.recommendation) && (
+                        <CollapsibleTrigger className="group/measurement inline-flex min-h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-surface-2 px-2 text-[12px] font-medium text-ink-2 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-10">
+                          <span className="group-data-[state=open]/measurement:hidden">Как замерить</span>
+                          <span className="hidden group-data-[state=open]/measurement:inline">Скрыть описание</span>
+                          <ChevronDown
+                            aria-hidden="true"
+                            className="size-3.5 shrink-0 transition-transform group-data-[state=open]/measurement:rotate-180"
+                          />
+                        </CollapsibleTrigger>
+                      )}
+                    </div>
+                    <CollapsibleContent>
+                      <p className="mt-2 border-l-2 border-line pl-3 text-[13px] leading-relaxed wrap-anywhere whitespace-pre-line text-ink-3">
+                        {item.how_to_measure ?? item.recommendation}
+                      </p>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
                 <div className="col-start-2 pt-1 sm:col-start-auto">
                   <div className="flex items-baseline justify-between gap-2">
