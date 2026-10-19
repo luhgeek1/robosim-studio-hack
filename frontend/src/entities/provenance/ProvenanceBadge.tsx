@@ -3,7 +3,7 @@ import type { Provenance, ProvenanceStatus } from '@/shared/api/types'
 import { formatDate } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import type { Tone } from '@/shared/ui/tone-classes'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { PROVENANCE_HINT, PROVENANCE_LABEL, PROVENANCE_TONE, SOURCE_KIND_LABEL } from './labels'
 
 // A dot and a word instead of a pill: the value's origin reads at a glance without a coloured block next to it.
@@ -26,37 +26,54 @@ export function ProvenanceBadge({
   provenance,
   status,
   className,
+  interactive = true,
 }: {
   provenance?: Provenance | null
   status?: ProvenanceStatus | null
   className?: string
+  interactive?: boolean
 }) {
   const current = provenance?.status ?? status
   if (!current) return null
   const tone = PROVENANCE_TONE[current]
+  if (!interactive) {
+    return (
+      <span
+        className={cn(
+          'inline-flex min-w-0 items-center gap-1.5 text-[12px] font-medium wrap-anywhere',
+          BADGE_TEXT[tone],
+          className,
+        )}
+      >
+        <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', BADGE_DOT[tone])} />
+        {PROVENANCE_LABEL[current]}
+      </span>
+    )
+  }
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          className={cn(
-            'inline-flex shrink-0 cursor-help items-center gap-1.5 text-[12px] font-medium whitespace-nowrap',
-            BADGE_TEXT[tone],
-            className,
-          )}
-        >
-          <span className={cn('size-1.5 shrink-0 rounded-full', BADGE_DOT[tone])} />
+    <InfoHint
+      title={PROVENANCE_LABEL[current]}
+      trigger={
+        <>
+          <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', BADGE_DOT[tone])} />
           {PROVENANCE_LABEL[current]}
-        </span>
-      </TooltipTrigger>
+        </>
+      }
+      className={cn(
+        'min-w-0 justify-start gap-1.5 rounded-md text-left text-[12px] font-medium wrap-anywhere',
+        BADGE_TEXT[tone],
+        className,
+      )}
+    >
       <ProvenanceTip status={current} provenance={provenance} />
-    </Tooltip>
+    </InfoHint>
   )
 }
 
 function ProvenanceTip({ status, provenance }: { status: ProvenanceStatus; provenance?: Provenance | null }) {
   const source = provenance?.source
   return (
-    <TooltipContent className="max-w-sm space-y-1 text-left">
+    <div className="space-y-1 text-left">
       <div className="font-medium">{PROVENANCE_HINT[status]}</div>
       {source && (
         <div>
@@ -67,7 +84,7 @@ function ProvenanceTip({ status, provenance }: { status: ProvenanceStatus; prove
       {provenance?.note && <div className="opacity-80">{provenance.note}</div>}
       {provenance?.raw_value && <div className="opacity-80">Исходное значение: {provenance.raw_value}</div>}
       {provenance?.changed_by && <div className="opacity-70">Изменил: {provenance.changed_by}</div>}
-    </TooltipContent>
+    </div>
   )
 }
 

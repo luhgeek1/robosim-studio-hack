@@ -30,12 +30,12 @@ export function Formula({
       </div>
       {note && <p className="text-xs text-muted-foreground">{note}</p>}
       {inputs && inputs.length > 0 && (
-        <table className="w-full text-xs">
+        <table className="w-full table-fixed text-xs sm:table-auto">
           <tbody>
             {inputs.map((input) => (
               <tr key={input.key} className="border-t align-top first:border-t-0">
                 <td className="py-1.5 pr-3">
-                  <div>{input.name}</div>
+                  <div className="wrap-anywhere">{input.name}</div>
                   <div className="font-mono text-[11px] text-muted-foreground [overflow-wrap:anywhere]">
                     {input.key}
                     {input.kind && ` · ${INPUT_KIND_LABEL[input.kind]}`}
@@ -43,7 +43,7 @@ export function Formula({
                   {/* На телефоне происхождение уходит под название: третьей колонке не хватает ширины. */}
                   <ProvenanceBadge provenance={input.provenance} className="mt-0.5 sm:hidden" />
                 </td>
-                <td className="num py-1.5 pr-3 text-right font-medium whitespace-nowrap">
+                <td className="num py-1.5 pr-3 text-right font-medium whitespace-nowrap max-sm:wrap-anywhere max-sm:whitespace-normal">
                   {formatValue(input.value, input.unit)}
                 </td>
                 <td className="py-1.5 text-right max-sm:hidden">

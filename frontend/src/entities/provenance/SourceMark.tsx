@@ -1,7 +1,7 @@
 import type { Provenance } from '@/shared/api/types'
 import { formatDate } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { PROVENANCE_HINT, PROVENANCE_LABEL, PROVENANCE_TONE, SOURCE_DOT, SOURCE_KIND_LABEL } from './labels'
 
 /* Происхождение значения точкой (в графиках — без подписи) вместо плашки. Источник — в подсказке. */
@@ -9,28 +9,21 @@ export function SourceMark({ provenance, compact }: { provenance: Provenance; co
   const tone = PROVENANCE_TONE[provenance.status]
   const source = provenance.source
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        {compact ? (
-          <span
-            className="grid size-4 shrink-0 cursor-help place-items-center"
-            aria-label={PROVENANCE_LABEL[provenance.status]}
-          >
-            <span className={cn('size-1.5 rounded-full', SOURCE_DOT[tone])} />
-          </span>
-        ) : (
-          <span
-            className={cn(
-              'inline-flex cursor-help items-center gap-1.5 text-[12px] whitespace-nowrap',
-              tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink-3',
-            )}
-          >
-            <span className={cn('size-1.5 shrink-0 rounded-full', SOURCE_DOT[tone])} />
-            {PROVENANCE_LABEL[provenance.status]}
-          </span>
-        )}
-      </TooltipTrigger>
-      <TooltipContent className="max-w-sm space-y-1 text-left">
+    <InfoHint
+      title={PROVENANCE_LABEL[provenance.status]}
+      trigger={
+        <>
+          <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', SOURCE_DOT[tone])} />
+          {!compact && PROVENANCE_LABEL[provenance.status]}
+        </>
+      }
+      className={cn(
+        'gap-1.5 rounded-md text-left text-[12px] wrap-anywhere',
+        compact ? 'w-4 max-sm:w-10' : 'min-w-0 justify-start',
+        tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink-3',
+      )}
+    >
+      <div className="space-y-1 text-left">
         <div className="font-medium">
           {PROVENANCE_LABEL[provenance.status]} — {PROVENANCE_HINT[provenance.status].toLowerCase()}
         </div>
@@ -41,7 +34,7 @@ export function SourceMark({ provenance, compact }: { provenance: Provenance; co
           </div>
         )}
         {provenance.note && <div className="opacity-80">{provenance.note}</div>}
-      </TooltipContent>
-    </Tooltip>
+      </div>
+    </InfoHint>
   )
 }

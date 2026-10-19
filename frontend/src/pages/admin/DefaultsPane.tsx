@@ -134,18 +134,18 @@ function DefaultRow({
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="grid w-full grid-cols-[minmax(0,1fr)_130px_110px_170px_16px] items-center gap-4 px-5 py-3 text-left transition-colors hover:bg-surface-2"
+        className="relative grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 px-4 py-3 text-left transition-colors hover:bg-surface-2 sm:px-5 lg:grid-cols-[minmax(0,1fr)_130px_110px_170px_16px] lg:items-center lg:gap-4"
       >
-        <span className="min-w-0">
-          <span className="flex items-center gap-2 text-[13.5px] font-medium">
-            <span className="truncate">{item.name}</span>
+        <span className="min-w-0 max-lg:col-span-2 max-lg:pr-6">
+          <span className="flex flex-wrap items-center gap-2 text-[13.5px] font-medium">
+            <span className="min-w-0 wrap-anywhere lg:truncate">{item.name}</span>
             {item.required && <span className="shrink-0 text-[11px] font-normal text-ink-4">обязательный</span>}
           </span>
-          <span className="block truncate font-mono text-[11px] text-ink-4">{item.key}</span>
+          <span className="block min-w-0 wrap-anywhere lg:truncate font-mono text-[11px] text-ink-4">{item.key}</span>
         </span>
         <span>
           {provenance ? (
-            <ProvenanceBadge provenance={provenance} />
+            <ProvenanceBadge provenance={provenance} interactive={false} />
           ) : (
             <span className="text-[12px] text-ink-4">не задано</span>
           )}
@@ -155,12 +155,18 @@ function DefaultRow({
             ? `в ${formatNumber(item.projects_using_default)} ${projectsWord(item.projects_using_default)}`
             : '—'}
         </span>
-        <span className="num truncate text-right text-[14px] font-medium" title={defaultText(item)}>
+        <span
+          className="num min-w-0 wrap-anywhere lg:truncate text-right text-[14px] font-medium max-lg:col-span-2 max-lg:text-left"
+          title={defaultText(item)}
+        >
           {defaultText(item)}
         </span>
         <ChevronDown
           size={15}
-          className={cn('shrink-0 text-ink-4 transition-transform duration-200', open && 'rotate-180')}
+          className={cn(
+            'shrink-0 text-ink-4 transition-transform duration-200 max-lg:absolute max-lg:top-4 max-lg:right-4',
+            open && 'rotate-180',
+          )}
         />
       </button>
       <AnimatePresence initial={false}>
