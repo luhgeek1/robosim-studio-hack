@@ -54,11 +54,12 @@ export function WorkspaceMenu() {
   }
 
   if (user.role === 'guest') {
+    if (pathname === '/login') return null
     return (
       <Button asChild size="sm" variant="outline">
-        <Link to="/login?mode=register" state={{ from: pathname, keepGuest: true }}>
-          <span className="sm:hidden">Сохранить</span>
-          <span className="hidden sm:inline">Сохранить и пригласить коллег</span>
+        <Link to="/login" state={{ from: pathname, keepGuest: true }}>
+          <span className="sm:hidden">Войти</span>
+          <span className="hidden sm:inline">Войти</span>
         </Link>
       </Button>
     )

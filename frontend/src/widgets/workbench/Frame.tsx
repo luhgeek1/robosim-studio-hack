@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
-import { PROJECT_STEPS, stepIndex } from '@/entities/project'
+import { useJourney } from '@/entities/project/journey'
 import { cn } from '@/shared/lib/utils'
 import { useMediaQuery } from '@/shared/lib/media'
 import { Button } from '@/shared/ui/button'
@@ -62,10 +62,11 @@ export function WorkbenchFrame({
 }) {
   const dockHalf = useDockHalf()
   const mobile = useMediaQuery('(max-width: 1023px)')
-  const idx = navigation?.index ?? stepIndex(step)
-  const total = navigation?.total ?? PROJECT_STEPS.length
-  const mainPrevious = PROJECT_STEPS[idx - 1]
-  const mainNext = PROJECT_STEPS[idx + 1]
+  const { steps } = useJourney(projectId)
+  const idx = navigation?.index ?? steps.findIndex((s) => s.id === step)
+  const total = navigation?.total ?? steps.length
+  const mainPrevious = steps[idx - 1]
+  const mainNext = steps[idx + 1]
   const prev = navigation
     ? navigation.previous
     : mainPrevious
@@ -86,7 +87,7 @@ export function WorkbenchFrame({
           : inFlow
             ? // Под шапкой, поверх распорки плашки шагов (66 px) и верхнего отступа страницы проекта (20 px).
               '-mx-6 -mt-[5.375rem] h-[calc(100dvh-3.5rem)] shrink-0 border-b border-line'
-            : 'fixed inset-x-0 top-14 bottom-0 z-20',
+            : 'fixed inset-x-0 top-[calc(3.5rem+var(--workspace-banner,0px))] bottom-0 z-20',
         className,
       )}
       style={{ '--dock-half': `${dockHalf}px` } as CSSProperties}

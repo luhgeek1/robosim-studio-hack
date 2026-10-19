@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Check, ChevronDown } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, Outlet, matchPath, useLocation, useMatch } from 'react-router'
-import { PROJECT_STEPS } from '@/entities/project'
+import { useJourney } from '@/entities/project/journey'
 import { useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
 import { useNarrow } from '@/shared/lib/media'
@@ -66,7 +66,8 @@ function StepDock({ projectId }: { projectId: string }) {
   const [focused, setFocused] = useState(false)
   const hidden = !pinned && scrolled && !pulled && !hovered && !focused
   const { pathname } = useLocation()
-  const steps = PROJECT_STEPS.map((step) => ({
+  const { steps: routeSteps } = useJourney(projectId)
+  const steps = routeSteps.map((step) => ({
     ...step,
     to: `/projects/${projectId}/${step.id}`,
     active: Boolean(matchPath({ path: `/projects/${projectId}/${step.id}`, end: false }, pathname)),
@@ -80,7 +81,10 @@ function StepDock({ projectId }: { projectId: string }) {
       el.scrollTo({ left: active.offsetLeft - (el.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' })
   }, [pathname])
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-14 z-30 flex justify-center px-3 sm:px-6">
+    <div
+      className="pointer-events-none fixed inset-x-0 z-30 flex justify-center px-3 sm:px-6"
+      style={{ top: 'calc(3.5rem + var(--workspace-banner, 0px))' }}
+    >
       <div
         className="pointer-events-auto max-w-full pt-3 pb-2"
         onMouseEnter={() => setHovered(true)}
