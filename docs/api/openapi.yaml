@@ -144,6 +144,7 @@ paths:
   /api/v1/scenarios/{scenario_id}/assist/review-assumptions: {$ref: './paths/platform.yaml#/assistReviewAssumptions'}
   /api/v1/demo/projects: {$ref: './paths/platform.yaml#/demoProjects'}
   /api/v1/demo/projects/{demo_key}: {$ref: './paths/platform.yaml#/demoProject'}
+  /api/v1/demo/projects/{demo_key}/open: {$ref: './paths/platform.yaml#/demoOpen'}
   /api/v1/demo/projects/{demo_key}/what-if: {$ref: './paths/platform.yaml#/demoWhatIf'}
   /api/v1/demo/projects/{demo_key}/report/{format}: {$ref: './paths/platform.yaml#/demoReport'}
   /api/v1/demo/projects/{demo_key}/replay: {$ref: './paths/platform.yaml#/demoReplay'}

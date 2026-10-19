@@ -16,7 +16,7 @@ from app.api.schemas.calculations import (
 from app.api.schemas.layouts import Layout
 from app.api.schemas.matching import MatchingResult
 from app.api.schemas.processes import ProcessDemand
-from app.api.schemas.projects import ProjectParam
+from app.api.schemas.projects import Project, ProjectParam
 from app.api.schemas.scenarios import Scenario
 from app.api.schemas.simulations import FleetSweepResult, SimulationRun
 
@@ -83,3 +83,12 @@ class DemoWhatIfResult(ApiModel):
     calculation: CalculationRun
     simulation_valid: bool
     notes: list[str]
+
+
+class DemoOpenRequest(ApiModel):
+    request_id: UUID
+    revision: str = Field(min_length=1, max_length=64)
+
+
+class DemoOpenResult(ApiModel):
+    project: Project

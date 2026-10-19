@@ -1537,6 +1537,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/demo/projects/{demo_key}/open': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Создать личную копию подготовленного примера
+     * @description Доступно гостевой сессии. Повтор request_id возвращает ту же копию без сброса правок. Расчёты пересчитываются, доказательства имитации переносятся только при совпадении физических условий.
+     */
+    post: operations['openDemoProject']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/demo/projects/{demo_key}/what-if': {
     parameters: {
       query?: never
@@ -8299,6 +8319,43 @@ export interface operations {
         }
       }
       404: components['responses']['NotFound']
+    }
+  }
+  openDemoProject: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        demo_key: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': {
+          /** Format: uuid */
+          request_id: string
+          revision: string
+        }
+      }
+    }
+    responses: {
+      /** @description Личная копия */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': {
+            project: components['schemas']['Project']
+          }
+        }
+      }
+      401: components['responses']['Unauthorized']
+      404: components['responses']['NotFound']
+      409: components['responses']['Conflict']
+      422: components['responses']['ValidationError']
+      429: components['responses']['RateLimited']
     }
   }
   demoWhatIf: {

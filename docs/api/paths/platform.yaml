@@ -526,3 +526,38 @@ integrationCatalogUpsert:
           schema: {type: object, required: [items], properties: {items: {type: array, items: {$ref: '../components/catalog.yaml#/ProductWrite'}}}}
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/CatalogImportResult'}}}}
+
+
+demoOpen:
+  post:
+    tags: [demo]
+    operationId: openDemoProject
+    summary: Создать личную копию подготовленного примера
+    description: Доступно гостевой сессии. Повтор request_id возвращает ту же копию без сброса правок. Расчёты пересчитываются, доказательства имитации переносятся только при совпадении физических условий.
+    parameters: [{name: demo_key, in: path, required: true, schema: {type: string}}]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [request_id, revision]
+            properties:
+              request_id: {type: string, format: uuid}
+              revision: {type: string, minLength: 1, maxLength: 64}
+    responses:
+      '200':
+        description: Личная копия
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [project]
+              properties:
+                project: {$ref: '../components/projects.yaml#/Project'}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
+      '429': {$ref: '../components/common.yaml#/responses/RateLimited'}
