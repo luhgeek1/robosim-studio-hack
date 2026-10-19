@@ -191,7 +191,7 @@ export function Lane({ drive, length, width }: { drive: RefObject<Drive>; length
     return t
   }, [length])
   useFrame(() => {
-    map.offset.x = drive.current.odo / tile
+    map.offset.setX(drive.current.odo / tile)
   })
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} renderOrder={1}>
@@ -321,7 +321,7 @@ export function LedStrip({
 }) {
   const glow = useGlow(color, 1.6)
   useTick((t) => {
-    glow.emissiveIntensity = 1.1 + 0.9 * (0.5 + 0.5 * Math.sin(t * rate * Math.PI))
+    glow.setValues({ emissiveIntensity: 1.1 + 0.9 * (0.5 + 0.5 * Math.sin(t * rate * Math.PI)) })
   })
   return (
     <mesh material={glow} position={pos}>
@@ -449,12 +449,12 @@ export type Framing = { scale?: number; lower?: number }
 
 export function Studio({
   bounds,
-  drag,
+  dragRef,
   framing,
   children,
 }: {
   bounds: Bounds
-  drag: DragState
+  dragRef: RefObject<DragState>
   framing?: Framing
   children: ReactNode
 }) {
@@ -487,7 +487,7 @@ export function Studio({
     c.lookAt(0, f.ty, 0)
     c.updateProjectionMatrix()
     if (!useGallery.getState().paused) f.t += Math.min(delta, 0.05)
-    if (turn.current) turn.current.rotation.y = -0.62 + Math.sin(f.t * 0.18) * 0.38 + drag.yaw
+    if (turn.current) turn.current.rotation.y = -0.62 + Math.sin(f.t * 0.18) * 0.38 + dragRef.current.yaw
   })
 
   return (

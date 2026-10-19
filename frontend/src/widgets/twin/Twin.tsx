@@ -52,7 +52,7 @@ export function Twin({
   onViewChange,
   selectedRobot,
   onSelectRobot,
-  capture,
+  capture: captureRef,
   toolbarPlacement,
   className = '',
   controls = 'full',
@@ -91,16 +91,16 @@ export function Twin({
   const planRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!capture || view !== '2d') return
+    if (!captureRef || view !== '2d') return
     const shoot = async () => {
       const svg = planRef.current?.querySelector('svg')
       return svg ? svgToPng(svg, '#ffffff') : null
     }
-    capture.current = shoot
+    captureRef.current = shoot
     return () => {
-      if (capture.current === shoot) capture.current = null
+      if (captureRef.current === shoot) captureRef.current = null
     }
-  }, [capture, view])
+  }, [captureRef, view])
   const span = Math.max(frame.w, frame.h)
 
   return (
@@ -218,7 +218,7 @@ export function Twin({
                 )}
                 <MapCamera command={command} extent={{ w: frame.w, h: frame.h }} />
                 <LabelProjector labels={labels} refs={labelRefs} />
-                {capture && <FrameCapture capture={capture} />}
+                {captureRef && <FrameCapture capture={captureRef} />}
               </Suspense>
             </Canvas>
           </SceneBoundary>
@@ -277,18 +277,18 @@ function Dot({ color, label }: { color: string; label: string }) {
 }
 
 // A WebGL canvas keeps no frame after presenting it, so the snapshot renders one frame and reads it at once.
-function FrameCapture({ capture }: { capture: TwinCapture }) {
+function FrameCapture({ capture: captureRef }: { capture: TwinCapture }) {
   const { gl, scene, camera } = useThree()
   useEffect(() => {
     const shoot = () => {
       gl.render(scene, camera)
       return new Promise<Blob | null>((resolve) => gl.domElement.toBlob(resolve, 'image/png'))
     }
-    capture.current = shoot
+    captureRef.current = shoot
     // The canvas unmounts after the 2D view has mounted: clear only our own capture.
     return () => {
-      if (capture.current === shoot) capture.current = null
+      if (captureRef.current === shoot) captureRef.current = null
     }
-  }, [capture, gl, scene, camera])
+  }, [captureRef, gl, scene, camera])
   return null
 }

@@ -78,7 +78,7 @@ export function Ugv({ v, accent }: ModelProps) {
   const claw = useRef<(G | null)[]>([])
   const cam = useRef<G>(null)
   const item = useRef<G>(null)
-  const drive = useDrive()
+  const driveRef = useDrive()
   const a = L * 0.5
   const b = L * 0.45
   const trackH = H * 0.3
@@ -88,7 +88,7 @@ export function Ugv({ v, accent }: ModelProps) {
   const T = 8
   useTick((t) => {
     const p = t % T
-    drive.current.odo = 0.6 * Math.sin((t * Math.PI) / T)
+    driveRef.current.odo = 0.6 * Math.sin((t * Math.PI) / T)
     const reach = seg(p, 0.5, 2) - seg(p, 4, 5.5)
     const lift = seg(p, 2.6, 3.4) - seg(p, 5.6, 6.4)
     // Wrist target: stowed over the body → down in front → lifted with the object.
@@ -118,7 +118,7 @@ export function Ugv({ v, accent }: ModelProps) {
         <group key={s} position={[0, trackH / 2 + lift0, s * (W / 2 - 0.08)]}>
           <RoundedBox args={[L, trackH, 0.16]} radius={trackH * 0.45} smoothness={6} material={M.rubber} />
           {[-0.33, 0, 0.33].map((x) => (
-            <Wheel key={x} r={trackH * 0.3} w={0.22} pos={[x * L, 0, 0]} drive={drive} />
+            <Wheel key={x} r={trackH * 0.3} w={0.22} pos={[x * L, 0, 0]} drive={driveRef} />
           ))}
         </group>
       ))}
@@ -292,7 +292,7 @@ export function RailRover({ v, accent }: ModelProps) {
   const shoulder = useRef<G>(null)
   const elbow = useRef<G>(null)
   const lever = useRef<G>(null)
-  const drive = useDrive()
+  const driveRef = useDrive()
   const trackZ = -1.35
   const couplerY = 1.05
   const a = 0.75
@@ -301,7 +301,7 @@ export function RailRover({ v, accent }: ModelProps) {
   useTick((t) => {
     const p = t % T
     const x = -2.2 * (1 - seg(p, 0.3, 2.8)) + 2.2 * seg(p, 7.2, 9.7)
-    drive.current.odo = x
+    driveRef.current.odo = x
     if (rover.current) rover.current.position.x = x
     const reach = seg(p, 3.0, 4.2) - seg(p, 5.8, 7.0)
     const pull = seg(p, 4.4, 5.2) - seg(p, 5.8, 6.4)
@@ -372,7 +372,7 @@ export function RailRover({ v, accent }: ModelProps) {
               r={0.16}
               w={0.12}
               pos={[sx * L * 0.33, 0.16, sz * (W / 2 - 0.02)]}
-              drive={drive}
+              drive={driveRef}
             />
           )),
         )}
@@ -412,13 +412,13 @@ export function RailRover({ v, accent }: ModelProps) {
 export function Shuttle({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [4600, 1900, 1600])
   const speed = v.spec.speed_mps ?? 8
-  const drive = useDrive()
+  const driveRef = useDrive()
   const body = useRef<G>(null)
   const T = 9
   const P = (Math.min(speed, 10) * 7) / 1.5
   useTick((t) => {
     const c = Math.floor(t / T)
-    drive.current.odo = c * P + P * seg(t % T, 0.5, 7.5)
+    driveRef.current.odo = c * P + P * seg(t % T, 0.5, 7.5)
     if (body.current) body.current.position.y = Math.sin(t * 9) * 0.004
   })
   const wr = Math.min(0.34, H * 0.2)
@@ -443,10 +443,12 @@ export function Shuttle({ v, accent }: ModelProps) {
   const tail = useGlow('#ff3b3b', 1.4)
   return (
     <group>
-      <Lane drive={drive} length={L * 3} width={W * 1.8} />
+      <Lane drive={driveRef} length={L * 3} width={W * 1.8} />
       <BlobShadow w={L * 1.1} d={W * 1.25} />
       {[-L * 0.32, L * 0.32].flatMap((x) =>
-        [-1, 1].map((s) => <Wheel key={`${x}${s}`} r={wr} w={0.22} pos={[x, wr, s * (W / 2 - 0.12)]} drive={drive} />),
+        [-1, 1].map((s) => (
+          <Wheel key={`${x}${s}`} r={wr} w={0.22} pos={[x, wr, s * (W / 2 - 0.12)]} drive={driveRef} />
+        )),
       )}
       <group ref={body}>
         <RoundedBox
@@ -498,9 +500,9 @@ export function Exo({ v, accent }: ModelProps) {
     { hip: null, knee: null },
   ])
   const pelvis = useRef<G>(null)
-  const drive = useDrive()
+  const driveRef = useDrive()
   useTick((t) => {
-    drive.current.odo = t * 0.5
+    driveRef.current.odo = t * 0.5
     const w = t * 3.2
     legs.current.forEach((l, i) => {
       const ph = w + i * Math.PI
@@ -527,7 +529,7 @@ export function Exo({ v, accent }: ModelProps) {
       <BlobShadow w={1.4} d={0.9} />
       <RoundedBox args={[1.5, 0.12, 0.7]} radius={0.04} smoothness={3} position={[0, 0.07, 0]} material={M.dark} />
       <group position={[0, 0.135, 0]}>
-        <Lane drive={drive} length={1.4} width={0.6} />
+        <Lane drive={driveRef} length={1.4} width={0.6} />
       </group>
       {[-1, 1].map((s) => (
         <mesh key={s} material={M.steel} position={[0.55, 0.6, s * 0.33]}>
@@ -654,7 +656,7 @@ export function Neutral({ v, accent }: ModelProps) {
     })
     if (glowDisc.current) {
       glowDisc.current.scale.setScalar(1 - bob * 2)
-      under.opacity = 0.28 + 0.1 * Math.sin(t * 3)
+      under.setValues({ opacity: 0.28 + 0.1 * Math.sin(t * 3) })
     }
   })
   const faceR = [R * 0.86, headRy, R * 0.86] as const

@@ -22,7 +22,7 @@ type G = THREE.Group
 
 /** Spots on the floor ahead of a cleaner: they scroll with the lane and vanish under the robot. */
 function Debris({
-  drive,
+  drive: driveRef,
   front,
   span,
   halfW,
@@ -58,7 +58,7 @@ function Debris({
   useTick(() => {
     refs.current.forEach((m, i) => {
       if (!m) return
-      const u = ((((i * span) / count - drive.current.odo) % span) + span) % span
+      const u = ((((i * span) / count - driveRef.current.odo) % span) + span) % span
       m.position.x = front + u
       m.scale.setScalar(size * seeds[i].s * Math.min(1, u / 0.05, (span - u) / (span * 0.2)))
     })
@@ -140,7 +140,7 @@ function Battery({ hours, pos, w }: { hours: number; pos: [number, number, numbe
 export function Cleaner({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [700, 560, 750])
   const speed = v.spec.speed_mps ?? 0.6
-  const drive = useDrive()
+  const driveRef = useDrive()
   const eyes = useRef<(THREE.Mesh | null)[]>([])
   const water = useRef<THREE.Mesh>(null)
   const eyeMat = useGlow('#7fe3ff', 2)
@@ -150,7 +150,7 @@ export function Cleaner({ v, accent }: ModelProps) {
   useTick((t) => {
     const c = Math.floor(t / T)
     const p = t % T
-    drive.current.odo = c * P + P * seg(p, 0.5, 8.5)
+    driveRef.current.odo = c * P + P * seg(p, 0.5, 8.5)
     const blink = t % 3.2 < 0.12 ? 0.1 : 1
     eyes.current.forEach((m) => {
       if (m) m.scale.y = blink
@@ -173,11 +173,11 @@ export function Cleaner({ v, accent }: ModelProps) {
   )
   return (
     <group>
-      <Lane drive={drive} length={span * 2.2} width={W * 2} />
+      <Lane drive={driveRef} length={span * 2.2} width={W * 2} />
       <mesh material={shine} rotation={[-Math.PI / 2, 0, 0]} position={[-L / 2 - span / 2, 0.003, 0]} renderOrder={2}>
         <planeGeometry args={[span, W * 0.95]} />
       </mesh>
-      <Debris drive={drive} front={L / 2 + 0.02} span={span} halfW={W * 0.4} color="#6b5a45" size={0.09} />
+      <Debris drive={driveRef} front={L / 2 + 0.02} span={span} halfW={W * 0.4} color="#6b5a45" size={0.09} />
       <BlobShadow w={L * 1.3} d={W * 1.35} />
       <RoundedBox args={[L, 0.12, W]} radius={0.05} smoothness={3} position={[0, 0.08, 0]} material={M.dark} />
       <RoundedBox
@@ -235,21 +235,21 @@ export function Cleaner({ v, accent }: ModelProps) {
 export function Sweeper({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [2200, 1100, 1600])
   const speed = v.spec.speed_mps ?? 1.4
-  const drive = useDrive()
+  const driveRef = useDrive()
   const T = 9
   const P = (speed * 7) / 1.5
   const span = L * 2
   useTick((t) => {
     const c = Math.floor(t / T)
-    drive.current.odo = c * P + P * seg(t % T, 0.5, 7.5)
+    driveRef.current.odo = c * P + P * seg(t % T, 0.5, 7.5)
   })
   const wr = H * 0.17
   const bodyMat = paint(accent, 0.38, 0.1, 0.6)
   return (
     <group>
-      <Lane drive={drive} length={span * 2.2} width={W * 1.9} />
+      <Lane drive={driveRef} length={span * 2.2} width={W * 1.9} />
       <Debris
-        drive={drive}
+        drive={driveRef}
         front={L / 2 + 0.3}
         span={span}
         halfW={W * 0.6}
@@ -291,7 +291,7 @@ export function Sweeper({ v, accent }: ModelProps) {
       <Beacon pos={[-L * 0.3, wr + H * 0.8, W * 0.3]} r={0.07} />
       {[-1, 1].flatMap((sx) =>
         [-1, 1].map((sz) => (
-          <Wheel key={`${sx}${sz}`} r={wr} w={0.16} pos={[sx * L * 0.3, wr, sz * (W / 2 - 0.04)]} drive={drive} />
+          <Wheel key={`${sx}${sz}`} r={wr} w={0.16} pos={[sx * L * 0.3, wr, sz * (W / 2 - 0.04)]} drive={driveRef} />
         )),
       )}
       <Brush r={W * 0.28} pos={[L * 0.45, 0.04, W * 0.42]} dir={-1} tilt={0.12} />
@@ -442,7 +442,7 @@ export function Humanoid({ v, accent }: ModelProps) {
 export function Courier({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [800, 600, 750])
   const speed = v.spec.speed_mps ?? 1.5
-  const drive = useDrive()
+  const driveRef = useDrive()
   const lid = useRef<G>(null)
   const parcel = useRef<G>(null)
   const flag = useRef<G>(null)
@@ -451,7 +451,7 @@ export function Courier({ v, accent }: ModelProps) {
   useTick((t) => {
     const c = Math.floor(t / T)
     const p = t % T
-    drive.current.odo = c * P + P * seg(p, 0.3, 4.8)
+    driveRef.current.odo = c * P + P * seg(p, 0.3, 4.8)
     const open = seg(p, 5.2, 5.9) - seg(p, 7.0, 7.7)
     if (lid.current) lid.current.rotation.z = open * 1.7
     if (parcel.current) parcel.current.position.y = open * 0.12
@@ -465,10 +465,12 @@ export function Courier({ v, accent }: ModelProps) {
   const wheelsX = [-L * 0.36, 0, L * 0.36]
   return (
     <group>
-      <Lane drive={drive} length={Math.max(L, 1) * 5} width={W * 2} />
+      <Lane drive={driveRef} length={Math.max(L, 1) * 5} width={W * 2} />
       <BlobShadow w={L * 1.3} d={W * 1.4} />
       {wheelsX.flatMap((x) =>
-        [-1, 1].map((s) => <Wheel key={`${x}${s}`} r={wr} w={0.07} pos={[x, wr, s * (W / 2 + 0.01)]} drive={drive} />),
+        [-1, 1].map((s) => (
+          <Wheel key={`${x}${s}`} r={wr} w={0.07} pos={[x, wr, s * (W / 2 + 0.01)]} drive={driveRef} />
+        )),
       )}
       <group>
         <RoundedBox
@@ -538,7 +540,7 @@ export function Courier({ v, accent }: ModelProps) {
 export function Security({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [900, 700, 1650])
   const speed = v.spec.speed_mps ?? 1.5
-  const drive = useDrive()
+  const driveRef = useDrive()
   const turret = useRef<G>(null)
   const cone = useRef<THREE.Mesh>(null)
   const red = useGlow('#ff3b3b', 2)
@@ -548,13 +550,13 @@ export function Security({ v, accent }: ModelProps) {
   useTick((t) => {
     const c = Math.floor(t / T)
     const p = t % T
-    drive.current.odo = c * P + P * seg(p, 0.3, 4.3)
+    driveRef.current.odo = c * P + P * seg(p, 0.3, 4.3)
     const scan = seg(p, 4.6, 5.4)
     if (turret.current)
       turret.current.rotation.y = scan * Math.sin((p - 4.6) * 1.1) * 1.3 + (1 - scan) * Math.sin(t * 0.8) * 0.3
     const phase = Math.floor(t * 6) % 4
-    red.emissiveIntensity = phase === 0 || phase === 2 ? 3 : 0.2
-    blue.emissiveIntensity = phase === 1 || phase === 3 ? 3 : 0.2
+    red.setValues({ emissiveIntensity: phase === 0 || phase === 2 ? 3 : 0.2 })
+    blue.setValues({ emissiveIntensity: phase === 1 || phase === 3 ? 3 : 0.2 })
     if (cone.current) (cone.current.material as THREE.MeshBasicMaterial).opacity = 0.1 + 0.05 * Math.sin(t * 5)
   })
   const wr = 0.16
@@ -566,12 +568,12 @@ export function Security({ v, accent }: ModelProps) {
   )
   return (
     <group>
-      <Lane drive={drive} length={L * 6} width={W * 2} />
+      <Lane drive={driveRef} length={L * 6} width={W * 2} />
       <BlobShadow w={L * 1.3} d={W * 1.4} />
       <RoundedBox args={[L, 0.28, W]} radius={0.1} smoothness={4} position={[0, wr + 0.08, 0]} material={M.dark} />
       {[-1, 1].flatMap((sx) =>
         [-1, 1].map((sz) => (
-          <Wheel key={`${sx}${sz}`} r={wr} w={0.12} pos={[sx * L * 0.32, wr, sz * (W / 2 + 0.02)]} drive={drive} />
+          <Wheel key={`${sx}${sz}`} r={wr} w={0.12} pos={[sx * L * 0.32, wr, sz * (W / 2 + 0.02)]} drive={driveRef} />
         )),
       )}
       <mesh material={M.shell} position={[0, wr + 0.22 + bodyH / 2, 0]}>

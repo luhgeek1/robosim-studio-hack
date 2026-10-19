@@ -27,7 +27,7 @@ export function Truck({ v, accent }: ModelProps) {
   const speed = v.spec.speed_mps ?? 5
   const pallets = Math.max(2, Math.min(8, Math.round((v.spec.payload_kg ?? 2000) / 333)))
   const cols = Math.ceil(pallets / 2)
-  const drive = useDrive()
+  const driveRef = useDrive()
   const body = useRef<G>(null)
   const blink = useGlow('#ffb020', 2)
   const headlight = useGlow('#fff6e0', 1.6)
@@ -36,14 +36,14 @@ export function Truck({ v, accent }: ModelProps) {
   useTick((t) => {
     const c = Math.floor(t / T)
     const p = t % T
-    drive.current.odo = c * P + P * seg(p, 0.5, 7.5)
+    driveRef.current.odo = c * P + P * seg(p, 0.5, 7.5)
     const moving = seg(p, 0.5, 1.5) - seg(p, 6.5, 7.5)
     if (body.current) {
       body.current.position.y = Math.sin(t * 11) * 0.006 * moving
       body.current.rotation.z =
         -0.012 * (seg(p, 0.5, 1.2) - seg(p, 1.2, 2.2)) + 0.012 * (seg(p, 6.8, 7.4) - seg(p, 7.4, 8.2))
     }
-    blink.emissiveIntensity = Math.floor(t * 2.5) % 2 ? 2.5 : 0.1
+    blink.setValues({ emissiveIntensity: Math.floor(t * 2.5) % 2 ? 2.5 : 0.1 })
   })
   const wr = 0.38
   const floorY = wr + 0.42
@@ -58,11 +58,11 @@ export function Truck({ v, accent }: ModelProps) {
   const faceX = L / 2 + 0.012
   return (
     <group>
-      <Lane drive={drive} length={L * 3} width={W * 1.8} />
+      <Lane drive={driveRef} length={L * 3} width={W * 1.8} />
       <BlobShadow w={L * 1.1} d={W * 1.3} />
       {[-L * 0.3, L * 0.3].flatMap((x) =>
         [-1, 1].map((s) => (
-          <Wheel key={`${x}${s}`} r={wr} w={0.24} pos={[x, wr, s * (W / 2 - 0.1)]} drive={drive} hub={accent} />
+          <Wheel key={`${x}${s}`} r={wr} w={0.24} pos={[x, wr, s * (W / 2 - 0.1)]} drive={driveRef} hub={accent} />
         )),
       )}
       <group ref={body}>
@@ -249,8 +249,8 @@ export function Drone({ v, accent }: ModelProps) {
     }
     if (pod.current) pod.current.position.y = -0.1 - len - podS / 2
     const blinkOn = t % 1.2 < 0.12
-    nav.emissiveIntensity = blinkOn ? 4 : 1
-    navR.emissiveIntensity = blinkOn ? 4 : 1
+    nav.setValues({ emissiveIntensity: blinkOn ? 4 : 1 })
+    navR.setValues({ emissiveIntensity: blinkOn ? 4 : 1 })
     if (shadow.current) shadow.current.scale.setScalar(1 + (y - hover) * 0.8)
   })
   const bodyMat = paint(accent, 0.35, 0.1, 0.7)

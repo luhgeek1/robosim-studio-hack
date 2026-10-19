@@ -60,7 +60,7 @@ function RobotCard({ kind, products }: { kind: Kind; products: Product[] | undef
   const options = fromCatalog
     ? products!.map((p) => ({ id: p.id, name: cleanName(p.name) }))
     : kind.variants.map((x) => ({ id: x.id, name: x.name }))
-  const drag = useRef<DragState>({ yaw: 0 }).current
+  const dragRef = useRef<DragState>({ yaw: 0 })
   const last = useRef<number | null>(null)
   const bounds = useMemo(() => kind.bounds(v), [kind, v])
   const rows = specRows(v.spec)
@@ -72,7 +72,7 @@ function RobotCard({ kind, products }: { kind: Kind; products: Product[] | undef
   }
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     if (last.current === null) return
-    drag.yaw += (e.clientX - last.current) * 0.012
+    dragRef.current.yaw += (e.clientX - last.current) * 0.012
     last.current = e.clientX
   }
   const onUp = () => {
@@ -92,7 +92,7 @@ function RobotCard({ kind, products }: { kind: Kind; products: Product[] | undef
         onPointerCancel={onUp}
       >
         <View className="absolute inset-0">
-          <Studio bounds={bounds} drag={drag}>
+          <Studio bounds={bounds} dragRef={dragRef}>
             <Model key={`${v.id}:${detail.data ? 1 : 0}`} v={v} accent={kind.accent} />
           </Studio>
         </View>

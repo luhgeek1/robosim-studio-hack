@@ -25,14 +25,14 @@ type G = THREE.Group
 export function Marine({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [3000, 1400, 1100])
   const speed = v.spec.speed_mps ?? 2.5
-  const drive = useDrive()
+  const driveRef = useDrive()
   const boat = useRef<G>(null)
   const radar = useRef<G>(null)
   const T = 10
   const P = (speed * 8) / 1.5
   useTick((t) => {
     const c = Math.floor(t / T)
-    drive.current.odo = c * P + P * seg(t % T, 0.5, 8.5)
+    driveRef.current.odo = c * P + P * seg(t % T, 0.5, 8.5)
     if (boat.current) {
       boat.current.position.y = Math.sin(t * 1.4) * 0.03
       boat.current.rotation.z = Math.sin(t * 1.1) * 0.025
@@ -49,7 +49,7 @@ export function Marine({ v, accent }: ModelProps) {
   return (
     <group>
       <FadeDisc w={L * 3.2} d={L * 2.4} color="#6fa9c2" opacity={0.75} />
-      <Scroller drive={drive} span={L * 2.6} count={5} lanes={[-hullZ, hullZ]}>
+      <Scroller drive={driveRef} span={L * 2.6} count={5} lanes={[-hullZ, hullZ]}>
         {(i) => (
           <mesh material={foam} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, (i % 3) * 0.08 - 0.08]}>
             <circleGeometry args={[0.12 + (i % 4) * 0.04, 10]} />
@@ -109,13 +109,13 @@ export function Marine({ v, accent }: ModelProps) {
 export function Agro({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [2600, 1500, 1700])
   const speed = v.spec.speed_mps ?? 1.6
-  const drive = useDrive()
+  const driveRef = useDrive()
   const tool = useRef<G>(null)
   const T = 10
   const P = (speed * 8) / 1.5
   useTick((t) => {
     const c = Math.floor(t / T)
-    drive.current.odo = c * P + P * seg(t % T, 0.5, 8.5)
+    driveRef.current.odo = c * P + P * seg(t % T, 0.5, 8.5)
     if (tool.current) tool.current.position.y = Math.sin(t * 7) * 0.008
   })
   const rr = H * 0.34
@@ -126,7 +126,7 @@ export function Agro({ v, accent }: ModelProps) {
   return (
     <group>
       <FadeDisc w={L * 3.4} d={W * 2.6} color="#8a6a4c" opacity={0.85} />
-      <Scroller drive={drive} span={L * 3} count={9} lanes={[-W * 0.62, 0, W * 0.62]}>
+      <Scroller drive={driveRef} span={L * 3} count={9} lanes={[-W * 0.62, 0, W * 0.62]}>
         {(i) => (
           <group>
             <mesh material={i % 2 ? leaf : leaf2} position={[0, 0.09, 0]}>
@@ -166,8 +166,8 @@ export function Agro({ v, accent }: ModelProps) {
       />
       {[-1, 1].map((s) => (
         <group key={s}>
-          <Wheel r={rr} w={0.34} pos={[-L * 0.22, rr, s * (W / 2 - 0.17)]} drive={drive} hub={accent} />
-          <Wheel r={fr} w={0.22} pos={[L * 0.3, fr, s * (W / 2 - 0.2)]} drive={drive} hub={accent} />
+          <Wheel r={rr} w={0.34} pos={[-L * 0.22, rr, s * (W / 2 - 0.17)]} drive={driveRef} hub={accent} />
+          <Wheel r={fr} w={0.22} pos={[L * 0.3, fr, s * (W / 2 - 0.2)]} drive={driveRef} hub={accent} />
           <mesh material={M.dark} position={[-L * 0.1, (H + rr) / 2, s * W * 0.32]}>
             <boxGeometry args={[0.06, H - rr, 0.06]} />
           </mesh>
@@ -204,7 +204,7 @@ export function Agro({ v, accent }: ModelProps) {
 export function Roller({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [3800, 1700, 2600])
   const speed = v.spec.speed_mps ?? 1.2
-  const drive = useDrive()
+  const driveRef = useDrive()
   const drums = useRef<(G | null)[]>([])
   const T = 12
   const P = (speed * 5) / 1.5
@@ -212,9 +212,9 @@ export function Roller({ v, accent }: ModelProps) {
   useTick((t) => {
     const p = t % T
     // Rollers work back and forth over the same stretch.
-    drive.current.odo = P * (seg(p, 0.5, 5.5) - seg(p, 6.5, 11.5))
+    driveRef.current.odo = P * (seg(p, 0.5, 5.5) - seg(p, 6.5, 11.5))
     drums.current.forEach((g) => {
-      if (g) g.rotation.y = -drive.current.odo / dr
+      if (g) g.rotation.y = -driveRef.current.odo / dr
     })
   })
   const bodyMat = paint(accent, 0.35, 0.1, 0.7)
@@ -222,7 +222,7 @@ export function Roller({ v, accent }: ModelProps) {
   return (
     <group>
       <FadeDisc w={L * 3.2} d={W * 2.2} color="#3b3f44" opacity={0.95} />
-      <Scroller drive={drive} span={L * 2.8} count={6} lanes={[0]}>
+      <Scroller drive={driveRef} span={L * 2.8} count={6} lanes={[0]}>
         {() => (
           <mesh material={seam} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]}>
             <planeGeometry args={[0.05, W * 1.2]} />
@@ -289,14 +289,14 @@ export function Roller({ v, accent }: ModelProps) {
 export function PipeCrawler({ v, accent }: ModelProps) {
   const [L, W, H] = mm(v.spec.dims_mm, [600, 250, 250])
   const speed = v.spec.speed_mps ?? 0.25
-  const drive = useDrive()
+  const driveRef = useDrive()
   const ring = useRef<THREE.Mesh>(null)
   const T = 9
   const P = Math.max(0.6, (speed * 7) / 1.5)
   const R = Math.max(W, H) * 0.95
   useTick((t) => {
     const c = Math.floor(t / T)
-    drive.current.odo = c * P + P * seg(t % T, 0.5, 7.5)
+    driveRef.current.odo = c * P + P * seg(t % T, 0.5, 7.5)
     if (ring.current) {
       ring.current.position.x = L * 0.7 + Math.sin(t * 1.6) * L * 0.25
       ;(ring.current.material as THREE.MeshBasicMaterial).opacity = 0.5 + 0.3 * Math.sin(t * 6)
@@ -320,7 +320,7 @@ export function PipeCrawler({ v, accent }: ModelProps) {
       <mesh material={pipeMat} position={[0, cy, 0]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[R, R, pipeLen, 48, 1, true, Math.PI * 0.35, Math.PI * 1.5]} />
       </mesh>
-      <Scroller drive={drive} span={pipeLen * 0.9} count={4} lanes={[0]}>
+      <Scroller drive={driveRef} span={pipeLen * 0.9} count={4} lanes={[0]}>
         {() => (
           <mesh material={M.steel} position={[0, cy, 0]} rotation={[0, 0, Math.PI / 2]}>
             <cylinderGeometry args={[R * 1.03, R * 1.03, 0.03, 48, 1, true, Math.PI * 0.35, Math.PI * 1.5]} />
@@ -339,7 +339,7 @@ export function PipeCrawler({ v, accent }: ModelProps) {
                 <mesh material={M.dark} position={[0, R * 0.55, 0]}>
                   <boxGeometry args={[0.03, R * 0.5, 0.03]} />
                 </mesh>
-                <Wheel r={R * 0.14} w={R * 0.12} pos={[0, R * 0.84, 0]} drive={drive} />
+                <Wheel r={R * 0.14} w={R * 0.12} pos={[0, R * 0.84, 0]} drive={driveRef} />
               </group>
             )
           }),

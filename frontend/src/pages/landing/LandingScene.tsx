@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Line, OrbitControls, RoundedBox } from '@react-three/drei'
+import { Line, OrbitControls, OrthographicCamera, RoundedBox } from '@react-three/drei'
 import { useReducedMotion } from 'framer-motion'
 import { Group, MathUtils, PCFShadowMap, Vector3 } from 'three'
 import type { ReactNode } from 'react'
@@ -106,11 +106,13 @@ function Robot({
   const distance = useRef(offset * 4.3)
   const segments = useMemo(() => {
     let total = 0
-    const ends = path.map((from, i) => {
+    const ends: number[] = []
+    for (let i = 0; i < path.length; i++) {
+      const from = path[i]
       const to = path[(i + 1) % path.length]
       total += Math.hypot(to[0] - from[0], to[2] - from[2])
-      return total
-    })
+      ends.push(total)
+    }
     return { ends, total }
   }, [path])
   useFrame((_, delta) => {
@@ -325,14 +327,16 @@ function Airport() {
 }
 
 function CameraFit() {
-  const { camera, size } = useThree()
-  useEffect(() => {
-    if ('zoom' in camera) {
-      camera.zoom = Math.min(size.width / 20.5, size.height / 15.2)
-      camera.updateProjectionMatrix()
-    }
-  }, [camera, size])
-  return null
+  const size = useThree((state) => state.size)
+  return (
+    <OrthographicCamera
+      makeDefault
+      position={[16, 16, 20]}
+      near={0.1}
+      far={100}
+      zoom={Math.min(size.width / 20.5, size.height / 15.2)}
+    />
+  )
 }
 
 export function SceneFallback() {
@@ -398,11 +402,9 @@ export default function LandingScene({ kind, paused }: { kind: ObjectKind; pause
     >
       <SceneBoundary fallback={<SceneFallback />}>
         <Canvas
-          orthographic
           shadows={{ type: PCFShadowMap }}
           dpr={[1, 1.5]}
           frameloop={playing ? 'always' : 'demand'}
-          camera={{ position: [16, 16, 20], near: 0.1, far: 100, zoom: 35 }}
           gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
         >
           <CameraFit />

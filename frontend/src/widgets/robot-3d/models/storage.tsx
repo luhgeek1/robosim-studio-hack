@@ -531,7 +531,7 @@ export function Inventory({ v, accent }: ModelProps) {
   const dots = useRef<(THREE.Mesh | null)[]>([])
   const ticks = useRef<(G | null)[]>([])
   const phaseDots = useRef<(THREE.Mesh | null)[]>([])
-  const drive = useDrive()
+  const driveRef = useDrive()
   const idle = useMemo(() => new THREE.MeshBasicMaterial({ color: '#a5957f' }), [])
   const active = useGlow('#29d9e6', 2.2)
   const okGlow = useGlow('#22b67a', 1.6)
@@ -566,7 +566,7 @@ export function Inventory({ v, accent }: ModelProps) {
     const u = resetting ? seg(p, last.done + 0.6, T - 0.2) : seg(p, cur.start, cur.arrive)
     const x = prev.x + (target.x - prev.x) * u
     const y = prev.y + (target.y - prev.y) * u
-    drive.current.odo = x
+    driveRef.current.odo = x
     if (robot.current) robot.current.position.x = x
     if (head.current) head.current.position.set(x, y, robotZ)
     const scanning = !resetting && p >= cur.arrive && p < cur.done
@@ -693,7 +693,7 @@ export function Inventory({ v, accent }: ModelProps) {
               r={0.11}
               w={0.08}
               pos={[sx * L * 0.34, 0.11, sz * (W / 2 - 0.07)]}
-              drive={drive}
+              drive={driveRef}
             />
           )),
         )}

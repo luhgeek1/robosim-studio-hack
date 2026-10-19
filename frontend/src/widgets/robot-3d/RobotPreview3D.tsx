@@ -42,7 +42,7 @@ export function RobotPreview3D({
     [kind, product],
   )
   const bounds = useMemo(() => (kind && variant ? kind.bounds(variant) : undefined), [kind, variant])
-  const drag = useRef<DragState>({ yaw: 0 }).current
+  const dragRef = useRef<DragState>({ yaw: 0 })
   const last = useRef<number | null>(null)
 
   const onDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -51,7 +51,7 @@ export function RobotPreview3D({
   }
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     if (last.current === null) return
-    drag.yaw += (e.clientX - last.current) * 0.012
+    dragRef.current.yaw += (e.clientX - last.current) * 0.012
     last.current = e.clientX
   }
   const onUp = () => {
@@ -79,7 +79,7 @@ export function RobotPreview3D({
               gl.toneMappingExposure = 1.05
             }}
           >
-            <Studio bounds={bounds} drag={drag} framing={framing}>
+            <Studio bounds={bounds} dragRef={dragRef} framing={framing}>
               <Model v={variant} accent={kind.accent} />
             </Studio>
           </Canvas>

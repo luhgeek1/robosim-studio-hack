@@ -81,21 +81,21 @@ export function AmrLift({ v, accent }: ModelProps) {
   const { pw, pd, stack } = amrLoad(L, W, v.spec.payload_kg ?? 1000)
   const body = useRef<G>(null)
   const top = useRef<G>(null)
-  const drive = useDrive()
+  const driveRef = useDrive()
   const T = 9
   // Smoothstep peaks at 1.5× its mean speed: the drive window is sized so the peak equals the robot's top speed.
   const P = (speed * 3) / 1.5
   useTick((t) => {
     const c = Math.floor(t / T)
     const p = t % T
-    drive.current.odo = c * P + P * seg(p, 1.2, 4.2)
+    driveRef.current.odo = c * P + P * seg(p, 1.2, 4.2)
     if (body.current) body.current.rotation.y = Math.PI * (c + seg(p, 4.5, 6.3))
     if (top.current) top.current.position.y = H + lift * (seg(p, 0.2, 1.0) - seg(p, 6.6, 7.6))
   })
   const plateR = Math.min(L, W) * 0.42
   return (
     <group>
-      <Lane drive={drive} length={Math.max(pw, 1.5) * 3.4} width={pd * 1.4} />
+      <Lane drive={driveRef} length={Math.max(pw, 1.5) * 3.4} width={pd * 1.4} />
       <BlobShadow w={L * 1.35} d={W * 1.4} />
       <group ref={body}>
         <AmrBody L={L} W={W} H={H} accent={accent} />
@@ -257,7 +257,7 @@ export function SorterTilt({ v, accent }: ModelProps) {
   const ps = 0.16 + Math.cbrt(payload / 10) * 0.12
   const parcel: [number, number, number] = [ps * 1.25, ps * 0.8, ps]
   const trayY = H + 0.02
-  const drive = useDrive()
+  const driveRef = useDrive()
   const pivot = useRef<G>(null)
   const box = useRef<G>(null)
   const chutes = useRef<(THREE.Mesh | null)[]>([])
@@ -275,8 +275,8 @@ export function SorterTilt({ v, accent }: ModelProps) {
   useTick((t) => {
     const c = Math.floor(t / T)
     const p = t % T
-    drive.current.odo = c * P + P * seg(p, 0.2, 2.0)
-    const x0 = (c + 1) * P - drive.current.odo
+    driveRef.current.odo = c * P + P * seg(p, 0.2, 2.0)
+    const x0 = (c + 1) * P - driveRef.current.odo
     chutes.current.forEach((m, i) => {
       if (!m) return
       const x = x0 - i * P
@@ -304,7 +304,7 @@ export function SorterTilt({ v, accent }: ModelProps) {
   })
   return (
     <group>
-      <Lane drive={drive} length={laneLen} width={W * 2.6} />
+      <Lane drive={driveRef} length={laneLen} width={W * 2.6} />
       {[0, 1].map((i) => (
         <mesh
           key={i}
@@ -544,7 +544,7 @@ export function Stacker({ v, accent }: ModelProps) {
   const maxExt = Math.max(0, lift + 0.1 + 1.2 - mastH)
   const nStages = maxExt > 0 ? Math.ceil(maxExt / (mastH * 0.8)) : 0
   const load = useRef<G>(null)
-  const drive = useDrive()
+  const driveRef = useDrive()
   const spot = useGlow('#3a8bff', 2.4)
   useTick((t) => {
     let carY: number
@@ -561,7 +561,7 @@ export function Stacker({ v, accent }: ModelProps) {
     const racked = put ? p >= d0 : p < d1
     px = racked ? loadX : rx + loadX
     py = racked ? Math.max(carY, lift) : carY
-    drive.current.odo = rx
+    driveRef.current.odo = rx
     if (robot.current) robot.current.position.x = rx
     if (carriage.current) carriage.current.position.y = carY
     const ext = Math.max(0, carY + 1.2 - mastH)
@@ -569,7 +569,7 @@ export function Stacker({ v, accent }: ModelProps) {
       if (g) g.position.y = (ext * (i + 1)) / nStages
     })
     if (load.current) load.current.position.set(px, py, 0)
-    spot.emissiveIntensity = 1.6 + Math.sin(t * 6) * 0.6
+    spot.setValues({ emissiveIntensity: 1.6 + Math.sin(t * 6) * 0.6 })
   })
 
   const bodyMat = paint(accent, 0.38, 0.1, 0.6)
@@ -635,14 +635,14 @@ export function Stacker({ v, accent }: ModelProps) {
         />
         <Lidar pos={[-L / 2 + 0.2, 0.14 + bodyH + 0.04, 0]} r={0.06} />
         <Beacon pos={[-L / 2 + 0.2, 0.14 + bodyH + 0.04, W * 0.34]} r={0.05} />
-        <Wheel r={0.14} w={0.1} pos={[-L / 2 + bodyL * 0.5, 0.14, W / 2 - 0.02]} drive={drive} />
-        <Wheel r={0.14} w={0.1} pos={[-L / 2 + bodyL * 0.5, 0.14, -(W / 2 - 0.02)]} drive={drive} />
+        <Wheel r={0.14} w={0.1} pos={[-L / 2 + bodyL * 0.5, 0.14, W / 2 - 0.02]} drive={driveRef} />
+        <Wheel r={0.14} w={0.1} pos={[-L / 2 + bodyL * 0.5, 0.14, -(W / 2 - 0.02)]} drive={driveRef} />
         {[-1, 1].map((s) => (
           <group key={s}>
             <mesh material={M.dark} position={[mastX + 0.6, 0.07, s * (W / 2 - 0.07)]}>
               <boxGeometry args={[1.15, 0.1, 0.1]} />
             </mesh>
-            <Wheel r={0.05} w={0.07} pos={[mastX + 1.05, 0.05, s * (W / 2 - 0.07)]} drive={drive} />
+            <Wheel r={0.05} w={0.07} pos={[mastX + 1.05, 0.05, s * (W / 2 - 0.07)]} drive={driveRef} />
             <mesh material={M.dark} position={[mastX, mastH / 2, s * W * 0.33]}>
               <boxGeometry args={[0.1, mastH, 0.07]} />
             </mesh>
@@ -708,7 +708,7 @@ export function Stacker({ v, accent }: ModelProps) {
 
 /* ---------- Tow tractor: number of carts follows towing capacity ---------- */
 
-function Cart({ len, wid, drive }: { len: number; wid: number; drive: RefObject<Drive> }) {
+function Cart({ len, wid, drive: driveRef }: { len: number; wid: number; drive: RefObject<Drive> }) {
   const deckY = 0.36
   return (
     <group>
@@ -718,7 +718,7 @@ function Cart({ len, wid, drive }: { len: number; wid: number; drive: RefObject<
       </mesh>
       {[-1, 1].flatMap((sx) =>
         [-1, 1].map((sz) => (
-          <Wheel key={`${sx}${sz}`} r={0.12} w={0.07} pos={[sx * len * 0.38, 0.12, sz * wid * 0.4]} drive={drive} />
+          <Wheel key={`${sx}${sz}`} r={0.12} w={0.07} pos={[sx * len * 0.38, 0.12, sz * wid * 0.4]} drive={driveRef} />
         )),
       )}
       {[-1, 1].flatMap((sx) =>
@@ -755,17 +755,17 @@ export function tugLayout(v: ModelProps['v']) {
 export function Tug({ v, accent }: ModelProps) {
   const { L, W, H, n, cartL, cartW, gap, total } = tugLayout(v)
   const speed = v.spec.speed_mps ?? 2
-  const drive = useDrive()
+  const driveRef = useDrive()
   const carts = useRef<(G | null)[]>([])
   const T = 8
   const P = (speed * 5) / 1.5
   useTick((t) => {
     const c = Math.floor(t / T)
     const p = t % T
-    drive.current.odo = c * P + P * seg(p, 0.8, 5.8)
+    driveRef.current.odo = c * P + P * seg(p, 0.8, 5.8)
     const moving = seg(p, 0.8, 1.6) - seg(p, 5.0, 5.8)
     carts.current.forEach((g, i) => {
-      if (g) g.rotation.y = Math.sin(drive.current.odo * 1.1 + i * 1.7) * 0.018 * moving
+      if (g) g.rotation.y = Math.sin(driveRef.current.odo * 1.1 + i * 1.7) * 0.018 * moving
     })
   })
   const shift = (total - L) / 2
@@ -774,7 +774,7 @@ export function Tug({ v, accent }: ModelProps) {
   const bodyMat = paint(accent, 0.38, 0.1, 0.6)
   return (
     <group>
-      <Lane drive={drive} length={total * 1.7} width={Math.max(W, cartW) * 1.9} />
+      <Lane drive={driveRef} length={total * 1.7} width={Math.max(W, cartW) * 1.9} />
       <group position={[shift, 0, 0]}>
         <BlobShadow w={L * 1.2} d={W * 1.4} />
         <RoundedBox
@@ -814,7 +814,7 @@ export function Tug({ v, accent }: ModelProps) {
               r={wheelR}
               w={0.11}
               pos={[sx * L * 0.33, wheelR, sz * (W / 2 + 0.02)]}
-              drive={drive}
+              drive={driveRef}
             />
           )),
         )}
@@ -838,7 +838,7 @@ export function Tug({ v, accent }: ModelProps) {
                 }}
                 position={[x, 0, 0]}
               >
-                <Cart len={cartL} wid={cartW} drive={drive} />
+                <Cart len={cartL} wid={cartW} drive={driveRef} />
               </group>
             </group>
           )
