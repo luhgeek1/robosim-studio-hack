@@ -3,14 +3,14 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, TriangleAle
 import { useState, type CSSProperties } from 'react'
 import { useDataQuality, useUpdateParam, useValidation } from '@/entities/project'
 import { PROVENANCE_LABEL } from '@/entities/provenance'
-import { ParamValueInput, displayRange, parseDraft, shortHint, toDraft } from '@/features/param-edit'
+import { ParamValueInput, displayRange, parseDraft, toDraft } from '@/features/param-edit'
 import type { DataQualityReport, ObjectType, ProjectParam, ProvenanceStatus, ValidationIssue } from '@/shared/api/types'
 import { formatNumber, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { useNarrow } from '@/shared/lib/media'
 import { Button } from '@/shared/ui/button'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 import { ObjectTwin } from './ObjectTwin'
 import { scrollToParam } from './scroll'
 
@@ -224,7 +224,7 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
         <div
           className={cn(
             'flex min-h-5 flex-wrap gap-x-4 gap-y-1 text-ink-3 lg:absolute lg:inset-0 lg:flex-nowrap transition-opacity duration-150',
-            hovered ? 'opacity-0' : 'opacity-100',
+            hovered ? 'opacity-0 max-lg:hidden' : 'opacity-100',
           )}
         >
           {LEGEND.map((entry) => (
@@ -237,8 +237,8 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
         <div
           aria-hidden={!hovered}
           className={cn(
-            'pointer-events-none absolute inset-0 truncate transition-opacity duration-150',
-            hovered ? 'opacity-100' : 'opacity-0',
+            'pointer-events-none min-w-0 wrap-anywhere transition-opacity duration-150 lg:absolute lg:inset-0 lg:truncate',
+            hovered ? 'opacity-100' : 'opacity-0 max-lg:hidden',
           )}
         >
           {last && (
@@ -334,6 +334,7 @@ function FocusCard({
   const [error, setError] = useState<string | null>(null)
   const range = displayRange(param)
   const hint = param.definition?.hint
+  const inlineUnit = param.unit && param.unit.length <= 4
   const impact = IMPACT_LABEL[item.impact]
   const changed = draft.trim() !== initial.trim()
   const empty = draft.trim() === ''
@@ -348,22 +349,23 @@ function FocusCard({
 
   return (
     <div className="px-4 pt-4.5 pb-5 sm:px-5">
-      <div className="flex items-center gap-2 text-[12.5px]">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
         {impact && (
           <span className={cn('font-medium', item.impact === 'high' ? 'text-crit' : 'text-warn')}>{impact}</span>
         )}
         {impact && <span className="text-ink-4">·</span>}
         <span className="text-ink-3">сейчас {PROVENANCE_LABEL[item.status].toLowerCase()}</span>
       </div>
-      <h3 className="mt-1.5 text-[18px] leading-snug font-semibold tracking-[-0.01em]">{param.name}</h3>
-      {hint && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="mt-1 line-clamp-2 cursor-help text-[13.5px] leading-relaxed text-ink-3">{shortHint(hint)}</p>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-sm">{hint}</TooltipContent>
-        </Tooltip>
-      )}
+      <div className="mt-1.5 flex items-start gap-2">
+        <h3 className="min-w-0 flex-1 text-[18px] leading-snug font-semibold tracking-[-0.01em] wrap-anywhere">
+          {param.name}
+        </h3>
+        {hint && (
+          <InfoHint title={param.name} className="-mt-1 -mr-2">
+            {hint}
+          </InfoHint>
+        )}
+      </div>
 
       {textual ? (
         <form
@@ -373,17 +375,17 @@ function FocusCard({
             void save()
           }}
         >
-          <label className="relative flex-1">
+          <label className="relative min-w-0 flex-1">
             <input
               value={draft}
               inputMode={type === 'string' ? 'text' : 'decimal'}
-              placeholder={param.definition?.example ? `напр. ${param.definition.example}` : 'введите значение'}
+              placeholder={param.definition?.example ? `напр. ${param.definition.example}` : 'значение'}
               aria-label={param.name}
               aria-invalid={error ? true : undefined}
               disabled={update.isPending}
               // На телефоне поле узкое: отступ под единицу по её длине, а не фиксированный, иначе число не видно.
               style={
-                param.unit
+                inlineUnit && param.unit
                   ? ({ '--unit-pad': `calc(${param.unit.length * 0.5}rem + 1.75rem)` } as CSSProperties)
                   : undefined
               }
@@ -394,12 +396,17 @@ function FocusCard({
               className={cn(
                 'h-12 w-full rounded-lg bg-card px-3.5 text-[17px] sm:px-4 shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-[15px] placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80',
                 type !== 'string' && 'num',
-                param.unit && 'pr-(--unit-pad) sm:pr-24',
+                inlineUnit && 'pr-(--unit-pad)',
                 error && 'ring-crit',
               )}
             />
             {param.unit && (
-              <span className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-[13px] text-ink-3 sm:right-4">
+              <span
+                className={cn(
+                  'pointer-events-none text-[13px] wrap-anywhere text-ink-3',
+                  inlineUnit ? 'absolute top-1/2 right-3.5 -translate-y-1/2 sm:right-4' : 'mt-1 block',
+                )}
+              >
                 {param.unit}
               </span>
             )}
@@ -422,10 +429,19 @@ function FocusCard({
         </div>
       )}
 
-      <div className="mt-2.5 flex items-center justify-between gap-3 text-[12.5px]">
-        <span className={cn('min-w-0 truncate', error ? 'text-crit' : 'text-ink-3')}>
+      <div className="mt-2.5 flex items-start justify-between gap-3 text-[12.5px]">
+        <span
+          role={error ? 'alert' : undefined}
+          className={cn('min-w-0 flex-1 leading-relaxed wrap-anywhere', error ? 'text-crit' : 'text-ink-3')}
+        >
           {error ??
-            (range ? `обычно ${range}` : changed ? 'Enter — сохранить' : 'Если значение верное, подтвердите его')}
+            (range
+              ? `обычно ${range}`
+              : empty
+                ? 'Введите значение'
+                : changed
+                  ? 'Сохраните изменение'
+                  : 'Подтвердите значение')}
         </span>
         <button
           type="button"

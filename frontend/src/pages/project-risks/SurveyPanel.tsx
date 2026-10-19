@@ -4,6 +4,7 @@ import { ProvenanceBadge } from '@/entities/provenance'
 import { useSurvey } from '@/entities/scenario'
 import { formatRub, formatValue } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { Section } from '@/shared/ui/page'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 
@@ -48,17 +49,17 @@ export function SurveyPanel({ scenarioId }: { scenarioId: string }) {
                   {item.rank}
                 </span>
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="text-[14px] font-medium">{item.name}</span>
-                    <ProvenanceBadge status={item.status} />
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[14px] font-medium wrap-anywhere">{item.name}</div>
+                      <ProvenanceBadge status={item.status} />
+                    </div>
+                    <InfoHint title={`Как замерить: ${item.name}`} className="-mt-1 -mr-1">
+                      {item.how_to_measure ?? item.recommendation}
+                    </InfoHint>
                   </div>
-                  <p
-                    className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-3"
-                    title={item.how_to_measure ? undefined : item.recommendation}
-                  >
+                  <p className="mt-1 text-[13px] leading-relaxed wrap-anywhere text-ink-3">
                     <span className="num text-ink-2">сейчас {formatValue(item.current_value, item.unit)}</span>
-                    {' · '}
-                    {item.how_to_measure ?? item.recommendation}
                   </p>
                 </div>
                 <div className="col-start-2 pt-1 sm:col-start-auto">

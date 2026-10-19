@@ -37,14 +37,23 @@ export function ObjectPage() {
       dense
       title={project.name}
       actions={
-        <>
-          <Button variant="outline" onClick={() => void downloadTemplate()} disabled={downloading}>
-            {downloading ? <Spinner /> : <FileSpreadsheet />} Шаблон Excel
+        <div className="flex max-w-full flex-wrap items-center gap-2 max-sm:flex-nowrap">
+          <Button
+            variant="outline"
+            onClick={() => void downloadTemplate()}
+            disabled={downloading}
+            aria-label="Шаблон Excel"
+          >
+            {downloading ? <Spinner /> : <FileSpreadsheet />}
+            <span className="sm:hidden">Шаблон</span>
+            <span className="hidden sm:inline">Шаблон Excel</span>
           </Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload /> Загрузить файл
+          <Button variant="outline" onClick={() => setImportOpen(true)} aria-label="Загрузить файл">
+            <Upload />
+            <span className="sm:hidden">Загрузить</span>
+            <span className="hidden sm:inline">Загрузить файл</span>
           </Button>
-        </>
+        </div>
       }
       nextLabel="Начать анализ"
       nextPrimary

@@ -4,9 +4,10 @@ import { useResetParam, useUpdateParam } from '@/entities/project'
 import type { ProjectParam } from '@/shared/api/types'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { Spinner } from '@/shared/ui/states'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
-import { displayParamValue, shortHint } from './display'
+import { displayParamValue } from './display'
 import { ParamHistory } from './ParamHistory'
 import { ParamValueInput } from './ParamValueInput'
 import type { ParamValue } from './parse'
@@ -37,9 +38,9 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
       className="group/row grid scroll-mt-48 grid-cols-1 items-start gap-x-6 gap-y-2.5 px-4 py-3.5 transition-colors hover:bg-surface-2/70 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-6"
     >
       <div className="min-w-0 pt-1">
-        <div className="flex items-center gap-2 text-[14px] font-medium">
-          {flagged && <span className={cn('size-1.5 shrink-0 rounded-full', error ? 'bg-crit' : 'bg-warn')} />}
-          <span className="min-w-0">
+        <div className="flex items-start gap-2 text-[14px] font-medium">
+          {flagged && <span className={cn('mt-2 size-1.5 shrink-0 rounded-full', error ? 'bg-crit' : 'bg-warn')} />}
+          <span className="min-w-0 flex-1 wrap-anywhere">
             {param.name}
             {def?.required && (
               <span className="ml-0.5 text-ink-4" title="Обязательный параметр">
@@ -47,15 +48,12 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
               </span>
             )}
           </span>
+          {def?.hint && (
+            <InfoHint title={param.name} className="-mt-1 -mr-1">
+              {def.hint}
+            </InfoHint>
+          )}
         </div>
-        {def?.hint && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="mt-0.5 line-clamp-2 cursor-help text-[12.5px] text-ink-3">{shortHint(def.hint)}</p>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-sm">{def.hint}</TooltipContent>
-          </Tooltip>
-        )}
         {flagged && (
           <p className={cn('mt-1 text-[12.5px]', error ? 'text-crit' : 'text-warn')}>
             {check.message ?? (check.status === 'missing' ? 'Значение не задано' : 'Проверьте значение')}

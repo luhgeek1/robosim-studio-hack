@@ -96,6 +96,7 @@ function TextValueInput({
   const [draft, setDraft] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const numeric = type === 'number' || type === 'integer'
+  const inlineSuffix = suffix && suffix.length <= 6
   const shown = draft ?? toDraft(param.value, type)
 
   const commit = async () => {
@@ -134,8 +135,8 @@ function TextValueInput({
           aria-invalid={error ? true : undefined}
           disabled={pending}
           className={cn('max-sm:h-10', numeric && 'num text-right')}
-          // Единица стоит внутри поля справа: отступ под её длину, чтобы число не наезжало.
-          style={suffix ? { paddingRight: `calc(${suffix.length * 0.5}rem + 1.25rem)` } : undefined}
+          // Длинная единица стоит под полем, чтобы не отнимать ширину у самого значения.
+          style={inlineSuffix ? { paddingRight: `calc(${suffix.length * 0.5}rem + 1.25rem)` } : undefined}
           onChange={(event) => {
             setDraft(event.target.value)
             if (error) setError(null)
@@ -150,7 +151,12 @@ function TextValueInput({
           }}
         />
         {suffix && (
-          <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[12.5px] text-ink-3">
+          <span
+            className={cn(
+              'pointer-events-none text-[12.5px] wrap-anywhere text-ink-3',
+              inlineSuffix ? 'absolute top-1/2 right-3 -translate-y-1/2' : 'mt-1 block',
+            )}
+          >
             {suffix}
           </span>
         )}
