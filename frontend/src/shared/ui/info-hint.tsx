@@ -1,7 +1,7 @@
 import { Info, X } from 'lucide-react'
-import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode, type RefObject } from 'react'
 import { cn } from '@/shared/lib/utils'
-import { Popover, PopoverContent, PopoverTrigger } from './popover'
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from './popover'
 
 export function InfoHint({
   title,
@@ -10,6 +10,7 @@ export function InfoHint({
   className,
   showCloseButton = true,
   size = 'default',
+  anchorRef,
 }: {
   title: string
   children: ReactNode
@@ -17,6 +18,7 @@ export function InfoHint({
   className?: string
   showCloseButton?: boolean
   size?: 'default' | 'sm'
+  anchorRef?: RefObject<HTMLElement | null>
 }) {
   const [open, setOpen] = useState(false)
   const headingId = useId()
@@ -45,6 +47,7 @@ export function InfoHint({
         setOpen(next)
       }}
     >
+      {anchorRef && <PopoverAnchor virtualRef={anchorRef} />}
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -60,7 +63,7 @@ export function InfoHint({
           onPointerLeave={closeOnLeave}
           onClick={(event) => {
             event.stopPropagation()
-            if (hoverOpened.current && !pinned.current) {
+            if (open && hoverOpened.current && !pinned.current) {
               event.preventDefault()
               cancelClose()
               pinned.current = true
@@ -68,12 +71,18 @@ export function InfoHint({
             }
           }}
           className={cn(
-            'inline-flex shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-muted hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-muted',
-            trigger ? 'min-h-7 max-sm:min-h-10' : size === 'sm' ? 'size-6 max-sm:size-8' : 'size-7 max-sm:size-10',
+            'group/info-hint inline-flex shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+            trigger
+              ? 'min-h-7 hover:bg-muted data-[state=open]:bg-muted max-sm:min-h-10'
+              : cn(size === 'sm' ? 'size-6 max-sm:size-8' : 'size-7 max-sm:size-10', 'data-[state=open]:text-ink'),
             className,
           )}
         >
-          {trigger ?? <Info size={size === 'sm' ? 12 : 16} aria-hidden="true" />}
+          {trigger ?? (
+            <span className="inline-flex shrink-0 rounded-full p-0.5 transition-colors group-hover/info-hint:bg-muted group-data-[state=open]/info-hint:bg-muted">
+              <Info size={size === 'sm' ? 12 : 16} aria-hidden="true" />
+            </span>
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent

@@ -23,6 +23,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
   const flagged = check.status !== 'ok'
   const error = check.status === 'error'
   const dimensions = def?.type === 'dimensions'
+  const lastWordAt = param.name.lastIndexOf(' ') + 1
 
   const commit = (value: ParamValue) => update.mutateAsync({ key: param.key, value, unit: param.unit ?? null })
 
@@ -38,21 +39,26 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
       className="group/row grid scroll-mt-48 grid-cols-1 items-start gap-x-6 gap-y-2.5 px-4 py-3.5 transition-colors hover:bg-surface-2/70 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-6"
     >
       <div className="min-w-0 pt-1">
-        <div className="flex items-start gap-2 text-[14px] font-medium">
-          {flagged && <span className={cn('mt-2 size-1.5 shrink-0 rounded-full', error ? 'bg-crit' : 'bg-warn')} />}
-          <span className="min-w-0 flex-1 wrap-anywhere">
-            {param.name}
-            {def?.required && (
-              <span className="ml-0.5 text-ink-4" title="Обязательный параметр">
-                *
-              </span>
-            )}
-          </span>
-          {def?.hint && (
-            <InfoHint title={param.name} className="-mt-1 -mr-1">
-              {def.hint}
-            </InfoHint>
+        <div className="flex items-start text-[14px] font-medium">
+          {flagged && (
+            <span className={cn('mt-2 mr-2 size-1.5 shrink-0 rounded-full', error ? 'bg-crit' : 'bg-warn')} />
           )}
+          <span className="min-w-0 wrap-anywhere">
+            {param.name.slice(0, lastWordAt)}
+            <span className="whitespace-nowrap">
+              {param.name.slice(lastWordAt)}
+              {def?.required && (
+                <span className="ml-0.5 text-ink-4" title="Обязательный параметр">
+                  *
+                </span>
+              )}
+              {def?.hint && (
+                <InfoHint title={param.name} className="-my-1 -mr-1 -ml-1 align-middle max-sm:-my-2 max-sm:-ml-2.5">
+                  {def.hint}
+                </InfoHint>
+              )}
+            </span>
+          </span>
         </div>
         {flagged && (
           <p className={cn('mt-1 text-[12.5px]', error ? 'text-crit' : 'text-warn')}>

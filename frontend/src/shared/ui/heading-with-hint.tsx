@@ -42,10 +42,15 @@ export function HeadingWithHint({ text, title, children }: { text: string; title
       </span>
       <span
         ref={hintRef}
-        className="absolute top-0 inline-flex -translate-y-0.5 max-sm:-translate-y-1.5"
+        className="absolute inset-y-0 inline-flex items-start"
         style={{ left, right: left === undefined ? 0 : undefined }}
       >
-        <InfoHint title={title} showCloseButton={false}>
+        <InfoHint
+          title={title}
+          showCloseButton={false}
+          anchorRef={hintRef}
+          className="-translate-y-0.5 max-sm:-translate-y-1.5"
+        >
           {children}
         </InfoHint>
       </span>
