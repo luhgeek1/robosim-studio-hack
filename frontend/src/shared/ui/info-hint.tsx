@@ -8,11 +8,15 @@ export function InfoHint({
   children,
   trigger,
   className,
+  showCloseButton = true,
+  size = 'default',
 }: {
   title: string
   children: ReactNode
   trigger?: ReactNode
   className?: string
+  showCloseButton?: boolean
+  size?: 'default' | 'sm'
 }) {
   const [open, setOpen] = useState(false)
   const headingId = useId()
@@ -65,16 +69,16 @@ export function InfoHint({
           }}
           className={cn(
             'inline-flex shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-muted hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[state=open]:bg-muted',
-            trigger ? 'min-h-7 max-sm:min-h-10' : 'size-7 max-sm:size-10',
+            trigger ? 'min-h-7 max-sm:min-h-10' : size === 'sm' ? 'size-6 max-sm:size-8' : 'size-7 max-sm:size-10',
             className,
           )}
         >
-          {trigger ?? <Info size={16} aria-hidden="true" />}
+          {trigger ?? <Info size={size === 'sm' ? 12 : 16} aria-hidden="true" />}
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        sideOffset={6}
+        sideOffset={size === 'sm' ? 4 : 6}
         collisionPadding={12}
         aria-labelledby={headingId}
         onPointerEnter={cancelClose}
@@ -85,27 +89,43 @@ export function InfoHint({
         onCloseAutoFocus={(event) => {
           if (hoverOpened.current) event.preventDefault()
         }}
-        className="max-h-[min(24rem,var(--radix-popover-content-available-height))] w-80 max-w-[calc(100vw-1.5rem)] gap-2 p-4"
+        className={cn(
+          'max-h-[min(24rem,var(--radix-popover-content-available-height))] max-w-[calc(100vw-1.5rem)]',
+          size === 'sm' ? 'w-60 gap-1.5 p-3' : 'w-80 gap-2 p-4',
+        )}
       >
         <div className="flex shrink-0 items-start gap-2">
-          <h4 id={headingId} className="min-w-0 flex-1 text-[13px] leading-relaxed font-medium wrap-anywhere">
+          <h4
+            id={headingId}
+            className={cn(
+              'min-w-0 flex-1 leading-relaxed font-medium wrap-anywhere',
+              size === 'sm' ? 'text-[12px]' : 'text-[13px]',
+            )}
+          >
             {title}
           </h4>
-          <button
-            type="button"
-            aria-label="Закрыть пояснение"
-            onClick={() => {
-              cancelClose()
-              pinned.current = false
-              hoverOpened.current = false
-              setOpen(false)
-            }}
-            className="-mt-1 -mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-full text-ink-3 hover:bg-muted hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:size-10"
-          >
-            <X size={16} aria-hidden="true" />
-          </button>
+          {showCloseButton && (
+            <button
+              type="button"
+              aria-label="Закрыть пояснение"
+              onClick={() => {
+                cancelClose()
+                pinned.current = false
+                hoverOpened.current = false
+                setOpen(false)
+              }}
+              className="-mt-1 -mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-full text-ink-3 hover:bg-muted hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:size-10"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          )}
         </div>
-        <div className="min-h-0 overflow-y-auto text-[13px] leading-relaxed wrap-anywhere whitespace-pre-line text-ink-3">
+        <div
+          className={cn(
+            'min-h-0 overflow-y-auto leading-relaxed wrap-anywhere whitespace-pre-line text-ink-3',
+            size === 'sm' ? 'text-[12px]' : 'text-[13px]',
+          )}
+        >
           {children}
         </div>
       </PopoverContent>
