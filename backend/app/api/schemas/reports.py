@@ -20,7 +20,10 @@ class ReportRequest(ApiModel):
     simulation_ids: list[UUID] = Field(default_factory=list)
     visual_ids: list[UUID] = Field(default_factory=list, description="Загруженные снимки имитации")
     title: str | None = Field(default=None, max_length=200)
-    live_formulas: bool = Field(default=True, description="Для xlsx — формулы, а не значения")
+    live_formulas: bool = Field(
+        default=False,
+        description="Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении",
+    )
 
 
 class Report(ApiModel):

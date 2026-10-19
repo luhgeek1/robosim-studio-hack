@@ -119,7 +119,7 @@ ReportRequest:
     simulation_ids: {type: array, items: {type: string, format: uuid}}
     visual_ids: {type: array, items: {type: string, format: uuid}, description: "Загруженные снимки имитации"}
     title: {type: [string, "null"]}
-    live_formulas: {type: boolean, default: true, description: "Для xlsx — формулы, а не значения"}
+    live_formulas: {type: boolean, default: false, description: "Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении"}
 
 Report:
   type: object

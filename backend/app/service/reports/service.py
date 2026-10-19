@@ -173,7 +173,7 @@ async def run_report(db: Database, job_id: UUID) -> None:
                     scenario_ids=[UUID(s) for s in request.get("scenario_ids") or []],
                     visual_ids=[UUID(v) for v in request.get("visual_ids") or []],
                     title=report.title,
-                    live_formulas=request.get("live_formulas", True),
+                    live_formulas=request.get("live_formulas", False),
                 ),
             )
             await uow.commit()

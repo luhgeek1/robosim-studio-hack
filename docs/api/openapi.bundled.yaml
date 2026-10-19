@@ -9493,8 +9493,8 @@ components:
             - 'null'
         live_formulas:
           type: boolean
-          default: true
-          description: Для xlsx — формулы, а не значения
+          default: false
+          description: Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении
     AssistStatus:
       type: object
       required:

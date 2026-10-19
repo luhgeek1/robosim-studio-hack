@@ -4784,8 +4784,8 @@ export interface components {
       visual_ids?: string[]
       title?: string | null
       /**
-       * @description Для xlsx — формулы, а не значения
-       * @default true
+       * @description Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении
+       * @default false
        */
       live_formulas: boolean
     }

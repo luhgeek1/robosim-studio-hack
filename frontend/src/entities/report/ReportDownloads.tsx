@@ -63,7 +63,7 @@ export function ReportDownloads({
               {busyFormat === 'xlsx' ? 'Готовим Excel…' : 'Скачать Excel'}
             </span>
             <span className="mt-1 block text-[12px] leading-relaxed font-normal text-ink-3">
-              Расчёт с живыми формулами
+              Снимок расчёта и денежные потоки
             </span>
           </span>
           {busyFormat === 'xlsx' ? <Spinner /> : <Download className="size-5 text-ink-3" />}
@@ -101,8 +101,8 @@ export function ReportDownloads({
               роботы, состав парка, экономика, сравнение сценариев, риски, имитация, допущения и источники.
             </p>
             <p>
-              <span className="font-medium text-ink">Excel.</span> Исходные параметры, шаги расчёта и денежный поток с
-              живыми формулами. Значения можно менять и пересчитывать в таблице.
+              <span className="font-medium text-ink">Excel.</span> Исходные параметры, шаги расчёта и денежные потоки на
+              дату экспорта. Чтобы изменить условия, пересчитайте сценарий в приложении и скачайте новый файл.
             </p>
             {onJson && (
               <p>

@@ -33,6 +33,9 @@ _BASE_LIMITATIONS = [
     "Суммы с НДС (единая база ТЗ); налог на прибыль и амортизация приведены справочно.",
     "Имитация покрывает поддерживаемые транспортные процессы и отбор «товар к человеку». "
     "Пропущенные процессы указаны в результатах; их парк рассчитан аналитически.",
+    "В чувствительности объём операций меняется вместе с пропорциональным штатом без роботов "
+    "(допущение о найме). При изменении физики парк рассчитывается аналитически: "
+    "это не подтверждение SLA имитацией для новых условий.",
 ]
 
 
@@ -42,7 +45,7 @@ class ReportRequest:
     scenario_ids: list[UUID]
     visual_ids: list[UUID]
     title: str | None
-    live_formulas: bool = True
+    live_formulas: bool = False
 
 
 def _shown(value: Any, options: list[dict[str, str]] | None) -> Any:
@@ -339,6 +342,11 @@ class ReportCollector:
     def _limitations(model: ReportModel) -> list[str]:
         team = sum(1 for n in model.assumptions if (n.get("source") or {}).get("kind") == "team_assumption")
         result = [*_BASE_LIMITATIONS]
+        if "meal_delivery" in model.process_names:
+            result.append(
+                "Доставка питания моделируется потоком рейсов со средним спросом и пиковым коэффициентом. "
+                "Одновременная развозка по отделениям в заданные окна приёма пищи отдельно не проверяется."
+            )
         if team:
             result.append(
                 f"В расчёте {team} нормативов — допущения команды с обоснованием; их нужно подтвердить."
