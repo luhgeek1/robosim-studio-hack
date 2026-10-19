@@ -6,7 +6,17 @@ import { Screen } from '@/shared/ui/page'
 import { Button } from '@/shared/ui/button'
 import { DemoBadge } from './DemoBadge'
 
-export function GuestScreen({ title, lead, children }: { title: ReactNode; lead?: ReactNode; children: ReactNode }) {
+export function GuestScreen({
+  title,
+  lead,
+  children,
+  className,
+}: {
+  title: ReactNode
+  lead?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
   const { demoKey = 'warehouse_demo_01' } = useParams()
   const [search] = useSearchParams()
   const index = DEMO_STEPS.findIndex((s) => s.id === demoStep(search.get('step')))
@@ -24,6 +34,7 @@ export function GuestScreen({ title, lead, children }: { title: ReactNode; lead?
   return (
     <Screen
       dense
+      className={className}
       badge={<DemoBadge />}
       title={title}
       lead={lead}
