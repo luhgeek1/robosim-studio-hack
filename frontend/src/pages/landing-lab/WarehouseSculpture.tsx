@@ -12,6 +12,10 @@ const ROUTE: Point[] = [
   [-7, 0.12, 0],
   [-7, 0.12, -4],
   [7, 0.12, -4],
+  [8.5, 0.12, -4],
+  [8.5, 0.12, 5],
+  [-7, 0.12, 5],
+  [-7, 0.12, 4],
 ]
 
 function Block({ at, size, color = '#d5d0c5' }: { at: Point; size: Point; color?: string }) {
@@ -137,14 +141,24 @@ export default function WarehouseSculpture({ phase, moving }: { phase: number; m
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   useEffect(() => {
+    if (ready) return
     const timer = setTimeout(() => setFailed(true), 15000)
     return () => clearTimeout(timer)
-  }, [])
+  }, [ready])
   return (
-    <div className="lab-sculpture" data-renderer={failed && !ready ? 'fallback' : ready ? 'ready' : 'loading'}>
+    <div
+      className="lab-sculpture"
+      data-motion={moving ? 'playing' : 'paused'}
+      data-renderer={failed && !ready ? 'fallback' : ready ? 'ready' : 'loading'}
+    >
       <div className="lab-scene-fallback">
-        <span>Объект → маршруты → парк</span>
-        <p>{failed ? '3D недоступно. Изучите расчёт и планировку в демо.' : 'Пространственная модель склада'}</p>
+        <img
+          src="/design-lab/warehouse-fallback.png"
+          width="708"
+          height="440"
+          alt="Пространственная схема склада со стеллажами и роботами"
+        />
+        {failed && <p>Статичная схема. Изучите расчёт и планировку в демо.</p>}
       </div>
       {!failed || ready ? (
         <SceneBoundary fallback={<span className="lab-renderer-note">3D недоступно. Расчёт открыт в демо.</span>}>
