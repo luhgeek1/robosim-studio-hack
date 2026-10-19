@@ -1,4 +1,4 @@
-import { FileUp, TriangleAlert } from 'lucide-react'
+import { ArrowRight, FileCheck2, FileUp, Info, TriangleAlert } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useApplyImport, useImportFile, useProjectParams } from '@/entities/project'
@@ -107,16 +107,25 @@ export function ImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
-      <DialogContent className="max-h-[90vh] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-5xl">
-        <DialogHeader>
-          <DialogTitle>Загрузка параметров из файла</DialogTitle>
-          <DialogDescription>
-            Excel по шаблону, произвольный Excel/CSV или JSON. Ничего не меняется, пока вы не нажмёте «Применить»:
-            сначала проверьте, как поля файла сопоставились с параметрами.
+      <DialogContent
+        className={cn(
+          'max-h-[min(90dvh,760px)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[20px] p-0 shadow-float',
+          mapped.length > 0 ? 'sm:max-w-[896px]' : 'sm:max-w-[520px]',
+        )}
+      >
+        <DialogHeader className="gap-1.5 px-5 pt-5 pb-5 sm:px-6 sm:pt-6">
+          <span className="mb-1 text-[10px] font-medium tracking-[0.12em] text-ink-3 uppercase">Импорт данных</span>
+          <DialogTitle className="pr-5 text-xl leading-tight font-semibold tracking-[-0.02em]">
+            {result ? 'Проверка параметров' : 'Загрузка параметров'}
+          </DialogTitle>
+          <DialogDescription className="text-[13px] leading-relaxed">
+            {result
+              ? 'Проверьте сопоставление полей и выберите значения для импорта.'
+              : 'Добавьте Excel, CSV или JSON с данными вашего объекта.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
+        <div className="min-h-0 space-y-4 overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6">
           <input
             ref={inputRef}
             type="file"
@@ -126,27 +135,80 @@ export function ImportDialog({
           />
           <button
             type="button"
+            aria-label={fileName ? 'Выбрать другой файл' : 'Выбрать файл для загрузки'}
+            aria-busy={parse.isPending}
             onClick={() => inputRef.current?.click()}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault()
               onFile(event.dataTransfer.files?.[0])
             }}
-            className="flex w-full items-center gap-3 rounded-lg border border-dashed border-input px-4 py-4 text-left hover:bg-raised/60"
+            className={cn(
+              'group/upload flex w-full cursor-pointer items-center rounded-2xl border border-dashed border-input bg-surface-2/70 transition-colors hover:border-signal/50 hover:bg-signal/3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring',
+              fileName ? 'gap-3 px-4 py-3.5 text-left' : 'min-h-52 flex-col justify-center px-5 py-6 text-center',
+            )}
           >
-            {parse.isPending ? <Spinner /> : <FileUp className="size-5 text-muted-foreground" />}
-            <span className="min-w-0 flex-1">
-              <span className="block font-medium">{fileName ?? 'Выберите файл или перетащите его сюда'}</span>
-              <span className="text-xs text-muted-foreground">
-                {parse.isPending
-                  ? 'Разбираем файл…'
-                  : result
-                    ? `${SOURCE_KIND_LABEL[result.source_kind]} · сопоставлено ${mapped.length}, не распознано ${result.unmapped.length}`
-                    : 'Форматы: .xlsx, .csv, .json, до 20 МБ'}
-              </span>
+            <span
+              aria-hidden
+              className={cn(
+                'flex shrink-0 items-center justify-center rounded-xl bg-signal-soft text-signal',
+                fileName ? 'size-10' : 'mb-4 size-12',
+              )}
+            >
+              {parse.isPending ? (
+                <Spinner className="size-5" />
+              ) : result ? (
+                <FileCheck2 className="size-5" />
+              ) : (
+                <FileUp className="size-6" />
+              )}
             </span>
-            {fileName && !parse.isPending && <span className="text-xs text-primary">Выбрать другой</span>}
+            {fileName ? (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[13px] font-medium" title={fileName}>
+                    {fileName}
+                  </span>
+                  <span className="mt-1 block text-[11.5px] leading-relaxed text-ink-3">
+                    {parse.isPending
+                      ? 'Разбираем файл…'
+                      : result
+                        ? `${SOURCE_KIND_LABEL[result.source_kind]} · сопоставлено ${mapped.length}, не распознано ${result.unmapped.length}`
+                        : 'Выберите файл, чтобы повторить загрузку'}
+                  </span>
+                </span>
+                {!parse.isPending && (
+                  <span className="shrink-0 text-xs font-medium text-signal max-sm:sr-only">Заменить</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold">
+                  Выберите файл
+                  <ArrowRight className="size-3.5 text-signal transition-transform group-hover/upload:translate-x-0.5" />
+                </span>
+                <span className="mt-1 text-[12px] text-ink-3">или перетащите его сюда</span>
+                <span className="mt-4 flex flex-wrap items-center justify-center gap-1.5">
+                  {['XLSX', 'CSV', 'JSON'].map((format) => (
+                    <span
+                      key={format}
+                      className="rounded-md border border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink-3"
+                    >
+                      {format}
+                    </span>
+                  ))}
+                  <span className="ml-1 text-[11px] text-ink-3">до 20 МБ</span>
+                </span>
+              </>
+            )}
           </button>
+
+          {!result && (
+            <p className="flex items-start gap-2 px-1 text-[12px] leading-relaxed text-ink-3">
+              <Info className="mt-0.5 size-3.5 shrink-0 text-ink-4" aria-hidden />
+              После загрузки проверьте значения и нажмите «Применить».
+            </p>
+          )}
 
           {result && result.warnings.length > 0 && (
             <ul className="space-y-1 rounded-md border border-l-2 border-l-warn bg-raised p-3 text-xs">
@@ -204,7 +266,10 @@ export function ImportDialog({
                           <div className="text-xs text-muted-foreground">поле «{item.raw_field}»</div>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-48 truncate text-muted-foreground" title={item.raw_value ?? ''}>
+                      <TableCell
+                        className="max-w-48 min-w-0 wrap-anywhere lg:truncate text-muted-foreground"
+                        title={item.raw_value ?? ''}
+                      >
                         {item.raw_value ?? '—'}
                       </TableCell>
                       <TableCell className="num text-right">
@@ -241,7 +306,7 @@ export function ImportDialog({
                 {result.unmapped.map((item, i) => {
                   const suggestion = item.suggestion_key ? byKey.get(item.suggestion_key) : undefined
                   return (
-                    <li key={i} className="min-w-0 truncate">
+                    <li key={i} className="min-w-0 wrap-anywhere lg:truncate">
                       <span className="text-foreground">{item.raw_field ?? '—'}</span>
                       {item.raw_value && <span className="text-muted-foreground">: {item.raw_value}</span>}
                       {item.suggestion_key && (
@@ -261,26 +326,30 @@ export function ImportDialog({
           )}
         </div>
 
-        <DialogFooter className="sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 max-sm:order-last">
-            {mapped.length > 0 && (
-              <>
-                <Checkbox
-                  id="import-overwrite"
-                  checked={overwrite}
-                  onCheckedChange={(on) => setOverwrite(on === true)}
-                />
-                <Label htmlFor="import-overwrite" className="font-normal">
-                  Перезаписать значения, введённые вручную
-                </Label>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-2 [&>button]:max-sm:flex-1">
-            <Button variant="outline" onClick={close}>
+        <DialogFooter
+          className={cn(
+            'mx-0 mb-0 flex-col gap-4 rounded-none bg-surface-2 px-5 py-4 sm:items-center sm:px-6',
+            mapped.length > 0 ? 'sm:justify-between' : 'sm:justify-end',
+          )}
+        >
+          {mapped.length > 0 && (
+            <div className="flex min-w-0 items-start gap-2">
+              <Checkbox
+                id="import-overwrite"
+                checked={overwrite}
+                onCheckedChange={(on) => setOverwrite(on === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="import-overwrite" className="text-[12px] leading-relaxed font-normal text-ink-2">
+                Перезаписать значения, введённые вручную
+              </Label>
+            </div>
+          )}
+          <div className="flex shrink-0 items-center gap-2 [&>button]:max-sm:flex-1">
+            <Button variant="outline" className="h-9 px-4" onClick={close}>
               Отмена
             </Button>
-            <Button onClick={onApply} disabled={!result || checked.size === 0 || apply.isPending}>
+            <Button className="h-9 px-4" onClick={onApply} disabled={!result || checked.size === 0 || apply.isPending}>
               {apply.isPending && <Spinner />}
               Применить{checked.size > 0 && ` (${checked.size})`}
             </Button>
