@@ -112,7 +112,10 @@ export function WorkbenchFrame({
                 Шаг {pad(idx + 1)} / {pad(total)}
               </div>
             )}
-            <h1 className="truncate text-[14px] font-semibold tracking-[-0.01em]" title={titleHint}>
+            <h1
+              className="min-w-0 wrap-anywhere lg:truncate text-[14px] font-semibold tracking-[-0.01em]"
+              title={titleHint}
+            >
               {title}
             </h1>
           </div>

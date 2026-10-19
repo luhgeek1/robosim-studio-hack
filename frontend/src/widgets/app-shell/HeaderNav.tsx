@@ -320,8 +320,10 @@ function AddProjectMenu({ openIds, order }: { openIds: Set<string>; order: strin
                   {objectIcon(project.object_type, 15)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13.5px] font-medium">{project.name}</span>
-                  <span className="block truncate text-[12px] text-ink-3">
+                  <span className="block min-w-0 text-[13.5px] font-medium wrap-anywhere lg:truncate">
+                    {project.name}
+                  </span>
+                  <span className="block min-w-0 text-[12px] wrap-anywhere text-ink-3 lg:truncate">
                     {OBJECT_TYPE_LABEL[project.object_type]} · {formatDateTime(project.updated_at)}
                   </span>
                 </span>

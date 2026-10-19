@@ -78,7 +78,7 @@ export function RobotCard({
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0 pointer-coarse:opacity-100! max-sm:p-4">
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0 pointer-coarse:hidden max-sm:p-4">
           <div className="min-w-0">
             <h3 className="line-clamp-2 text-[17px] leading-snug font-semibold tracking-[-0.01em]">{name}</h3>
             {subtitle && <p className="mt-0.5 truncate text-[13px] text-ink-3">{subtitle}</p>}
@@ -87,8 +87,16 @@ export function RobotCard({
         </div>
       </div>
 
+      <div className="hidden px-4 pt-4 pb-3 pointer-coarse:block">
+        <h3 className="text-[17px] leading-snug font-semibold tracking-[-0.01em] wrap-anywhere">{name}</h3>
+        {subtitle && <p className="mt-1 text-[13px] leading-snug wrap-anywhere text-ink-3">{subtitle}</p>}
+        <div className="mt-3 flex justify-end">
+          <CardPrice price={price} />
+        </div>
+      </div>
+
       <div className="absolute inset-x-0 bottom-0 translate-y-full bg-card px-4 pt-3 pb-3.5 transition-[translate,box-shadow] duration-300 ease-out group-focus-within:translate-y-0 group-focus-within:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)] group-hover:translate-y-0 group-hover:shadow-[0_-8px_24px_-12px_rgba(20,20,19,0.18)] pointer-coarse:static pointer-coarse:flex-1 pointer-coarse:translate-y-0 pointer-coarse:border-t pointer-coarse:border-line pointer-coarse:shadow-none">
-        {/* Название на сенсорном экране уже подписано на сцене — здесь остаётся только то, что стоит рядом с ним. */}
+        {/* На сенсорном экране название и цена уже стоят под сценой. */}
         <div className={cn('flex items-center justify-between gap-3', !aside && 'pointer-coarse:hidden')}>
           <Link
             to={to}
@@ -148,10 +156,12 @@ export function CardFigures({ items }: { items: { value: ReactNode; label: strin
       {items.map((item) => (
         // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
         <div key={item.label} className="flex min-w-0 flex-col-reverse">
-          <dt className="truncate text-[11.5px] text-ink-3" title={item.label}>
+          <dt className="min-w-0 text-[11.5px] wrap-anywhere text-ink-3 lg:truncate" title={item.label}>
             {item.label}
           </dt>
-          <dd className="num truncate text-[15px] leading-tight font-semibold tracking-[-0.01em]">{item.value}</dd>
+          <dd className="num min-w-0 text-[15px] leading-tight font-semibold tracking-[-0.01em] wrap-anywhere lg:truncate">
+            {item.value}
+          </dd>
         </div>
       ))}
     </dl>

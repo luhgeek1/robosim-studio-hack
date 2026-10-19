@@ -59,12 +59,12 @@ export function SpecsList({
                   >
                     <span className="col-span-2 min-w-0 sm:col-span-1">
                       <span className="flex flex-wrap items-center gap-1.5 text-[13px] font-medium sm:flex-nowrap">
-                        <span className="max-sm:wrap-anywhere sm:truncate">{key.name}</span>
+                        <span className="wrap-anywhere lg:truncate">{key.name}</span>
                         {missing.has(key.key) && (
                           <span className="shrink-0 text-[11px] font-normal text-crit">ключевая, пусто</span>
                         )}
                       </span>
-                      <span className="block truncate text-[12px] text-ink-3">
+                      <span className="block min-w-0 wrap-anywhere lg:truncate text-[12px] text-ink-3">
                         {spec
                           ? `${formatValue(spec.value, spec.unit)} · ${PROVENANCE_LABEL[spec.provenance.status].toLowerCase()}`
                           : 'нет данных'}

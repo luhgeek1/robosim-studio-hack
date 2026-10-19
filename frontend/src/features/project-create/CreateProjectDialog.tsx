@@ -245,7 +245,7 @@ function Choice({
             {active && <Check className="size-3" />}
           </span>
         )}
-        <span className={cn('flex min-w-0 flex-col gap-1 break-words', compact && 'items-center gap-2')}>
+        <span className={cn('flex min-w-0 flex-col gap-1 wrap-anywhere', compact && 'items-center gap-2')}>
           {children}
         </span>
       </span>

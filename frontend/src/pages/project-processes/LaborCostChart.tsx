@@ -142,7 +142,7 @@ function CompactBars({ data, max, onOpen }: { data: Row[]; max: number; onOpen: 
         <li key={row.key}>
           <button type="button" onClick={() => onOpen(row)} className="block w-full py-1.5 text-left">
             <span className="flex items-baseline justify-between gap-3 text-[13px]">
-              <span className="line-clamp-2 min-w-0 text-ink-2">{row.name}</span>
+              <span className="min-w-0 wrap-anywhere text-ink-2">{row.name}</span>
               <span className="num shrink-0 whitespace-nowrap">
                 <span className="font-semibold">{formatRub(row.cost)}</span>
                 {row.share !== undefined && (

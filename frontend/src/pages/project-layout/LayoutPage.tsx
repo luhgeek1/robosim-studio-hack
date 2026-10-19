@@ -325,7 +325,7 @@ function RoutesPanel({
                 >
                   {on && <SlideMark />}
                   <span className="relative flex items-baseline justify-between gap-3">
-                    <span className="min-w-0 truncate text-[13px]">
+                    <span className="min-w-0 wrap-anywhere lg:truncate text-[13px]">
                       {capitalize(from)}
                       {to && <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />}
                       {to}
@@ -427,7 +427,7 @@ function FigureButton({ figure, active, onClick }: { figure: Figure; active: boo
     >
       {active && <SlideMark className="absolute inset-x-0 top-0 h-0.5" />}
       <span className="num block text-[20px] leading-tight font-semibold tracking-[-0.01em]">{figure.value}</span>
-      <span className="mt-0.5 block truncate text-[12.5px] text-ink-3">{figure.label}</span>
+      <span className="mt-0.5 block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">{figure.label}</span>
     </button>
   )
 }

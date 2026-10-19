@@ -27,7 +27,7 @@ export function PaybackScale({ data }: { data: Slice[] }) {
           <div key={slice.key}>
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
-                <div className="truncate text-[13px] text-ink-2">{slice.name}</div>
+                <div className="min-w-0 wrap-anywhere lg:truncate text-[13px] text-ink-2">{slice.name}</div>
                 <div className={cn('display num text-[30px] leading-none', zone.text)}>{formatYears(slice.value)}</div>
               </div>
               <span className={cn('hud mb-0.5 shrink-0', zone.text)}>{zone.word}</span>

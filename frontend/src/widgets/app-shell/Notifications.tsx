@@ -123,7 +123,7 @@ function InvitationRow({ invitation, onOpened }: { invitation: IncomingInvitatio
           <span className="text-ink-2"> приглашает в </span>
           <span className="font-medium">{quoted(invitation.organization_name)}</span>
         </div>
-        <div className="mt-0.5 truncate text-[12px] text-ink-3">
+        <div className="mt-0.5 min-w-0 text-[12px] wrap-anywhere text-ink-3 lg:truncate">
           {invitation.invited_by_email && `${invitation.invited_by_email} · `}
           {formatDateTime(invitation.created_at)}
         </div>

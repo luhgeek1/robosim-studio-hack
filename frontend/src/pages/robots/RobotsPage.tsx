@@ -145,7 +145,7 @@ function RobotCard({ kind, products }: { kind: Kind; products: Product[] | undef
         {options.length === 1 && <div className="text-[12.5px] font-medium text-ink">{v.name}</div>}
         {product && (
           <div className="-mt-1 flex items-center justify-between gap-3 text-[11.5px] text-ink-3">
-            <span className="min-w-0 truncate">
+            <span className="min-w-0 wrap-anywhere lg:truncate">
               Класс «{product.solution_type_name ?? v.name}» · {products!.length} в каталоге
               {detail.isLoading && ' · загружаем ТТХ…'}
             </span>

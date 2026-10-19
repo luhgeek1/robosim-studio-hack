@@ -117,7 +117,7 @@ export function ReportPage() {
                   <span className="flex min-w-0 items-center gap-2">
                     <ImageIcon className="size-4 shrink-0 text-ink-3" />
                     <span className="min-w-0">
-                      <span className="block truncate">{v.caption}</span>
+                      <span className="block min-w-0 wrap-anywhere lg:truncate">{v.caption}</span>
                       <span className="meta sm:hidden">{formatDateTime(v.createdAt)}</span>
                     </span>
                   </span>

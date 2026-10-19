@@ -114,11 +114,11 @@ function ProjectRow({ project }: { project: Project }) {
       <span className="min-w-0 flex-1">
         <Link
           to={`/projects/${project.id}`}
-          className="block text-[15px] font-semibold after:absolute after:inset-0 max-md:line-clamp-2 md:truncate"
+          className="block text-[15px] font-semibold wrap-anywhere after:absolute after:inset-0 lg:truncate"
         >
           {project.name}
         </Link>
-        <span className="block text-[13px] text-ink-3 md:truncate">
+        <span className="block text-[13px] text-ink-3 lg:truncate">
           {OBJECT_TYPE_LABEL[project.object_type]} · обновлён {formatDateTime(project.updated_at)}
         </span>
       </span>

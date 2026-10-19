@@ -149,7 +149,7 @@ function Form({
     <div className="flex h-full min-h-0 flex-col">
       <div className="border-b border-line px-6 pt-5 pb-4">
         <div className="hud mb-1.5">{isNew ? 'Новый продукт' : 'Правка карточки'} · на модерацию</div>
-        <SheetTitle className="truncate pr-8 text-[20px] font-semibold tracking-[-0.02em]">
+        <SheetTitle className="min-w-0 wrap-anywhere lg:truncate pr-8 text-[20px] font-semibold tracking-[-0.02em]">
           {form.name.trim() || detail?.name || 'Новый продукт'}
         </SheetTitle>
         <SheetDescription className="mt-0.5 text-[12.5px] max-sm:sr-only">

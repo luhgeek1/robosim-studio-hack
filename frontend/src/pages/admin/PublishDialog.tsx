@@ -81,7 +81,7 @@ export function PublishDialog({
             {changes.map((norm) => (
               <li key={norm.key} className="px-4 py-3">
                 <div className="flex items-baseline justify-between gap-x-3 gap-y-0.5 max-sm:flex-wrap">
-                  <span className="min-w-0 text-[13.5px] font-medium sm:truncate">{norm.name}</span>
+                  <span className="min-w-0 text-[13.5px] font-medium lg:truncate">{norm.name}</span>
                   <span className="num flex shrink-0 items-center gap-1.5 text-[13px]">
                     <span className="text-ink-3 line-through">{formatValue(norm.value, norm.unit)}</span>
                     <ArrowRight size={12} className="text-ink-4" />

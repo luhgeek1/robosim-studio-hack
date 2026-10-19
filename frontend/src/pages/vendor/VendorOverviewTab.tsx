@@ -119,8 +119,10 @@ export function VendorOverviewTab() {
                 className="flex items-center justify-between gap-3 border-b border-line py-2.5"
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-[13.5px] font-medium">{gap.process_name}</span>
-                  <span className="block truncate text-[12px] text-ink-3">
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[13.5px] font-medium">
+                    {gap.process_name}
+                  </span>
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[12px] text-ink-3">
                     {typeLabel(gap.object_type)} · {gap.solution_types.map(typeName).join(', ')}
                   </span>
                 </span>

@@ -84,7 +84,7 @@ export function CatalogImportDialog({ open, onOpenChange }: { open: boolean; onO
           >
             {preview.isPending ? <Spinner /> : <FileUp className="size-5 text-ink-3" />}
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13.5px] font-medium">
+              <span className="block min-w-0 wrap-anywhere lg:truncate text-[13.5px] font-medium">
                 {file?.name ?? 'Выберите файл или перетащите его сюда'}
               </span>
               <span className="text-[12px] text-ink-3">
@@ -220,7 +220,7 @@ function ItemRow({
         {ACTION_LABEL[item.action]}
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[13px] font-medium">{item.name}</span>
+        <span className="block min-w-0 wrap-anywhere lg:truncate text-[13px] font-medium">{item.name}</span>
         {item.action === 'conflict' && <span className="text-[12px] text-ink-3">{item.reason}</span>}
         {item.action === 'created' && (
           <span className="text-[12px] text-ink-3">

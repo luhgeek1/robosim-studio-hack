@@ -173,7 +173,7 @@ export function OverviewTab() {
                 className="flex items-center justify-between gap-3 border-b border-line py-2.5"
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-[13.5px] font-medium">
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[13.5px] font-medium">
                     {processNames.get(`${gap.object_type}/${gap.process_key}`) ?? gap.process_key}
                   </span>
                   <span className="block text-[12px] text-ink-3">{typeLabel(gap.object_type ?? '')}</span>

@@ -52,8 +52,10 @@ function ProposalCard({ proposal, index }: { proposal: Proposal; index: number }
         aria-expanded={open}
       >
         <span className="min-w-0">
-          <span className="block truncate text-[14px] font-medium">{proposal.product_name}</span>
-          <span className="block truncate text-[12.5px] text-ink-3">
+          <span className="block min-w-0 wrap-anywhere lg:truncate text-[14px] font-medium">
+            {proposal.product_name}
+          </span>
+          <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
             {proposalSummary(proposal)} · {formatDateTime(proposal.created_at)}
           </span>
         </span>

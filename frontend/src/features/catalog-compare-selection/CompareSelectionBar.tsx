@@ -19,13 +19,17 @@ export function CompareSelectionBar() {
         </div>
         <div className="hidden h-8 w-px shrink-0 bg-line sm:block" />
         {/* На телефоне выбранные решения уходят вниз одной прокручиваемой строкой, кнопки остаются рядом со счётчиком. */}
-        <div className="order-last flex min-w-0 basis-full flex-wrap gap-1.5 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:[scrollbar-width:none] sm:order-none sm:flex-1 sm:basis-auto">
+        <div className="order-last flex min-w-0 basis-full flex-wrap gap-1.5 max-lg:flex-nowrap max-lg:overflow-x-auto max-lg:[scrollbar-width:none] sm:order-none sm:flex-1 sm:basis-auto">
           {selection.items.map((item) => (
             <span
               key={item.id}
-              className="inline-flex max-w-56 min-w-0 items-center gap-1 rounded-lg bg-black/5 py-1 pr-1 pl-2.5 text-[12.5px] text-ink-2 max-sm:shrink-0"
+              className="inline-flex max-w-56 min-w-0 items-center gap-1 rounded-lg bg-black/5 py-1 pr-1 pl-2.5 text-[12.5px] text-ink-2 max-lg:max-w-none max-lg:shrink-0"
             >
-              <Link to={`/catalog/${item.id}`} className="truncate hover:text-ink" title={item.name}>
+              <Link
+                to={`/catalog/${item.id}`}
+                className="whitespace-nowrap hover:text-ink lg:truncate"
+                title={item.name}
+              >
                 {item.name}
               </Link>
               <button

@@ -48,7 +48,9 @@ function Organization({ org }: { org: OrganizationDetail }) {
             {initialOf(org.name)}
           </span>
           <div className="min-w-0">
-            <h1 className="display truncate text-[28px] leading-[1.1] tracking-[-0.03em] sm:text-[36px]">{org.name}</h1>
+            <h1 className="display min-w-0 wrap-anywhere lg:truncate text-[28px] leading-[1.1] tracking-[-0.03em] sm:text-[36px]">
+              {org.name}
+            </h1>
             <div className="mt-1 text-[14px] text-ink-3">
               {ROLE_LABEL[org.role]} · {org.members_count}{' '}
               {pluralRu(org.members_count, ['участник', 'участника', 'участников'])} · {org.projects_count}{' '}
@@ -79,11 +81,11 @@ function Organization({ org }: { org: OrganizationDetail }) {
                   {initialOf(member.name || member.email)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium">
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[14px] font-medium">
                     {member.name}
                     {me && <span className="font-normal text-ink-3"> · вы</span>}
                   </span>
-                  <span className="block truncate text-[12.5px] text-ink-3">
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
                     {member.email} · с {formatDate(member.joined_at)}
                   </span>
                 </span>
@@ -116,8 +118,10 @@ function Organization({ org }: { org: OrganizationDetail }) {
                     <Mail size={14} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-medium">{invitation.email}</span>
-                    <span className="block truncate text-[12.5px] text-ink-3">
+                    <span className="block min-w-0 wrap-anywhere lg:truncate text-[14px] font-medium">
+                      {invitation.email}
+                    </span>
+                    <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
                       {invitation.invited_by_name && `пригласил(а) ${invitation.invited_by_name} · `}
                       {formatDateTime(invitation.created_at)}
                     </span>

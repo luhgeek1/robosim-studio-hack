@@ -176,10 +176,10 @@ function UserRow({ user, index }: { user: User; index: number }) {
         </span>
         <span className="min-w-0">
           <span className="flex items-center gap-2 text-[14px] font-medium">
-            <span className="truncate">{user.name || user.email}</span>
+            <span className="min-w-0 wrap-anywhere lg:truncate">{user.name || user.email}</span>
             {self && <span className="shrink-0 text-[11.5px] font-normal text-ink-3">это вы</span>}
           </span>
-          <span className="block truncate text-[12.5px] text-ink-3">
+          <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
             {user.email}
             {user.organization ? ` · ${user.organization}` : ''}
           </span>

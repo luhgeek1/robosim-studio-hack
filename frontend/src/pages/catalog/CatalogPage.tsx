@@ -405,7 +405,7 @@ function ProductCard({ product, catalogSearch }: { product: Product; catalogSear
       cornerPinned={selection.has(product.id)}
       details={
         <>
-          <p className="-mt-1.5 mb-2.5 truncate text-[12.5px] text-ink-3" title={type}>
+          <p className="-mt-1.5 mb-2.5 min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3" title={type}>
             {type}
           </p>
           <CardFigures

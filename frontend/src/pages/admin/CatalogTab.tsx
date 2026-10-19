@@ -213,12 +213,14 @@ function ProductRow({
       onClick={() => onEdit()}
     >
       <span className="min-w-0">
-        <span className="block truncate text-[14px] font-medium group-hover:text-ink">{product.name}</span>
-        <span className="block truncate text-[12.5px] text-ink-3">
+        <span className="block min-w-0 wrap-anywhere lg:truncate text-[14px] font-medium group-hover:text-ink">
+          {product.name}
+        </span>
+        <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
           {product.manufacturer.name} · {formatDate(product.updated_at)}
         </span>
       </span>
-      <span className="truncate text-[13px] text-ink-2" title={product.solution_type_name}>
+      <span className="min-w-0 wrap-anywhere lg:truncate text-[13px] text-ink-2" title={product.solution_type_name}>
         {product.solution_type_name}
       </span>
       <ProductStatusMark status={product.status} className="text-[13px] text-ink-2" />

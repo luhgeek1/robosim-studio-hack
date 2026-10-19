@@ -77,11 +77,11 @@ function RfqCard({ rfq, index }: { rfq: Rfq; index: number }) {
         aria-expanded={open}
       >
         <span className="min-w-0">
-          <span className="block truncate text-[14px] font-medium">
+          <span className="block min-w-0 wrap-anywhere lg:truncate text-[14px] font-medium">
             {rfq.product.name}
             {rfq.quantity ? <span className="num font-normal text-ink-3"> · {rfq.quantity} шт.</span> : null}
           </span>
-          <span className="block truncate text-[12.5px] text-ink-3">
+          <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
             {rfq.object.object_type_name} · {rfq.object.industry} · {formatDateTime(rfq.created_at)}
           </span>
         </span>
@@ -116,7 +116,7 @@ function RfqCard({ rfq, index }: { rfq: Rfq; index: number }) {
                 <dl className="grid gap-x-6 gap-y-1.5 rounded-[12px] border border-line bg-card px-3.5 py-3 text-[13px] sm:grid-cols-2">
                   {rfq.object.params.map((p) => (
                     <div key={p.key} className="flex justify-between gap-3">
-                      <dt className="truncate text-ink-3">{p.name}</dt>
+                      <dt className="min-w-0 wrap-anywhere lg:truncate text-ink-3">{p.name}</dt>
                       <dd className="num shrink-0 text-right font-medium">{formatValue(p.value, p.unit)}</dd>
                     </div>
                   ))}

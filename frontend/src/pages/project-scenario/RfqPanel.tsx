@@ -79,8 +79,8 @@ function RfqRow({
       className="grid items-center gap-x-4 gap-y-1.5 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]"
     >
       <span className="min-w-0">
-        <span className="block truncate text-[13.5px] font-medium">{rfq.product.name}</span>
-        <span className="block truncate text-[12.5px] text-ink-3">
+        <span className="block min-w-0 wrap-anywhere lg:truncate text-[13.5px] font-medium">{rfq.product.name}</span>
+        <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
           {company} · запрошено {formatDate(rfq.created_at)}
           {rfq.quantity ? ` · ${rfq.quantity} шт.` : ''}
         </span>
@@ -181,7 +181,9 @@ function RequestDialog({
                       )
                     }
                   />
-                  <span className="min-w-0 flex-1 truncate text-[13.5px]">{item.product_name ?? item.product_id}</span>
+                  <span className="min-w-0 flex-1 wrap-anywhere lg:truncate text-[13.5px]">
+                    {item.product_name ?? item.product_id}
+                  </span>
                   <span className="num shrink-0 text-[12.5px] text-ink-3">
                     {n ? `${n} шт.` : 'кол-во после расчёта'}
                   </span>

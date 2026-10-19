@@ -123,7 +123,7 @@ function Figure({ value, label, tone }: { value: ReactNode; label: string; tone?
   // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
   return (
     <div className="flex min-w-0 flex-col-reverse">
-      <dt className="mt-0.5 text-[12.5px] text-ink-3 max-sm:leading-snug sm:truncate" title={label}>
+      <dt className="mt-0.5 text-[12.5px] text-ink-3 max-sm:leading-snug lg:truncate" title={label}>
         {label}
       </dt>
       <dd

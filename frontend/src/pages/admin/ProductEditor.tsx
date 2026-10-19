@@ -100,7 +100,9 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
       <div className="border-b border-line px-4 pt-5 pb-4 sm:px-6">
         <div className="flex items-start justify-between gap-4 pr-8">
           <div className="min-w-0">
-            <SheetTitle className="truncate text-[20px] font-semibold tracking-[-0.02em]">{title}</SheetTitle>
+            <SheetTitle className="min-w-0 wrap-anywhere lg:truncate text-[20px] font-semibold tracking-[-0.02em]">
+              {title}
+            </SheetTitle>
             <SheetDescription className="mt-0.5 text-[12.5px]">
               {detail
                 ? `${detail.manufacturer.name} · изменён ${formatDateTime(detail.updated_at)}`

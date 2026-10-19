@@ -227,9 +227,9 @@ function NormRow({
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2 text-[13.5px] font-medium">
             {changed && <span className="size-1.5 shrink-0 rounded-full bg-warn" />}
-            <span className="sm:truncate">{norm.name}</span>
+            <span className="lg:truncate">{norm.name}</span>
           </span>
-          <span className="block truncate font-mono text-[11px] text-ink-4">{norm.key}</span>
+          <span className="block min-w-0 wrap-anywhere lg:truncate font-mono text-[11px] text-ink-4">{norm.key}</span>
         </span>
         {range && range.min !== undefined && range.max !== undefined && range.max > range.min && (
           <RangeTrack min={range.min} max={range.max} value={changed ? draft : norm.value} />
@@ -394,7 +394,9 @@ function Versions({
                   <span className="block text-[11.5px] text-ink-3">
                     {formatDate(set.published_at)} · {set.published_by === 'system' ? 'исходная' : set.published_by}
                   </span>
-                  {set.notes && <span className="mt-1 line-clamp-3 text-[12px] text-ink-2">{set.notes}</span>}
+                  {set.notes && (
+                    <span className="mt-1 text-[12px] wrap-anywhere text-ink-2 lg:line-clamp-3">{set.notes}</span>
+                  )}
                 </span>
               </button>
             </motion.li>

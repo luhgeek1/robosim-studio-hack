@@ -89,7 +89,7 @@ export function Donut({
             )}
           >
             <span className="size-2.5 shrink-0 rounded-[3px]" style={{ background: PALETTE[i % PALETTE.length] }} />
-            <span className="min-w-0 flex-1 truncate text-ink-2">{slice.name}</span>
+            <span className="min-w-0 flex-1 wrap-anywhere text-ink-2 lg:truncate">{slice.name}</span>
             <span className="num shrink-0 font-medium">{unit(slice.value)}</span>
             <span className="num w-10 shrink-0 text-right text-[12px] text-ink-4">
               {total ? Math.round((slice.value / total) * 100) : 0} %

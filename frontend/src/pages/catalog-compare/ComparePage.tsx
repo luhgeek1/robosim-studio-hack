@@ -327,7 +327,7 @@ function ProductSummary({
       }
       details={
         <>
-          <p className="-mt-1.5 mb-2.5 truncate text-[12.5px] text-ink-3" title={type}>
+          <p className="-mt-1.5 mb-2.5 min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3" title={type}>
             {type}
           </p>
           <CardFigures
@@ -387,7 +387,7 @@ function ProductLabel({ product, color }: { product: Product; color: string }) {
   return (
     <span className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-ink-2" title={product.name}>
       <span className="size-2 shrink-0 rounded-[2px]" style={{ background: color }} />
-      <span className="truncate">{shortName(product.name)}</span>
+      <span className="min-w-0 wrap-anywhere lg:truncate">{shortName(product.name)}</span>
     </span>
   )
 }
@@ -443,7 +443,9 @@ function SpecChart({ row, products, colors }: { row: Row; products: Product[]; c
                   </>
                 ) : spec && hasValue(row, product.id) ? (
                   <span className="flex min-w-0 items-center gap-1.5 text-[13px]">
-                    <span className="truncate">{formatValue(value ?? null, spec.unit ?? row.unit)}</span>
+                    <span className="min-w-0 wrap-anywhere lg:truncate">
+                      {formatValue(value ?? null, spec.unit ?? row.unit)}
+                    </span>
                     <SourceMark provenance={spec.provenance} compact />
                   </span>
                 ) : (
@@ -479,7 +481,7 @@ function SpecText({ row, products, colors }: { row: Row; products: Product[]; co
               </span>
               {spec && hasValue(row, product.id) ? (
                 <span className="flex min-w-0 items-start gap-1.5 text-[13px] leading-snug">
-                  <span className="min-w-0 break-words">{formatValue(spec.value, spec.unit ?? row.unit)}</span>
+                  <span className="min-w-0 wrap-anywhere">{formatValue(spec.value, spec.unit ?? row.unit)}</span>
                   <SourceMark provenance={spec.provenance} compact />
                 </span>
               ) : (

@@ -138,11 +138,11 @@ export function ProductMiniCard({ product, state }: { product: Product; state?: 
       <Link
         to={`/catalog/${product.id}`}
         state={state}
-        className="line-clamp-2 font-medium after:absolute after:inset-0"
+        className="font-medium wrap-anywhere after:absolute after:inset-0 lg:line-clamp-2"
       >
         {product.name}
       </Link>
-      <div className="truncate text-xs text-muted-foreground">{product.manufacturer.name}</div>
+      <div className="min-w-0 wrap-anywhere lg:truncate text-xs text-muted-foreground">{product.manufacturer.name}</div>
       <div className="flex flex-wrap items-center gap-1">
         <ProductStatusBadge status={product.status} />
         <TrlBadge trl={product.trl} />

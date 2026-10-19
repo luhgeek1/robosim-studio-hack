@@ -63,12 +63,12 @@ export function ProposalDiff({ proposal }: { proposal: Proposal }) {
                 href={spec.source.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-0.5 truncate underline-offset-2 hover:text-ink hover:underline"
+                className="inline-flex items-center gap-0.5 min-w-0 wrap-anywhere lg:truncate underline-offset-2 hover:text-ink hover:underline"
               >
                 {spec.source.title} <ExternalLink size={11} />
               </a>
             ) : (
-              <span className="truncate">{spec.source.title}</span>
+              <span className="min-w-0 wrap-anywhere lg:truncate">{spec.source.title}</span>
             )}
           </span>
         </span>
@@ -109,7 +109,7 @@ function diffCard(
     {
       key: 'description',
       label: 'Описание',
-      show: (c) => <span className="line-clamp-3 font-normal">{text(c.description)}</span>,
+      show: (c) => <span className="font-normal wrap-anywhere lg:line-clamp-3">{text(c.description)}</span>,
     },
   ]
   const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
@@ -141,10 +141,12 @@ function DiffTable({ title, rows, fresh }: { title: string; rows: Row[]; fresh: 
             transition={{ ...SPRING, delay: Math.min(i, 12) * 0.022 }}
             className={cn(
               'grid items-start gap-3 px-3.5 py-2.5 text-[13px]',
-              fresh ? 'grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_minmax(0,1fr)_16px_minmax(0,1fr)]',
+              fresh
+                ? 'grid-cols-1 sm:grid-cols-[150px_minmax(0,1fr)]'
+                : 'grid-cols-[minmax(0,1fr)_16px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)_16px_minmax(0,1fr)]',
             )}
           >
-            <span className="text-ink-3">{row.label}</span>
+            <span className={cn('wrap-anywhere text-ink-3', !fresh && 'max-sm:col-span-3')}>{row.label}</span>
             {!fresh && <span className="min-w-0 text-ink-3 line-through decoration-ink-4/60">{row.before}</span>}
             {!fresh && <ArrowRight size={14} className="mt-0.5 text-ink-4" />}
             <span className="min-w-0 font-medium">{row.after}</span>

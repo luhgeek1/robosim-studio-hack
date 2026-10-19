@@ -214,12 +214,12 @@ function PickCard({ pick, first }: { pick: Pick; first: boolean }) {
       <div className="flex min-w-0 flex-1 flex-col px-5 pt-5 pb-6 sm:px-6">
         <Link
           to={`/catalog/${pick.productId}`}
-          className="truncate text-[20px] font-semibold tracking-[-0.02em] transition-colors hover:text-ink-2"
+          className="min-w-0 wrap-anywhere lg:truncate text-[20px] font-semibold tracking-[-0.02em] transition-colors hover:text-ink-2"
           title={pick.name}
         >
           {pick.name}
         </Link>
-        <p className="meta mt-1 truncate">
+        <p className="meta mt-1 min-w-0 wrap-anywhere lg:truncate">
           {[product?.manufacturer?.name, product?.solution_type_name].filter(Boolean).join(' · ') || ' '}
         </p>
 
@@ -286,8 +286,8 @@ function Figure({ value, label, children }: { value: string; label: string; chil
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-col-reverse">
-      <dt className="meta truncate">{label}</dt>
-      <dd className="num truncate text-[17px] font-semibold tracking-[-0.01em]">{value}</dd>
+      <dt className="meta min-w-0 wrap-anywhere lg:truncate">{label}</dt>
+      <dd className="num min-w-0 wrap-anywhere lg:truncate text-[17px] font-semibold tracking-[-0.01em]">{value}</dd>
     </div>
   )
 }

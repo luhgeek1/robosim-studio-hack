@@ -279,7 +279,9 @@ function Intro({ product }: { product: ProductDetail }) {
         <Readiness trl={product.trl} />
       </div>
 
-      {lead && <p className="mt-6 line-clamp-5 max-w-[60ch] text-[14.5px] leading-[1.6] text-ink-2">{lead}</p>}
+      {lead && (
+        <p className="mt-6 max-w-[60ch] text-[14.5px] leading-[1.6] wrap-anywhere text-ink-2 lg:line-clamp-5">{lead}</p>
+      )}
 
       <div className="mt-auto pt-8">
         <Price product={product} />
@@ -385,9 +387,9 @@ function Passport({ specs }: { specs: Spec[] }) {
             typeof spec.value === 'string' && 'max-lg:col-span-2',
           )}
         >
-          {/* Ширину колонки задаёт число, а не подпись: длинная подпись обрезается, число — никогда. */}
+          {/* На широком экране ширину колонки задаёт число; на узком подпись переносится целиком. */}
           <dt className="mt-1.5 flex items-center gap-1 text-[13px] text-ink-3 [contain:inline-size]" title={spec.name}>
-            <span className="truncate">{spec.name}</span>
+            <span className="min-w-0 wrap-anywhere lg:truncate">{spec.name}</span>
             <SourceMark provenance={spec.provenance} compact />
           </dt>
           <dd className="flex min-w-0 items-baseline gap-1.5">
@@ -723,7 +725,7 @@ function SimilarCard({ product, state }: { product: Product; state: CatalogLinkS
       corner={<CompareToggle product={product} className="h-7 rounded-full pointer-coarse:h-9" />}
       details={
         <>
-          <p className="-mt-1.5 mb-2.5 truncate text-[12.5px] text-ink-3" title={type}>
+          <p className="-mt-1.5 mb-2.5 min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3" title={type}>
             {type}
           </p>
           <CardFigures

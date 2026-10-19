@@ -17,7 +17,7 @@ export function Kpi({
 }) {
   return (
     <div className="min-w-0 px-4 py-4 sm:px-5">
-      <div className="text-[12.5px] leading-snug text-ink-3 sm:truncate">{label}</div>
+      <div className="text-[12.5px] leading-snug text-ink-3 lg:truncate">{label}</div>
       <div
         className="display mt-1.5 text-[26px] leading-tight sm:text-[30px]"
         style={tone ? { color: tone } : undefined}
@@ -28,7 +28,7 @@ export function Kpi({
           <KpiNumber value={value} format={format} />
         )}
       </div>
-      {hint && <div className="mt-1.5 text-[12px] leading-snug text-ink-3 sm:truncate">{hint}</div>}
+      {hint && <div className="mt-1.5 text-[12px] leading-snug text-ink-3 lg:truncate">{hint}</div>}
     </div>
   )
 }

@@ -145,7 +145,7 @@ export function SourcesPane() {
         <>
           <div className="card overflow-hidden">
             <div
-              className={`grid ${COLUMNS} items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3`}
+              className={`hidden ${COLUMNS} items-center gap-4 border-b border-line bg-surface-2 px-5 py-2.5 text-[12px] text-ink-3 lg:grid`}
             >
               <span>Источник</span>
               <span>Получен</span>
@@ -218,10 +218,10 @@ function SourceRow({ source, index, onEdit }: { source: RegistrySource; index: n
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, transition: { duration: 0.12 } }}
       transition={stagger(index)}
-      className={`group grid ${COLUMNS} items-center gap-4 px-5 py-3 transition-colors hover:bg-surface-2`}
+      className="group relative grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 px-4 py-3 transition-colors hover:bg-surface-2 sm:px-5 lg:grid-cols-[minmax(0,1fr)_132px_minmax(0,230px)_64px_36px] lg:items-center lg:gap-4"
     >
-      <span className="min-w-0">
-        <span className="block truncate text-[13.5px] font-medium" title={source.title}>
+      <span className="min-w-0 max-lg:col-span-2 max-lg:pr-10">
+        <span className="block min-w-0 wrap-anywhere lg:truncate text-[13.5px] font-medium" title={source.title}>
           {source.title}
         </span>
         <span className="flex min-w-0 items-center gap-1.5 text-[12px] text-ink-3">
@@ -233,12 +233,13 @@ function SourceRow({ source, index, onEdit }: { source: RegistrySource; index: n
               rel="noreferrer"
               className="inline-flex min-w-0 items-center gap-0.5 text-info hover:underline"
             >
-              <span className="truncate">{host(source.url)}</span> <ExternalLink size={11} className="shrink-0" />
+              <span className="min-w-0 wrap-anywhere lg:truncate">{host(source.url)}</span>{' '}
+              <ExternalLink size={11} className="shrink-0" />
             </a>
           )}
         </span>
       </span>
-      <span className="text-[12.5px]">
+      <span className="text-[12.5px] max-lg:col-start-1 max-lg:row-start-2">
         {source.freshness === 'undated' ? (
           <span className="text-ink-4">нет даты</span>
         ) : (
@@ -252,7 +253,7 @@ function SourceRow({ source, index, onEdit }: { source: RegistrySource; index: n
           </span>
         )}
       </span>
-      <span className="truncate text-[12.5px] text-ink-3">
+      <span className="min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3 max-lg:col-span-2 max-lg:row-start-3">
         {usage.length
           ? usage.map(([key, label]) => (
               <span key={key} className="mr-2 whitespace-nowrap">
@@ -261,13 +262,19 @@ function SourceRow({ source, index, onEdit }: { source: RegistrySource; index: n
             ))
           : 'не используется'}
       </span>
-      <span className={cn('num text-right text-[13.5px]', source.usage.total === 0 && 'text-ink-4')}>
+      <span
+        className={cn(
+          'num text-right text-[13.5px] max-lg:col-start-2 max-lg:row-start-2',
+          source.usage.total === 0 && 'text-ink-4',
+        )}
+      >
+        <span className="font-sans text-[12px] text-ink-3 lg:hidden">ссылок: </span>
         {formatNumber(source.usage.total)}
       </span>
       <Button
         variant="ghost"
         size="icon-sm"
-        className="text-ink-4 group-hover:text-ink"
+        className="text-ink-4 group-hover:text-ink max-lg:absolute max-lg:top-3 max-lg:right-3"
         onClick={onEdit}
         aria-label={`Исправить источник «${source.title}»`}
       >

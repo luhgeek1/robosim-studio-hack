@@ -105,8 +105,8 @@ export function TraceSheet({
                           )}
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate">{item.name}</span>
-                          <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                          <span className="block min-w-0 wrap-anywhere lg:truncate">{item.name}</span>
+                          <span className="block min-w-0 wrap-anywhere lg:truncate font-mono text-[11px] text-muted-foreground">
                             {item.metric_key}
                           </span>
                         </span>

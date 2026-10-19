@@ -29,7 +29,7 @@ export function PaneSection({
           className="hud flex min-h-11 min-w-0 flex-1 items-center gap-1 rounded-[6px] py-1 text-left text-ink-2 transition-colors hover:text-ink lg:min-h-0"
         >
           <ChevronRight size={13} className={cn('shrink-0 transition-transform duration-200', open && 'rotate-90')} />
-          <span className="truncate">{title}</span>
+          <span className="min-w-0 wrap-anywhere lg:truncate">{title}</span>
         </button>
         {aside && <div className="flex shrink-0 items-center gap-1 text-ink-3">{aside}</div>}
       </div>
@@ -92,7 +92,7 @@ export function StatusBar({
         {status}
       </span>
       {items.map((item, i) => (
-        <span key={i} className="hidden truncate md:inline">
+        <span key={i} className="hidden min-w-0 wrap-anywhere lg:truncate md:inline">
           {item}
         </span>
       ))}

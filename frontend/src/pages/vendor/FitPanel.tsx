@@ -51,7 +51,9 @@ export function FitPanel({ products }: { products: VendorProduct[] }) {
               >
                 <div className="min-w-0">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="truncate text-[13.5px] font-medium">{names.get(item.product_id)}</span>
+                    <span className="min-w-0 wrap-anywhere lg:truncate text-[13.5px] font-medium">
+                      {names.get(item.product_id)}
+                    </span>
                     <span className="num shrink-0 text-[12px] text-ink-3">
                       {formatNumber(item.appearances)} {pluralRu(item.appearances, ['раз', 'раза', 'раз'])} в подборе
                       {item.top3 > 0 && ` · в тройке лучших ${formatNumber(item.top3)}`}

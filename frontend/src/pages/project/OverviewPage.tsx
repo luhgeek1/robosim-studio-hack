@@ -193,7 +193,7 @@ function Start({ scenario }: { scenario?: Scenario }) {
 function Figure({ label, value, children }: { label: string; value: string; children: ReactNode }) {
   return (
     <div className="min-w-0 px-5 py-4 sm:px-6 sm:py-5">
-      <div className="text-[13px] text-ink-3 sm:truncate">{label}</div>
+      <div className="text-[13px] text-ink-3 lg:truncate">{label}</div>
       <div className="display num mt-2 text-[28px]">{value}</div>
       <div className="mt-2">{children}</div>
     </div>
@@ -232,17 +232,19 @@ function Solution({ projectId, scenario }: { projectId: string; scenario: Scenar
               )}
               <span className="display num shrink-0 text-[34px]">{formatNumber(count)}</span>
               <span className="min-w-0">
-                <span className="block truncate text-[15px] font-semibold tracking-[-0.01em]">
+                <span className="block min-w-0 wrap-anywhere lg:truncate text-[15px] font-semibold tracking-[-0.01em]">
                   {(item.product_name ?? 'Решение').split(' (')[0]}
                 </span>
-                <span className="block truncate text-[12.5px] text-ink-3">
+                <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
                   {processName.get(item.process_key) ?? item.process_key}
                 </span>
                 {isNum(price) && (
-                  <span className="block truncate text-[12.5px] text-ink-3">{formatRub(price)} за единицу</span>
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
+                    {formatRub(price)} за единицу
+                  </span>
                 )}
                 {result && (
-                  <span className="block truncate text-[12.5px] text-ink-3">
+                  <span className="block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">
                     {isNum(result.simulated)
                       ? `${formatNumber(result.simulated)} по имитации`
                       : `${formatNumber(result.analytic)} по расчёту цикла`}
