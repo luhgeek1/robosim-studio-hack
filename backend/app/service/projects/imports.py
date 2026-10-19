@@ -7,8 +7,9 @@ from app.core.errors import DomainError, FileTooLargeError, NotFoundError, Unsup
 from app.db.models import ParamImport, Source
 from app.db.repositories.projects import ProjectRepository
 from app.db.uow import UnitOfWork
-from app.domain.auth import CurrentUser
+from app.domain.auth import CurrentUser, Role
 from app.domain.common.provenance import ProvenanceStatus, SourceKind
+from app.infra.importers.limits import check_guest_file
 from app.infra.importers.models import ImportFormatError, MappedValue
 from app.infra.importers.parser import parse_file
 from app.service.projects.audit import AuditLog
@@ -77,11 +78,15 @@ class ImportService:
         self._audit = AuditLog(self._repo, user)
 
     async def parse(self, project_id: UUID, filename: str, content: bytes) -> ImportView:
+        if self._user.role == Role.GUEST:
+            check_guest_file(content)
         if len(content) > MAX_FILE_BYTES:
             raise FileTooLargeError(f"Файл больше {MAX_FILE_BYTES // (1024 * 1024)} МБ")
         context = await self._loader.context(self._user, project_id)
         try:
-            parsed = parse_file(content, filename, context.object_type.parameters)
+            parsed = parse_file(
+                content, filename, context.object_type.parameters, bounded=self._user.role == Role.GUEST
+            )
         except ImportFormatError as exc:
             raise UnsupportedFileTypeError(str(exc)) from exc
         warnings = list(parsed.warnings)

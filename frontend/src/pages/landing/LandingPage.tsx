@@ -192,7 +192,7 @@ export function LandingPage() {
         : user?.role === 'vendor'
           ? '/vendor'
           : '/projects'
-      : '/login'
+      : '/demo?new=1'
   const demoQuery = useDemo('warehouse_demo_01')
   const demo = demoQuery.data && 'demo' in demoQuery.data ? demoQuery.data : undefined
   const sweep = demo?.sweep
@@ -613,7 +613,7 @@ export function LandingPage() {
                 </h2>
                 <p>Первый расчёт объекта займёт около 15 минут. Без звонков менеджеру.</p>
                 <Link
-                  to={status === 'authenticated' ? '/projects?new=1' : '/login?mode=register'}
+                  to={status === 'authenticated' ? '/projects?new=1' : '/demo?new=1'}
                   state={{ from: '/projects?new=1' }}
                   className="landing-cta-button"
                 >

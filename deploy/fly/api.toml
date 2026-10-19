@@ -9,6 +9,7 @@ primary_region = "arn"
   RS_COOKIE_SECURE = "true"
   RS_DOCS_ENABLED = "true"
   RS_JOBS_BACKEND = "arq"
+  RS_CLIENT_IP_HEADER = "X-Robomera-Client-IP"
   RS_REDIS_URL = "redis://robomera-redis.internal:6379/0"
 
 [deploy]

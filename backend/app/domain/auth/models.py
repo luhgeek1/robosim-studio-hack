@@ -28,6 +28,7 @@ class UserProfile:
     created_at: datetime
     last_login_at: datetime | None
     is_active: bool
+    guest_expires_at: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)

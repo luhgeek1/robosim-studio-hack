@@ -19,7 +19,8 @@ from app.api.files import content_disposition
 from app.api.schemas.layouts import FileRef
 from app.api.schemas.reports import Report, ReportList, ReportRequest, VisualUpload
 from app.core.errors import FileTooLargeError, UnsupportedFileTypeError
-from app.domain.auth import CurrentUser, Permission
+from app.domain.auth import CurrentUser, Permission, Role
+from app.infra.importers.limits import GUEST_FILE_BYTES
 from app.service.jobs.queue import JobQueue
 from app.service.reports.service import REPORT_JOB, ReportService
 from app.service.simulations.service import SimulationService
@@ -126,9 +127,10 @@ async def upload_visual(
     content_type = file.content_type or ""
     if content_type not in VISUAL_TYPES:
         raise UnsupportedFileTypeError("Снимок принимается в PNG или GIF")
-    data = await file.read()
-    if len(data) > VISUAL_MAX_BYTES:
-        raise FileTooLargeError("Снимок больше 10 МБ")
+    limit = GUEST_FILE_BYTES if user.role == Role.GUEST else VISUAL_MAX_BYTES
+    data = await file.read(limit + 1)
+    if len(data) > limit:
+        raise FileTooLargeError(f"Снимок больше {limit // (1024 * 1024)} МБ")
     stored = await ReportService(uow, user).upload_visual(
         run.project_id, simulation_id, caption or file.filename or "Снимок имитации", content_type, data
     )

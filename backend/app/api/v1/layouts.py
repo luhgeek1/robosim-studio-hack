@@ -8,7 +8,8 @@ from app.api.deps import UowDep, require
 from app.api.files import content_disposition
 from app.api.schemas.base import ApiModel
 from app.api.schemas.layouts import Layout, LayoutGenerateRequest, LayoutUpdate
-from app.domain.auth import CurrentUser, Permission
+from app.domain.auth import CurrentUser, Permission, Role
+from app.infra.importers.limits import GUEST_FILE_BYTES, check_guest_file
 from app.service.layouts.service import LayoutPatch, LayoutService
 
 router = APIRouter(prefix="/projects/{project_id}/layout", tags=["layout"])
@@ -89,7 +90,10 @@ async def upload_background(
     file: Annotated[UploadFile, File()],
     scale_m_per_px: Annotated[float | None, Form(gt=0)] = None,
 ) -> Layout:
-    content = await file.read()
+    limit = GUEST_FILE_BYTES if user.role == Role.GUEST else 10 * 1024 * 1024
+    content = await file.read(limit + 1)
+    if user.role == Role.GUEST:
+        check_guest_file(content)
     view = await LayoutService(uow, user).upload_background(
         project_id, file.filename or "plan", file.content_type or "", content, scale_m_per_px
     )

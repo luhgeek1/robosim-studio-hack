@@ -16,7 +16,7 @@ from app.db.models import Layout, Project, StoredFile
 from app.db.repositories.layouts import LayoutRepository
 from app.db.repositories.projects import ProjectRepository
 from app.db.uow import UnitOfWork
-from app.domain.auth import CurrentUser
+from app.domain.auth import CurrentUser, Role
 from app.domain.layout.models import EdgeKind, LayoutTemplate
 from app.domain.project.params import input_names
 from app.engine.layout import Edge, LayoutError, Plan, generate, stats, validate
@@ -132,9 +132,13 @@ class LayoutService:
         chosen = template or templates[0]
         if chosen not in templates:
             raise InvalidInputError(f"Шаблон {chosen} не подходит; доступны: {', '.join(templates)}")
+        if self._user.role == Role.GUEST:
+            _guest_generator_limits(context.numeric(), overrides)
         norms = await self._norms.book(context.project.object_type)
         try:
             generated = generate(LayoutTemplate(chosen), param_book(context), norms, overrides)
+            if self._user.role == Role.GUEST:
+                _guest_plan_limits(len(generated.plan.nodes), len(generated.plan.edges))
             summary = stats(generated.plan)
         except LayoutError as exc:
             raise ConflictError(str(exc), error_code=ErrorCode.PARAMS_INVALID, details=exc.details) from exc
@@ -174,6 +178,8 @@ class LayoutService:
 
     async def update(self, project_id: UUID, patch: LayoutPatch) -> LayoutView:
         project, layout = await self._owned(project_id, lock=True)
+        if self._user.role == Role.GUEST:
+            _guest_plan_limits(len(patch.nodes or layout.nodes), len(patch.edges or layout.edges))
         current = plan_from(layout)
         try:
             plan = Plan(
@@ -247,3 +253,30 @@ class LayoutService:
         if stored is None:
             raise NotFoundError("Подложка не загружена")
         return stored
+
+
+def _guest_generator_limits(values: dict[str, float | None], overrides: dict[str, float]) -> None:
+    caps = {
+        "area_m2": 200_000,
+        "pallet_positions": 100_000,
+        "meal_points": 200,
+        "gates": 100,
+        "baggage_carousels": 100,
+        "terminals": 20,
+        "pallets_in_per_day": 100_000,
+        "pallets_out_per_day": 100_000,
+    }
+    if any((values.get(key) or 0) > limit for key, limit in caps.items()):
+        raise InvalidInputError(
+            "Объект слишком велик для демо-планировки. Уменьшите площадь, число точек или нагрузку."
+        )
+    if any(not math.isfinite(value) or value < 0 or value > 100 for value in overrides.values()):
+        raise InvalidInputError("Лимит демо: параметры генератора от 0 до 100")
+    ratio = overrides.get("aspect_ratio", 1)
+    if not 0.1 <= ratio <= 10:
+        raise InvalidInputError("Лимит демо: соотношение сторон от 0,1 до 10")
+
+
+def _guest_plan_limits(nodes: int, edges: int) -> None:
+    if nodes > 3000 or edges > 6000:
+        raise InvalidInputError("Лимит демо: планировка до 3000 узлов и 6000 проездов")

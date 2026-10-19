@@ -11,6 +11,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('restoring')
   const [user, setUser] = useState<User | null>(null)
   const restored = useRef(false)
+  const guestStarting = useRef<Promise<User> | null>(null)
 
   const clear = useCallback(() => {
     setAccessToken(null)
@@ -30,10 +31,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const accept = useCallback(
     async (pair: TokenPair) => {
+      queryClient.clear()
       setAccessToken(pair.access_token)
       return enter(pair.user ?? (await sessionApi.me()))
     },
-    [enter],
+    [enter, queryClient],
   )
 
   useEffect(() => {
@@ -56,8 +58,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       user,
-      login: async (body: LoginRequest) => accept(await sessionApi.login(body)),
-      register: async (body: RegisterRequest) => accept(await sessionApi.register(body)),
+      login: async (body: LoginRequest) => accept(await sessionApi.login(body, user?.role === 'guest')),
+      register: async (body: RegisterRequest) => accept(await sessionApi.register(body, user?.role === 'guest')),
+      startGuest: () => {
+        if (user) return Promise.resolve(user)
+        guestStarting.current ??= sessionApi
+          .startGuest()
+          .then(accept)
+          .finally(() => {
+            guestStarting.current = null
+          })
+        return guestStarting.current
+      },
+      resetGuest: async () => {
+        await sessionApi.resetGuest()
+        clear()
+      },
       logout: async () => {
         await sessionApi.logout().catch(() => undefined)
         clear()

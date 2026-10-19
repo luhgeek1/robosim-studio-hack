@@ -25,9 +25,15 @@ from app.infra.importers.template import (
 )
 
 
-def load_workbook(content: bytes) -> Workbook:
+def load_workbook(content: bytes, *, bounded: bool = False) -> Workbook:
     try:
-        return openpyxl.load_workbook(BytesIO(content), data_only=True)
+        workbook = openpyxl.load_workbook(BytesIO(content), data_only=True, read_only=bounded)
+        if len(workbook.worksheets) > 20 or any(
+            (sheet.max_row or 0) > 10_000 or (sheet.max_column or 0) > 100 for sheet in workbook.worksheets
+        ):
+            workbook.close()
+            raise ImportFormatError("Excel: допускается до 20 листов, 10 000 строк и 100 столбцов")
+        return workbook
     except (BadZipFile, InvalidFileException, KeyError, OSError, ValueError) as error:
         message = "Не удалось открыть файл Excel: он повреждён или сохранён не в формате .xlsx"
         raise ImportFormatError(message) from error

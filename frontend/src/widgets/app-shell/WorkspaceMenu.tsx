@@ -53,6 +53,17 @@ export function WorkspaceMenu() {
     )
   }
 
+  if (user.role === 'guest') {
+    return (
+      <Button asChild size="sm" variant="outline">
+        <Link to="/login?mode=register" state={{ from: pathname, keepGuest: true }}>
+          <span className="sm:hidden">Сохранить</span>
+          <span className="hidden sm:inline">Сохранить и пригласить коллег</span>
+        </Link>
+      </Button>
+    )
+  }
+
   const current = workspace.organization
   const switchTo = (id: string | null) => {
     workspace.select(id)

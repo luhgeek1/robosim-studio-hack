@@ -3,6 +3,7 @@ import io
 import json
 from collections import Counter
 from collections.abc import Sequence
+from itertools import islice
 from pathlib import PurePath
 from typing import Any
 
@@ -68,11 +69,14 @@ def _delimiter(text: str) -> str:
     return max(CSV_DELIMITERS, key=lambda delimiter: _delimiter_score(lines, delimiter))
 
 
-def _parse_csv(content: bytes, matcher: ParameterMatcher) -> ParsedImport:
+def _parse_csv(content: bytes, matcher: ParameterMatcher, *, bounded: bool = False) -> ParsedImport:
     text = _decode(content)
     if not text.strip():
         raise ImportFormatError("CSV-файл пустой")
-    table: list[Sequence[Any]] = list(csv.reader(io.StringIO(text), delimiter=_delimiter(text)))
+    reader = csv.reader(io.StringIO(text), delimiter=_delimiter(text))
+    table: list[Sequence[Any]] = list(islice(reader, 10_001)) if bounded else list(reader)
+    if bounded and len(table) > 10_000:
+        raise ImportFormatError("Лимит демо: до 10 000 строк в CSV")
     warnings: list[str] = []
     rows = table_rows(table, "CSV", warnings)
     return build_import(ImportSourceKind.CSV, rows, matcher, warnings)
@@ -120,18 +124,22 @@ def _json_rows(data: Any, warnings: list[str]) -> list[RawRow]:
     raise ImportFormatError("JSON должен быть объектом {ключ: значение} или списком [{key, value, unit}]")
 
 
-def _parse_json(content: bytes, matcher: ParameterMatcher) -> ParsedImport:
+def _parse_json(content: bytes, matcher: ParameterMatcher, *, bounded: bool = False) -> ParsedImport:
     try:
         data = json.loads(_decode(content))
     except json.JSONDecodeError as error:
         message = f"Файл не является корректным JSON: строка {error.lineno}, {error.msg}"
         raise ImportFormatError(message) from error
     warnings: list[str] = []
+    if bounded and isinstance(data, dict | list) and len(data) > 10_000:
+        raise ImportFormatError("Лимит демо: до 10 000 полей в JSON")
     rows = _json_rows(data, warnings)
     return build_import(ImportSourceKind.JSON, rows, matcher, warnings)
 
 
-def parse_file(content: bytes, filename: str, parameters: list[ParameterDef]) -> ParsedImport:
+def parse_file(
+    content: bytes, filename: str, parameters: list[ParameterDef], *, bounded: bool = False
+) -> ParsedImport:
     """Map an uploaded file onto object-type parameters.
 
     Raises ImportFormatError only when the file as a whole can't be read; bad rows become warnings.
@@ -139,10 +147,10 @@ def parse_file(content: bytes, filename: str, parameters: list[ParameterDef]) ->
     matcher = ParameterMatcher(parameters)
     kind = _detect_kind(content, filename)
     if kind == "csv":
-        return _parse_csv(content, matcher)
+        return _parse_csv(content, matcher, bounded=bounded)
     if kind == "json":
-        return _parse_json(content, matcher)
-    workbook = load_workbook(content)
+        return _parse_json(content, matcher, bounded=bounded)
+    workbook = load_workbook(content, bounded=bounded)
     try:
         if is_template(workbook):
             return parse_template(workbook, matcher)

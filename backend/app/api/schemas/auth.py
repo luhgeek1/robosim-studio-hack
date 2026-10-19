@@ -19,6 +19,7 @@ class User(ApiModel):
     created_at: datetime
     last_login_at: datetime | None = None
     is_active: bool = True
+    guest_expires_at: datetime | None = None
 
     @classmethod
     def from_domain(cls, user: UserProfile) -> "User":

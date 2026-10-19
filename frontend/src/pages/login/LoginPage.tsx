@@ -37,11 +37,11 @@ export function LoginPage() {
   const { status, user, login, register } = useSession()
   const navigate = useNavigate()
   const location = useLocation()
-  const back = location.state as { from?: string; userId?: string | null } | null
+  const back = location.state as { from?: string; userId?: string | null; keepGuest?: boolean } | null
   // Возвращаем на прежнюю страницу только её владельца: другой учётке прошлый проект чужой.
   // Возврат туда, откуда отправили на вход; иначе админ — в админ-панель, производитель — в кабинет, остальные — в проекты.
   const target = (me: User) =>
-    back?.from && (!back.userId || back.userId === me.id) ? back.from : (HOME[me.role] ?? '/projects')
+    back?.from && (back.keepGuest || !back.userId || back.userId === me.id) ? back.from : (HOME[me.role] ?? '/projects')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [email, setEmail] = useState('')
@@ -52,7 +52,7 @@ export function LoginPage() {
     new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login',
   )
 
-  if (status === 'authenticated' && user) return <Navigate to={target(user)} replace />
+  if (status === 'authenticated' && user && user.role !== 'guest') return <Navigate to={target(user)} replace />
 
   const run = async (action: () => Promise<User>) => {
     setPending(true)
@@ -111,8 +111,17 @@ export function LoginPage() {
           <div className="w-full max-w-110">
             <div className="h1 mb-2">{mode === 'login' ? 'Вход' : 'Регистрация'}</div>
             <p className="mb-6 text-[15px] text-ink-3">
-              {mode === 'login' ? 'Продолжите работу с проектами.' : 'Создайте учётную запись для своих проектов.'}
+              {user?.role === 'guest'
+                ? 'Ваши временные проекты и результаты перейдут в аккаунт и сохранятся надолго.'
+                : mode === 'login'
+                  ? 'Продолжите работу с проектами.'
+                  : 'Создайте учётную запись для своих проектов.'}
             </p>
+            {user?.role === 'guest' && (
+              <Link className="mb-4 block text-sm text-signal" to={back?.from ?? '/projects'}>
+                Продолжить без регистрации
+              </Link>
+            )}
             <Tabs value={mode} onValueChange={(v) => switchMode(v as Mode)}>
               <TabsList className="mb-5 h-11! w-full">
                 <TabsTrigger value="login">Вход</TabsTrigger>

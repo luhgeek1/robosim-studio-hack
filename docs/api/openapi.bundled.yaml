@@ -150,6 +150,44 @@ paths:
                 type: string
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/v1/auth/guest:
+    post:
+      tags:
+        - auth
+      operationId: startGuestSession
+      summary: Начать гостевую сессию на 24 часа
+      description: Обычные проекты и API, изолированные по владельцу. До 10 сессий в час на IP. Данные удаляются через 24 часа; фоновая очистка раз в минуту. Access-токен в памяти, refresh в httpOnly-cookie для web. Продление не сдвигает срок удаления.
+      security: []
+      parameters:
+        - name: X-Client
+          in: header
+          required: true
+          schema:
+            type: string
+            enum:
+              - web
+              - mobile
+      responses:
+        '200':
+          description: Временная сессия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - auth
+      operationId: resetGuestSession
+      summary: Удалить все данные текущего гостя
+      responses:
+        '204':
+          description: Гостевые проекты, файлы, задачи и сессия удалены
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/v1/auth/register:
     post:
       tags:
@@ -184,6 +222,7 @@ paths:
         - auth
       operationId: login
       summary: Вход
+      description: X-Keep-Guest-CSRF с CSRF-токеном текущей гостевой cookie переносит все временные проекты и результаты в аккаунт. Дождитесь завершения фоновых задач перед переносом.
       security: []
       parameters:
         - $ref: '#/components/parameters/XClient'
@@ -202,6 +241,8 @@ paths:
                 $ref: '#/components/schemas/TokenPair'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationError'
         '429':
@@ -5772,6 +5813,12 @@ components:
         is_active:
           type: boolean
           default: true
+        guest_expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Срок удаления гостевого пространства; null для аккаунтов
     Organization:
       type: object
       description: Организация глазами текущего пользователя — с его ролью.
@@ -6219,35 +6266,9 @@ components:
         - done
         - failed
         - cancelled
-    RegisterRequest:
-      type: object
-      required:
-        - email
-        - password
-        - name
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          minLength: 8
-          maxLength: 128
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        organization:
-          type:
-            - string
-            - 'null'
-        position:
-          type:
-            - string
-            - 'null'
     Role:
       type: string
-      description: guest — без токена (каталог и демо); user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
+      description: guest — временная сессия с проектами на 24 часа; user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
       enum:
         - guest
         - user
@@ -6275,6 +6296,32 @@ components:
           description: Секунд до истечения access-токена
         user:
           $ref: '#/components/schemas/User'
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        organization:
+          type:
+            - string
+            - 'null'
+        position:
+          type:
+            - string
+            - 'null'
     LoginRequest:
       type: object
       required:
@@ -11050,18 +11097,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Problem'
-    Conflict:
-      description: Конфликт состояния
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    ValidationError:
-      description: Ошибка валидации запроса
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
     RateLimited:
       description: Слишком много запросов
       content:
@@ -11076,6 +11111,18 @@ components:
             $ref: '#/components/schemas/Problem'
     Forbidden:
       description: Недостаточно прав или чужой проект
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Конфликт состояния
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ValidationError:
+      description: Ошибка валидации запроса
       content:
         application/json:
           schema:

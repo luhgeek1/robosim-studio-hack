@@ -1,132 +1,99 @@
-import { useEffect, useState } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router'
-import { useDemo, useDemoWhatIf, type DemoChanges, type DemoSnapshot } from '@/entities/demo/api'
-import { demoStep, demoUrl } from '@/entities/demo/navigation'
-import { useDemoWorkspace } from '@/entities/demo/workspace'
-import { problemText } from '@/shared/api/problem'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { DEMO_PROJECTS } from '@/entities/demo/navigation'
+import { projectApi } from '@/entities/project/api'
+import { useSession } from '@/entities/session'
+import { CreateProjectDialog } from '@/features/project-create'
 import { Button } from '@/shared/ui/button'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
-import { GuestScreen } from './GuestScreen'
-import { ObjectStep } from './ObjectStep'
-import { Decision } from './Decision'
-import { Simulation } from './Simulation'
-import { Report } from './Report'
-import type { FleetCheckState } from './FleetCheck'
-import { INITIAL } from './defaults'
 
-export function DemoPage() {
-  const { demoKey } = useParams()
-  const activeKey = useDemoWorkspace((s) => s.activeKey)
-  const activeStep = useDemoWorkspace((s) => s.steps[s.activeKey] ?? 'object')
-  const snapshot = useDemo(demoKey ?? activeKey)
-  useEffect(() => {
-    const previous = document.title
-    document.title = 'Демо-проект — РобоМера'
-    return () => {
-      document.title = previous
-    }
-  }, [])
-  if (!demoKey) return <Navigate to={demoUrl(activeKey, activeStep)} replace />
-  return (
-    <div className="flex min-h-0 flex-1 flex-col px-4 pt-5 sm:px-6">
-      {snapshot.isError ? (
-        <GuestScreen title="Демонстрационный проект">
-          <ErrorBlock error={snapshot.error} onRetry={() => snapshot.refetch()} />
-        </GuestScreen>
-      ) : !snapshot.data || 'status' in snapshot.data ? (
-        <GuestScreen title="Демонстрационный проект">
-          <div className="card p-6">
-            <LoadingBlock
-              label={
-                snapshot.data && 'status' in snapshot.data && snapshot.data.status === 'failed'
-                  ? 'Пример пока не готов'
-                  : 'Готовим объект, подбор и расчёт…'
-              }
-            />
-            <p className="mt-3 text-[13px] text-ink-3">После подготовки пример откроется автоматически.</p>
-            <Button variant="outline" className="mt-4" onClick={() => void snapshot.refetch()}>
-              Проверить готовность
-            </Button>
-          </div>
-        </GuestScreen>
-      ) : (
-        <Journey key={`${demoKey}:${snapshot.data.revision}`} demo={snapshot.data} />
-      )}
-    </div>
-  )
+const DESTINATION: Record<string, string> = {
+  decision: 'matching',
+  evidence: 'matching',
+  simulation: 'simulation',
+  report: 'report',
 }
 
-function Journey({ demo }: { demo: DemoSnapshot }) {
-  const [search] = useSearchParams()
-  const step = demoStep(search.get('step'))
-  const [changes, setChanges] = useState<DemoChanges>(INITIAL)
-  const [applied, setApplied] = useState<DemoChanges>(INITIAL)
+export function DemoPage() {
+  const { status, user, startGuest } = useSession()
+  const { demoKey } = useParams()
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
+  const [error, setError] = useState<unknown>(null)
+  const starting = useRef(false)
+  const creating = useRef(false)
+  const [ownOpen, setOwnOpen] = useState(params.get('new') === '1')
   useEffect(() => {
-    const timer = setTimeout(() => setApplied(changes), 350)
-    return () => clearTimeout(timer)
-  }, [changes])
-  const formula = useDemoWhatIf(demo, { ...applied, fleet_source: 'formula' }, true)
-  const simulation = useDemoWhatIf(demo, applied, applied.fleet_source === 'simulation')
-  const result = applied.fleet_source === 'simulation' ? simulation : formula
-  const pending = JSON.stringify(changes) !== JSON.stringify(applied) || result.isFetching || formula.isFetching
-  const retry = () => {
-    void formula.refetch()
-    if (applied.fleet_source === 'simulation') void simulation.refetch()
-  }
-  const update = (next: DemoChanges) =>
-    setChanges({ ...next, fleet_source: (next.volume_multiplier ?? 1) !== 1 ? 'formula' : next.fleet_source })
-  const fleet: FleetCheckState = {
-    formula: formula.data?.calculation,
-    current: result.data?.calculation,
-    applied:
-      changes.fleet_source === 'simulation' &&
-      applied.fleet_source === 'simulation' &&
-      !!result.data?.simulation_valid &&
-      !result.isPlaceholderData &&
-      !result.isError,
-    busy: pending,
-    changedVolume: (changes.volume_multiplier ?? 1) !== 1,
-    error: result.isError ? problemText(result.error) : formula.isError ? problemText(formula.error) : null,
-    onApply: () => {
-      if (result.isError || formula.isError) retry()
-      else if (applied.fleet_source === 'simulation') void result.refetch()
-      else update({ ...changes, fleet_source: 'simulation' })
-    },
-    onUseFormula: () => update({ ...changes, fleet_source: 'formula' }),
-    onResetVolume: () => update({ ...changes, volume_multiplier: 1, fleet_source: 'formula' }),
+    if (status === 'restoring' || user || starting.current) return
+    starting.current = true
+    startGuest()
+      .catch(setError)
+      .finally(() => {
+        starting.current = false
+      })
+  }, [status, user, startGuest])
+  useEffect(() => {
+    if (!demoKey || !user || creating.current) return
+    const demo = DEMO_PROJECTS.find((item) => item.key === demoKey)
+    if (!demo) return
+    creating.current = true
+    projectApi
+      .create({ name: demo.label, object_type: demo.objectType, init: { mode: 'demo', demo_key: demo.key } })
+      .then((project) =>
+        navigate(`/projects/${project.id}/${DESTINATION[params.get('step') ?? ''] ?? 'object'}`, { replace: true }),
+      )
+      .catch(setError)
+  }, [demoKey, user, params, navigate])
+  if (error) return <ErrorBlock error={error} onRetry={() => window.location.reload()} />
+  if (status === 'restoring' || !user || (demoKey && DEMO_PROJECTS.some((item) => item.key === demoKey))) {
+    return <LoadingBlock className="p-8" label="Готовим ваше пространство…" />
   }
   return (
-    <>
-      {step === 'object' && <ObjectStep demo={demo} value={changes} onChange={update} />}
-      {step === 'decision' &&
-        (result.data ? (
-          <Decision
-            demo={demo}
-            current={result.data.calculation}
-            result={result.data}
-            pending={pending}
-            failed={fleet.error}
-            value={changes}
-            onChange={update}
-            onRetry={retry}
-            fleet={fleet}
-          />
-        ) : (
-          <GuestScreen title="Подбор роботов и расчёт эффекта">
-            {result.isError ? (
-              <ErrorBlock error={result.error} onRetry={retry} />
-            ) : (
-              <LoadingBlock label="Считаем исходный парк по формуле…" />
-            )}
-          </GuestScreen>
+    <div className="mx-auto w-full max-w-275 space-y-6 px-4 py-10 sm:px-6">
+      <div>
+        <h1 className="display text-4xl">Попробуйте РобоМеру без регистрации</h1>
+        <p className="mt-3 max-w-3xl text-ink-3">
+          Откройте готовый объект или создайте свой. Параметры, подбор, планировка, экономика, сценарии, сравнение,
+          риски, имитация в 2D и 3D и отчёты доступны в обычном интерфейсе.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {DEMO_PROJECTS.map((demo) => (
+          <Link className="card block p-5 hover:bg-surface-2" key={demo.key} to={`/demo/${demo.key}`}>
+            <span className="font-semibold">{demo.label}</span>
+            <span className="mt-2 block text-sm text-ink-3">Открыть независимую копию →</span>
+          </Link>
         ))}
-      {step === 'simulation' && <Simulation demo={demo} fleet={fleet} />}
-      {step === 'report' && (
-        <Report
-          demo={demo}
-          changed={JSON.stringify({ ...changes, fleet_source: 'formula' }) !== JSON.stringify(INITIAL)}
-        />
-      )}
-    </>
+      </div>
+      <CreateProjectDialog
+        initialMode="blank"
+        open={ownOpen}
+        onOpenChange={setOwnOpen}
+        trigger={<Button>Создать свой проект</Button>}
+      />
+      <p className="text-sm text-ink-3">
+        Excel, CSV и JSON до 5 МБ или ручной ввод. Временные данные удаляются через 24 часа. Регистрация понадобится для
+        сохранения надолго и совместной работы.
+      </p>
+      <details id="demo-limits" className="card p-4 text-sm text-ink-3">
+        <summary className="cursor-pointer font-medium text-ink">Лимиты гостевого пространства</summary>
+        <p className="mt-3">
+          До 10 проектов, 30 сценариев, 100 фоновых задач и 100 МБ файлов за сессию. Одновременно выполняются две
+          задачи; можно запускать до 12 расчётов в минуту. До 10 новых сессий в час с одного IP.
+        </p>
+        <p className="mt-2">
+          Имитация — до 24 часов, 100 роботов и 100 000 операций. Монте-Карло — до 1000 прогонов. Планировка — до 3000
+          узлов и 6000 проездов; заданный вручную диапазон перебора — до 20 вариантов. Генератор: площадь до 200 000 м²,
+          ёмкость до 100 000 паллетомест; для более крупных объектов уменьшите параметры.
+        </p>
+        <p className="mt-2">
+          Файлы — до 5 МБ. Excel: до 20 листов, 10 000 строк, 100 столбцов и 100 000 ячеек суммарно; распакованный объём
+          до 25 МБ. CSV и JSON — до 10 000 строк или полей.
+        </p>
+      </details>
+      <Button asChild variant="outline">
+        <Link to="/projects">Мои временные проекты</Link>
+      </Button>
+    </div>
   )
 }

@@ -13,8 +13,8 @@ from app.api.schemas.analysis import (
     SensitivityResult,
     SurveyPriorities,
 )
-from app.core.errors import ConflictError
-from app.domain.auth import CurrentUser, Permission
+from app.core.errors import ConflictError, InvalidInputError
+from app.domain.auth import CurrentUser, Permission, Role
 from app.service.scenarios.analysis import AnalysisService
 from app.service.scenarios.calculations import CalculationService
 from app.service.scenarios.narrative import narrative
@@ -35,6 +35,8 @@ async def run_sensitivity(
     scenario_id: ScenarioIdPath, user: OwnerDep, uow: UowDep, payload: SensitivityRequest | None = None
 ) -> SensitivityResult:
     request = payload or SensitivityRequest()
+    if user.role == Role.GUEST and len(request.parameters) > 30:
+        raise InvalidInputError("Лимит демо: до 30 параметров чувствительности")
     heat = (request.heatmap.x_key, request.heatmap.y_key, request.heatmap.steps) if request.heatmap else None
     view = await AnalysisService(uow, user).sensitivity(
         scenario_id, request.metric, [p.to_domain() for p in request.parameters], heat
@@ -52,6 +54,12 @@ async def run_monte_carlo(
     scenario_id: ScenarioIdPath, user: OwnerDep, uow: UowDep, payload: MonteCarloRequest | None = None
 ) -> MonteCarloResult:
     request = payload or MonteCarloRequest()
+    if user.role == Role.GUEST:
+        if request.n is not None and request.n > 1000:
+            raise InvalidInputError("Лимит демо: до 1000 прогонов Монте-Карло")
+        if len(request.distributions) > 30:
+            raise InvalidInputError("Лимит демо: до 30 распределений")
+        request.n = request.n or 1000
     if request.method != "analytic":
         raise ConflictError("Методы surrogate и des появятся вместе с имитацией; сейчас доступен analytic")
     outcome = await AnalysisService(uow, user).monte_carlo(

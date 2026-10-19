@@ -26,10 +26,12 @@ const OBJECT_TYPE_ICON = { warehouse: Warehouse, airport: Plane, hospital: Heart
 
 export function CreateProjectDialog({
   trigger,
+  initialMode = 'demo',
   open: controlledOpen,
   onOpenChange,
 }: {
   trigger: ReactNode
+  initialMode?: InitMode
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
@@ -44,7 +46,7 @@ export function CreateProjectDialog({
   const create = useCreateProject()
   const workspace = useWorkspace()
   const [objectType, setObjectType] = useState<ObjectTypeKey>('warehouse')
-  const [preferredMode, setMode] = useState<InitMode>('demo')
+  const [preferredMode, setMode] = useState<InitMode>(initialMode)
   const [name, setName] = useState('')
   const [demoKey, setDemoKey] = useState<string | null>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
@@ -115,9 +117,7 @@ export function CreateProjectDialog({
                 })}
               </div>
               {selected && (
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  {selected.depth === 'full' ? 'Расчёт, планировка и имитация' : 'Параметры, подбор и экономика'}
-                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">Расчёт, планировка и имитация</p>
               )}
             </fieldset>
 
@@ -161,7 +161,7 @@ export function CreateProjectDialog({
                 </details>
               ) : (
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Начните со значений по умолчанию, заполните параметры вручную или импортируйте Excel.
+                  Начните со значений по умолчанию, заполните параметры вручную или импортируйте Excel, CSV или JSON.
                 </p>
               )}
             </fieldset>

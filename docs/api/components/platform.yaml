@@ -5,7 +5,7 @@
 
 Role:
   type: string
-  description: guest — без токена (каталог и демо); user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
+  description: guest — временная сессия с проектами на 24 часа; user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
   enum: [guest, user, admin, vendor]
 
 User:
@@ -22,6 +22,7 @@ User:
     created_at: {type: string, format: date-time}
     last_login_at: {type: [string, "null"], format: date-time}
     is_active: {type: boolean, default: true}
+    guest_expires_at: {type: [string, "null"], format: date-time, description: "Срок удаления гостевого пространства; null для аккаунтов"}
 
 RegisterRequest:
   type: object
