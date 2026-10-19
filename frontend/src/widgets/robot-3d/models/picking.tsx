@@ -1,7 +1,7 @@
 import { RoundedBox } from '@react-three/drei'
 import { useRef, type RefObject } from 'react'
 import * as THREE from 'three'
-import { useTick } from '../kit'
+import { useTick } from '../animation'
 
 // «Световой отбор» from the robot-lab tab, carried over as approved: same blocks, colours and cycle.
 

@@ -1,104 +1,10 @@
+import { useTick, type Drive } from './animation'
+import { paint, M, useGlow } from './materials'
 import { Environment, Lightformer, PerspectiveCamera } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode, type RefObject } from 'react'
 import * as THREE from 'three'
 import { useGallery, type DragState } from './store'
-
-/* ---------- timing ---------- */
-
-export const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x)
-export const ease = (x: number) => {
-  const c = clamp01(x)
-  return c * c * (3 - 2 * c)
-}
-/** Eased 0 → 1 progress of `t` through the window [a, b]. */
-export const seg = (t: number, a: number, b: number) => ease((t - a) / (b - a))
-/** 0 → 1 → 0 bump: up during [a, b], down during [c, d]. */
-export const hold = (t: number, a: number, b: number, c: number, d: number) => seg(t, a, b) - seg(t, c, d)
-
-/** Local animation clock that stops while the gallery is paused; `dt` is 0 on paused frames. */
-export function useTick(cb: (t: number, dt: number) => void) {
-  const t = useRef(0)
-  useFrame((_, delta) => {
-    const dt = useGallery.getState().paused ? 0 : Math.min(delta, 0.05) * useGallery.getState().speed
-    t.current += dt
-    cb(t.current, dt)
-  })
-}
-
-/** Distance driven by a robot: the lane scrolls and the wheels roll from the same odometer. */
-export type Drive = { speed: number; odo: number }
-export function useDrive(): RefObject<Drive> {
-  return useRef<Drive>({ speed: 0, odo: 0 })
-}
-
-/* ---------- materials ---------- */
-
-const cache = new Map<string, THREE.Material>()
-function cached<T extends THREE.Material>(key: string, make: () => T): T {
-  let m = cache.get(key)
-  if (!m) {
-    m = make()
-    cache.set(key, m)
-  }
-  return m as T
-}
-
-export const paint = (color: string, roughness = 0.42, metalness = 0.05, clearcoat = 0.5) =>
-  cached(
-    `p:${color}:${roughness}:${metalness}:${clearcoat}`,
-    () => new THREE.MeshPhysicalMaterial({ color, roughness, metalness, clearcoat, clearcoatRoughness: 0.35 }),
-  )
-
-export const M = {
-  get shell() {
-    return paint('#f5f6f8', 0.32, 0.02, 0.8)
-  },
-  get shell2() {
-    return paint('#dde2e7', 0.45, 0.05, 0.4)
-  },
-  get dark() {
-    return paint('#2a3037', 0.55, 0.15, 0.2)
-  },
-  get rubber() {
-    return paint('#1b1e22', 0.85, 0, 0)
-  },
-  get steel() {
-    return paint('#aeb6bf', 0.3, 0.75, 0)
-  },
-  get chrome() {
-    return paint('#dfe4ea', 0.15, 0.95, 0)
-  },
-  get glass() {
-    return cached(
-      'glass-dark',
-      () => new THREE.MeshPhysicalMaterial({ color: '#15191e', roughness: 0.08, metalness: 0.2, clearcoat: 1 }),
-    )
-  },
-  get wood() {
-    return paint('#c8a06c', 0.85, 0, 0)
-  },
-  get carton() {
-    return paint('#d6b27f', 0.8, 0, 0)
-  },
-  get tape() {
-    return paint('#e9d2a8', 0.6, 0, 0)
-  },
-  get rackBlue() {
-    return paint('#3d5a86', 0.5, 0.35, 0.2)
-  },
-  get beamOrange() {
-    return paint('#e38b3a', 0.45, 0.2, 0.3)
-  },
-}
-
-/** Emissive material owned by one component, so its glow can pulse independently. */
-export function useGlow(color: string, intensity = 1.6) {
-  return useMemo(
-    () => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, roughness: 0.4 }),
-    [color, intensity],
-  )
-}
 
 /* ---------- textures (generated, nothing is fetched) ---------- */
 
@@ -588,12 +494,4 @@ export function Scroller({
       )}
     </>
   )
-}
-
-/** Planar two-link IK: shoulder and elbow angles that put the wrist at (r, y) from the shoulder; elbow up. */
-export function ik2(r: number, y: number, a: number, b: number) {
-  const d = Math.min(Math.hypot(r, y), a + b - 1e-3)
-  const e = Math.acos(Math.max(-1, Math.min(1, (d * d - a * a - b * b) / (2 * a * b))))
-  const s = Math.atan2(y, r) + Math.atan2(b * Math.sin(e), a + b * Math.cos(e))
-  return { s, e }
 }

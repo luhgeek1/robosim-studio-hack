@@ -1,21 +1,9 @@
 import { RoundedBox } from '@react-three/drei'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import {
-  Beacon,
-  BlobShadow,
-  FadeDisc,
-  LedStrip,
-  Lidar,
-  M,
-  Scroller,
-  Wheel,
-  paint,
-  seg,
-  useDrive,
-  useGlow,
-  useTick,
-} from '../kit'
+import { Beacon, BlobShadow, FadeDisc, LedStrip, Lidar, Scroller, Wheel } from '../kit'
+import { M, paint, useGlow } from '../materials'
+import { seg, useDrive, useTick } from '../animation'
 import { mm, type ModelProps } from '../types'
 
 type G = THREE.Group
