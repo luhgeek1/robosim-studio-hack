@@ -75,8 +75,10 @@ docker compose up -d --build
 
 ## Автодеплой на Fly.io
 
-Push в `main` запускает `.github/workflows/deploy.yml`: после успешного `make check` сначала приложение `robomera-api` (API и воркер arq),
-затем `robomera` (фронтенд). Перед обновлением API выполняется `alembic upgrade head`; ошибка миграции останавливает
+Push в `main` запускает `.github/workflows/deploy.yml`: backend (`make check`) и frontend (`npm run check`) проверяются
+параллельно. Выкладка ждёт успеха обеих проверок: сначала `robomera-api` (API и воркер arq), затем `robomera` (фронтенд).
+Загрузки npm кешируются по `frontend/package-lock.json`; установка всегда выполняется через `npm ci`.
+Перед обновлением API выполняется `alembic upgrade head`; ошибка миграции останавливает
 выкладку. Сборка обоих образов идёт из корня репозитория на удалённом сборщике Fly.io. Запуски выполняются по очереди.
 Изменения только Markdown и `docs/` не запускают деплой; файлы `case/dataset/` и `research/` входят в образ API.
 Ручной запуск — Actions → deploy → Run workflow, ветка `main`.

@@ -29,17 +29,28 @@ jobs:
           version: 0.11.8
       - name: Run backend and API contract checks
         run: make check
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs --tail 60 db redis
+
+  frontend-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - name: Check frontend types, lint, formatting and production build
         working-directory: frontend
         run: |
           npm ci --no-audit --no-fund
           npm run check
-      - name: Show service logs on failure
-        if: failure()
-        run: docker compose logs --tail 60 db redis
 
   deploy:
-    needs: check
+    needs: [check, frontend-check]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
