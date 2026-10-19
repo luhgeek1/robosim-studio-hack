@@ -1,0 +1,648 @@
+.cinema-section-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 50px;
+  margin-bottom: 70px;
+}
+.cinema-section-top h2,
+.cinema-report h2,
+.cinema-faq h2 {
+  font-size: clamp(38px, 4.5vw, 66px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+.cinema-section-top h2 em,
+.cinema-report h2 em {
+  color: #858b77;
+  font-style: normal;
+}
+.cinema-section-top > p {
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 350px;
+}
+.cinema-industries {
+  padding: 110px 7vw;
+  background: #f3f0e7;
+}
+.cinema-industry-layout {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 70px;
+}
+.cinema-object-menu {
+  padding-top: 15px;
+}
+.cinema-object-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+  gap: 25px;
+  padding: 25px 0;
+  border-bottom: 1px solid #c7c9ba;
+  text-align: left;
+  cursor: pointer;
+  color: #8b9081;
+  transition: color 200ms;
+}
+.cinema-object-menu button span {
+  font-size: clamp(28px, 3.7vw, 55px);
+  letter-spacing: -0.04em;
+}
+.cinema-object-menu button svg {
+  width: 38px;
+  height: 38px;
+  opacity: 0;
+  transform: translate(-10px, 10px);
+  transition:
+    opacity 220ms,
+    transform 220ms;
+}
+.cinema-object-menu button[aria-selected='true'] {
+  color: #cf4b2a;
+}
+.cinema-object-menu button[aria-selected='true'] svg {
+  opacity: 1;
+  transform: none;
+}
+.cinema-object-menu button:hover {
+  color: #cf4b2a;
+}
+.cinema-object-promise {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.8;
+  padding-top: 55px;
+  color: #737a68;
+}
+.cinema-object-panel {
+  background: #e5e4d9;
+}
+.cinema-blueprint {
+  height: 290px;
+  position: relative;
+  color: #c9d0b6;
+  background: #20342c;
+  overflow: hidden;
+}
+.cinema-blueprint[data-object='1'] {
+  background: #334b46;
+  color: #e2ead7;
+}
+.cinema-blueprint[data-object='2'] {
+  background: #2c3941;
+  color: #dce4dd;
+}
+.cinema-blueprint svg {
+  width: 100%;
+  height: 100%;
+  padding-top: 10px;
+}
+.cinema-map-path {
+  stroke-dasharray: 1500;
+  stroke-dashoffset: 0;
+  animation: cinema-trace 1.5s ease-out both;
+}
+.cinema-map-label {
+  position: absolute;
+  top: 16px;
+  left: 26px;
+  font-size: 10px;
+  color: #d4ddc7;
+}
+.cinema-object-description {
+  padding: 30px 32px 28px;
+}
+.cinema-object-description h3 {
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  margin: 0 0 15px;
+}
+.cinema-object-description p {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  max-width: 460px;
+}
+.cinema-object-description > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 30px;
+}
+.cinema-object-description > div span {
+  font-size: 10px;
+  padding: 6px 9px;
+  border: 1px solid #b6bdab;
+}
+.cinema-object-description > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #b6bdab;
+  padding-top: 17px;
+  font-size: 13px;
+}
+.cinema-object-description > a:hover {
+  color: #bd3e1d;
+}
+.cinema-finance {
+  padding: 110px 7vw 120px;
+  background: #20271f;
+  color: #f0efe3;
+}
+.cinema-finance .cinema-section-top h2 em {
+  color: #b1bca1;
+}
+.cinema-finance .cinema-section-top p {
+  color: #bac2b1;
+}
+.cinema-finance-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7vw;
+}
+.cinema-finance-options > div {
+  border-top: 1px solid #505848;
+}
+.cinema-finance-options > div:last-child {
+  border-bottom: 1px solid #505848;
+}
+.cinema-finance-options button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 0;
+  font-size: 25px;
+  color: #b4bdab;
+  cursor: pointer;
+}
+.cinema-finance-options button svg {
+  transition: transform 240ms;
+}
+.cinema-finance-options .is-selected button {
+  color: #d5e5ad;
+}
+.cinema-finance-options .is-selected button svg {
+  transform: rotate(45deg);
+}
+.cinema-finance-options h3 {
+  font-size: 17px;
+  font-weight: 500;
+  margin: 0 0 15px;
+}
+.cinema-finance-options p {
+  max-width: 420px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #b4bdab;
+  margin-bottom: 22px;
+}
+.cinema-finance-options ul {
+  padding: 0 0 25px;
+  margin: 0;
+  list-style: none;
+}
+.cinema-finance-options li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  padding: 5px 0;
+  color: #d1d8c5;
+}
+.cinema-finance-options li svg {
+  color: #b5da82;
+}
+.cinema-finance-visual {
+  position: relative;
+  background: #d8ddc8;
+  color: #20271f;
+  min-height: 490px;
+  padding: 30px 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.cinema-finance-note {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 7px;
+}
+.cinema-finance-note span {
+  font-size: 11px;
+}
+.cinema-finance-note strong {
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.cinema-finance-word {
+  position: absolute;
+  top: 61%;
+  left: 28px;
+  font-size: clamp(30px, 3.4vw, 52px);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  animation: cinema-word 400ms ease-out;
+}
+.cinema-finance-visual > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  border-top: 1px solid #8a947c;
+  padding-top: 16px;
+  position: relative;
+}
+.cinema-finance-disc {
+  position: absolute;
+  top: 10%;
+  right: -10%;
+  width: 76%;
+  height: 55%;
+  transform: rotate(-22deg);
+}
+.cinema-finance-disc div {
+  position: absolute;
+  width: 100%;
+  height: 70%;
+  border-radius: 50%;
+  background: #a3b390;
+  box-shadow:
+    0 14px 0 #657b55,
+    0 26px 35px #263e2433;
+  border-top: 2px solid #d1ddbf;
+}
+.cinema-finance-disc div:nth-child(1) {
+  top: 28%;
+  background: #eb6b3b;
+  box-shadow:
+    0 14px 0 #b94a29,
+    0 26px 35px #263e2433;
+  border-color: #ee8a62;
+}
+.cinema-finance-disc div:nth-child(2) {
+  top: 3%;
+  left: 0;
+  transform: scale(0.9);
+}
+.cinema-finance-disc div:nth-child(3) {
+  top: -22%;
+  transform: scale(0.75);
+  background: #d9e3c7;
+  box-shadow:
+    0 14px 0 #8fa37a,
+    0 26px 35px #263e2433;
+}
+.cinema-report {
+  background: #eeeadf;
+  padding: 100px 7vw;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  align-items: center;
+  min-height: 790px;
+  overflow: hidden;
+}
+.cinema-report-copy > p {
+  font-size: 16px;
+  line-height: 1.8;
+  max-width: 420px;
+  margin: 30px 0;
+}
+.cinema-report-formats {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  margin-bottom: 30px;
+}
+.cinema-report-formats span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cinema-report-art {
+  position: relative;
+  min-height: 565px;
+  perspective: 1100px;
+}
+.cinema-report-sheet {
+  position: absolute;
+  width: 330px;
+  height: 455px;
+  left: 50%;
+  top: 45%;
+  margin-left: -180px;
+  margin-top: -210px;
+  padding: 30px;
+  background: #faf9f2;
+  box-shadow: 0 25px 50px #323b2426;
+}
+.cinema-report-sheet-back {
+  transform: translate(75px, 15px) rotate(13deg);
+  background: #dee3d1;
+}
+.cinema-report-sheet-back > span {
+  font-size: 16px;
+  font-weight: 500;
+}
+.cinema-report-sheet-back small {
+  font-size: 10px;
+}
+.cinema-report-table {
+  margin: 45px 0 55px;
+}
+.cinema-report-table > div {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 5px;
+  border-bottom: 1px solid #b9c0ad;
+  padding: 10px 0;
+  font-size: 9px;
+}
+.cinema-report-table > div span:not(:first-child) {
+  width: 75%;
+  height: 3px;
+  align-self: center;
+  background: #a1ad94;
+}
+.cinema-report-sheet-front {
+  transform: rotate(-8deg);
+}
+.cinema-report-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.cinema-report-brand svg {
+  color: #cf4b2a;
+}
+.cinema-report-sheet-front h3 {
+  font-size: 34px;
+  line-height: 1.07;
+  letter-spacing: -0.035em;
+  font-weight: 500;
+  margin: 39px 0 25px;
+}
+.cinema-report-sheet-front h3 em {
+  font-style: normal;
+  color: #cf4b2a;
+}
+.cinema-report-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 9px;
+}
+.cinema-report-bottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  border-top: 1px solid #c8cebc;
+  padding-top: 15px;
+  margin-top: 27px;
+  align-items: center;
+}
+.cinema-report-caption {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 10px;
+  color: #717866;
+}
+.cinema-faq {
+  padding: 80px 7vw 115px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7vw;
+  background: #eeeadf;
+}
+.cinema-faq h2 {
+  font-size: 45px;
+}
+.cinema-faq details {
+  border-top: 1px solid #bdc2b1;
+}
+.cinema-faq details:last-child {
+  border-bottom: 1px solid #bdc2b1;
+}
+.cinema-faq summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 23px 0;
+  font-size: 15px;
+}
+.cinema-faq summary::-webkit-details-marker {
+  display: none;
+}
+.cinema-faq summary svg {
+  flex-shrink: 0;
+  transition: transform 200ms;
+}
+.cinema-faq details[open] summary svg {
+  transform: rotate(45deg);
+}
+.cinema-faq details p {
+  margin: 0 35px 25px 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #626c56;
+}
+.cinema-closing {
+  position: relative;
+  overflow: hidden;
+}
+.cinema-closing h2 {
+  position: relative;
+}
+.cinema-closing h2 em {
+  font-style: normal;
+  border-bottom: 1px solid #f9e2c8;
+}
+.cinema-closing-actions {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+  flex-wrap: wrap;
+  position: relative;
+}
+.cinema-closing > p {
+  font-size: 12px;
+  margin-top: 55px;
+  position: relative;
+}
+.cinema-closing-orbit {
+  position: absolute;
+  right: -6%;
+  top: -50%;
+  width: 60vw;
+  color: #6b29171c;
+  transform: rotate(20deg);
+}
+.cinema-closing-orbit svg {
+  width: 100%;
+  height: auto;
+}
+@keyframes cinema-trace {
+  from {
+    stroke-dashoffset: 1500;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes cinema-word {
+  from {
+    transform: translateY(14px);
+    opacity: 0.3;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (max-width: 1000px) {
+  .cinema-industry-layout,
+  .cinema-finance-layout,
+  .cinema-report,
+  .cinema-faq {
+    gap: 35px;
+  }
+  .cinema-report-art {
+    transform: scale(0.83);
+    transform-origin: center;
+    margin: 0 -30px;
+  }
+  .cinema-section-top > p {
+    max-width: 280px;
+    font-size: 13px;
+  }
+}
+@media (max-width: 700px) {
+  .cinema-industries,
+  .cinema-finance {
+    padding: 65px 24px;
+  }
+  .cinema-section-top {
+    display: block;
+    margin-bottom: 30px;
+  }
+  .cinema-section-top h2 {
+    font-size: 38px;
+  }
+  .cinema-section-top > p {
+    margin-top: 25px;
+    max-width: none;
+    font-size: 14px;
+  }
+  .cinema-industry-layout,
+  .cinema-finance-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .cinema-object-menu {
+    display: flex;
+    padding: 0;
+    gap: 0;
+  }
+  .cinema-object-menu button {
+    width: auto;
+    flex: 1;
+    padding: 14px 4px;
+    justify-content: center;
+  }
+  .cinema-object-menu button span {
+    font-size: 17px;
+    letter-spacing: -0.03em;
+  }
+  .cinema-object-menu button svg,
+  .cinema-object-promise {
+    display: none;
+  }
+  .cinema-object-menu button[aria-selected='true'] {
+    border-color: #cf4b2a;
+  }
+  .cinema-blueprint {
+    height: 225px;
+  }
+  .cinema-object-description {
+    padding: 24px;
+  }
+  .cinema-object-description h3 {
+    font-size: 23px;
+  }
+  .cinema-object-description p {
+    font-size: 13px;
+  }
+  .cinema-finance-visual {
+    min-height: 370px;
+    padding: 25px;
+  }
+  .cinema-finance-word {
+    font-size: 38px;
+  }
+  .cinema-finance-options button {
+    padding: 20px 0;
+    font-size: 24px;
+  }
+  .cinema-report {
+    grid-template-columns: 1fr;
+    padding: 70px 24px 25px;
+    gap: 0;
+  }
+  .cinema-report h2 {
+    font-size: 42px;
+  }
+  .cinema-report-copy > p {
+    font-size: 14px;
+  }
+  .cinema-report-art {
+    min-height: 510px;
+    transform: scale(0.8);
+    margin: 0 -20px;
+  }
+  .cinema-report-sheet {
+    width: 290px;
+    margin-left: -170px;
+  }
+  .cinema-report-caption {
+    bottom: -5px;
+    right: 12px;
+  }
+  .cinema-faq {
+    padding: 40px 24px 70px;
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .cinema-faq h2 {
+    font-size: 36px;
+  }
+  .cinema-faq summary {
+    font-size: 14px;
+  }
+  .cinema-closing-actions {
+    gap: 18px;
+  }
+  .cinema-closing-orbit {
+    width: 140vw;
+    right: -55%;
+    top: -10%;
+  }
+}
