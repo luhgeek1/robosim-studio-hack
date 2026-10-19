@@ -287,7 +287,7 @@ function Focus({ projectId, queue, params }: { projectId: string; queue: Item[];
           </Button>
         </span>
       </div>
-      <div className="relative overflow-hidden rounded-xl bg-surface-2 ring-1 ring-line">
+      <div className="relative overflow-hidden rounded-xl bg-canvas">
         <AnimatePresence initial={false} mode="popLayout" custom={direction}>
           <motion.div
             key={item.key}
@@ -343,7 +343,7 @@ function FocusCard({
   }
 
   return (
-    <div className="px-4 pt-4.5 pb-5 sm:px-5">
+    <div data-slot="focus-param-card" className="px-4 pt-5 pb-4 sm:px-5">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
         {impact && (
           <span className={cn('font-medium', item.impact === 'high' ? 'text-crit' : 'text-warn')}>{impact}</span>
@@ -364,7 +364,7 @@ function FocusCard({
 
       {textual ? (
         <form
-          className="mt-4 flex items-stretch gap-2"
+          className="mt-4 flex items-stretch gap-2.5"
           onSubmit={(event) => {
             event.preventDefault()
             void save()
@@ -389,10 +389,10 @@ function FocusCard({
                 if (error) setError(null)
               }}
               className={cn(
-                'h-12 w-full rounded-lg bg-card px-3.5 text-[17px] sm:px-4 shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-[15px] placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80',
+                'h-12 w-full rounded-lg border-0 bg-white px-3.5 text-[20px] font-medium caret-info transition-[background-color,box-shadow] outline-none placeholder:text-[15px] placeholder:font-normal placeholder:text-ink-4 focus:ring-2 focus:ring-info/25 disabled:opacity-60 sm:px-4 sm:text-[22px]',
                 type !== 'string' && 'num',
                 inlineUnit && 'pr-(--unit-pad)',
-                error && 'ring-crit',
+                error && 'bg-crit-soft/40 ring-1 ring-crit/40 focus:ring-crit/40',
               )}
             />
             {param.unit && (
@@ -408,14 +408,14 @@ function FocusCard({
           </label>
           <Button
             type="submit"
-            className="h-12 min-w-22 rounded-lg px-4 text-[14px] sm:min-w-28 sm:px-5"
+            className="h-12 min-w-20 rounded-lg border-0 px-4 text-[14px] shadow-none sm:min-w-24 sm:px-5"
             disabled={update.isPending || empty}
           >
             {update.isPending ? <Spinner /> : changed ? 'Сохранить' : 'Верно'}
           </Button>
         </form>
       ) : (
-        <div className="mt-4">
+        <div className="mt-4 [&_[data-slot=select-trigger]]:border-0 [&_[data-slot=select-trigger]]:bg-white [&_[role=group]]:border-0 [&_[role=group]]:bg-white">
           <ParamValueInput
             param={param}
             pending={update.isPending}
@@ -424,7 +424,7 @@ function FocusCard({
         </div>
       )}
 
-      <div className="mt-2.5 flex items-start justify-between gap-3 text-[12.5px]">
+      <div className="mt-2 flex items-center justify-between gap-3 text-[12.5px]">
         <span
           role={error ? 'alert' : undefined}
           className={cn('min-w-0 flex-1 leading-relaxed wrap-anywhere', error ? 'text-crit' : 'text-ink-3')}
@@ -441,7 +441,7 @@ function FocusCard({
         <button
           type="button"
           onClick={onNext}
-          className="shrink-0 font-medium text-ink-3 transition-colors hover:text-ink max-sm:-my-2 max-sm:py-2"
+          className="-my-1 -mr-1.5 inline-flex min-h-10 shrink-0 items-center rounded-md px-1.5 font-medium text-ink-3 transition-colors hover:bg-black/3 hover:text-ink focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none sm:min-h-8"
         >
           Пропустить
         </button>
