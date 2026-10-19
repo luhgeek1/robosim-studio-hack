@@ -27,7 +27,7 @@ export function DemoEvidence() {
     <section className="lab-evidence" aria-labelledby="evidence-title">
       <div className="lab-wrap">
         <div className="lab-section-label">
-          <span>01 / Расчёт, который можно проверить</span>
+          <span>Пример работы платформы</span>
           <span>Демонстрационный склад</span>
         </div>
         <div className="lab-evidence-heading">
@@ -37,8 +37,8 @@ export function DemoEvidence() {
             <em>решение.</em>
           </h2>
           <p>
-            Проверьте разницу между расчётом по формуле и парком после совместной проверки под нагрузкой. Здесь — данные
-            настоящего демо.
+            На одном демонстрационном складе — разница между формулой и проверкой под нагрузкой. Ваш результат будет
+            зависеть от собственной планировки, процессов и условий.
           </p>
         </div>
         <div className="lab-evidence-switch" role="group" aria-label="Источник расчёта парка">

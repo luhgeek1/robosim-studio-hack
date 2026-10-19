@@ -1,0 +1,581 @@
+.cinema-page {
+  --paper: #eeeae0;
+  --ink: #22271f;
+  --orange: #d64a28;
+  --scene-ink: #22271f;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Onest Variable', sans-serif;
+  overflow: clip;
+  font-synthesis: none;
+}
+.cinema-page ::selection {
+  background: #d64a28;
+  color: #fff8ec;
+}
+.cinema-page :focus-visible {
+  outline: 2px solid #d64a28;
+  outline-offset: 6px;
+}
+.cinema-page a {
+  text-decoration: none;
+}
+.cinema-page button,
+.cinema-page a {
+  -webkit-tap-highlight-color: transparent;
+}
+.cinema-skip {
+  position: fixed;
+  top: -80px;
+  left: 20px;
+  background: #fff;
+  padding: 12px;
+  z-index: 100;
+}
+.cinema-skip:focus {
+  top: 20px;
+}
+.cinema-header {
+  height: 104px;
+  padding: 0 4vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  gap: 28px;
+}
+.cinema-logo {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 29px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: inherit;
+}
+.cinema-logo svg {
+  width: 32px;
+  height: 32px;
+  color: #d64a28;
+}
+.cinema-logo > span {
+  font-size: 11px;
+  align-self: flex-start;
+  margin-top: 9px;
+  margin-left: -6px;
+}
+.cinema-header nav {
+  display: flex;
+  gap: 34px;
+  font-size: 13px;
+}
+.cinema-header nav a {
+  padding: 12px 0;
+  border-bottom: 1px solid transparent;
+  transition: border-color 180ms;
+}
+.cinema-header nav a:hover {
+  border-color: currentColor;
+}
+.cinema-header-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 28px;
+  border: 1px solid #8c8f80;
+  padding: 12px 18px;
+  font-size: 13px;
+}
+.cinema-story {
+  position: relative;
+  color: var(--scene-ink);
+}
+.cinema-stage {
+  height: 100svh;
+  min-height: 650px;
+  position: sticky;
+  top: 0;
+  background: #eeeae0;
+  overflow: hidden;
+}
+.cinema-scene {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 32%;
+  right: -2%;
+}
+.cinema-scene canvas {
+  touch-action: pan-y;
+}
+.cinema-poster {
+  position: absolute;
+  width: 90%;
+  height: 80%;
+  left: 5%;
+  top: 12%;
+  object-fit: contain;
+}
+.cinema-chapters {
+  position: relative;
+  margin-top: -100svh;
+  pointer-events: none;
+}
+.cinema-chapter {
+  min-height: 100svh;
+  padding: 21vh 4vw 15vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.cinema-chapter-copy {
+  max-width: 450px;
+  pointer-events: auto;
+}
+.cinema-chapter h1 {
+  font-size: clamp(68px, 6.8vw, 104px);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+  font-weight: 550;
+  margin: 0 0 30px;
+}
+.cinema-chapter h1 span {
+  display: block;
+}
+.cinema-chapter em {
+  font-style: normal;
+  color: #d64a28;
+}
+.cinema-chapter h2 {
+  font-size: clamp(44px, 4.5vw, 72px);
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  line-height: 1.04;
+  margin: 20px 0 28px;
+}
+.cinema-chapter p {
+  font-size: 18px;
+  line-height: 1.65;
+  max-width: 365px;
+  margin: 0 0 30px;
+}
+.cinema-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 45px;
+  background: #d64a28;
+  color: #fff9ec;
+  min-height: 62px;
+  padding: 16px 22px;
+  font-size: 15px;
+  border: 0;
+  transition:
+    background 180ms,
+    transform 180ms;
+}
+.cinema-button:hover {
+  background: #b9391b;
+  transform: translateY(-3px);
+}
+.cinema-button svg,
+.cinema-link svg {
+  transition: transform 220ms;
+}
+.cinema-button:hover svg,
+.cinema-link:hover svg {
+  transform: translate(3px, -3px);
+}
+.cinema-hero-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  margin-top: 15px;
+  opacity: 0.7;
+}
+.cinema-hero-side {
+  position: absolute;
+  right: 3vw;
+  top: 24%;
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  opacity: 0.6;
+}
+.cinema-scroll {
+  position: absolute;
+  bottom: 5vh;
+  left: 4vw;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  pointer-events: auto;
+}
+.cinema-scroll > span {
+  border: 1px solid #a0a18e;
+  border-radius: 50%;
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+}
+.cinema-stage-bottom {
+  position: absolute;
+  bottom: 5vh;
+  right: 7vw;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  font-size: 12px;
+  color: var(--scene-ink);
+}
+.cinema-stage-bottom small {
+  display: block;
+  opacity: 0.6;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.cinema-stage-bottom button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.cinema-stage-bottom button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cinema-progress {
+  position: absolute;
+  right: 2vw;
+  top: 44%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: var(--scene-ink);
+  font-size: 9px;
+  writing-mode: vertical-rl;
+}
+.cinema-progress > div {
+  width: 1px;
+  height: 100px;
+  background: #9ca68c55;
+}
+.cinema-progress-fill {
+  display: block;
+  width: 1px;
+  height: 100%;
+  background: currentColor;
+  transform: scaleY(0);
+  transform-origin: top;
+}
+.cinema-chapter-index {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.cinema-chapter-index::after {
+  content: '';
+  width: 64px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+.cinema-chapter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: 10px;
+}
+.cinema-chapter-tags span {
+  border: 1px solid #8f9c805e;
+  padding: 8px 12px;
+}
+.cinema-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 30px;
+  border-bottom: 1px solid currentColor;
+  padding: 12px 0;
+  font-size: 15px;
+}
+.cinema-manifesto {
+  padding: 120px 7vw 125px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 30px;
+  overflow: hidden;
+  background: #e7e4da;
+}
+.cinema-manifesto h2 {
+  position: relative;
+  font-size: clamp(38px, 5vw, 72px);
+  line-height: 1.13;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  margin: 0;
+  grid-column: 1 / -1;
+}
+.cinema-manifesto em {
+  font-style: normal;
+  color: #7c826f;
+}
+.cinema-manifesto p {
+  max-width: 460px;
+  font-size: 18px;
+  line-height: 1.6;
+  position: relative;
+}
+.cinema-orbit-mark {
+  position: absolute;
+  right: -90px;
+  top: -100px;
+  opacity: 0.11;
+  transform: rotate(-20deg);
+}
+.cinema-orbit-mark svg {
+  width: 530px;
+  height: 530px;
+}
+.cinema-evidence {
+  background: #172b25;
+}
+.cinema-evidence .lab-evidence {
+  margin: 0;
+  max-width: none;
+  border-radius: 0;
+  padding: 100px 7vw;
+}
+.cinema-closing {
+  padding: 130px 7vw;
+  background: #db532f;
+  color: #fff5e1;
+}
+.cinema-closing h2 {
+  font-size: clamp(46px, 6vw, 88px);
+  line-height: 1.06;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  margin-bottom: 45px;
+}
+.cinema-closing .cinema-button {
+  background: #22271f;
+}
+.cinema-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 38px 4vw;
+  gap: 30px;
+  font-size: 11px;
+}
+.cinema-footer > a:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cinema-page[data-motion='reduced'] .cinema-stage {
+  order: 2;
+  position: relative;
+  height: 65vh;
+  min-height: 350px;
+}
+.cinema-page[data-motion='reduced'] .cinema-scene {
+  inset: 0;
+}
+.cinema-page[data-motion='reduced'] .cinema-chapters {
+  display: contents;
+  margin-top: 0;
+}
+.cinema-page[data-motion='reduced'] .cinema-story {
+  display: flex;
+  flex-direction: column;
+}
+.cinema-page[data-motion='reduced'] * {
+  animation: none !important;
+  transition: none !important;
+}
+.cinema-page[data-motion='reduced'] .cinema-chapter {
+  order: 3;
+  min-height: auto;
+  padding: 60px 7vw;
+}
+.cinema-page[data-motion='reduced'] .cinema-hero {
+  order: 1;
+}
+.cinema-page[data-motion='reduced'] .cinema-chapter-copy {
+  max-width: 700px;
+}
+.cinema-page[data-motion='reduced'] .cinema-hero-side,
+.cinema-page[data-motion='reduced'] .cinema-scroll,
+.cinema-page[data-motion='reduced'] .cinema-progress {
+  display: none;
+}
+.cinema-page[data-motion='reduced'] .cinema-header {
+  position: relative;
+}
+@media (max-width: 1050px) {
+  .cinema-header nav {
+    gap: 20px;
+  }
+  .cinema-chapter-copy {
+    max-width: 370px;
+  }
+  .cinema-chapter p {
+    max-width: 320px;
+    font-size: 16px;
+  }
+  .cinema-chapter h1 {
+    font-size: 78px;
+  }
+  .cinema-scene {
+    left: 28%;
+    right: -6%;
+  }
+}
+@media (max-width: 700px) {
+  .cinema-header {
+    height: 76px;
+    padding: 0 22px;
+    gap: 12px;
+  }
+  .cinema-logo {
+    font-size: 24px;
+    gap: 7px;
+  }
+  .cinema-logo svg {
+    width: 25px;
+  }
+  .cinema-header nav {
+    display: none;
+  }
+  .cinema-header-cta {
+    font-size: 11px;
+    padding: 10px;
+    gap: 12px;
+  }
+  .cinema-stage {
+    min-height: 720px;
+  }
+  .cinema-scene {
+    left: -8%;
+    right: -8%;
+    top: 35%;
+    bottom: 4%;
+  }
+  .cinema-chapter {
+    align-items: flex-start;
+    min-height: 100svh;
+    padding: 100px 24px 65vh;
+  }
+  .cinema-chapter-copy {
+    max-width: 100%;
+  }
+  .cinema-chapter h1 {
+    font-size: clamp(48px, 12.8vw, 78px);
+    line-height: 0.97;
+    margin-bottom: 20px;
+  }
+  .cinema-chapter h1 span {
+    display: inline;
+  }
+  .cinema-chapter h1 span::after {
+    content: ' ';
+  }
+  .cinema-chapter h1 span:last-child {
+    display: block;
+  }
+  .cinema-chapter p {
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 300px;
+    margin-bottom: 20px;
+  }
+  .cinema-chapter h2 {
+    font-size: 43px;
+    margin: 13px 0 18px;
+  }
+  .cinema-chapter-index {
+    font-size: 11px;
+  }
+  .cinema-hero-note {
+    font-size: 11px;
+    margin-top: 16px;
+  }
+  .cinema-button {
+    min-height: 48px;
+    font-size: 12px;
+    padding: 12px 16px;
+  }
+  .cinema-hero-side,
+  .cinema-progress,
+  .cinema-scroll {
+    display: none;
+  }
+  .cinema-stage-bottom {
+    bottom: 25px;
+    right: 24px;
+    left: 24px;
+    justify-content: space-between;
+    font-size: 10px;
+  }
+  .cinema-chapter-tags {
+    font-size: 9px;
+  }
+  .cinema-manifesto {
+    padding: 70px 24px;
+    gap: 20px;
+  }
+  .cinema-manifesto h2 {
+    font-size: 37px;
+  }
+  .cinema-manifesto p {
+    font-size: 15px;
+  }
+  .cinema-manifesto > svg {
+    width: 35px;
+  }
+  .cinema-orbit-mark svg {
+    width: 380px;
+  }
+  .cinema-evidence .lab-evidence {
+    padding: 60px 24px;
+  }
+  .cinema-closing {
+    padding: 80px 24px;
+  }
+  .cinema-closing h2 {
+    font-size: 45px;
+  }
+  .cinema-footer {
+    padding: 30px 24px;
+    flex-wrap: wrap;
+    gap: 22px;
+  }
+  .cinema-footer > span {
+    width: 100%;
+    order: 3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinema-page *,
+  .cinema-page *::before,
+  .cinema-page *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

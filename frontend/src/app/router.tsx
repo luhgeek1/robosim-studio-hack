@@ -8,6 +8,11 @@ const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: l
 
 const router = createBrowserRouter([
   {
+    path: '/design-lab/cinematic',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-cinematic/CinematicPage').then((m) => ({ Component: m.CinematicPage }))),
+  },
+  {
     path: '/design-lab',
     errorElement: <RouteError />,
     ...page(() => import('@/pages/landing-lab/DesignLabPage').then((m) => ({ Component: m.DesignLabPage }))),
