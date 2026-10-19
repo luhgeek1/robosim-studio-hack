@@ -1,5 +1,17 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Box, Map as MapIcon, Maximize2, RefreshCw } from 'lucide-react'
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Box,
+  Check,
+  CircleCheck,
+  Info,
+  LocateFixed,
+  Map as MapIcon,
+  Maximize2,
+  RefreshCw,
+  TriangleAlert,
+} from 'lucide-react'
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useLayout } from '@/entities/layout'
@@ -11,6 +23,7 @@ import { formatNumber, isNum, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/shared/ui/dialog'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { Screen } from '@/shared/ui/page'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { LayoutMap, type FitPadding } from '@/widgets/layout-map'
@@ -27,8 +40,8 @@ type Figure = { key: string; value: string; label: string; spotlight: Spotlight 
 
 const SPRING = { type: 'spring', stiffness: 500, damping: 40 } as const
 // At «Целиком» the building stays clear of the caption above and the toolbar below.
-const PLAN_PAD: FitPadding = { x: 36, top: 76, bottom: 92 }
-const MODAL_PLAN_PAD: FitPadding = { x: 56, top: 84, bottom: 96 }
+const PLAN_PAD = (width: number): FitPadding => ({ x: 36, top: 104, bottom: width < 608 ? 132 : 64 })
+const MODAL_PLAN_PAD = (width: number): FitPadding => ({ x: 56, top: 84, bottom: width < 608 ? 132 : 96 })
 
 export function LayoutPage() {
   const projectId = useProjectId()
@@ -139,13 +152,14 @@ function PlanOverview({ layout, onRegenerate }: { layout: Layout; onRegenerate?:
   const toggle = (next: NonNullable<Focus>) =>
     setFocus((prev) => (prev?.kind === next.kind && prev.key === next.key ? null : next))
 
-  const stage = (fitPadding: FitPadding, modal: boolean) => (
+  const stage = (fitPadding: (width: number) => FitPadding, modal: boolean) => (
     <PlanStage
       layout={layout}
       route={activeRoute}
       example={example}
       figure={activeFigure}
       fitPadding={fitPadding}
+      onFigure={(key) => toggle({ kind: 'figure', key })}
       onExpand={modal ? undefined : () => setExpanded(true)}
     />
   )
@@ -153,25 +167,22 @@ function PlanOverview({ layout, onRegenerate }: { layout: Layout; onRegenerate?:
   return (
     <section className="card overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_23rem]">
-        <div className="relative min-h-150">{!expanded && stage(PLAN_PAD, false)}</div>
-        <RoutesPanel
-          layout={layout}
-          routes={routes}
-          active={activeRoute?.key}
-          onPick={(key) => toggle({ kind: 'route', key })}
-          onFigure={(key) => setFocus({ kind: 'figure', key })}
-          onRegenerate={onRegenerate}
-        />
+        <div className="relative min-h-96 sm:min-h-120 lg:min-h-136">{!expanded && stage(PLAN_PAD, false)}</div>
+        <RoutesPanel routes={routes} active={activeRoute?.key} onPick={(key) => toggle({ kind: 'route', key })} />
       </div>
 
+      <PlanNotices layout={layout} onRegenerate={onRegenerate} />
+
       <div
+        role="group"
+        aria-label="Объекты на схеме"
         className={cn(
-          'relative grid grid-cols-3 md:grid-cols-(--cols) md:divide-x md:divide-line',
-          figures.length > 0 && 'border-t border-line',
+          'relative isolate grid grid-cols-2 gap-1.5 p-2 sm:grid-cols-3 sm:gap-2 xl:grid-cols-(--cols)',
+          figures.length > 0 && 'border-t border-line/60',
         )}
         style={{ '--cols': `repeat(${Math.max(figures.length, 1)}, minmax(0, 1fr))` } as CSSProperties}
       >
-        <SlideHighlight className="z-10 bg-warn" transition={SPRING} />
+        <SlideHighlight className="rounded-xl bg-warn/10 ring-1 ring-warn/25 ring-inset" transition={SPRING} />
         {figures.map((figure) => (
           <FigureButton
             key={figure.key}
@@ -203,13 +214,15 @@ function PlanStage({
   example,
   figure,
   fitPadding,
+  onFigure,
   onExpand,
 }: {
   layout: Layout
   route?: LayoutRoute
   example: ExampleRoute | null
   figure?: Figure
-  fitPadding: FitPadding
+  fitPadding: (width: number) => FitPadding
+  onFigure: (key: string) => void
   onExpand?: () => void
 }) {
   const caption = route ? (
@@ -238,7 +251,9 @@ function PlanStage({
         infoCorner="top-left"
         fitPadding={fitPadding}
         className="h-full rounded-none border-0"
-        toolbarClassName="top-auto right-4 bottom-4 bg-white/95 shadow-card"
+        toolbarClassName="top-auto right-4 bottom-4 left-4 z-10 flex-col-reverse items-start gap-2 border-0 bg-transparent p-0 shadow-none @min-[38rem]:flex-row @min-[38rem]:items-end @min-[38rem]:justify-between"
+        toolbarControlsClassName="self-end rounded-lg border border-line/60 bg-white/95 p-1 shadow-card"
+        toolbarExtra={<MapChecks layout={layout} activeFigure={figure?.key} onFigure={onFigure} />}
       >
         {(view) => <FocusLayer layout={layout} k={view.k} route={example} spotlight={figure?.spotlight} />}
       </LayoutMap>
@@ -277,37 +292,43 @@ function PlanStage({
 }
 
 function RoutesPanel({
-  layout,
   routes,
   active,
   onPick,
-  onFigure,
-  onRegenerate,
 }: {
-  layout: Layout
   routes: LayoutRoute[]
   active?: RouteKey
   onPick: (key: RouteKey) => void
-  onFigure: (key: string) => void
-  onRegenerate?: () => void
 }) {
-  const longest = Math.max(...routes.map((r) => r.value_m), 1)
-  const checks = buildChecks(layout)
-
   return (
-    <div className="flex min-w-0 flex-col border-t border-line px-5 py-6 lg:border-t-0 lg:border-l">
-      <div className="flex items-baseline justify-between gap-3 px-2">
-        <h2 className="h3">Маршруты роботов</h2>
-        <span className="meta">средние по графу</span>
+    <aside
+      aria-label="Маршруты роботов"
+      className="flex min-w-0 flex-col border-t border-line/60 px-4 py-5 sm:px-5 lg:border-t-0 lg:border-l lg:py-4"
+    >
+      <div className="flex items-start gap-1 px-1">
+        <h2 className="h3 pt-1">Маршруты роботов</h2>
+        <InfoHint title="Как рассчитаны маршруты" showCloseButton={false} className="max-sm:-my-1.5">
+          <p>
+            Средняя длина кратчайших путей между точками на схеме, с учётом их вместимости. Количество пар показывает,
+            сколько сочетаний «откуда → куда» вошло в расчёт.
+          </p>
+          <p className="mt-2">
+            Рабочие маршруты используются в цикле робота вместо норматива. Если вы указали свой замер в параметрах
+            объекта, расчёт использует его. Путь к зарядке — справочный. Поездка на лифте в длину не входит.
+          </p>
+        </InfoHint>
       </div>
-      <p className="mt-1 px-2 text-[12.5px] leading-relaxed text-ink-3">
-        Идут в цикл робота вместо норматива; ваш замер из параметров объекта важнее.
+      <p className="mt-1 px-1 text-[12px] leading-relaxed text-ink-3">
+        {routes.length ? 'Средняя длина · нажмите на маршрут' : 'Расстояния между точками объекта'}
       </p>
 
       {routes.length ? (
-        <ul className="relative mt-3">
-          <SlideHighlight className="rounded-lg bg-surface-2 ring-1 ring-line" transition={SPRING} />
-          {routes.map((route) => {
+        <ol
+          className="relative mt-4 space-y-1 lg:mt-3 lg:flex lg:flex-1 lg:flex-col lg:justify-between lg:space-y-0"
+          aria-label="Выбор маршрута"
+        >
+          <SlideHighlight className="rounded-xl bg-warn/7" transition={SPRING} />
+          {routes.map((route, index) => {
             const on = route.key === active
             const [from, to] = ROUTE_ENDPOINT[route.key] ?? [route.name, '']
             const pairs = `${formatNumber(route.pairs)} ${pluralRu(route.pairs, ['пара', 'пары', 'пар'])}`
@@ -317,99 +338,178 @@ function RoutesPanel({
                   type="button"
                   onClick={() => onPick(route.key)}
                   aria-pressed={on}
+                  aria-label={`${route.name}, ${formatNumber(route.value_m)} м, ${pairs}`}
                   className={cn(
-                    'relative w-full rounded-lg px-2.5 py-1.5 text-left transition-colors',
-                    on ? 'text-ink' : 'text-ink-2 hover:bg-surface-2',
+                    'group/route relative grid w-full grid-cols-[1rem_minmax(0,1fr)_auto] items-start gap-x-2.5 rounded-xl px-3 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40 lg:py-2',
+                    on ? 'text-ink' : 'text-ink-2 hover:bg-surface-2/80',
                   )}
                   title={`${route.name}: ${ROUTE_USE[route.key] ?? 'справочно'}, ${pairs}`}
                 >
                   {on && <SlideMark />}
-                  <span className="relative flex items-baseline justify-between gap-3">
-                    <span className="min-w-0 wrap-anywhere lg:truncate text-[13px]">
-                      {capitalize(from)}
-                      {to && <ArrowRight size={11} className="mx-1 inline -translate-y-px text-ink-4" />}
-                      {to}
-                    </span>
-                    <span className="num shrink-0 text-[14px] font-semibold text-ink">
-                      {formatNumber(route.value_m)}
-                      <span className="ml-0.5 text-[11px] font-normal text-ink-3">м</span>
-                    </span>
+                  {on && <span aria-hidden className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-warn" />}
+                  <span aria-hidden className="relative pt-0.5 font-mono text-[10px] text-ink-4">
+                    {String(index + 1).padStart(2, '0')}
                   </span>
-                  <span className="relative mt-1 flex items-center gap-2.5">
-                    <span className="block h-0.75 flex-1 overflow-hidden rounded-full bg-black/5">
-                      <motion.span
-                        className={cn('block h-full rounded-full', on ? 'bg-warn' : 'bg-black/15')}
-                        initial={false}
-                        animate={{ width: `${(route.value_m / longest) * 100}%` }}
-                        transition={{ type: 'spring', stiffness: 160, damping: 26 }}
-                      />
+                  <span className="relative min-w-0">
+                    <span className="grid grid-cols-[0.5rem_minmax(0,1fr)] gap-x-2 gap-y-1 text-[13px] leading-snug">
+                      <span
+                        aria-hidden
+                        className="relative row-span-2 flex flex-col items-center justify-between py-1.5"
+                      >
+                        {to && <span className="absolute inset-y-2 left-1/2 w-px -translate-x-1/2 bg-line-2" />}
+                        <span
+                          className={cn(
+                            'relative size-1.5 rounded-full border bg-surface',
+                            on ? 'border-warn' : 'border-ink-4',
+                          )}
+                        />
+                        {to && <span className={cn('relative size-1.5 rounded-full', on ? 'bg-warn' : 'bg-ink-4')} />}
+                      </span>
+                      <span className="min-w-0 wrap-anywhere">{capitalize(from)}</span>
+                      {to && <span className="min-w-0 font-medium wrap-anywhere">{capitalize(to)}</span>}
                     </span>
-                    <span className="num shrink-0 text-[11px] text-ink-4">{pairs}</span>
+                    <span className="mt-1.5 block pl-4 text-[10.5px] leading-relaxed text-ink-3">{pairs}</span>
+                  </span>
+                  <span className="relative text-right">
+                    <span className="num block text-[21px] leading-tight font-semibold tracking-[-0.03em] text-ink">
+                      {formatNumber(route.value_m)}
+                      <span className="ml-1 text-[11px] font-normal tracking-normal text-ink-3">м</span>
+                    </span>
+                    <span
+                      className={cn(
+                        'mt-2 flex items-center justify-end gap-0.5 text-[10px] leading-relaxed transition-opacity',
+                        on
+                          ? 'text-warn'
+                          : 'text-ink-3 opacity-0 group-hover/route:opacity-100 group-focus-visible/route:opacity-100',
+                      )}
+                    >
+                      {on ? 'На схеме' : 'Показать'}
+                      <ArrowUpRight size={11} aria-hidden />
+                    </span>
                   </span>
                 </button>
               </li>
             )
           })}
-        </ul>
+        </ol>
       ) : (
         <p className="mt-4 px-2 text-[13px] text-ink-3">Маршруты не рассчитаны.</p>
       )}
-
-      {checks.length > 0 && (
-        <div className="hairline mx-2 mt-auto pt-5">
-          <div className="mb-2 text-[13px] text-ink-2">Проверки схемы</div>
-          <ul className="space-y-1">
-            {checks.map((check) => (
-              <li key={check.text}>
-                <CheckRow
-                  check={check}
-                  onClick={check.figure ? () => onFigure(check.figure!) : undefined}
-                  action={
-                    check.rebuild && onRegenerate ? (
-                      <button
-                        type="button"
-                        onClick={onRegenerate}
-                        className="mt-1 flex items-center gap-1 text-[12.5px] font-medium text-ink transition-opacity hover:opacity-70"
-                      >
-                        <RefreshCw size={12} /> Перегенерировать
-                      </button>
-                    ) : undefined
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-          <p className="meta mt-4 px-2">
-            {TEMPLATE_LABEL[layout.template ?? ''] ?? 'Планировка'}
-            {!layout.generated && ', изменена вручную'}
-            {layout.updated_at && ` · ${SHORT_DATE.format(new Date(layout.updated_at))}`}
-          </p>
-        </div>
-      )}
-    </div>
+    </aside>
   )
 }
 
-type Check = { tone: 'ok' | 'warn' | 'info'; text: string; figure?: string; rebuild?: boolean }
+type Check = {
+  tone: 'ok' | 'warn' | 'info'
+  title: string
+  text: string
+  label?: string
+  figure?: string
+  rebuild?: boolean
+}
 
-function CheckRow({ check, onClick, action }: { check: Check; onClick?: () => void; action?: ReactNode }) {
-  const dot = { ok: 'bg-ok', warn: 'bg-warn', info: 'bg-info' }[check.tone]
-  const body = (
-    <>
-      <span className={cn('mt-1.75 size-1.5 shrink-0 rounded-full', dot)} />
-      <span className="min-w-0">
-        <span className="block">{check.text}</span>
-        {action}
-      </span>
-    </>
+function MapChecks({
+  layout,
+  activeFigure,
+  onFigure,
+}: {
+  layout: Layout
+  activeFigure?: string
+  onFigure: (key: string) => void
+}) {
+  const figureChecks = buildChecks(layout).filter((check) => check.figure)
+  return (
+    <section
+      aria-label="Проверки схемы"
+      className="flex max-w-full items-center gap-1 rounded-lg bg-white/95 p-1 shadow-card"
+    >
+      {figureChecks.map((check) => {
+        const active = check.figure === activeFigure
+        const Icon = check.figure === 'storage' ? CircleCheck : MapIcon
+        return (
+          <Button
+            key={check.figure}
+            variant="ghost"
+            size="sm"
+            aria-pressed={active}
+            aria-label={`${check.label ?? check.title}. ${check.title}. Показать на схеме`}
+            onClick={() => onFigure(check.figure!)}
+            className={cn(
+              'h-8 gap-1.5 rounded-md border-0 px-2.5 text-[12px] shadow-none',
+              active ? 'bg-warn/12 text-ink hover:bg-warn/18' : 'text-ink-2 hover:bg-canvas',
+            )}
+          >
+            <Icon className={cn('size-3.5', check.tone === 'ok' ? 'text-ok' : 'text-info')} strokeWidth={1.7} />
+            {check.label ?? check.title}
+          </Button>
+        )
+      })}
+      <InfoHint title="Проверки схемы" size="sm" showCloseButton={false}>
+        <div className="space-y-2.5">
+          {figureChecks.map((check) => (
+            <p key={check.figure}>
+              <span className="mb-0.5 block font-medium text-ink">{check.title}</span>
+              {check.text}
+            </p>
+          ))}
+        </div>
+        <div className={cn('space-y-1 text-[10.5px]', figureChecks.length > 0 && 'mt-3 border-t border-line pt-2')}>
+          <p>
+            {TEMPLATE_LABEL[layout.template ?? ''] ?? 'Планировка'}
+            {!layout.generated && ' · изменена вручную'}
+          </p>
+          {layout.updated_at && (
+            <p>
+              Обновлена <time dateTime={layout.updated_at}>{SHORT_DATE.format(new Date(layout.updated_at))}</time>
+            </p>
+          )}
+        </div>
+      </InfoHint>
+    </section>
   )
-  const cls = 'flex w-full gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug text-ink-2'
-  return onClick ? (
-    <button type="button" onClick={onClick} className={cn(cls, 'transition-colors hover:bg-surface-2 hover:text-ink')}>
-      {body}
-    </button>
-  ) : (
-    <div className={cls}>{body}</div>
+}
+
+function PlanNotices({ layout, onRegenerate }: { layout: Layout; onRegenerate?: () => void }) {
+  const notices = buildChecks(layout).filter((check) => !check.figure)
+  if (!notices.length) return null
+
+  return (
+    <section aria-label="Замечания к схеме" className="border-t border-line/60 p-3">
+      <ul className="space-y-3 rounded-lg bg-surface-2 p-3">
+        {notices.map((check) => (
+          <li key={check.text}>
+            <CheckNotice check={check} onRegenerate={onRegenerate} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function CheckNotice({ check, onRegenerate }: { check: Check; onRegenerate?: () => void }) {
+  const Icon = check.tone === 'warn' ? TriangleAlert : Info
+  return (
+    <div className="flex gap-2 text-left leading-snug">
+      <Icon
+        size={16}
+        strokeWidth={1.7}
+        className={cn('mt-0.5 shrink-0', check.tone === 'warn' ? 'text-warn' : 'text-info')}
+        aria-hidden
+      />
+      <div className="min-w-0 wrap-anywhere">
+        <p className="text-[12px] font-medium text-ink-2">{check.title}</p>
+        <p className="mt-1 text-[11.5px] leading-relaxed text-ink-3">{check.text}</p>
+        {check.rebuild && onRegenerate && (
+          <button
+            type="button"
+            onClick={onRegenerate}
+            className="mt-1 flex min-h-8 items-center gap-1 text-[12px] font-medium text-ink hover:opacity-70 focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <RefreshCw size={12} /> Перегенерировать
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -419,15 +519,31 @@ function FigureButton({ figure, active, onClick }: { figure: Figure; active: boo
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      aria-label={`${figure.value} ${figure.label}. ${active ? 'Снять подсветку' : 'Показать на схеме'}`}
       title={active ? 'Снять подсветку' : 'Показать на схеме'}
       className={cn(
-        'relative min-w-0 px-6 py-4 text-left transition-colors',
-        active ? 'bg-surface-2' : 'hover:bg-surface-2',
+        'group/figure relative grid min-w-0 cursor-pointer grid-cols-[minmax(0,1fr)_auto] content-start items-center gap-x-2 gap-y-1 rounded-xl px-3 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:bg-warn/15',
+        active ? 'text-ink' : 'bg-canvas/65 hover:bg-canvas',
       )}
     >
-      {active && <SlideMark className="absolute inset-x-0 top-0 h-0.5" />}
-      <span className="num block text-[20px] leading-tight font-semibold tracking-[-0.01em]">{figure.value}</span>
-      <span className="mt-0.5 block min-w-0 wrap-anywhere lg:truncate text-[12.5px] text-ink-3">{figure.label}</span>
+      {active && <SlideMark />}
+      <span className="num col-start-1 row-start-1 text-[20px] leading-tight font-semibold tracking-[-0.01em]">
+        {figure.value}
+      </span>
+      <span className="col-span-2 row-start-2 min-w-0 text-[12px] leading-snug wrap-anywhere text-ink-2">
+        {figure.label}
+      </span>
+      <span
+        aria-hidden
+        className={cn(
+          'col-start-2 row-start-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors',
+          active
+            ? 'bg-warn text-white'
+            : 'bg-surface text-ink-3 shadow-xs group-hover/figure:bg-ink group-hover/figure:text-white group-focus-visible/figure:bg-ink group-focus-visible/figure:text-white',
+        )}
+      >
+        {active ? <Check size={14} /> : <LocateFixed size={14} />}
+      </span>
     </button>
   )
 }
@@ -536,18 +652,21 @@ function buildChecks(layout: Layout): Check[] {
   if (layout.params_changed) {
     checks.push({
       tone: 'warn',
-      text: 'Параметры объекта менялись после генерации — маршруты могут не совпадать с объектом',
+      title: 'Схема требует обновления',
+      text: 'Параметры объекта изменились. Перестройте схему, чтобы уточнить маршруты.',
       rebuild: true,
     })
   }
-  for (const warning of layout.warnings) checks.push({ tone: 'warn', text: warning })
+  for (const warning of layout.warnings) checks.push({ tone: 'warn', title: 'Проверьте схему', text: warning })
 
   const need = layout.generator?.params?.pallet_positions
   const slots = layout.stats.rack_slots_total
   if (isNum(need) && isNum(slots) && slots >= need) {
     checks.push({
       tone: 'ok',
-      text: `Вмещает ${formatNumber(slots)} паллетомест — нужно ${formatNumber(need)}`,
+      title: 'Мест хранения достаточно',
+      label: 'Хранение',
+      text: `${formatNumber(slots)} паллетомест при потребности ${formatNumber(need)}`,
       figure: 'storage',
     })
   }
@@ -559,12 +678,16 @@ function buildChecks(layout: Layout): Check[] {
       narrow < twoWay
         ? {
             tone: 'info',
-            text: `В проходах ${formatNumber(narrow)} м двум роботам не разъехаться (нужно ${formatNumber(twoWay)} м): едут по одному`,
+            title: 'Одностороннее движение',
+            label: 'Проезды',
+            text: `Проходы ${formatNumber(narrow)} м · для разъезда нужно ${formatNumber(twoWay)} м`,
             figure: 'aisles',
           }
         : {
             tone: 'ok',
-            text: `Проезды от ${formatNumber(narrow)} м — роботы разъезжаются (нужно ${formatNumber(twoWay)} м)`,
+            title: 'Встречное движение доступно',
+            label: 'Проезды',
+            text: `Проезды от ${formatNumber(narrow)} м · для разъезда нужно ${formatNumber(twoWay)} м`,
             figure: 'aisles',
           },
     )

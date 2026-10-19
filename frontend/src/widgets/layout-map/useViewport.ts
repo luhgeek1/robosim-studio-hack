@@ -30,7 +30,7 @@ export function useViewport(
   contentW: number,
   contentH: number,
   fitKey: string,
-  pad: FitPadding = DEFAULT_PAD,
+  pad: FitPadding | ((width: number) => FitPadding) = DEFAULT_PAD,
 ) {
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [view, setView] = useState<LayoutMapView>({ k: 1, tx: 0, ty: 0 })
@@ -51,7 +51,7 @@ export function useViewport(
 
   const fit = useCallback(() => {
     if (!size.width || !size.height) return
-    const next = fitView(size.width, size.height, contentW, contentH, pad)
+    const next = fitView(size.width, size.height, contentW, contentH, typeof pad === 'function' ? pad(size.width) : pad)
     fitK.current = next.k
     setView(next)
   }, [size.width, size.height, contentW, contentH, pad])

@@ -43,12 +43,14 @@ export type LayoutMapProps = {
   fill?: boolean
   /** Moves the zoom toolbar when the host puts its own controls in the corner. */
   toolbarClassName?: string
+  /** Styles the grouped graph and zoom controls when the host adds another floating panel. */
+  toolbarControlsClassName?: string
   /** Where the scale bar and the building size sit; a full-bleed host keeps the bottom for its own overlays. */
   infoCorner?: 'bottom' | 'top-left'
   /** Moves the scale bar and the building size, e.g. below the host's own controls on a narrow map. */
   infoClassName?: string
   /** Free space kept around the building at «Целиком», for hosts that lay their own overlays over the map. */
-  fitPadding?: FitPadding
+  fitPadding?: FitPadding | ((width: number) => FitPadding)
   /** Overlay in meter coordinates (robots, heat spots); `view.k` is pixels per meter for constant-size marks. */
   children?: ReactNode | ((view: LayoutMapView) => ReactNode)
   /** More map layers next to «Граф маршрутов» (the simulation's congestion layer). */
@@ -69,6 +71,7 @@ export function LayoutMap({
   className,
   fill = false,
   toolbarClassName,
+  toolbarControlsClassName,
   infoCorner = 'bottom',
   infoClassName,
   fitPadding,
@@ -128,31 +131,34 @@ export function LayoutMap({
           )}
         >
           {toolbarExtra}
-          {!simplified && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Toggle
-                  size="sm"
-                  variant="outline"
-                  pressed={graph}
-                  onPressedChange={setGraph}
-                  aria-label="Граф маршрутов"
-                >
-                  <Waypoints /> <span className="@max-[28rem]:sr-only">Граф маршрутов</span>
-                </Toggle>
-              </TooltipTrigger>
-              <TooltipContent>Узлы и рёбра, по которым считаются маршруты роботов</TooltipContent>
-            </Tooltip>
-          )}
-          <Button size="icon-sm" variant="ghost" onClick={() => zoomCenter(1.4)} aria-label="Приблизить">
-            <Plus />
-          </Button>
-          <Button size="icon-sm" variant="ghost" onClick={() => zoomCenter(1 / 1.4)} aria-label="Отдалить">
-            <Minus />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={fit} aria-label="Показать целиком">
-            <Maximize2 /> <span className="@max-[28rem]:sr-only">Целиком</span>
-          </Button>
+          <div className={cn('flex items-center gap-1', toolbarControlsClassName)}>
+            {!simplified && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    size="sm"
+                    variant="outline"
+                    className="border-0"
+                    pressed={graph}
+                    onPressedChange={setGraph}
+                    aria-label="Граф маршрутов"
+                  >
+                    <Waypoints /> <span className="@max-[28rem]:sr-only">Граф маршрутов</span>
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>Узлы и рёбра, по которым считаются маршруты роботов</TooltipContent>
+              </Tooltip>
+            )}
+            <Button size="icon-sm" variant="ghost" onClick={() => zoomCenter(1.4)} aria-label="Приблизить">
+              <Plus />
+            </Button>
+            <Button size="icon-sm" variant="ghost" onClick={() => zoomCenter(1 / 1.4)} aria-label="Отдалить">
+              <Minus />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={fit} aria-label="Показать целиком">
+              <Maximize2 /> <span className="@max-[28rem]:sr-only">Целиком</span>
+            </Button>
+          </div>
         </div>
 
         <div
