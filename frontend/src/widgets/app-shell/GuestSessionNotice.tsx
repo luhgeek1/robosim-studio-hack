@@ -44,7 +44,11 @@ export function GuestSessionNotice() {
               guest && user?.guest_expires_at ? `Данные удалятся ${formatDateTime(user.guest_expires_at)}` : undefined
             }
           >
-            {guest ? 'Личная демо-копия · 24 часа' : 'Ваш сохранённый пример'}
+            {guest
+              ? projectId
+                ? 'Личная демо-копия · 24 часа'
+                : 'Гостевое пространство · 24 часа'
+              : 'Ваш сохранённый пример'}
           </span>
           {journey && projectId && (
             <Button

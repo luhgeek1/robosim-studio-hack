@@ -2,6 +2,7 @@ import { FileSpreadsheet, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useProject, useProjectId, useProjectParams, useValidation } from '@/entities/project'
+import { useJourney } from '@/entities/project/journey'
 import { useObjectType } from '@/entities/reference'
 import { ParamsEditor } from '@/features/param-edit'
 import { ImportDialog } from '@/features/params-import'
@@ -14,6 +15,8 @@ import { ObjectOverview } from './ObjectOverview'
 
 export function ObjectPage() {
   const projectId = useProjectId()
+  const { guided } = useJourney(projectId)
+  const [editing, setEditing] = useState(false)
   const project = useProject(projectId).data!
   const params = useProjectParams(projectId)
   const validation = useValidation(projectId)
@@ -55,21 +58,32 @@ export function ObjectPage() {
           </Button>
         </div>
       }
-      nextLabel="Начать анализ"
+      nextLabel={guided ? 'Посмотреть роботов' : 'Начать анализ'}
       nextPrimary
       nextDisabled={validation.data ? !validation.data.can_match : false}
     >
-      <ObjectOverview projectId={projectId} objectType={objectType.data} params={params.data?.params} />
+      <ObjectOverview projectId={projectId} objectType={objectType.data} params={params.data?.params} guided={guided} />
 
-      <div className="mt-14">
-        <h2 className="h2 mb-5">Параметры объекта</h2>
+      {guided && (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-2 p-5">
+          <p className="max-w-170 text-sm text-ink-3">
+            Попробуйте изменить нагрузку или зарплату. Экономика пересчитается на ваших данных; изменение физических
+            условий потребует новой проверки имитацией.
+          </p>
+          <Button variant="outline" onClick={() => setEditing(!editing)}>
+            {editing ? 'Свернуть параметры' : 'Изменить параметры'}
+          </Button>
+        </div>
+      )}
+      <details open={!guided || editing} className="mt-10" onToggle={(event) => setEditing(event.currentTarget.open)}>
+        <summary className="h2 mb-5 cursor-pointer">Параметры объекта</summary>
         {(params.isPending || objectType.isPending) && <LoadingBlock label="Загружаем параметры…" />}
         {params.error && <ErrorBlock error={params.error} onRetry={() => params.refetch()} />}
         {objectType.error && <ErrorBlock error={objectType.error} onRetry={() => objectType.refetch()} />}
         {params.data && objectType.data && (
           <ParamsEditor projectId={projectId} params={params.data.params} groups={objectType.data.parameter_groups} />
         )}
-      </div>
+      </details>
 
       <ImportDialog projectId={projectId} open={importOpen} onOpenChange={setImportOpen} />
     </Screen>

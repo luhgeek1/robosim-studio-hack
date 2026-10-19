@@ -1,6 +1,8 @@
 import { AnimatePresence, motion, type Transition } from 'framer-motion'
 import { Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
+import { useDemoList } from '@/entities/demo/api'
+import { useJourney } from '@/entities/project/journey'
 import { useDataQuality, useUpdateParam, useValidation } from '@/entities/project'
 import { PROVENANCE_LABEL } from '@/entities/provenance'
 import { ParamValueInput, displayRange, parseDraft, toDraft } from '@/features/param-edit'
@@ -66,18 +68,26 @@ export function ObjectOverview({
   projectId,
   objectType,
   params,
+  guided = false,
 }: {
   projectId: string
   objectType: ObjectType | undefined
   params: ProjectParam[] | undefined
+  guided?: boolean
 }) {
   const narrow = useNarrow()
-  const [showTwin, setShowTwin] = useState(false)
+  const [showTwin, setShowTwin] = useState(guided)
   return (
     <section className="card overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="flex min-w-0 flex-col px-5 py-6 sm:px-7 sm:py-7">
-          {params ? <Readiness projectId={projectId} params={params} /> : <LoadingBlock rows={4} />}
+          {guided ? (
+            <PreparedIntro projectId={projectId} />
+          ) : params ? (
+            <Readiness projectId={projectId} params={params} />
+          ) : (
+            <LoadingBlock rows={4} />
+          )}
         </div>
         <div className="min-w-0 border-t border-line lg:border-t-0 lg:border-l">
           <button
@@ -101,7 +111,51 @@ export function ObjectOverview({
         </div>
       </div>
       {params && <Passport params={params} />}
+      {guided && params && (
+        <details className="border-t border-line p-5">
+          <summary className="cursor-pointer text-sm font-medium">
+            Источники, допущения и качество исходных данных
+          </summary>
+          <div className="mt-5">
+            <Readiness projectId={projectId} params={params} />
+          </div>
+        </details>
+      )}
     </section>
+  )
+}
+
+function PreparedIntro({ projectId }: { projectId: string }) {
+  const { journey } = useJourney(projectId)
+  const examples = useDemoList()
+  const example = examples.data?.find((item) => item.key === journey?.demoKey)
+  return (
+    <div className="flex h-full flex-col justify-center py-4">
+      <p className="hud text-ink-3">ПОДГОТОВЛЕННЫЙ ПРИМЕР / ВАША КОПИЯ</p>
+      <h2 className="display mt-5 text-3xl leading-tight">
+        Роботизация начинается
+        <br />с вашего объекта.
+      </h2>
+      <p className="mt-5 max-w-lg leading-relaxed text-ink-3">
+        {example?.description ??
+          'Исходные данные уже заполнены. Пройдите от объекта до проверенного решения в обычном интерфейсе платформы.'}
+      </p>
+      <ol className="mt-7 space-y-4 text-sm">
+        {[
+          'Посмотрите подобранных роботов и причины выбора.',
+          'Сравните покупку, лизинг и услугу с ручным трудом.',
+          'Проверьте парк в имитации и заберите отчёт.',
+        ].map((text, i) => (
+          <li key={text} className="flex gap-3">
+            <span className="num text-ink-4">0{i + 1}</span>
+            {text}
+          </li>
+        ))}
+      </ol>
+      <p className="mt-7 border-t border-line pt-4 text-xs leading-relaxed text-ink-3">
+        {example?.scope} Это предварительная оценка: допущения и ограничения раскрыты ниже.
+      </p>
+    </div>
   )
 }
 
