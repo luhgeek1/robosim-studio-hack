@@ -118,7 +118,7 @@ export function CinematicDetails({ reduced }: { reduced: boolean }) {
           {[
             [
               'Можно оценить свой объект?',
-              'Да. Создайте проект, выберите тип объекта и процессы, задайте исходные параметры. Для собственного проекта потребуется вход; готовые примеры доступны без регистрации.',
+              'Да. Создайте проект, выберите тип объекта и процессы, задайте параметры или загрузите Excel. Тестовый проект можно начать без регистрации. Для сохранения работы и конфиденциальных данных создайте аккаунт.',
             ],
             [
               'С чего начать, если я не инженер?',
@@ -157,7 +157,7 @@ export function CinematicDetails({ reduced }: { reduced: boolean }) {
           На <em>вашем</em> объекте.
         </h2>
         <div className="cinema-closing-actions">
-          <Link className="cinema-button" to="/projects">
+          <Link className="cinema-button" to="/demo?new=1">
             Оценить свой объект <ArrowUpRight />
           </Link>
           <Link className="cinema-link" to="/demo">

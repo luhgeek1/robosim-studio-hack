@@ -169,7 +169,7 @@ export function CinematicPage() {
                   </span>
                 </h1>
                 <p>Оцените роботизацию своего объекта: от подходящих роботов до экономики внедрения.</p>
-                <Link to="/projects" className="cinema-button">
+                <Link to="/demo?new=1" className="cinema-button">
                   Оценить свой объект <ArrowUpRight size={22} />
                 </Link>
                 <Link to="/demo" className="cinema-hero-note">
