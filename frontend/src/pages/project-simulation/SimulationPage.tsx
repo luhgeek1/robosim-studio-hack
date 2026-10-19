@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Camera, Info, Sparkles, X } from 'lucide-react'
+import { Camera, ChevronDown, Info, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router'
@@ -34,6 +34,7 @@ import type { Scenario, SizingResult } from '@/shared/api/types'
 import { formatDate, formatNumber, formatPct, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { Callout, Screen } from '@/shared/ui/page'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
@@ -480,7 +481,10 @@ function SimulationView({
                   Условия прогона
                   <span className="absolute inset-x-0 -bottom-px h-0.5 bg-ink" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[12px] text-info" title={whatIf ?? undefined}>
+                <span
+                  className="min-w-0 flex-1 wrap-anywhere lg:truncate text-[12px] text-info"
+                  title={whatIf ?? undefined}
+                >
                   {whatIf}
                 </span>
                 <Button
@@ -699,7 +703,7 @@ function RunLive({
             {byState.map(([k, v]) => (
               <li key={k} className="flex items-center gap-2">
                 <span className={cn('size-2 shrink-0 rounded-full', STATE_COLOR[k] ?? 'bg-ink-4')} />
-                <span className="min-w-0 truncate text-ink-2">{STATE_LABEL[k] ?? k}</span>
+                <span className="min-w-0 wrap-anywhere lg:truncate text-ink-2">{STATE_LABEL[k] ?? k}</span>
                 <span className="num ml-auto shrink-0 text-ink">{formatPct(v ?? 0, { share: true, digits: 0 })}</span>
               </li>
             ))}
@@ -713,7 +717,7 @@ function RunLive({
             {topEdges.map((e) => (
               <li key={e.edge_id} className="flex items-center gap-2">
                 <span className="size-1.5 shrink-0 rounded-full bg-crit" />
-                <span className="min-w-0 truncate text-ink-2">{e.name ?? e.edge_id}</span>
+                <span className="min-w-0 wrap-anywhere lg:truncate text-ink-2">{e.name ?? e.edge_id}</span>
                 <span className="num ml-auto shrink-0">{Math.round(e.wait_s ?? 0)} с</span>
               </li>
             ))}
@@ -777,17 +781,25 @@ function RunCheck({ summary, target }: { summary: SimulationSummary; target: num
   )
 }
 
-/* Пояснение по клику: в колонках имитации текст не должен съедать высоту, но остаётся под рукой. */
-function Hint({ children }: { children: ReactNode }) {
+function Hint({ children, label = 'Пояснение' }: { children: ReactNode; label?: string }) {
+  const trigger = (
+    <button
+      type="button"
+      className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-ink-4 transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:size-10"
+      aria-label={label}
+    >
+      <Info size={14} aria-hidden="true" />
+    </button>
+  )
+
   return (
     <Popover>
-      <PopoverTrigger
-        className="inline-flex shrink-0 text-ink-4 transition-colors hover:text-ink"
-        aria-label="Пояснение"
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent
+        align="end"
+        collisionPadding={12}
+        className="max-h-[min(28rem,var(--radix-popover-content-available-height))] w-80 max-w-[calc(100vw-1.5rem)] space-y-2 overflow-y-auto text-[13px] leading-relaxed wrap-anywhere text-ink-2"
       >
-        <Info size={14} />
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-80 space-y-2 text-[13px] leading-relaxed text-ink-2">
         {children}
       </PopoverContent>
     </Popover>
@@ -869,7 +881,6 @@ function FleetSweep({
   const simulated = result?.by_simulation
   const usingSimulation = count.source === 'simulated'
   const usingFormula = count.source === 'manual' && formula != null && count.final === formula.total
-  const best = result?.points.find((p) => p.count === result.recommended_count)
   const busy = sweep.isPending || source.isPending
 
   const run = () =>
@@ -886,20 +897,7 @@ function FleetSweep({
     <>
       <PaneSection
         title="Сколько роботов нужно"
-        aside={
-          result ? (
-            <Hint>
-              {formula && simulated && best && (
-                <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
-              )}
-              <p className="text-ink-3">{result.explanation}</p>
-              <p className="text-ink-3">
-                Цель — {formatNumber(result.target_pct)} % задач в срок в каждом из прогонов. Окупаемость — сценария с
-                этим N и резервом. {result.computed_at ? `Перебор от ${formatDate(result.computed_at)}.` : ''}
-              </p>
-            </Hint>
-          ) : undefined
-        }
+        aside={result ? <FleetCountHint result={result} sizing={sizing} /> : undefined}
       >
         {!result ? (
           <p className="text-[13px] leading-relaxed text-ink-2">
@@ -916,19 +914,24 @@ function FleetSweep({
             </div>
           )
         )}
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <div className="mt-2.5 flex flex-wrap gap-1.5 lg:flex-nowrap">
           <Button
             size="sm"
             variant={result ? 'outline' : 'default'}
-            className={cn('rounded-full px-3.5', result && 'border-ink/70')}
+            className={cn(
+              'rounded-full px-3.5 lg:h-auto lg:min-h-7 lg:min-w-0 lg:shrink lg:px-2.5 lg:whitespace-normal',
+              result && 'border-ink/70',
+            )}
             disabled={busy}
             onClick={run}
           >
             {sweep.isPending ? <Spinner /> : <Sparkles />}{' '}
             {sweep.isPending
-              ? variantIds.length
-                ? 'Перебираем для всех вариантов…'
-                : 'Перебираем флот…'
+              ? result
+                ? 'Проверяем…'
+                : variantIds.length
+                  ? 'Перебираем для всех вариантов…'
+                  : 'Перебираем флот…'
               : result
                 ? 'Перепроверить'
                 : 'Подобрать N имитацией'}
@@ -937,7 +940,7 @@ function FleetSweep({
             <Button
               size="sm"
               variant="outline"
-              className="rounded-full border-ink/70 px-3.5"
+              className="rounded-full border-ink/70 px-3.5 lg:h-auto lg:min-h-7 lg:min-w-0 lg:shrink lg:px-2.5 lg:whitespace-normal"
               disabled={busy}
               title={usingSimulation ? 'Считать число роботов по формуле цикла' : 'Считать число роботов по имитации'}
               onClick={() =>
@@ -945,50 +948,51 @@ function FleetSweep({
               }
             >
               {source.isPending && <Spinner />}
-              {usingSimulation ? `По формуле (${formula.total})` : `По имитации (${simulated.total})`}
+              {source.isPending
+                ? 'Меняем…'
+                : usingSimulation
+                  ? `По формуле (${formula.total})`
+                  : `По имитации (${simulated.total})`}
             </Button>
           )}
         </div>
         {sweep.isError && <p className="mt-2 text-[12.5px] text-crit">{parseApiProblem(sweep.error).detail}</p>}
-        {result && (
+        {result?.joint_validation && (
           <div className="mt-3 space-y-2 text-[12.5px]">
-            <p className={result.applied && usingSimulation ? 'text-ok' : 'text-warn'}>{result.explanation}</p>
-            {result.joint_validation && (
-              <div className="rounded-lg border border-line p-3">
-                <div className="font-medium">
-                  Совместная проверка парка · {result.joint_validation.replications} повторов
-                </div>
-                <p className="mt-1 text-ink-3">
-                  {result.joint_validation.status === 'passed'
-                    ? 'Все моделируемые процессы выдержали SLA с общими ресурсами.'
-                    : result.joint_validation.status === 'failed'
-                      ? 'Общий парк не выдержал SLA. Кандидат отдельного поиска не подтверждён для расчёта.'
-                      : 'Совместная проверка не выполнена; парк не подтверждён.'}
-                </p>
-                {result.joint_validation.processes.map((process) => (
-                  <div key={process.process_key} className="mt-1 flex justify-between gap-3">
-                    <span>
-                      {processDefs.find((definition) => definition.key === process.process_key)?.name ??
-                        'Процесс сценария'}
-                    </span>
-                    <span className={process.passed ? 'text-ok' : 'text-crit'}>
-                      {formatPct(process.sla_min_pct)} / цель {formatPct(process.target_pct)}
-                    </span>
-                  </div>
-                ))}
-                {result.joint_validation.skipped_processes.map((process) => (
-                  <p key={process.process_key} className="mt-1 text-ink-3">
-                    {process.reason}
-                  </p>
-                ))}
-                {!usingSimulation && result.applied && (
-                  <p className="mt-2 text-warn">
-                    Сохранённый результат не используется текущим расчётом. Перепроверьте парк после изменения
-                    физических входов или выбора ручного количества.
-                  </p>
-                )}
+            <div className="rounded-lg border border-line p-3">
+              <div className="font-medium">
+                Совместная проверка парка · {result.joint_validation.replications} повторов
               </div>
-            )}
+              <p className="mt-1 text-ink-3">
+                {result.joint_validation.status === 'passed'
+                  ? 'Все моделируемые процессы выдержали SLA с общими ресурсами.'
+                  : result.joint_validation.status === 'failed'
+                    ? 'Общий парк не выдержал SLA. Кандидат отдельного поиска не подтверждён для расчёта.'
+                    : 'Совместная проверка не выполнена; парк не подтверждён.'}
+              </p>
+              {result.joint_validation.processes.map((process) => (
+                <div key={process.process_key} className="mt-1 flex justify-between gap-3">
+                  <span>
+                    {processDefs.find((definition) => definition.key === process.process_key)?.name ??
+                      'Процесс сценария'}
+                  </span>
+                  <span className={process.passed ? 'text-ok' : 'text-crit'}>
+                    {formatPct(process.sla_min_pct)} / цель {formatPct(process.target_pct)}
+                  </span>
+                </div>
+              ))}
+              {result.joint_validation.skipped_processes.map((process) => (
+                <p key={process.process_key} className="mt-1 text-ink-3">
+                  {process.reason}
+                </p>
+              ))}
+              {!usingSimulation && result.applied && (
+                <p className="mt-2 text-warn">
+                  Сохранённый результат не используется текущим расчётом. Перепроверьте парк после изменения физических
+                  входов или выбора ручного количества.
+                </p>
+              )}
+            </div>
           </div>
         )}
       </PaneSection>
@@ -1042,17 +1046,62 @@ function FleetSweep({
   )
 }
 
+function FleetCountHint({ result, sizing }: { result: FleetSweepResult; sizing: SizingResult }) {
+  const formula = result.by_formula
+  const simulated = result.by_simulation
+  const best = result.points.find((point) => point.count === result.recommended_count)
+  const joint = result.joint_validation
+  const target = result.target_pct != null ? `${formatNumber(result.target_pct)} % задач в срок` : 'норматив срока'
+
+  return (
+    <InfoHint title="Пояснение к числу роботов">
+      <div className="space-y-2">
+        {formula && simulated ? (
+          <p>
+            В работе: <span className="font-medium text-ink">{formula.working} по формуле</span>,{' '}
+            <span className="font-medium text-ink">{simulated.working} по имитации</span>.
+          </p>
+        ) : result.recommended_count != null ? (
+          <p>
+            По имитации — {result.recommended_count}{' '}
+            {pluralRu(result.recommended_count, ['робот', 'робота', 'роботов'])} в работе.
+          </p>
+        ) : null}
+        <p>
+          {joint?.status === 'passed'
+            ? `Все ${joint.replications} ${pluralRu(joint.replications, ['прогон', 'прогона', 'прогонов'])} пройдены. Цель — ${target}.`
+            : `Парк пока не подтверждён. Цель — ${target}.`}
+        </p>
+        <p>Резерв входит в общее число роботов и окупаемость.</p>
+        {result.applied === false && <p className="text-warn">Результат не применён к расчёту.</p>}
+        <details className="group border-t border-line pt-1">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 rounded-sm font-medium text-ink-2 outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            Подробнее <ChevronDown size={14} className="shrink-0 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="space-y-2 pt-1 pb-2">
+            {formula && simulated && best && (
+              <WhyDifferent sizing={sizing} formula={formula} simulated={simulated} best={best} />
+            )}
+            <p>{result.explanation}</p>
+            {result.computed_at && <p>Проверено {formatDate(result.computed_at)}.</p>}
+          </div>
+        </details>
+      </div>
+    </InfoHint>
+  )
+}
+
 function FleetTile({ title, fleet, active }: { title: string; fleet: FleetEconomics; active: boolean }) {
   return (
     <div className={`rounded-[10px] border px-2.5 py-2 ${active ? 'border-ink bg-white' : 'border-line bg-surface-2'}`}>
-      <div className="truncate text-[12px] text-ink-2">{title}</div>
+      <div className="min-w-0 wrap-anywhere lg:truncate text-[12px] text-ink-2">{title}</div>
       <div className="flex items-baseline gap-1.5">
         <span className="display num text-[20px]">{fleet.total}</span>
         <span className="num text-[11.5px] text-ink-3" title={`${fleet.working} в работе + ${fleet.reserve} в резерве`}>
           {fleet.working} + {fleet.reserve} рез.
         </span>
       </div>
-      <div className="num truncate text-[11.5px] text-ink-2">
+      <div className="num min-w-0 wrap-anywhere lg:truncate text-[11.5px] text-ink-2">
         {formatYears(fleet.payback_years)} · {formatRub(fleet.capex_rub)}
       </div>
       {active && <div className="text-[11.5px] font-medium text-ok">в расчёте</div>}
@@ -1152,7 +1201,7 @@ function Kpi({ label, value, unit, tone = 'neutral' }: { label: string; value: n
   const c = tone === 'crit' ? 'text-crit' : tone === 'warn' ? 'text-warn' : 'text-ink'
   return (
     <div className="min-w-0 px-3 py-2.5">
-      <div className="truncate text-[12px] text-ink-3">{label}</div>
+      <div className="min-w-0 wrap-anywhere lg:truncate text-[12px] text-ink-3">{label}</div>
       <div className="flex items-baseline gap-1 whitespace-nowrap">
         <KpiNumber value={value} className={`display text-[20px] ${c}`} />
         <span className="text-[11.5px] text-ink-3">{unit}</span>
