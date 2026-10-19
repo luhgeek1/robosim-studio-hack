@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import { Link } from 'react-router'
-import { AnimatedFaq, useLandingMotion } from './motion'
+import { AnimatedFaq } from './motion'
+import { useLandingMotion } from './use-landing-motion'
 
 const QUESTIONS = [
   {

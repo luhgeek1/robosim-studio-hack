@@ -4,7 +4,7 @@ import { ArrowUpRight, Check, FileCheck2, Fingerprint, Route } from 'lucide-reac
 import { Link } from 'react-router'
 import type { DemoSnapshot } from '@/entities/demo/api'
 import { formatNumber, formatRub, formatYears } from '@/shared/lib/format'
-import { EASE, useLandingMotion } from './motion'
+import { EASE, useLandingMotion } from './use-landing-motion'
 
 const METRICS = [
   {
