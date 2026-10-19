@@ -2,6 +2,7 @@ import asyncio
 import os
 from collections.abc import AsyncIterator
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from alembic import command
@@ -9,7 +10,7 @@ from alembic.config import Config
 from httpx import ASGITransport, AsyncClient, Response
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.core.config import Settings
 from app.main import create_app
@@ -24,27 +25,6 @@ _REDIS_URL = os.environ.get("RS_TEST_REDIS_URL", "redis://localhost:6379/15")
 DEMO_PASSWORD = "Demo12345!"
 # Every response of the integration tests is checked against docs/api; set to a file path to collect instead.
 _CONTRACT_LOG = os.environ.get("RS_CONTRACT_LOG")
-# Seeded reference data survives between tests; only user-generated tables are truncated.
-SEEDED_TABLES = frozenset(
-    {
-        "alembic_version",
-        "sources",
-        "object_types",
-        "parameter_defs",
-        "process_defs",
-        "solution_types",
-        "spec_keys",
-        "industries",
-        "norm_sets",
-        "norms",
-        "data_versions",
-        "manufacturers",
-        "products",
-        "product_offers",
-        "product_specs",
-        "product_cases",
-    }
-)
 
 
 def make_settings(**overrides: object) -> Settings:
@@ -61,16 +41,27 @@ def make_settings(**overrides: object) -> Settings:
     return Settings.model_validate(values)
 
 
-async def _ensure_database(url: str) -> None:
-    target = make_url(url)
+@pytest.fixture(scope="session")
+async def database_admin() -> AsyncIterator[AsyncEngine]:
+    target = make_url(_BASE_DB_URL)
     admin = create_async_engine(target.set(database="postgres"), isolation_level="AUTOCOMMIT")
+    try:
+        yield admin
+    finally:
+        await admin.dispose()
+
+
+async def _drop_database(admin: AsyncEngine, url: str) -> None:
+    name = admin.dialect.identifier_preparer.quote(str(make_url(url).database))
     async with admin.connect() as conn:
-        exists = await conn.scalar(
-            text("SELECT 1 FROM pg_database WHERE datname = :n"), {"n": target.database}
-        )
-        if not exists:
-            await conn.execute(text(f'CREATE DATABASE "{target.database}"'))
-    await admin.dispose()
+        await conn.execute(text(f"DROP DATABASE IF EXISTS {name}"))
+
+
+async def _create_database(admin: AsyncEngine, url: str, template: str = "template0") -> None:
+    target = make_url(url)
+    quote = admin.dialect.identifier_preparer.quote
+    async with admin.connect() as conn:
+        await conn.execute(text(f"CREATE DATABASE {quote(str(target.database))} TEMPLATE {quote(template)}"))
 
 
 def _migrate(url: str) -> None:
@@ -80,22 +71,30 @@ def _migrate(url: str) -> None:
 
 
 @pytest.fixture(scope="session")
-async def migrated_db() -> str:
-    await _ensure_database(_BASE_DB_URL)
-    await asyncio.to_thread(_migrate, _BASE_DB_URL)  # env.py runs its own event loop
-    return _BASE_DB_URL
+async def seeded_template(database_admin: AsyncEngine) -> AsyncIterator[str]:
+    template = f"robomera_test_template_{uuid4().hex}"
+    url = make_url(_BASE_DB_URL).set(database=template).render_as_string(hide_password=False)
+    await _create_database(database_admin, url)
+    try:
+        await asyncio.to_thread(_migrate, url)  # env.py runs its own event loop
+        app = create_app(make_settings(database_url=url))
+        # The real startup seeds the snapshot once; closing the pool lets PostgreSQL clone it.
+        async with app.router.lifespan_context(app):
+            pass
+        yield template
+    finally:
+        await _drop_database(database_admin, url)
 
 
 @pytest.fixture
-async def settings(migrated_db: str) -> Settings:
-    engine = create_async_engine(migrated_db)
-    async with engine.begin() as conn:
-        tables = await conn.scalars(text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'"))
-        names = ", ".join(f'"{name}"' for name in tables if name not in SEEDED_TABLES)
-        if names:
-            await conn.execute(text(f"TRUNCATE {names} RESTART IDENTITY CASCADE"))
-    await engine.dispose()
-    return make_settings()
+async def settings(database_admin: AsyncEngine, seeded_template: str) -> AsyncIterator[Settings]:
+    await _drop_database(database_admin, _BASE_DB_URL)
+    await _create_database(database_admin, _BASE_DB_URL, seeded_template)
+    try:
+        # Each test gets pristine reference data and users, including their password hashes.
+        yield make_settings(seed_on_startup=False)
+    finally:
+        await _drop_database(database_admin, _BASE_DB_URL)
 
 
 def _log_violations(found: list[str]) -> None:

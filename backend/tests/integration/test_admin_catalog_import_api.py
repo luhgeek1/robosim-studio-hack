@@ -1,13 +1,9 @@
 import csv
 import io
-from collections.abc import AsyncIterator
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.core.config import Settings
 from app.seeds.catalog_sources import CATALOG_FILE
 from tests.conftest import REPO_DIR, bearer, login
 
@@ -19,24 +15,6 @@ H1500 = "5760e938-9a43-45a7-b8e8-f4f2e6383930"
 NEW_CLEANER = "0f9c1a52-7d3e-4c8b-9e61-2a4b5c6d7e81"
 NEW_AMR = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
 SOURCE = {"kind": "vendor_site", "title": "Паспорт изделия", "url": "https://example.com/passport"}
-
-
-@pytest.fixture(autouse=True)
-async def reseed_catalog(settings: Settings) -> AsyncIterator[None]:
-    """Imported cards live in seeded tables: drop new ones and let the next startup reload the bundled CSV."""
-    yield
-    engine = create_async_engine(settings.database_url)
-    async with engine.begin() as conn:
-        await conn.execute(
-            text("DELETE FROM products WHERE id IN (:a, :b)"), {"a": NEW_CLEANER, "b": NEW_AMR}
-        )
-        admin_sources = "SELECT id FROM sources WHERE key LIKE 'admin:%'"
-        await conn.execute(text(f"DELETE FROM product_specs WHERE source_id IN ({admin_sources})"))
-        await conn.execute(text(f"DELETE FROM product_offers WHERE source_id IN ({admin_sources})"))
-        await conn.execute(text("UPDATE products SET managed_by_seed = true, hidden_at = NULL"))
-        await conn.execute(text("DELETE FROM sources WHERE key LIKE 'admin:%'"))
-        await conn.execute(text("UPDATE data_versions SET content_hash = NULL WHERE key = 'catalog'"))
-    await engine.dispose()
 
 
 async def _admin(client: AsyncClient) -> dict[str, str]:

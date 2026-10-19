@@ -91,7 +91,7 @@ async def test_norm_upgrade_preserves_admin_inputs_and_is_idempotent(settings: S
             try:
                 await _upgrade_preserves_prior_revision(uow, settings)
             finally:
-                # Reference data survives tests; rollback restores every version and the current flag.
+                # Rollback must restore every version and the current flag.
                 await uow.rollback()
             restored = set(await uow.session.scalars(select(NormSet.id)))
             assert restored == original

@@ -1,10 +1,7 @@
-from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import Settings
 from app.main import create_app
@@ -16,33 +13,6 @@ ADMIN = "/api/v1/admin"
 DEFAULTS = f"{ADMIN}/parameter-defaults"
 SOURCE = {"kind": "open_source", "title": "Росстат, зарплаты 2026", "url": "https://rosstat.gov.ru/labor"}
 SALARY = "forklift_salary_rub_month"
-TEAM_SOURCE_KEY = "norms:team"
-
-
-@pytest.fixture(autouse=True)
-async def restore_reference(settings: Settings) -> AsyncIterator[None]:
-    """Defaults and sources are seeded: drop what the admin set, the next seed run restores the rest."""
-    engine = create_async_engine(settings.database_url)
-    async with engine.connect() as conn:
-        team = (
-            await conn.execute(
-                text("SELECT title, url, retrieved_at, note FROM sources WHERE key = :k"),
-                {"k": TEAM_SOURCE_KEY},
-            )
-        ).one()
-    yield
-    async with engine.begin() as conn:
-        admin_sources = "SELECT id FROM sources WHERE key LIKE 'admin:%'"
-        detach = (
-            f"UPDATE parameter_defs SET default_source_id = NULL WHERE default_source_id IN ({admin_sources})"
-        )
-        await conn.execute(text(detach))
-        await conn.execute(text("DELETE FROM sources WHERE key LIKE 'admin:%'"))
-        await conn.execute(
-            text("UPDATE sources SET title = :t, url = :u, retrieved_at = :r, note = :n WHERE key = :k"),
-            {"t": team.title, "u": team.url, "r": team.retrieved_at, "n": team.note, "k": TEAM_SOURCE_KEY},
-        )
-    await engine.dispose()
 
 
 async def _admin(client: AsyncClient) -> dict[str, str]:
@@ -190,7 +160,7 @@ async def test_seed_keeps_admin_default_and_edited_source(client: AsyncClient, s
         await client.patch(f"{ADMIN}/sources/{team['id']}", json=edit, headers=headers)
     ).status_code == 200
 
-    restarted = create_app(settings)
+    restarted = create_app(settings.model_copy(update={"seed_on_startup": True}))
     async with restarted.router.lifespan_context(restarted):
         pass
 

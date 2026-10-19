@@ -1,11 +1,6 @@
-from collections.abc import AsyncIterator
-
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.core.config import Settings
 from tests.conftest import bearer, login
 
 pytestmark = pytest.mark.integration
@@ -13,25 +8,6 @@ pytestmark = pytest.mark.integration
 ADMIN = "/api/v1/admin"
 PRODUCTS = "/api/v1/catalog/products"
 SOURCE = {"kind": "vendor_site", "title": "Сайт производителя", "url": "https://example.com/robot"}
-
-
-@pytest.fixture(autouse=True)
-async def restore_seeded_tables(settings: Settings) -> AsyncIterator[None]:
-    """Catalog and norms survive between tests (conftest SEEDED_TABLES): undo what the admin changed."""
-    engine = create_async_engine(settings.database_url)
-    async with engine.connect() as conn:
-        version = await conn.scalar(text("SELECT version FROM data_versions WHERE key = 'catalog'"))
-    yield
-    async with engine.begin() as conn:
-        await conn.execute(text("DELETE FROM products WHERE managed_by_seed = false"))
-        await conn.execute(text("DELETE FROM norm_sets WHERE published_by <> 'system'"))
-        await conn.execute(text("UPDATE norm_sets SET is_current = (version = 'v1')"))
-        await conn.execute(text("DELETE FROM sources WHERE key LIKE 'admin:%'"))
-        if version is not None:
-            await conn.execute(
-                text("UPDATE data_versions SET version = :v WHERE key = 'catalog'"), {"v": version}
-            )
-    await engine.dispose()
 
 
 async def _admin(client: AsyncClient) -> dict[str, str]:

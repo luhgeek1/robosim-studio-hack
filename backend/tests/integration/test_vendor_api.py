@@ -1,11 +1,6 @@
-from collections.abc import AsyncIterator
-
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.core.config import Settings
 from app.seeds.users import DEMO_VENDOR_MANUFACTURER
 from tests.conftest import bearer, login
 
@@ -14,23 +9,6 @@ pytestmark = pytest.mark.integration
 ADMIN = "/api/v1/admin"
 VENDOR = "/api/v1/vendor"
 SOURCE = {"kind": "vendor_site", "title": "Паспорт изделия", "url": "https://example.com/passport.pdf"}
-
-
-@pytest.fixture(autouse=True)
-async def restore_seeded_tables(settings: Settings) -> AsyncIterator[None]:
-    """Approved proposals write to the seeded catalog: undo it like the admin tests do."""
-    engine = create_async_engine(settings.database_url)
-    async with engine.connect() as conn:
-        version = await conn.scalar(text("SELECT version FROM data_versions WHERE key = 'catalog'"))
-    yield
-    async with engine.begin() as conn:
-        await conn.execute(text("DELETE FROM products WHERE managed_by_seed = false"))
-        await conn.execute(text("DELETE FROM sources WHERE key LIKE 'admin:%'"))
-        if version is not None:
-            await conn.execute(
-                text("UPDATE data_versions SET version = :v WHERE key = 'catalog'"), {"v": version}
-            )
-    await engine.dispose()
 
 
 async def _headers(client: AsyncClient, email: str) -> dict[str, str]:

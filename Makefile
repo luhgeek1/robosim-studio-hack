@@ -21,7 +21,7 @@ typecheck:
 	$(BACKEND) uv run mypy app
 
 test: infra       ## Unit + integration + contract tests (real Postgres/Redis)
-	$(BACKEND) uv run pytest -q
+	$(BACKEND) uv run pytest -q --durations=20
 
 check: lint typecheck test contract-lint   ## What CI runs; must be green before a commit
 
