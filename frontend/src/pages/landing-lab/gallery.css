@@ -52,6 +52,16 @@
 .lab-gallery-preview:hover img {
   transform: scale(1.025);
 }
+.lab-gallery-new {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  background: #bc492e;
+  color: #fffaf1;
+  padding: 9px 13px;
+  font-size: 10px;
+  font-weight: 500;
+}
 .lab-gallery-preview > span {
   display: flex;
   align-items: center;
