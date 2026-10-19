@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowRight, Layers, Scale } from 'lucide-react'
 import { Link } from 'react-router'
+import { useJourney } from '@/entities/project/journey'
 import { useProjectId } from '@/entities/project'
 import { useBuildComparisonSet, useComparison } from '@/entities/scenario'
 import { parseApiProblem } from '@/shared/api/problem'
@@ -17,6 +18,7 @@ const MIN_ROBOTIZED = 2
 
 export function ComparisonPage() {
   const projectId = useProjectId()
+  const { guided } = useJourney(projectId)
   const comparison = useComparison(projectId)
   const buildSet = useBuildComparisonSet(projectId)
   const [whyOpen, setWhyOpen] = useState(false)
@@ -80,7 +82,7 @@ export function ComparisonPage() {
   const m = best?.metrics
 
   return (
-    <Screen title={table!.verdict.headline} nextLabel="Проверить риски">
+    <Screen title={table!.verdict.headline} nextLabel={guided ? 'Проверить в имитации' : 'Проверить риски'}>
       <div className="space-y-6">
         {(robotized < MIN_ROBOTIZED || stale > 0) && (
           <Callout
@@ -133,13 +135,16 @@ export function ComparisonPage() {
           <CashflowChart table={table!} />
         </Section>
 
-        <Section
-          title="Сводная таблица"
-          description="Суммы с НДС. Название сценария ведёт к расчёту и трассе формул"
-          bodyClassName="p-0"
-        >
-          <ComparisonGrid table={table!} />
-        </Section>
+        <details open={!guided}>
+          <summary className="cursor-pointer py-3 text-sm font-medium">Все показатели и трасса расчёта</summary>
+          <Section
+            title="Сводная таблица"
+            description="Суммы с НДС. Название сценария ведёт к расчёту и трассе формул"
+            bodyClassName="p-0"
+          >
+            <ComparisonGrid table={table!} />
+          </Section>
+        </details>
       </div>
     </Screen>
   )

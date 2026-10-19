@@ -3,6 +3,7 @@ import { Camera, ChevronDown, Info, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Link } from 'react-router'
+import { useJourney } from '@/entities/project/journey'
 import { useLayout } from '@/entities/layout'
 import { useProject, useProjectId } from '@/entities/project'
 import { useObjectType } from '@/entities/reference'
@@ -194,6 +195,7 @@ function SimulationView({
   calculationId: string
   picker: React.ReactNode
 }) {
+  const { guided } = useJourney(projectId)
   usePlaybackDriver()
   const calculation = useCalculation(calculationId)
   const runs = useSimulations(scenario.id)
@@ -337,6 +339,20 @@ function SimulationView({
       titleHint={`${config.count} × ${sizing?.product_name ?? ''}${lead ? `. ${lead}` : ''}`}
       actions={picker}
     >
+      {guided && (
+        <div className="border-b border-line bg-surface-2 px-4 py-2 text-xs leading-relaxed text-ink-3">
+          {run.data?.stage === 'Подготовленная проверка исходного примера'
+            ? 'Подготовленный прогон исходных условий. '
+            : 'Имитация текущих условий. '}
+          {(run.data?.fleet?.length ?? 0) > 1 && (
+            <span>
+              Роботов в прогоне: {run.data!.fleet!.reduce((sum, item) => sum + (item.count ?? 0), 0)}. Процессы
+              используют общие ресурсы.{' '}
+            </span>
+          )}
+          Сравните парк по формуле и по имитации справа. Попробуйте уменьшить N или включить стресс +20 %.
+        </div>
+      )}
       {scenario.items.some((item) => item.process_key === 'meal_delivery') && (
         <p className="border-b border-line px-5 py-3 text-sm text-ink-3">
           Питание моделируется потоком рейсов с пиковым коэффициентом. Одновременная развозка по отделениям в заданное
@@ -548,7 +564,15 @@ function SimulationView({
                 </Control>
               </div>
               <div className="px-3.5 py-2">
-                <PlayerBar disabled={!tracks} />
+                {tracks ? (
+                  <PlayerBar />
+                ) : (
+                  <div className="py-2 text-xs text-ink-3">
+                    {failed || error
+                      ? 'Прогон не готов — измените условия или повторите запуск.'
+                      : 'Готовим новый прогон…'}
+                  </div>
+                )}
               </div>
             </>
           }
@@ -574,7 +598,7 @@ function SimulationView({
                 ...(summary
                   ? [`SLA ${formatNumber(summary.sla.achieved_pct, summary.sla.achieved_pct >= 99 ? 1 : 0)} %`]
                   : []),
-                <PlaybackClock key="clock" />,
+                ...(tracks ? [<PlaybackClock key="clock" />] : []),
               ]}
               panels={panels}
               onToggle={(key) => setPanels((p) => ({ ...p, [key]: !p[key] }))}
