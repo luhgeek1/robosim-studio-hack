@@ -6,6 +6,7 @@ import { SCENARIO_KIND_LABEL, useMonteCarlo, useScenarios, useSensitivity } from
 import type { MonteCarloResult } from '@/shared/api/types'
 import { formatNumber, formatPayback, formatPct, formatYears, isNum } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
+import { InfoHint } from '@/shared/ui/info-hint'
 import { Callout, Screen, Section, Stat, StatStrip } from '@/shared/ui/page'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { EmptyState, ErrorBlock, LoadingBlock } from '@/shared/ui/states'
@@ -123,25 +124,60 @@ function SensitivitySections({
   const heatmap = useSensitivity(scenarioId, { metric, heatmap: HEATMAP })
 
   const metricSwitch = (
-    <Segmented
-      size="sm"
-      value={metric}
-      onChange={onMetric}
-      options={METRIC_KEYS.map((m) => ({ value: m, label: METRIC[m].short, hint: METRIC[m].label }))}
-    />
+    <div className="min-w-0 max-w-full max-sm:[&_button]:px-2">
+      <Segmented
+        size="sm"
+        value={metric}
+        onChange={onMetric}
+        options={METRIC_KEYS.map((m) => ({
+          value: m,
+          label:
+            m === 'payback_years' ? (
+              <>
+                <span className="sm:hidden">Срок</span>
+                <span className="hidden sm:inline">{METRIC[m].short}</span>
+              </>
+            ) : (
+              METRIC[m].short
+            ),
+          hint: METRIC[m].label,
+        }))}
+      />
+    </div>
   )
 
   return (
     <>
-      <Section
-        title="Что сильнее всего меняет результат"
-        description="Каждый параметр по очереди сдвигается к границам диапазона; сверху — самый влиятельный"
-        actions={metricSwitch}
-      >
-        {tornado.isPending && <LoadingBlock rows={4} />}
-        {tornado.isError && <ErrorBlock error={tornado.error} onRetry={() => tornado.refetch()} />}
-        {tornado.data && <Tornado result={tornado.data} metric={metric} />}
-      </Section>
+      <section className="card" aria-labelledby="sensitivity-heading">
+        <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 px-4 pt-4 pb-4 sm:px-5 sm:pt-5">
+          <div className="flex min-w-0 max-w-full items-start">
+            <h2 id="sensitivity-heading" className="h3 min-w-0">
+              Что сильнее всего меняет результат
+            </h2>
+            <InfoHint
+              title="Как считается влияние"
+              size="sm"
+              showCloseButton={false}
+              className="-mt-1 -mr-1 -ml-1 max-sm:-mt-2 max-sm:-ml-2"
+            >
+              <p>
+                Каждый параметр по очереди меняется к границам своего диапазона. Остальные значения остаются как в
+                базовом расчёте.
+              </p>
+              <p className="mt-2">
+                Сверху — параметры с самым большим разбросом результата. Это чувствительность расчёта к параметру, а не
+                вероятность исхода.
+              </p>
+            </InfoHint>
+          </div>
+          <div className="min-w-0 max-w-full max-sm:w-full">{metricSwitch}</div>
+        </div>
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+          {tornado.isPending && <LoadingBlock rows={4} />}
+          {tornado.isError && <ErrorBlock error={tornado.error} onRetry={() => tornado.refetch()} />}
+          {tornado.data && <Tornado result={tornado.data} metric={metric} />}
+        </div>
+      </section>
 
       <Section
         title="Если зарплаты и объёмы изменятся вместе"

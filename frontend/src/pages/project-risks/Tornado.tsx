@@ -16,7 +16,7 @@ const KIND_LABEL: Record<NonNullable<Item['kind']>, string> = {
   group: 'группа параметров',
 }
 
-// Место по краям шкалы под подписи значений у концов полос.
+// Небольшой запас по краям шкалы, чтобы крайние точки не упирались в границу графика.
 const PAD_SHARE = 0.2
 const SPRING = { type: 'spring', stiffness: 150, damping: 24 } as const
 
@@ -35,15 +35,11 @@ function inputText(item: Item, v: number): string {
   return item.unit ? `${formatNumber(v)} ${item.unit}` : formatNumber(v)
 }
 
-// «Срок окупаемости» внутри фразы — со строчной, аббревиатуры (NPV, ROI, TCO) остаются как есть.
-const inSentence = (label: string) =>
-  label[1] && label[1] === label[1].toLowerCase() ? label[0].toLowerCase() + label.slice(1) : label
-
-/* Торнадо одной полосой на параметр: полоса — весь диапазон метрики при сдвиге параметра, часть лучше базы
-   зелёная, хуже — красная; у концов значение и вход, который его даёт. Справа — разброс, по нему и порядок. */
+/* Торнадо одной полосой на параметр: часть лучше базы зелёная, хуже — красная. Точки отмечают результаты
+   на границах параметра; значения и входы стоят под полосой. Справа — разброс, по нему и порядок. */
 export function Tornado({ result, metric }: { result: SensitivityResult; metric: Metric }) {
   const items = [...result.items].sort((a, b) => a.rank - b.rank)
-  const { format: fmt, better, label } = METRIC[metric]
+  const { format: fmt, better } = METRIC[metric]
   const base = result.base_value
   const values = [base, ...items.flatMap((i) => [i.metric_at_low, i.metric_at_high])].filter(isNum)
   const hasNull = items.some((i) => i.metric_at_low === null || i.metric_at_high === null)
@@ -61,32 +57,60 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
   const isBetter = (v: number | null) => isNum(v) && (better === 'lower' ? v < base : v > base)
 
   const top = items[0]
-  const topRange = top ? [top.metric_at_low, top.metric_at_high].filter(isNum).sort((a, b) => a - b) : []
+  const topRange = top ? [top.metric_at_low, top.metric_at_high].sort((a, b) => pos(a) - pos(b)) : []
+  const [rangeLow, rangeHigh] = topRange
+  const sharedUnit = (metric === 'payback_years' || metric === 'roi_pct') && isNum(rangeLow) && isNum(rangeHigh)
 
   return (
     <div>
-      {top && topRange.length > 0 && (
-        <p className="max-w-[72ch] text-[15px] leading-relaxed text-ink-2">
-          Сильнее всего {inSentence(label)} зависит от параметра{' '}
-          <span className="font-medium text-ink">«{top.name}»</span>: в его диапазоне —{' '}
-          {topRange.length === 2 ? (
-            <>
-              от <span className="num font-medium text-ink">{fmt(topRange[0])}</span> до{' '}
-              <span className="num font-medium text-ink">{fmt(topRange[1])}</span>
-            </>
-          ) : (
-            <span className="num font-medium text-ink">{fmt(topRange[0])}</span>
-          )}{' '}
-          при базе <span className="num font-medium text-ink">{fmt(base)}</span>.
-        </p>
+      {top && (
+        <div
+          role="note"
+          aria-label="Краткий вывод по чувствительности"
+          className="grid items-center gap-x-8 gap-y-4 pt-1 lg:grid-cols-[minmax(0,1fr)_auto]"
+        >
+          <div className="min-w-0 border-l-2 border-signal/70 pl-3">
+            <p className="text-[11px] text-ink-3">Сильнее всего влияет</p>
+            <p className="mt-1.5 text-[15px] leading-snug font-medium wrap-anywhere sm:text-[16px]">{top.name}</p>
+          </div>
+          <dl className="grid w-full min-w-0 max-w-96 grid-cols-[minmax(0,3fr)_minmax(0,4fr)] items-start justify-self-end gap-x-4 sm:gap-x-6 lg:w-96">
+            <div className="min-w-0 text-right">
+              <dt className="text-[12px] text-ink-3">База</dt>
+              <dd className="num mt-1 min-w-0 text-[18px] leading-snug font-medium tracking-[-0.02em] wrap-anywhere">
+                {fmt(base)}
+              </dd>
+            </div>
+            <div className="min-w-0 text-right">
+              <dt className="text-[12px] text-ink-3">Диапазон</dt>
+              <dd className="num mt-1 min-w-0 text-[18px] leading-snug font-semibold tracking-[-0.02em] wrap-anywhere">
+                {rangeLow === rangeHigh ? (
+                  fmt(rangeLow)
+                ) : (
+                  <>
+                    <span className="inline-block max-w-full">
+                      {sharedUnit ? formatNumber(rangeLow, 1) : fmt(rangeLow)}
+                    </span>
+                    <span className="inline-block max-w-full">
+                      <span aria-hidden className="mx-1 font-normal text-ink-4">
+                        –
+                      </span>
+                      <span className="sr-only"> до </span>
+                      {fmt(rangeHigh)}
+                    </span>
+                  </>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12.5px] text-ink-3">
+      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-ink-3">
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-4 rounded-full bg-ok" /> лучше базы
+          <span className="h-1.5 w-3 rounded-full bg-ok" /> лучше базы
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-4 rounded-full bg-crit" /> хуже базы
+          <span className="h-1.5 w-3 rounded-full bg-crit" /> хуже базы
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-3 w-px bg-ink" /> база
@@ -98,7 +122,7 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
         )}
       </div>
 
-      {/* На узком экране значения стоят под полосой: их длина не влияет на шкалу и не вызывает наложений. */}
+      {/* Подписи отделены от полосы на любой ширине: близкие результаты и длинные суммы не накладываются. */}
       <div className="mt-5 grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-2 lg:grid-cols-[1.5rem_minmax(0,16rem)_minmax(0,1fr)_6.5rem] lg:gap-x-4">
         <div className="hidden lg:col-span-2 lg:block" />
         <div className="relative col-span-2 flex min-w-0 justify-center pb-2 lg:col-span-1 lg:block lg:h-8 lg:pb-0">
@@ -185,33 +209,32 @@ function Row({
           </div>
 
           <div className="relative col-span-2 row-start-2 min-w-0 lg:col-auto lg:row-auto">
-            <div aria-hidden="true" className="relative h-7 lg:h-11">
-              <span className="absolute inset-y-0 w-px bg-ink lg:-inset-y-3" style={{ left: `${basePos * 100}%` }} />
+            <div aria-hidden="true" className="relative h-7">
+              <span className="absolute inset-y-0 w-px bg-ink" style={{ left: `${basePos * 100}%` }} />
               {zeroPos !== null && (
                 <span
-                  className="absolute inset-y-0 w-0 border-l border-dashed border-ink-4 lg:-inset-y-3"
+                  className="absolute inset-y-0 w-0 border-l border-dashed border-ink-4"
                   style={{ left: `${zeroPos * 100}%` }}
                 />
               )}
               <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line" />
               <Segment from={basePos} to={pos(left.value)} good={isBetter(left.value)} open={left.value === null} />
               <Segment from={basePos} to={pos(right.value)} good={isBetter(right.value)} open={right.value === null} />
+              {ends.map((end, i) =>
+                end.value !== null ? (
+                  <motion.span
+                    key={i}
+                    className="absolute top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink ring-2 ring-surface"
+                    initial={false}
+                    animate={{ left: `${pos(end.value) * 100}%` }}
+                    transition={SPRING}
+                  />
+                ) : null,
+              )}
             </div>
-            <div className="mt-1.5 grid grid-cols-2 gap-4 lg:contents">
-              <EndLabel
-                side="left"
-                at={pos(left.value)}
-                value={left.value}
-                input={inputText(item, left.input)}
-                fmt={fmt}
-              />
-              <EndLabel
-                side="right"
-                at={pos(right.value)}
-                value={right.value}
-                input={inputText(item, right.input)}
-                fmt={fmt}
-              />
+            <div className="mt-1.5 grid grid-cols-2 gap-4">
+              <EndLabel side="left" value={left.value} input={inputText(item, left.input)} fmt={fmt} />
+              <EndLabel side="right" value={right.value} input={inputText(item, right.input)} fmt={fmt} />
             </div>
           </div>
 
@@ -270,31 +293,21 @@ function Segment({ from, to, good, open }: { from: number; to: number; good: boo
 
 function EndLabel({
   side,
-  at,
   value,
   input,
   fmt,
 }: {
   side: 'left' | 'right'
-  at: number
   value: number | null
   input: string
   fmt: Fmt
 }) {
   return (
-    <motion.span
-      className={cn(
-        'block min-w-0 leading-snug wrap-anywhere lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:leading-tight lg:whitespace-nowrap',
-        side === 'left' ? 'text-left lg:pr-2.5 lg:text-right' : 'text-right lg:pl-2.5 lg:text-left',
-      )}
-      initial={false}
-      animate={side === 'left' ? { right: `${(1 - at) * 100}%` } : { left: `${at * 100}%` }}
-      transition={SPRING}
-    >
+    <span className={cn('block min-w-0 leading-snug wrap-anywhere', side === 'left' ? 'text-left' : 'text-right')}>
       <span className={cn('num block text-[12.5px] font-medium', value === null ? 'text-crit' : 'text-ink')}>
         {value === null ? 'не окупается' : fmt(value)}
       </span>
       <span className="num block text-[11px] text-ink-3">при {input}</span>
-    </motion.span>
+    </span>
   )
 }
