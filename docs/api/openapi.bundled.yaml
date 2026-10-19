@@ -7836,6 +7836,17 @@ components:
             - string
             - 'null'
           description: Текст, если подходящих нет (допустимый ответ по Q&A)
+        recommended_product_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+          description: Продукт для сценария из рекомендации; тот же выбор, что при создании
+        selection_reason:
+          type:
+            - string
+            - 'null'
+          description: Причина выбора с учётом NPV и статуса проверок
     MatchingRunRequest:
       type: object
       properties:

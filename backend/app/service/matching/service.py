@@ -98,6 +98,51 @@ def _demand_summary(view: ProcessView) -> str | None:
     return f"{fmt(math.ceil(result.peak_per_hour))} {unit}/ч в пик, {fmt(result.demand_per_day)} {unit}/сут"
 
 
+def recommended_candidates(processes: list[ProcessMatchingView]) -> list[tuple[str, CandidateView]]:
+    """One selection policy for the preview, scenario creation and report."""
+    chosen: list[tuple[str, CandidateView]] = []
+    fallback: tuple[str, CandidateView] | None = None
+    for process in processes:
+        priced = [
+            c
+            for c in process.candidates
+            if c.economics is not None and c.result.status in {CandidateStatus.FIT, CandidateStatus.CHECK}
+        ]
+        for status in (CandidateStatus.FIT, CandidateStatus.CHECK):
+            good = [
+                c for c in priced if c.result.status == status and c.economics and c.economics.npv_rub > 0
+            ]
+            if good:
+                chosen.append((process.process_key, good[0]))
+                break
+        for candidate in priced:
+            if (
+                candidate.economics
+                and candidate.economics.effect_rub_year > 0
+                and (
+                    fallback is None
+                    or (fallback[1].economics and candidate.economics.npv_rub > fallback[1].economics.npv_rub)
+                )
+            ):
+                fallback = (process.process_key, candidate)
+    return chosen or ([fallback] if fallback else [])
+
+
+def selection_reason(view: CandidateView) -> str:
+    economics = view.economics
+    reason = (
+        "Лучший по рейтингу вариант с положительным NPV; сначала рассматриваются подходящие решения."
+        if economics and economics.npv_rub > 0
+        else "Вариант с наибольшим NPV среди решений с положительным годовым эффектом; "
+        "за горизонт инвестиции не окупаются."
+    )
+    if economics:
+        reason += f" NPV покупки: {fmt(economics.npv_rub / 1e6)} млн ₽."
+    if view.result.status == CandidateStatus.CHECK:
+        reason += " До внедрения подтвердите пропущенные проверки объекта и ТТХ."
+    return reason
+
+
 class MatchingService:
     def __init__(self, uow: UnitOfWork, user: CurrentUser) -> None:
         self._uow = uow

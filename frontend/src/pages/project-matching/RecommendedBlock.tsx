@@ -70,8 +70,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
       }) ?? []
 
   const fromMatching: Pick[] = matching.processes.flatMap((process) => {
-    const best =
-      process.candidates.find((c) => c.status === 'fit') ?? process.candidates.find((c) => c.status === 'check')
+    const best = process.candidates.find((c) => c.product.id === process.recommended_product_id)
     if (!best) return []
     return [
       {
@@ -97,6 +96,17 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
 
   return (
     <section className="card mb-10 overflow-hidden">
+      {!fromScenario.length && (
+        <div className="space-y-2 border-b border-line px-5 py-4 text-sm text-ink-3">
+          {matching.processes
+            .filter((p) => p.selection_reason)
+            .map((p) => (
+              <p key={p.process_key}>
+                <span className="font-medium text-ink">{p.name}.</span> {p.selection_reason}
+              </p>
+            ))}
+        </div>
+      )}
       {picks.length === 1 ? (
         <ul>
           <PickHero pick={picks[0]} first />

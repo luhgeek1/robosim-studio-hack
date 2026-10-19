@@ -4063,6 +4063,13 @@ export interface components {
       candidates: components['schemas']['Candidate'][]
       /** @description Текст, если подходящих нет (допустимый ответ по Q&A) */
       no_fit_message?: string | null
+      /**
+       * Format: uuid
+       * @description Продукт для сценария из рекомендации; тот же выбор, что при создании
+       */
+      recommended_product_id?: string | null
+      /** @description Причина выбора с учётом NPV и статуса проверок */
+      selection_reason?: string | null
     }
     MatchingRunRequest: {
       weights?: {

@@ -42,7 +42,6 @@ _LIGHT = colors.HexColor("#EEF3F8")
 _WARN = colors.HexColor("#FCE4D6")
 _GRID = colors.HexColor("#C8D3DF")
 PARAMS_LIMIT = 80
-CANDIDATES_SHOWN = 3
 ASSUMPTIONS_SHOWN = 60
 MODE_LABELS = {"normal": "обычный день", "peak": "пиковый режим", "custom": "стресс-тест"}
 _SUMMARY_ROWS = (
@@ -300,7 +299,7 @@ class Builder:
             )
         )
         for process in self.m.matching:
-            candidates = process["candidates"][:CANDIDATES_SHOWN]
+            candidates = process["candidates"]
             if not candidates:
                 continue
             rows: list[list[Any]] = [["Продукт", "Статус", "Балл", "N", "Срок окуп., лет", "Причины"]]

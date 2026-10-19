@@ -54,3 +54,22 @@ async def test_sanitation_norm_reaches_the_event_simulation(client: AsyncClient)
         assert all(e["dur"] == seconds for e in service)
         events.append(replay["events"])
     assert events[0] != events[1]
+
+
+async def test_recommendation_preview_and_created_scenario_agree(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client, "warehouse")
+    matching = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=headers)).json()
+    expected = {
+        p["process_key"]: p["recommended_product_id"]
+        for p in matching["processes"]
+        if p["recommended_product_id"]
+    }
+    assert expected
+    created = await client.post(
+        f"/api/v1/projects/{project_id}/scenarios",
+        json={"name": "Рекомендация", "kind": "purchase", "from_recommendation": True},
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    assert {i["process_key"]: i["product_id"] for i in created.json()["items"]} == expected
+    assert all("NPV" in i["notes"] for i in created.json()["items"])

@@ -6,7 +6,14 @@ from pydantic import Field
 from app.api.schemas.base import ApiModel
 from app.api.schemas.catalog import Product
 from app.engine.matching import CandidateStatus
-from app.service.matching.service import ESTIMATE_NOTE, CandidateView, MatchingOutcome, ProcessMatchingView
+from app.service.matching.service import (
+    ESTIMATE_NOTE,
+    CandidateView,
+    MatchingOutcome,
+    ProcessMatchingView,
+    recommended_candidates,
+    selection_reason,
+)
 
 
 class Reason(ApiModel):
@@ -113,9 +120,11 @@ class ProcessMatching(ApiModel):
     solution_types: list[SolutionTypeMatch]
     candidates: list[Candidate]
     no_fit_message: str | None = None
+    recommended_product_id: UUID | None = None
+    selection_reason: str | None = None
 
     @classmethod
-    def from_domain(cls, view: ProcessMatchingView) -> "ProcessMatching":
+    def from_domain(cls, view: ProcessMatchingView, chosen: CandidateView | None = None) -> "ProcessMatching":
         return cls(
             process_key=view.process_key,
             name=view.name,
@@ -123,6 +132,8 @@ class ProcessMatching(ApiModel):
             solution_types=[SolutionTypeMatch.model_validate(t) for t in view.solution_types],
             candidates=[Candidate.from_domain(c) for c in view.candidates],
             no_fit_message=view.no_fit_message,
+            recommended_product_id=chosen.data.product.id if chosen else None,
+            selection_reason=selection_reason(chosen) if chosen else None,
         )
 
 
@@ -143,13 +154,14 @@ class MatchingResult(ApiModel):
 
     @classmethod
     def from_domain(cls, item: MatchingOutcome) -> "MatchingResult":
+        chosen = dict(recommended_candidates(item.processes))
         return cls(
             project_id=item.project_id,
             project_version=item.project_version,
             catalog_version=item.catalog_version,
             computed_at=item.computed_at,
             weights=item.weights,
-            processes=[ProcessMatching.from_domain(p) for p in item.processes],
+            processes=[ProcessMatching.from_domain(p, chosen.get(p.process_key)) for p in item.processes],
             totals=MatchingTotals(**item.totals),
         )
 
