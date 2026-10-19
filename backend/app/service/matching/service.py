@@ -12,9 +12,12 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.catalog import ProductSummary
 from app.domain.reference import ProcessDef
+from app.engine.layout import Plan
 from app.engine.matching import CRITERIA, CandidateResult, CandidateStatus, QuickEstimate, evaluate, rank
 from app.engine.trace import fmt
 from app.service.catalog.mappers import to_summary
+from app.service.layouts.mapping import plan_from
+from app.service.layouts.reader import LayoutReader
 from app.service.matching.candidates import (
     CandidateData,
     ProcessSizing,
@@ -26,6 +29,7 @@ from app.service.matching.candidates import (
     specs_by_product,
 )
 from app.service.matching.economics import QuickEconomics, payback_limit_years, quick_economics
+from app.service.matching.geometry import check_geometry
 from app.service.projects.context import ProjectContext, ProjectLoader
 from app.service.projects.processes import ProcessAnalysis, ProcessService, ProcessView
 
@@ -138,7 +142,9 @@ class MatchingService:
         selected = set(settings.process_keys) if settings and settings.process_keys else None
         rnd = settings.include_rnd if settings else False
         views = [v for v in analysis.views if selected is None or v.result.process_key in selected]
-        processes = [await self._process(analysis, view, effective, rnd) for view in views]
+        layout = await LayoutReader(self._uow).layout(context.project.id)
+        plan = plan_from(layout) if layout else None
+        processes = [await self._process(analysis, view, effective, rnd, plan) for view in views]
         totals = {
             status.value: 0
             for status in (CandidateStatus.FIT, CandidateStatus.CHECK, CandidateStatus.EXCLUDED)
@@ -178,7 +184,12 @@ class MatchingService:
         return settings
 
     async def _process(
-        self, analysis: ProcessAnalysis, view: ProcessView, weights: dict[str, float], include_rnd: bool
+        self,
+        analysis: ProcessAnalysis,
+        view: ProcessView,
+        weights: dict[str, float],
+        include_rnd: bool,
+        plan: Plan | None,
     ) -> ProcessMatchingView:
         definition = next(
             p for p in analysis.context.object_type.processes if p.key == view.result.process_key
@@ -202,6 +213,16 @@ class MatchingService:
         results: list[CandidateResult] = []
         for data in candidates:
             result = evaluate(data.input, definition.requirements, analysis.values, include_rnd=include_rnd)
+            check_geometry(
+                result,
+                data,
+                definition,
+                plan,
+                analysis.norms,
+                (analysis.values.get("pallet_dims_mm_width") or 0.0)
+                if analysis.context.project.object_type == "warehouse"
+                else 0.0,
+            )
             if data.product.id in manual_ids:
                 result.status = CandidateStatus.MANUAL
             results.append(result)

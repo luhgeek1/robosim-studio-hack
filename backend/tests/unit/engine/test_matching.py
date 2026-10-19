@@ -101,10 +101,19 @@ def test_assumed_spec_is_not_evidence() -> None:
     assert result.status == CandidateStatus.CHECK
 
 
-def test_missing_object_param_skips_check() -> None:
+def test_missing_object_param_requires_verification() -> None:
     result = evaluate(product("H1500", payload_kg=1500), [PAYLOAD], {}, include_rnd=False)
-    assert result.status == CandidateStatus.FIT
+    assert result.status == CandidateStatus.CHECK
     assert result.reasons[0].code == "OBJECT_PARAM_MISSING"
+
+
+def test_unknown_applicability_requires_check_but_false_condition_does_not() -> None:
+    conditional = replace(PAYLOAD, when="has_open_air_zones")
+    candidate = product("H1500", payload_kg=1500)
+    unknown = evaluate(candidate, [conditional], VALUES, include_rnd=False)
+    assert unknown.status == CandidateStatus.CHECK
+    not_applicable = evaluate(candidate, [conditional], {"has_open_air_zones": 0}, include_rnd=False)
+    assert not_applicable.status == CandidateStatus.FIT
 
 
 def test_rnd_excluded_unless_requested() -> None:

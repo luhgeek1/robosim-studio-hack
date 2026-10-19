@@ -5,7 +5,8 @@ from functools import cache
 import pytest
 
 from app.domain.layout.models import LayoutTemplate, NodeKind
-from app.engine.layout import Plan, generate
+from app.engine.layout import Edge, Node, Plan, generate
+from app.engine.layout.clearance import required_passage_m
 from app.engine.simulation import (
     Failure,
     Prepared,
@@ -21,6 +22,7 @@ from app.engine.simulation import (
     simulate,
 )
 from app.engine.simulation.model import Model
+from app.engine.simulation.network import Network
 from app.engine.simulation.sweep import Sweep
 from app.engine.trace import Book, InputKind
 from app.seeds.schemas import load_norm_set
@@ -125,6 +127,49 @@ def test_narrow_aisles_are_one_robot_resources_with_recorded_waits() -> None:
     assert len(aisles) == len(prepared.segments)
     assert sum(r.wait_s for r in aisles) > 0
     assert result.summary.congestion["top_edges"]
+
+
+def test_robot_cannot_confirm_sla_through_a_passage_narrower_than_its_body() -> None:
+    plan, _ = layout()
+    narrow = replace(plan, edges=tuple(replace(e, width_m=0.2) for e in plan.edges))
+    process = replace(PALLETS, robot=replace(PALLETS.robot, footprint_m=(1.0, 0.64)))
+    with pytest.raises(SimulationError, match="SLA не подтверждён"):
+        simulate(SimInput(narrow, (process,), SETTINGS, SimConfig(mode=SimMode.PEAK)))
+
+
+def test_passage_includes_cargo_and_safety_clearance() -> None:
+    specs = Book.of(
+        InputKind.SPEC,
+        [
+            ("width_mm", "Ширина", 640, "мм"),
+            ("min_aisle_width_mm", "Проход", 1500, "мм"),
+        ],
+    )
+    norms = Book.of(InputKind.NORM, [("aisle_safety_clearance_mm", "Зазор", 500, "мм")])
+    assert required_passage_m(specs, norms) == 1.5
+    assert required_passage_m(specs, norms, cargo_width_mm=1200) == 1.7
+
+
+def test_routing_takes_a_wide_detour_and_preserves_one_way_rules() -> None:
+    nodes = tuple(Node(key, i, 0, NodeKind.WAYPOINT) for i, key in enumerate("abc"))
+    plan = Plan(
+        10,
+        10,
+        (),
+        (),
+        nodes,
+        (
+            Edge("short", "a", "c", 1, 0.2, 1),
+            Edge("ab", "a", "b", 2, 2, 1, one_way=True),
+            Edge("bc", "b", "c", 2, 2, 1),
+        ),
+    )
+    network = Network(plan, []).for_width(1.2)
+    assert network.route("a", "c").nodes == ("a", "b", "c")
+    assert network.distance("a", "c") == 4
+    with pytest.raises(SimulationError):
+        network.require_connected({"a", "c"}, "Рейс", 1.2)
+    assert Network(plan, []).for_width(0.2).distance("a", "c") == 1
 
 
 def test_events_describe_moves_on_the_layout_graph() -> None:
@@ -295,6 +340,30 @@ def test_hospital_trips_ride_the_lift_and_carry_the_load_per_trip() -> None:
     assert comparison.sim_throughput_per_hour == pytest.approx(
         comparison.analytic_throughput_per_hour, rel=0.25
     )
+
+
+def test_turnaround_occupies_robot_after_delivery_and_reduces_capacity() -> None:
+    plan, prepared = _hospital()
+    busy = replace(MEALS, robots=1, internal_per_day=200, turnaround_s=120)
+    inp = SimInput(plan, (busy,), SETTINGS, SimConfig(mode=SimMode.PEAK, seed=3))
+    short = simulate(inp, prepared)
+    long = simulate(replace(inp, processes=(replace(busy, turnaround_s=600),)), prepared)
+    assert long.summary.completed < short.summary.completed
+    events = long.record.events
+    services = [e for e in events if e.reason == "turnaround"]
+    assert services
+    assert all(e.dur == 600 for e in services)
+    for service in services:
+        next_task = next(
+            (
+                e
+                for e in events
+                if e.type == "task_assigned" and e.robot_id == service.robot_id and e.t > service.t
+            ),
+            None,
+        )
+        if next_task:
+            assert next_task.t >= service.t + 600
 
 
 def test_one_lift_for_a_busy_flow_is_the_bottleneck() -> None:

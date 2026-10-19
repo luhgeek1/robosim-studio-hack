@@ -7,6 +7,7 @@ from app.engine.calculation import CalculationResult, ItemSizing
 from app.engine.calculation.context import Books
 from app.engine.expressions import ExpressionError, MissingValueError
 from app.engine.layout import Plan
+from app.engine.layout.clearance import required_passage_m
 from app.engine.simulation import (
     Dispatch,
     Failure,
@@ -109,6 +110,12 @@ class InputBuilder:
     def _robot(self, sizing: ItemSizing) -> RobotSpec:
         specs, norms = sizing.item.specs, self.snapshot.input.norms
         length, width = specs.optional("length_mm"), specs.optional("width_mm")
+        cargo_width = (
+            self.snapshot.input.params.get("pallet_dims_mm_width") or 0.0
+            if self.snapshot.input.object_type == "warehouse"
+            and sizing.item.sizing_model in {SizingModel.TRANSPORT_CYCLE, SizingModel.TOW_TRAIN}
+            else 0.0
+        )
         return RobotSpec(
             speed_mps=specs.value("max_speed_mps") * norms.value("effective_speed_factor"),
             load_s=norms.value("load_handling_time_s"),
@@ -119,6 +126,7 @@ class InputBuilder:
             runtime_h=runtime.value if (runtime := specs.optional("runtime_h")) else None,
             charge_min=self._charge_min(specs, norms),
             footprint_m=(length.value / MM_PER_M, width.value / MM_PER_M) if length and width else None,
+            min_passage_m=required_passage_m(specs, norms, cargo_width),
         )
 
     def _station_rate(self, sizing: ItemSizing, spec: dict[str, Any]) -> float:
@@ -169,6 +177,12 @@ class InputBuilder:
             analytic_robots=sizing.count.analytic,
             analytic_per_robot_h=outcome.effective_per_hour if outcome else None,
             units_per_trip=_step(self.result, f"{key}.units_per_trip") or 1.0,
+            # Lift time is already applied on elevator edges; other cycle extras occupy the robot once.
+            turnaround_s=sum(
+                _step(self.result, f"{key}.{extra.key}") or 0.0
+                for extra in definition.cycle_extras
+                if extra.key != "elevator_s"
+            ),
         )
         return replace(process, **service) if service else process
 

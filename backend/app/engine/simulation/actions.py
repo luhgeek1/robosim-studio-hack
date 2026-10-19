@@ -120,8 +120,9 @@ class Actions:
         """An idle robot must not block a one-way aisle: it drives to the nearest aisle end first."""
         if robot.held is None:
             return
-        exits = self.exits[robot.held[0]]
-        target = min(exits, key=lambda node: robot.network.distance(robot.node, node))
+        reachable = robot.network.tree(robot.node)[0]
+        exits = [node for node in self.exits[robot.held[0]] if node in reachable]
+        target = min(exits, key=lambda node: reachable[node])
         yield from self.travel(robot, target)
         self._release_segment(robot)
 
@@ -188,8 +189,16 @@ class Actions:
         elif model == ProcessModel.TOW_TRAIN:
             self.line_done(task)
         robot.tasks += 1
-        robot.cycles.append(self.env.now - started)
         self.emit("task_done", robot, task_id=task.id, node=robot.node)
+        if robot.process.turnaround_s > 0:
+            # Delivery SLA stops above; sanitation still occupies the fleet and consumes battery.
+            yield from self.leave_aisle(robot)
+            duration = robot.process.turnaround_s
+            robot.switch(State.UNLOADING, self.env.now)
+            self.emit("unload", robot, node=robot.node, dur=duration, reason="turnaround")
+            yield self.env.timeout(duration)
+            robot.drain(duration)
+        robot.cycles.append(self.env.now - started)
 
     def _transport(self, robot: Robot, task: Task) -> Steps:
         spec = robot.process.robot

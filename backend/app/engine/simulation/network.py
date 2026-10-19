@@ -86,6 +86,10 @@ class Network:
     def __init__(
         self, plan: Plan, segments: list[Segment], allow: Callable[[Edge], bool] | None = None
     ) -> None:
+        self.plan = plan
+        self.segments = segments
+        self.allow = allow
+        self._width_networks: dict[float, Network] = {}
         self.nodes: dict[str, Node] = {node.id: node for node in plan.nodes}
         self.adjacency: dict[str, list[tuple[str, float, str]]] = defaultdict(list)
         for edge in plan.edges:
@@ -102,6 +106,43 @@ class Network:
         self.lengths = {edge.id: edge.length_m for edge in plan.edges}
         self._trees: dict[str, Tree] = {}
         self._routes: dict[tuple[str, str], Route] = {}
+
+    def for_width(self, width_m: float) -> "Network":
+        """Keep usable detours; an undersized edge must never become a valid route."""
+        if width_m <= 0:
+            return self
+        if width_m not in self._width_networks:
+            self._width_networks[width_m] = Network(
+                self.plan,
+                self.segments,
+                lambda edge: edge.width_m >= width_m and (self.allow is None or self.allow(edge)),
+            )
+        return self._width_networks[width_m]
+
+    def require_connected(self, points: set[str], label: str, width_m: float) -> None:
+        """All task endpoints and homes must be mutually reachable, including one-way restrictions."""
+        if not points:
+            raise SimulationError(f"«{label}»: на планировке нет стартовых точек роботов")
+        anchor = min(points)
+        reverse: dict[str, list[str]] = defaultdict(list)
+        for source, neighbours in self.adjacency.items():
+            for target, _, _ in neighbours:
+                reverse[target].append(source)
+        visited: set[str] = set()
+        pending = [anchor]
+        while pending:
+            node = pending.pop()
+            if node not in visited:
+                visited.add(node)
+                pending.extend(reverse[node])
+        missing = points - (self.tree(anchor)[0].keys() & visited)
+        if missing:
+            names = ", ".join(self.nodes[n].label or n for n in sorted(missing)[:3])
+            raise SimulationError(
+                f"«{label}»: нет доступного маршрута к точкам {names} и обратно. "
+                f"Минимальная ширина проезда для робота с зазором — {width_m:g} м. "
+                "Проверьте ширину и направление проходов на планировке. SLA не подтверждён."
+            )
 
     def tree(self, source: str) -> Tree:
         cached = self._trees.get(source)
