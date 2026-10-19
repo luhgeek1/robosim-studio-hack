@@ -10,6 +10,7 @@ import {
   Map as MapIcon,
   Maximize2,
   RefreshCw,
+  Pencil,
   TriangleAlert,
 } from 'lucide-react'
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
@@ -31,6 +32,7 @@ import { Derivation } from './DerivationList'
 import { FocusLayer, type Spotlight } from './FocusLayer'
 import { ROUTE_ENDPOINT, ROUTE_USE, TEMPLATE_LABEL, type LayoutRoute } from './labels'
 import { RegenerateDialog } from './RegenerateDialog'
+import { EditLayoutDialog } from './EditLayoutDialog'
 import { exampleRoute, type ExampleRoute, type RouteKey } from './routes'
 import { SlideHighlight, SlideMark } from '@/shared/ui/slide-highlight'
 
@@ -49,6 +51,7 @@ export function LayoutPage() {
   const objectType = useObjectType(project.data?.object_type)
   const layout = useLayout(projectId)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(false)
 
   const templates = objectType.data?.layout_templates ?? []
   const unsupported = objectType.data !== undefined && templates.length === 0
@@ -78,9 +81,14 @@ export function LayoutPage() {
       actions={
         data &&
         !unsupported && (
-          <Button variant="outline" onClick={openDialog}>
-            <RefreshCw /> Перегенерировать
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => setEditorOpen(true)}>
+              <Pencil /> Редактировать
+            </Button>
+            <Button variant="outline" onClick={openDialog}>
+              <RefreshCw /> Перегенерировать
+            </Button>
+          </>
         )
       }
     >
@@ -131,6 +139,7 @@ export function LayoutPage() {
           onOpenChange={setDialogOpen}
         />
       )}
+      {editorOpen && data && <EditLayoutDialog projectId={projectId} layout={data} onOpenChange={setEditorOpen} />}
     </Screen>
   )
 }
