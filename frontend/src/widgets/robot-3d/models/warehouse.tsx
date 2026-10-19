@@ -1,3 +1,4 @@
+import { amrLoad, stackerLayout, tugLayout } from './dimensions'
 import { RoundedBox } from '@react-three/drei'
 import { useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
@@ -52,12 +53,6 @@ export function AmrBody({ L, W, H, accent }: { L: number; W: number; H: number; 
       ))}
     </group>
   )
-}
-
-/* ---------- AMR under a pallet ---------- */
-
-export function amrLoad(L: number, W: number, payload: number) {
-  return { pw: Math.max(1.2, L * 1.04), pd: Math.max(0.8, W * 1.12), stack: 0.25 + (payload / 2000) * 1.1 }
 }
 
 export function AmrLift({ v, accent }: ModelProps) {
@@ -489,22 +484,6 @@ export function SorterConveyor({ v, accent }: ModelProps) {
   )
 }
 
-/* ---------- Autonomous stacker / FMR: mast height follows lift height ---------- */
-
-export function stackerLayout(v: ModelProps['v']) {
-  const [L, W, H] = mm(v.spec.dims_mm, [1800, 900, 2000])
-  // Beam level: a floor-lift product still places its pallet on the lowest beam, clear of the straddle legs.
-  const lift = Math.max((v.spec.lift_mm ?? 1600) / 1000, 0.3)
-  const bodyL = Math.min(L * 0.5, 1.1)
-  const mastX = -L / 2 + bodyL + 0.05
-  const loadX = mastX + 0.12 + 0.6
-  const stack = 0.3 + ((v.spec.payload_kg ?? 1400) / 2000) * 0.9
-  const dx = 1.4
-  const xmin = -dx - L / 2
-  const xmax = loadX + 0.62
-  return { L, W, H, lift, bodyL, mastX, loadX, stack, dx, xmin, xmax }
-}
-
 export function Stacker({ v, accent }: ModelProps) {
   const { L, W, H, lift, bodyL, mastX, loadX, stack, dx, xmin, xmax } = stackerLayout(v)
   const speed = v.spec.speed_mps ?? 1.5
@@ -726,16 +705,6 @@ function Cart({ len, wid, drive: driveRef }: { len: number; wid: number; drive: 
       </group>
     </group>
   )
-}
-
-export function tugLayout(v: ModelProps['v']) {
-  const [L, W, H] = mm(v.spec.dims_mm, [1600, 800, 2200])
-  const n = Math.max(1, Math.min(3, Math.round((v.spec.tow_kg ?? 3000) / 1600)))
-  const cartL = 1.5
-  const cartW = 0.9
-  const gap = 0.6
-  const total = L + n * (cartL + gap)
-  return { L, W, H, n, cartL, cartW, gap, total }
 }
 
 export function Tug({ v, accent }: ModelProps) {

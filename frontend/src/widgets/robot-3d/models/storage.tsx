@@ -1,10 +1,11 @@
+import { asrsLayout, cubeLayout, inventoryLayout } from './dimensions'
 import { RoundedBox } from '@react-three/drei'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { Beacon, BlobShadow, LedStrip, Lidar, Wheel } from '../kit'
 import { M, paint, useGlow } from '../materials'
 import { seg, useDrive, useTick } from '../animation'
-import { mm, type ModelProps, type Variant } from '../types'
+import { mm, type ModelProps } from '../types'
 
 type G = THREE.Group
 type V3 = [number, number, number]
@@ -69,22 +70,6 @@ function play(keys: Key[], p: number, init: CraneState): CraneState {
   return s
 }
 const total = (keys: Key[]) => keys.reduce((a, k) => a + k.d, 0)
-
-export function asrsLayout(v: Variant) {
-  const height = v.spec.height_m ?? 24
-  const pitch = 1.55
-  const levels = Math.floor((height - 0.4) / pitch)
-  // A 24 m aisle is a thin line in a card: the crane is drawn full size in a cut of the lower levels.
-  const shown = Math.min(levels, 5)
-  const bays = 4
-  const bayW = 1.35
-  const depth = 1.3
-  const aisle = 1.7
-  const x0 = -((bays + 1) * bayW) / 2
-  const length = (bays + 1) * bayW
-  const visH = 0.3 + shown * pitch + 0.25
-  return { height, pitch, levels, shown, bays, bayW, depth, aisle, x0, length, visH }
-}
 
 export function Asrs({ v, accent }: ModelProps) {
   const { pitch, shown: levels, bays, bayW, depth, aisle, x0, length, visH } = asrsLayout(v)
@@ -338,19 +323,6 @@ export function Asrs({ v, accent }: ModelProps) {
   )
 }
 
-/* ---------- Cube storage: robots on a top grid dig bins out of stacks ---------- */
-
-export function cubeLayout(v: Variant) {
-  const nx = 6
-  const nz = 5
-  const cx = 0.7
-  const cz = 0.5
-  const binH = 0.33
-  // A 14 m cube would dwarf the robots; the stack is drawn as a cut of the top layers.
-  const layers = Math.min(Math.round((v.spec.height_m ?? 14) / binH), 8)
-  return { nx, nz, cx, cz, binH, layers, gridH: layers * binH + 0.08 }
-}
-
 function CubeBot({ accent }: { accent: string }) {
   return (
     <group>
@@ -474,21 +446,6 @@ export function Cube({ v, accent }: ModelProps) {
       </group>
     </group>
   )
-}
-
-/* ---------- Inventory robot: drives along a rack, raises the camera head to each label, marks it counted ---------- */
-// Scene idea from the robot-lab variant (approach → scan → counted), rebuilt on the gallery kit and specs.
-
-export function inventoryLayout(v: Variant) {
-  const scan = v.spec.height_m ?? 12
-  // Rows stand for the scan height at a readable scale: 12.5 m → 4 rows, 12 m → 3.
-  const rows = Math.max(3, Math.min(5, Math.round(scan / 3.5)))
-  const cols = 3
-  const pitchX = 1.1
-  const pitchY = 0.55
-  const rackZ = -0.65
-  const rackH = 0.45 + rows * pitchY + 0.2
-  return { scan, rows, cols, pitchX, pitchY, rackZ, rackH, width: cols * pitchX + 0.3 }
 }
 
 type Stop = { col: number; row: number; x: number; y: number; start: number; arrive: number; done: number }

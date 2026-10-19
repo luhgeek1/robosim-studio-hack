@@ -1,29 +1,13 @@
+import { armLayout } from './dimensions'
 import { RoundedBox } from '@react-three/drei'
 import { useRef } from 'react'
 import * as THREE from 'three'
 import { BlobShadow, LedStrip, Pallet } from '../kit'
 import { M, paint, useGlow } from '../materials'
 import { seg, useTick } from '../animation'
-import type { ModelProps, Variant } from '../types'
+import type { ModelProps } from '../types'
 
 type G = THREE.Group
-
-/** Link lengths and thickness follow the reach and payload encoded in the model name (А25-1720 = 25 kg, 1720 mm). */
-export function armLayout(v: Variant) {
-  const R = (v.spec.reach_mm ?? 1500) / 1000
-  const P = v.spec.payload_kg ?? 10
-  const rb = 0.1 + R * 0.05 + Math.pow(P, 0.35) * 0.012
-  const hb = 0.1 + R * 0.07
-  const hS = hb + R * 0.16
-  const a = R * 0.46
-  const b = R * 0.42
-  const w = 0.06 + R * 0.06
-  const th = 0.055 + R * 0.028 + Math.pow(P, 0.4) * 0.01
-  const box = 0.14 + Math.cbrt(P) * 0.065
-  const pickR = R * 0.62
-  const beltTop = Math.min(0.75, hS * 0.75)
-  return { R, P, rb, hb, hS, a, b, w, th, box, pickR, beltTop }
-}
 
 /** Planar two-link IK with the tool pointing straight down; elbow-up solution. */
 function ik(r: number, y: number, L: ReturnType<typeof armLayout>) {

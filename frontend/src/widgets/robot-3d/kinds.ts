@@ -1,21 +1,21 @@
-import { Arm, armLayout } from './models/industrial'
+import {
+  amrLoad,
+  armLayout,
+  asrsLayout,
+  cubeLayout,
+  droneLayout,
+  inventoryLayout,
+  stackerLayout,
+  tugLayout,
+} from './models/dimensions'
+import { Arm } from './models/industrial'
 import { Cleaner, Courier, Humanoid, Security, Sweeper } from './models/service'
-import { Asrs, Cube, Inventory, asrsLayout, cubeLayout, inventoryLayout } from './models/storage'
+import { Asrs, Cube, Inventory } from './models/storage'
 import { Agro, Marine, PipeCrawler, Roller } from './models/field'
 import { Exo, Neutral, RailRover, RoboCafe, Shuttle, Ugv } from './models/misc'
 import { LightPicking, PICKING_ROWS } from './models/picking'
-import { Drone, Truck, droneLayout } from './models/vehicles'
-import {
-  AmrLift,
-  G2P,
-  SorterConveyor,
-  SorterTilt,
-  Stacker,
-  Tug,
-  amrLoad,
-  stackerLayout,
-  tugLayout,
-} from './models/warehouse'
+import { Drone, Truck } from './models/vehicles'
+import { AmrLift, G2P, SorterConveyor, SorterTilt, Stacker, Tug } from './models/warehouse'
 import type { Product } from '@/shared/api/types'
 import { mm, type Kind } from './types'
 

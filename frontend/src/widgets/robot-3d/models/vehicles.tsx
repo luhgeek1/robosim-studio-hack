@@ -1,10 +1,11 @@
+import { droneLayout } from './dimensions'
 import { RoundedBox } from '@react-three/drei'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { BlobShadow, Cartons, Lane, LedStrip, Lidar, Pallet, Wheel } from '../kit'
 import { M, paint, useGlow } from '../materials'
 import { seg, useDrive, useTick } from '../animation'
-import { mm, type ModelProps, type Variant } from '../types'
+import { mm, type ModelProps } from '../types'
 
 type G = THREE.Group
 
@@ -165,16 +166,6 @@ export function Truck({ v, accent }: ModelProps) {
       </group>
     </group>
   )
-}
-
-/* ---------- Multirotor UAV: arm count and span follow the variant ---------- */
-
-export function droneLayout(v: Variant) {
-  const arms = 8
-  const payload = v.spec.payload_kg ?? 30
-  const armL = 0.3 + Math.sqrt(payload) * 0.1
-  const hover = 1.9
-  return { arms, payload, armL, hover }
 }
 
 function Rotor({ pos, r, dir }: { pos: [number, number, number]; r: number; dir: number }) {
