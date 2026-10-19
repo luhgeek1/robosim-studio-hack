@@ -8,7 +8,7 @@ from app.core.versions import ENGINE_VERSION
 from app.db.models import Job, Layout, Scenario, SimulationRun
 from app.db.repositories.simulations import SimulationRepository
 from app.db.uow import UnitOfWork
-from app.domain.auth import CurrentUser
+from app.domain.auth import CurrentUser, Role
 from app.domain.jobs import JobStatus, JobType
 from app.domain.scenario.models import CountMode
 from app.engine.simulation import SimInput, SimMode
@@ -16,6 +16,7 @@ from app.service.layouts.mapping import plan_from
 from app.service.layouts.reader import LayoutReader
 from app.service.scenarios.calculations import CalculationService, Evaluation
 from app.service.scenarios.service import ScenarioService
+from app.service.simulations.guest_limits import validate_guest_simulation, validate_guest_sweep
 from app.service.simulations.inputs import InputBuilder, RunRequest, config_from, dump_input
 from app.service.simulations.results import resample, unpack_events, window
 from app.service.simulations.sweep_results import reprice_view
@@ -143,6 +144,8 @@ class SimulationService:
     async def start(self, scenario_id: UUID, request: RunRequest, raw: dict[str, Any]) -> SimulationRun:
         scenario = await self._scenarios.owned(scenario_id)
         draft = await self._prepare(scenario, request)
+        if self._user.role == Role.GUEST:
+            validate_guest_simulation(draft.inp)
         job = Job(type=JobType.SIMULATION, owner_id=self._user.id, payload={"kind": SIMULATION_JOB})
         self._uow.session.add(job)
         await self._uow.flush()
@@ -209,6 +212,8 @@ class SimulationService:
     async def start_sweep(self, scenario_id: UUID, sweep: SweepRequest, raw: dict[str, Any]) -> Job:
         scenario = await self._scenarios.owned(scenario_id)
         draft = await self._prepare(scenario, replace(sweep.request, mode=SimMode.PEAK))
+        if self._user.role == Role.GUEST:
+            validate_guest_sweep(draft.inp, sweep.low, sweep.high)
         evaluation, layout = draft.evaluation, draft.layout
         if sweep.process_key not in {p.key for p in draft.inp.processes}:
             reason = draft.skipped.get(sweep.process_key, "процесса нет в сценарии")

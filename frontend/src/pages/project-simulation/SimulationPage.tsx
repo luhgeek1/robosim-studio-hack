@@ -119,27 +119,15 @@ const usable = (run: SimulationRun) =>
 
 export function SimulationPage() {
   const projectId = useProjectId()
-  const project = useProject(projectId).data
-  const objectType = useObjectType(project?.object_type ?? '')
   const scenarios = useScenarios(projectId)
   const options = (scenarios.data ?? []).filter((s) => !s.is_baseline && s.last_calculation)
   const [picked, setPicked] = useState<string>()
   const scenario = options.find((s) => s.id === picked) ?? options.find((s) => s.is_recommended) ?? options[0]
 
-  if (scenarios.isPending || objectType.isPending) {
+  if (scenarios.isPending) {
     return (
       <Screen title="Справятся ли роботы">
         <LoadingBlock label="Загружаем сценарии…" />
-      </Screen>
-    )
-  }
-  if (objectType.data && objectType.data.depth !== 'full') {
-    return (
-      <Screen title="Имитация для этого типа объекта — следующим этапом">
-        <EmptyState
-          title="Число роботов посчитано по времени цикла"
-          description="Дискретно-событийная имитация сейчас построена для склада. Для аэропорта и больницы количество роботов берётся из расчёта по времени цикла с резервом — его видно в сценариях и сравнении."
-        />
       </Screen>
     )
   }

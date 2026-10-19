@@ -39,6 +39,8 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
+    # Set only behind a private proxy which overwrites this header (see deploy/fly/nginx.conf).
+    client_ip_header: str | None = None
     auth_rate_limit_per_min: int = 20
     worker_heartbeat_ttl_s: int = 90
     jobs_backend: Literal["inline", "arq"] = Field(

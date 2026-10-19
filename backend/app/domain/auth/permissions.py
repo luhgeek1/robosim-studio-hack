@@ -20,7 +20,7 @@ class Permission(StrEnum):
     ANALYTICS_READ = "analytics:read"
 
 
-_GUEST = frozenset({Permission.CATALOG_READ, Permission.DEMO_USE})
+_GUEST = frozenset({Permission.CATALOG_READ, Permission.DEMO_USE, Permission.PROJECTS_OWN})
 _USER = _GUEST | {Permission.PROJECTS_OWN, Permission.API_KEYS_MANAGE}
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {

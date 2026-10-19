@@ -8,6 +8,8 @@ export type Session = {
   user: User | null
   login: (body: LoginRequest) => Promise<User>
   register: (body: RegisterRequest) => Promise<User>
+  startGuest: () => Promise<User>
+  resetGuest: () => Promise<void>
   logout: () => Promise<void>
 }
 

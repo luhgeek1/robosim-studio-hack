@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path, Response, status
 
-from app.api.deps import UowDep, require
+from app.api.deps import UowDep, registered_user
 from app.api.schemas.organizations import (
     IncomingInvitation,
     IncomingInvitationList,
@@ -14,12 +14,12 @@ from app.api.schemas.organizations import (
     OrganizationList,
     OrganizationWrite,
 )
-from app.domain.auth import CurrentUser, Permission
+from app.domain.auth import CurrentUser
 from app.service.organizations import OrganizationService
 
 router = APIRouter(tags=["organizations"])
 
-MemberDep = Annotated[CurrentUser, Depends(require(Permission.PROJECTS_OWN))]
+MemberDep = Annotated[CurrentUser, Depends(registered_user)]
 OrganizationIdPath = Annotated[UUID, Path()]
 NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"description": "Не найдено"}}
 CONFLICT: dict[int | str, dict[str, Any]] = {409: {"description": "Конфликт"}}

@@ -1,3 +1,4 @@
+import { useSession } from '@/entities/session'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useMonteCarlo } from '@/entities/scenario'
@@ -22,8 +23,10 @@ const POS_COLOR = 'var(--foreground)'
 const NEG_COLOR = 'var(--ink-4)'
 
 export function MonteCarloPanel({ scenarioId, horizon }: { scenarioId: string; horizon: number }) {
+  const { user } = useSession()
+  const request = { ...MC_REQUEST, n: user?.role === 'guest' ? 1000 : MC_REQUEST.n }
   const [metric, setMetric] = useState<McMetric>('payback_years')
-  const mc = useMonteCarlo(scenarioId, { ...MC_REQUEST, metric })
+  const mc = useMonteCarlo(scenarioId, { ...request, metric })
 
   return (
     <article className="card overflow-hidden">
@@ -31,7 +34,7 @@ export function MonteCarloPanel({ scenarioId, horizon }: { scenarioId: string; h
         <div className="min-w-0">
           <h2 className="h3 text-[18px]">Разброс результата</h2>
           <p className="meta mt-1">
-            {formatNumber(MC_REQUEST.n)} случайных сочетаний ключевых параметров в пределах их диапазонов
+            {formatNumber(request.n)} случайных сочетаний ключевых параметров в пределах их диапазонов
           </p>
         </div>
         <Segmented

@@ -23,6 +23,7 @@ class User(UuidPkMixin, TimestampMixin, Base):
         sa.Boolean, nullable=False, default=True, server_default=sa.true()
     )
     auth_version: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=1, server_default="1")
+    guest_expires_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), index=True)
     last_login_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
 
 

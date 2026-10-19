@@ -21,11 +21,12 @@ from app.api.schemas.projects import (
     ValidationReport,
 )
 from app.core.errors import LlmUnavailableError
-from app.domain.auth import CurrentUser, Permission
+from app.domain.auth import CurrentUser, Permission, Role
 from app.domain.common.provenance import ProvenanceStatus
 from app.domain.project.params import data_quality
+from app.infra.importers.limits import GUEST_FILE_BYTES
 from app.service.projects.context import ProjectContext
-from app.service.projects.imports import ImportService, ImportView
+from app.service.projects.imports import MAX_FILE_BYTES, ImportService, ImportView
 from app.service.projects.params import ParamChange, ParamsService
 from app.service.projects.processes import ProcessService
 from app.service.scenarios.analysis import AnalysisService
@@ -162,7 +163,8 @@ async def import_file(
     file: Annotated[UploadFile, File()],
     use_assistant: Annotated[bool, Form()] = False,
 ) -> ImportResult:
-    content = await file.read()
+    limit = GUEST_FILE_BYTES if user.role == Role.GUEST else MAX_FILE_BYTES
+    content = await file.read(limit + 1)
     view = await ImportService(uow, user).parse(project_id, file.filename or "upload", content)
     return _import_result(view)
 

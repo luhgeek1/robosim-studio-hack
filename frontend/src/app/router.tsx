@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
 import { AppShell } from '@/widgets/app-shell'
-import { NotFoundPage, RequireAdmin, RequireAuth, RequireVendor, RootRedirect } from './guards'
+import { NotFoundPage, RequireAccount, RequireAdmin, RequireAuth, RequireVendor, RootRedirect } from './guards'
 import { RouteError } from './RouteError'
 
 const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: loader })
@@ -96,10 +96,7 @@ const router = createBrowserRouter([
                 path: 'projects',
                 ...page(() => import('@/pages/projects').then((m) => ({ Component: m.ProjectsPage }))),
               },
-              {
-                path: 'organizations/:organizationId',
-                ...page(() => import('@/pages/organization').then((m) => ({ Component: m.OrganizationPage }))),
-              },
+
               {
                 path: 'projects/:projectId',
                 ...page(() => import('@/pages/project').then((m) => ({ Component: m.ProjectLayout }))),
@@ -149,6 +146,15 @@ const router = createBrowserRouter([
                     ...page(() => import('@/pages/project-report').then((m) => ({ Component: m.ReportPage }))),
                   },
                 ],
+              },
+            ],
+          },
+          {
+            Component: RequireAccount,
+            children: [
+              {
+                path: 'organizations/:organizationId',
+                ...page(() => import('@/pages/organization').then((m) => ({ Component: m.OrganizationPage }))),
               },
             ],
           },

@@ -26,7 +26,7 @@ export function Notifications() {
   const [open, setOpen] = useState(false)
   const headingId = useId()
   const invitations = useIncomingInvitations()
-  if (!user) return null
+  if (!user || user.role === 'guest') return null
   const items = invitations.data ?? []
   const failed = invitations.isError && items.length === 0
 

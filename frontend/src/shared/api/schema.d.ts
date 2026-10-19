@@ -93,6 +93,27 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/auth/guest': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Начать гостевую сессию на 24 часа
+     * @description Обычные проекты и API, изолированные по владельцу. До 10 сессий в час на IP. Данные удаляются через 24 часа; фоновая очистка раз в минуту. Access-токен в памяти, refresh в httpOnly-cookie для web. Продление не сдвигает срок удаления.
+     */
+    post: operations['startGuestSession']
+    /** Удалить все данные текущего гостя */
+    delete: operations['resetGuestSession']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/auth/register': {
     parameters: {
       query?: never
@@ -119,7 +140,10 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Вход */
+    /**
+     * Вход
+     * @description X-Keep-Guest-CSRF с CSRF-токеном текущей гостевой cookie переносит все временные проекты и результаты в аккаунт. Дождитесь завершения фоновых задач перед переносом.
+     */
     post: operations['login']
     delete?: never
     options?: never
@@ -3179,6 +3203,11 @@ export interface components {
       last_login_at?: string | null
       /** @default true */
       is_active: boolean
+      /**
+       * Format: date-time
+       * @description Срок удаления гостевого пространства; null для аккаунтов
+       */
+      guest_expires_at?: string | null
     }
     /** @description Организация глазами текущего пользователя — с его ролью. */
     Organization: {
@@ -3360,16 +3389,8 @@ export interface components {
     JobType: 'simulation' | 'monte_carlo' | 'report' | 'enrichment' | 'import' | 'calibration'
     /** @enum {string} */
     JobStatus: 'queued' | 'running' | 'done' | 'failed' | 'cancelled'
-    RegisterRequest: {
-      /** Format: email */
-      email: string
-      password: string
-      name: string
-      organization?: string | null
-      position?: string | null
-    }
     /**
-     * @description guest — без токена (каталог и демо); user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
+     * @description guest — временная сессия с проектами на 24 часа; user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
      * @enum {string}
      */
     Role: 'guest' | 'user' | 'admin' | 'vendor'
@@ -3382,6 +3403,14 @@ export interface components {
       /** @description Секунд до истечения access-токена */
       expires_in: number
       user?: components['schemas']['User']
+    }
+    RegisterRequest: {
+      /** Format: email */
+      email: string
+      password: string
+      name: string
+      organization?: string | null
+      position?: string | null
     }
     LoginRequest: {
       /** Format: email */
@@ -5421,24 +5450,6 @@ export interface components {
         'application/json': components['schemas']['Problem']
       }
     }
-    /** @description Конфликт состояния */
-    Conflict: {
-      headers: {
-        [name: string]: unknown
-      }
-      content: {
-        'application/json': components['schemas']['Problem']
-      }
-    }
-    /** @description Ошибка валидации запроса */
-    ValidationError: {
-      headers: {
-        [name: string]: unknown
-      }
-      content: {
-        'application/json': components['schemas']['Problem']
-      }
-    }
     /** @description Слишком много запросов */
     RateLimited: {
       headers: {
@@ -5459,6 +5470,24 @@ export interface components {
     }
     /** @description Недостаточно прав или чужой проект */
     Forbidden: {
+      headers: {
+        [name: string]: unknown
+      }
+      content: {
+        'application/json': components['schemas']['Problem']
+      }
+    }
+    /** @description Конфликт состояния */
+    Conflict: {
+      headers: {
+        [name: string]: unknown
+      }
+      content: {
+        'application/json': components['schemas']['Problem']
+      }
+    }
+    /** @description Ошибка валидации запроса */
+    ValidationError: {
       headers: {
         [name: string]: unknown
       }
@@ -5611,6 +5640,49 @@ export interface operations {
       404: components['responses']['NotFound']
     }
   }
+  startGuestSession: {
+    parameters: {
+      query?: never
+      header: {
+        'X-Client': 'web' | 'mobile'
+      }
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Временная сессия */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TokenPair']
+        }
+      }
+      429: components['responses']['RateLimited']
+    }
+  }
+  resetGuestSession: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Гостевые проекты, файлы, задачи и сессия удалены */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      401: components['responses']['Unauthorized']
+      403: components['responses']['Forbidden']
+    }
+  }
   register: {
     parameters: {
       query?: never
@@ -5667,6 +5739,7 @@ export interface operations {
         }
       }
       401: components['responses']['Unauthorized']
+      409: components['responses']['Conflict']
       422: components['responses']['ValidationError']
       429: components['responses']['RateLimited']
     }
