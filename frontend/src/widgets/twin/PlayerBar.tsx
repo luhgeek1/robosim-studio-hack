@@ -1,30 +1,9 @@
+import { clock } from './playback-driver'
 import { Pause, Play, RotateCcw } from 'lucide-react'
-import { useEffect } from 'react'
 import { SPEEDS, usePlayback } from '@/entities/simulation'
 import { Button } from '@/shared/ui/button'
 import { cn } from '@/shared/lib/utils'
 import { Segmented } from '@/shared/ui/v0'
-
-export const clock = (seconds: number) => {
-  const m = Math.floor(seconds / 60)
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
-}
-
-// One animation loop advances the shared clock; the 2D plan, the 3D twin and the KPI panel only read it.
-export function usePlaybackDriver() {
-  const tick = usePlayback((s) => s.tick)
-  useEffect(() => {
-    let frame = 0
-    let last = performance.now()
-    const loop = (now: number) => {
-      tick(Math.min(0.1, (now - last) / 1000))
-      last = now
-      frame = requestAnimationFrame(loop)
-    }
-    frame = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(frame)
-  }, [tick])
-}
 
 // ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения — первая строка нижней панели, под картой.
 export function PlayerBar({ disabled = false, speeds = SPEEDS }: { disabled?: boolean; speeds?: readonly number[] }) {

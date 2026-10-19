@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef, type RefObject } from 'react'
 import * as THREE from 'three'
-import type { SceneLabel } from './scene3d'
+import type { SceneLabel } from './scene-frame'
 
 type LabelRefs = RefObject<Map<string, HTMLDivElement>>
 
