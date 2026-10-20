@@ -1,0 +1,2686 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#e35a34" />
+    <title>РобоМера · Атлас возможностей роботизации</title>
+    <meta
+      name="description"
+      content="Оцените роботизацию своего склада, больницы или аэропорта. Сравните решения, ограничения, парк и сценарии финансирования до инвестиций."
+    />
+    <link rel="icon" href="assets/visuals/mark.svg" type="image/svg+xml" />
+    <link rel="preload" href="assets/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/visuals/atlas.svg" as="image" />
+    <style>
+      @font-face {
+        font-family: Onest;
+        src: url('assets/fonts/onest-cyrillic-wght-normal.woff2') format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+        unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+      }
+
+      @font-face {
+        font-family: Onest;
+        src: url('assets/fonts/onest-latin-wght-normal.woff2') format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+        unicode-range:
+          U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+          U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+
+      :root {
+        --bg: oklch(0.949 0.016 85);
+        --surface: oklch(0.978 0.008 85);
+        --fg: oklch(0.232 0.012 155);
+        --muted: oklch(0.47 0.018 155);
+        --border: oklch(0.79 0.022 85);
+        --accent: oklch(0.640004 0.178829 36.145706);
+        --forest: oklch(0.291 0.038 162);
+        --forest-light: oklch(0.35 0.04 162);
+        --on-forest: oklch(0.949 0.016 85);
+        --forest-muted: oklch(0.79 0.025 125);
+        --accent-hover: oklch(0.71 0.15 36.145706);
+        --success: oklch(0.4 0.07 162);
+        --warn: oklch(0.49 0.1 60);
+        --danger: oklch(0.46 0.15 30);
+        --font-display: 'Onest', 'Segoe UI', sans-serif;
+        --font-body: 'Onest', 'Segoe UI', sans-serif;
+        --font-mono: 'Onest', 'Segoe UI', sans-serif;
+        --ease: cubic-bezier(0.2, 0, 0, 1);
+        color-scheme: light;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 24px;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 400 16px/1.55 var(--font-body);
+        -webkit-font-smoothing: antialiased;
+      }
+      button,
+      input,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+      button,
+      a {
+        touch-action: manipulation;
+      }
+      button {
+        font: 500 14px/1.3 var(--font-body);
+        letter-spacing: 0.02em;
+        cursor: pointer;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button,
+      summary,
+      a {
+        outline-offset: 5px;
+      }
+      button:focus-visible,
+      summary:focus-visible,
+      a:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid currentColor;
+      }
+      ::selection {
+        background: var(--fg);
+        color: var(--bg);
+      }
+      button:disabled {
+        cursor: default;
+        opacity: 0.5;
+      }
+      img,
+      svg {
+        max-width: 100%;
+        vertical-align: middle;
+      }
+      button {
+        color: inherit;
+      }
+      h1,
+      h2,
+      h3,
+      p,
+      figure {
+        margin: 0;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 500;
+        text-wrap: balance;
+      }
+      h1 {
+        letter-spacing: -0.03em;
+      }
+      h2 {
+        font-size: clamp(40px, 4.8vw, 68px);
+        line-height: 1.06;
+        letter-spacing: -0.03em;
+      }
+      h3 {
+        font-size: 25px;
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+      }
+      p {
+        text-wrap: pretty;
+        max-width: 65ch;
+      }
+      .wrap {
+        width: min(1246px, calc(100% - 96px));
+        margin-inline: auto;
+      }
+      .section {
+        padding-block: 108px;
+      }
+      .small {
+        font-size: 13px;
+        line-height: 1.5;
+        letter-spacing: 0.015em;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .skip {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        padding: 12px 20px;
+        background: var(--fg);
+        color: var(--bg);
+        z-index: 30;
+        transform: translateY(-180%);
+      }
+      .skip:focus {
+        transform: none;
+      }
+      .arrow {
+        width: 20px;
+        height: 20px;
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 26px;
+        min-height: 52px;
+        padding: 13px 23px;
+        border: 1px solid var(--fg);
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.3;
+        letter-spacing: 0.02em;
+        transition:
+          background 150ms,
+          color 150ms,
+          border-color 150ms;
+      }
+      .btn.primary {
+        background: var(--fg);
+        color: var(--surface);
+      }
+      .btn.primary:hover {
+        background: oklch(0.15 0.012 155);
+        color: var(--surface);
+      }
+      .btn.secondary {
+        background: transparent;
+        color: var(--fg);
+      }
+      .btn.secondary:hover {
+        background: var(--fg);
+        color: var(--surface);
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .text-link {
+        display: inline-flex;
+        gap: 16px;
+        align-items: center;
+        min-height: 44px;
+        border-bottom: 1px solid currentColor;
+        font-weight: 500;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+      }
+      .text-link:hover {
+        border-bottom-width: 2px;
+      }
+      .cross {
+        position: relative;
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        flex: none;
+      }
+      .cross:before,
+      .cross:after {
+        content: '';
+        position: absolute;
+        background: currentColor;
+      }
+      .cross:before {
+        width: 28px;
+        height: 5px;
+        top: 11.5px;
+        left: 0;
+      }
+      .cross:after {
+        height: 28px;
+        width: 5px;
+        left: 11.5px;
+        top: 0;
+      }
+      .cross i {
+        position: absolute;
+        inset: 8px;
+        border: 2px solid var(--accent);
+        z-index: 1;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 25px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+        white-space: nowrap;
+      }
+      .nav {
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px;
+        border-bottom: 1px solid color-mix(in oklch, var(--fg) 28%, transparent);
+      }
+      .nav-links {
+        display: flex;
+        gap: 29px;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .nav-links a {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+      }
+      .nav-links a:hover {
+        text-decoration: underline;
+        text-underline-offset: 5px;
+      }
+      .nav-end {
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+      }
+      .menu-toggle {
+        display: none;
+      }
+      .hero-shell {
+        background: var(--accent);
+      }
+      .hero {
+        padding-top: 24px;
+        text-align: center;
+        position: relative;
+      }
+      .hero h1 {
+        font-size: clamp(64px, 6.8vw, 96px);
+        line-height: 0.99;
+        font-weight: 500;
+        max-width: 1180px;
+        margin: auto;
+      }
+      .hero h1 span {
+        display: block;
+      }
+      .hero .intro {
+        font-size: 15px;
+        line-height: 1.5;
+        max-width: 650px;
+        margin: 18px auto;
+      }
+      .hero-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+      }
+      .atlas-stage {
+        position: relative;
+        max-width: 1246px;
+        height: 290px;
+        margin: 3px auto 0;
+        isolation: isolate;
+      }
+      .atlas-drawing {
+        position: absolute;
+        inset: 0 0 44px;
+      }
+      .atlas-drawing > img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transition: opacity 180ms;
+      }
+      .atlas-drawing canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        position: relative;
+        opacity: 0;
+        transition: opacity 180ms;
+      }
+      .atlas-drawing.is-ready canvas {
+        opacity: 1;
+      }
+      .atlas-drawing.is-ready > img {
+        opacity: 0;
+      }
+      .atlas-stage:after {
+        content: '';
+        position: absolute;
+        left: 15%;
+        right: 15%;
+        height: 20%;
+        bottom: 8%;
+        background: oklch(0.25 0.06 37 / 0.12);
+        filter: blur(24px);
+        border-radius: 50%;
+        z-index: -1;
+      }
+      .hero-labels {
+        position: absolute;
+        bottom: 0;
+        left: 12%;
+        right: 12%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        font-weight: 500;
+        text-transform: uppercase;
+      }
+      .hero-labels a {
+        display: flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+      }
+      .hero-labels a:hover {
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .scene-tools {
+        position: absolute;
+        right: 0;
+        bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transform: translateY(47px);
+      }
+      .scene-tools button {
+        min-width: 44px;
+        min-height: 44px;
+        border: 0;
+        background: transparent;
+        padding: 8px;
+        font-size: 12px;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .scene-tools button:hover {
+        text-decoration-thickness: 2px;
+      }
+      .hero-bottom {
+        border-top: 1px solid color-mix(in oklch, var(--fg) 28%, transparent);
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        text-align: left;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+      }
+      .hero-bottom p {
+        max-width: 65%;
+      }
+      .hero-bottom .scene-tools {
+        position: static;
+        transform: none;
+      }
+      .motion-glyph {
+        display: inline-flex;
+        gap: 3px;
+        width: 15px;
+        margin-left: 7px;
+        vertical-align: middle;
+      }
+      .motion-glyph:before,
+      .motion-glyph:after {
+        content: '';
+        height: 12px;
+        width: 2px;
+        background: currentColor;
+      }
+      .motion-off .motion-glyph:after {
+        display: none;
+      }
+      .motion-off .motion-glyph:before {
+        width: 9px;
+        height: 9px;
+      }
+      .purpose {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 110px;
+        align-items: start;
+      }
+      .purpose h2 {
+        font-size: clamp(40px, 4.4vw, 62px);
+      }
+      .purpose-copy {
+        padding-top: 4px;
+      }
+      .purpose-copy > p {
+        font-size: 20px;
+        line-height: 1.5;
+        letter-spacing: -0.01em;
+      }
+      .roles {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 14px 28px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 1px solid var(--border);
+        font-size: 14px;
+      }
+      .roles dt {
+        font-weight: 600;
+      }
+      .roles dd {
+        margin: 0;
+        color: var(--muted);
+      }
+      .objects {
+        padding-top: 0;
+      }
+      .objects h2 {
+        max-width: 900px;
+        margin-bottom: 33px;
+      }
+      .object-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        gap: 44px;
+        margin-bottom: 28px;
+      }
+      .object-tabs button {
+        font-size: 20px;
+        letter-spacing: -0.01em;
+        border: 0;
+        background: transparent;
+        padding: 16px 0;
+        position: relative;
+        min-height: 60px;
+      }
+      .object-tabs button:after {
+        content: '';
+        position: absolute;
+        height: 3px;
+        bottom: -1px;
+        background: var(--fg);
+        left: 0;
+        right: 0;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 180ms;
+      }
+      .object-tabs button[aria-selected='true']:after,
+      .object-tabs button:hover:after {
+        transform: scaleX(1);
+      }
+      .object-tabs button[aria-selected='true'] {
+        font-weight: 600;
+      }
+      .object-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr);
+        gap: 64px;
+        align-items: center;
+        min-height: 470px;
+      }
+      .object-visual {
+        background: oklch(0.914 0.024 85);
+        position: relative;
+        border-radius: 4px;
+        min-width: 0;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .object-visual img {
+        width: 100%;
+        height: auto;
+        max-height: 440px;
+        object-fit: contain;
+        filter: drop-shadow(12px 20px 13px oklch(0.3 0.03 90 / 0.16));
+      }
+      .object-visual:before,
+      .object-visual:after {
+        content: '';
+        position: absolute;
+        width: 17px;
+        height: 17px;
+        pointer-events: none;
+        border-color: var(--muted);
+      }
+      .object-visual:before {
+        left: 22px;
+        top: 22px;
+        border-left: 1px solid;
+        border-top: 1px solid;
+      }
+      .object-visual:after {
+        right: 22px;
+        bottom: 22px;
+        border-right: 1px solid;
+        border-bottom: 1px solid;
+      }
+      .object-copy {
+        padding-block: 25px;
+      }
+      .object-copy h3 {
+        font-size: 36px;
+        letter-spacing: -0.025em;
+        max-width: 370px;
+        margin-bottom: 15px;
+      }
+      .object-copy > p {
+        font-size: 16px;
+        max-width: 360px;
+      }
+      .object-facts {
+        display: grid;
+        gap: 20px;
+        margin: 27px 0 21px;
+      }
+      .object-facts dt {
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .object-facts dd {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.45;
+        max-width: 370px;
+      }
+      .atlas-caption {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        padding-top: 15px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .logic {
+        padding-top: 92px;
+        border-top: 1px solid var(--border);
+      }
+      .logic-head {
+        max-width: 840px;
+      }
+      .logic-head p {
+        font-size: 18px;
+        line-height: 1.55;
+        max-width: 630px;
+        margin-top: 24px;
+      }
+      .resource-lab {
+        margin-top: 44px;
+        background: var(--surface);
+        border-radius: 4px;
+        padding: 29px 36px 25px;
+      }
+      .lab-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .lab-toolbar p {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .switch {
+        display: inline-flex;
+        gap: 14px;
+        align-items: center;
+        border: 0;
+        padding: 8px 0;
+        background: transparent;
+        min-height: 44px;
+        text-align: left;
+      }
+      .switch-track {
+        width: 42px;
+        height: 24px;
+        border-radius: 99px;
+        background: var(--fg);
+        display: block;
+        padding: 3px;
+        flex: none;
+        transition: background 150ms;
+      }
+      .switch-track:after {
+        content: '';
+        display: block;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--surface);
+        transform: translateX(18px);
+        transition: transform 150ms;
+      }
+      .switch[aria-checked='false'] .switch-track {
+        background: var(--muted);
+      }
+      .switch[aria-checked='false'] .switch-track:after {
+        transform: translateX(0);
+      }
+      .flow-mobile {
+        display: none;
+      }
+      .flow-svg {
+        width: 100%;
+        height: auto;
+        margin: 30px 0 8px;
+        overflow: visible;
+      }
+      .flow-svg text {
+        font-family: var(--font-body);
+        fill: var(--fg);
+      }
+      .flow-line {
+        stroke: var(--border);
+        stroke-width: 3;
+        fill: none;
+      }
+      .flow-shared {
+        stroke: var(--accent);
+        stroke-width: 4;
+        fill: none;
+      }
+      .flow-node {
+        fill: var(--bg);
+        stroke: var(--border);
+        stroke-width: 1.2;
+      }
+      .flow-core {
+        fill: var(--fg);
+      }
+      .flow-robot {
+        fill: var(--fg);
+      }
+      .flow-robot.wait {
+        fill: var(--accent);
+      }
+      .flow-svg .on-dark {
+        fill: var(--surface);
+      }
+      .lab-off .flow-shared {
+        stroke: var(--border);
+      }
+      .lab-off .flow-robot.wait {
+        opacity: 0;
+      }
+      .lab-off .queue-label {
+        opacity: 0;
+      }
+      .lab-off .core-highlight {
+        fill: var(--muted);
+      }
+      .flow-caption {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 45px;
+        border-top: 1px solid var(--border);
+        padding-top: 25px;
+      }
+      .flow-caption h3 {
+        font-size: 21px;
+        margin-bottom: 9px;
+      }
+      .flow-caption p {
+        font-size: 14px;
+        color: var(--muted);
+        max-width: 450px;
+      }
+      .impact-chain {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        margin-top: 37px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .impact-chain span {
+        padding: 19px 10px 19px 0;
+        border-top: 1px solid var(--border);
+        position: relative;
+      }
+      .impact-chain span:not(:last-child):after {
+        content: '→';
+        float: right;
+        margin-right: 22px;
+      }
+      .scope-note {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 26px;
+        max-width: 820px;
+      }
+      .journey {
+        padding-top: 0;
+      }
+      .journey h2 {
+        max-width: 850px;
+      }
+      .journey-track {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 27px;
+        margin-top: 46px;
+      }
+      .journey-step {
+        min-width: 0;
+        padding-top: 20px;
+        border-top: 1px solid var(--fg);
+      }
+      .journey-step h3 {
+        font-size: 21px;
+        margin-bottom: 13px;
+      }
+      .journey-step p {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .journey-detail {
+        min-height: 95px;
+        margin-top: 27px;
+        padding: 16px 0 0;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        line-height: 1.7;
+        letter-spacing: 0.015em;
+      }
+      .journey-detail strong {
+        display: block;
+        font-weight: 600;
+        font-size: 13px;
+        margin-bottom: 3px;
+      }
+      .finance {
+        background: var(--forest);
+        color: var(--on-forest);
+        padding-block: 94px;
+      }
+      .finance .muted {
+        color: var(--forest-muted);
+      }
+      .finance-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 48px;
+      }
+      .finance h2 {
+        max-width: 800px;
+        font-size: clamp(40px, 4.7vw, 66px);
+      }
+      .finance-head .cross {
+        width: 66px;
+        height: 66px;
+        margin-right: 15px;
+        margin-bottom: 9px;
+        color: var(--on-forest);
+      }
+      .finance-head .cross:before {
+        width: 66px;
+        height: 12px;
+        top: 27px;
+      }
+      .finance-head .cross:after {
+        height: 66px;
+        width: 12px;
+        left: 27px;
+      }
+      .finance-intro {
+        font-size: 17px;
+        color: var(--forest-muted);
+        max-width: 650px;
+        margin-top: 25px;
+      }
+      .finance-tabs {
+        display: flex;
+        gap: 8px;
+        padding: 8px;
+        background: oklch(0.24 0.03 162);
+        border-radius: 99px;
+        width: max-content;
+        max-width: 100%;
+        margin: 38px 0 42px;
+      }
+      .finance-tabs button {
+        border: 0;
+        background: transparent;
+        padding: 14px 27px;
+        min-height: 48px;
+        border-radius: 99px;
+        font-size: 14px;
+        color: var(--on-forest);
+      }
+      .finance-tabs button:hover {
+        background: oklch(0.19 0.03 162);
+      }
+      .finance-tabs button[aria-selected='true'] {
+        background: var(--bg);
+        color: var(--fg);
+      }
+      .finance-panel {
+        display: grid;
+        grid-template-columns: 1fr 1.05fr;
+        gap: 100px;
+        min-height: 320px;
+      }
+      .finance-copy h3 {
+        font-size: 35px;
+        letter-spacing: -0.02em;
+        max-width: 450px;
+        margin-bottom: 17px;
+      }
+      .finance-copy p {
+        color: var(--forest-muted);
+        font-size: 15px;
+        max-width: 440px;
+      }
+      .finance-facts {
+        margin-top: 29px;
+        display: grid;
+        gap: 17px;
+        font-size: 13px;
+      }
+      .finance-facts div {
+        display: grid;
+        grid-template-columns: 115px 1fr;
+        gap: 16px;
+      }
+      .finance-facts dt {
+        color: var(--forest-muted);
+      }
+      .finance-facts dd {
+        margin: 0;
+        max-width: 290px;
+      }
+      .payment-figure {
+        padding: 25px 27px 20px;
+        border: 1px solid oklch(0.949 0.016 85 / 0.26);
+        border-radius: 4px;
+        align-self: start;
+      }
+      .payment-figure figcaption {
+        font-size: 13px;
+        letter-spacing: 0.02em;
+      }
+      .payment-chart {
+        height: 172px;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        gap: 10px;
+        align-items: end;
+        border-bottom: 1px solid oklch(0.949 0.016 85 / 0.35);
+        padding-bottom: 10px;
+        margin-top: 15px;
+      }
+      .payment-chart i {
+        display: block;
+        height: var(--bar);
+        background: var(--bg);
+        border-radius: 2px 2px 0 0;
+        opacity: 0.8;
+        transition: opacity 200ms;
+      }
+      .payment-chart i:first-child {
+        opacity: 1;
+      }
+      .payment-labels {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        font-size: 12px;
+        color: var(--forest-muted);
+        padding-top: 12px;
+      }
+      .payment-note {
+        font-size: 11px;
+        line-height: 1.5;
+        letter-spacing: 0.01em;
+        margin-top: 19px;
+        color: var(--forest-muted);
+        max-width: 420px;
+      }
+      .finance-foot {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 60px;
+        margin-top: 34px;
+        padding-top: 26px;
+        border-top: 1px solid oklch(0.949 0.016 85 / 0.2);
+        font-size: 13px;
+        color: var(--forest-muted);
+      }
+      .finance-foot p:first-child {
+        max-width: 520px;
+      }
+      .finance-foot p:last-child {
+        max-width: 370px;
+      }
+      .report {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 100px;
+        align-items: center;
+        padding-block: 115px 120px;
+      }
+      .report-copy h2 {
+        font-size: clamp(40px, 4.4vw, 62px);
+        max-width: 550px;
+      }
+      .report-copy > p {
+        font-size: 17px;
+        margin-top: 24px;
+        max-width: 470px;
+        color: var(--muted);
+      }
+      .deliverables {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 37px;
+      }
+      .deliverable {
+        border-top: 1px solid var(--border);
+        padding-top: 18px;
+      }
+      .deliverable b {
+        font-size: 25px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        display: block;
+        margin-bottom: 10px;
+      }
+      .deliverable p {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .report-art {
+        perspective: 1200px;
+        padding: 10px 14px 10px 0;
+        position: relative;
+      }
+      .report-sheet {
+        position: relative;
+        background: var(--surface);
+        padding: 35px 32px 27px;
+        transform: rotate(5deg);
+        box-shadow: 0 23px 50px oklch(0.27 0.025 85 / 0.17);
+        border-radius: 2px;
+        z-index: 1;
+      }
+      .report-sheet:before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: oklch(0.91 0.021 85);
+        transform: rotate(-10deg);
+        z-index: -2;
+        box-shadow: 0 12px 25px oklch(0.27 0.025 85 / 0.12);
+        border-radius: 2px;
+      }
+      .report-sheet:after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--surface);
+        z-index: -1;
+        border-radius: 2px;
+      }
+      .sheet-brand {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 17px;
+      }
+      .sheet-brand .cross {
+        transform: scale(0.7);
+        transform-origin: right center;
+      }
+      .sheet-title {
+        font-size: 33px;
+        line-height: 1.1;
+        letter-spacing: -0.025em;
+        font-weight: 500;
+        margin-top: 25px;
+      }
+      .sheet-sub {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      .sheet-route {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin: 29px 0;
+      }
+      .sheet-route span {
+        height: 8px;
+        flex: 1;
+        background: var(--fg);
+      }
+      .sheet-route span:nth-child(2) {
+        background: var(--accent);
+      }
+      .sheet-route span:nth-child(3) {
+        background: var(--border);
+      }
+      .sheet-rows {
+        display: grid;
+        gap: 0;
+      }
+      .sheet-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 13px 0;
+        font-size: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .sheet-row span:last-child {
+        color: var(--muted);
+      }
+      .sheet-footer {
+        font-size: 11px;
+        line-height: 1.5;
+        letter-spacing: 0.01em;
+        padding-top: 24px;
+        color: var(--muted);
+        max-width: 270px;
+      }
+      .faq {
+        display: grid;
+        grid-template-columns: 0.7fr 1.3fr;
+        gap: 80px;
+        border-top: 1px solid var(--border);
+        padding-block: 85px 100px;
+      }
+      .faq h2 {
+        font-size: 44px;
+        max-width: 350px;
+      }
+      .faq-list {
+        border-top: 1px solid var(--fg);
+      }
+      .faq details {
+        border-bottom: 1px solid var(--border);
+      }
+      .faq summary {
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        min-height: 78px;
+        padding: 20px 0;
+        font-size: 17px;
+        line-height: 1.4;
+        list-style: none;
+        letter-spacing: -0.01em;
+      }
+      .faq summary::-webkit-details-marker {
+        display: none;
+      }
+      .faq summary:after {
+        content: '+';
+        font-size: 28px;
+        line-height: 1;
+        flex: none;
+        font-weight: 400;
+      }
+      .faq details[open] summary:after {
+        content: '−';
+      }
+      .faq summary:hover {
+        color: var(--fg);
+        background: var(--surface);
+      }
+      .faq details p {
+        font-size: 14px;
+        color: var(--muted);
+        max-width: 590px;
+        padding: 0 30px 25px 0;
+      }
+      .closing {
+        background: var(--accent);
+        padding: 75px 0 0;
+        text-align: center;
+      }
+      .closing h2 {
+        font-size: clamp(56px, 6.6vw, 92px);
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+        margin: auto;
+        max-width: 1050px;
+      }
+      .closing .lead {
+        font-size: 17px;
+        max-width: 535px;
+        margin: 22px auto 25px;
+      }
+      .closing .auth-note {
+        font-size: 12px;
+        margin: 16px auto 0;
+        max-width: 430px;
+      }
+      .footer {
+        margin-top: 72px;
+        border-top: 1px solid color-mix(in oklch, var(--fg) 30%, transparent);
+        padding-top: 26px;
+      }
+      .footer-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 30px;
+        text-align: left;
+        font-size: 12px;
+      }
+      .footer-links {
+        display: flex;
+        gap: 25px;
+      }
+      .footer-links a {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .footer-links a:hover {
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .footer-mark {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        padding-block: 30px 20px;
+      }
+      .footer-word {
+        font-size: clamp(80px, 15.1vw, 210px);
+        letter-spacing: -0.04em;
+        font-weight: 500;
+        line-height: 1.03;
+      }
+      .footer-mark .cross {
+        width: clamp(40px, 8vw, 112px);
+        height: clamp(40px, 8vw, 112px);
+        margin-left: auto;
+      }
+      .footer-mark .cross:before {
+        width: 100%;
+        height: 20%;
+        top: 40%;
+      }
+      .footer-mark .cross:after {
+        width: 20%;
+        height: 100%;
+        left: 40%;
+        top: 0;
+      }
+      .transition-in {
+        animation: panel-in 240ms var(--ease);
+      }
+      @keyframes panel-in {
+        from {
+          opacity: 0.55;
+          transform: translateY(7px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @supports (animation-timeline: view()) {
+        .report-art {
+          animation: paper-settle linear both;
+          animation-timeline: view();
+          animation-range: entry 0% entry 90%;
+        }
+        @keyframes paper-settle {
+          from {
+            transform: translateY(36px) rotate(-3deg);
+          }
+          to {
+            transform: none;
+          }
+        }
+      }
+      .motion-off *,
+      .motion-off *:before,
+      .motion-off *:after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+
+      @media (min-width: 1536px) {
+        .atlas-stage {
+          height: 350px;
+        }
+        .hero {
+          padding-top: 44px;
+        }
+      }
+
+      @media (max-width: 1100px) {
+        .wrap {
+          width: calc(100% - 64px);
+        }
+        .nav-links {
+          gap: 18px;
+        }
+        .nav-end {
+          display: none;
+        }
+        .hero h1 {
+          font-size: 8vw;
+        }
+        .atlas-stage {
+          height: 29vw;
+          min-height: 260px;
+        }
+        .purpose {
+          gap: 60px;
+        }
+        .object-panel {
+          gap: 35px;
+          grid-template-columns: 1.25fr 1fr;
+        }
+        .finance-panel {
+          gap: 55px;
+        }
+        .report {
+          gap: 60px;
+        }
+        .faq {
+          gap: 45px;
+        }
+        .hero-labels {
+          bottom: 10px;
+        }
+        .journey-track {
+          gap: 18px;
+        }
+        .journey-step h3 {
+          font-size: 19px;
+        }
+      }
+
+      @media (max-width: 767px) {
+        html {
+          scroll-padding-top: 16px;
+        }
+        .wrap {
+          width: calc(100% - 40px);
+        }
+        .section {
+          padding-block: 65px;
+        }
+        .nav {
+          height: 68px;
+          position: relative;
+          gap: 12px;
+        }
+        .brand {
+          font-size: 23px;
+        }
+        .nav-links {
+          display: none;
+        }
+        .nav-links.is-open {
+          display: flex;
+          position: absolute;
+          top: 67px;
+          left: -20px;
+          right: -20px;
+          z-index: 20;
+          background: var(--accent);
+          padding: 16px 24px 24px;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0;
+          border-bottom: 1px solid var(--fg);
+        }
+        .nav-links.is-open a {
+          font-size: 18px;
+          padding-block: 10px;
+        }
+        .menu-toggle {
+          display: block;
+          min-width: 44px;
+          min-height: 44px;
+          background: transparent;
+          border: 1px solid var(--fg);
+          border-radius: 50%;
+          padding: 10px;
+        }
+        .menu-toggle svg {
+          width: 20px;
+          height: 20px;
+        }
+        .hero {
+          padding-top: 35px;
+        }
+        .hero h1 {
+          font-size: clamp(28px, 9vw, 64px);
+          line-height: 1.05;
+          letter-spacing: -0.04em;
+        }
+        .hero .intro {
+          font-size: 14px;
+          line-height: 1.5;
+          margin: 20px auto;
+          max-width: 330px;
+        }
+        .hero-actions {
+          gap: 10px;
+          flex-direction: column;
+          align-items: center;
+        }
+        .btn {
+          min-height: 50px;
+          gap: 22px;
+          font-size: 13px;
+          padding: 13px 21px;
+        }
+        .hero-actions .btn {
+          width: 240px;
+        }
+        .hero-actions .btn.secondary {
+          min-height: 44px;
+          padding-block: 10px;
+        }
+        .atlas-stage {
+          height: 218px;
+          min-height: 0;
+          width: calc(100% + 40px);
+          margin: 4px -20px 0;
+        }
+        .atlas-drawing > img {
+          object-fit: contain;
+        }
+        .hero-labels {
+          font-size: 10px;
+          letter-spacing: 0.06em;
+          bottom: 0;
+          left: 12%;
+          right: 11%;
+        }
+        .hero-bottom {
+          height: auto;
+          min-height: 85px;
+          align-items: start;
+          padding: 14px 0;
+          gap: 12px;
+        }
+        .hero-bottom > p {
+          max-width: 180px;
+          font-size: 11px;
+          letter-spacing: 0.01em;
+        }
+        .hero-bottom .scene-tools {
+          flex-direction: column;
+          gap: 0;
+          align-items: end;
+        }
+        .scene-tools button {
+          font-size: 11px;
+          min-height: 44px;
+          padding: 7px;
+        }
+        .scene-tools #unfold-atlas {
+          min-height: 44px;
+        }
+        .purpose {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .purpose h2 {
+          font-size: 39px;
+          max-width: 360px;
+        }
+        .purpose-copy > p {
+          font-size: 17px;
+        }
+        .roles {
+          font-size: 12px;
+          gap: 13px 20px;
+          margin-top: 25px;
+          padding-top: 20px;
+        }
+        .objects {
+          padding-top: 0;
+        }
+        .objects h2 {
+          font-size: 39px;
+          margin-bottom: 22px;
+        }
+        .object-tabs {
+          gap: 0;
+          justify-content: space-between;
+          margin-bottom: 20px;
+        }
+        .object-tabs button {
+          font-size: 16px;
+          min-height: 55px;
+          padding: 12px 6px;
+        }
+        .object-panel {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          min-height: 0;
+        }
+        .object-visual {
+          height: 280px;
+          min-height: 0;
+        }
+        .object-visual img {
+          height: auto;
+          max-height: 280px;
+          width: 100%;
+        }
+        .object-copy {
+          padding: 20px 0 0;
+        }
+        .object-copy h3 {
+          font-size: 29px;
+          max-width: 330px;
+        }
+        .object-copy > p {
+          font-size: 15px;
+          max-width: 335px;
+        }
+        .object-facts {
+          gap: 18px;
+          margin: 24px 0 18px;
+        }
+        .object-facts dd {
+          max-width: 340px;
+        }
+        .atlas-caption {
+          flex-direction: column;
+          gap: 5px;
+          padding-top: 20px;
+        }
+        .logic {
+          padding-top: 58px;
+        }
+        .logic-head h2 {
+          font-size: 39px;
+        }
+        .logic-head p {
+          font-size: 16px;
+          margin-top: 20px;
+        }
+        .resource-lab {
+          padding: 21px 16px;
+          margin: 30px -4px 0;
+        }
+        .lab-toolbar {
+          align-items: start;
+          gap: 12px;
+        }
+        .lab-toolbar p {
+          font-size: 12px;
+          max-width: 125px;
+          padding-top: 8px;
+        }
+        .switch {
+          gap: 8px;
+          font-size: 11px;
+          max-width: 150px;
+        }
+        .switch-track {
+          width: 38px;
+          height: 22px;
+          padding: 3px;
+        }
+        .switch-track:after {
+          width: 16px;
+          height: 16px;
+          transform: translateX(16px);
+        }
+        .flow-svg {
+          display: none;
+        }
+        .flow-mobile {
+          display: block;
+          width: 100%;
+          height: auto;
+          margin: 23px 0;
+        }
+        .flow-mobile text {
+          font-family: var(--font-body);
+          fill: var(--fg);
+        }
+        .flow-caption {
+          grid-template-columns: 1fr;
+          gap: 18px;
+          padding-top: 20px;
+        }
+        .flow-caption h3 {
+          font-size: 19px;
+        }
+        .flow-caption p {
+          font-size: 13px;
+        }
+        .impact-chain {
+          grid-template-columns: 1fr 1fr;
+          margin-top: 25px;
+          font-size: 12px;
+        }
+        .impact-chain span {
+          padding: 15px 6px 15px 0;
+        }
+        .impact-chain span:not(:last-child):after {
+          margin-right: 7px;
+        }
+        .impact-chain span:nth-child(2):after {
+          display: none;
+        }
+        .scope-note {
+          font-size: 12px;
+          margin-top: 21px;
+        }
+        .journey {
+          padding-top: 5px;
+        }
+        .journey h2 {
+          font-size: 39px;
+        }
+        .journey-track {
+          grid-template-columns: 1fr 1fr;
+          gap: 28px 20px;
+          margin-top: 35px;
+        }
+        .journey-step h3 {
+          font-size: 19px;
+        }
+        .journey-step p {
+          font-size: 13px;
+        }
+        .journey-detail {
+          min-height: 0;
+          font-size: 11px;
+          margin-top: 20px;
+        }
+        .journey-detail strong {
+          font-size: 12px;
+        }
+        .finance {
+          padding-block: 60px;
+        }
+        .finance h2 {
+          font-size: 40px;
+        }
+        .finance-head .cross {
+          display: none;
+        }
+        .finance-intro {
+          font-size: 15px;
+          margin-top: 22px;
+        }
+        .finance-tabs {
+          gap: 2px;
+          padding: 5px;
+          border-radius: 16px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          width: 100%;
+          margin: 28px 0;
+        }
+        .finance-tabs button {
+          font-size: 13px;
+          padding: 12px 10px;
+          min-height: 44px;
+        }
+        .finance-panel {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .finance-copy h3 {
+          font-size: 29px;
+          max-width: 330px;
+        }
+        .finance-copy p {
+          font-size: 14px;
+        }
+        .finance-facts {
+          font-size: 12px;
+          gap: 16px;
+          margin-top: 24px;
+        }
+        .finance-facts div {
+          grid-template-columns: 90px 1fr;
+          gap: 15px;
+        }
+        .payment-figure {
+          padding: 21px 20px;
+        }
+        .payment-chart {
+          height: 155px;
+          gap: 9px;
+        }
+        .finance-foot {
+          display: block;
+          margin-top: 27px;
+          font-size: 12px;
+        }
+        .finance-foot p + p {
+          margin-top: 14px;
+        }
+        .report {
+          grid-template-columns: 1fr;
+          gap: 45px;
+          padding-block: 65px 75px;
+        }
+        .report-copy h2 {
+          font-size: 40px;
+        }
+        .report-copy > p {
+          font-size: 15px;
+          margin-top: 20px;
+        }
+        .deliverables {
+          gap: 25px;
+          margin-top: 28px;
+        }
+        .deliverable b {
+          font-size: 23px;
+        }
+        .deliverable p {
+          font-size: 12px;
+        }
+        .report-art {
+          margin: 0 12px;
+          padding: 0 8px;
+        }
+        .report-sheet {
+          padding: 27px 24px 23px;
+        }
+        .sheet-title {
+          font-size: 29px;
+        }
+        .sheet-row {
+          font-size: 10px;
+          letter-spacing: 0.01em;
+          gap: 9px;
+        }
+        .sheet-footer {
+          font-size: 10px;
+        }
+        .faq {
+          grid-template-columns: 1fr;
+          gap: 29px;
+          padding-block: 58px 65px;
+        }
+        .faq h2 {
+          font-size: 39px;
+          max-width: 330px;
+        }
+        .faq summary {
+          font-size: 15px;
+          min-height: 76px;
+          gap: 20px;
+        }
+        .faq details p {
+          font-size: 13px;
+          padding-right: 10px;
+        }
+        .closing {
+          padding-top: 57px;
+        }
+        .closing h2 {
+          font-size: clamp(34px, 11.8vw, 49px);
+          letter-spacing: -0.04em;
+        }
+        .closing .lead {
+          font-size: 15px;
+          margin: 22px auto 25px;
+          max-width: 320px;
+        }
+        .closing .auth-note {
+          font-size: 11px;
+          max-width: 280px;
+        }
+        .footer {
+          margin-top: 55px;
+          padding-top: 22px;
+        }
+        .footer-top {
+          display: block;
+          font-size: 11px;
+        }
+        .footer-top > p {
+          max-width: 285px;
+        }
+        .footer-links {
+          gap: 25px;
+          margin-top: 14px;
+        }
+        .footer-mark {
+          gap: 15px;
+          padding-block: 21px 24px;
+        }
+        .footer-word {
+          font-size: 15.1vw;
+          letter-spacing: -0.04em;
+        }
+        .footer-mark .cross {
+          width: 33px;
+          height: 33px;
+          margin-left: auto;
+        }
+        .transition-in {
+          animation-duration: 180ms;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        *,
+        *:before,
+        *:after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .report-art {
+          transform: none !important;
+        }
+      }
+
+      @media print {
+        .hero-shell,
+        .closing {
+          background: var(--bg);
+        }
+        .scene-tools,
+        .menu-toggle,
+        .hero-actions,
+        .closing .btn {
+          display: none;
+        }
+        .section,
+        .finance {
+          padding-block: 35px;
+        }
+        .atlas-drawing canvas {
+          display: none;
+        }
+        .atlas-drawing > img {
+          opacity: 1 !important;
+        }
+        .report-sheet {
+          transform: none;
+        }
+        .faq details p {
+          display: block;
+        }
+        .wrap {
+          width: 94%;
+        }
+      }
+    </style>
+    <style>
+      body {
+        overflow-x: clip;
+      }
+      main {
+        overflow: clip;
+      }
+    </style>
+    <noscript
+      ><style>
+        .scene-tools,
+        .menu-toggle,
+        .object-tabs,
+        .finance-tabs,
+        #resource-toggle {
+          display: none !important;
+        }
+        .nav-links {
+          display: flex !important;
+          position: static !important;
+          flex-wrap: wrap;
+        }
+        .nav {
+          height: auto;
+          min-height: 72px;
+          flex-wrap: wrap;
+          padding-block: 16px;
+        }
+        .report-art {
+          transform: none !important;
+        }
+      </style></noscript
+    >
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol id="arrow-right" viewBox="0 0 24 24">
+          <path d="M5 12l14 0" />
+          <path d="M13 18l6 -6" />
+          <path d="M13 6l6 6" />
+        </symbol>
+        <symbol id="arrow-up-right" viewBox="0 0 24 24">
+          <path d="M17 7l-10 10" />
+          <path d="M8 7l9 0l0 9" />
+        </symbol>
+        <symbol id="menu" viewBox="0 0 24 24">
+          <path d="M4 6l16 0" />
+          <path d="M4 12l16 0" />
+          <path d="M4 18l16 0" />
+        </symbol>
+      </defs>
+    </svg>
+    <a class="skip" href="#main" data-od-id="skip-navigation">К содержанию</a>
+    <main id="main">
+      <div class="hero-shell" data-od-id="hero-region">
+        <header class="wrap nav" data-od-id="header">
+          <a class="brand" href="#" aria-label="РобоМера, начало страницы" data-od-id="brand"
+            ><span class="cross" aria-hidden="true"><i></i></span>РобоМера</a
+          >
+          <nav class="nav-links" id="navigation" aria-label="Основная навигация" data-od-id="navigation">
+            <a href="#objects">Объекты</a><a href="#logic">Логика расчёта</a><a href="#scenarios">Сценарии</a
+            ><a href="#faq">Вопросы</a>
+          </nav>
+          <a class="nav-end" href="/catalog" data-od-id="catalog-link"
+            >Каталог решений<svg class="arrow"><use href="#arrow-up-right" /></svg
+          ></a>
+          <button
+            class="menu-toggle"
+            aria-label="Открыть меню"
+            aria-expanded="false"
+            aria-controls="navigation"
+            data-od-id="mobile-menu"
+          >
+            <svg class="arrow"><use href="#menu" /></svg>
+          </button>
+        </header>
+        <section class="hero wrap" aria-labelledby="hero-title" data-od-id="hero">
+          <h1 id="hero-title" data-od-id="hero-title"><span>Сначала картина.</span><span>Потом роботизация.</span></h1>
+          <p class="intro">
+            Оцените возможности своего объекта, проверьте ограничения и сравните экономику до вложений в роботов.
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="/demo?new=1" data-od-id="hero-assess"
+              >Оценить свой объект<svg class="arrow"><use href="#arrow-up-right" /></svg></a
+            ><a class="btn secondary" href="/demo" data-od-id="hero-demo"
+              >Исследовать демо<svg class="arrow"><use href="#arrow-right" /></svg
+            ></a>
+          </div>
+          <figure
+            class="atlas-stage"
+            aria-label="Пространственный атлас: склад, больница и аэропорт"
+            data-od-id="hero-atlas"
+          >
+            <div class="atlas-drawing" data-atlas-canvas>
+              <img
+                src="assets/visuals/atlas.svg"
+                width="1440"
+                height="440"
+                alt="Три архитектурных макета: складские стеллажи, этажи больницы с лифтом, терминал с багажной линией"
+                fetchpriority="high"
+              />
+            </div>
+            <figcaption class="hero-labels">
+              <a href="#objects" data-atlas-select="warehouse" data-od-id="atlas-warehouse">Склад</a
+              ><a href="#objects" data-atlas-select="hospital" data-od-id="atlas-hospital">Больница</a
+              ><a href="#objects" data-atlas-select="airport" data-od-id="atlas-airport">Аэропорт</a>
+            </figcaption>
+          </figure>
+          <div class="hero-bottom">
+            <p>Независимая платформа предварительной оценки</p>
+            <div class="scene-tools">
+              <button id="unfold-atlas" aria-pressed="false" data-od-id="unfold-atlas">Раскрыть макеты</button
+              ><button id="motion-toggle" aria-pressed="false" data-od-id="motion-toggle">
+                Остановить движение<span class="motion-glyph" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <section class="wrap section purpose" aria-labelledby="purpose-title" data-od-id="purpose">
+        <h2 id="purpose-title" data-od-id="purpose-title">У каждого объекта<br />своя мера.</h2>
+        <div class="purpose-copy">
+          <p>
+            РобоМера связывает процессы, подходящую технику и финансовую модель. Чтобы обсуждать инвестиции на языке
+            вашего объекта.
+          </p>
+          <dl class="roles">
+            <dt>Операциям</dt>
+            <dd>Что изменится в работе</dd>
+            <dt>Финансам</dt>
+            <dd>Из чего складываются затраты</dd>
+            <dt>Инженерам</dt>
+            <dd>Какие ограничения учесть</dd>
+          </dl>
+        </div>
+      </section>
+      <section class="wrap section objects" id="objects" aria-labelledby="objects-title" data-od-id="objects">
+        <h2 id="objects-title" data-od-id="objects-title">Узнайте свой объект.</h2>
+        <div class="object-tabs" role="tablist" aria-label="Тип объекта" data-od-id="industry-tabs">
+          <button
+            id="tab-warehouse"
+            role="tab"
+            aria-selected="true"
+            aria-controls="industry-panel"
+            tabindex="0"
+            data-industry="warehouse"
+            data-od-id="industry-warehouse"
+          >
+            Склад</button
+          ><button
+            id="tab-hospital"
+            role="tab"
+            aria-selected="false"
+            aria-controls="industry-panel"
+            tabindex="-1"
+            data-industry="hospital"
+            data-od-id="industry-hospital"
+          >
+            Больница</button
+          ><button
+            id="tab-airport"
+            role="tab"
+            aria-selected="false"
+            aria-controls="industry-panel"
+            tabindex="-1"
+            data-industry="airport"
+            data-od-id="industry-airport"
+          >
+            Аэропорт
+          </button>
+        </div>
+        <div
+          class="object-panel"
+          id="industry-panel"
+          role="tabpanel"
+          aria-labelledby="tab-warehouse"
+          tabindex="0"
+          data-od-id="industry-panel"
+        >
+          <figure class="object-visual">
+            <img
+              id="industry-image"
+              src="assets/visuals/warehouse.svg"
+              width="960"
+              height="660"
+              alt="Условная аксонометрия склада с паллетными стеллажами и маршрутами перевозки"
+              loading="lazy"
+            />
+          </figure>
+          <div class="object-copy">
+            <h3 id="industry-title" data-od-id="industry-title">Движение паллет.<br />Без слепых зон.</h3>
+            <p id="industry-description">
+              Проверьте, как перевозки впишутся в смены, проходы и работу погрузочных зон.
+            </p>
+            <dl class="object-facts">
+              <div>
+                <dt>С чего начать</dt>
+                <dd id="industry-input">Объёмы перемещений, длины маршрутов и график смен.</dd>
+              </div>
+              <div>
+                <dt>Что важно учесть</dt>
+                <dd id="industry-limit">Общие проезды, погрузку, зарядку и пики нагрузки.</dd>
+              </div>
+              <div>
+                <dt>Что получите</dt>
+                <dd id="industry-output">Подходящие решения, состав парка с резервом и сравнение затрат.</dd>
+              </div>
+            </dl>
+            <a class="text-link" id="industry-demo" href="/demo/warehouse_demo_01" data-od-id="industry-demo"
+              >Открыть пример склада<svg class="arrow"><use href="#arrow-up-right" /></svg
+            ></a>
+          </div>
+        </div>
+        <div class="atlas-caption">
+          <span>Гостевые примеры доступны без регистрации.</span
+          ><span>Макеты условные. Расчёт строится на параметрах вашего объекта.</span>
+        </div>
+      </section>
+      <section class="wrap section logic" id="logic" aria-labelledby="logic-title" data-od-id="logic">
+        <div class="logic-head">
+          <h2 id="logic-title" data-od-id="logic-title">Робот не работает<br />в одиночку.</h2>
+          <p>
+            Один лифт, узкий проезд, общая зарядка. В моделируемых процессах имитация учитывает конкуренцию за ресурсы и
+            уточняет парк.
+          </p>
+        </div>
+        <div class="resource-lab" data-od-id="resource-lab">
+          <div class="lab-toolbar">
+            <p>Несколько задач.<br />Один общий ресурс.</p>
+            <button
+              class="switch"
+              id="resource-toggle"
+              role="switch"
+              aria-checked="true"
+              aria-controls="resource-result"
+              data-od-id="resource-toggle"
+            >
+              <span>Учитывать<br />общие ресурсы</span><span class="switch-track" aria-hidden="true"></span>
+            </button>
+          </div>
+          <svg class="flow-svg" viewBox="0 0 1040 245" role="img" aria-labelledby="flow-title flow-desc">
+            <title id="flow-title">Потоки задач через общий ресурс</title>
+            <desc id="flow-desc">
+              Три потока сходятся у одного ресурса. Очередь меняет длительность цикла, необходимый парк и экономику.
+            </desc>
+            <path
+              class="flow-line"
+              d="M130 40H320Q360 40 360 80V102Q360 122 400 122H470M130 122H470M130 204H320Q360 204 360 164V142Q360 122 400 122M570 122H640Q680 122 680 82V60Q680 40 720 40H910M570 122H910M570 122H640Q680 122 680 162V184Q680 204 720 204H910"
+            />
+            <path class="flow-shared" d="M360 122H680" />
+            <rect class="flow-node" x="0" y="14" width="130" height="52" rx="4" />
+            <rect class="flow-node" x="0" y="96" width="130" height="52" rx="4" />
+            <rect class="flow-node" x="0" y="178" width="130" height="52" rx="4" />
+            <text x="65" y="45" font-size="15" text-anchor="middle">Задача А</text>
+            <text x="65" y="127" font-size="15" text-anchor="middle">Задача Б</text>
+            <text x="65" y="209" font-size="15" text-anchor="middle">Задача В</text>
+            <rect class="flow-core core-highlight" x="470" y="70" width="100" height="105" rx="4" />
+            <path d="M497 149V96h46v53m-23-53v53" stroke="var(--surface)" fill="none" stroke-width="2" />
+            <text x="520" y="203" font-size="13" text-anchor="middle">Общий ресурс</text>
+            <rect class="flow-node" x="910" y="14" width="130" height="52" rx="4" />
+            <rect class="flow-node" x="910" y="96" width="130" height="52" rx="4" />
+            <rect class="flow-node" x="910" y="178" width="130" height="52" rx="4" />
+            <text x="975" y="45" font-size="15" text-anchor="middle">Доставка А</text>
+            <text x="975" y="127" font-size="15" text-anchor="middle">Доставка Б</text>
+            <text x="975" y="209" font-size="15" text-anchor="middle">Доставка В</text>
+            <rect class="flow-robot" x="230" y="28" width="30" height="24" rx="5" />
+            <rect class="flow-robot" x="770" y="192" width="30" height="24" rx="5" />
+            <g class="queue">
+              <rect class="flow-robot wait" x="413" y="110" width="30" height="24" rx="5" />
+              <rect class="flow-robot wait" x="370" y="110" width="30" height="24" rx="5" />
+              <text class="queue-label" x="407" y="96" font-size="12" text-anchor="middle">Ожидание</text>
+            </g>
+          </svg>
+          <svg
+            class="flow-mobile"
+            viewBox="0 0 320 250"
+            role="img"
+            aria-label="Три потока задач сходятся у одного ресурса, создавая очередь"
+          >
+            <path
+              class="flow-line"
+              d="M50 42V70Q50 85 70 85H250Q270 85 270 70V42M160 42V119M160 177V210H55M160 210H265"
+            />
+            <path class="flow-shared" d="M160 85V120M160 176V210" />
+            <g class="flow-node">
+              <rect x="8" y="8" width="84" height="34" rx="3" />
+              <rect x="118" y="8" width="84" height="34" rx="3" />
+              <rect x="228" y="8" width="84" height="34" rx="3" />
+            </g>
+            <g font-size="12" text-anchor="middle">
+              <text x="50" y="30">Задача А</text>
+              <text x="160" y="30">Задача Б</text>
+              <text x="270" y="30">Задача В</text>
+            </g>
+            <rect class="flow-core core-highlight" x="103" y="120" width="114" height="57" rx="4" />
+            <text x="160" y="145" font-size="12" text-anchor="middle" style="fill: var(--surface)">Общий</text>
+            <text x="160" y="162" font-size="12" text-anchor="middle" style="fill: var(--surface)">ресурс</text>
+            <rect class="flow-robot wait" x="151" y="94" width="18" height="14" rx="3" />
+            <rect class="flow-robot wait" x="179" y="78" width="18" height="14" rx="3" />
+            <text class="queue-label" x="222" y="106" font-size="11">Ожидание</text>
+            <text x="160" y="239" font-size="12" text-anchor="middle">Доставка после освобождения ресурса</text>
+          </svg>
+          <div class="flow-caption" id="resource-result" aria-live="polite">
+            <div>
+              <h3 id="resource-heading" data-od-id="resource-heading">Очередь меняет расчёт.</h3>
+              <p id="resource-description">
+                Если ресурс занят, робот ждёт. Меняется цикл работы, а вместе с ним требуемое количество роботов и
+                стоимость сценария.
+              </p>
+            </div>
+            <p>
+              Это схема принципа, не симуляция объекта. В платформе результат зависит от ваших исходных данных и
+              доступной модели процесса.
+            </p>
+          </div>
+        </div>
+        <div class="impact-chain" aria-label="Связь ограничений с экономикой">
+          <span>Доступность ресурса</span><span>Длительность цикла</span><span>Парк и резерв</span
+          ><span>Экономика сценария</span>
+        </div>
+        <p class="scope-note">
+          Имитация доступна для поддерживаемых процессов. Остальные оцениваются аналитически; границы модели и допущения
+          остаются видимыми.
+        </p>
+      </section>
+      <section class="wrap section journey" id="start" aria-labelledby="journey-title" data-od-id="journey">
+        <h2 id="journey-title" data-od-id="journey-title">Ваши вводные.<br />Прослеживаемое решение.</h2>
+        <div class="journey-track">
+          <article class="journey-step" data-od-id="journey-input">
+            <h3 data-od-id="journey-input-title">Опишите объект</h3>
+            <p>Создайте личный проект. Задайте параметры или используйте доступный импорт данных и документов.</p>
+            <div class="journey-detail">
+              <strong>На входе</strong>Процессы, объёмы, смены, расстояния и стоимость текущей работы.
+            </div>
+          </article>
+          <article class="journey-step" data-od-id="journey-match">
+            <h3 data-od-id="journey-match-title">Проверьте подбор</h3>
+            <p>Рассмотрите решения разных производителей и объяснение их совместимости с вашей задачей.</p>
+            <div class="journey-detail">
+              <strong>Основание выбора</strong>Характеристики, источники и ограничения применения.
+            </div>
+          </article>
+          <article class="journey-step" data-od-id="journey-simulate">
+            <h3 data-od-id="journey-simulate-title">Уточните сценарий</h3>
+            <p>Изучите планировку, поддерживаемую имитацию, необходимый парк и резерв.</p>
+            <div class="journey-detail">
+              <strong>Проверка нагрузки</strong>Общие ресурсы, очереди и условия работы модели.
+            </div>
+          </article>
+          <article class="journey-step" data-od-id="journey-decide">
+            <h3 data-od-id="journey-decide-title">Обоснуйте решение</h3>
+            <p>Сравните варианты финансирования и сохраните результаты для обсуждения с командой.</p>
+            <div class="journey-detail"><strong>На выходе</strong>PDF с обоснованием и Excel с живыми формулами.</div>
+          </article>
+        </div>
+      </section>
+      <section class="finance" id="scenarios" aria-labelledby="finance-title" data-od-id="finance">
+        <div class="wrap">
+          <div class="finance-head">
+            <h2 id="finance-title" data-od-id="finance-title">Одна задача.<br />Разная экономика.</h2>
+            <span class="cross" aria-hidden="true"></span>
+          </div>
+          <p class="finance-intro">
+            Сравните текущую работу, покупку, подписку на роботов и лизинг на одной базе исходных данных.
+          </p>
+          <div class="finance-tabs" role="tablist" aria-label="Финансовый сценарий" data-od-id="finance-tabs">
+            <button
+              role="tab"
+              id="finance-current"
+              data-finance="current"
+              aria-selected="false"
+              aria-controls="finance-panel"
+              tabindex="-1"
+              data-od-id="finance-current"
+            >
+              Как сейчас</button
+            ><button
+              role="tab"
+              id="finance-buy"
+              data-finance="buy"
+              aria-selected="true"
+              aria-controls="finance-panel"
+              tabindex="0"
+              data-od-id="finance-buy"
+            >
+              Покупка</button
+            ><button
+              role="tab"
+              id="finance-raas"
+              data-finance="raas"
+              aria-selected="false"
+              aria-controls="finance-panel"
+              tabindex="-1"
+              data-od-id="finance-raas"
+            >
+              RaaS</button
+            ><button
+              role="tab"
+              id="finance-lease"
+              data-finance="lease"
+              aria-selected="false"
+              aria-controls="finance-panel"
+              tabindex="-1"
+              data-od-id="finance-lease"
+            >
+              Лизинг
+            </button>
+          </div>
+          <div
+            class="finance-panel"
+            id="finance-panel"
+            role="tabpanel"
+            aria-labelledby="finance-buy"
+            tabindex="0"
+            data-od-id="finance-panel"
+          >
+            <div class="finance-copy">
+              <h3 id="finance-heading" data-od-id="finance-heading">Инвестиции сейчас.<br />Актив в собственности.</h3>
+              <p id="finance-description">
+                Покупка оборудования и внедрение формируют начальные вложения. Далее учитываются эксплуатация,
+                обслуживание и замены.
+              </p>
+              <dl class="finance-facts">
+                <div>
+                  <dt>На старте</dt>
+                  <dd id="finance-start">Оборудование и внедрение</dd>
+                </div>
+                <div>
+                  <dt>В процессе</dt>
+                  <dd id="finance-recurring">Обслуживание и эксплуатация</dd>
+                </div>
+                <div>
+                  <dt>Для сравнения</dt>
+                  <dd id="finance-consider">Совокупные затраты и срок окупаемости при заданных допущениях</dd>
+                </div>
+              </dl>
+            </div>
+            <figure class="payment-figure">
+              <figcaption id="payment-title">Как распределяются затраты</figcaption>
+              <div
+                class="payment-chart"
+                id="payment-chart"
+                role="img"
+                aria-label="Условная схема покупки: крупное начальное вложение, затем эксплуатационные затраты"
+              >
+                <i style="--bar: 94%"></i><i style="--bar: 25%"></i><i style="--bar: 25%"></i><i style="--bar: 25%"></i
+                ><i style="--bar: 25%"></i><i style="--bar: 25%"></i><i style="--bar: 25%"></i><i style="--bar: 25%"></i
+                ><i style="--bar: 25%"></i>
+              </div>
+              <div class="payment-labels">
+                <span id="payment-first">Первоначальные вложения</span><span>Эксплуатация</span>
+              </div>
+              <p class="payment-note">
+                Схематичный профиль, без денежного масштаба. Не расчёт стоимости и не предложение финансирования.
+              </p>
+            </figure>
+          </div>
+          <div class="finance-foot">
+            <p>
+              Не выбираем победителя заранее. Эффект зависит от загрузки, состава парка, условий договора и ваших
+              допущений.
+            </p>
+            <p>RaaS: использование роботов за регулярный платёж. Состав сервиса определяется договором.</p>
+          </div>
+        </div>
+      </section>
+      <section class="wrap report" aria-labelledby="report-title" data-od-id="report">
+        <div class="report-copy">
+          <h2 id="report-title" data-od-id="report-title">Решение, которое<br />можно объяснить.</h2>
+          <p>
+            Не только итоговая цифра. Сохраните исходные данные, источники, допущения и границы модели вместе с
+            результатом оценки.
+          </p>
+          <div class="deliverables">
+            <div class="deliverable" data-od-id="deliverable-pdf">
+              <b>PDF</b>
+              <p>Обоснование выбора и сравнение сценариев для обсуждения инвестиций.</p>
+            </div>
+            <div class="deliverable" data-od-id="deliverable-excel">
+              <b>Excel</b>
+              <p>Расчёт с живыми формулами для проверки и дальнейшей работы.</p>
+            </div>
+          </div>
+        </div>
+        <figure
+          class="report-art"
+          aria-label="Состав будущего отчёта, без расчётных данных"
+          data-od-id="report-structure"
+        >
+          <div class="report-sheet">
+            <div class="sheet-brand">РобоМера<span class="cross" aria-hidden="true"></span></div>
+            <div class="sheet-title">Обоснование<br />роботизации</div>
+            <p class="sheet-sub">Ваш объект / Ваши исходные данные</p>
+            <div class="sheet-route" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="sheet-rows">
+              <div class="sheet-row"><span>Исходные данные</span><span>Источники</span></div>
+              <div class="sheet-row"><span>Подбор решений</span><span>Совместимость</span></div>
+              <div class="sheet-row"><span>Парк и ограничения</span><span>Допущения</span></div>
+              <div class="sheet-row"><span>Финансовые сценарии</span><span>Сравнение</span></div>
+            </div>
+            <p class="sheet-footer">
+              Структура результата оценки.<br />Фактические значения появятся после расчёта вашего объекта.
+            </p>
+          </div>
+        </figure>
+      </section>
+      <section class="wrap faq" id="faq" aria-labelledby="faq-title" data-od-id="faq">
+        <h2 id="faq-title" data-od-id="faq-title">До того, как<br />вы начнёте.</h2>
+        <div class="faq-list">
+          <details data-od-id="faq-get-started">
+            <summary data-od-id="faq-get-started-question">Что нужно для первой оценки?</summary>
+            <p>
+              Тип объекта, процессы, объёмы работы, сменность и доступные параметры маршрутов. Начните с того, что
+              известно, затем уточняйте исходные данные и допущения. Тестовый объект можно создать без регистрации;
+              сохраните его в аккаунт для дальнейшей работы.
+            </p>
+          </details>
+          <details data-od-id="faq-guest">
+            <summary data-od-id="faq-guest-question">Можно посмотреть без регистрации?</summary>
+            <p>
+              Да. Гостевые примеры склада, больницы и аэропорта доступны по ссылкам на этой странице. Свой тестовый
+              объект тоже можно создать без регистрации.
+            </p>
+          </details>
+          <details data-od-id="faq-independence">
+            <summary data-od-id="faq-independence-question">Вы продаёте роботов или внедряете их?</summary>
+            <p>
+              РобоМера помогает предварительно оценить роботизацию и сравнить решения разных производителей. Это
+              самостоятельная аналитическая платформа. Подбор не заменяет согласование технических условий с поставщиком
+              и проект внедрения.
+            </p>
+          </details>
+          <details data-od-id="faq-simulation">
+            <summary data-od-id="faq-simulation-question">Любой процесс можно промоделировать?</summary>
+            <p>
+              Нет. Имитация доступна для поддерживаемых процессов. Остальные остаются аналитическими. Учитывайте границы
+              модели: платформа не является валидированным цифровым двойником и не заменяет инженерное обследование.
+            </p>
+          </details>
+          <details data-od-id="faq-import">
+            <summary data-od-id="faq-import-question">Можно загрузить план или документ?</summary>
+            <p>
+              В проекте можно использовать доступные способы ввода и импорта данных. Поддержка зависит от типа данных и
+              текущих возможностей платформы. Автоматический разбор любых CAD/BIM-файлов не предполагается; параметры
+              необходимо проверить.
+            </p>
+          </details>
+          <details data-od-id="faq-guarantee">
+            <summary data-od-id="faq-guarantee-question">Расчёт гарантирует экономию?</summary>
+            <p>
+              Нет. Это предварительная оценка на основе выбранных параметров и допущений. Результат зависит от
+              фактических условий объекта, качества данных, загрузки и условий внедрения. Итог нужно проверять перед
+              инвестиционным решением.
+            </p>
+          </details>
+        </div>
+      </section>
+      <section class="closing" aria-labelledby="closing-title" data-od-id="closing">
+        <div class="wrap">
+          <h2 id="closing-title" data-od-id="closing-title">Ваш объект.<br />Ваше решение.</h2>
+          <p class="lead">
+            Начните с реальной задачи. Узнайте, где роботизация имеет смысл и что нужно проверить до инвестиций.
+          </p>
+          <a class="btn primary" href="/demo?new=1" data-od-id="closing-assess"
+            >Оценить свой объект<svg class="arrow"><use href="#arrow-up-right" /></svg
+          ></a>
+          <p class="auth-note">
+            Начните с тестового проекта без регистрации.<br />Для сохранения работы создайте аккаунт.
+          </p>
+          <footer class="footer" data-od-id="footer">
+            <div class="footer-top">
+              <p>Независимая оценка роботизации.<br />От исходных данных к обоснованному решению.</p>
+              <nav class="footer-links" aria-label="Дополнительная навигация">
+                <a href="/design-lab">Все варианты</a><a href="/demo">Исследовать демо</a
+                ><a href="/catalog">Каталог решений</a>
+              </nav>
+            </div>
+            <div class="footer-mark" aria-hidden="true">
+              <span class="footer-word">РобоМера</span><span class="cross"></span>
+            </div>
+          </footer>
+        </div>
+      </section>
+    </main>
+    <script>
+      ;(() => {
+        'use strict'
+        const $ = (s) => document.querySelector(s),
+          $$ = (s) => [...document.querySelectorAll(s)]
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)')
+        let paused = reduced.matches
+        function motionState() {
+          document.documentElement.classList.toggle('motion-off', paused)
+          const b = $('#motion-toggle')
+          b.disabled = reduced.matches
+          b.setAttribute('aria-pressed', String(paused))
+          b.innerHTML =
+            (reduced.matches ? 'Движение отключено' : paused ? 'Включить движение' : 'Остановить движение') +
+            '<span class="motion-glyph" aria-hidden="true"></span>'
+          document.dispatchEvent(new CustomEvent('atlas:motion', { detail: !paused }))
+        }
+        $('#motion-toggle').addEventListener('click', () => {
+          paused = !paused
+          motionState()
+        })
+        reduced.addEventListener('change', (e) => {
+          paused = e.matches
+          motionState()
+        })
+        motionState()
+        const industry = {
+          warehouse: {
+            title: 'Движение паллет.\nБез слепых зон.',
+            description: 'Проверьте, как перевозки впишутся в смены, проходы и работу погрузочных зон.',
+            input: 'Объёмы перемещений, длины маршрутов и график смен.',
+            limit: 'Общие проезды, погрузку, зарядку и пики нагрузки.',
+            output: 'Подходящие решения, состав парка с резервом и сравнение затрат.',
+            demo: 'Открыть пример склада',
+            alt: 'Условная аксонометрия склада с паллетными стеллажами и маршрутами перевозки',
+          },
+          hospital: {
+            title: 'Разные этажи.\nСвязанный процесс.',
+            description: 'Рассмотрите внутреннюю логистику больницы с учётом маршрутов и общих ресурсов.',
+            input: 'Задачи доставки, объёмы, этажность и режим работы.',
+            limit: 'Лифты, маршруты и требования к условиям эксплуатации.',
+            output: 'Объяснимый подбор, предварительную оценку парка и границы применимости модели.',
+            demo: 'Открыть пример больницы',
+            alt: 'Условный разрез больницы: три этажа и общий лифт, связывающий потоки доставки',
+          },
+          airport: {
+            title: 'Много потоков.\nОдна система.',
+            description: 'Оцените задачи аэропорта с учётом неравномерной нагрузки и особенностей зон работы.',
+            input: 'Процессы, объёмы, расписание нагрузки и протяжённость маршрутов.',
+            limit: 'Пиковые периоды, пересечения потоков и доступность зон.',
+            output: 'Сопоставление подходящих решений и затрат при заданных ограничениях.',
+            demo: 'Открыть пример аэропорта',
+            alt: 'Условный терминал аэропорта: арочная конструкция, багажная линия и диспетчерская башня',
+          },
+        }
+        function animate(el) {
+          if (paused) return
+          el.classList.remove('transition-in')
+          void el.offsetWidth
+          el.classList.add('transition-in')
+        }
+        function setTitle(el, text) {
+          el.replaceChildren()
+          text.split('\n').forEach((part, i) => {
+            if (i) el.append(document.createElement('br'))
+            el.append(document.createTextNode(part))
+          })
+        }
+        function tabs(group, callback) {
+          const buttons = [...group.querySelectorAll('[role=tab]')]
+          function activate(button) {
+            buttons.forEach((b) => {
+              const active = b === button
+              b.setAttribute('aria-selected', String(active))
+              b.tabIndex = active ? 0 : -1
+            })
+            callback(button)
+          }
+          group.addEventListener('click', (e) => {
+            const b = e.target.closest('[role=tab]')
+            if (b && group.contains(b)) activate(b)
+          })
+          group.addEventListener('keydown', (e) => {
+            const idx = buttons.indexOf(document.activeElement)
+            if (idx < 0) return
+            let n
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (idx + 1) % buttons.length
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (idx + buttons.length - 1) % buttons.length
+            else if (e.key === 'Home') n = 0
+            else if (e.key === 'End') n = buttons.length - 1
+            else return
+            e.preventDefault()
+            buttons[n].focus()
+            activate(buttons[n])
+          })
+        }
+        tabs($('.object-tabs'), (b) => {
+          const k = b.dataset.industry,
+            d = industry[k]
+          setTitle($('#industry-title'), d.title)
+          for (const key of ['description', 'input', 'limit', 'output']) $('#industry-' + key).textContent = d[key]
+          const img = $('#industry-image')
+          img.src = 'assets/visuals/' + k + '.svg'
+          img.alt = d.alt
+          const a = $('#industry-demo')
+          a.firstChild.textContent = d.demo
+          a.href = '/demo/' + k + '_demo_01'
+          $('#industry-panel').setAttribute('aria-labelledby', b.id)
+          animate($('.object-copy'))
+        })
+        $$('[data-atlas-select]').forEach((a) =>
+          a.addEventListener('click', () => $('#tab-' + a.dataset.atlasSelect).click()),
+        )
+        document.addEventListener('atlas:select', (e) => {
+          const link = $('[data-atlas-select="' + e.detail + '"]')
+          if (link) link.click()
+        })
+        const finance = {
+          current: {
+            title: 'Точка отсчёта.\nТекущая работа.',
+            description:
+              'Опишите, сколько стоит выполнять задачи сегодня. Это база, с которой сравниваются варианты роботизации.',
+            start: 'Параметры существующего процесса',
+            recurring: 'Персонал, техника и текущая эксплуатация',
+            consider: 'Сопоставимые объёмы работ и период оценки',
+            bars: [60, 60, 60, 60, 60, 60, 60, 60, 60],
+            first: 'Начало периода',
+            alt: 'Условная схема текущей работы: регулярные операционные затраты',
+          },
+          buy: {
+            title: 'Инвестиции сейчас.\nАктив в собственности.',
+            description:
+              'Покупка оборудования и внедрение формируют начальные вложения. Далее учитываются эксплуатация, обслуживание и замены.',
+            start: 'Оборудование и внедрение',
+            recurring: 'Обслуживание и эксплуатация',
+            consider: 'Совокупные затраты и срок окупаемости при заданных допущениях',
+            bars: [94, 25, 25, 25, 25, 25, 25, 25, 25],
+            first: 'Первоначальные вложения',
+            alt: 'Условная схема покупки: крупное начальное вложение, затем эксплуатационные затраты',
+          },
+          raas: {
+            title: 'Роботы как услуга.\nРегулярный платёж.',
+            description:
+              'Использование роботов оплачивается регулярно. Отдельно проверьте, что входит в сервис и какие затраты остаются у вашей команды.',
+            start: 'Запуск и условия договора',
+            recurring: 'Платёж за использование и отдельные расходы',
+            consider: 'Состав сервиса, срок и совокупные платежи',
+            bars: [58, 58, 58, 58, 58, 58, 58, 58, 58],
+            first: 'Запуск сервиса',
+            alt: 'Условная схема RaaS: регулярные платежи за использование роботов',
+          },
+          lease: {
+            title: 'Распределите вложения\nво времени.',
+            description:
+              'Оборудование финансируется по договору лизинга. В сравнении учитываются аванс, график платежей и условия выкупа.',
+            start: 'Аванс и внедрение',
+            recurring: 'Лизинговые платежи и эксплуатация',
+            consider: 'Срок договора, удорожание и выкуп',
+            bars: [80, 45, 45, 45, 45, 45, 45, 45, 64],
+            first: 'Аванс и внедрение',
+            alt: 'Условная схема лизинга: аванс, регулярные платежи и выкуп по условиям договора',
+          },
+        }
+        tabs($('.finance-tabs'), (b) => {
+          const d = finance[b.dataset.finance]
+          setTitle($('#finance-heading'), d.title)
+          for (const key of ['description', 'start', 'recurring', 'consider']) $('#finance-' + key).textContent = d[key]
+          $$('#payment-chart i').forEach((bar, i) => bar.style.setProperty('--bar', d.bars[i] + '%'))
+          $('#payment-chart').setAttribute('aria-label', d.alt)
+          $('#payment-first').textContent = d.first
+          $('#finance-panel').setAttribute('aria-labelledby', b.id)
+          animate($('.finance-copy'))
+        })
+        $('#resource-toggle').addEventListener('click', (e) => {
+          const b = e.currentTarget,
+            on = b.getAttribute('aria-checked') !== 'true'
+          b.setAttribute('aria-checked', String(on))
+          $('.resource-lab').classList.toggle('lab-off', !on)
+          $('#resource-heading').textContent = on ? 'Очередь меняет расчёт.' : 'Задачи выглядят независимыми.'
+          $('#resource-description').textContent = on
+            ? 'Если ресурс занят, робот ждёт. Меняется цикл работы, а вместе с ним требуемое количество роботов и стоимость сценария.'
+            : 'Без учёта общего ресурса ожидание выпадает из картины. Такой аналитический взгляд не показывает конкуренцию потоков.'
+          $('#flow-desc').textContent = on
+            ? 'Три потока сходятся у одного ресурса. Очередь меняет длительность цикла, необходимый парк и экономику.'
+            : 'Показаны три потока. Ожидание у общего ресурса не учтено.'
+          animate($('#resource-result'))
+        })
+        const menu = $('.menu-toggle'),
+          nav = $('#navigation')
+        function closeMenu() {
+          nav.classList.remove('is-open')
+          menu.setAttribute('aria-expanded', 'false')
+          menu.setAttribute('aria-label', 'Открыть меню')
+        }
+        menu.addEventListener('click', () => {
+          const open = menu.getAttribute('aria-expanded') !== 'true'
+          menu.setAttribute('aria-expanded', String(open))
+          menu.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню')
+          nav.classList.toggle('is-open', open)
+        })
+        nav.addEventListener('click', (e) => {
+          if (e.target.closest('a')) closeMenu()
+        })
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && menu.getAttribute('aria-expanded') === 'true') {
+            closeMenu()
+            menu.focus()
+          }
+        })
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.nav')) closeMenu()
+        })
+        $('#unfold-atlas').addEventListener('click', (e) => {
+          const b = e.currentTarget,
+            on = b.getAttribute('aria-pressed') !== 'true'
+          b.setAttribute('aria-pressed', String(on))
+          b.textContent = on ? 'Собрать макеты' : 'Раскрыть макеты'
+          document.dispatchEvent(new CustomEvent('atlas:unfold', { detail: on }))
+          $('.atlas-stage').classList.toggle('is-unfolded', on)
+          $('.atlas-drawing>img').src = 'assets/visuals/' + (on ? 'atlas-unfolded' : 'atlas') + '.svg'
+        })
+        // SVG assets preload after the first frame; no external network dependency.
+        for (const k of ['hospital', 'airport', 'atlas-unfolded']) {
+          const image = new Image()
+          image.src = 'assets/visuals/' + k + '.svg'
+        }
+      })()
+    </script>
+    <script src="assets/vendor/atlas.min.js" defer></script>
+  </body>
+</html>

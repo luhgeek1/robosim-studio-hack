@@ -1,11 +1,14 @@
 from uuid import UUID
 
+from sqlalchemy import select
+
 from app.core.errors import InvalidInputError, NotFoundError
-from app.db.models import Manufacturer
+from app.db.models import Manufacturer, User
 from app.db.repositories.users import to_profile
 from app.db.uow import UnitOfWork
 from app.domain.admin import UserChange, UserQuery
 from app.domain.auth import CurrentUser, Role, UserProfile
+from app.service.auth.session_store import revoke_all_sessions
 
 
 class UserAdminService:
@@ -18,7 +21,7 @@ class UserAdminService:
         return [to_profile(user) for user in users], total
 
     async def update(self, user_id: UUID, change: UserChange) -> UserProfile:
-        user = await self._uow.users.get(user_id)
+        user = await self._uow.session.scalar(select(User).where(User.id == user_id).with_for_update())
         if user is None:
             raise NotFoundError("Пользователь не найден")
         if user.id == self._actor.id and (
@@ -42,7 +45,6 @@ class UserAdminService:
         if change.vendor_manufacturer_set:
             user.vendor_manufacturer_id = change.vendor_manufacturer_id
         if revoke:
-            # Access and refresh tokens carry auth_version: a new role or a block ends every open session.
-            user.auth_version += 1
+            await revoke_all_sessions(self._uow, user)
         await self._uow.flush()
         return to_profile(user)

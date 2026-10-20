@@ -1,0 +1,141 @@
+.im-paper {
+  background: var(--im-paper);
+  color: var(--im-dark);
+}
+.im-process,
+.im-evidence,
+.im-finance,
+.im-report,
+.im-questions {
+  padding: 110px 6%;
+}
+.im-section-heading {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 8%;
+  align-items: end;
+  margin-bottom: 65px;
+}
+.im-section-heading h2 {
+  font-size: clamp(34px, 3.8vw, 60px);
+  line-height: 1.12;
+}
+.im-section-heading h2 span {
+  color: #76847a;
+}
+.im-section-heading > p {
+  font-size: 15px;
+  line-height: 1.75;
+  max-width: 380px;
+  color: #b9c5bb;
+}
+.im-paper .im-section-heading > p {
+  color: #5a665b;
+}
+.im-object-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid #21362a30;
+  border-bottom: 1px solid #21362a30;
+}
+.im-object-tabs button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  padding: 20px 24px;
+  font-size: 22px;
+  background: transparent;
+  border: 0;
+  color: #697467;
+  cursor: pointer;
+}
+.im-object-tabs button + button {
+  border-left: 1px solid #21362a30;
+}
+.im-object-tabs button[aria-pressed='true'] {
+  background: #24392d;
+  color: var(--im-paper);
+}
+.im-object-tabs button[aria-pressed='true'] svg {
+  color: var(--im-signal);
+}
+.im-process-view {
+  display: grid;
+  grid-template-columns: 0.85fr 1.2fr;
+  gap: 8%;
+  padding-top: 50px;
+}
+.im-process-copy h3 {
+  font-size: 32px;
+  line-height: 1.2;
+  max-width: 350px;
+}
+.im-process-copy > p {
+  margin-top: 20px;
+  color: #5a665b;
+  font-size: 14px;
+}
+.im-process-copy ul {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+  gap: 10px 18px;
+  margin: 26px 0;
+  list-style: none;
+}
+.im-process-copy li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #426049;
+}
+.im-process-map {
+  background: #e8ebdf;
+  padding: 24px;
+}
+.im-map-bar {
+  display: flex;
+  justify-content: space-between;
+  font: 10px var(--font-mono);
+  color: #51654c;
+}
+.im-process-map svg {
+  width: 100%;
+  margin-top: 14px;
+  font-family: var(--font-sans);
+}
+.im-process-map p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #51654c;
+  padding-top: 14px;
+  border-top: 1px solid #23392c20;
+}
+.im-method {
+  display: grid;
+  grid-template-columns: 1fr 36px 1fr 36px 1fr;
+  gap: 30px;
+  border-top: 1px solid #21362a30;
+  margin-top: 70px;
+  padding-top: 40px;
+}
+.im-method span {
+  font: 10px var(--font-mono);
+  color: #6c7769;
+}
+.im-method h3 {
+  font-size: 23px;
+  margin-top: 15px;
+}
+.im-method p {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #5a665b;
+}
+.im-method-arrow {
+  margin-top: 42px;
+  width: 20px;
+  color: #9fa796;
+}

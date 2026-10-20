@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="ru" data-brand="robomera">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#171f1e" />
+    <meta
+      name="description"
+      content="Независимая предварительная оценка роботизации. Подбор решений, проверка парка в симуляции, сравнение покупки, RaaS и лизинга. Отчёт PDF и Excel с источниками."
+    />
+    <title>РобоМера. Сначала проверьте. Потом внедряйте.</title>
+    <link rel="icon" href="assets/visuals/brand-mark.svg" type="image/svg+xml" />
+    <link rel="preload" href="assets/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/onest-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      :root {
+        /* Linear token contract. Robomera overrides are explicitly scoped below. */
+        --bg: #08090a;
+        --surface: #191a1b;
+        --surface-warm: var(--surface);
+        --fg: #f7f8f8;
+        --fg-2: #d0d6e0;
+        --muted: #8a8f98;
+        --meta: #62666d;
+        --border: rgba(255, 255, 255, 0.08);
+        --border-soft: rgba(255, 255, 255, 0.05);
+        --accent: #5e6ad2;
+        --accent-on: #ffffff;
+        --accent-hover: #828fff;
+        --accent-active: #4752c4;
+        --success: #27a644;
+        --warn: #eab308;
+        --danger: #dc2626;
+        --font-display:
+          'Inter Variable', 'Inter', 'SF Pro Display', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+        --font-body:
+          'Inter Variable', 'Inter', 'SF Pro Display', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+        --font-mono: 'Berkeley Mono', ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+        --text-xs: 12px;
+        --text-sm: 14px;
+        --text-base: 16px;
+        --text-lg: 18px;
+        --text-xl: 24px;
+        --text-2xl: 32px;
+        --text-3xl: 48px;
+        --text-4xl: 72px;
+        --leading-body: 1.5;
+        --leading-tight: 1;
+        --tracking-display: -0.022em;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-12: 48px;
+        --section-y-desktop: 80px;
+        --section-y-tablet: 48px;
+        --section-y-phone: 32px;
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-pill: 9999px;
+        --elev-flat: none;
+        --elev-ring: 0 0 0 1px var(--border);
+        --elev-raised: rgba(0, 0, 0, 0.4) 0px 2px 4px, 0 0 0 1px rgba(255, 255, 255, 0.05);
+        --focus-ring: 0 0 0 2px color-mix(in oklab, var(--accent), transparent 30%), 0 4px 12px rgba(0, 0, 0, 0.1);
+        --motion-fast: 150ms;
+        --motion-base: 200ms;
+        --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+        --container-max: 1200px;
+        --container-gutter-desktop: 24px;
+        --container-gutter-tablet: 16px;
+        --container-gutter-phone: 12px;
+      }
+      :root[data-brand='robomera'] {
+        --bg: #171f1e;
+        --fg: #f2f1e9;
+        --accent: #ed7049;
+        --surface: oklch(from var(--bg) calc(l + 0.035) c h);
+        --fg-2: oklch(from var(--fg) 0.82608 c h);
+        --muted: oklch(from var(--fg) 0.71722 c h);
+        --meta: var(--muted);
+        --border: oklch(from var(--fg) l c h / 0.15);
+        --border-soft: oklch(from var(--fg) l c h / 0.08);
+        --accent-on: var(--bg);
+        --accent-hover: oklch(from var(--accent) calc(l + 0.07) c h);
+        --accent-active: oklch(from var(--accent) calc(l + 0.035) c h);
+        --font-display: 'Onest', 'Segoe UI', sans-serif;
+        --font-body: 'Onest', 'Segoe UI', sans-serif;
+        --font-mono: 'Onest', 'Segoe UI', sans-serif;
+        --container-max: 1280px;
+      }
+    </style>
+    <link rel="stylesheet" href="assets/landing.css" />
+    <script src="assets/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-od-id="skip-content">Перейти к содержимому</a>
+    <header class="header container" data-od-id="site-header">
+      <a class="brand" href="#top" aria-label="РобоМера, на главную" data-od-id="brand"
+        ><img src="assets/visuals/brand-mark.svg" width="30" height="30" alt="" />РобоМера<span class="brand-period"
+          >.</span
+        ></a
+      >
+      <nav class="desktop-nav" aria-label="Основная навигация" data-od-id="main-navigation">
+        <a href="#workflow" data-od-id="main-navigation-a-1">Как это работает</a
+        ><a href="#objects" data-od-id="main-navigation-a-2">Для каких объектов</a
+        ><a href="#economics" data-od-id="main-navigation-a-3">Экономика</a>
+      </nav>
+      <a class="header-link" href="/catalog" data-od-id="catalog-link"
+        >Каталог решений <svg class="icon"><use href="#i-up-right" /></svg
+      ></a>
+      <button
+        class="menu-toggle btn btn-ghost"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+        data-od-id="menu-toggle"
+      >
+        Меню <svg class="icon"><use href="#i-menu" /></svg>
+      </button>
+    </header>
+    <nav class="mobile-nav container" id="mobile-nav" aria-label="Мобильная навигация" hidden>
+      <a href="#workflow" data-od-id="page-a-1">Как это работает</a
+      ><a href="#objects" data-od-id="page-a-2">Для каких объектов</a
+      ><a href="#economics" data-od-id="page-a-3">Экономика</a
+      ><a href="/catalog" data-od-id="page-a-4">Каталог решений</a>
+    </nav>
+    <main id="main" tabindex="-1">
+      <section class="hero container" id="top" data-od-id="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Независимая оценка роботизации</p>
+          <h1 id="hero-title" data-od-id="hero-title">Сначала проверьте.<br /><span>Потом внедряйте.</span></h1>
+        </div>
+        <div class="hero-intro">
+          <p>
+            Подберите роботов, проверьте парк в симуляции и сравните экономику. До того, как инвестировать в
+            оборудование.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="/demo?new=1" data-od-id="hero-own-object"
+              >Оценить свой объект <svg class="icon"><use href="#i-up-right" /></svg></a
+            ><a class="text-link" href="/demo" data-od-id="guest-demo"
+              >Открыть демо <svg class="icon"><use href="#i-right" /></svg
+            ></a>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="stage-section container"
+        aria-label="Интерактивная демонстрация проверки парка"
+        data-od-id="product-stage"
+      >
+        <div class="product-stage">
+          <div class="stage-heading">
+            <div class="stage-project">
+              <svg class="icon"><use href="#i-box" /></svg><strong>Склад: перевозка паллет</strong
+              ><span class="pill">ДЕМО</span>
+            </div>
+            <button class="quiet-button" id="parameters-button" data-od-id="parameters-button">
+              Исходные данные <svg class="icon"><use href="#i-sliders" /></svg>
+            </button>
+          </div>
+          <div class="stage-main">
+            <div class="model-column">
+              <div class="model-chips">
+                <span>20 000 м²</span><span>Перемещение паллет</span><span>Проверка на пике</span>
+              </div>
+              <div class="scene-viewport" id="scene-viewport" data-od-id="warehouse-scene">
+                <img
+                  class="scene-fallback"
+                  src="assets/visuals/warehouse.svg"
+                  width="960"
+                  height="660"
+                  alt="Схема склада: ряды хранения, проходы и транспортные маршруты"
+                />
+                <canvas
+                  id="warehouse-canvas"
+                  tabindex="0"
+                  role="img"
+                  aria-label="Интерактивная схема склада. Стрелки влево и вправо поворачивают вид. Home возвращает общий план. Управление видами также доступно кнопками ниже."
+                  aria-describedby="scene-description"
+                  data-od-id="warehouse-scene-canvas-1"
+                ></canvas>
+                <div class="scene-note" id="scene-description">
+                  <span class="scene-label">Маршруты</span
+                  ><span id="scene-note-text">Приёмка → хранение → отгрузка</span>
+                </div>
+                <div class="view-switch" role="group" aria-label="Вид модели">
+                  <button aria-pressed="true" data-view="3d" data-od-id="view-3d">3D</button
+                  ><button aria-pressed="false" data-view="2d" data-od-id="view-2d">2D</button>
+                </div>
+                <p class="webgl-status" id="webgl-status" hidden>
+                  3D недоступен. Показана схема, данные и проверки доступны.
+                </p>
+              </div>
+              <div class="scene-toolbar">
+                <div class="scene-modes" role="group" aria-label="Что проверить">
+                  <button class="mode-button" aria-pressed="true" data-mode="routes" data-od-id="mode-routes">
+                    <svg class="icon"><use href="#i-route" /></svg>Маршруты</button
+                  ><button class="mode-button" aria-pressed="false" data-mode="queues" data-od-id="mode-queues">
+                    <svg class="icon"><use href="#i-layers" /></svg>Очереди</button
+                  ><button class="mode-button" aria-pressed="false" data-mode="charging" data-od-id="mode-charging">
+                    <svg class="icon"><use href="#i-battery" /></svg>Зарядка
+                  </button>
+                </div>
+                <button
+                  class="quiet-button pause-button"
+                  id="pause-button"
+                  aria-pressed="false"
+                  data-od-id="pause-animation"
+                >
+                  <svg class="icon"><use href="#i-pause" /></svg><span>Пауза</span>
+                </button>
+              </div>
+            </div>
+            <aside class="decision-pane" data-od-id="decision-pane" aria-labelledby="decision-title">
+              <h2 id="decision-title" data-od-id="decision-title">Парк под нагрузкой</h2>
+              <div class="fleet-result">
+                <div><span>По формуле</span><strong>17</strong></div>
+                <svg class="icon"><use href="#i-right" /></svg>
+                <div>
+                  <span>После имитации</span><strong>13<small>роботов</small></strong>
+                </div>
+              </div>
+              <div class="inspection-copy" aria-live="polite" aria-atomic="true">
+                <h3 id="inspection-title" data-od-id="decision-pane-h3-1">Парк работает как система</h3>
+                <p id="inspection-text">
+                  Общие проходы и станции ограничивают поток. Проверка уточняет парк и его экономику.
+                </p>
+              </div>
+              <p class="demo-disclaimer">Демо одного склада. Оба значения включают резерв.</p>
+              <a class="text-link" href="/demo/warehouse_demo_01?step=decision" data-od-id="stage-decision-link"
+                >Открыть расчёт примера <svg class="icon"><use href="#i-up-right" /></svg
+              ></a>
+            </aside>
+          </div>
+          <div class="stage-bottom">
+            <span>Модель показывает ограничения до закупки</span
+            ><span>Иллюстрация работы платформы, не цифровой двойник объекта</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="workflow container" id="workflow" data-od-id="workflow" aria-labelledby="workflow-title">
+        <h2 class="sr-only" id="workflow-title" data-od-id="workflow-h2-1">От параметров объекта до отчёта</h2>
+        <ol class="workflow-chain">
+          <li><span>Ваш объект</span><small>Параметры и процессы</small></li>
+          <li><span>Подбор</span><small>Решения с обоснованием</small></li>
+          <li><span>Парк и экономика</span><small>Четыре сценария</small></li>
+          <li><span>Проверка в 2D / 3D</span><small>Уточнение расчёта</small></li>
+          <li><span>Решение</span><small>Отчёт PDF и Excel</small></li>
+        </ol>
+      </section>
+
+      <section
+        class="industries container section"
+        id="objects"
+        data-od-id="industries"
+        aria-labelledby="objects-title"
+      >
+        <div class="section-intro">
+          <h2 id="objects-title" data-od-id="objects-title">
+            Разные объекты.<br /><span>Один подход к решению.</span>
+          </h2>
+          <p>Начните со своих процессов. Ограничения склада, больницы и аэропорта требуют разных решений.</p>
+        </div>
+        <div class="industry-panorama">
+          <article class="industry" data-od-id="industry-warehouse">
+            <div class="industry-visual">
+              <img
+                src="assets/visuals/warehouse.svg"
+                alt="Аксонометрическая схема складских стеллажей и проходов"
+                width="960"
+                height="660"
+                loading="lazy"
+              />
+            </div>
+            <div class="industry-copy">
+              <h3 data-od-id="industry-warehouse-h3-1">Склад</h3>
+              <p>Перемещение паллет,<br />отбор заказов, уборка.</p>
+              <div class="industry-constraint"><span>Что важно</span>Поток, проходы, точки загрузки</div>
+            </div>
+          </article>
+          <article class="industry" data-od-id="industry-hospital">
+            <div class="industry-visual">
+              <img
+                src="assets/visuals/hospital.svg"
+                alt="Аксонометрическая схема больничного корпуса и коридоров"
+                width="960"
+                height="660"
+                loading="lazy"
+              />
+            </div>
+            <div class="industry-copy">
+              <h3 data-od-id="industry-hospital-h3-1">Больница</h3>
+              <p>Доставка медикаментов,<br />питания и материалов.</p>
+              <div class="industry-constraint"><span>Что важно</span>Лифты, доступ, график доставки</div>
+            </div>
+          </article>
+          <article class="industry" data-od-id="industry-airport">
+            <div class="industry-visual">
+              <img
+                src="assets/visuals/airport.svg"
+                alt="Аксонометрическая схема терминала аэропорта с багажной зоной"
+                width="960"
+                height="660"
+                loading="lazy"
+              />
+            </div>
+            <div class="industry-copy">
+              <h3 data-od-id="industry-airport-h3-1">Аэропорт</h3>
+              <p>Перемещение багажа,<br />грузов и уборка терминала.</p>
+              <div class="industry-constraint"><span>Что важно</span>Пики, расстояния, режим доступа</div>
+            </div>
+          </article>
+        </div>
+        <p class="section-footnote">
+          Доступность имитации зависит от процесса. Неподдерживаемые процессы остаются в аналитическом расчёте.
+        </p>
+      </section>
+
+      <section class="matching container section" id="matching" data-od-id="matching" aria-labelledby="matching-title">
+        <div class="matching-copy">
+          <p class="eyebrow">Совместимость, которую можно проверить</p>
+          <h2 id="matching-title" data-od-id="matching-title">Не просто список.<br />Причины выбора.</h2>
+          <p class="lead">
+            РобоМера сопоставляет задачу с каталогом. Показывает подходящие типы решений, ограничения и данные, которые
+            ещё нужно уточнить.
+          </p>
+          <a class="text-link" href="/catalog" data-od-id="matching-catalog"
+            >Посмотреть каталог <svg class="icon"><use href="#i-up-right" /></svg
+          ></a>
+          <div class="matching-principle">
+            <svg class="icon"><use href="#i-fingerprint" /></svg>
+            <p>Без привязки к одному производителю.<br /><span>Основание важнее места в списке.</span></p>
+          </div>
+        </div>
+        <div class="matching-explorer card" data-od-id="matching-explorer">
+          <div class="explorer-title"><span>Логика подбора</span><span class="pill">Пример процесса</span></div>
+          <div class="matching-flow">
+            <div><small>Задача</small><strong>Перевозить паллеты</strong></div>
+            <svg class="icon"><use href="#i-right" /></svg>
+            <div><small>Тип решения</small><strong>Транспортный AMR</strong></div>
+          </div>
+          <div class="compatibility-row">
+            <svg class="icon"><use href="#i-check" /></svg><span>Горизонтальное перемещение</span
+            ><small>Соответствует задаче</small>
+          </div>
+          <div class="compatibility-row">
+            <svg class="icon"><use href="#i-info" /></svg><span>Груз, пол и ширина проходов</span
+            ><small>Сверить с объектом</small>
+          </div>
+          <div class="compatibility-row">
+            <svg class="icon"><use href="#i-info" /></svg><span>Подъём на ярусы</span><small>Другой тип решения</small>
+          </div>
+          <details class="trace-details" data-od-id="source-disclosure">
+            <summary data-od-id="source-disclosure-summary-1">
+              Откуда берётся рекомендация <svg class="icon"><use href="#i-plus" /></svg>
+            </summary>
+            <div class="trace-content">
+              <p><strong>Объект</strong><span>Параметры демо: данные организатора, лист «Склад».</span></p>
+              <p><strong>Каталог</strong><span>Характеристики и источник сведений о решении.</span></p>
+              <p><strong>Допущения</strong><span>Нормативы и неизвестные значения отмечаются отдельно.</span></p>
+            </div>
+          </details>
+          <div class="explorer-footer">
+            Отсутствующая характеристика требует проверки, а не автоматического одобрения.
+          </div>
+        </div>
+      </section>
+
+      <section class="economics section" id="economics" data-od-id="economics" aria-labelledby="economics-title">
+        <div class="container">
+          <div class="section-intro">
+            <h2 id="economics-title" data-od-id="economics-title">
+              Не «сколько стоит робот».<br /><span>Как изменится весь процесс.</span>
+            </h2>
+            <p>Сравните текущую работу с покупкой, подпиской RaaS и лизингом на одних исходных данных.</p>
+          </div>
+          <div class="finance-grid" role="group" aria-label="Сценарии финансирования">
+            <button class="finance-option" data-finance="current" aria-pressed="false" data-od-id="finance-current">
+              <span class="finance-number">База сравнения</span><span class="finance-heading">Как сейчас</span
+              ><span class="finance-description">Персонал, техника<br />и текущие расходы</span
+              ><span class="finance-option-bottom"
+                >Текущий процесс <svg class="icon"><use href="#i-right" /></svg
+              ></span>
+            </button>
+            <button class="finance-option" data-finance="purchase" aria-pressed="true" data-od-id="finance-purchase">
+              <span class="finance-number">Оборудование в собственности</span
+              ><span class="finance-heading">Покупка</span
+              ><span class="finance-description">Инвестиции в запуск<br />и эксплуатацию</span
+              ><span class="finance-option-bottom"
+                >Разобрать сценарий <svg class="icon"><use href="#i-right" /></svg
+              ></span>
+            </button>
+            <button class="finance-option" data-finance="raas" aria-pressed="false" data-od-id="finance-raas">
+              <span class="finance-number">Роботы как услуга</span><span class="finance-heading">RaaS</span
+              ><span class="finance-description">Регулярные платежи<br />и условия сервиса</span
+              ><span class="finance-option-bottom"
+                >Разобрать сценарий <svg class="icon"><use href="#i-right" /></svg
+              ></span>
+            </button>
+            <button class="finance-option" data-finance="leasing" aria-pressed="false" data-od-id="finance-leasing">
+              <span class="finance-number">Финансирование покупки</span><span class="finance-heading">Лизинг</span
+              ><span class="finance-description">Аванс, график платежей<br />и выкуп оборудования</span
+              ><span class="finance-option-bottom"
+                >Разобрать сценарий <svg class="icon"><use href="#i-right" /></svg
+              ></span>
+            </button>
+          </div>
+          <div class="finance-detail" aria-live="polite" aria-atomic="true">
+            <div>
+              <span id="finance-label">В сценарии покупки</span>
+              <h3 id="finance-title" data-od-id="economics-h3-1">Цена оборудования только начало.</h3>
+            </div>
+            <p id="finance-copy">
+              В расчёт входят парк с резервом, интеграция, инфраструктура и эксплуатация. Эффект сравнивается с текущими
+              затратами.
+            </p>
+            <a class="text-link" href="/demo/warehouse_demo_01?step=decision" data-od-id="economics-demo"
+              >Экономика демо <svg class="icon"><use href="#i-up-right" /></svg
+            ></a>
+          </div>
+          <div class="decision-shift">
+            <div>
+              <span>До оценки</span>
+              <p>«Кажется, нам нужны роботы»</p>
+            </div>
+            <svg class="icon"><use href="#i-right" /></svg>
+            <div>
+              <span>После оценки</span>
+              <p>Какие процессы менять, каким парком<br />и при каких условиях это имеет смысл.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="report container section" id="report" data-od-id="report" aria-labelledby="report-title">
+        <div class="report-preview" data-od-id="report-preview">
+          <div class="report-format">
+            <span class="file-format">PDF</span><span>Предварительная оценка</span><span class="pill">ДЕМО</span>
+          </div>
+          <div class="report-paper">
+            <div class="report-brand">
+              <img src="assets/visuals/brand-mark.svg" width="23" height="23" alt="" />РобоМера
+            </div>
+            <h3 data-od-id="report-preview-h3-1">Роботизация склада.<br />Основания для решения.</h3>
+            <p class="report-description">Состав отчёта на демонстрационном проекте</p>
+            <div class="report-chapters">
+              <div>
+                <svg class="icon"><use href="#i-check" /></svg><span>Исходные параметры и допущения</span>
+              </div>
+              <div>
+                <svg class="icon"><use href="#i-check" /></svg><span>Подбор и сравнение сценариев</span>
+              </div>
+              <div>
+                <svg class="icon"><use href="#i-check" /></svg><span>Результаты проверки парка</span>
+              </div>
+              <div>
+                <svg class="icon"><use href="#i-check" /></svg><span>Источники и вопросы к пилоту</span>
+              </div>
+            </div>
+            <div class="report-source">
+              <span>Прослеживаемость данных</span><strong>Параметр → источник → расчёт → вывод</strong>
+            </div>
+          </div>
+          <div class="excel-strip">
+            <span class="file-format">XLSX</span>
+            <p>Та же логика в Excel.<br /><strong>С формулами для проверки.</strong></p>
+            <svg class="icon"><use href="#i-file" /></svg>
+          </div>
+        </div>
+        <div class="report-copy">
+          <h2 id="report-title" data-od-id="report-title">Решение, которое<br />можно обсудить.</h2>
+          <p class="lead">
+            PDF для команды. Excel с живыми формулами для проверки расчёта. Исходные данные, источники и ограничения
+            остаются рядом с выводами.
+          </p>
+          <dl class="report-audiences">
+            <div>
+              <dt>Операционному директору</dt>
+              <dd>Что изменится в процессе</dd>
+            </div>
+            <div>
+              <dt>Финансовому директору</dt>
+              <dd>Из чего складывается экономика</dd>
+            </div>
+            <div>
+              <dt>Инженеру</dt>
+              <dd>Что проверить на объекте</dd>
+            </div>
+          </dl>
+          <a class="btn btn-ghost" href="/demo/warehouse_demo_01?step=report" data-od-id="report-demo"
+            >Посмотреть отчёт <svg class="icon"><use href="#i-up-right" /></svg
+          ></a>
+        </div>
+      </section>
+
+      <section class="faq container section" id="questions" data-od-id="faq" aria-labelledby="faq-title">
+        <div>
+          <h2 id="faq-title" data-od-id="faq-title">До первого<br />расчёта.</h2>
+          <p>Что важно знать<br />о возможностях платформы.</p>
+        </div>
+        <div class="faq-items">
+          <details data-od-id="faq-start">
+            <summary data-od-id="faq-start-summary-1">
+              Можно попробовать без регистрации?<svg class="icon"><use href="#i-plus" /></svg>
+            </summary>
+            <p>
+              Да. Готовые примеры доступны в гостевом демо. Можно начать собственный расчёт. Для длительного хранения
+              личных проектов и совместной работы потребуется аккаунт.
+            </p>
+          </details>
+          <details data-od-id="faq-inputs">
+            <summary data-od-id="faq-inputs-summary-1">
+              Какие данные нужны для оценки?<svg class="icon"><use href="#i-plus" /></svg>
+            </summary>
+            <p>
+              Параметры объекта, процессы, объём работ, сменность и текущие ресурсы. Начните с известных значений.
+              Нормативы, допущения и сведения, которые нужно уточнить, будут видны в расчёте.
+            </p>
+          </details>
+          <details data-od-id="faq-model">
+            <summary data-od-id="faq-model-summary-1">
+              Это цифровой двойник моего объекта?<svg class="icon"><use href="#i-plus" /></svg>
+            </summary>
+            <p>
+              Это модель для предварительной оценки, а не валидированный цифровой двойник или CAD-редактор.
+              Дискретно-событийная имитация проверяет поддерживаемые процессы и общие ресурсы. Остальные процессы
+              оцениваются аналитически.
+            </p>
+          </details>
+          <details data-od-id="faq-result">
+            <summary data-od-id="faq-result-summary-1">
+              Можно сразу закупать по результатам?<svg class="icon"><use href="#i-plus" /></svg>
+            </summary>
+            <p>
+              Результат помогает выбрать сценарий и подготовить вопросы поставщику. Перед внедрением нужны обследование
+              объекта, уточнение характеристик и пилот. Расчёт зависит от исходных данных и не гарантирует финансовый
+              результат.
+            </p>
+          </details>
+          <details data-od-id="faq-independent">
+            <summary data-od-id="faq-independent-summary-1">
+              РобоМера продаёт роботов?<svg class="icon"><use href="#i-plus" /></svg>
+            </summary>
+            <p>
+              Нет. РобоМера помогает независимо оценить роботизацию и сопоставить решения из каталога. Характеристики,
+              источники и основания подбора доступны для проверки.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <section class="closing container" data-od-id="closing" aria-labelledby="closing-title">
+        <div>
+          <p class="eyebrow">Сначала основания. Затем инвестиции.</p>
+          <h2 id="closing-title" data-od-id="closing-title">Начните со своего объекта.</h2>
+          <p>Проверьте идею роботизации на ваших процессах и ограничениях.</p>
+        </div>
+        <a class="btn btn-primary" href="/demo?new=1" data-od-id="closing-own-object"
+          >Оценить свой объект <svg class="icon"><use href="#i-up-right" /></svg
+        ></a>
+      </section>
+    </main>
+    <footer class="footer container" data-od-id="footer">
+      <a class="brand" href="#top" data-od-id="footer-a-1"
+        ><img src="assets/visuals/brand-mark.svg" width="24" height="24" alt="" />РобоМера.</a
+      >
+      <p>Независимая платформа предварительной оценки</p>
+      <a href="/" class="text-link" data-od-id="footer-a-2"
+        >О платформе <svg class="icon"><use href="#i-up-right" /></svg></a
+      ><a href="/design-lab" data-od-id="gallery-return">Все варианты лендинга</a>
+    </footer>
+    <dialog id="parameters-dialog" aria-labelledby="parameters-title" data-od-id="parameters-dialog">
+      <div class="dialog-header">
+        <h2 id="parameters-title" data-od-id="parameters-dialog-h2-1">Исходные данные демо</h2>
+        <button
+          class="btn btn-ghost"
+          id="close-dialog"
+          aria-label="Закрыть исходные данные"
+          data-od-id="parameters-dialog-button-1"
+        >
+          <svg class="icon"><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <p>Склад: перевозка паллет</p>
+      <dl class="parameter-list">
+        <div>
+          <dt>Общая площадь</dt>
+          <dd>20 000 м²</dd>
+        </div>
+        <div>
+          <dt>Зона роботизации</dt>
+          <dd>10 000 м²</dd>
+        </div>
+        <div>
+          <dt>Граница процесса</dt>
+          <dd>Горизонтальное перемещение</dd>
+        </div>
+        <div>
+          <dt>Работа с ярусами</dt>
+          <dd>Остаётся у людей</dd>
+        </div>
+      </dl>
+      <p class="dialog-note">
+        Источник: публичный демо-проект РобоМеры. Данные организатора, лист «Склад». Параметры примера не описывают ваш
+        объект.
+      </p>
+      <a class="text-link" href="/demo/warehouse_demo_01" data-od-id="parameters-dialog-a-1"
+        >Открыть исходный проект <svg class="icon"><use href="#i-up-right" /></svg
+      ></a>
+    </dialog>
+    <!-- Tabler Icons 3.35.0, MIT. Inlined to avoid runtime requests. -->
+    <svg class="svg-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs id="icon-definitions">
+        <symbol id="i-up-right" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 7l-10 10" />
+            <path d="M8 7l9 0l0 9" />
+          </g>
+        </symbol>
+        <symbol id="i-right" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l14 0" />
+            <path d="M13 18l6 -6" />
+            <path d="M13 6l6 6" />
+          </g>
+        </symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6l16 0" />
+            <path d="M4 12l16 0" />
+            <path d="M4 18l16 0" />
+          </g>
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6l-12 12" />
+            <path d="M6 6l12 12" />
+          </g>
+        </symbol>
+        <symbol id="i-box" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" />
+            <path d="M12 12l8 -4.5" />
+            <path d="M12 12l0 9" />
+            <path d="M12 12l-8 -4.5" />
+          </g>
+        </symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+            <path d="M4 6l8 0" />
+            <path d="M16 6l4 0" />
+            <path d="M8 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+            <path d="M4 12l2 0" />
+            <path d="M10 12l10 0" />
+            <path d="M17 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+            <path d="M4 18l11 0" />
+            <path d="M19 18l1 0" />
+          </g>
+        </symbol>
+        <symbol id="i-route" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+            <path d="M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4z" />
+            <path d="M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5" />
+          </g>
+        </symbol>
+        <symbol id="i-layers" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 4m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" />
+            <path d="M4 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" />
+          </g>
+        </symbol>
+        <symbol id="i-battery" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M6 7h11a2 2 0 0 1 2 2v.5a.5 .5 0 0 0 .5 .5a.5 .5 0 0 1 .5 .5v3a.5 .5 0 0 1 -.5 .5a.5 .5 0 0 0 -.5 .5v.5a2 2 0 0 1 -2 2h-11a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2"
+            />
+            <path d="M7 10l0 4" />
+            <path d="M10 10l0 4" />
+            <path d="M13 10l0 4" />
+          </g>
+        </symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" />
+            <path d="M14 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" />
+          </g>
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 4v16l13 -8z" />
+          </g>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l5 5l10 -10" />
+          </g>
+        </symbol>
+        <symbol id="i-info" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+            <path d="M12 9h.01" />
+            <path d="M11 12h1v4h1" />
+          </g>
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5l0 14" />
+            <path d="M5 12l14 0" />
+          </g>
+        </symbol>
+        <symbol id="i-fingerprint" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3" />
+            <path d="M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 2 6" />
+            <path d="M12 11v2a14 14 0 0 0 2.5 8" />
+            <path d="M8 15a18 18 0 0 0 1.8 6" />
+            <path d="M4.9 19a22 22 0 0 1 -.9 -7v-1a8 8 0 0 1 12 -6.95" />
+          </g>
+        </symbol>
+        <symbol id="i-file" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+            <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+            <path d="M8 11h8v7h-8z" />
+            <path d="M8 15h8" />
+            <path d="M11 11v7" />
+          </g>
+        </symbol>
+      </defs>
+    </svg>
+  </body>
+</html>

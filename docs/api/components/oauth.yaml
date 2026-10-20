@@ -1,0 +1,23 @@
+OAuthProviderInfo:
+  type: object
+  required: [id, name, enabled]
+  properties:
+    id: {type: string, enum: [yandex, google, vk]}
+    name: {type: string}
+    enabled: {type: boolean}
+OAuthProviderList:
+  type: object
+  required: [items]
+  properties:
+    items: {type: array, items: {$ref: '#/OAuthProviderInfo'}}
+OAuthStartRequest:
+  type: object
+  properties:
+    return_to: {type: string, default: /projects, maxLength: 2048}
+    intent: {type: string, enum: [login, link], default: login}
+    keep_guest_csrf: {type: [string, 'null'], maxLength: 128}
+OAuthAuthorization:
+  type: object
+  required: [authorization_url]
+  properties:
+    authorization_url: {type: string, format: uri}

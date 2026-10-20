@@ -19,15 +19,17 @@ export const useDemoList = () =>
     staleTime: 60_000,
   })
 
-export const useDemo = (key: string) =>
+export const useDemo = (key: string, options: { timeoutMs?: number; enabled?: boolean } = {}) =>
   useQuery({
     queryKey: ['public-demo', key],
-    queryFn: ({ signal }) => apiPublic.get<DemoSnapshot | Preparation>(path(key), { signal }).then((r) => r.data),
+    queryFn: ({ signal }) =>
+      apiPublic.get<DemoSnapshot | Preparation>(path(key), { signal, timeout: options.timeoutMs }).then((r) => r.data),
     refetchInterval: (query) => {
       const data = query.state.data
       return data && 'status' in data ? data.retry_after_s * 1000 : false
     },
     staleTime: 60_000,
+    enabled: options.enabled,
   })
 
 export const useDemoWhatIf = (demo: DemoSnapshot, changes: DemoChanges, enabled: boolean) =>

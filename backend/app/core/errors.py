@@ -88,6 +88,10 @@ class UnauthorizedError(DomainError):
     default_detail = "Требуется вход"
 
 
+class SessionCompromisedError(UnauthorizedError):
+    pass
+
+
 class TokenExpiredError(UnauthorizedError):
     error_code = ErrorCode.TOKEN_EXPIRED
     default_detail = "Сессия истекла, войдите снова"
@@ -151,3 +155,9 @@ class LlmUnavailableError(DomainError):
     status_code = 503
     error_code = ErrorCode.LLM_UNAVAILABLE
     default_detail = "Ассистент недоступен: загрузите файл по шаблону или заполните форму"
+
+
+class ServiceUnavailableError(DomainError):
+    status_code = 503
+    error_code = ErrorCode.HTTP_ERROR
+    default_detail = "Сервис временно недоступен"

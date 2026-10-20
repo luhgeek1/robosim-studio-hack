@@ -40,3 +40,4 @@ feedback.md
 # Browser test artifacts
 frontend/test-results/
 frontend/playwright-report/
+ui_services.md

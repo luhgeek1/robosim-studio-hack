@@ -17,6 +17,7 @@ from app.db.session import Database
 from app.infra.redis import create_redis
 from app.seeds.runner import run_seeds
 from app.service.auth.guests import guest_cleanup_loop
+from app.service.mail.delivery import email_delivery_loop
 
 API_DESCRIPTION = (
     "Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1). "
@@ -39,10 +40,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if settings.demo_warm_on_startup
             else None
         )
+        mail = (
+            asyncio.create_task(email_delivery_loop(app.state.db, settings))
+            if settings.jobs_backend == "inline" and settings.email_enabled
+            else None
+        )
         cleanup = asyncio.create_task(guest_cleanup_loop(app.state.db))
         try:
             yield
         finally:
+            if mail is not None:
+                mail.cancel()
+                with suppress(asyncio.CancelledError):
+                    await mail
             cleanup.cancel()
             with suppress(asyncio.CancelledError):
                 await cleanup

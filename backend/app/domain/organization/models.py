@@ -43,6 +43,8 @@ class InvitationInfo:
     created_at: datetime
     invited_by_name: str | None
     invitee_registered: bool
+    email_delivery: str = "disabled"
+    expires_at: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,3 +62,13 @@ class IncomingInvitation:
     invited_by_name: str | None
     invited_by_email: str | None
     created_at: datetime
+    requires_email_link: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class InvitationPreview:
+    id: UUID
+    email: str
+    organization_name: str
+    invited_by_name: str | None
+    expires_at: datetime

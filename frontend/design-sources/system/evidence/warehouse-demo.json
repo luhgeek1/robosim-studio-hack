@@ -1,0 +1,66 @@
+{
+  "source": "https://prooood.ru/api/v1/demo/projects/warehouse_demo_01",
+  "retrieved": "2026-10-20",
+  "revision": "aa305674d65fa2c77eda",
+  "name": "Склад: перевозка паллет",
+  "scope": "Горизонтальное перемещение паллет. Работа с ярусами и остальные функции погрузчика остаются у людей.",
+  "params": [
+    {
+      "key": "area_m2",
+      "name": "Общая площадь склада",
+      "value": 20000,
+      "unit": "м²",
+      "source": {
+        "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+        "kind": "organizer_dataset",
+        "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+        "url": null,
+        "retrieved_at": "2026-09-15",
+        "note": null
+      }
+    },
+    {
+      "key": "robotized_area_m2",
+      "name": "Площадь зоны, где будут работать роботы",
+      "value": 10000,
+      "unit": "м²",
+      "source": {
+        "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+        "kind": "organizer_dataset",
+        "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+        "url": null,
+        "retrieved_at": "2026-09-15",
+        "note": null
+      }
+    }
+  ],
+  "fleet": {
+    "by_formula": {
+      "working": 14,
+      "reserve": 3,
+      "total": 17
+    },
+    "by_simulation": {
+      "working": 11,
+      "reserve": 2,
+      "total": 13
+    },
+    "joint_validation": {
+      "status": "passed",
+      "replications": 5,
+      "fleet": {
+        "pallet_transport": 11
+      },
+      "processes": [
+        {
+          "process_key": "pallet_transport",
+          "target_pct": 95.0,
+          "sla_min_pct": 100.0,
+          "passed": true
+        }
+      ],
+      "skipped_processes": []
+    },
+    "computed_at": "2026-10-19T20:28:53.285385Z"
+  }
+}

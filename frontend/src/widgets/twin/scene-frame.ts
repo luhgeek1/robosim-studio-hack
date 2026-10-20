@@ -12,20 +12,41 @@ export function sceneFrame(layout: LayoutGeometry): SceneFrame {
   }
 }
 
-export type SceneLabel = { id: string; name: string; x: number; z: number }
+export type SceneLabel = {
+  id: string
+  name: string
+  x: number
+  z: number
+  edge?: { x: number; z: number; dx: number; dz: number }
+}
 
-// Zone names sit at the centre of each zone's bounding box; corridors stay unlabelled.
 export function zoneLabels(layout: LayoutGeometry, frame: SceneFrame): SceneLabel[] {
   return layout.zones
     .filter((zone) => zone.kind !== 'corridor')
     .map((zone) => {
       const xs = zone.polygon.map((p) => p[0])
       const ys = zone.polygon.map((p) => p[1])
+      const minX = Math.min(...xs)
+      const maxX = Math.max(...xs)
+      const minY = Math.min(...ys)
+      const maxY = Math.max(...ys)
+      const x = (minX + maxX) / 2
+      const y = (minY + maxY) / 2
+      // A permanent building edge keeps annotations out of the floor without swapping screen-space slots.
+      const edges = [
+        { gap: minX, length: maxY - minY, x: 0, y, dx: -1, dz: 0 },
+        { gap: layout.width_m - maxX, length: maxY - minY, x: layout.width_m, y, dx: 1, dz: 0 },
+        { gap: minY, length: maxX - minX, x, y: 0, dx: 0, dz: -1 },
+        { gap: layout.height_m - maxY, length: maxX - minX, x, y: layout.height_m, dx: 0, dz: 1 },
+      ].sort((a, b) => a.gap - b.gap || b.length - a.length)
+      const edge = edges[0]
       return {
         id: zone.id,
         name: zone.name,
-        x: frame.x((Math.min(...xs) + Math.max(...xs)) / 2),
-        z: frame.z((Math.min(...ys) + Math.max(...ys)) / 2),
+        x: frame.x(x),
+        z: frame.z(y),
+        edge:
+          zone.kind === 'storage' ? undefined : { x: frame.x(edge.x), z: frame.z(edge.y), dx: edge.dx, dz: edge.dz },
       }
     })
 }

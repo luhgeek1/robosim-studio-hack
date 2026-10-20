@@ -1,8 +1,10 @@
 from app.db.models.auth import ApiKey, User
 from app.db.models.catalog import Manufacturer, Product, ProductCase, ProductOffer, ProductSpec
+from app.db.models.email import EmailOutbox
 from app.db.models.jobs import Job
 from app.db.models.layouts import Layout, StoredFile
 from app.db.models.matching import ManualCandidate, MatchingSettings
+from app.db.models.oauth import AuthEmailToken, AuthSession, OAuthIdentity, UserCredential
 from app.db.models.organizations import Organization, OrganizationInvitation, OrganizationMember
 from app.db.models.projects import AuditEvent, ParamHistory, ParamImport, Project, ProjectParam
 from app.db.models.reference import (
@@ -25,8 +27,11 @@ from app.db.models.vendor import Rfq, VendorProposal
 __all__ = [
     "ApiKey",
     "AuditEvent",
+    "AuthEmailToken",
+    "AuthSession",
     "CalculationRun",
     "DataVersion",
+    "EmailOutbox",
     "Industry",
     "Job",
     "Layout",
@@ -35,6 +40,7 @@ __all__ = [
     "MatchingSettings",
     "Norm",
     "NormSet",
+    "OAuthIdentity",
     "ObjectType",
     "Organization",
     "OrganizationInvitation",
@@ -59,5 +65,6 @@ __all__ = [
     "SpecKey",
     "StoredFile",
     "User",
+    "UserCredential",
     "VendorProposal",
 ]

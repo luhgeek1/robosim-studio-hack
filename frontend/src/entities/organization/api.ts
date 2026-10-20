@@ -27,9 +27,12 @@ export const organizationApi = {
   removeMember: (id: string, userId: string) =>
     api.delete(`/organizations/${id}/members/${userId}`).then(() => undefined),
   incoming: () => api.get<Res<'/api/v1/me/invitations', 'get'>>('/me/invitations').then((r) => r.data.items),
-  accept: (invitationId: string) =>
+  accept: (invitationId: string, token?: string) =>
     api
-      .post<Res<'/api/v1/me/invitations/{invitation_id}/accept', 'post'>>(`/me/invitations/${invitationId}/accept`)
+      .post<Res<'/api/v1/me/invitations/{invitation_id}/accept', 'post'>>(
+        `/me/invitations/${invitationId}/accept`,
+        token ? { token } : undefined,
+      )
       .then((r) => r.data),
   decline: (invitationId: string) => api.post(`/me/invitations/${invitationId}/decline`).then(() => undefined),
 }
@@ -76,7 +79,7 @@ export function useWorkspace() {
 function useOrgMutation<T, R>(fn: (vars: T) => Promise<R>, extra: (vars: T) => readonly unknown[][] = () => []) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: fn,
+    mutationFn: (vars: T) => fn(vars),
     onSuccess: (_, vars) =>
       Promise.all(
         [qk.organizations.list, ...extra(vars)].map((queryKey) => queryClient.invalidateQueries({ queryKey })),

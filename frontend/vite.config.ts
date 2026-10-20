@@ -2,11 +2,12 @@ import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
+import { immersiveFallback } from './vite.immersive'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), immersiveFallback()],
     resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
     server: {
       port: 5173,

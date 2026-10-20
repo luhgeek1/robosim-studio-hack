@@ -13,7 +13,7 @@ class User(UuidPkMixin, TimestampMixin, Base):
     __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(CITEXT, unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    email_verified_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     name: Mapped[str] = mapped_column(sa.String(120), nullable=False)
     role: Mapped[Role] = mapped_column(pg_enum(Role, "user_role"), nullable=False, default=Role.USER)
     organization: Mapped[str | None] = mapped_column(sa.String(255))

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": null,
+  "installCommand": null,
+  "outputDirectory": ".",
+  "rewrites": [
+    {
+      "source": "/design-lab/immersive",
+      "destination": "/design-lab/immersive/index.html"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://prooood.ru/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

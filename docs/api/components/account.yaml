@@ -1,0 +1,53 @@
+EmailRequest:
+  type: object
+  required: [email]
+  properties:
+    email: {type: string, format: email}
+EmailTokenRequest:
+  type: object
+  required: [token]
+  properties:
+    token: {type: string, minLength: 20, maxLength: 256}
+PasswordReset:
+  allOf:
+    - {$ref: '#/EmailTokenRequest'}
+    - type: object
+      required: [password]
+      properties:
+        password: {type: string, minLength: 8, maxLength: 128}
+PasswordChange:
+  type: object
+  required: [password]
+  properties:
+    password: {type: string, minLength: 8, maxLength: 128}
+    current_password: {type: [string, 'null'], maxLength: 128}
+EmailAccepted:
+  type: object
+  required: [message]
+  properties:
+    message: {type: string}
+ConnectedIdentity:
+  type: object
+  required: [provider, connected_at]
+  properties:
+    provider: {type: string, enum: [yandex, google, vk]}
+    connected_at: {type: string, format: date-time}
+AccountSession:
+  type: object
+  required: [id, method, client, created_at, last_seen_at, expires_at, current]
+  properties:
+    id: {type: string, format: uuid}
+    method: {type: string, enum: [password, guest, yandex, google, vk]}
+    client: {type: string, enum: [web, mobile]}
+    created_at: {type: string, format: date-time}
+    last_seen_at: {type: string, format: date-time}
+    expires_at: {type: string, format: date-time}
+    current: {type: boolean}
+AccountSecurity:
+  type: object
+  required: [has_password, email_verified, identities, sessions]
+  properties:
+    has_password: {type: boolean}
+    email_verified: {type: boolean}
+    identities: {type: array, items: {$ref: '#/ConnectedIdentity'}}
+    sessions: {type: array, items: {$ref: '#/AccountSession'}}

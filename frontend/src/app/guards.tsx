@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useWorkspaceStore } from '@/entities/organization'
-import { useSession } from '@/entities/session'
+import { sessionHome, useSession } from '@/entities/session'
 import { Button } from '@/shared/ui/button'
 import { EmptyState, LoadingBlock } from '@/shared/ui/states'
 
@@ -44,14 +44,17 @@ export function RequireVendor() {
   return <Outlet />
 }
 
-// Каждая роль открывает своё рабочее место: админ — панель, производитель — кабинет, остальные — проекты.
-const HOME: Partial<Record<string, string>> = { admin: '/admin', vendor: '/vendor' }
+export function PublicHome() {
+  const { status, user } = useSession()
+  if (status === 'restoring') return <LoadingBlock className="m-6" label="Восстанавливаем вход…" />
+  if (user) return <Navigate to={sessionHome(user).path} replace />
+  return <Outlet />
+}
 
 export function RootRedirect() {
   const { status, user } = useSession()
   if (status === 'restoring') return <LoadingBlock className="p-8" />
-  const home = (user?.role && HOME[user.role]) ?? '/projects'
-  return <Navigate to={status === 'authenticated' ? home : '/catalog'} replace />
+  return <Navigate to={user ? sessionHome(user).path : '/catalog'} replace />
 }
 
 export function NotFoundPage() {

@@ -15,6 +15,7 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import Role
 from app.domain.common.provenance import SourceKind
 from app.domain.jobs import JobStatus
+from app.service.auth.cleanup import purge_auth_history
 
 MAX_GUEST_SCENARIOS = 30
 GUEST_TTL_S = 24 * 60 * 60
@@ -32,8 +33,6 @@ def ensure_guest_active(user: User) -> None:
 async def create_guest(uow: UnitOfWork) -> User:
     user = User(
         email=f"guest-{uuid4().hex}@guest.robomera.demo",
-        # Not a password hash: this identity cannot be entered through password login.
-        password_hash="!guest",  # noqa: S106 — deliberately invalid hash; password login is impossible
         name="Гость",
         role=Role.GUEST,
         guest_expires_at=datetime.now(UTC) + timedelta(seconds=GUEST_TTL_S),
@@ -101,6 +100,7 @@ async def guest_cleanup_loop(db: Database) -> None:
     while True:
         try:
             await purge_expired_guests(db)
+            await purge_auth_history(db)
         except Exception:
             logger.exception("guest_cleanup_failed")
         await asyncio.sleep(CLEANUP_INTERVAL_S)

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>РобоМера — роботизация начинается с расчёта</title>
+  <style>
+    @font-face{font-family:Onest;src:url('./onest-cyrillic.woff2') format('woff2');font-weight:100 900;font-display:swap;unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+    @font-face{font-family:Onest;src:url('./onest-latin.woff2') format('woff2');font-weight:100 900;font-display:swap}
+    *{box-sizing:border-box}body{margin:0;background:#171d1e;color:#f5f4ef;font:16px/1.7 Onest,sans-serif}a{color:inherit;text-underline-offset:5px}a:focus-visible{outline:2px solid #ff6b42;outline-offset:6px}::selection{background:#ff6b42;color:#171d1e}header{display:flex;justify-content:space-between;align-items:center;padding:25px 5%}header strong{font-size:24px;letter-spacing:-.04em}header span{font-size:11px;color:#bec7bf}.hero{min-height:720px;padding:70px 5%;background:linear-gradient(90deg,#171d1ef2,#171d1e70 65%,#171d1e10),url('./warehouse.jpg') center/cover}h1,h2,h3{font-weight:500;letter-spacing:-.04em;line-height:1.1;margin:0}h1{font-size:clamp(45px,6vw,90px)}h1 span{color:#ff6b42}.hero p{max-width:410px;margin:28px 0}.actions{display:flex;flex-wrap:wrap;align-items:center;gap:25px;margin-top:30px}.button{display:inline-block;background:#ff6b42;color:#171d1e;padding:14px 24px;text-decoration:none;font-size:14px}section{padding:80px 6%}h2{font-size:clamp(32px,4vw,55px)}h3{font-size:26px}p{max-width:650px;color:#bdc9bb}.split{display:grid;grid-template-columns:1fr 1.3fr;align-items:center;gap:8%}img{display:block;width:100%}.paper{background:#f5f4ef;color:#171d1e}.paper p{color:#546250}.objects{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:45px}.objects article{border-top:1px solid #a5b09f;padding-top:25px}.objects p{font-size:14px}.result{margin-top:40px;border-top:1px solid #73816e;padding-top:25px;font-size:60px;letter-spacing:-.04em;color:#ff6b42}.result small{font-size:17px;color:#c6d1bd;letter-spacing:0}table{width:100%;border-collapse:collapse;margin-top:40px;font-size:14px;text-align:left}th,td{padding:15px 12px;border-bottom:1px solid #bec6b8}th:first-child,td:first-child{padding-left:0}.note{font-size:12px}ol{padding-left:22px;line-height:2}footer{padding:30px 6%;border-top:1px solid #73816e;font-size:12px}details{padding:22px 0;border-bottom:1px solid #bac4b4}summary{cursor:pointer}details p{font-size:14px}
+    @media(max-width:760px){header{padding:22px 6%}header strong{font-size:22px}.hero{min-height:800px;padding:55px 6%;background:linear-gradient(#171d1e 34%,#171d1e60 70%,#171d1e10),url('./warehouse.jpg') 70% bottom/auto 58% no-repeat}.hero p{font-size:14px}.split,.objects{grid-template-columns:1fr;gap:28px}section{padding:60px 6%}.hero h1{font-size:46px}.actions{gap:20px}table{font-size:11px}th,td{padding:12px 6px}.result{font-size:52px}}
+  </style>
+</head>
+<body>
+  <header><strong>РобоМера.</strong><span>Статичная версия</span></header>
+  <main>
+    <section class="hero">
+      <h1>Роботизация<br>начинается<br>с <span>расчёта.</span></h1>
+      <p>Подберите роботов, проверьте поддерживаемые процессы в симуляции и сравните сценарии внедрения.</p>
+      <div class="actions"><a class="button" target="_top" href="https://prooood.ru/demo">Открыть демо ↗</a><a target="_top" href="https://prooood.ru/demo?new=1">Рассчитать свой объект ↗</a></div>
+      <p class="note">Предварительная оценка. Демо без регистрации.</p>
+    </section>
+    <section class="split">
+      <div><h2>Увидеть<br>все связи.</h2><p>У робота есть маршрут. У маршрута — ограничения. Ширина прохода, очередь на загрузку, время зарядки. Из этих условий складывается работа всего парка.</p></div>
+      <img src="./model.jpg" alt="Склад сверху: те же стеллажи, робот и маршрут. Архитектурная иллюстрация.">
+    </section>
+    <section class="paper">
+      <h2>Теперь это — основа решения.</h2><p>Модель уточняет парк. Парк меняет экономику.</p>
+      <h3>Демонстрационный склад · перевозка паллет</h3>
+      <div class="result">17 → 13 <small>роботов, включая резерв</small></div>
+      <p>После имитации: 11 в работе и 2 в резерве. Рабочий парк прошёл пять повторов проверки. Результат относится к условиям демонстрационного склада площадью 20 000 м². На другом объекте имитация может увеличить парк.</p>
+      <p class="note">Снимок публичного демо от 19.10.2026. Данные организатора и допущения модели. <a href="./evidence.json">Исходные данные</a>.</p>
+      <a target="_top" href="https://prooood.ru/demo/warehouse_demo_01?step=simulation">Открыть имитацию ↗</a>
+    </section>
+    <section>
+      <h2>Начните с задачи.<br>Роботы подберутся под неё.</h2>
+      <div class="objects">
+        <article><h3>Склад</h3><p>Приёмка, хранение, отбор и отгрузка. Груз, проходы и смены влияют на подбор. Имитация проверяет транспорт, G2P и тягачи.</p><a target="_top" href="https://prooood.ru/demo/warehouse_demo_01">Открыть пример ↗</a></article>
+        <article><h3>Больница</h3><p>Питание, бельё, лекарства и пробы. Проверьте служебные маршруты и очередь роботов к общему лифту.</p><a target="_top" href="https://prooood.ru/demo/hospital_demo_01">Открыть пример ↗</a></article>
+        <article><h3>Аэропорт</h3><p>Багаж и служебные перевозки. Подберите тягачи и проверьте сцепки и маршруты. Потоки не привязаны к расписанию воздушных судов.</p><a target="_top" href="https://prooood.ru/demo/airport_demo_01">Открыть пример ↗</a></article>
+      </div>
+      <ol><li>Опишите объект: параметры, источники и допущения.</li><li>Поймите выбор: подходящие роботы и причины исключения.</li><li>Испытайте поддерживаемый процесс под нагрузкой.</li></ol>
+    </section>
+    <section class="paper">
+      <h2>Один объект.<br>Разные способы внедрения.</h2>
+      <table><thead><tr><th>Сценарий</th><th>Вложения</th><th>Простой срок</th><th>NPV за 5 лет</th></tr></thead><tbody><tr><td>Покупка</td><td>40,3 млн ₽</td><td>2,2 года</td><td>+25,3 млн ₽</td></tr><tr><td>RaaS</td><td>10,2 млн ₽</td><td>1,5 года</td><td>+15,6 млн ₽</td></tr><tr><td>Лизинг</td><td>40,3 млн ₽</td><td>2,5 года</td><td>+25,3 млн ₽</td></tr></tbody></table>
+      <p class="note">Это пример, не прогноз для вашего объекта. Снимок от 19.10.2026: горизонт 5 лет, превращение высвобождённого труда в денежную экономию — 100%, оптимистичное допущение. NPV учитывает стоимость денег во времени, простой срок — нет.</p>
+      <a target="_top" href="https://prooood.ru/demo/warehouse_demo_01?step=decision">Сравнить в продукте ↗</a>
+    </section>
+    <section><h2>Решение, которое<br>можно объяснить.</h2><p>Исходные условия, выбранный парк, проверка процессов, сценарии, источники и ограничения остаются в отчёте. PDF для обсуждения. Excel с формулами.</p><a class="button" target="_top" href="https://prooood.ru/demo/warehouse_demo_01?step=report">Посмотреть отчёт ↗</a></section>
+    <section class="paper"><h2>Перед первым расчётом.</h2><details><summary>Все процессы проверяются имитацией?</summary><p>Нет. Поддерживаются складской транспорт, G2P, тягачи, служебные доставки в больнице и перевозки в аэропорту. Для остальных процессов остаётся аналитическая оценка с явной пометкой.</p></details><details><summary>Это готовый проект внедрения?</summary><p>Это предварительная оценка. Для внедрения нужны проверка данных, обследование, условия поставщика и пилот на объекте.</p></details></section>
+    <section><h2>Ваш объект.<br>Ваш следующий шаг.</h2><div class="actions"><a class="button" target="_top" href="https://prooood.ru/demo">Открыть демо ↗</a><a target="_top" href="https://prooood.ru/demo?new=1">Рассчитать свой объект ↗</a></div></section>
+  </main>
+  <footer>РобоМера · Предварительная оценка роботизации</footer>
+</body>
+</html>

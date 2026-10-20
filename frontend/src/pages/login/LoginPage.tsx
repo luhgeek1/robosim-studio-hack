@@ -2,7 +2,9 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { LayoutGroup, motion, type Transition } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
-import { useSession } from '@/entities/session'
+import { ProviderButtons } from '@/features/auth/ProviderButtons'
+import { authErrorText, safeReturnPath } from '@/features/auth/links'
+import { sessionHome, useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
 import { problemText } from '@/shared/api/problem'
 import type { User } from '@/shared/api/types'
@@ -21,12 +23,10 @@ const DEMO_ACCOUNTS = [
   { email: 'vendor@robomera.demo', label: 'Производитель', hint: 'свои карточки и спрос' },
 ]
 
-const HOME: Partial<Record<User['role'], string>> = { admin: '/admin', vendor: '/vendor' }
-
 type Mode = 'login' | 'register'
 const SWAP: Transition = { type: 'spring', stiffness: 170, damping: 26, mass: 1 }
 // Auth fields are the only thing on this half, so they are larger and more contrasted than the in-app inputs.
-const FIELD = 'h-12 rounded-[10px] bg-card px-4 text-[15px]! shadow-[0_1px_2px_rgba(20,20,19,0.04)]'
+const FIELD = 'h-12 rounded-[10px] bg-card px-4 text-base! shadow-[0_1px_2px_rgba(20,20,19,0.04)]'
 const FADE = {
   initial: { opacity: 0, y: 6 },
   animate: { opacity: 1, y: 0 },
@@ -37,14 +37,22 @@ export function LoginPage() {
   const { status, user, login, register } = useSession()
   const navigate = useNavigate()
   const location = useLocation()
+  const params = new URLSearchParams(location.search)
+  const requestedReturn = safeReturnPath(params.get('return_to'))
+  const authErrorKey = params.get('auth_error')
+  const authError = authErrorText(authErrorKey)
+  const reauth = params.get('reauth') === '1'
   const back = location.state as { from?: string; userId?: string | null; keepGuest?: boolean } | null
   // Возвращаем на прежнюю страницу только её владельца: другой учётке прошлый проект чужой.
   // Возврат туда, откуда отправили на вход; иначе админ — в админ-панель, производитель — в кабинет, остальные — в проекты.
+  const previousReturn = safeReturnPath(back?.from)
   const target = (me: User) =>
-    back?.from && (back.keepGuest || !back.userId || back.userId === me.id) ? back.from : (HOME[me.role] ?? '/projects')
+    previousReturn && (back?.keepGuest || !back?.userId || back?.userId === me.id)
+      ? previousReturn
+      : (requestedReturn ?? sessionHome(me).path)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(reauth ? (user?.email ?? '') : '')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [organization, setOrganization] = useState('')
@@ -52,7 +60,13 @@ export function LoginPage() {
     new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login',
   )
 
-  if (status === 'authenticated' && user && user.role !== 'guest') return <Navigate to={target(user)} replace />
+  if (status === 'authenticated' && user && user.role !== 'guest' && !reauth)
+    return (
+      <Navigate
+        to={authError ? `/account?auth_error=${encodeURIComponent(authErrorKey || 'login_failed')}` : target(user)}
+        replace
+      />
+    )
 
   const run = async (action: () => Promise<User>) => {
     setPending(true)
@@ -122,12 +136,25 @@ export function LoginPage() {
                 Продолжить без регистрации
               </Link>
             )}
+            <ProviderButtons
+              returnTo={safeReturnPath(back?.from) ?? requestedReturn ?? '/app'}
+              keepGuest={user?.role === 'guest'}
+              disabled={pending}
+            />
+            {authError && (
+              <p role="alert" className="mb-4 text-sm text-crit">
+                {authError}
+              </p>
+            )}
             <Tabs value={mode} onValueChange={(v) => switchMode(v as Mode)}>
               <TabsList className="mb-5 h-11! w-full">
                 <TabsTrigger value="login">Вход</TabsTrigger>
                 <TabsTrigger value="register">Регистрация</TabsTrigger>
               </TabsList>
               <TabsContent value="login">
+                <Link to="/forgot-password" className="mb-4 inline-block text-sm underline underline-offset-4">
+                  Не помню пароль
+                </Link>
                 <motion.form {...FADE} onSubmit={onLogin} className="space-y-4">
                   <Field id="email" label="Эл. почта">
                     <Input
@@ -144,6 +171,7 @@ export function LoginPage() {
                   <Field id="password" label="Пароль">
                     <Input
                       className={FIELD}
+                      maxLength={128}
                       id="password"
                       type="password"
                       required
@@ -195,6 +223,7 @@ export function LoginPage() {
                     <Input
                       className={FIELD}
                       id="r-password"
+                      maxLength={128}
                       type="password"
                       required
                       minLength={8}

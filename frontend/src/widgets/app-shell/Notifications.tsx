@@ -182,6 +182,12 @@ function InvitationRow({ invitation, onOpened }: { invitation: IncomingInvitatio
   const navigate = useNavigate()
   const busy = accept.isPending || decline.isPending
   const onAccept = async () => {
+    if (invitation.requires_email_link) {
+      toast('Откройте ссылку из письма', {
+        description: 'Приглашение нужно подтвердить по ссылке, отправленной на вашу почту.',
+      })
+      return
+    }
     const organization = await accept.mutateAsync(invitation.id).catch(() => null)
     if (!organization) return
     toast.success('Приглашение принято', {
@@ -234,7 +240,8 @@ function InvitationRow({ invitation, onOpened }: { invitation: IncomingInvitatio
         </div>
         <div className="mt-3.5 grid grid-cols-2 gap-2">
           <Button className="h-9 gap-1.5 px-2 text-[12.5px] shadow-none" disabled={busy} onClick={onAccept}>
-            {accept.isPending ? <Spinner className="size-3.5" /> : <Check className="size-3.5" />}Принять
+            {accept.isPending ? <Spinner className="size-3.5" /> : <Check className="size-3.5" />}
+            {invitation.requires_email_link ? 'Ссылка в письме' : 'Принять'}
           </Button>
           <Button
             variant="ghost"

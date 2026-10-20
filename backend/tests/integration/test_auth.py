@@ -104,3 +104,52 @@ async def test_login_rate_limit(settings: Settings) -> None:
             payload = {"email": "user@robomera.demo", "password": "wrong-password"}
             codes = [(await http.post("/api/v1/auth/login", json=payload)).status_code for _ in range(3)]
     assert codes == [401, 401, 429]
+
+
+async def test_refresh_replay_revokes_rotated_tokens_but_not_other_sessions(client: AsyncClient) -> None:
+    first = await login(client, "user@robomera.demo")
+    independent = await login(client, "user@robomera.demo")
+    rotated = (await client.post("/api/v1/auth/refresh", json={"refresh_token": first["refresh"]})).json()
+    assert (
+        await client.post("/api/v1/auth/refresh", json={"refresh_token": first["refresh"]})
+    ).status_code == 401
+    assert (await client.get("/api/v1/me", headers=bearer(rotated["access_token"]))).status_code == 401
+    assert (
+        await client.post("/api/v1/auth/refresh", json={"refresh_token": rotated["refresh_token"]})
+    ).status_code == 401
+    assert (await client.get("/api/v1/me", headers=bearer(independent["access"]))).status_code == 200
+
+
+async def test_logout_revokes_access_immediately(client: AsyncClient) -> None:
+    tokens = await login(client, "user@robomera.demo")
+    await client.post("/api/v1/auth/logout", json={"refresh_token": tokens["refresh"]})
+    assert (await client.get("/api/v1/me", headers=bearer(tokens["access"]))).status_code == 401
+
+
+async def test_cookie_logout_requires_csrf(client: AsyncClient) -> None:
+    response = await client.post(
+        "/api/v1/auth/login", json={"email": "user@robomera.demo", "password": "Demo12345!"}
+    )
+    assert (await client.post("/api/v1/auth/logout")).status_code == 403
+    assert (
+        await client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": response.cookies["csrf_token"]})
+    ).status_code == 204
+
+
+async def test_auth_responses_are_not_cached_and_revoked_cookie_logout_clears_cookies(
+    client: AsyncClient,
+) -> None:
+    signed = await client.post(
+        "/api/v1/auth/login", json={"email": "user@robomera.demo", "password": "Demo12345!"}
+    )
+    assert signed.headers["cache-control"] == "no-store"
+    auth = bearer(signed.json()["access_token"])
+    sessions = (await client.get("/api/v1/me/security", headers=auth)).json()["sessions"]
+    current = next(s for s in sessions if s["current"])
+    await client.delete(f"/api/v1/me/sessions/{current['id']}", headers=auth)
+    response = await client.post(
+        "/api/v1/auth/logout", headers={"X-CSRF-Token": client.cookies["csrf_token"]}
+    )
+    assert response.status_code == 401
+    assert "csrf_token" not in client.cookies
+    assert "refresh_token" not in client.cookies

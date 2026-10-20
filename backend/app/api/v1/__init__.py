@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    account,
     admin,
     admin_reference,
     analysis,
@@ -11,6 +12,7 @@ from app.api.v1 import (
     layouts,
     matching,
     me,
+    oauth,
     organizations,
     params,
     projects,
@@ -25,6 +27,8 @@ from app.api.v1 import (
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(system.router)
 api_router.include_router(auth.router)
+api_router.include_router(account.router)
+api_router.include_router(oauth.router)
 api_router.include_router(me.router)
 api_router.include_router(organizations.router)
 api_router.include_router(reference.router)

@@ -1,16 +1,50 @@
 import type { ComponentType } from 'react'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
 import { AppShell } from '@/widgets/app-shell'
-import { NotFoundPage, RequireAccount, RequireAdmin, RequireAuth, RequireVendor, RootRedirect } from './guards'
+import {
+  NotFoundPage,
+  PublicHome,
+  RequireAccount,
+  RequireAdmin,
+  RequireAuth,
+  RequireVendor,
+  RootRedirect,
+} from './guards'
 import { RouteError } from './RouteError'
 
 const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: loader })
 
 const router = createBrowserRouter([
   {
+    path: '/design-lab/immersive',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-immersive/ImmersivePage').then((m) => ({ Component: m.ImmersivePage }))),
+  },
+  {
+    path: '/design-lab/platform',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-platform/PlatformPage').then((m) => ({ Component: m.PlatformPage }))),
+  },
+  {
+    path: '/design-lab/cinematic',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-cinematic/CinematicPage').then((m) => ({ Component: m.CinematicPage }))),
+  },
+  {
+    path: '/design-lab',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-lab/DesignLabPage').then((m) => ({ Component: m.DesignLabPage }))),
+  },
+  {
+    path: '/design-lab/editorial',
+    errorElement: <RouteError />,
+    ...page(() => import('@/pages/landing-lab/EditorialPage').then((m) => ({ Component: m.EditorialPage }))),
+  },
+  {
     path: '/',
     errorElement: <RouteError />,
-    ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))),
+    Component: PublicHome,
+    children: [{ index: true, ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))) }],
   },
   {
     Component: AppShell,
@@ -76,6 +110,31 @@ const router = createBrowserRouter([
                     ...page(() => import('@/pages/vendor').then((m) => ({ Component: m.VendorRfqsTab }))),
                   },
                 ],
+              },
+            ],
+          },
+          {
+            path: 'invitations/:invitationId',
+            ...page(() => import('@/pages/auth-link/InvitationPage').then((m) => ({ Component: m.InvitationPage }))),
+          },
+          {
+            path: 'forgot-password',
+            ...page(() => import('@/pages/auth-link/AuthLinkPages').then((m) => ({ Component: m.ForgotPasswordPage }))),
+          },
+          {
+            path: 'reset-password',
+            ...page(() => import('@/pages/auth-link/AuthLinkPages').then((m) => ({ Component: m.ResetPasswordPage }))),
+          },
+          {
+            path: 'verify-email',
+            ...page(() => import('@/pages/auth-link/AuthLinkPages').then((m) => ({ Component: m.VerifyEmailPage }))),
+          },
+          {
+            Component: RequireAccount,
+            children: [
+              {
+                path: 'account',
+                ...page(() => import('@/pages/account/AccountPage').then((m) => ({ Component: m.AccountPage }))),
               },
             ],
           },

@@ -1,13 +1,16 @@
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Response, status
+from fastapi import APIRouter, Body, Depends, Path, Response, status
 
-from app.api.deps import UowDep, registered_user
+from app.api.deps import SettingsDep, UowDep, rate_limited, registered_user, verified_user
+from app.api.schemas.account import EmailTokenRequest
 from app.api.schemas.organizations import (
     IncomingInvitation,
     IncomingInvitationList,
+    InvitationAccept,
     InvitationCreate,
+    InvitationPreview,
     Organization,
     OrganizationDetail,
     OrganizationInvitation,
@@ -15,10 +18,12 @@ from app.api.schemas.organizations import (
     OrganizationWrite,
 )
 from app.domain.auth import CurrentUser
+from app.service.mail.invitations import preview_invitation
 from app.service.organizations import OrganizationService
 
 router = APIRouter(tags=["organizations"])
 
+VerifiedDep = Annotated[CurrentUser, Depends(verified_user)]
 MemberDep = Annotated[CurrentUser, Depends(registered_user)]
 OrganizationIdPath = Annotated[UUID, Path()]
 NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"description": "Не найдено"}}
@@ -37,7 +42,7 @@ async def list_organizations(user: MemberDep, uow: UowDep) -> OrganizationList:
     summary="Создать организацию (создатель — владелец)",
     status_code=status.HTTP_201_CREATED,
 )
-async def create_organization(payload: OrganizationWrite, user: MemberDep, uow: UowDep) -> Organization:
+async def create_organization(payload: OrganizationWrite, user: VerifiedDep, uow: UowDep) -> Organization:
     return Organization.from_domain(await OrganizationService(uow, user).create(payload.name))
 
 
@@ -84,12 +89,17 @@ async def delete_organization(organization_id: OrganizationIdPath, user: MemberD
     operation_id="inviteToOrganization",
     summary="Пригласить пользователя по email (владелец)",
     status_code=status.HTTP_201_CREATED,
-    responses={**NOT_FOUND, **CONFLICT},
+    responses={**NOT_FOUND, **CONFLICT, 503: {"description": "Почта не настроена"}},
+    dependencies=[Depends(rate_limited("organization-invite"))],
 )
 async def invite_to_organization(
-    organization_id: OrganizationIdPath, payload: InvitationCreate, user: MemberDep, uow: UowDep
+    organization_id: OrganizationIdPath,
+    payload: InvitationCreate,
+    user: VerifiedDep,
+    uow: UowDep,
+    settings: SettingsDep,
 ) -> OrganizationInvitation:
-    invitation = await OrganizationService(uow, user).invite(organization_id, str(payload.email))
+    invitation = await OrganizationService(uow, user).invite(organization_id, str(payload.email), settings)
     return OrganizationInvitation.from_domain(invitation)
 
 
@@ -130,7 +140,7 @@ async def remove_member(
 @router.get(
     "/me/invitations", operation_id="listMyInvitations", summary="Приглашения в организации, ждущие ответа"
 )
-async def list_my_invitations(user: MemberDep, uow: UowDep) -> IncomingInvitationList:
+async def list_my_invitations(user: VerifiedDep, uow: UowDep) -> IncomingInvitationList:
     items = await OrganizationService(uow, user).incoming()
     return IncomingInvitationList(items=[IncomingInvitation.from_domain(i) for i in items])
 
@@ -142,9 +152,19 @@ async def list_my_invitations(user: MemberDep, uow: UowDep) -> IncomingInvitatio
     responses=NOT_FOUND,
 )
 async def accept_invitation(
-    invitation_id: Annotated[UUID, Path()], user: MemberDep, uow: UowDep
+    invitation_id: Annotated[UUID, Path()],
+    user: MemberDep,
+    uow: UowDep,
+    settings: SettingsDep,
+    payload: Annotated[InvitationAccept | None, Body()] = None,
 ) -> Organization:
-    return Organization.from_domain(await OrganizationService(uow, user).accept(invitation_id))
+    return Organization.from_domain(
+        await OrganizationService(uow, user).accept(
+            invitation_id,
+            payload.token if payload else None,
+            allow_legacy_unverified=settings.stage != "prod" and not settings.email_enabled,
+        )
+    )
 
 
 @router.post(
@@ -155,7 +175,19 @@ async def accept_invitation(
     responses=NOT_FOUND,
 )
 async def decline_invitation(
-    invitation_id: Annotated[UUID, Path()], user: MemberDep, uow: UowDep
+    invitation_id: Annotated[UUID, Path()], user: VerifiedDep, uow: UowDep
 ) -> Response:
     await OrganizationService(uow, user).decline(invitation_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/auth/invitations/{invitation_id}/preview",
+    operation_id="previewInvitation",
+    summary="Открыть сведения приглашения по секретной ссылке",
+    dependencies=[Depends(rate_limited("invitation-preview"))],
+)
+async def invitation_preview(
+    invitation_id: Annotated[UUID, Path()], payload: EmailTokenRequest, uow: UowDep
+) -> InvitationPreview:
+    return InvitationPreview.model_validate(await preview_invitation(uow, invitation_id, payload.token))

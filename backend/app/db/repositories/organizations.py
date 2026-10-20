@@ -1,9 +1,11 @@
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.db.models import Organization, OrganizationInvitation, OrganizationMember, Project, User
 from app.domain.organization import InvitationStatus, OrganizationRole
@@ -78,6 +80,7 @@ class OrganizationRepository:
             .where(
                 OrganizationInvitation.organization_id == organization_id,
                 OrganizationInvitation.status == InvitationStatus.PENDING,
+                self.unexpired(),
             )
             .order_by(OrganizationInvitation.created_at.desc())
         )
@@ -93,6 +96,7 @@ class OrganizationRepository:
             .where(
                 OrganizationInvitation.email == email,
                 OrganizationInvitation.status == InvitationStatus.PENDING,
+                self.unexpired(),
             )
             .order_by(OrganizationInvitation.created_at.desc())
         )
@@ -105,9 +109,25 @@ class OrganizationRepository:
         invitation: OrganizationInvitation | None = await self._session.scalar(statement)
         return invitation
 
+    @staticmethod
+    def unexpired() -> ColumnElement[bool]:
+        return or_(
+            OrganizationInvitation.expires_at.is_(None), OrganizationInvitation.expires_at > datetime.now(UTC)
+        )
+
     async def create_pending_invitation(
         self, organization_id: UUID, email: str, invited_by: UUID
     ) -> OrganizationInvitation | None:
+        await self._session.execute(
+            update(OrganizationInvitation)
+            .where(
+                OrganizationInvitation.organization_id == organization_id,
+                OrganizationInvitation.email == email,
+                OrganizationInvitation.status == InvitationStatus.PENDING,
+                OrganizationInvitation.expires_at <= datetime.now(UTC),
+            )
+            .values(status=InvitationStatus.REVOKED, responded_at=datetime.now(UTC))
+        )
         statement = (
             insert(OrganizationInvitation)
             .values(

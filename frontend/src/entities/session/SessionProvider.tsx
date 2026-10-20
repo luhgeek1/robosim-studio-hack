@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWorkspaceStore } from '@/entities/organization/workspace'
+import { parseApiProblem } from '@/shared/api/problem'
 import { refreshAccessToken, setAccessToken, setUnauthorizedHandler } from '@/shared/api/client'
 import type { LoginRequest, RegisterRequest, TokenPair, User } from '@/shared/api/types'
 import { sessionApi } from './api'
@@ -11,9 +12,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('restoring')
   const [user, setUser] = useState<User | null>(null)
   const restored = useRef(false)
+  const generation = useRef(0)
+  const channelRef = useRef<BroadcastChannel | null>(null)
+  const notify = useCallback(() => channelRef.current?.postMessage('session-changed'), [])
   const guestStarting = useRef<Promise<User> | null>(null)
 
   const clear = useCallback(() => {
+    generation.current += 1
     setAccessToken(null)
     setUser(null)
     setStatus('guest')
@@ -31,11 +36,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const accept = useCallback(
     async (pair: TokenPair) => {
+      generation.current += 1
       queryClient.clear()
       setAccessToken(pair.access_token)
-      return enter(pair.user ?? (await sessionApi.me()))
+      const me = enter(pair.user ?? (await sessionApi.me()))
+      notify()
+      return me
     },
-    [enter, queryClient],
+    [enter, queryClient, notify],
   )
 
   useEffect(() => {
@@ -43,16 +51,48 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return () => setUnauthorizedHandler(null)
   }, [clear])
 
+  const restore = useCallback(
+    async (announce = false) => {
+      const current = ++generation.current
+      setStatus('restoring')
+      setUser(null)
+      setAccessToken(null)
+      queryClient.clear()
+      try {
+        const token = await refreshAccessToken()
+        if (!token) {
+          if (current === generation.current) clear()
+          return
+        }
+        const me = await sessionApi.me()
+        if (current !== generation.current) return
+        enter(me)
+        if (announce) notify()
+      } catch {
+        if (current === generation.current) clear()
+      }
+    },
+    [clear, enter, notify, queryClient],
+  )
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return
+    const channel = new BroadcastChannel('robomera-auth')
+    channelRef.current = channel
+    channel.onmessage = (event) => {
+      if (event.data === 'session-changed') void restore()
+    }
+    return () => {
+      channel.close()
+      channelRef.current = null
+    }
+  }, [restore])
+
   useEffect(() => {
     if (restored.current) return
     restored.current = true
-    refreshAccessToken()
-      .then(async (token) => {
-        if (!token) return clear()
-        enter(await sessionApi.me())
-      })
-      .catch(clear)
-  }, [clear, enter])
+    void restore(true)
+  }, [restore])
 
   const value = useMemo<Session>(
     () => ({
@@ -73,13 +113,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       resetGuest: async () => {
         await sessionApi.resetGuest()
         clear()
+        notify()
       },
       logout: async () => {
-        await sessionApi.logout().catch(() => undefined)
+        try {
+          await sessionApi.logout()
+        } catch (error) {
+          if (parseApiProblem(error).status !== 401) throw error
+        }
         clear()
+        notify()
       },
     }),
-    [status, user, accept, clear],
+    [status, user, accept, clear, notify],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

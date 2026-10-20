@@ -57,7 +57,10 @@ logout:
   post:
     tags: [auth]
     operationId: logout
-    summary: Выход (отзыв refresh-токена)
+    summary: Выход (отзыв сессии и обоих токенов)
+    description: Для web-cookies обязателен X-CSRF-Token, для mobile — refresh_token в теле.
+    parameters:
+      - {name: X-CSRF-Token, in: header, required: false, schema: {type: string}}
     responses:
       '204': {description: "Вышли"}
       '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}

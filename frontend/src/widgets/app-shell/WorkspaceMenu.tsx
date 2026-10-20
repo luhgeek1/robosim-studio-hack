@@ -1,6 +1,7 @@
 import { Building2, Check, ChevronDown, ChevronRight, LockKeyhole, LogOut, Plus, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
+import { toast } from 'sonner'
 import { ROLE_LABEL, initialOf, useWorkspace } from '@/entities/organization'
 import { useSession } from '@/entities/session'
 import { CreateOrganizationDialog } from '@/features/organization-create'
@@ -160,13 +161,23 @@ export function WorkspaceMenu() {
               <ChevronRight className="size-3 text-ink-4" />
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            onSelect={() => navigate('/account')}
+            className="mt-2 cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[12px]"
+          >
+            <LockKeyhole className="size-3.5" /> Аккаунт и безопасность
+          </DropdownMenuItem>
           <DropdownMenuSeparator className="mx-1 mt-1.5 mb-1" />
           <DropdownMenuItem
             variant="destructive"
             className="cursor-pointer gap-2.5 rounded-[10px] px-2.5 py-2 text-[12px] transition-colors"
             onSelect={async () => {
-              await logout()
-              navigate('/login')
+              try {
+                await logout()
+                navigate('/login')
+              } catch {
+                toast.error('Не удалось закрыть сессию на сервере. Обновите страницу и повторите выход.')
+              }
             }}
           >
             <LogOut className="size-3.5" /> Выйти из аккаунта

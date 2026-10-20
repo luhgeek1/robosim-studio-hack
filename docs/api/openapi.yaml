@@ -57,6 +57,18 @@ paths:
   /api/v1/auth/login: {$ref: './paths/auth.yaml#/login'}
   /api/v1/auth/refresh: {$ref: './paths/auth.yaml#/refresh'}
   /api/v1/auth/logout: {$ref: './paths/auth.yaml#/logout'}
+  /api/v1/auth/invitations/{invitation_id}/preview: {$ref: './paths/organizations.yaml#/invitationPreview'}
+  /api/v1/auth/email/verification: {$ref: './paths/account.yaml#/requestVerification'}
+  /api/v1/auth/email/verify: {$ref: './paths/account.yaml#/verifyEmail'}
+  /api/v1/auth/password/forgot: {$ref: './paths/account.yaml#/forgotPassword'}
+  /api/v1/auth/password/reset: {$ref: './paths/account.yaml#/resetPassword'}
+  /api/v1/me/security: {$ref: './paths/account.yaml#/security'}
+  /api/v1/me/password: {$ref: './paths/account.yaml#/changePassword'}
+  /api/v1/me/sessions/{session_id}: {$ref: './paths/account.yaml#/revokeSession'}
+  /api/v1/me/identities/{provider}: {$ref: './paths/account.yaml#/unlinkIdentity'}
+  /api/v1/auth/oauth/providers: {$ref: './paths/oauth.yaml#/providers'}
+  /api/v1/auth/oauth/{provider}/start: {$ref: './paths/oauth.yaml#/start'}
+  /api/v1/auth/oauth/{provider}/callback: {$ref: './paths/oauth.yaml#/callback'}
   /api/v1/me: {$ref: './paths/auth.yaml#/me'}
   /api/v1/me/api-keys: {$ref: './paths/auth.yaml#/apiKeys'}
   /api/v1/me/api-keys/{key_id}: {$ref: './paths/auth.yaml#/apiKey'}

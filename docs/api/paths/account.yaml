@@ -1,0 +1,91 @@
+requestVerification:
+  post:
+    tags: [auth]
+    operationId: requestEmailVerification
+    summary: Отправить подтверждение своей почты
+    responses:
+      '202': {description: Успешно, content: {application/json: {schema: {$ref: '../components/account.yaml#/EmailAccepted'}}}}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+      '503': {description: Почта не настроена, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+verifyEmail:
+  post:
+    tags: [auth]
+    operationId: verifyEmail
+    summary: Подтвердить почту
+    security: []
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/account.yaml#/EmailTokenRequest'}}}
+    responses:
+      '204': {description: Успешно}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+
+forgotPassword:
+  post:
+    tags: [auth]
+    operationId: requestPasswordReset
+    summary: Запросить сброс пароля
+    security: []
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/account.yaml#/EmailRequest'}}}
+    responses:
+      '202': {description: Успешно, content: {application/json: {schema: {$ref: '../components/account.yaml#/EmailAccepted'}}}}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+      '503': {description: Почта не настроена, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+resetPassword:
+  post:
+    tags: [auth]
+    operationId: resetPassword
+    summary: Задать пароль по ссылке из письма
+    security: []
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/account.yaml#/PasswordReset'}}}
+    responses:
+      '204': {description: Успешно}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+
+security:
+  get:
+    tags: [auth]
+    operationId: getAccountSecurity
+    summary: Способы входа и активные сессии
+    responses:
+      '200': {description: Успешно, content: {application/json: {schema: {$ref: '../components/account.yaml#/AccountSecurity'}}}}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+
+changePassword:
+  put:
+    tags: [auth]
+    operationId: changePassword
+    summary: Изменить или добавить пароль
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/account.yaml#/PasswordChange'}}}
+    responses:
+      '204': {description: Успешно}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+
+revokeSession:
+  delete:
+    tags: [auth]
+    operationId: revokeSession
+    summary: Завершить свою сессию
+    parameters: [{name: session_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    responses:
+      '204': {description: Успешно}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+
+unlinkIdentity:
+  delete:
+    tags: [auth]
+    operationId: unlinkIdentity
+    summary: Отключить сервис входа
+    parameters: [{name: provider, in: path, required: true, schema: {type: string, enum: [yandex, google, vk]}}]
+    responses:
+      '204': {description: Успешно}
+      '400': {$ref: '../components/common.yaml#/responses/BadRequest'}
+      '409': {$ref: '../components/common.yaml#/responses/Conflict'}

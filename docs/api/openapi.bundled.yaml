@@ -285,12 +285,305 @@ paths:
       tags:
         - auth
       operationId: logout
-      summary: Выход (отзыв refresh-токена)
+      summary: Выход (отзыв сессии и обоих токенов)
+      description: Для web-cookies обязателен X-CSRF-Token, для mobile — refresh_token в теле.
+      parameters:
+        - name: X-CSRF-Token
+          in: header
+          required: false
+          schema:
+            type: string
       responses:
         '204':
           description: Вышли
         '401':
           $ref: '#/components/responses/Unauthorized'
+  /api/v1/auth/invitations/{invitation_id}/preview:
+    post:
+      tags:
+        - organizations
+      operationId: previewInvitation
+      summary: Открыть приглашение по секрету письма
+      description: Не принимает приглашение и не подтверждает почту. Сведения видит только обладатель секретной ссылки. Токен передаётся в JSON, не в query.
+      security: []
+      parameters:
+        - name: invitation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailTokenRequest'
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationPreview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/auth/email/verification:
+    post:
+      tags:
+        - auth
+      operationId: requestEmailVerification
+      summary: Отправить подтверждение своей почты
+      responses:
+        '202':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailAccepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          description: Почта не настроена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/auth/email/verify:
+    post:
+      tags:
+        - auth
+      operationId: verifyEmail
+      summary: Подтвердить почту
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailTokenRequest'
+      responses:
+        '204':
+          description: Успешно
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/auth/password/forgot:
+    post:
+      tags:
+        - auth
+      operationId: requestPasswordReset
+      summary: Запросить сброс пароля
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '202':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailAccepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          description: Почта не настроена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/auth/password/reset:
+    post:
+      tags:
+        - auth
+      operationId: resetPassword
+      summary: Задать пароль по ссылке из письма
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+      responses:
+        '204':
+          description: Успешно
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/me/security:
+    get:
+      tags:
+        - auth
+      operationId: getAccountSecurity
+      summary: Способы входа и активные сессии
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSecurity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/me/password:
+    put:
+      tags:
+        - auth
+      operationId: changePassword
+      summary: Изменить или добавить пароль
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChange'
+      responses:
+        '204':
+          description: Успешно
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/me/sessions/{session_id}:
+    delete:
+      tags:
+        - auth
+      operationId: revokeSession
+      summary: Завершить свою сессию
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Успешно
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/me/identities/{provider}:
+    delete:
+      tags:
+        - auth
+      operationId: unlinkIdentity
+      summary: Отключить сервис входа
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - yandex
+              - google
+              - vk
+      responses:
+        '204':
+          description: Успешно
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/auth/oauth/providers:
+    get:
+      tags:
+        - auth
+      operationId: listOAuthProviders
+      summary: Сервисы входа и их доступность
+      security: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthProviderList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/auth/oauth/{provider}/start:
+    post:
+      tags:
+        - auth
+      operationId: startOAuth
+      summary: Начать вход или подключение сервиса
+      description: Authorization Code + PKCE S256. Устанавливает httpOnly SameSite=Lax cookie на 10 минут; одноразовое состояние в Redis. intent=link требует Bearer, текущую refresh-cookie, подтверждённую почту и вход за последние RS_RECENT_AUTH_MINUTES. Возврат только на относительный путь приложения. Гостевой перенос требует keep_guest_csrf. Фронт переходит на authorization_url целиком.
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - yandex
+              - google
+              - vk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthStartRequest'
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthAuthorization'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/auth/oauth/{provider}/callback:
+    get:
+      tags:
+        - auth
+      operationId: finishOAuth
+      summary: Возврат из сервиса входа
+      description: Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка — /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity — конфликт, автоматического связывания нет.
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - yandex
+              - google
+              - vk
+        - name: state
+          in: query
+          schema:
+            type: string
+            maxLength: 128
+            pattern: ^[A-Za-z0-9_-]*$
+        - name: code
+          in: query
+          schema:
+            type: string
+            maxLength: 4096
+        - name: device_id
+          in: query
+          schema:
+            type: string
+            maxLength: 512
+        - name: error
+          in: query
+          schema:
+            type: string
+            maxLength: 256
+      responses:
+        '303':
+          description: Переход в приложение
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/me:
     get:
       tags:
@@ -410,6 +703,13 @@ paths:
         - organizations
       operationId: acceptInvitation
       summary: Принять приглашение — стать участником организации
+      description: Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token — 403, истёкшее/отозванное/принятое — 404. GET никогда не принимает приглашение.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationAccept'
       responses:
         '200':
           description: OK
@@ -531,7 +831,7 @@ paths:
         - organizations
       operationId: inviteToOrganization
       summary: Пригласить пользователя по email (владелец)
-      description: Приглашение появляется у адресата в уведомлениях; незарегистрированный адрес увидит его после регистрации.
+      description: Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod — 503. Истёкшее приглашение можно создать заново.
       requestBody:
         required: true
         content:
@@ -540,7 +840,7 @@ paths:
               $ref: '#/components/schemas/InvitationCreate'
       responses:
         '201':
-          description: Отправлено
+          description: Создано; письмо в очереди
           content:
             application/json:
               schema:
@@ -551,6 +851,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '503':
+          description: Почта не настроена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/organizations/{organization_id}/invitations/{invitation_id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
@@ -5898,6 +6204,8 @@ components:
         is_active:
           type: boolean
           default: true
+        email_verified:
+          type: boolean
         guest_expires_at:
           type:
             - string
@@ -5996,6 +6304,20 @@ components:
             - 'null'
         invitee_registered:
           type: boolean
+        email_delivery:
+          type: string
+          enum:
+            - disabled
+            - queued
+            - sent
+            - failed
+            - cancelled
+          description: sent — Resend принял письмо; доставка в ящик не подтверждается.
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
     OrganizationRole:
       type: string
       description: owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
@@ -6019,6 +6341,8 @@ components:
           format: uuid
         organization_name:
           type: string
+        requires_email_link:
+          type: boolean
         invited_by_name:
           type:
             - string
@@ -6418,6 +6742,205 @@ components:
           format: email
         password:
           type: string
+          maxLength: 128
+    EmailTokenRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          minLength: 20
+          maxLength: 256
+    InvitationPreview:
+      type: object
+      required:
+        - id
+        - email
+        - organization_name
+        - invited_by_name
+        - expires_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        organization_name:
+          type: string
+        invited_by_name:
+          type:
+            - string
+            - 'null'
+        expires_at:
+          type: string
+          format: date-time
+    EmailAccepted:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    EmailRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+    PasswordReset:
+      allOf:
+        - $ref: '#/components/schemas/EmailTokenRequest'
+        - type: object
+          required:
+            - password
+          properties:
+            password:
+              type: string
+              minLength: 8
+              maxLength: 128
+    ConnectedIdentity:
+      type: object
+      required:
+        - provider
+        - connected_at
+      properties:
+        provider:
+          type: string
+          enum:
+            - yandex
+            - google
+            - vk
+        connected_at:
+          type: string
+          format: date-time
+    AccountSession:
+      type: object
+      required:
+        - id
+        - method
+        - client
+        - created_at
+        - last_seen_at
+        - expires_at
+        - current
+      properties:
+        id:
+          type: string
+          format: uuid
+        method:
+          type: string
+          enum:
+            - password
+            - guest
+            - yandex
+            - google
+            - vk
+        client:
+          type: string
+          enum:
+            - web
+            - mobile
+        created_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        current:
+          type: boolean
+    AccountSecurity:
+      type: object
+      required:
+        - has_password
+        - email_verified
+        - identities
+        - sessions
+      properties:
+        has_password:
+          type: boolean
+        email_verified:
+          type: boolean
+        identities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedIdentity'
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountSession'
+    PasswordChange:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        current_password:
+          type:
+            - string
+            - 'null'
+          maxLength: 128
+    OAuthProviderInfo:
+      type: object
+      required:
+        - id
+        - name
+        - enabled
+      properties:
+        id:
+          type: string
+          enum:
+            - yandex
+            - google
+            - vk
+        name:
+          type: string
+        enabled:
+          type: boolean
+    OAuthProviderList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OAuthProviderInfo'
+    OAuthStartRequest:
+      type: object
+      properties:
+        return_to:
+          type: string
+          default: /projects
+          maxLength: 2048
+        intent:
+          type: string
+          enum:
+            - login
+            - link
+          default: login
+        keep_guest_csrf:
+          type:
+            - string
+            - 'null'
+          maxLength: 128
+    OAuthAuthorization:
+      type: object
+      required:
+        - authorization_url
+      properties:
+        authorization_url:
+          type: string
+          format: uri
     UserUpdate:
       type: object
       properties:
@@ -6495,6 +7018,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/IncomingInvitation'
+    InvitationAccept:
+      type: object
+      properties:
+        token:
+          type:
+            - string
+            - 'null'
+          minLength: 20
+          maxLength: 256
+          description: Секрет из фрагмента ссылки письма. Обязателен для почтового приглашения.
     OrganizationList:
       type: object
       required:
@@ -11402,6 +11935,12 @@ components:
             $ref: '#/components/schemas/Problem'
     ValidationError:
       description: Ошибка валидации запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    BadRequest:
+      description: Некорректный запрос
       content:
         application/json:
           schema:

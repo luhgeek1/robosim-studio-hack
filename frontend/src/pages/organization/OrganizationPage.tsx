@@ -273,10 +273,21 @@ function PendingRow({
         <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1 text-[11px] text-ink-3">
             <Clock3 className="size-3" />
-            {invitation.invitee_registered ? 'Ждём ответа' : 'Ждёт регистрации'}
+            {invitation.email_delivery === 'queued'
+              ? 'Письмо в очереди'
+              : invitation.email_delivery === 'sent'
+                ? 'Письмо отправлено'
+                : invitation.email_delivery === 'failed'
+                  ? 'Не удалось отправить'
+                  : invitation.invitee_registered
+                    ? 'Ждём ответа'
+                    : 'Ждёт регистрации'}
           </span>
           {canRevoke && <RevokeInvitation orgId={orgId} invitation={invitation} />}
         </div>
+        {invitation.email_delivery === 'failed' && (
+          <p className="mt-2 text-xs text-crit">Отзовите приглашение и отправьте новое.</p>
+        )}
       </div>
     </li>
   )
@@ -294,9 +305,11 @@ function InviteForm({ org }: { org: OrganizationDetail }) {
     toast.success('Приглашение создано', {
       description:
         invitation.email +
-        (invitation.invitee_registered
-          ? ' — приглашение появилось в уведомлениях.'
-          : ' — приглашение будет доступно после регистрации.'),
+        (invitation.email_delivery === 'queued'
+          ? ' — письмо с приглашением поставлено в очередь.'
+          : invitation.invitee_registered
+            ? ' — приглашение появилось в уведомлениях.'
+            : ' — приглашение будет доступно после регистрации.'),
     })
   }
   return (

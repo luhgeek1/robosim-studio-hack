@@ -1,3 +1,4 @@
+import secrets
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -9,7 +10,6 @@ from app.api.deps import (
     CodecDep,
     CurrentUserDep,
     RedisDep,
-    RevocationsDep,
     SettingsDep,
     UowDep,
     rate_limited,
@@ -17,12 +17,13 @@ from app.api.deps import (
 from app.api.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenPair, User
 from app.core.config import Settings
 from app.core.errors import ForbiddenError, RateLimitedError, UnauthorizedError
-from app.db.repositories.users import to_profile
 from app.domain.auth import Role
 from app.infra.client_ip import client_ip
 from app.infra.rate_limit import RateLimiter
 from app.service.auth import AuthService, Registration, SessionResult
+from app.service.auth.email_tokens import request_email
 from app.service.auth.guests import create_guest, delete_guest_data, transfer_guest
+from app.service.auth.session_store import jti_hash, live_session
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -62,11 +63,12 @@ async def register(
     client: ClientDep,
     uow: UowDep,
     codec: CodecDep,
-    revocations: RevocationsDep,
     settings: SettingsDep,
 ) -> TokenPair:
-    result = await AuthService(uow, codec, revocations).register(Registration(**payload.model_dump()), client)
-    await _keep_guest_work(request, result, uow, codec, revocations)
+    result = await AuthService(uow, codec).register(Registration(**payload.model_dump()), client)
+    await _keep_guest_work(request, result, uow, codec)
+    if settings.email_enabled:
+        await request_email(uow, settings, result.user.email, "verify_email")
     return _token_pair(result, response, settings, web=client == "web")
 
 
@@ -88,11 +90,10 @@ async def login(
     client: ClientDep,
     uow: UowDep,
     codec: CodecDep,
-    revocations: RevocationsDep,
     settings: SettingsDep,
 ) -> TokenPair:
-    result = await AuthService(uow, codec, revocations).login(payload.email, payload.password, client)
-    await _keep_guest_work(request, result, uow, codec, revocations)
+    result = await AuthService(uow, codec).login(payload.email, payload.password, client)
+    await _keep_guest_work(request, result, uow, codec)
     return _token_pair(result, response, settings, web=client == "web")
 
 
@@ -109,7 +110,6 @@ async def refresh(
     response: Response,
     uow: UowDep,
     codec: CodecDep,
-    revocations: RevocationsDep,
     settings: SettingsDep,
     payload: Annotated[RefreshRequest | None, Body()] = None,
     x_csrf: Annotated[str | None, Header(alias="X-CSRF-Token")] = None,
@@ -118,13 +118,8 @@ async def refresh(
     token = cookie_token or (payload.refresh_token if payload else None)
     if not token:
         raise UnauthorizedError("Нет refresh-токена")
-    service = AuthService(uow, codec, revocations)
-    try:
-        result = await service.refresh(token, csrf=x_csrf, from_cookie=cookie_token is not None)
-    except UnauthorizedError:
-        if cookie_token:
-            clear_auth_cookies(response, settings)
-        raise
+    service = AuthService(uow, codec)
+    result = await service.refresh(token, csrf=x_csrf, from_cookie=cookie_token is not None)
     return _token_pair(result, response, settings, web=cookie_token is not None)
 
 
@@ -139,22 +134,21 @@ async def logout(
     request: Request,
     uow: UowDep,
     codec: CodecDep,
-    revocations: RevocationsDep,
     settings: SettingsDep,
     payload: Annotated[RefreshRequest | None, Body()] = None,
 ) -> Response:
     token = request.cookies.get(REFRESH_COOKIE) or (payload.refresh_token if payload else None)
     if not token:
         raise UnauthorizedError("Нет refresh-токена")
-    await AuthService(uow, codec, revocations).logout(token)
+    await AuthService(uow, codec).logout(
+        token, csrf=request.headers.get("X-CSRF-Token"), from_cookie=bool(request.cookies.get(REFRESH_COOKIE))
+    )
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     clear_auth_cookies(response, settings)
     return response
 
 
-async def _keep_guest_work(
-    request: Request, result: SessionResult, uow: UowDep, codec: CodecDep, revocations: RevocationsDep
-) -> None:
+async def _keep_guest_work(request: Request, result: SessionResult, uow: UowDep, codec: CodecDep) -> None:
     csrf = request.headers.get("X-Keep-Guest-CSRF")
     if csrf is None:
         return
@@ -162,10 +156,10 @@ async def _keep_guest_work(
     if token is None:
         raise UnauthorizedError("Нет гостевой сессии для сохранения")
     claims = codec.decode(token, "refresh")
-    if await revocations.is_revoked(claims.jti):
+    session = await live_session(uow, claims)
+    if not secrets.compare_digest(session.refresh_jti_hash, jti_hash(claims.jti)):
         raise UnauthorizedError("Гостевая сессия уже завершена")
     await transfer_guest(uow, codec, token, csrf, result.user.id)
-    await revocations.revoke(claims.jti, claims.expires_at)
 
 
 @router.post("/guest", operation_id="startGuestSession", summary="Начать гостевую сессию на 24 часа")
@@ -184,9 +178,7 @@ async def start_guest(
     if not await RateLimiter(redis, limit=10, window_s=3600).hit(f"guest-start:{ip}"):
         raise RateLimitedError("Можно начать до 10 демо-сессий в час. Попробуйте позже.")
     row = await create_guest(uow)
-    result = SessionResult(
-        user=to_profile(row), tokens=codec.issue(row.id, row.role, row.auth_version, client)
-    )
+    result = await AuthService(uow, codec).create_session(row, client, "guest")
     return _token_pair(result, response, settings, web=client == "web")
 
 
