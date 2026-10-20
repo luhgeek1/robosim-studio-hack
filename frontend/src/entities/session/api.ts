@@ -5,12 +5,16 @@ import type { LoginRequest, RegisterRequest, Res, TokenPair } from '@/shared/api
 const keepGuest = () => ({ headers: { 'X-Keep-Guest-CSRF': readCookie('csrf_token') || undefined } })
 
 export const sessionApi = {
-  startGuest: () => apiPublic.post<TokenPair>('/auth/guest').then((r) => r.data),
+  startGuest: () => withAuthLock(() => apiPublic.post<TokenPair>('/auth/guest')).then((r) => r.data),
   resetGuest: () => api.delete('/auth/guest').then(() => undefined),
   login: (body: LoginRequest, guest = false) =>
-    apiPublic.post<TokenPair>('/auth/login', body, guest ? keepGuest() : undefined).then((r) => r.data),
+    withAuthLock(() => apiPublic.post<TokenPair>('/auth/login', body, guest ? keepGuest() : undefined)).then(
+      (r) => r.data,
+    ),
   register: (body: RegisterRequest, guest = false) =>
-    apiPublic.post<TokenPair>('/auth/register', body, guest ? keepGuest() : undefined).then((r) => r.data),
+    withAuthLock(() => apiPublic.post<TokenPair>('/auth/register', body, guest ? keepGuest() : undefined)).then(
+      (r) => r.data,
+    ),
   logout: () =>
     withAuthLock(() =>
       apiPublic.post('/auth/logout', {}, { headers: { 'X-CSRF-Token': readCookie('csrf_token') } }),
