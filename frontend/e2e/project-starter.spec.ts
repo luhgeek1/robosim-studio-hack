@@ -102,3 +102,78 @@ test('mobile starter retains a draft after a failed request and supports retry',
   await page.getByRole('button', { name: 'Создать проект', exact: true }).click()
   await expect(page).toHaveURL(/\/projects\/[\w-]+\/object$/)
 })
+
+test('project cards wrap names, adapt to mobile and keep their action menu separate from opening', async ({ page }) => {
+  const headers = await account(page)
+  const names = [
+    'Распределительный центр Подмосковье: оценка перевозки паллет и отбора заказов в основном корпусе',
+    'Городская больница: доставка питания',
+    'Аэропорт: багаж и терминалы',
+  ]
+  const types = ['warehouse', 'hospital', 'airport']
+  for (let index = 0; index < names.length; index++) {
+    const response = await page.request.post('/api/v1/projects', {
+      headers,
+      data: { name: names[index], object_type: types[index], init: { mode: 'blank' } },
+    })
+    expect(response.status()).toBe(201)
+  }
+  let revision = ''
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get('/api/v1/demo/projects/warehouse_demo_01', { headers })
+        if (response.status() === 200) revision = (await response.json()).revision
+        return response.status()
+      },
+      { timeout: 90_000, intervals: [1000] },
+    )
+    .toBe(200)
+  const opened = await page.request.post('/api/v1/demo/projects/warehouse_demo_01/open', {
+    headers,
+    data: { request_id: crypto.randomUUID(), revision },
+  })
+  expect(opened.status()).toBe(200)
+  const demoProject = (await opened.json()).project
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await page.goto('/projects')
+  const cards = page.getByRole('article')
+  await expect(cards).toHaveCount(4)
+  await expect(
+    page.getByRole('article', { name: names[0], exact: true }).getByText('Расчёта пока нет', { exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('article', { name: demoProject.name, exact: true }).getByText('Окупаемость', { exact: true }),
+  ).toBeVisible()
+  const boxes = await cards.evaluateAll((items) =>
+    items.map((item) => ({ x: item.getBoundingClientRect().x, y: item.getBoundingClientRect().y })),
+  )
+  expect(boxes[0].y).toBe(boxes[1].y)
+  expect(boxes[0].x).not.toBe(boxes[1].x)
+  await expect
+    .poll(() =>
+      cards.evaluateAll((items) => items.every((item) => getComputedStyle(item.parentElement!).opacity === '1')),
+    )
+    .toBe(true)
+  await page.screenshot({ path: test.info().outputPath('cards-desktop.png'), fullPage: true })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.reload()
+  await expect(cards).toHaveCount(4)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
+  await expect
+    .poll(() =>
+      cards.evaluateAll((items) => items.every((item) => getComputedStyle(item.parentElement!).opacity === '1')),
+    )
+    .toBe(true)
+  await page.screenshot({ path: test.info().outputPath('cards-mobile.png'), fullPage: true })
+  const card = page.getByRole('article', { name: names[1] })
+  await card.getByRole('button', { name: 'Действия с проектом' }).click()
+  await expect(page).toHaveURL(/\/projects$/)
+  await page.getByRole('menuitem', { name: 'Дублировать', exact: true }).click()
+  await expect(page).toHaveURL(/\/projects\/[\w-]+$/)
+  await page.goto('/projects')
+  await expect(page.getByRole('article')).toHaveCount(5)
+  const copied = page.getByRole('article', { name: `${names[1]} (копия)` })
+  await copied.getByRole('link', { name: `${names[1]} (копия)`, exact: true }).press('Enter')
+  await expect(page).toHaveURL(/\/projects\/[\w-]+$/)
+})

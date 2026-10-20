@@ -1,9 +1,27 @@
-import { ArrowRightLeft, Copy, HeartPulse, MoreHorizontal, Plane, Plus, Trash2, Users, Warehouse } from 'lucide-react'
+import {
+  ArrowRight,
+  ArrowRightLeft,
+  Copy,
+  HeartPulse,
+  MoreHorizontal,
+  Plane,
+  Plus,
+  Trash2,
+  Users,
+  Warehouse,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { quoted, useWorkspace } from '@/entities/organization'
-import { OBJECT_TYPE_LABEL, useCopyProject, useDeleteProject, useMoveProject, useProjects } from '@/entities/project'
+import {
+  OBJECT_TYPE_LABEL,
+  PROJECT_STATUS_LABEL,
+  useCopyProject,
+  useDeleteProject,
+  useMoveProject,
+  useProjects,
+} from '@/entities/project'
 import { VerdictBadge } from '@/entities/scenario'
 import { useSession } from '@/entities/session'
 import { CreateProjectDialog, ProjectStarter } from '@/features/project-create'
@@ -80,9 +98,9 @@ export function ProjectsPage() {
         {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
         {isEmpty && <ProjectStarter key={organization?.id ?? 'personal'} />}
         {projects.data && projects.data.items.length > 0 && (
-          <Stagger className="card divide-y divide-line overflow-hidden">
+          <Stagger className="grid gap-4 md:grid-cols-2">
             {projects.data.items.map((project) => (
-              <ProjectRow key={project.id} project={project} />
+              <ProjectCard key={project.id} project={project} />
             ))}
           </Stagger>
         )}
@@ -91,7 +109,7 @@ export function ProjectsPage() {
   )
 }
 
-function ProjectRow({ project }: { project: Project }) {
+function ProjectCard({ project }: { project: Project }) {
   const navigate = useNavigate()
   const { user } = useSession()
   const { organization } = useWorkspace()
@@ -102,93 +120,110 @@ function ProjectRow({ project }: { project: Project }) {
   const canManage = project.organization_id === null || project.owner_id === user?.id || organization?.role === 'owner'
 
   return (
-    <div className="group relative flex items-start gap-3 px-4 py-4 transition-colors hover:bg-surface-2 max-md:flex-wrap sm:gap-4 sm:px-5 md:items-center">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-black/5 text-ink-2">
-        {ICONS[project.object_type] ?? <Warehouse size={18} />}
-      </span>
-      <span className="min-w-0 flex-1">
+    <article
+      aria-labelledby={`project-${project.id}`}
+      className="group relative flex h-full min-w-0 flex-col rounded-xl border border-line bg-popover p-5 transition-colors hover:border-ink-3 sm:p-6"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-surface-2 text-ink-2"
+            aria-hidden
+          >
+            {ICONS[project.object_type] ?? <Warehouse size={18} />}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[13px] font-medium text-ink-2">{OBJECT_TYPE_LABEL[project.object_type]}</p>
+            <p className="mt-0.5 text-[12px] text-ink-3">{PROJECT_STATUS_LABEL[project.status]}</p>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative z-10 -mt-1 -mr-1.5 text-ink-3"
+              aria-label="Действия с проектом"
+            >
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-auto min-w-44">
+            <DropdownMenuItem
+              onSelect={async () => {
+                const created = await copy.mutateAsync({ id: project.id, name: `${project.name} (копия)` })
+                navigate(`/projects/${created.id}`)
+              }}
+            >
+              <Copy /> Дублировать
+            </DropdownMenuItem>
+            {canManage && (
+              <>
+                <MoveTo project={project} />
+                <DropdownMenuSeparator />
+                <ConfirmDialog
+                  title={`Удалить «${project.name}»?`}
+                  description="Проект, его сценарии и расчёты будут удалены без возможности восстановления."
+                  onConfirm={() => remove.mutateAsync(project.id)}
+                  trigger={
+                    <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
+                      <Trash2 /> Удалить
+                    </DropdownMenuItem>
+                  }
+                />
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <h2
+        id={`project-${project.id}`}
+        className="mt-5 text-[19px] leading-snug font-semibold tracking-[-0.02em] wrap-anywhere sm:text-[21px]"
+      >
         <Link
           to={`/projects/${project.id}`}
-          className="block text-[15px] font-semibold wrap-anywhere after:absolute after:inset-0 lg:truncate"
+          className="line-clamp-3 outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:outline-2 focus-visible:after:outline-offset-3 focus-visible:after:outline-ring"
+          title={project.name}
         >
           {project.name}
         </Link>
-        <span className="block text-[13px] text-ink-3 lg:truncate">
-          {OBJECT_TYPE_LABEL[project.object_type]} · обновлён {formatDateTime(project.updated_at)}
-        </span>
-      </span>
-      {metrics ? (
-        <span className="hidden items-center text-[13px] md:flex">
-          <Metric value={formatYears(metrics.payback_years)} label="окупаемость" className="w-28" />
-          <Metric value={formatRub(metrics.capex_rub)} label="CAPEX" className="w-32" />
-          <span className="w-32">
-            <VerdictBadge verdict={metrics.verdict} />
-          </span>
-        </span>
-      ) : (
-        <span className="hidden w-92 text-[13px] text-ink-3 md:inline">
-          {project.scenarios_count > 0 ? `Сценариев: ${project.scenarios_count}, расчёта нет` : 'Расчёта ещё нет'}
-        </span>
-      )}
-      <DataScore score={score} className="hidden w-28 md:flex" />
-      {/* На узком экране цифры проекта идут отдельной строкой под названием во всю ширину, а не колонками справа. */}
-      <span className="order-last flex basis-full flex-wrap gap-x-6 gap-y-2.5 text-[13px] md:hidden">
+      </h2>
+      <p className="mt-2 text-[12px] text-ink-3">Обновлён {formatDateTime(project.updated_at)}</p>
+      <div className="mt-5 mb-6">
         {metrics ? (
           <>
-            <Metric value={formatYears(metrics.payback_years)} label="окупаемость" />
-            <Metric value={formatRub(metrics.capex_rub)} label="CAPEX" />
+            <div className="grid grid-cols-2 gap-4">
+              <Metric value={formatYears(metrics.payback_years)} label="Окупаемость" />
+              <Metric value={formatRub(metrics.capex_rub)} label="Вложения" />
+            </div>
+            <div className="mt-4">
+              <VerdictBadge verdict={metrics.verdict} />
+            </div>
           </>
         ) : (
-          <span className="basis-full text-ink-3">
-            {project.scenarios_count > 0 ? `Сценариев: ${project.scenarios_count}, расчёта нет` : 'Расчёта ещё нет'}
-          </span>
+          <>
+            <p className="text-[14px] font-medium">Расчёта пока нет</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-3">
+              {project.scenarios_count > 0
+                ? `${project.scenarios_count} ${pluralRu(project.scenarios_count, ['сценарий', 'сценария', 'сценариев'])}. Откройте проект, чтобы рассчитать экономику.`
+                : 'Проверьте исходные данные и подберите роботов для вашего объекта.'}
+            </p>
+          </>
         )}
-        <DataScore score={score} />
-        {metrics && (
-          <span className="basis-full">
-            <VerdictBadge verdict={metrics.verdict} />
+      </div>
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-[12px]">
+        <span className="flex items-center gap-2 text-ink-3">
+          <ConfidenceRing value={score * 100} size={18} />
+          <span>
+            <span className="num font-medium text-ink-2">{formatPct(score, { share: true, digits: 0 })}</span> данных
+            введено
           </span>
-        )}
-      </span>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative z-10 -mt-1 -mr-1.5 text-ink-4 md:mt-0 md:mr-0"
-            aria-label="Действия с проектом"
-          >
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-auto min-w-44">
-          <DropdownMenuItem
-            onSelect={async () => {
-              const created = await copy.mutateAsync({ id: project.id, name: `${project.name} (копия)` })
-              navigate(`/projects/${created.id}`)
-            }}
-          >
-            <Copy /> Дублировать
-          </DropdownMenuItem>
-          {canManage && (
-            <>
-              <MoveTo project={project} />
-              <DropdownMenuSeparator />
-              <ConfirmDialog
-                title={`Удалить «${project.name}»?`}
-                description="Проект, его сценарии и расчёты будут удалены без возможности восстановления."
-                onConfirm={() => remove.mutateAsync(project.id)}
-                trigger={
-                  <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
-                    <Trash2 /> Удалить
-                  </DropdownMenuItem>
-                }
-              />
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+        </span>
+        <span className="flex items-center gap-2 font-medium text-ink-2" aria-hidden>
+          Открыть проект <ArrowRight size={15} />
+        </span>
+      </div>
+    </article>
   )
 }
 
@@ -223,26 +258,11 @@ function MoveTo({ project }: { project: Project }) {
   )
 }
 
-function DataScore({ score, className }: { score: number; className?: string }) {
-  return (
-    <Metric
-      value={
-        <span className="flex items-center gap-1.5">
-          <ConfidenceRing value={score * 100} size={16} />
-          {formatPct(score, { share: true, digits: 0 })}
-        </span>
-      }
-      label="данных введено"
-      className={className}
-    />
-  )
-}
-
 function Metric({ value, label, className }: { value: ReactNode; label: string; className?: string }) {
   return (
     <span className={cn('flex flex-col', className)}>
-      <span className="num text-[14px] font-medium">{value}</span>
-      <span className="text-[12px] text-ink-3">{label}</span>
+      <span className="num text-[22px] leading-tight font-semibold tracking-[-0.02em]">{value}</span>
+      <span className="mt-1 text-[12px] text-ink-3">{label}</span>
     </span>
   )
 }
