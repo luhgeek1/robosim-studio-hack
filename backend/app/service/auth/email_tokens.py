@@ -1,6 +1,5 @@
 import secrets
 from datetime import UTC, datetime, timedelta
-from html import escape
 from typing import Literal
 from uuid import UUID
 
@@ -13,6 +12,7 @@ from app.db.models import AuthEmailToken, EmailOutbox, User, UserCredential
 from app.db.uow import UnitOfWork
 from app.service.auth.session_store import revoke_all_sessions
 from app.service.mail.invitations import token_hash
+from app.service.mail.templates import EmailMessage, render_email
 
 Purpose = Literal["verify_email", "reset_password"]
 
@@ -72,19 +72,29 @@ async def _issue(uow: UnitOfWork, settings: Settings, user: User, purpose: Purpo
     link = f"{settings.public_web_url.rstrip('/')}/{route}#token={raw_token}"
     subject = "Подтвердите почту в РобоМере" if purpose == "verify_email" else "Смена пароля РобоМеры"
     instruction = "Подтвердить почту" if purpose == "verify_email" else "Задать новый пароль"
-    expiry = (
-        f"{settings.verification_ttl_hours} ч"
-        if purpose == "verify_email"
-        else f"{settings.password_reset_ttl_minutes} мин"
-    )
+    expiry = token.expires_at.strftime("%d.%m.%Y, %H:%M UTC")
     text = (
-        f"{subject}\n\n{instruction}: {link}\n\nСсылка действует {expiry}. "
+        f"{subject}\n\n{instruction}: {link}\n\nСсылка действует до {expiry}. "
         "Если это не вы, проигнорируйте письмо."
     )
-    html = (
-        f'<html lang="ru"><body><h1>{subject}</h1><p><a href="{escape(link, quote=True)}">'
-        f"{instruction}</a></p><p>Ссылка действует {expiry}. "
-        "Если это не вы, проигнорируйте письмо.</p></body></html>"
+    html = render_email(
+        EmailMessage(
+            preview=subject,
+            title=subject,
+            paragraphs=(
+                "Подтвердите адрес, чтобы создавать команды, приглашать коллег и подключать сервисы входа."
+                if purpose == "verify_email"
+                else "Вы запросили восстановление доступа. Задайте новый пароль на сайте; "
+                "прежние сессии завершатся.",
+            ),
+            action_label=instruction,
+            action_url=link,
+            facts=(("Аккаунт", user.email), ("Действует до", expiry)),
+            footnote=(
+                "Если вы не запрашивали это действие, проигнорируйте письмо. Никому не пересылайте ссылку."
+            ),
+        ),
+        settings.public_web_url,
     )
     uow.session.add(
         EmailOutbox(

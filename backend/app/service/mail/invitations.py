@@ -1,7 +1,6 @@
 import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
-from html import escape
 from uuid import UUID
 
 from app.core.config import Settings
@@ -10,6 +9,7 @@ from app.db.models import EmailOutbox, Organization, OrganizationInvitation
 from app.db.uow import UnitOfWork
 from app.domain.organization import InvitationStatus
 from app.domain.organization.models import InvitationPreview
+from app.service.mail.templates import EmailMessage, render_email
 
 
 def token_hash(token: str) -> str:
@@ -23,22 +23,31 @@ def queue_invitation(
     invitation.token_hash = token_hash(token)
     invitation.expires_at = datetime.now(UTC) + timedelta(hours=settings.invitation_ttl_hours)
     link = f"{settings.public_web_url.rstrip('/')}/invitations/{invitation.id}#token={token}"
+    expiry = invitation.expires_at.strftime("%d.%m.%Y, %H:%M UTC")
     subject = "Приглашение в команду РобоМеры"
     text = (
         f"{inviter} приглашает вас в команду «{organization}» в РобоМере.\n\n"
         f"Открыть приглашение: {link}\n\n"
         f"Войдите или зарегистрируйтесь с адресом {invitation.email}, затем подтвердите вступление.\n"
-        f"Ссылка действует {settings.invitation_ttl_hours} ч. Если вы не ждали письмо, проигнорируйте его."
+        f"Ссылка действует до {expiry}. Если вы не ждали письмо, проигнорируйте его."
     )
-    html = (
-        '<html lang="ru"><body style="font-family:Arial,sans-serif;color:#141413;line-height:1.6">'
-        '<h1 style="font-size:24px">Вас приглашают в команду</h1>'
-        f"<p>{escape(inviter)} приглашает вас в «{escape(organization)}» в РобоМере.</p>"
-        f'<p><a href="{escape(link, quote=True)}">Открыть приглашение</a></p>'
-        f"<p>Войдите или зарегистрируйтесь с адресом {escape(invitation.email)}, "
-        "затем подтвердите вступление.</p>"
-        f"<p>Ссылка действует {settings.invitation_ttl_hours} ч. "
-        "Если вы не ждали письмо, проигнорируйте его.</p></body></html>"
+    html = render_email(
+        EmailMessage(
+            preview=f"{inviter} приглашает вас в команду «{organization}» в РобоМере.",
+            title="Вас приглашают в команду",
+            paragraphs=(
+                f"{inviter} приглашает вас в «{organization}» в РобоМере.",
+                "Работайте с объектами и сценариями вместе: от исходных данных до расчёта и отчёта.",
+                f"Войдите или создайте аккаунт с почтой {invitation.email}, затем подтвердите вступление.",
+            ),
+            action_label="Открыть приглашение",
+            action_url=link,
+            facts=(("Команда", organization), ("Для кого", invitation.email), ("Действует до", expiry)),
+            footnote=(
+                "Вступление подтверждается на сайте. Если вы не ждали приглашение, проигнорируйте письмо."
+            ),
+        ),
+        settings.public_web_url,
     )
     uow.session.add(
         EmailOutbox(
