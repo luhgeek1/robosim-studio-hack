@@ -6,7 +6,7 @@ import { quoted, useWorkspace } from '@/entities/organization'
 import { OBJECT_TYPE_LABEL, useCopyProject, useDeleteProject, useMoveProject, useProjects } from '@/entities/project'
 import { VerdictBadge } from '@/entities/scenario'
 import { useSession } from '@/entities/session'
-import { CreateProjectDialog } from '@/features/project-create'
+import { CreateProjectDialog, ProjectStarter } from '@/features/project-create'
 import type { Project } from '@/shared/api/types'
 import { formatDateTime, formatPct, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
@@ -35,12 +35,13 @@ const ICONS: Record<string, ReactNode> = {
 export function ProjectsPage() {
   const projects = useProjects()
   const { organization } = useWorkspace()
+  const isEmpty = projects.isSuccess && projects.data.items.length === 0
   // «Добавить проект» из меню вкладок ведёт сюда с ?new=1 - модалка создания открывается сразу.
   const [params, setParams] = useSearchParams()
   const creating = params.get('new') === '1'
   const setCreating = (next: boolean) => setParams(next ? { new: '1' } : {}, { replace: true })
   const newProject = (
-    <Button size="sm">
+    <Button size="sm" className={isEmpty ? 'hidden' : undefined}>
       <Plus /> Новый проект
     </Button>
   )
@@ -77,13 +78,7 @@ export function ProjectsPage() {
       <section>
         {projects.isPending && <LoadingBlock label="Загружаем проекты…" />}
         {projects.isError && <ErrorBlock error={projects.error} onRetry={() => projects.refetch()} />}
-        {projects.data && projects.data.items.length === 0 && (
-          <div className="rounded-[12px] border border-dashed border-line px-5 py-10 text-center text-[14px] text-ink-3">
-            {organization
-              ? 'В организации пока нет проектов. Создайте первый или перенесите сюда личный - через меню «…» у проекта.'
-              : 'Проектов пока нет. Создайте первый - демо-склад организатора считается за минуту.'}
-          </div>
-        )}
+        {isEmpty && <ProjectStarter key={organization?.id ?? 'personal'} />}
         {projects.data && projects.data.items.length > 0 && (
           <Stagger className="card divide-y divide-line overflow-hidden">
             {projects.data.items.map((project) => (
