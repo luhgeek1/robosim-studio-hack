@@ -60,10 +60,10 @@ ProvenanceStatus:
   type: string
   description: |
     Откуда взялось значение и можно ли ему верить.
-    user — ввёл пользователь; imported — из файла пользователя; llm_suggested — предложил ассистент, не подтверждено;
-    default — значение по умолчанию из справочника (с источником); assumption — допущение команды с обоснованием;
-    derived — вычислено из других параметров; confirmed — подтверждено первичным источником (для ТТХ и нормативов);
-    vendor_claim — заявка производителя без независимого подтверждения; missing — данных нет.
+    user - ввёл пользователь; imported - из файла пользователя; llm_suggested - предложил ассистент, не подтверждено;
+    default - значение по умолчанию из справочника (с источником); assumption - допущение команды с обоснованием;
+    derived - вычислено из других параметров; confirmed - подтверждено первичным источником (для ТТХ и нормативов);
+    vendor_claim - заявка производителя без независимого подтверждения; missing - данных нет.
   enum: [user, imported, llm_suggested, default, assumption, derived, confirmed, vendor_claim, missing]
 
 SourceKind:
@@ -270,5 +270,5 @@ parameters:
     in: header
     required: false
     description: |
-      web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле.
+      web - refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other - оба токена в теле.
     schema: {type: string, enum: [web, mobile], default: web}

@@ -12,11 +12,11 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/shared/ui/s
 
 type Scenario = ComparisonTable['scenarios'][number]
 
-// Как на обзоре проекта: вердикт — точка в палитре сайта, «обоснованно» чернилами, а не синим акцентом.
+// Как на обзоре проекта: вердикт - точка в палитре сайта, «обоснованно» чернилами, а не синим акцентом.
 const VERDICT_DOT = { ok: 'bg-ok', info: 'bg-ink', warn: 'bg-warn', crit: 'bg-crit', muted: 'bg-ink-4' } as const
 
 /* Почему рекомендован вариант: три цифры, когда вернутся вложения, как он выглядит рядом с остальными,
-   что определяет результат и оговорки — всё из того же ответа сравнения, без новых расчётов. */
+   что определяет результат и оговорки - всё из того же ответа сравнения, без новых расчётов. */
 export function WhySheet({
   table,
   open,
@@ -54,7 +54,7 @@ export function WhySheet({
           <dl className="mt-6 grid grid-cols-1 divide-y divide-line rounded-2xl bg-card ring-1 ring-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Figure value={formatRub(m.npv_rub)} label="NPV" note="лучший среди окупаемых" />
             <Figure
-              value={isNum(m.payback_years) ? formatYears(m.payback_years) : '—'}
+              value={isNum(m.payback_years) ? formatYears(m.payback_years) : '-'}
               label="окупаемость"
               note={`ROI ${formatPct(m.roi_pct, { digits: 0 })}`}
             />
@@ -106,7 +106,7 @@ export function WhySheet({
 
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-line bg-card px-5 py-4 sm:flex-nowrap sm:px-7">
           <p className="text-[12px] leading-snug text-ink-3">
-            Предварительная оценка — требует верификации при обследовании объекта.
+            Предварительная оценка - требует верификации при обследовании объекта.
           </p>
           <Button asChild className="shrink-0 rounded-xl">
             <Link to={`../scenarios/${best.scenario_id}`}>
@@ -138,7 +138,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-/* Накопленный поток рекомендуемого варианта против «как сейчас»: ниже нуля — вложения ещё не вернулись. */
+/* Накопленный поток рекомендуемого варианта против «как сейчас»: ниже нуля - вложения ещё не вернулись. */
 function Payback({ table, scenario }: { table: ComparisonTable; scenario: Scenario }) {
   const points = table.cashflow_overlay?.[scenario.scenario_id] ?? []
   if (points.length < 2) return <p className="text-[13px] text-ink-3">Денежный поток в расчёте не передан.</p>
@@ -230,7 +230,7 @@ function Payback({ table, scenario }: { table: ComparisonTable; scenario: Scenar
         </ResponsiveContainer>
       </div>
       <p className="px-2 pt-1 text-[11.5px] text-ink-3">
-        Накопленный денежный поток против «как сейчас», млн ₽. Пересечение нуля — момент окупаемости.
+        Накопленный денежный поток против «как сейчас», млн ₽. Пересечение нуля - момент окупаемости.
       </p>
     </div>
   )

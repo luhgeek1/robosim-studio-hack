@@ -9,7 +9,7 @@ from app.service.projects.processes import ProcessesOverview, ProcessView
 PROFILE_PROVENANCE: dict[str, Any] = {
     "status": "assumption",
     "note": "Пиковое окно sim_peak_window_hours в середине рабочего дня с пиковым коэффициентом объекта, "
-    "остальные рабочие часы — равномерно; сумма за сутки — объём из параметров",
+    "остальные рабочие часы - равномерно; сумма за сутки - объём из параметров",
 }
 
 

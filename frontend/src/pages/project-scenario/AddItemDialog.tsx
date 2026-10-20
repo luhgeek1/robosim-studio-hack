@@ -41,7 +41,7 @@ export function AddItemDialog({
         {matching.isPending && <LoadingBlock rows={3} />}
         {matching.isError && <ErrorBlock error={matching.error} />}
         {current && (
-          // На телефоне процессы — строка фишек над списком кандидатов.
+          // На телефоне процессы - строка фишек над списком кандидатов.
           <div className="flex max-h-[60vh] min-w-0 flex-col gap-3 sm:grid sm:grid-cols-[220px_1fr] sm:gap-4">
             <div className="scroll-thin flex shrink-0 gap-1 overflow-x-auto pb-1 sm:block sm:space-y-1 sm:overflow-x-visible sm:overflow-y-auto sm:pb-0">
               {processes.map((p) => (

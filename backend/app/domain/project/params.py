@@ -82,7 +82,7 @@ def validate_value(definition: ParameterDef, value: Scalar) -> ParamValidation:
         if (low is not None and value < low) or (high is not None and value > high):
             unit = f" {definition.unit}" if definition.unit else ""
             bounds = (
-                f"{_format(low) if low is not None else '…'}–{_format(high) if high is not None else '…'}"
+                f"{_format(low) if low is not None else '…'}-{_format(high) if high is not None else '…'}"
             )
             return ParamValidation(
                 ValidationState.WARNING,
@@ -150,7 +150,7 @@ def input_names(params: Iterable[EffectiveParam]) -> list[tuple[str, str, str | 
         definition = param.definition
         if definition.type == "dimensions":
             for part in DIMENSION_PARTS:
-                label = f"{definition.name} — {_DIMENSION_NAMES[part]}"
+                label = f"{definition.name} - {_DIMENSION_NAMES[part]}"
                 names.append((f"{param.key}_{part}", label, definition.unit, param))
         else:
             names.append((param.key, definition.name, definition.unit, param))

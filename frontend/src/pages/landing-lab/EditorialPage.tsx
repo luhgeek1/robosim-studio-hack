@@ -34,7 +34,7 @@ export function EditorialPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const y = useTransform(scrollYProgress, [0, 1], [0, 85])
   useEffect(() => {
-    document.title = 'РобоМера — сначала доказательства'
+    document.title = 'РобоМера - сначала доказательства'
     const update = () => setVisible(!document.hidden)
     document.addEventListener('visibilitychange', update)
     return () => document.removeEventListener('visibilitychange', update)
@@ -61,14 +61,14 @@ export function EditorialPage() {
         <section className="lab-hero lab-wrap" ref={heroRef}>
           <div className="lab-hero-topline">
             <span>Независимая оценка роботизации</span>
-            <span>От параметров объекта — к решению</span>
+            <span>От параметров объекта - к решению</span>
           </div>
           <div className="lab-hero-grid">
             <div className="lab-hero-copy">
               <h1>
                 Роботизация.
                 <br />
-                Сначала —<br />
+                Сначала -<br />
                 <em>доказательства.</em>
               </h1>
               <p>
@@ -108,7 +108,7 @@ export function EditorialPage() {
                   {paused || reduced ? <Play size={15} /> : <Pause size={15} />}
                 </button>
               </div>
-              <figcaption>Иллюстрация принципа. Результаты имитации — в демо.</figcaption>
+              <figcaption>Иллюстрация принципа. Результаты имитации - в демо.</figcaption>
             </motion.figure>
           </div>
           <div className="lab-hero-bottom">
@@ -124,12 +124,12 @@ export function EditorialPage() {
             <br />
             <span>Робот в вашем процессе.</span>
             <br />
-            Между ними — проверка.
+            Между ними - проверка.
           </h2>
           <div className="lab-principle-aside">
             <p>
               Паспортная производительность не учитывает вашу планировку. Очереди, зарядка и пиковая нагрузка меняют
-              необходимый парк — и цену решения.
+              необходимый парк - и цену решения.
             </p>
             <Link to="/demo/warehouse_demo_01?step=simulation" className="lab-text-link">
               Посмотреть имитацию <ArrowRight size={20} />

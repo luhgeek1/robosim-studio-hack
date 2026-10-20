@@ -38,7 +38,7 @@ def team_assumption_source(topic: str) -> SourceSpec:
         key=f"assumption:{topic}",
         kind=SourceKind.TEAM_ASSUMPTION,
         title="Допущение команды «РобоМера»",
-        note="Обоснование — в поле rationale/note значения",
+        note="Обоснование - в поле rationale/note значения",
     )
 
 

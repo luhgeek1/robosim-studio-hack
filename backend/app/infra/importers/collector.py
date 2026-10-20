@@ -7,7 +7,7 @@ from app.domain.reference import ParameterDef
 from app.infra.importers.matching import EXACT_CONFIDENCE, Match, ParameterMatcher
 from app.infra.importers.models import ImportRow, ImportSourceKind, MappedValue, ParsedImport, UnmappedField
 
-_EMPTY_TEXTS = {"", "-", "—", "–"}
+_EMPTY_TEXTS = {"", "-", "\u2013", "\u2014"}
 _NUMERIC_TYPES = {"number", "integer"}
 _BOOLEAN_NUMBERS = {0: False, 1: True}
 
@@ -52,7 +52,7 @@ def _numeric(param: ParameterDef, raw: Any, warnings: list[str], location: str) 
         parsed = number
     if isinstance(parsed, bool) or not isinstance(parsed, int | float):
         raise ValueConversionError(
-            f"{location}: «{cell_text(raw)}» — не число, параметр «{param.name}» пропущен"
+            f"{location}: «{cell_text(raw)}» - не число, параметр «{param.name}» пропущен"
         )
     if param.type == "integer" and isinstance(parsed, float) and parsed.is_integer():
         return int(parsed)
@@ -67,9 +67,9 @@ def _boolean(param: ParameterDef, raw: Any, warnings: list[str], location: str) 
         return _BOOLEAN_NUMBERS[int(parsed)]
     if isinstance(parsed, str):
         # The organizer states a requirement instead of «Да»: «EASA/ИКАО», «Обязательно для Б-маршрутов».
-        warnings.append(f"{location}: «{cell_text(raw)}» понято как «Да» — {param.name}")
+        warnings.append(f"{location}: «{cell_text(raw)}» понято как «Да» - {param.name}")
         return True
-    raise ValueConversionError(f"{location}: «{cell_text(raw)}» — ожидается «Да» или «Нет» ({param.name})")
+    raise ValueConversionError(f"{location}: «{cell_text(raw)}» - ожидается «Да» или «Нет» ({param.name})")
 
 
 def convert_value(param: ParameterDef, raw: Any, warnings: list[str], location: str) -> Scalar:

@@ -25,8 +25,8 @@ type Row = CompareResult['rows'][number]
 const NO_PROJECT = '__none'
 
 const BETTER_HINT: Record<NonNullable<Row['better']>, string> = {
-  higher: 'лучше — больше',
-  lower: 'лучше — меньше',
+  higher: 'лучше - больше',
+  lower: 'лучше - меньше',
   none: '',
 }
 
@@ -92,7 +92,7 @@ export function ComparePage() {
         <EmptyState
           icon={<GitCompareArrows className="size-6" />}
           title="Выберите хотя бы два решения"
-          description={`Отметьте «Сравнить» у 2–${COMPARE_LIMIT} решений в каталоге.`}
+          description={`Отметьте «Сравнить» у 2-${COMPARE_LIMIT} решений в каталоге.`}
           action={
             <Button asChild>
               <Link to="/catalog">Открыть каталог</Link>
@@ -190,7 +190,7 @@ function CompareTable({
   const filledRows = result.rows.filter((row) => products.some((p) => hasValue(row, p.id)))
   const hiddenEmpty = result.rows.length - filledRows.length
   const rows = onlyDiff ? filledRows.filter((row) => differs(row, products)) : filledRows
-  // Внутри группы сначала графики, потом текстовые характеристики — сетка не рвётся длинными строками.
+  // Внутри группы сначала графики, потом текстовые характеристики - сетка не рвётся длинными строками.
   const groups = SPEC_GROUP_ORDER.map((group) => {
     const inGroup = rows.filter((r) => r.group === group)
     return {
@@ -210,7 +210,7 @@ function CompareTable({
         </label>
       </div>
 
-      {/* На узком экране карточки не сжимаются в столбики, а листаются вбок лентой; с md — сетка как раньше. */}
+      {/* На узком экране карточки не сжимаются в столбики, а листаются вбок лентой; с md - сетка как раньше. */}
       <div
         className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:grid md:gap-4 md:overflow-visible md:px-0 md:pb-0"
         style={{ gridTemplateColumns: `repeat(${products.length}, minmax(0, 1fr))` }}
@@ -238,7 +238,7 @@ function CompareTable({
           <span className="size-2 rounded-full bg-ok" /> подтверждено
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-warn" /> заявка производителя — источник в подсказке у точки
+          <span className="size-2 rounded-full bg-warn" /> заявка производителя - источник в подсказке у точки
         </span>
       </div>
 
@@ -299,7 +299,7 @@ function ProductSummary({
       price={product.price_from}
       // Высота постоянная: при 2 решениях в колонке пропорция 5:6 из каталога даёт карточку выше экрана.
       className="aspect-auto h-85"
-      // Цвет продукта — тот же, что у его столбиков на графиках ниже.
+      // Цвет продукта - тот же, что у его столбиков на графиках ниже.
       accent={color}
       chips={
         <>
@@ -332,7 +332,7 @@ function ProductSummary({
           </p>
           <CardFigures
             items={[
-              { value: product.trl ?? '—', label: 'УГТ из 9' },
+              { value: product.trl ?? '-', label: 'УГТ из 9' },
               { value: formatNumber(offers), label: pluralRu(offers, ['предложение', 'предложения', 'предложений']) },
               ...(compatibility !== undefined
                 ? [
@@ -392,7 +392,7 @@ function ProductLabel({ product, color }: { product: Product; color: string }) {
   )
 }
 
-/* Числовая характеристика — горизонтальные столбики по решениям от общего нуля, у лучшего кубок. */
+/* Числовая характеристика - горизонтальные столбики по решениям от общего нуля, у лучшего кубок. */
 function SpecChart({ row, products, colors }: { row: Row; products: Product[]; colors: Map<string, string> }) {
   const numbers = products.map((p) => row.values[p.id]?.value).filter((v): v is number => typeof v === 'number')
   // Шкала от общего нуля: отрицательные значения (температура) уходят влево от нулевой отметки.
@@ -463,7 +463,7 @@ function SpecChart({ row, products, colors }: { row: Row; products: Product[]; c
   )
 }
 
-/* Текстовая характеристика — значение каждого решения строкой в той же карточке. */
+/* Текстовая характеристика - значение каждого решения строкой в той же карточке. */
 function SpecText({ row, products, colors }: { row: Row; products: Product[]; colors: Map<string, string> }) {
   return (
     <div className="card px-5 pt-4 pb-4.5">

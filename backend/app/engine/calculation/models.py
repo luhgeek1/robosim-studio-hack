@@ -11,7 +11,7 @@ from app.engine.trace import Book, InputKind, Quantity, TraceStep
 
 
 class CalculationError(ValueError):
-    """The scenario cannot be calculated as entered — the message tells the user what to fix."""
+    """The scenario cannot be calculated as entered - the message tells the user what to fix."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,7 +59,7 @@ class CalculationInput:
     items: Sequence[ItemInput]
     layout: Book = field(default_factory=lambda: Book(InputKind.LAYOUT, {}))
     # Sensitivity «объём операций»: scales each process's evaluated daily volume, not the parameters of the
-    # formula — in a product of parameters scaling every factor would move the demand by 1.2², 1.2³.
+    # formula - in a product of parameters scaling every factor would move the demand by 1.2², 1.2³.
     volume_factor: float = 1.0
     physical_norm_keys: frozenset[str] | None = None
 

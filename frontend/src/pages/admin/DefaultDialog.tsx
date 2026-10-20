@@ -35,7 +35,7 @@ function parse(item: AdminParameterDefault, text: string): { value?: ParameterDe
   if (item.type === 'integer' && !Number.isInteger(number)) return { error: 'Нужно целое число' }
   if ((item.min != null && number < item.min) || (item.max != null && number > item.max))
     return {
-      error: `Вне допустимого диапазона ${item.min != null ? formatNumber(item.min) : '…'} – ${
+      error: `Вне допустимого диапазона ${item.min != null ? formatNumber(item.min) : '…'} - ${
         item.max != null ? formatNumber(item.max) : '…'
       }`,
     }
@@ -80,8 +80,8 @@ function DefaultForm({ item, onDone }: { item: AdminParameterDefault; onDone: ()
         onSuccess: ({ projects_restamped: n }) => {
           toast.success(`«${item.name}»: новое значение по умолчанию`, {
             description: n
-              ? `${formatNumber(n)} ${pluralRu(n, ['проект получил', 'проекта получили', 'проектов получили'])} новую версию — их расчёты устарели и пересчитаются с диффом.`
-              : 'Действующие значения в проектах не изменились — расчёты остаются актуальными.',
+              ? `${formatNumber(n)} ${pluralRu(n, ['проект получил', 'проекта получили', 'проектов получили'])} новую версию - их расчёты устарели и пересчитаются с диффом.`
+              : 'Действующие значения в проектах не изменились - расчёты остаются актуальными.',
           })
           onDone()
         },
@@ -127,7 +127,7 @@ function DefaultForm({ item, onDone }: { item: AdminParameterDefault; onDone: ()
             <span className="font-semibold">{parsed.value !== undefined ? defaultText(item, parsed.value) : '…'}</span>
           </p>
         )}
-        <Field label="Обоснование" hint="Почему такое значение — видно в карточке параметра и в истории">
+        <Field label="Обоснование" hint="Почему такое значение - видно в карточке параметра и в истории">
           <Textarea
             value={rationale}
             onChange={(e) => setRationale(e.target.value)}

@@ -28,7 +28,7 @@ def released_share(item: FleetItem, tracer: Tracer, warnings: list[str]) -> Quan
         formula = f"min({item.release.key}, {cap.key} / {fte.key}) × {item.coverage.key}"
         if share < item.release.value:
             warnings.append(
-                f"{item.process_name}: высвобождение ограничено объёмом работ — {cap.value:.1f} FTE "
+                f"{item.process_name}: высвобождение ограничено объёмом работ - {cap.value:.1f} FTE "
                 f"вместо {item.labor_fte * item.release.value:.1f} по численности из датасета"
             )
     return tracer.record(
@@ -51,7 +51,7 @@ def labor_savings(items: list[FleetItem], norms: Book, tracer: Tracer, warnings:
     potential_total = hours_total = 0.0
     for item in items:
         if item.release is None:
-            warnings.append(f"{item.process_name}: не задана доля высвобождения — экономия ФОТ не считается")
+            warnings.append(f"{item.process_name}: не задана доля высвобождения - экономия ФОТ не считается")
             continue
         share = released_share(item, tracer, warnings)
         fte = Quantity(f"{item.key}.labor_fte", "Персонал процесса", item.labor_fte, "FTE", InputKind.METRIC)
@@ -96,7 +96,7 @@ def labor_savings(items: list[FleetItem], norms: Book, tracer: Tracer, warnings:
         hours_total += hours.value
     if potential_total > 0:
         warnings.append(
-            f"Денежная реализация высвобождения труда — {realization.value:.0%}: допущение, "
+            f"Денежная реализация высвобождения труда - {realization.value:.0%}: допущение, "
             "требующее плана сокращения затрат или предотвращённого найма. Перевод сотрудников на другие "
             "задачи высвобождает мощность, но сам по себе не уменьшает ФОТ."
         )

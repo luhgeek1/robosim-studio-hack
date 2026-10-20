@@ -55,7 +55,7 @@ def test_transport_cycle_hand_calculation() -> None:
 
 
 def test_passport_vs_physics() -> None:
-    # the vendor claims 80–100 pallets/h; the cycle on a 200 m route gives ~5.5 — 18× fewer
+    # the vendor claims 80-100 pallets/h; the cycle on a 200 m route gives ~5.5 - 18× fewer
     out = size(
         SizingModel.TRANSPORT_CYCLE,
         PALLETS,

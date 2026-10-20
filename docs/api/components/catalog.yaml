@@ -8,9 +8,9 @@ ProductStatus:
 Badge:
   type: string
   description: |
-    in_registry_719 — есть в реестре промпродукции (ПП 719); tested_fcbas — протестировано ФЦ БАС;
-    specs_confirmed — все ключевые ТТХ подтверждены первичными источниками; domestic — отечественный производитель;
-    has_cases — есть реализованные внедрения.
+    in_registry_719 - есть в реестре промпродукции (ПП 719); tested_fcbas - протестировано ФЦ БАС;
+    specs_confirmed - все ключевые ТТХ подтверждены первичными источниками; domestic - отечественный производитель;
+    has_cases - есть реализованные внедрения.
   enum: [in_registry_719, tested_fcbas, specs_confirmed, domestic, has_cases]
 
 SpecGroup:
@@ -31,7 +31,7 @@ Manufacturer:
 ProductOffer:
   type: object
   description: |
-    Предложение продукта в отрасли. Дубли строк каталога организатора — это разные предложения одного продукта
+    Предложение продукта в отрасли. Дубли строк каталога организатора - это разные предложения одного продукта
     (разная отрасль, сценарий, иногда цена); по Q&A их нельзя объединять.
   required: [id, industry, scenario, price]
   properties:
@@ -75,7 +75,7 @@ Product:
     name: {type: string, example: "Ronavi H1500"}
     manufacturer: {$ref: '#/Manufacturer'}
     solution_type: {type: string, example: "amr_transport"}
-    solution_type_name: {type: string, example: "AMR — транспортный"}
+    solution_type_name: {type: string, example: "AMR - транспортный"}
     subtype: {type: [string, "null"], example: "Мобильный робот"}
     status: {$ref: '#/ProductStatus'}
     trl: {type: [integer, "null"], minimum: 1, maximum: 9, description: "УГТ"}
@@ -107,7 +107,7 @@ ProductDetail:
         integration_notes: {type: [string, "null"], example: "Интеграция с WMS по REST API вендора; QR-разметка пола"}
         missing_key_specs:
           type: array
-          description: Ключевые ТТХ без данных — влияют на статус «требует проверки».
+          description: Ключевые ТТХ без данных - влияют на статус «требует проверки».
           items: {type: string}
         similar_products:
           type: array
@@ -124,7 +124,7 @@ ProductList:
 
 CatalogFacets:
   type: object
-  description: Значения фильтров с количествами — для панели фильтров каталога.
+  description: Значения фильтров с количествами - для панели фильтров каталога.
   properties:
     solution_types: {type: array, items: {$ref: '#/Facet'}}
     manufacturers: {type: array, items: {$ref: '#/Facet'}}
@@ -150,8 +150,8 @@ CompareRequest:
   properties:
     product_ids: {type: array, minItems: 2, maxItems: 5, items: {type: string, format: uuid}}
     object_type: {oneOf: [{$ref: './reference.yaml#/ObjectTypeKey'}, {type: "null"}]}
-    process_key: {type: [string, "null"], description: "Если задан — в таблицу добавляются оценки для процесса"}
-    project_id: {type: [string, "null"], format: uuid, description: "Если задан — проверки совместимости с объектом"}
+    process_key: {type: [string, "null"], description: "Если задан - в таблицу добавляются оценки для процесса"}
+    project_id: {type: [string, "null"], format: uuid, description: "Если задан - проверки совместимости с объектом"}
 
 CompareResult:
   type: object
@@ -232,12 +232,12 @@ CatalogImportResult:
   type: object
   required: [dry_run, catalog_version, created, updated, unchanged, conflicts, offers_created, skipped, not_in_file, errors, items]
   properties:
-    dry_run: {type: boolean, description: "true — предпросмотр, ничего не сохранено"}
-    catalog_version: {type: string, description: "После применения — новая версия; в предпросмотре и без изменений — текущая"}
+    dry_run: {type: boolean, description: "true - предпросмотр, ничего не сохранено"}
+    catalog_version: {type: string, description: "После применения - новая версия; в предпросмотре и без изменений - текущая"}
     created: {type: integer, description: "Новые продукты (id нет в каталоге)"}
     updated: {type: integer, description: "Продукты под управлением сида, у которых файл что-то меняет"}
     unchanged: {type: integer}
-    conflicts: {type: integer, description: "Карточки, которые правил или скрыл администратор, — не тронуты"}
+    conflicts: {type: integer, description: "Карточки, которые правил или скрыл администратор, - не тронуты"}
     offers_created: {type: integer, description: "Новые предложения: строки-дубли сохраняются как отдельные предложения"}
     skipped: {type: integer, description: "Строки без id"}
     not_in_file: {type: integer, description: "Продукты под управлением сида, которых нет в файле (не скрываются)"}
@@ -246,7 +246,7 @@ CatalogImportResult:
       items:
         type: object
         required: [row, message]
-        properties: {row: {type: integer, description: "Номер строки файла, заголовок — строка 1"}, message: {type: string}}
+        properties: {row: {type: integer, description: "Номер строки файла, заголовок - строка 1"}, message: {type: string}}
     items:
       type: array
       description: Новые, изменённые и конфликтные продукты; неизменённые только считаются
@@ -288,7 +288,7 @@ EnrichmentProposal:
 
 EnrichmentJob:
   type: object
-  description: Заявка на обогащение ТТХ продукта из открытых источников. Результат — предложения, которые админ принимает или отклоняет.
+  description: Заявка на обогащение ТТХ продукта из открытых источников. Результат - предложения, которые админ принимает или отклоняет.
   required: [id, product_id, status, created_at, proposals]
   properties:
     id: {type: string, format: uuid}
@@ -321,5 +321,5 @@ EnrichmentReview:
 EnrichmentRequest:
   type: object
   properties:
-    urls: {type: array, items: {type: string, format: uri}, description: "Если пусто — ищем сайт производителя сами"}
-    spec_keys: {type: array, items: {type: string}, description: "Если пусто — все недостающие ключевые ТТХ"}
+    urls: {type: array, items: {type: string, format: uri}, description: "Если пусто - ищем сайт производителя сами"}
+    spec_keys: {type: array, items: {type: string}, description: "Если пусто - все недостающие ключевые ТТХ"}

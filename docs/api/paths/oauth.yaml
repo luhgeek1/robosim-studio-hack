@@ -26,7 +26,7 @@ callback:
     tags: [auth]
     operationId: finishOAuth
     summary: Возврат из сервиса входа
-    description: Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка — /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity — конфликт, автоматического связывания нет.
+    description: Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка - /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity - конфликт, автоматического связывания нет.
     security: []
     parameters:
       - {name: provider, in: path, required: true, schema: {type: string, enum: [yandex, google, vk]}}

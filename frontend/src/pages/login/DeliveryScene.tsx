@@ -109,7 +109,7 @@ const STOCK = {
 }
 
 type Stock = ['box' | 'tote', number, number]
-// Rack contents as "kind width×height" per bay: b — carton, t — plastic tote; bays are split by "|".
+// Rack contents as "kind width×height" per bay: b - carton, t - plastic tote; bays are split by "|".
 const parseBay = (bay: string): Stock[] =>
   bay
     .trim()

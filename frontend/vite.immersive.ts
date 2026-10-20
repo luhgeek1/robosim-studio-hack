@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 
-const fallback = `<noscript><iframe title="РобоМера — статичная версия" src="/design-lab/immersive/static.html" style="position:fixed;inset:0;width:100%;height:100%;border:0;background:#171d1e"></iframe></noscript>`
+const fallback = `<noscript><iframe title="РобоМера - статичная версия" src="/design-lab/immersive/static.html" style="position:fixed;inset:0;width:100%;height:100%;border:0;background:#171d1e"></iframe></noscript>`
 
 export function immersiveFallback(): Plugin {
   let outputDirectory = ''

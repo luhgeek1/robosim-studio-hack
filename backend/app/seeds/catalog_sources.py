@@ -22,7 +22,7 @@ CATALOG_REQUIRED_COLUMNS = ("id", "Название", "компания", "От�
 CATALOG_SOURCE = SourceSpec(
     key="catalog:catalog_export_v4",
     kind=SourceKind.ORGANIZER_CATALOG,
-    title="catalog_export_v4.csv — каталог организатора",
+    title="catalog_export_v4.csv - каталог организатора",
     retrieved_at=date(2026, 9, 15),
     note="Цена изделия с НДС; без доставки, ПНР и интеграции (Доп. 6)",
 )

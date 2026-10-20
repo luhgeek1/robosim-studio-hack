@@ -56,7 +56,7 @@ def parse_scalar(value: Any) -> Any:
     if value is None or isinstance(value, bool | int | float):
         return value
     text = str(value).strip()
-    if text in {"", "-", "—", "–"}:
+    if text in {"", "-", "\u2013", "\u2014"}:
         return None
     word = text.split()[0].strip(".,;()").lower()
     if word in _YES:

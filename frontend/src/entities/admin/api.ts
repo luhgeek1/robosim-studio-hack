@@ -126,7 +126,7 @@ export const useCreateProduct = () => useCatalogWrite((body: ProductWrite) => ad
 export const useUpdateProduct = () =>
   useCatalogWrite(({ id, body }: { id: string; body: ProductWrite }) => adminApi.updateProduct(id, body))
 export const useDeleteProduct = () => useCatalogWrite((id: string) => adminApi.deleteProduct(id))
-// Предпросмотр ничего не пишет — кэш не трогаем; применение идёт через useCatalogWrite.
+// Предпросмотр ничего не пишет - кэш не трогаем; применение идёт через useCatalogWrite.
 export const usePreviewCatalogImport = () =>
   useMutation({
     mutationFn: (args: Omit<CatalogImport, 'dryRun'>) => adminApi.importCatalog({ ...args, dryRun: true }),

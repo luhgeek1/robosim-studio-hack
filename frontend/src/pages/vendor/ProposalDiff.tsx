@@ -15,12 +15,12 @@ import { LoadingBlock } from '@/shared/ui/states'
 type Row = { key: string; label: string; before: ReactNode; after: ReactNode }
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 24 } as const
-const EMPTY = <span className="text-ink-4">—</span>
+const EMPTY = <span className="text-ink-4">-</span>
 const text = (value: string | number | null | undefined) =>
   value === null || value === undefined || value === '' ? EMPTY : String(value)
 
 /* Что вендор предлагает поменять: только изменившиеся поля карточки, цены по отраслям и ТТХ с источником.
-   Для нового продукта «было» пусто — показываем всё, что он заполнил. */
+   Для нового продукта «было» пусто - показываем всё, что он заполнил. */
 export function ProposalDiff({ proposal }: { proposal: Proposal }) {
   const current = useProduct(proposal.product_id && proposal.kind === 'update' ? proposal.product_id : undefined)
   const solutionTypes = useSolutionTypes()
@@ -81,7 +81,7 @@ export function ProposalDiff({ proposal }: { proposal: Proposal }) {
       {cardRows.length > 0 && <DiffTable title="Карточка и цены" rows={cardRows} fresh={!before} />}
       {specRows.length > 0 && <DiffTable title="Характеристики" rows={specRows} fresh={false} />}
       {cardRows.length === 0 && specRows.length === 0 && (
-        <p className="text-[13px] text-ink-3">Карточка в заявке совпадает с текущей — менять нечего.</p>
+        <p className="text-[13px] text-ink-3">Карточка в заявке совпадает с текущей - менять нечего.</p>
       )}
     </div>
   )

@@ -41,7 +41,7 @@ export function useImportReview(projectId: string) {
   const onFile = (file: File | undefined, maxMb: number) => {
     if (!file || busy) return
     if (file.size > maxMb * 1024 * 1024) {
-      toast.error(`Максимальный размер файла — ${maxMb} МБ`)
+      toast.error(`Максимальный размер файла - ${maxMb} МБ`)
       return
     }
     reset()

@@ -16,7 +16,7 @@ export function displayRange(param: ProjectParam): string | null {
   if (min == null && max == null) return null
   const unit = param.unit ? ` ${param.unit}` : ''
   if (min != null && max != null && min === max) return `${formatNumber(min)}${unit}`
-  if (min != null && max != null) return `${formatNumber(min)}–${formatNumber(max)}${unit}`
+  if (min != null && max != null) return `${formatNumber(min)}-${formatNumber(max)}${unit}`
   if (min != null) return `от ${formatNumber(min)}${unit}`
   return `до ${formatNumber(max)}${unit}`
 }

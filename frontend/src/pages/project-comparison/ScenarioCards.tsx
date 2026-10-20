@@ -8,7 +8,7 @@ import { cn } from '@/shared/lib/utils'
 type Scenario = ComparisonTable['scenarios'][number]
 
 /* One card per scenario: payback up top, then the saving over the horizon against «как сейчас» as a bar
-   scaled to the best saving — the eye finds the winner before reading any number. */
+   scaled to the best saving - the eye finds the winner before reading any number. */
 export function ScenarioCards({ table, onExplain }: { table: ComparisonTable; onExplain: () => void }) {
   const recommendedId = table.recommendation?.scenario_id ?? null
   const saving = (s: Scenario) =>
@@ -54,7 +54,7 @@ function ScenarioCard({
   const share = saving && maxSaving ? Math.max(saving, 0) / maxSaving : 0
 
   return (
-    // Вся карточка ведёт к расчёту через растянутую ссылку в заголовке — так внутри может жить кнопка «почему».
+    // Вся карточка ведёт к расчёту через растянутую ссылку в заголовке - так внутри может жить кнопка «почему».
     <div
       className={cn(
         'group card relative flex flex-col p-5 transition-shadow hover:shadow-[0_8px_28px_-14px_rgba(20,20,19,0.25)]',

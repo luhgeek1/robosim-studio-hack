@@ -47,7 +47,7 @@ class RefreshRequest(ApiModel):
 class TokenPair(ApiModel):
     access_token: str
     refresh_token: str | None = Field(
-        default=None, description="Для X-Client=web всегда null — токен в httpOnly-cookie"
+        default=None, description="Для X-Client=web всегда null - токен в httpOnly-cookie"
     )
     token_type: str = "bearer"  # noqa: S105  (OAuth2 token type, not a secret)
     expires_in: int = Field(description="Секунд до истечения access-токена")

@@ -20,7 +20,7 @@ const KIND_LABEL: Record<NonNullable<Item['kind']>, string> = {
 const PAD_SHARE = 0.2
 const SPRING = { type: 'spring', stiffness: 150, damping: 24 } as const
 
-// Группы и цена из каталога сдвигаются множителем — их вход понятнее в процентах от текущего.
+// Группы и цена из каталога сдвигаются множителем - их вход понятнее в процентах от текущего.
 const isRelative = (item: Item) =>
   item.kind === 'group' || item.kind === 'catalog' || (!item.unit && item.base_input === 1)
 
@@ -30,13 +30,13 @@ function inputText(item: Item, v: number): string {
     const delta = Math.round((v / base - 1) * 100)
     return delta === 0 ? 'как сейчас' : `${delta > 0 ? '+' : '−'}${Math.abs(delta)} %`
   }
-  // Доли читаются как проценты: 0,85 доли — это 85 %.
+  // Доли читаются как проценты: 0,85 доли - это 85 %.
   if (item.unit?.startsWith('доля')) return `${formatPct(v, { share: true, digits: 0 })}${item.unit.slice(4)}`
   return item.unit ? `${formatNumber(v)} ${item.unit}` : formatNumber(v)
 }
 
-/* Торнадо одной полосой на параметр: часть лучше базы зелёная, хуже — красная. Точки отмечают результаты
-   на границах параметра; значения и входы стоят под полосой. Справа — разброс, по нему и порядок. */
+/* Торнадо одной полосой на параметр: часть лучше базы зелёная, хуже - красная. Точки отмечают результаты
+   на границах параметра; значения и входы стоят под полосой. Справа - разброс, по нему и порядок. */
 export function Tornado({ result, metric }: { result: SensitivityResult; metric: Metric }) {
   const items = [...result.items].sort((a, b) => a.rank - b.rank)
   const { format: fmt, better } = METRIC[metric]
@@ -45,7 +45,7 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
   const hasNull = items.some((i) => i.metric_at_low === null || i.metric_at_high === null)
   let min = Math.min(...values)
   let max = Math.max(...values)
-  // Пустое значение — «не окупается в горизонте»: рисуем его у дальнего края, а не прячем.
+  // Пустое значение - «не окупается в горизонте»: рисуем его у дальнего края, а не прячем.
   const nullEdge = max + (max - min || Math.abs(max) || 1) * 0.2
   if (hasNull) max = nullEdge
   const span = max - min || Math.abs(max) || 1
@@ -92,7 +92,7 @@ export function Tornado({ result, metric }: { result: SensitivityResult; metric:
                     </span>
                     <span className="inline-block max-w-full">
                       <span aria-hidden className="mx-1 font-normal text-ink-4">
-                        –
+                        -
                       </span>
                       <span className="sr-only"> до </span>
                       {fmt(rangeHigh)}
@@ -175,7 +175,7 @@ function Row({
   swing: string
   share: number
 }) {
-  // Концы полосы — метрика на нижней и верхней границе параметра, слева меньшая.
+  // Концы полосы - метрика на нижней и верхней границе параметра, слева меньшая.
   const ends = [
     { value: item.metric_at_low, input: item.low_input },
     { value: item.metric_at_high, input: item.high_input },
@@ -262,7 +262,7 @@ function Row({
         {item.kind && <div className="opacity-80">{KIND_LABEL[item.kind]}</div>}
         {isNum(item.base_input) && <div>Сейчас: {inputText(item, item.base_input)}</div>}
         <div>
-          При {inputText(item, item.low_input)} — {fmt(item.metric_at_low)}, при {inputText(item, item.high_input)} —{' '}
+          При {inputText(item, item.low_input)} - {fmt(item.metric_at_low)}, при {inputText(item, item.high_input)} -{' '}
           {fmt(item.metric_at_high)}
         </div>
       </TooltipContent>
@@ -270,7 +270,7 @@ function Row({
   )
 }
 
-/* Отрезок от базы до конца: зелёный, если там лучше базы, красный — если хуже. */
+/* Отрезок от базы до конца: зелёный, если там лучше базы, красный - если хуже. */
 function Segment({ from, to, good, open }: { from: number; to: number; good: boolean; open: boolean }) {
   const left = Math.min(from, to)
   const width = Math.abs(to - from)

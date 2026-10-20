@@ -1,9 +1,9 @@
 # Имитация: запрос, прогон, сводка KPI, таймлайн, журнал событий для 2D-плеера, тепловая карта.
-# Принцип: бэкенд считает, фронт воспроизводит. Журнал компактный — движение между узлами фронт интерполирует сам.
+# Принцип: бэкенд считает, фронт воспроизводит. Журнал компактный - движение между узлами фронт интерполирует сам.
 
 SimulationMode:
   type: string
-  description: normal — обычный день; peak — день с пиковым коэффициентом; custom — параметры заданы явно.
+  description: normal - обычный день; peak - день с пиковым коэффициентом; custom - параметры заданы явно.
   enum: [normal, peak, custom]
 
 DispatchPolicy:
@@ -14,7 +14,7 @@ RobotFailure:
   type: object
   required: [at_hour, duration_hours]
   properties:
-    robot_index: {type: [integer, "null"], description: "Какой робот флота (0..N-1); null — случайный"}
+    robot_index: {type: [integer, "null"], description: "Какой робот флота (0..N-1); null - случайный"}
     at_hour: {type: number, example: 14}
     duration_hours: {type: number, example: 2}
 
@@ -38,8 +38,8 @@ SimulationRequest:
           stations: {type: [integer, "null"]}
     failures: {type: array, items: {$ref: '#/RobotFailure'}}
     dispatch_policy: {$ref: '#/DispatchPolicy'}
-    record_events: {type: boolean, default: true, description: "false — только KPI, быстрее (для перебора N)"}
-    compare_baseline: {type: boolean, default: false, description: "Прогнать тем же движком ручной процесс для «SLA как сейчас» — пока не поддерживается, summary.baseline = null"}
+    record_events: {type: boolean, default: true, description: "false - только KPI, быстрее (для перебора N)"}
+    compare_baseline: {type: boolean, default: false, description: "Прогнать тем же движком ручной процесс для «SLA как сейчас» - пока не поддерживается, summary.baseline = null"}
 
 StateShare:
   type: object
@@ -123,7 +123,7 @@ SimulationSummary:
     bottleneck: {$ref: '#/Bottleneck'}
     vs_analytic:
       type: object
-      description: Сверка «расчёт против имитации» — блок, который должен быть на экране (ТЗ 3.6.2).
+      description: Сверка «расчёт против имитации» - блок, который должен быть на экране (ТЗ 3.6.2).
       required: [analytic_throughput_per_hour, sim_throughput_per_hour, delta_pct, verdict]
       properties:
         analytic_throughput_per_hour: {type: number}
@@ -133,7 +133,7 @@ SimulationSummary:
         text: {type: string, example: "Имитация подтверждает расчёт: 131 палл/ч против 136 (−4 %), SLA выполнен"}
     baseline:
       type: [object, "null"]
-      description: Тот же день ручным процессом (если compare_baseline); пока не поддерживается — null.
+      description: Тот же день ручным процессом (если compare_baseline); пока не поддерживается - null.
       properties: {throughput_per_hour: {type: number}, sla_achieved_pct: {type: number}, avg_lead_time_min: {type: number}}
     per_process:
       type: array
@@ -147,7 +147,7 @@ SimulationSummary:
           utilization: {type: number}
     skipped_processes:
       type: array
-      description: Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) — их N остаётся по расчёту.
+      description: Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) - их N остаётся по расчёту.
       items:
         type: object
         properties: {process_key: {type: string}, reason: {type: string}}
@@ -167,7 +167,7 @@ SimulationRun:
     layout_id: {type: string, format: uuid}
     layout_version: {type: integer}
     seed: {type: integer}
-    purpose: {type: string, enum: [run, sweep], description: "sweep — прогон рекомендованного N, записанный перебором флота"}
+    purpose: {type: string, enum: [run, sweep], description: "sweep - прогон рекомендованного N, записанный перебором флота"}
     job_id: {type: [string, "null"], format: uuid}
     events_count: {type: integer}
     fleet:
@@ -217,7 +217,7 @@ SimEvent:
   type: object
   description: |
     Событие журнала. move: робот идёт по узлам path, прибытие в момент eta; фронт интерполирует положение по рёбрам.
-    Остальные типы — состояние в узле на dur секунд.
+    Остальные типы - состояние в узле на dur секунд.
   required: [t, type]
   properties:
     t: {type: number, description: "Секунды от начала прогона"}
@@ -260,7 +260,7 @@ SimulationReplay:
     events: {type: array, items: {$ref: '#/SimEvent'}}
     tasks_snapshot:
       type: array
-      description: Очередь задач на момент from_s — чтобы плеер стартовал не с пустой сцены.
+      description: Очередь задач на момент from_s - чтобы плеер стартовал не с пустой сцены.
       items:
         type: object
         properties: {task_id: {type: string}, process_key: {type: string}, from_node: {type: string}, to_node: {type: string}, created_at_s: {type: number}}
@@ -293,11 +293,11 @@ SimulationHeatmap:
 
 FleetSweepRequest:
   type: object
-  description: Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость».
+  description: Перебор количества роботов для процесса - кривая «N → SLA, загрузка, окупаемость».
   required: [process_key]
   properties:
     process_key: {type: string}
-    from_count: {type: [integer, "null"], minimum: 1, description: "Вместе с to_count — полный перебор диапазона вместо поиска"}
+    from_count: {type: [integer, "null"], minimum: 1, description: "Вместе с to_count - полный перебор диапазона вместо поиска"}
     to_count: {type: [integer, "null"], minimum: 1}
     mode:
       $ref: '#/SimulationMode'
@@ -327,12 +327,12 @@ FleetSweepResult:
           utilization: {type: number}
           throughput_per_hour: {type: number}
           queue_max: {type: integer}
-          robots_total: {type: [integer, "null"], description: "N плюс резерв — как в сценарии после применения"}
+          robots_total: {type: [integer, "null"], description: "N плюс резерв - как в сценарии после применения"}
           capex_rub: {type: [number, "null"]}
           payback_years: {type: [number, "null"], description: "null, если N не держит SLA: такой парк не выполняет работу"}
           npv_rub: {type: [number, "null"]}
           simulation_id: {type: [string, "null"], format: uuid}
-    recommended_count: {type: [integer, "null"], description: "N после совместной проверки всех моделируемых процессов; null — парк не подтверждён"}
+    recommended_count: {type: [integer, "null"], description: "N после совместной проверки всех моделируемых процессов; null - парк не подтверждён"}
     candidate_count: {type: [integer, "null"], description: "Кандидат отдельного поиска, ещё без совместного SLA"}
     joint_validation:
       oneOf: [{$ref: '#/JointFleetValidation'}, {type: "null"}]
@@ -341,10 +341,10 @@ FleetSweepResult:
     simulation_id: {type: [string, "null"], format: uuid, description: "Прогон рекомендованного N с журналом для плеера"}
     applied: {type: boolean, description: "Совместно проверенные количества атомарно записаны в актуальный сценарий"}
     by_formula: {oneOf: [{$ref: '#/FleetEconomics'}, {type: "null"}], description: "N по формуле цикла и его экономика"}
-    by_simulation: {oneOf: [{$ref: '#/FleetEconomics'}, {type: "null"}], description: "N по имитации — то, что берёт расчёт"}
+    by_simulation: {oneOf: [{$ref: '#/FleetEconomics'}, {type: "null"}], description: "N по имитации - то, что берёт расчёт"}
     job_id: {type: [string, "null"], format: uuid}
     computed_at: {type: [string, "null"], format: date-time}
-    explanation: {type: string, example: "12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 %"}
+    explanation: {type: string, example: "12 - минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 - простой 38 %"}
 
 JointFleetValidation:
   type: object

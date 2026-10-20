@@ -106,7 +106,7 @@ adminManufacturers:
   get:
     tags: [admin]
     operationId: adminListManufacturers
-    summary: Производители — для привязки учётной записи вендора
+    summary: Производители - для привязки учётной записи вендора
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/vendor.yaml#/ManufacturerList'}}}}
       '403': {$ref: '../components/common.yaml#/responses/Forbidden'}

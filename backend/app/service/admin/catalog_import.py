@@ -88,7 +88,7 @@ class CatalogImporter:
         missing = [name for name in CATALOG_REQUIRED_COLUMNS if name not in header.lstrip("﻿").split(";")]
         if missing:
             raise InvalidInputError(
-                f"В файле нет колонок: {', '.join(missing)} — нужен формат catalog_export_v4.csv"
+                f"В файле нет колонок: {', '.join(missing)} - нужен формат catalog_export_v4.csv"
             )
         rows_by_id, without_id = parse_catalog(text.splitlines(keepends=True))
         valid, errors = self._validated(rows_by_id)
@@ -211,7 +211,7 @@ class CatalogImporter:
         if solution_type is None:
             return ImportRowError(
                 rows[0].row,
-                f"«{name}»: тип решения не определяется по колонкам «Тип» и «Подтип» — добавьте вручную",
+                f"«{name}»: тип решения не определяется по колонкам «Тип» и «Подтип» - добавьте вручную",
             )
         # A new product joins the catalog without processes: matching offers it once the admin assigns them.
         return ProductMappingSeed(id=str(pid), name=name, solution_type=solution_type)

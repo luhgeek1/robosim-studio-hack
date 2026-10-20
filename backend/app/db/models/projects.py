@@ -24,7 +24,7 @@ class Project(UuidPkMixin, TimestampMixin, Base):
     )
 
     owner_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey("users.id", ondelete="CASCADE"))
-    # None — personal project of owner_id; otherwise shared with every member of the organization.
+    # None - personal project of owner_id; otherwise shared with every member of the organization.
     organization_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.ForeignKey("organizations.id", ondelete="CASCADE")
     )

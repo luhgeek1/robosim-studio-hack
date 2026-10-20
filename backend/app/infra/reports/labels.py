@@ -20,7 +20,7 @@ STATUS_LABELS = {
 _SCENARIO_KINDS = {"baseline": "Как сейчас", "purchase": "Покупка", "raas": "RaaS", "lease": "Лизинг"}
 _VERDICTS = {
     "attractive": "Привлекательно (до 3 лет)",
-    "reasonable": "Обоснованно (3–5 лет)",
+    "reasonable": "Обоснованно (3-5 лет)",
     "questionable": "Сомнительно",
     "not_recommended": "Нецелесообразно",
     "insufficient_data": "Недостаточно данных",

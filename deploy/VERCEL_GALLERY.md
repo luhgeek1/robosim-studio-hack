@@ -2,11 +2,11 @@
 
 Публичная ссылка: https://robomera-design-gallery.vercel.app/design-lab
 
-Отдельный проект `robomera-design-gallery`. Точка входа — `/design-lab`: шесть концепций
+Отдельный проект `robomera-design-gallery`. Точка входа - `/design-lab`: шесть концепций
 и ссылка на исходный лендинг `/`. Публикация галереи не заменяет `prooood.ru`.
 
 Собрать `frontend` командой `npm run check`. Скопировать содержимое `frontend/dist/`
-в отдельный каталог `robomera-design-gallery`, а `deploy/vercel-gallery.json` —
+в отдельный каталог `robomera-design-gallery`, а `deploy/vercel-gallery.json` -
 в его `vercel.json`. Из этого каталога выполнить `vercel --yes --prod`
 в подключённом аккаунте. При повторной публикации использовать тот же Vercel-проект.
 

@@ -24,7 +24,7 @@ export function CompareToggle({
       className={cn('rounded-lg', !selected && 'bg-card', className)}
       onClick={() => {
         const ok = selection.toggle({ id: product.id, name: product.name })
-        if (!ok) toast.warning(`В сравнении уже ${COMPARE_LIMIT} решений — уберите одно, чтобы добавить новое`)
+        if (!ok) toast.warning(`В сравнении уже ${COMPARE_LIMIT} решений - уберите одно, чтобы добавить новое`)
       }}
     >
       {selected ? <Check /> : <Plus />}

@@ -53,7 +53,7 @@ const STEPS = [
 
 function Brand({ footer = false }: { footer?: boolean }) {
   return (
-    <Link to="/" className="landing-brand" aria-label="РобоМера — на главную">
+    <Link to="/" className="landing-brand" aria-label="РобоМера - на главную">
       <span className="landing-brand-mark">
         <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="2.5" />
@@ -78,7 +78,7 @@ export function LandingPage() {
   const signIn = account ? sessionHome(user).path : '/login'
 
   useEffect(() => {
-    document.title = 'РобоМера — роботизация начинается с расчёта'
+    document.title = 'РобоМера - роботизация начинается с расчёта'
     window.scrollTo({ top: 0, behavior: 'instant' })
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setMenuOpen(false)
@@ -153,7 +153,7 @@ export function LandingPage() {
             </div>
             <motion.div className="landing-section-heading" {...reveal()}>
               <h2 id="workflow-title">
-                От «а если» —<br />к решению <Accent>в цифрах.</Accent>
+                От «а если» -<br />к решению <Accent>в цифрах.</Accent>
               </h2>
               <p>
                 Всё, что нужно для первой оценки роботизации:
@@ -220,7 +220,7 @@ export function LandingPage() {
               <motion.div className="landing-cta-copy" {...reveal()}>
                 <span className="landing-launch-eyebrow">ОТ ПЛАНА К РЕШЕНИЮ</span>
                 <h2 id="create-project-title">
-                  Теперь —
+                  Теперь -
                   <br />
                   <span>ваш сценарий.</span>
                 </h2>

@@ -56,7 +56,7 @@ export function QuestionsSection({ workspace }: { workspace: string }) {
               <br />
               <span>до старта.</span>
             </h2>
-            <p>Главное о платформе, данных и результате — до того, как вы создадите свой проект.</p>
+            <p>Главное о платформе, данных и результате - до того, как вы создадите свой проект.</p>
             <div className="landing-faq-start">
               <p>
                 Демо-объекты уже внутри.

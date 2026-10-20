@@ -353,7 +353,7 @@ class Deriver:
             fitted, wanted = f"{slots:,.0f}".replace(",", " "), f"{positions.value:,.0f}".replace(",", " ")
             self.warnings.append(
                 f"В здании помещается {fitted} из {wanted} паллетомест при {int(levels.value)} ярусах"
-                " — проверьте высоту потолков и площадь"
+                " - проверьте высоту потолков и площадь"
             )
         return aisles, block.value
 

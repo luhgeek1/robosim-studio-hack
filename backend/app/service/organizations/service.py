@@ -151,7 +151,7 @@ class OrganizationService:
         await self._uow.flush()
 
     async def remove_member(self, organization_id: UUID, user_id: UUID) -> None:
-        """An owner removes anyone; a member can only leave. The last owner cannot leave — delete instead."""
+        """An owner removes anyone; a member can only leave. The last owner cannot leave - delete instead."""
         _, me = await self._member(organization_id)
         if user_id != self._user.id and me.role != OrganizationRole.OWNER:
             raise ForbiddenError("Удалять участников может только владелец организации")

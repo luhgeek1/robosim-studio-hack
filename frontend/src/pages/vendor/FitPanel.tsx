@@ -16,7 +16,7 @@ const SEGMENTS = [
 ] as const
 
 /* Как продукты проходят подбор в проектах платформы: вердикты, частые причины исключения и ТТХ, которых не хватило
-   для проверки. Только счётчики — чьи это проекты, вендор не видит. */
+   для проверки. Только счётчики - чьи это проекты, вендор не видит. */
 export function FitPanel({ products }: { products: VendorProduct[] }) {
   const fit = useVendorFit()
   const names = new Map(products.map((p) => [p.product.id, p.product.name]))
@@ -109,7 +109,7 @@ export function FitPanel({ products }: { products: VendorProduct[] }) {
           </ul>
           {absent.length > 0 && (
             <p className="meta mt-3">
-              Не были кандидатами: {absent.map((p) => names.get(p.product_id)).join(', ')} — объекты или процессы этих
+              Не были кандидатами: {absent.map((p) => names.get(p.product_id)).join(', ')} - объекты или процессы этих
               проектов не совпадают с карточкой.
             </p>
           )}

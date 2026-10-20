@@ -71,7 +71,7 @@ export function WeightsPopover({
               <div className="flex items-center justify-between text-xs">
                 <Label htmlFor={`w-${key}`}>{CRITERION_LABEL[key] ?? key}</Label>
                 <span className="num text-muted-foreground">
-                  {total ? formatPct((draft[key] / total) * 100, { digits: 0 }) : '—'}
+                  {total ? formatPct((draft[key] / total) * 100, { digits: 0 }) : '-'}
                 </span>
               </div>
               <Slider

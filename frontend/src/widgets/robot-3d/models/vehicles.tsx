@@ -117,7 +117,7 @@ export function Truck({ v, accent }: ModelProps) {
           position={[noseX, wr + 0.05 + (H - wr - 0.1) / 2, 0]}
           material={bodyMat}
         />
-        {/* Face parts sit just proud of the nose's flat front (radius 0.28 eats the edges) — flush faces z-fight. */}
+        {/* Face parts sit just proud of the nose's flat front (radius 0.28 eats the edges) - flush faces z-fight. */}
         <RoundedBox
           args={[0.03, (H - wr) * 0.26, faceW]}
           radius={0.012}

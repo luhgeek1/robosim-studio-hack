@@ -163,7 +163,7 @@ class ParamUpsert(ApiModel):
     key: str
     value: Scalar
     unit: str | None = Field(
-        default=None, description="Если отличается от базовой единицы — бэкенд конвертирует"
+        default=None, description="Если отличается от базовой единицы - бэкенд конвертирует"
     )
     note: str | None = Field(default=None, description="Комментарий к правке, попадает в историю")
 
@@ -346,7 +346,7 @@ class ImportReview(ApiModel):
 class ImportResult(ApiModel):
     import_id: UUID
     source_kind: Literal["xlsx_template", "xlsx_freeform", "csv", "json", "text_llm", "pdf_llm"]
-    provider: str = Field(description="rules — детерминированный разбор шаблона; gemini — ассистент")
+    provider: str = Field(description="rules - детерминированный разбор шаблона; gemini - ассистент")
     mapped: list[ImportMappedItem]
     unmapped: list[ImportUnmapped]
     warnings: list[str]
@@ -356,7 +356,7 @@ class ImportResult(ApiModel):
 
 
 class ImportApply(ApiModel):
-    accept_keys: list[str] = Field(default_factory=list, description="Если пусто — применить все mapped")
+    accept_keys: list[str] = Field(default_factory=list, description="Если пусто - применить все mapped")
     overwrite_user_values: bool = False
     row_ids: list[str] | None = Field(default=None, max_length=10000)
 

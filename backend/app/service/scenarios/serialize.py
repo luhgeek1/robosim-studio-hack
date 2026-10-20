@@ -84,7 +84,7 @@ class Serializer:
         if ".share." in key:
             return {
                 "status": ProvenanceStatus.DEFAULT.value,
-                "note": "Распределение персонала по процессам — справочник объекта",
+                "note": "Распределение персонала по процессам - справочник объекта",
             }
         return {"status": ProvenanceStatus.USER.value, "note": "Задано в сценарии"}
 

@@ -34,7 +34,7 @@ const IMPACT_RANK: Record<Item['impact'], number> = { high: 0, medium: 1, low: 2
 const IMPACT_LABEL: Partial<Record<Item['impact'], string>> = { high: 'Сильно влияет', medium: 'Влияет' }
 const STATUS_RANK: Partial<Record<ProvenanceStatus, number>> = { missing: 0, assumption: 1, default: 2 }
 
-// Клетки карты параметров идут от подтверждённого к пробелам, цвет — по происхождению значения.
+// Клетки карты параметров идут от подтверждённого к пробелам, цвет - по происхождению значения.
 const CELL_ORDER: ProvenanceStatus[] = [
   'user',
   'imported',
@@ -203,8 +203,8 @@ function Readiness({ projectId, params }: { projectId: string; params: ProjectPa
           <h2 className="h3 text-[20px]">{verdict.title}</h2>
           <p className="mt-1 text-[14px] leading-relaxed text-ink-3">
             {queue.length > 0
-              ? `Оценка станет точнее, если уточнить ${queue.length} ${pluralRu(queue.length, ['значение', 'значения', 'значений'])} — начните с главного.`
-              : 'Все важные значения уточнены — оценка опирается на ваши данные.'}
+              ? `Оценка станет точнее, если уточнить ${queue.length} ${pluralRu(queue.length, ['значение', 'значения', 'значений'])} - начните с главного.`
+              : 'Все важные значения уточнены - оценка опирается на ваши данные.'}
           </p>
         </div>
       </div>
@@ -228,7 +228,7 @@ function Readiness({ projectId, params }: { projectId: string; params: ProjectPa
   )
 }
 
-/* Карта параметров: одна клетка — один параметр. Видно, какая часть объекта описана вашими данными,
+/* Карта параметров: одна клетка - один параметр. Видно, какая часть объекта описана вашими данными,
    а какая держится на справочнике и допущениях; клик ведёт к параметру. */
 function ParamMap({ params }: { params: ProjectParam[] }) {
   const [hovered, setHovered] = useState<ProjectParam | null>(null)
@@ -303,7 +303,7 @@ function ParamMap({ params }: { params: ProjectParam[] }) {
 }
 
 /* Очередь «уточните главное»: по одному параметру, начиная с самых влиятельных. Значение можно исправить или
-   подтвердить как верное — после сохранения параметр уходит из очереди и становится «введённым». */
+   подтвердить как верное - после сохранения параметр уходит из очереди и становится «введённым». */
 function Focus({ projectId, queue, params }: { projectId: string; queue: Item[]; params: ProjectParam[] }) {
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -524,7 +524,7 @@ function Passport({ params }: { params: ProjectParam[] }) {
       {figures.map(({ param, label }) => (
         <Figure
           key={param.key}
-          value={typeof param.value === 'number' ? formatNumber(param.value) : '—'}
+          value={typeof param.value === 'number' ? formatNumber(param.value) : '-'}
           label={label}
           onClick={() => scrollToParam(param.key)}
         />
@@ -546,7 +546,7 @@ function Figure({ value, label, onClick }: { value: string; label: string; onCli
       type="button"
       onClick={onClick}
       className="min-w-0 px-5 py-3.5 text-left transition-colors hover:bg-surface-2 sm:px-6 sm:py-4"
-      title={`${label} — изменить`}
+      title={`${label} - изменить`}
     >
       <span className="num block text-[20px] leading-tight font-semibold tracking-[-0.01em]">{value}</span>
       <span className="mt-0.5 block text-[12.5px] text-ink-3 max-lg:leading-snug lg:truncate">{label}</span>

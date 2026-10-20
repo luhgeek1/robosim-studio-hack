@@ -63,7 +63,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
         {flagged && (
           <p className={cn('mt-1 text-[12.5px]', error ? 'text-crit' : 'text-warn')}>
             {check.message ?? (check.status === 'missing' ? 'Значение не задано' : 'Проверьте значение')}
-            {check.how_to_fix && <span className="text-ink-3"> — {check.how_to_fix}</span>}
+            {check.how_to_fix && <span className="text-ink-3"> - {check.how_to_fix}</span>}
           </p>
         )}
       </div>

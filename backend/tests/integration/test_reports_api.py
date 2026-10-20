@@ -49,7 +49,7 @@ async def test_pdf_excel_and_json_reports_are_built_and_downloaded(client: Async
     assert xlsx["status"] == "done", xlsx
     book = load_workbook(BytesIO((await client.get(xlsx["file"]["url"], headers=headers)).content))
     assert {"Сводка", "Сравнение", "Параметры объекта", "Нормативы"} <= set(book.sheetnames)
-    calc = next(book[name] for name in book.sheetnames if name.startswith("Расчёт — Покупка"))
+    calc = next(book[name] for name in book.sheetnames if name.startswith("Расчёт - Покупка"))
     formulas = [c.value for c in calc["C"] if isinstance(c.value, str) and c.value.startswith("=")]
     assert not formulas
     assert all(sheet.protection.sheet for sheet in book.worksheets)

@@ -130,7 +130,7 @@ async def admin_review_proposal(
     "/admin/manufacturers",
     tags=["admin"],
     operation_id="adminListManufacturers",
-    summary="Производители — для привязки учётной записи вендора",
+    summary="Производители - для привязки учётной записи вендора",
 )
 async def admin_list_manufacturers(_: CatalogAdmin, uow: UowDep) -> ManufacturerList:
     repo = VendorRepository(uow.session)

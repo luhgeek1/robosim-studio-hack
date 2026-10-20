@@ -110,7 +110,7 @@ export function PublishDialog({
 
           <div>
             <span className="text-[13px] font-medium">Источник новых значений</span>
-            <p className="meta">Без источника у значений останется прежний — лучше указать, откуда число (ТЗ 3.5.1).</p>
+            <p className="meta">Без источника у значений останется прежний - лучше указать, откуда число (ТЗ 3.5.1).</p>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <Input
                 value={sourceTitle}

@@ -285,7 +285,7 @@ def test_fleet_starts_mid_day_with_a_share_on_chargers() -> None:
     process = replace(PALLETS, robot=replace(PALLETS.robot, runtime_h=6.0, charge_min=120.0), robots=10)
     inp = SimInput(plan, (process,), SETTINGS, SimConfig(mode=SimMode.PEAK, seed=1))
     model = Model(inp, prepared.pallet_net, prepared.full_net, prepared.segments)
-    # Work 6 h × 0.8 and charge 2 h × 0.8 of battery: a quarter of the cycle is charging — 2 of 10 robots.
+    # Work 6 h × 0.8 and charge 2 h × 0.8 of battery: a quarter of the cycle is charging - 2 of 10 robots.
     assert sum(r.charging_at_start for r in model.robots) == 2
     assert all(SETTINGS.charge_threshold <= r.battery <= 1 for r in model.robots)
     result = simulate(inp, prepared)

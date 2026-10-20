@@ -209,7 +209,7 @@ class ScenarioService:
             scenario.name = patch.name.strip()
         if "items" in patch.fields and patch.items is not None:
             if scenario.is_baseline and patch.items:
-                raise InvalidInputError("В базовом сценарии нет роботов — создайте сценарий роботизации")
+                raise InvalidInputError("В базовом сценарии нет роботов - создайте сценарий роботизации")
             context = await self._loader.context(self._user, project.id)
             items = await self._items(context.object_type, patch.items)
             _keep_simulation(scenario.items, items)
@@ -363,7 +363,7 @@ class ScenarioService:
     @staticmethod
     def _check_item(spec: ScenarioItemSpec, name: str) -> None:
         if spec.count_mode == CountMode.MANUAL and not spec.count_manual:
-            raise InvalidInputError(f"Для «{name}» выбран ручной режим — укажите количество")
+            raise InvalidInputError(f"Для «{name}» выбран ручной режим - укажите количество")
         overridden = spec.price_override_rub is not None or spec.throughput_override_per_hour is not None
         if overridden and not (spec.override_reason or "").strip():
             raise InvalidInputError(f"Укажите причину ручной цены или производительности для «{name}»")
@@ -407,7 +407,7 @@ class ScenarioService:
         chosen = recommended_candidates(outcome.processes)
         if not chosen:
             raise ConflictError(
-                "Ни одно решение из подбора не даёт положительного эффекта на этом объекте — "
+                "Ни одно решение из подбора не даёт положительного эффекта на этом объекте - "
                 "выберите продукты вручную, чтобы сравнить варианты"
             )
         return [

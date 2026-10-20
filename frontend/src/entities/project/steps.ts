@@ -3,7 +3,7 @@ export type ProjectStepId =
 
 export type ProjectStep = { id: ProjectStepId; label: string; question: string; soon?: boolean }
 
-// Путь оценки как последовательность вопросов заказчика — так был устроен прототип v0.
+// Путь оценки как последовательность вопросов заказчика - так был устроен прототип v0.
 export const PROJECT_STEPS: ProjectStep[] = [
   { id: 'object', label: 'Объект', question: 'Вот мой объект' },
   { id: 'processes', label: 'Где деньги', question: 'Что в нём происходит' },

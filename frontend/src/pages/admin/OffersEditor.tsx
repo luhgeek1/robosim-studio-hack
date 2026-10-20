@@ -45,7 +45,7 @@ export function OffersEditor({
           <h3 className="text-[13.5px] font-semibold">Цены по отраслям</h3>
           <p className="meta">
             Цена изделия с НДС, без доставки и внедрения. В каталоге показывается минимальная
-            {Number.isFinite(minPrice) && <> — сейчас {formatRub(minPrice)}</>}.
+            {Number.isFinite(minPrice) && <> - сейчас {formatRub(minPrice)}</>}.
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={add}>
@@ -56,7 +56,7 @@ export function OffersEditor({
       {error && <p className="mb-3 text-[12.5px] text-crit">{error}</p>}
       {offers.length === 0 && (
         <div className="rounded-[12px] border border-dashed border-line px-4 py-8 text-center text-[13.5px] text-ink-3">
-          Предложений нет — без цены решение не попадёт в экономику сценария.
+          Предложений нет - без цены решение не попадёт в экономику сценария.
         </div>
       )}
 

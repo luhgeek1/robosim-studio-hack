@@ -93,7 +93,7 @@ export async function derivationDocument(layout: Layout, projectName: string): P
     new Paragraph({
       heading: HeadingLevel.HEADING_3,
       spacing: { before: 240, after: 80 },
-      children: [text(`${index + 1}. ${step.name} — ${formatValue(step.value, step.unit)}`)],
+      children: [text(`${index + 1}. ${step.name} - ${formatValue(step.value, step.unit)}`)],
     }),
     para([text('Формула: ', { muted: true, size: 20 }), text(step.formula, { mono: true, size: 20 })], 40),
     para([text('Подстановка: ', { muted: true, size: 20 }), text(step.formula_rendered, { mono: true, size: 20 })]),
@@ -122,7 +122,7 @@ export async function derivationDocument(layout: Layout, projectName: string): P
 
   const doc = new Document({
     creator: 'РобоМера',
-    title: `Как получена геометрия — ${projectName}`,
+    title: `Как получена геометрия - ${projectName}`,
     styles: { default: { document: { run: { font: 'Calibri', size: 22 } } } },
     sections: [
       {
@@ -132,7 +132,7 @@ export async function derivationDocument(layout: Layout, projectName: string): P
           para([text(meta.join(' · '), { muted: true, size: 20 })], 240),
           para([
             text(
-              'Схема построена из параметров объекта и нормативов, это не CAD. Каждый размер ниже — формула с подставленными ' +
+              'Схема построена из параметров объекта и нормативов, это не CAD. Каждый размер ниже - формула с подставленными ' +
                 'значениями; средние маршруты по графу проездов идут в цикл робота и в имитацию.',
               { size: 20 },
             ),

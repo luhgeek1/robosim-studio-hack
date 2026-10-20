@@ -87,7 +87,7 @@ export function CreateProjectDialog({
             <DialogDescription>
               Выберите объект и начальные данные. Всё можно изменить позже.
               {workspace.organization && (
-                <> Проект появится в организации {quoted(workspace.organization.name)} — его увидят все участники.</>
+                <> Проект появится в организации {quoted(workspace.organization.name)} - его увидят все участники.</>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -177,7 +177,7 @@ export function CreateProjectDialog({
                 className="h-11"
               />
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Можно оставить пустым — подставим{' '}
+                Можно оставить пустым - подставим{' '}
                 {mode === 'demo' ? 'название демо-объекта' : 'название по типу объекта'}.
               </p>
             </div>
@@ -187,7 +187,7 @@ export function CreateProjectDialog({
             <Button type="button" variant="outline" className="h-11 px-4" onClick={() => setOpen(false)}>
               Отмена
             </Button>
-            {/* Пока типы объектов не загрузились, демо-набор неизвестен — не даём создать пустой проект вместо демо. */}
+            {/* Пока типы объектов не загрузились, демо-набор неизвестен - не даём создать пустой проект вместо демо. */}
             <Button type="submit" className="h-11 px-5 max-sm:flex-1" disabled={create.isPending || !objectTypes.data}>
               {create.isPending && <Spinner />} Создать проект
             </Button>

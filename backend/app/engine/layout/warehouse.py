@@ -130,7 +130,7 @@ class WarehouseDrawer:
         if sum(placed) < d.stations:
             self.warnings.append(
                 f"Вдоль зоны отбора помещается {sum(placed)} из {d.stations} станций"
-                " — остальные ставить в третий ряд"
+                " - остальные ставить в третий ряд"
             )
         zone = b.zone(ZoneKind.PICKING, "Отбор товар-к-человеку", (x0, field_top, d.width, field_bottom))
         xs = [x0 + lane * HALF + i * column for i in range(columns + 1)]

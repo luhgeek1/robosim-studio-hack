@@ -30,7 +30,7 @@ for (const image of document.querySelectorAll('img'))
   )
 assert(document.documentElement.lang === 'ru')
 const bodyText = document.body.textContent
-assert(!/[—–]/.test(bodyText), 'Prohibited punctuation')
+assert(!/[\u2014\u2013]/.test(bodyText), 'Prohibited punctuation')
 assert(!/lorem ipsum|TODO|{{|placeholder/i.test(bodyText), 'Unfinished content')
 assert.equal(document.querySelectorAll('a.btn-primary').length, 2)
 for (const a of document.querySelectorAll('a.btn-primary')) assert.equal(a.getAttribute('href'), '/demo?new=1')

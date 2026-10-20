@@ -72,7 +72,7 @@ export function NormsTab() {
           </div>
           {!editable && version && (
             <span className="rounded-full bg-black/5 px-3 py-1 text-[12.5px] text-ink-2">
-              Архивная версия {version} — только просмотр
+              Архивная версия {version} - только просмотр
             </span>
           )}
         </div>
@@ -279,8 +279,8 @@ function NormRow({
                 </p>
                 {range && (range.min !== undefined || range.max !== undefined) && (
                   <p className="num text-[12.5px] text-ink-3">
-                    Допустимо: {range.min !== undefined ? formatNumber(range.min) : '—'} …{' '}
-                    {range.max !== undefined ? formatNumber(range.max) : '—'} {norm.unit}
+                    Допустимо: {range.min !== undefined ? formatNumber(range.min) : '-'} …{' '}
+                    {range.max !== undefined ? formatNumber(range.max) : '-'} {norm.unit}
                   </p>
                 )}
               </div>
@@ -309,7 +309,7 @@ function NormRow({
                   {parsed === null && <span className="mt-1 block text-[12px] text-crit">Введите число</span>}
                   {outOfRange && (
                     <span className="mt-1 block text-[12px] text-crit">
-                      Вне допустимого диапазона — не опубликуется
+                      Вне допустимого диапазона - не опубликуется
                     </span>
                   )}
                 </label>

@@ -126,7 +126,7 @@ class Distribution(ApiModel):
 
 class MonteCarloRequest(ApiModel):
     n: int | None = Field(
-        default=None, ge=100, le=10000, description="По умолчанию — норматив monte_carlo_runs"
+        default=None, ge=100, le=10000, description="По умолчанию - норматив monte_carlo_runs"
     )
     metric: MonteCarloMetric = "payback_years"
     distributions: list[Distribution] = Field(default_factory=list)

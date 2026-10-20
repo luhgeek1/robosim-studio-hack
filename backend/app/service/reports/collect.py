@@ -49,7 +49,7 @@ class ReportRequest:
 
 
 def _shown(value: Any, options: list[dict[str, str]] | None) -> Any:
-    """Enum values by their label, booleans as «да / нет» — the report is read by people, not code."""
+    """Enum values by their label, booleans as «да / нет» - the report is read by people, not code."""
     if isinstance(value, bool):
         return "да" if value else "нет"
     for option in options or []:
@@ -349,7 +349,7 @@ class ReportCollector:
             )
         if team:
             result.append(
-                f"В расчёте {team} нормативов — допущения команды с обоснованием; их нужно подтвердить."
+                f"В расчёте {team} нормативов - допущения команды с обоснованием; их нужно подтвердить."
             )
         for scenario in model.scenarios:
             skipped = ((scenario.simulation or {}).get("summary") or {}).get("skipped_processes") or []

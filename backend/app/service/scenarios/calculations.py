@@ -40,7 +40,7 @@ class StoredCalculation:
 
 @dataclass(frozen=True, slots=True)
 class Evaluation:
-    """A calculation that has not been stored — used by sensitivity, Monte Carlo and rerun previews."""
+    """A calculation that has not been stored - used by sensitivity, Monte Carlo and rerun previews."""
 
     snapshot: Snapshot
     result: CalculationResult

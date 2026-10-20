@@ -30,7 +30,7 @@ function SourceForm({ source, onDone }: { source: RegistrySource; onDone: () => 
   const [note, setNote] = useState(source.note ?? '')
   const badUrl = url.trim() !== '' && !/^https?:\/\//.test(url.trim())
 
-  // Отправляем только изменённые поля: правка — событие журнала «было → стало».
+  // Отправляем только изменённые поля: правка - событие журнала «было → стало».
   const body: SourceUpdate = {}
   if (title.trim() !== source.title) body.title = title.trim()
   if ((url.trim() || null) !== (source.url ?? null)) body.url = url.trim() || null
@@ -46,7 +46,7 @@ function SourceForm({ source, onDone }: { source: RegistrySource; onDone: () => 
           toast.success('Источник исправлен', {
             description:
               saved.freshness === 'stale'
-                ? 'Дата получения старше порога — источник остаётся в списке устаревших.'
+                ? 'Дата получения старше порога - источник остаётся в списке устаревших.'
                 : 'Карточки каталога, нормативы и отчёты покажут новое описание. Расчёты не меняются.',
           })
           onDone()

@@ -17,7 +17,7 @@ objectType:
   get:
     tags: [reference]
     operationId: getObjectType
-    summary: Тип объекта — схема формы параметров
+    summary: Тип объекта - схема формы параметров
     security: []
     parameters: [{name: object_type, in: path, required: true, schema: {$ref: '../components/reference.yaml#/ObjectTypeKey'}}]
     responses:
@@ -144,7 +144,7 @@ product:
   get:
     tags: [catalog]
     operationId: getProduct
-    summary: Карточка продукта — предложения, ТТХ с источниками, кейсы
+    summary: Карточка продукта - предложения, ТТХ с источниками, кейсы
     security: []
     parameters: [{$ref: '../components/common.yaml#/parameters/ProductId'}]
     responses:
@@ -155,7 +155,7 @@ productCompare:
   post:
     tags: [catalog]
     operationId: compareProducts
-    summary: Сравнение 2–5 продуктов по группам характеристик
+    summary: Сравнение 2-5 продуктов по группам характеристик
     security: []
     requestBody:
       required: true

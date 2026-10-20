@@ -65,7 +65,7 @@ def size_item(
             Section.SIZING,
         ).as_quantity()
         if all(q.kind == InputKind.NORM for q in inputs):
-            ctx.warnings.append(f"{process.name}: длина маршрута по нормативу — нет замера и планировки")
+            ctx.warnings.append(f"{process.name}: длина маршрута по нормативу - нет замера и планировки")
     extras = tuple(
         ctx.record_expression(
             f"{ns}.{extra.key}", extra.name, extra.formula, "с", Section.SIZING
@@ -125,7 +125,7 @@ def resolve_count(
     if item.count_mode == CountMode.MANUAL and item.count_manual:
         final, source = item.count_manual, CountSource.MANUAL
         text = f"Задано пользователем: {final} шт." + (
-            f" Расчёт по циклу — {analytic} + резерв {reserve}." if sized else ""
+            f" Расчёт по циклу - {analytic} + резерв {reserve}." if sized else ""
         )
         manual = Quantity("count_manual", "Количество, заданное вручную", float(final), "шт", InputKind.PARAM)
         ctx.tr.record(
@@ -239,7 +239,7 @@ def build_fleet_item(
     if simulated:
         # The sweep checked this fleet against the peak demand in time, so it covers the peak by definition.
         met = Quantity(
-            "simulated_sla_met", "SLA выполнен в имитации (1 — да)", 1.0, "доля", InputKind.SIMULATION
+            "simulated_sla_met", "SLA выполнен в имитации (1 - да)", 1.0, "доля", InputKind.SIMULATION
         )
         coverage = ctx.tr.record(
             f"{ns}.coverage",

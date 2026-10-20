@@ -102,7 +102,7 @@ def payback_months(cumulative: Sequence[float]) -> float | None:
 
 
 def simple_payback_years(investment: float, annual_effect: float) -> float | None:
-    """ТЗ 3.5.2: CAPEX / годовой эффект — only when the effect is positive."""
+    """ТЗ 3.5.2: CAPEX / годовой эффект - only when the effect is positive."""
     if annual_effect <= 0:
         return None
     return investment / annual_effect

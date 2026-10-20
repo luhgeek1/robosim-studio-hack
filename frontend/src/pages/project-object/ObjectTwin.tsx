@@ -26,7 +26,7 @@ export function ObjectTwin({ projectId, objectType }: { projectId: string; objec
     return (
       <Placeholder title={objectType.name}>
         Для этого типа объекта планировка не строится: длины маршрутов, площади и число постов расчёт берёт из
-        параметров объекта. Уточните их — подбор и экономика пересчитаются.
+        параметров объекта. Уточните их - подбор и экономика пересчитаются.
       </Placeholder>
     )
   }
@@ -47,7 +47,7 @@ export function ObjectTwin({ projectId, objectType }: { projectId: string; objec
         }
       >
         Типовая планировка соберётся из параметров объекта: площадь, потоки грузов, точки выдачи и ворота. Из неё расчёт
-        возьмёт длины маршрутов, а имитация — граф проездов.
+        возьмёт длины маршрутов, а имитация - граф проездов.
       </Placeholder>
     )
   }
@@ -233,7 +233,7 @@ function LayoutTwin({
             className="flex items-center gap-1.5 rounded-full border border-warn/30 bg-warn-soft px-2.5 py-1 text-[12px] font-medium text-warn transition-opacity hover:opacity-85 disabled:opacity-60"
           >
             <RefreshCw size={12} className={rebuilding ? 'animate-spin' : ''} />
-            {rebuilding ? 'Перестраиваем…' : 'Параметры менялись — перестроить'}
+            {rebuilding ? 'Перестраиваем…' : 'Параметры менялись - перестроить'}
           </button>
         )}
         {error && <div className="max-w-90 rounded-[12px] bg-white p-4 shadow-card">{error}</div>}

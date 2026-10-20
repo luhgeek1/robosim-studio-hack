@@ -155,7 +155,7 @@ def profile_rate(hour: float, hours_per_day: float, peak_factor: float, window_h
     """Demand rate at `hour` as a multiple of the working-day average.
 
     The day follows a peak window of `window_h` hours in the middle of the working day at `peak_factor`,
-    the other working hours evenly, so that the day sums to its volume; outside working hours — zero.
+    the other working hours evenly, so that the day sums to its volume; outside working hours - zero.
     """
     if hour < 0 or hour >= hours_per_day or hours_per_day <= 0:
         return 0.0

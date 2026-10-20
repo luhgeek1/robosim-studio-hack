@@ -15,14 +15,14 @@ API_PREFIX = "/api/v1"
 
 class ReportRequest(ApiModel):
     format: ReportFormat
-    scenario_ids: list[UUID] = Field(default_factory=list, description="Если пусто — все сценарии проекта")
-    sections: list[ReportSection] = Field(default_factory=list, description="Если пусто — все")
+    scenario_ids: list[UUID] = Field(default_factory=list, description="Если пусто - все сценарии проекта")
+    sections: list[ReportSection] = Field(default_factory=list, description="Если пусто - все")
     simulation_ids: list[UUID] = Field(default_factory=list)
     visual_ids: list[UUID] = Field(default_factory=list, description="Загруженные снимки имитации")
     title: str | None = Field(default=None, max_length=200)
     live_formulas: bool = Field(
         default=False,
-        description="Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении",
+        description="Для xlsx - проверочные формулы в защищённом снимке; входы меняются в приложении",
     )
 
 

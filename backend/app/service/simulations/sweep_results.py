@@ -52,7 +52,7 @@ def _priced(base: CalculationInput, process_key: str, change: dict[str, Any]) ->
 async def price_sweep(
     uow: UnitOfWork, job: Job, scenario: Scenario, process_key: str, joint: JointSweep
 ) -> SweepEconomics:
-    """A fleet that holds SLA is priced as the simulated count plus reserve with the peak covered —
+    """A fleet that holds SLA is priced as the simulated count plus reserve with the peak covered -
     exactly what the scenario gets when that N applies. A fleet that fails SLA gets no payback."""
     user = await uow.users.get(job.owner_id) if job.owner_id else None
     if user is None:

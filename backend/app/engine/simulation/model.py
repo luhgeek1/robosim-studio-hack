@@ -155,7 +155,7 @@ class Model(Actions):
             if not nodes:
                 raise SimulationError(
                     f"«{process.name}»: на планировке нет точек в зонах {', '.join(kinds)}"
-                    " — перегенерируйте её"
+                    " - перегенерируйте её"
                 )
             return Picker(self._stream(f"{stream}-{process.key}"), nodes)
 
@@ -190,7 +190,7 @@ class Model(Actions):
                 wanted = self.inp.config.stations.get(process.key, process.stations)
                 if wanted <= 0:
                     raise SimulationError(
-                        f"«{process.name}»: задано 0 станций отбора — выполнить SLA невозможно. "
+                        f"«{process.name}»: задано 0 станций отбора - выполнить SLA невозможно. "
                         "Укажите хотя бы одну станцию."
                     )
                 selected = list(self.station_pool.values())[:wanted]
@@ -243,7 +243,7 @@ class Model(Actions):
     def _start_battery(self, process: SimProcess, phase: float) -> tuple[float, bool]:
         """A fleet mid-day, not a fleet fresh off the chargers: robots are spread evenly over one
         work-and-charge cycle (drain from full to the threshold, then charge back). The share on the
-        charger at the start is charge / (work + charge) — the availability the cycle model assumes."""
+        charger at the start is charge / (work + charge) - the availability the cycle model assumes."""
         threshold = self.inp.settings.charge_threshold
         spec = process.robot
         if not spec.runtime_h or not spec.charge_min:
@@ -260,7 +260,7 @@ class Model(Actions):
         return self.stations_by_process.get(process_key, [])
 
     def unit_done(self, process_key: str, created: float, *, by_humans: bool) -> None:
-        """One pallet or one order line finished — by a robot or handed over to people."""
+        """One pallet or one order line finished - by a robot or handed over to people."""
         lead = self.env.now - created
         self.units[process_key].append((created, lead, by_humans))
         self.counters.done += 1

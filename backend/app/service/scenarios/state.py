@@ -8,7 +8,7 @@ NO_VERSION = "none"
 
 
 class VersionReader:
-    """Current versions of everything a calculation depends on — a stored run is stale when any differs."""
+    """Current versions of everything a calculation depends on - a stored run is stale when any differs."""
 
     def __init__(self, uow: UnitOfWork) -> None:
         self._reference = ReferenceRepository(uow.session)

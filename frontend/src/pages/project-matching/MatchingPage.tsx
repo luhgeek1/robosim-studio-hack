@@ -60,7 +60,7 @@ export function MatchingPage() {
   const data = matching.data
   const fit = data?.totals?.fit ?? 0
   const check = data?.totals?.check ?? 0
-  // «Требует проверки» — тоже кандидат для сценария (бэкенд их берёт): в аэропорту и больнице «подходит» нет ни у кого.
+  // «Требует проверки» - тоже кандидат для сценария (бэкенд их берёт): в аэропорту и больнице «подходит» нет ни у кого.
   const nothingToBuild = !data?.processes.some((p) => p.recommended_product_id)
   const total = fit + check + (data?.totals?.excluded ?? 0)
   const creating = createScenario.isPending || checking
@@ -69,7 +69,7 @@ export function MatchingPage() {
     <Screen
       wide
       dense
-      // Шапка и рекомендация — в обычной колонке шагов, список кандидатов ниже — во всю ширину экрана.
+      // Шапка и рекомендация - в обычной колонке шагов, список кандидатов ниже - во всю ширину экрана.
       headerClassName={TOP_COLUMN}
       lead={
         guided
@@ -349,7 +349,7 @@ function ProcessNav({
   }
 
   return (
-    // На телефоне и планшете процессы — строка фишек, которая листается вбок над карточками.
+    // На телефоне и планшете процессы - строка фишек, которая листается вбок над карточками.
     <nav className="-mx-4 min-w-0 sm:-mx-6 lg:sticky lg:top-40 lg:mx-0" aria-label="Процессы">
       <div className="scroll-thin relative flex gap-1 overflow-x-auto px-4 pb-1 sm:px-6 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0">
         {box && (

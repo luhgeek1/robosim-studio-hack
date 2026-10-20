@@ -64,7 +64,7 @@ async def update_product(
 @router.delete(
     "/catalog/products/{product_id}",
     operation_id="adminDeleteProduct",
-    summary="Скрыть продукт (мягкое удаление — расчёты, где он использован, сохраняются)",
+    summary="Скрыть продукт (мягкое удаление - расчёты, где он использован, сохраняются)",
     status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
     responses={404: {"description": "Не найдено"}},
@@ -91,9 +91,9 @@ async def upsert_product_specs(
 @router.post(
     "/catalog/import",
     operation_id="adminImportCatalog",
-    summary="Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)",
+    summary="Загрузить таблицу решений организатора (CSV) - новая версия каталога (ТЗ 3.3.2, 3.3.6)",
     description="С `dry_run=true` ничего не пишет и показывает, что изменится. Карточки, которые правил или "
-    "скрыл администратор, не перезаписываются — они в `items` с `action: conflict`.",
+    "скрыл администратор, не перезаписываются - они в `items` с `action: conflict`.",
     responses={413: {"description": "Файл больше 20 МБ"}, 415: {"description": "Неподдерживаемый формат"}},
 )
 async def import_catalog(

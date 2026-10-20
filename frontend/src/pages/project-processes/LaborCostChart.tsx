@@ -30,7 +30,7 @@ export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
     cost: p.current?.cost_rub_year ?? 0,
     share: p.share_of_labor_cost,
   }))
-  // Процессы без затрат на персонал не рисуем пустой строкой — перечисляем их сноской под графиком.
+  // Процессы без затрат на персонал не рисуем пустой строкой - перечисляем их сноской под графиком.
   const data = rows.filter((row) => row.cost > 0)
   const empty = rows.filter((row) => row.cost <= 0)
   const max = Math.max(...data.map((row) => row.cost), 1)
@@ -93,7 +93,7 @@ export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
                 cursor="pointer"
                 onClick={(entry) => open(entry?.payload as Row | undefined)}
               >
-                {/* Как в кадре шоурила: столбцы чернилами, самый дорогой процесс — единственный сигнальный. */}
+                {/* Как в кадре шоурила: столбцы чернилами, самый дорогой процесс - единственный сигнальный. */}
                 {data.map((row) => (
                   <Cell key={row.key} fill={row.cost === max ? 'var(--signal)' : 'var(--foreground)'} />
                 ))}
@@ -109,7 +109,7 @@ export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
                     return (
                       <text x={cx} y={cy} fontSize={13} className="num">
                         <tspan fill="var(--foreground)" fontWeight={600}>
-                          {row.cost ? formatRub(row.cost) : '—'}
+                          {row.cost ? formatRub(row.cost) : '-'}
                         </tspan>
                         {row.cost > 0 && row.share !== undefined && (
                           <tspan fill="var(--muted-foreground)" dx={6}>
@@ -127,14 +127,14 @@ export function LaborCostChart({ processes }: { processes: ProcessDemand[] }) {
       )}
       {empty.length > 0 && (
         <p className="meta mt-2">
-          Без затрат на персонал: {empty.map((row) => row.name.toLowerCase()).join(', ')} — персонал процесса не задан.
+          Без затрат на персонал: {empty.map((row) => row.name.toLowerCase()).join(', ')} - персонал процесса не задан.
         </p>
       )}
     </div>
   )
 }
 
-/* Узкий экран: название и сумма строкой, под ними столбец во всю ширину — та же шкала от нуля и один сигнальный. */
+/* Узкий экран: название и сумма строкой, под ними столбец во всю ширину - та же шкала от нуля и один сигнальный. */
 function CompactBars({ data, max, onOpen }: { data: Row[]; max: number; onOpen: (row: Row) => void }) {
   return (
     <ul className="space-y-1">

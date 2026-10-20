@@ -80,7 +80,7 @@ async def start_simulation(
 @router.post(
     "/scenarios/{scenario_id}/fleet-sweep",
     operation_id="runFleetSweep",
-    summary="Перебор количества роботов — кривая N → SLA, загрузка, окупаемость (фоновая задача)",
+    summary="Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача)",
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def run_fleet_sweep(
@@ -157,7 +157,7 @@ async def cancel_simulation(simulation_id: SimulationIdPath, user: OwnerDep, uow
 @router.get(
     "/simulations/{simulation_id}/timeline",
     operation_id="getSimulationTimeline",
-    summary="KPI по времени — графики очереди, SLA, загрузки",
+    summary="KPI по времени - графики очереди, SLA, загрузки",
     responses={409: {"description": "Прогон не завершён"}},
 )
 async def get_timeline(

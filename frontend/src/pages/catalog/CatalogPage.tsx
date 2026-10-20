@@ -288,7 +288,7 @@ export function CatalogPage() {
 function SearchBox({ value, onCommit }: { value: string; onCommit: (q: string) => void }) {
   const [text, setText] = useState(value)
   const [synced, setSynced] = useState(value)
-  // The URL can change without typing (back button, «Сбросить») — follow it unless it already matches the input.
+  // The URL can change without typing (back button, «Сбросить») - follow it unless it already matches the input.
   if (value !== synced) {
     setSynced(value)
     if (value !== text.trim()) setText(value)
@@ -307,7 +307,7 @@ function SearchBox({ value, onCommit }: { value: string; onCommit: (q: string) =
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Название, производитель или описание — например, «AMR» или «Ronavi»"
+        placeholder="Название, производитель или описание - например, «AMR» или «Ronavi»"
         className="h-11 w-full rounded-xl bg-card pr-4 pl-11 text-[14.5px] shadow-[0_1px_2px_rgba(20,20,19,0.04)] ring-1 ring-line transition-shadow outline-none placeholder:text-ink-4 focus:ring-2 focus:ring-ink/80"
         aria-label="Поиск по каталогу"
       />
@@ -324,7 +324,7 @@ function FilterGroup({ title, children }: { title: string; children: ReactNode }
   )
 }
 
-/* Один вид для всех фильтров: строка с отметкой слева и числом справа. Радио — кружок, множественный выбор — квадрат. */
+/* Один вид для всех фильтров: строка с отметкой слева и числом справа. Радио - кружок, множественный выбор - квадрат. */
 function OptionList({
   options,
   isActive,
@@ -410,7 +410,7 @@ function ProductCard({ product, catalogSearch }: { product: Product; catalogSear
           </p>
           <CardFigures
             items={[
-              { value: product.trl ?? '—', label: 'УГТ из 9' },
+              { value: product.trl ?? '-', label: 'УГТ из 9' },
               { value: formatPct(product.completeness, { share: true, digits: 0 }), label: 'полнота данных' },
               { value: formatNumber(offers), label: pluralRu(offers, ['предложение', 'предложения', 'предложений']) },
             ]}
@@ -451,7 +451,7 @@ function LoadMore({
     <div ref={setMarker} className="mt-8 flex h-10 items-center justify-center text-[13px] text-ink-3">
       {failed ? (
         <button type="button" className="font-medium text-ink underline" onClick={onMore}>
-          Не удалось загрузить продолжение — повторить
+          Не удалось загрузить продолжение - повторить
         </button>
       ) : hasMore ? (
         <span className="flex items-center gap-2">

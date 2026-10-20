@@ -30,7 +30,7 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'отменён',
 }
 
-// ТЗ 3.7.1–3.7.5: итоговое заключение, PDF и таблицы, сохранение визуализации, пометка «предварительная оценка».
+// ТЗ 3.7.1-3.7.5: итоговое заключение, PDF и таблицы, сохранение визуализации, пометка «предварительная оценка».
 export function ReportPage() {
   const projectId = useProjectId()
   const project = useProject(projectId).data

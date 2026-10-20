@@ -6,7 +6,7 @@ import { cn } from '@/shared/lib/utils'
 import { RobotPreview3D } from '@/widgets/robot-3d'
 
 /* Карточка робота для подбора, каталога и сравнения: 3D-модель на всю карточку, сверху плашки, снизу название
-   и цена по краям. При наведении снизу выезжает белая панель с цифрами — в покое карточка остаётся чистой.
+   и цена по краям. При наведении снизу выезжает белая панель с цифрами - в покое карточка остаётся чистой.
    Клик в любом месте открывает страницу робота; поворот модели перетаскиванием переходом не считается. */
 export function RobotCard({
   productId,
@@ -114,7 +114,7 @@ export function RobotCard({
   )
 }
 
-/* Сцена под моделью: мягкий свет сверху и модель класса решения, форма — по ТТХ продукта (widgets/robot-3d). */
+/* Сцена под моделью: мягкий свет сверху и модель класса решения, форма - по ТТХ продукта (widgets/robot-3d). */
 export function RobotStage({
   productId,
   solutionType,
@@ -154,7 +154,7 @@ export function CardFigures({ items }: { items: { value: ReactNode; label: strin
   return (
     <dl className="grid gap-x-3" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
       {items.map((item) => (
-        // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
+        // dt раньше dd по смыслу, а визуально число сверху - поэтому колонка развёрнута.
         <div key={item.label} className="flex min-w-0 flex-col-reverse">
           <dt className="min-w-0 text-[11.5px] wrap-anywhere text-ink-3 lg:truncate" title={item.label}>
             {item.label}

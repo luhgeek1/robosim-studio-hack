@@ -94,7 +94,7 @@ class _Sizer:
             return step.as_quantity()
         norm = self.norms.get("analytic_availability_default")
         out.availability = norm.value
-        out.warnings.append("Нет ТТХ по автономности и зарядке — доступность взята по нормативу")
+        out.warnings.append("Нет ТТХ по автономности и зарядке - доступность взята по нормативу")
         return norm
 
     def cycle(self, out: SizingOutcome, *extras: Quantity | None) -> Quantity:
@@ -196,7 +196,7 @@ class _Sizer:
 
 
 def _load(s: _Sizer) -> Quantity | None:
-    """Demand units one trip carries (порций на отделение, кг в контейнере); None — one unit per trip."""
+    """Demand units one trip carries (порций на отделение, кг в контейнере); None - one unit per trip."""
     units = s.demand.units_per_trip
     return _metric("load_per_trip", "Единиц спроса за рейс", units, "ед") if units else None
 
@@ -334,7 +334,7 @@ def _tow(s: _Sizer, out: SizingOutcome) -> None:
     )
     if capacity and by_mass < capacity:
         out.warnings.append(
-            f"Буксируемой массы хватает на {by_mass:.0f} из {capacity:.0f} мест сцепки — рейс неполный"
+            f"Буксируемой массы хватает на {by_mass:.0f} из {capacity:.0f} мест сцепки - рейс неполный"
         )
     s.count(out, s.per_robot(out, load.as_quantity(), s.cycle(out)))
 
@@ -394,7 +394,7 @@ def size(
     """Analytic robot count for one process and product.
 
     Throughput per robot = 3600 / cycle × units per cycle × availability × utilization;
-    N = ⌈peak demand / throughput⌉; reserve = ⌈N × fleet_reserve_share⌉ (legend: 15–20 %).
+    N = ⌈peak demand / throughput⌉; reserve = ⌈N × fleet_reserve_share⌉ (legend: 15-20 %).
     The simulation later checks and refines N (D-007); this is the starting point of that search.
     """
     opts = options or SizingOptions()

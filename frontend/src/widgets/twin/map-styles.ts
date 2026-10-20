@@ -24,7 +24,7 @@ export const ROBOT_LEGEND: [string, string][] = [
 
 export type HeatEdge = { id: string; traffic: number; wait: number }
 
-// Flow and congestion: width follows the number of passes, colour follows waiting — an edge many robots
+// Flow and congestion: width follows the number of passes, colour follows waiting - an edge many robots
 // crossed without stopping is busy, not jammed.
 export function heatStyle(edge: HeatEdge, maxTraffic: number, maxWait: number) {
   const flow = maxTraffic ? edge.traffic / maxTraffic : 0

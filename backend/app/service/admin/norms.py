@@ -76,7 +76,7 @@ def _check_changes(changes: Sequence[NormChange], norms: dict[str, Norm]) -> Non
             raise InvalidInputError(f"Норматив «{change.key}» изменён дважды")
         seen.add(change.key)
         if change.unit is not None and change.unit != norm.unit:
-            raise InvalidInputError(f"Единица норматива «{norm.name}» — {norm.unit}, менять её нельзя")
+            raise InvalidInputError(f"Единица норматива «{norm.name}» - {norm.unit}, менять её нельзя")
         if not norm_in_range(change.value, norm.range_min, norm.range_max):
             raise InvalidInputError(
                 f"«{norm.name}»: значение {change.value:g} вне допустимого диапазона "
@@ -85,4 +85,4 @@ def _check_changes(changes: Sequence[NormChange], norms: dict[str, Norm]) -> Non
 
 
 def _bound(value: float | None) -> str:
-    return "—" if value is None else f"{value:g}"
+    return "-" if value is None else f"{value:g}"

@@ -16,7 +16,7 @@ function SolutionHeading() {
   return (
     <article className="im-chapter im-solution" id="immersive-solution">
       <h2>
-        Теперь это —<br className="im-mobile-break" /> основа решения.
+        Теперь это -<br className="im-mobile-break" /> основа решения.
       </h2>
       <p>Модель уточняет парк. Парк меняет экономику.</p>
     </article>
@@ -45,7 +45,7 @@ export function ImmersiveStory() {
       ref={rootRef}
       className={`im-story ${staticView ? 'im-story-static' : ''}`}
       data-renderer={staticView ? 'static' : ready ? 'ready' : 'loading'}
-      aria-label="Изнутри объекта — к решению"
+      aria-label="Изнутри объекта - к решению"
     >
       <div className="im-stage">
         {!staticView && <ProductFrame initiallyHidden />}
@@ -109,7 +109,7 @@ export function ImmersiveStory() {
             </h2>
             <p>
               У робота есть маршрут.
-              <br />У маршрута — ограничения.
+              <br />У маршрута - ограничения.
             </p>
             <p className="im-secondary">
               Ширина прохода, очередь на загрузку, время зарядки. Из этих условий складывается работа всего парка.

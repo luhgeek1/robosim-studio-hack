@@ -153,7 +153,7 @@ export function CatalogTab() {
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[12.5px] text-ink-3">
             <span className="num">
-              {formatNumber((page - 1) * PAGE_SIZE + 1)}–{formatNumber(Math.min(page * PAGE_SIZE, total))} из{' '}
+              {formatNumber((page - 1) * PAGE_SIZE + 1)}-{formatNumber(Math.min(page * PAGE_SIZE, total))} из{' '}
               {formatNumber(total)} · сначала изменённые недавно
             </span>
             {pages > 1 && (
@@ -225,7 +225,7 @@ function ProductRow({
       </span>
       <ProductStatusMark status={product.status} className="text-[13px] text-ink-2" />
       <span className="num text-right text-[13.5px]">
-        {product.price_from.amount_rub > 0 ? formatRub(product.price_from.amount_rub) : '—'}
+        {product.price_from.amount_rub > 0 ? formatRub(product.price_from.amount_rub) : '-'}
       </span>
       <span className="flex items-center justify-end gap-1.5 text-[12.5px] text-ink-2">
         <ConfidenceRing value={product.completeness * 100} size={14} />

@@ -75,7 +75,7 @@ const STATE_LABEL: Record<string, string> = {
   idle: 'простой',
   failed: 'отказ',
 }
-// Цвета долей «Чем заняты роботы»: полезная работа — оттенки чернил, простой — предупреждение, затор и отказ — тревога.
+// Цвета долей «Чем заняты роботы»: полезная работа - оттенки чернил, простой - предупреждение, затор и отказ - тревога.
 const STATE_COLOR: Record<string, string> = {
   moving: 'bg-ink-2',
   loading: 'bg-ink-3',
@@ -97,7 +97,7 @@ const POSE_LABEL: Record<string, string> = {
 
 const fleetOf = (run: SimulationRun, processKey: string) => run.fleet?.find((f) => f.process_key === processKey)?.count
 
-// Пиковые часы экрана — то же окно, что у перебора флота; прогоны «24 ч пика» из прежней версии экрана не подходят.
+// Пиковые часы экрана - то же окно, что у перебора флота; прогоны «24 ч пика» из прежней версии экрана не подходят.
 const PEAK_WINDOW_MAX_H = 12
 
 const configOf = (run: SimulationRun, processKey: string): RunConfig | null => {
@@ -225,7 +225,7 @@ function SimulationView({
   }, [working])
 
   const [runIds, setRunIds] = useState<Record<string, string>>({})
-  // Прогон с теми же условиями уже есть — берём его; прогон, записавший N в сценарий, — первым.
+  // Прогон с теми же условиями уже есть - берём его; прогон, записавший N в сценарий, - первым.
   const existing = useMemo(() => {
     if (!sizing) return undefined
     const matching = (runs.data ?? []).filter((r) => {
@@ -254,7 +254,7 @@ function SimulationView({
     start.mutate(
       {
         mode: config.mode,
-        // Пик — окно `sim_peak_duration_hours` бэкенда, то же, что у перебора флота; обычный день — сутки.
+        // Пик - окно `sim_peak_duration_hours` бэкенда, то же, что у перебора флота; обычный день - сутки.
         ...(config.mode === 'normal' ? { duration_hours: 24 } : {}),
         seed: SEED,
         volume_multiplier: config.volume ? STRESS.volumeMultiplier : 1,
@@ -326,7 +326,7 @@ function SimulationView({
   const whatIf = sizing ? whatIfText(sizing, config, working) : null
 
   const lead = !sizing
-    ? 'В сценарии нет процесса с моделью цикла — имитировать нечего.'
+    ? 'В сценарии нет процесса с моделью цикла - имитировать нечего.'
     : summary
       ? undefined
       : 'Имитация прогонит день на планировке объекта и проверит, успевает ли парк выполнять задачи в срок.'
@@ -569,7 +569,7 @@ function SimulationView({
                 ) : (
                   <div className="py-2 text-xs text-ink-3">
                     {failed || error
-                      ? 'Прогон не готов — измените условия или повторите запуск.'
+                      ? 'Прогон не готов - измените условия или повторите запуск.'
                       : 'Готовим новый прогон…'}
                   </div>
                 )}
@@ -685,7 +685,7 @@ function RunLive({
         </div>
         {summary.sla.target_value != null && (
           <p className="meta mt-2">
-            в срок — до {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} · в среднем{' '}
+            в срок - до {formatNumber(summary.sla.target_value)} {summary.sla.target_unit ?? 'мин'} · в среднем{' '}
             {formatNumber(summary.sla.avg_lead_time_min, 1)} мин
           </p>
         )}
@@ -766,7 +766,7 @@ function RunCheck({ summary, target }: { summary: SimulationSummary; target: num
         </Hint>
       }
     >
-      {/* Вывод сверки — точкой и словом, как вердикты на других экранах, а не цветной плашкой. */}
+      {/* Вывод сверки - точкой и словом, как вердикты на других экранах, а не цветной плашкой. */}
       <div className="flex items-center gap-2 text-[13px] font-medium text-ink">
         <Dot tone={VS_LABEL[vs.verdict]?.tone ?? 'neutral'} />
         {VS_LABEL[vs.verdict]?.text ?? vs.verdict}
@@ -839,7 +839,7 @@ function workingCount(sizing: SizingResult): number {
   return count.analytic
 }
 
-/* Прогоны экрана — проверка «что если»: они не меняют сценарий. Меняет его только перебор флота (или выбор
+/* Прогоны экрана - проверка «что если»: они не меняют сценарий. Меняет его только перебор флота (или выбор
    «по формуле / по имитации»), и это сказано прямо, чтобы новое число на экране не путали с расчётом. */
 function whatIfText(sizing: SizingResult, config: RunConfig, working: number): string | null {
   const changes = [
@@ -849,7 +849,7 @@ function whatIfText(sizing: SizingResult, config: RunConfig, working: number): s
     config.failure ? 'отказ робота на 2 ч' : null,
   ].filter(Boolean)
   if (!changes.length) return null
-  return `Проверка «что если» (${changes.join(', ')}) — сценарий не меняется: в расчёте ${working} ${pluralRu(working, ['робот', 'робота', 'роботов'])} в работе + резерв ${sizing.count.reserve}, ${COUNT_HINT[sizing.count.source]}`
+  return `Проверка «что если» (${changes.join(', ')}) - сценарий не меняется: в расчёте ${working} ${pluralRu(working, ['робот', 'робота', 'роботов'])} в работе + резерв ${sizing.count.reserve}, ${COUNT_HINT[sizing.count.source]}`
 }
 
 function Control({ label, children }: { label: string; children: ReactNode }) {
@@ -872,7 +872,7 @@ function PlaybackClock() {
 }
 
 /* Перебор флота записывает N в сценарий: он прогоняет одни и те же пиковые часы для разного N и берёт минимальное,
-   при котором SLA держат все прогоны (D-029). Здесь же — сравнение «по формуле / по имитации» и выбор источника. */
+   при котором SLA держат все прогоны (D-029). Здесь же - сравнение «по формуле / по имитации» и выбор источника. */
 function FleetSweep({
   projectId,
   scenarioId,
@@ -1053,7 +1053,7 @@ function FleetSweep({
                   </td>
                   <td className="num py-1 text-right">{formatPct(p.utilization, { share: true, digits: 0 })}</td>
                   <td className="num py-1 text-right" title={p.passed ? undefined : 'Парк не держит SLA'}>
-                    {p.passed ? formatYears(p.payback_years) : '—'}
+                    {p.passed ? formatYears(p.payback_years) : '-'}
                   </td>
                 </tr>
               ))}
@@ -1082,14 +1082,14 @@ function FleetCountHint({ result, sizing }: { result: FleetSweepResult; sizing: 
           </p>
         ) : result.recommended_count != null ? (
           <p>
-            По имитации — {result.recommended_count}{' '}
+            По имитации - {result.recommended_count}{' '}
             {pluralRu(result.recommended_count, ['робот', 'робота', 'роботов'])} в работе.
           </p>
         ) : null}
         <p>
           {joint?.status === 'passed'
-            ? `Все ${joint.replications} ${pluralRu(joint.replications, ['прогон', 'прогона', 'прогонов'])} пройдены. Цель — ${target}.`
-            : `Парк пока не подтверждён. Цель — ${target}.`}
+            ? `Все ${joint.replications} ${pluralRu(joint.replications, ['прогон', 'прогона', 'прогонов'])} пройдены. Цель - ${target}.`
+            : `Парк пока не подтверждён. Цель - ${target}.`}
         </p>
         <p>Резерв входит в общее число роботов и окупаемость.</p>
         {result.applied === false && <p className="text-warn">Результат не применён к расчёту.</p>}
@@ -1128,7 +1128,7 @@ function FleetTile({ title, fleet, active }: { title: string; fleet: FleetEconom
   )
 }
 
-/* Почему формула и имитация расходятся — теми же числами, что в расчёте и в прогонах перебора. */
+/* Почему формула и имитация расходятся - теми же числами, что в расчёте и в прогонах перебора. */
 function WhyDifferent({
   sizing,
   formula,
@@ -1153,14 +1153,14 @@ function WhyDifferent({
         {formatNumber(robot.effective_throughput_per_hour, 1)} ед/ч:{' '}
         {formatNumber(robot.nominal_throughput_per_hour, 1)} по циклу × доступность{' '}
         {formatPct(robot.availability, { share: true, digits: 0 })} × целевая загрузка{' '}
-        {formatPct(robot.utilization_target, { share: true, digits: 0 })}; каждый рейс — туда и обратно, обратно пустым.
+        {formatPct(robot.utilization_target, { share: true, digits: 0 })}; каждый рейс - туда и обратно, обратно пустым.
       </p>
       <p>
         <span className="font-medium text-ink">Имитация</span>: {best.count} роботов реально везут{' '}
         {formatNumber(perRobot, 1)} ед/ч каждый при загрузке {formatPct(best.utilization, { share: true, digits: 0 })}
         {fewer
-          ? ' — часть парка так же стоит на зарядке, но робот берёт ближайшую задачу вместо пустого возврата, работает без запаса 20 %, а короткая очередь укладывается в норматив срока.'
-          : ' — заторы в проходах, очереди у ворот и зарядка съедают часть производительности.'}
+          ? ' - часть парка так же стоит на зарядке, но робот берёт ближайшую задачу вместо пустого возврата, работает без запаса 20 %, а короткая очередь укладывается в норматив срока.'
+          : ' - заторы в проходах, очереди у ворот и зарядка съедают часть производительности.'}
       </p>
     </div>
   )

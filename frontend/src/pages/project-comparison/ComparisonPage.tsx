@@ -55,7 +55,7 @@ export function ComparisonPage() {
             className="max-sm:px-3"
             icon={<Scale className="size-6" />}
             title="Нет рассчитанных сценариев роботизации"
-            description="Для сравнения нужен рассчитанный сценарий «как сейчас» и хотя бы два сценария роботизации. Их можно собрать одной кнопкой: покупка по рекомендации подбора, её копии как RaaS и лизинг — все сразу рассчитаются."
+            description="Для сравнения нужен рассчитанный сценарий «как сейчас» и хотя бы два сценария роботизации. Их можно собрать одной кнопкой: покупка по рекомендации подбора, её копии как RaaS и лизинг - все сразу рассчитаются."
             action={
               <div className="flex flex-wrap items-center justify-center gap-2 max-sm:flex-nowrap">
                 {buildSetButton()}
@@ -103,7 +103,7 @@ export function ComparisonPage() {
                   покупка и RaaS.
                 </div>
               )}
-              {stale > 0 && <div>Часть сценариев рассчитана по устаревшим данным объекта — пересчитайте их.</div>}
+              {stale > 0 && <div>Часть сценариев рассчитана по устаревшим данным объекта - пересчитайте их.</div>}
             </div>
           </Callout>
         )}
@@ -113,7 +113,7 @@ export function ComparisonPage() {
             <Stat
               label="Окупаемость"
               value={isNum(m.payback_years) ? formatYears(m.payback_years) : 'не окупается'}
-              hint={`с дисконтом — ${isNum(m.discounted_payback_years) ? formatYears(m.discounted_payback_years) : 'нет'}`}
+              hint={`с дисконтом - ${isNum(m.discounted_payback_years) ? formatYears(m.discounted_payback_years) : 'нет'}`}
             />
             <Stat label="Вложения" value={formatRub(m.capex_rub)} hint="CAPEX, с НДС" />
             <Stat label="Эффект в год" value={formatRub(m.effect_rub_year)} hint="после OPEX и процентов" />
@@ -130,7 +130,7 @@ export function ComparisonPage() {
 
         <Section
           title="Накопленный денежный поток проекта"
-          description="Полный CAPEX, без долга и его обслуживания; RaaS учтён. «Как сейчас» — пунктир. Выше линия — меньше затраты за горизонт"
+          description="Полный CAPEX, без долга и его обслуживания; RaaS учтён. «Как сейчас» - пунктир. Выше линия - меньше затраты за горизонт"
         >
           <CashflowChart table={table!} />
         </Section>

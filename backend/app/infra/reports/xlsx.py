@@ -127,7 +127,7 @@ def _summary(book: Workbook, model: ReportModel) -> None:
         "Версии: проект v{project_version}, каталог {catalog_version}, нормативы {norm_set_version}, движок "
         "{engine_version}, планировка v{layout_version}".format(
             **{
-                k: versions.get(k, "—")
+                k: versions.get(k, "-")
                 for k in (
                     "project_version",
                     "catalog_version",
@@ -160,7 +160,7 @@ def _summary(book: Workbook, model: ReportModel) -> None:
     for scenario in scenarios:
         if scenario.is_baseline:
             continue
-        sheet.section(f"{scenario.name}{' — рекомендован' if scenario is recommended else ''}")
+        sheet.section(f"{scenario.name}{' - рекомендован' if scenario is recommended else ''}")
         sheet.note(scenario.narrative.get("executive_summary", ""))
 
 
@@ -170,7 +170,7 @@ class CalculationSheet:
     def __init__(self, book: Workbook, scenario: ScenarioReport, *, live: bool = True) -> None:
         self.scenario = scenario
         self.live = live
-        self.sheet = Sheet(book, f"Расчёт — {scenario.name}", [44, 46, 18, 12, 60, 50, 12, 10])
+        self.sheet = Sheet(book, f"Расчёт - {scenario.name}", [44, 46, 18, 12, 60, 50, 12, 10])
         self.cells: dict[str, str] = {}
         self.values: dict[str, float] = {}
         self.name = self.sheet.ws.title
@@ -182,10 +182,10 @@ class CalculationSheet:
         sheet, scenario = self.sheet, self.scenario
         sheet.title(f"Расчёт: {scenario.name} ({scenario_kind(scenario.kind)})")
         sheet.note(
-            "Снимок: жёлтые ячейки — исходные данные, зелёные — проверочные формулы. "
+            "Снимок: жёлтые ячейки - исходные данные, зелёные - проверочные формулы. "
             "Изменять входы и пересчитывать весь сценарий нужно в приложении."
             if self.live
-            else "Значения платформы без формул: формула каждого шага — текстом в столбце «Формула»."
+            else "Значения платформы без формул: формула каждого шага - текстом в столбце «Формула»."
         )
         self._inputs()
         self._steps()
@@ -309,14 +309,14 @@ def _cashflow(
     if not cashflow.get("monthly"):
         return
     label = "Поток собственника" if owner else "Поток проекта"
-    sheet = Sheet(book, f"{label} — {scenario.name}", [10, 18, 18, 18, 18, 18, 20, 14, 18, 20])
+    sheet = Sheet(book, f"{label} - {scenario.name}", [10, 18, 18, 18, 18, 18, 20, 14, 18, 20])
     sheet.title(f"{label} относительно «как сейчас»: {scenario.name}")
     sheet.note(
         "С НДС, до налога на прибыль. "
         + ("Собственные вложения и платежи долга. " if owner else "Полный CAPEX, без платежей долга. ")
         + "Плата RaaS включена; внедрение, разгон, индексация и замены учтены. "
         + (
-            "Накопленный поток, дисконтирование, NPV и IRR — проверочные формулы Excel. "
+            "Накопленный поток, дисконтирование, NPV и IRR - проверочные формулы Excel. "
             "Месячные потоки зафиксированы; для нового сценария нужен новый экспорт."
             if live
             else "Значения платформы без формул."

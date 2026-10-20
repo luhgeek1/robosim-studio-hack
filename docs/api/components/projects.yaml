@@ -6,7 +6,7 @@ ProjectStatus:
 
 DataQualitySummary:
   type: object
-  description: Сводка происхождения параметров — «панель доверия» на экране объекта.
+  description: Сводка происхождения параметров - «панель доверия» на экране объекта.
   required: [score, counts]
   properties:
     score: {type: number, minimum: 0, maximum: 1, description: "Взвешенная доля подтверждённых и введённых значений среди влияющих на результат"}
@@ -29,7 +29,7 @@ Project:
     organization_id:
       type: [string, "null"]
       format: uuid
-      description: Организация, чьим участникам виден проект; null — личный проект автора.
+      description: Организация, чьим участникам виден проект; null - личный проект автора.
     organization: {type: [string, "null"]}
     notes: {type: [string, "null"]}
     tags: {type: array, items: {type: string}}
@@ -74,7 +74,7 @@ ProjectCreate:
     organization_id:
       type: [string, "null"]
       format: uuid
-      description: Создать в организации (нужно быть её участником); без значения — личный проект. Копия остаётся в рабочей области исходного проекта.
+      description: Создать в организации (нужно быть её участником); без значения - личный проект. Копия остаётся в рабочей области исходного проекта.
     notes: {type: [string, "null"]}
     tags: {type: array, items: {type: string}}
 
@@ -88,7 +88,7 @@ ProjectUpdate:
     organization_id:
       type: [string, "null"]
       format: uuid
-      description: Перенести в организацию или (null) в личное пространство — может автор или владелец организации.
+      description: Перенести в организацию или (null) в личное пространство - может автор или владелец организации.
 
 ParamValidation:
   type: object
@@ -96,12 +96,12 @@ ParamValidation:
   properties:
     status: {type: string, enum: [ok, warning, error, missing]}
     code: {type: [string, "null"], example: "RANGE_EXCEEDED"}
-    message: {type: [string, "null"], example: "Значение 12 000 выше типичного диапазона 500–5 000 палл/сут"}
+    message: {type: [string, "null"], example: "Значение 12 000 выше типичного диапазона 500-5 000 палл/сут"}
     how_to_fix: {type: [string, "null"], example: "Проверьте единицы: возможно, указано значение в неделю"}
 
 ProjectParam:
   type: object
-  description: Параметр объекта в проекте — значение, происхождение, валидация, история правок.
+  description: Параметр объекта в проекте - значение, происхождение, валидация, история правок.
   required: [key, name, group, value, provenance, validation]
   properties:
     key: {type: string, example: "aisle_width_m"}
@@ -131,7 +131,7 @@ ParamUpsert:
   properties:
     key: {type: string}
     value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
-    unit: {type: [string, "null"], description: "Если отличается от базовой единицы — бэкенд конвертирует"}
+    unit: {type: [string, "null"], description: "Если отличается от базовой единицы - бэкенд конвертирует"}
     note: {type: [string, "null"], description: "Комментарий к правке, попадает в историю"}
 
 ParamsBulkUpsert:
@@ -241,7 +241,7 @@ ImportResult:
   properties:
     import_id: {type: string, format: uuid}
     source_kind: {type: string, enum: [xlsx_template, xlsx_freeform, csv, json, text_llm, pdf_llm]}
-    provider: {type: string, example: "rules", description: "rules — детерминированный разбор шаблона; gemini — ассистент"}
+    provider: {type: string, example: "rules", description: "rules - детерминированный разбор шаблона; gemini - ассистент"}
     mapped: {type: array, items: {$ref: '#/ImportMappedItem'}}
     unmapped:
       type: array
@@ -261,7 +261,7 @@ ImportApply:
   type: object
   properties:
     row_ids: {type: [array, "null"], maxItems: 10000, items: {type: string}, description: "Явный выбор строк; [] не применяет ничего. Если задан, приоритетнее accept_keys. Ошибочные строки блокируют применение; исключённые пропускаются."}
-    accept_keys: {type: array, items: {type: string}, description: "Если пусто — применить все mapped"}
+    accept_keys: {type: array, items: {type: string}, description: "Если пусто - применить все mapped"}
     overwrite_user_values: {type: boolean, default: false}
 
 SmartImportRequest:
@@ -329,7 +329,7 @@ ProcessDemand:
     process_key: {type: string, example: "order_picking"}
     name: {type: string, example: "Отбор заказов"}
     demand_unit: {$ref: './reference.yaml#/DemandUnit'}
-    demand_per_day: {type: [number, "null"], example: 100000, description: "null — не хватает параметров для оценки спроса"}
+    demand_per_day: {type: [number, "null"], example: 100000, description: "null - не хватает параметров для оценки спроса"}
     avg_per_hour: {type: [number, "null"], example: 4545}
     peak_per_hour: {type: [number, "null"], example: 6818}
     hourly_profile:
@@ -337,7 +337,7 @@ ProcessDemand:
       minItems: 24
       maxItems: 24
       items: {type: number}
-      description: Доли суточного объёма по часам (сумма = 1). Источник профиля — допущение с источником.
+      description: Доли суточного объёма по часам (сумма = 1). Источник профиля - допущение с источником.
     profile_provenance: {oneOf: [{$ref: './common.yaml#/Provenance'}, {type: "null"}]}
     current:
       type: object
@@ -380,7 +380,7 @@ Point:
   minItems: 2
   maxItems: 2
   items: {type: number}
-  description: "[x, y] в метрах, начало координат — левый верхний угол"
+  description: "[x, y] в метрах, начало координат - левый верхний угол"
 
 Zone:
   type: object
@@ -423,7 +423,7 @@ LayoutEdge:
     from: {type: string}
     to: {type: string}
     length_m: {type: number}
-    width_m: {type: number, description: "Ширина прохода — участвует в жёстких проверках и заторах"}
+    width_m: {type: number, description: "Ширина прохода - участвует в жёстких проверках и заторах"}
     capacity: {type: integer, description: "Сколько роботов одновременно на участке"}
     one_way: {type: boolean, default: false}
     kind: {type: string, enum: [main_aisle, rack_aisle, corridor, door, elevator_link, ramp], default: rack_aisle}
@@ -432,11 +432,11 @@ LayoutEdge:
 LayoutTemplate:
   type: string
   description: |
-    warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
-    warehouse_flow_through — приёмка и отгрузка на противоположных фасадах;
-    hospital_floor — больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
+    warehouse_u_flow - ворота приёмки и отгрузки на одном фасаде (по умолчанию);
+    warehouse_flow_through - приёмка и отгрузка на противоположных фасадах;
+    hospital_floor - больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
     и типовой этаж отделений;
-    airport_apron — аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
+    airport_apron - аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
   enum: [warehouse_u_flow, warehouse_flow_through, hospital_floor, airport_apron]
 
 LayoutRoute:
@@ -450,7 +450,7 @@ LayoutRoute:
 
 LayoutDerivationStep:
   type: object
-  description: Шаг вывода геометрии — формула, подставленные значения и входы (параметры объекта и нормативы).
+  description: Шаг вывода геометрии - формула, подставленные значения и входы (параметры объекта и нормативы).
   required: [key, name, value, formula, formula_rendered, inputs]
   properties:
     key: {type: string, example: "rack_levels"}
@@ -473,13 +473,13 @@ LayoutDerivationStep:
 
 LayoutStats:
   type: object
-  description: Что вытекает из геометрии — попадает в расчёт цикла и в имитацию.
+  description: Что вытекает из геометрии - попадает в расчёт цикла и в имитацию.
   properties:
     avg_route_m:
       type: object
       additionalProperties: {type: number}
       example: {dock_in_to_storage: 91.1, storage_to_dock_out: 98.2, pod_to_station: 42.5}
-      description: "Ключи — LayoutRoute.key. В расчёт идут как входы `layout_route_<key>_m` (вид `layout` в трассе)"
+      description: "Ключи - LayoutRoute.key. В расчёт идут как входы `layout_route_<key>_m` (вид `layout` в трассе)"
     routes: {type: array, items: {$ref: '#/LayoutRoute'}}
     min_aisle_width_m: {type: [number, "null"], description: "Самый узкий проезд для паллетных роботов"}
     rack_slots_total: {type: integer}
@@ -508,7 +508,7 @@ LayoutPlan:
 Layout:
   type: object
   description: |
-    Планировка объекта — единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
+    Планировка объекта - единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
     пользователь может подправить зоны и станции в простом редакторе. Не CAD. Сохранение или перегенерация
     повышает версию проекта: расчёты становятся stale.
   required: [id, project_id, version, width_m, height_m, zones, nodes, edges, generated, stats, derivation, warnings, params_changed]
@@ -525,7 +525,7 @@ Layout:
     racks: {type: array, items: {$ref: '#/Rack'}}
     nodes: {type: array, items: {$ref: '#/LayoutNode'}}
     edges: {type: array, items: {$ref: '#/LayoutEdge'}}
-    generated: {type: boolean, description: "false — после ручной правки в редакторе"}
+    generated: {type: boolean, description: "false - после ручной правки в редакторе"}
     generator:
       type: object
       properties:
@@ -536,8 +536,8 @@ Layout:
         project_version: {type: integer}
     stats: {$ref: '#/LayoutStats'}
     derivation: {type: array, items: {$ref: '#/LayoutDerivationStep'}}
-    warnings: {type: array, items: {type: string}, example: ["В здании помещается 19 500 из 20 000 паллетомест при 5 ярусах — проверьте высоту потолков и площадь"]}
-    params_changed: {type: boolean, description: "Параметры объекта менялись после генерации — стоит перегенерировать"}
+    warnings: {type: array, items: {type: string}, example: ["В здании помещается 19 500 из 20 000 паллетомест при 5 ярусах - проверьте высоту потолков и площадь"]}
+    params_changed: {type: boolean, description: "Параметры объекта менялись после генерации - стоит перегенерировать"}
     updated_at: {type: string, format: date-time}
 
 LayoutGenerateRequest:
@@ -547,7 +547,7 @@ LayoutGenerateRequest:
     seed: {type: [integer, "null"], description: "Зарезервировано: генератор детерминирован"}
     overrides:
       type: object
-      description: Переопределения генератора; неизвестный ключ — 409.
+      description: Переопределения генератора; неизвестный ключ - 409.
       properties:
         aspect_ratio: {type: number, example: 2, description: "Длина здания к глубине"}
         docks_in: {type: integer, minimum: 1}
@@ -559,7 +559,7 @@ LayoutGenerateRequest:
 
 LayoutUpdate:
   type: object
-  description: Частичное обновление — присланные массивы замещают целиком. Длины прямых рёбер пересчитываются по координатам узлов.
+  description: Частичное обновление - присланные массивы замещают целиком. Длины прямых рёбер пересчитываются по координатам узлов.
   properties:
     zones: {type: array, items: {$ref: '#/Zone'}}
     racks: {type: array, items: {$ref: '#/Rack'}}

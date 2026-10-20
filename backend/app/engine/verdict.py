@@ -126,7 +126,7 @@ def _drivers(result: CalculationResult) -> list[str]:
     if economics.capex.total > 0:
         top = max(economics.capex.lines, key=lambda line: line.step.value)
         share = top.step.value / economics.capex.total * PERCENT
-        drivers.append(f"Крупнейшая статья CAPEX — {top.step.name.lower()}: {fmt(round(share))} %")
+        drivers.append(f"Крупнейшая статья CAPEX - {top.step.name.lower()}: {fmt(round(share))} %")
     saved = sum(line.step.value for line in savings)
     if saved > 0 and economics.opex.total > 0:
         drivers.append(
@@ -141,7 +141,7 @@ def _caveats(result: CalculationResult, ctx: VerdictContext) -> list[str]:
         "ФОТ не содержит НДС. Денежные потоки рассчитаны до налога на прибыль."
     ]
     if any(s.count.source == CountSource.ANALYTIC for s in result.sizing):
-        caveats.append("Число роботов — аналитическая оценка по времени цикла; имитация уточнит N и резерв")
+        caveats.append("Число роботов - аналитическая оценка по времени цикла; имитация уточнит N и резерв")
     used = {q.key: q.name for step in result.trace for q in step.inputs}
     assumed = sorted(name for key, name in used.items() if key in ctx.assumption_norms)
     if assumed:
@@ -165,7 +165,7 @@ def interpret(result: CalculationResult, ctx: VerdictContext) -> Interpretation:
             band=Band.NONE,
             headline=f"Как сейчас: {mln(metrics.baseline_cost_rub_year)} млн ₽ ФОТ в год, "
             f"{mln(metrics.tco_baseline_rub)} млн ₽ за {horizon} лет с индексацией",
-            summary="Без роботизации — точка отсчёта для эффекта, окупаемости и TCO остальных сценариев.",
+            summary="Без роботизации - точка отсчёта для эффекта, окупаемости и TCO остальных сценариев.",
             caveats=_caveats(result, ctx),
         )
     verdict = _verdict(metrics, ctx.norms)
@@ -176,9 +176,9 @@ def interpret(result: CalculationResult, ctx: VerdictContext) -> Interpretation:
     )
     scope = _scope(result)
     if metrics.payback_years is None or metrics.payback_years > horizon:
-        headline = f"{scope} не окупается за горизонт {horizon} лет — {VERDICT_LABELS[verdict]}"
+        headline = f"{scope} не окупается за горизонт {horizon} лет - {VERDICT_LABELS[verdict]}"
     else:
-        headline = f"{scope} окупается за {_years(metrics.payback_years)} — {VERDICT_LABELS[verdict]}"
+        headline = f"{scope} окупается за {_years(metrics.payback_years)} - {VERDICT_LABELS[verdict]}"
     irr = f", IRR проекта {fmt(round(metrics.irr_pct, 1))} %" if metrics.irr_pct is not None else ""
     roi = f"{fmt(round(metrics.roi_pct))} %" if metrics.roi_pct is not None else "не определён"
     discounted = (
@@ -266,7 +266,7 @@ def _lead_time_risks(result: CalculationResult, ctx: VerdictContext) -> list[Ris
                 "LEAD_TIME_EXCEEDED",
                 f"Рейс дольше норматива: {sizing.process_name}",
                 RiskSeverity.HIGH,
-                f"Один рейс робота — {fmt(round(cycle / SECONDS_PER_MINUTE, 1))} мин при нормативе "
+                f"Один рейс робота - {fmt(round(cycle / SECONDS_PER_MINUTE, 1))} мин при нормативе "
                 f"{fmt(target)} мин; ожидание в очереди добавит ещё",
                 "Проверить маршрут и лифты; взять более быстрый робот или оставить срочные заявки людям",
             )
@@ -306,7 +306,7 @@ def _item_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
                     f"Парк не закрывает пик: {name}",
                     RiskSeverity.HIGH,
                     f"Роботы закрывают {fmt(round(sizing.coverage * PERCENT))} % пикового спроса; "
-                    "остальное — вручную",
+                    "остальное - вручную",
                     f"Увеличить парк до расчётных {sizing.count.analytic + sizing.count.reserve} шт.",
                 )
             )
@@ -364,7 +364,7 @@ def _item_risks(result: CalculationResult, ctx: VerdictContext) -> list[Risk]:
                     f"Паспорт против физики: {item.product_name}",
                     RiskSeverity.LOW,
                     f"Производитель заявляет {fmt(claim.value)} ед/ч, цикл на маршруте объекта даёт "
-                    f"{fmt(round(outcome.effective_per_hour, 1))} ед/ч — расчёт по паспорту занизил бы парк",
+                    f"{fmt(round(outcome.effective_per_hour, 1))} ед/ч - расчёт по паспорту занизил бы парк",
                     "Расчёт уже ведётся по времени цикла; уточнить маршрут планировкой",
                 )
             )

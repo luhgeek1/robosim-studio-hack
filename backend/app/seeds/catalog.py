@@ -141,7 +141,7 @@ def offer_values(
                 "id": uuid.uuid5(_OFFER_NAMESPACE, f"{pid}|{industry}|{row.get('Сценарий')}"),
                 "product_id": pid,
                 "industry_key": industry,
-                "scenario": row.get("Сценарий") or "—",
+                "scenario": row.get("Сценарий") or "-",
                 "price_rub": catalog_price(row),
                 "vat_included": True,
                 "cases_text": row.get("Кейсы"),

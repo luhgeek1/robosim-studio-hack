@@ -35,7 +35,7 @@ const ICONS: Record<string, ReactNode> = {
 export function ProjectsPage() {
   const projects = useProjects()
   const { organization } = useWorkspace()
-  // «Добавить проект» из меню вкладок ведёт сюда с ?new=1 — модалка создания открывается сразу.
+  // «Добавить проект» из меню вкладок ведёт сюда с ?new=1 - модалка создания открывается сразу.
   const [params, setParams] = useSearchParams()
   const creating = params.get('new') === '1'
   const setCreating = (next: boolean) => setParams(next ? { new: '1' } : {}, { replace: true })
@@ -50,7 +50,7 @@ export function ProjectsPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="display text-[34px] leading-[1.05] tracking-[-0.035em] sm:text-[44px]">Проекты</h1>
-          {/* Чьи это проекты: переключатель рабочих областей — в меню профиля. */}
+          {/* Чьи это проекты: переключатель рабочих областей - в меню профиля. */}
           <div className="mt-2 flex flex-wrap items-center gap-x-2 text-[14px] text-ink-3">
             {organization ? (
               <>
@@ -67,7 +67,7 @@ export function ProjectsPage() {
                 </Link>
               </>
             ) : (
-              <span>Личное пространство — проекты видны только вам</span>
+              <span>Личное пространство - проекты видны только вам</span>
             )}
           </div>
         </div>
@@ -80,8 +80,8 @@ export function ProjectsPage() {
         {projects.data && projects.data.items.length === 0 && (
           <div className="rounded-[12px] border border-dashed border-line px-5 py-10 text-center text-[14px] text-ink-3">
             {organization
-              ? 'В организации пока нет проектов. Создайте первый или перенесите сюда личный — через меню «…» у проекта.'
-              : 'Проектов пока нет. Создайте первый — демо-склад организатора считается за минуту.'}
+              ? 'В организации пока нет проектов. Создайте первый или перенесите сюда личный - через меню «…» у проекта.'
+              : 'Проектов пока нет. Создайте первый - демо-склад организатора считается за минуту.'}
           </div>
         )}
         {projects.data && projects.data.items.length > 0 && (
@@ -197,7 +197,7 @@ function ProjectRow({ project }: { project: Project }) {
   )
 }
 
-/* Перенос между рабочими областями: личный проект — в организацию (его увидят участники) и обратно. */
+/* Перенос между рабочими областями: личный проект - в организацию (его увидят участники) и обратно. */
 function MoveTo({ project }: { project: Project }) {
   const { organizations } = useWorkspace()
   const move = useMoveProject()

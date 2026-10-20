@@ -108,7 +108,7 @@ export function EditLayoutDialog({
                     >
                       <title>
                         {edgeLabel(e)}
-                        {isClosed ? ' — закрыт' : ''}
+                        {isClosed ? ' - закрыт' : ''}
                       </title>
                     </line>
                   )
@@ -235,7 +235,7 @@ export function EditLayoutDialog({
             )}
             {invalid && (
               <p role="alert" className="text-sm text-crit">
-                Точки должны быть внутри объекта, ширина — больше нуля, число мест — положительное целое.
+                Точки должны быть внутри объекта, ширина - больше нуля, число мест - положительное целое.
               </p>
             )}
           </div>

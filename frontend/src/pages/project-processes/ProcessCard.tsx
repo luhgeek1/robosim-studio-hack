@@ -64,13 +64,13 @@ export function ProcessCard({
               label={`${unit}/ч в пик${peakFactor ? ` · ×${formatNumber(peakFactor)}` : ''}`}
               tone="warn"
             />
-            <Figure value={current?.fte !== undefined ? formatNumber(current.fte) : '—'} label="человек занято" />
+            <Figure value={current?.fte !== undefined ? formatNumber(current.fte) : '-'} label="человек занято" />
             <Figure
-              value={current?.productivity_per_hour != null ? formatNumber(current.productivity_per_hour) : '—'}
+              value={current?.productivity_per_hour != null ? formatNumber(current.productivity_per_hour) : '-'}
               label={`${unit}/ч на сотрудника`}
             />
             <Figure
-              value={current?.sla_now != null ? formatPct(current.sla_now, { share: true }) : '—'}
+              value={current?.sla_now != null ? formatPct(current.sla_now, { share: true }) : '-'}
               label={current?.sla_now != null ? 'вовремя сейчас' : 'вовремя: не оценено'}
             />
           </dl>
@@ -120,7 +120,7 @@ export function ProcessCard({
 }
 
 function Figure({ value, label, tone }: { value: ReactNode; label: string; tone?: 'warn' }) {
-  // dt раньше dd по смыслу, а визуально число сверху — поэтому колонка развёрнута.
+  // dt раньше dd по смыслу, а визуально число сверху - поэтому колонка развёрнута.
   return (
     <div className="flex min-w-0 flex-col-reverse">
       <dt className="mt-0.5 text-[12.5px] text-ink-3 max-sm:leading-snug lg:truncate" title={label}>
@@ -135,7 +135,7 @@ function Figure({ value, label, tone }: { value: ReactNode; label: string; tone?
   )
 }
 
-/* Профиль суток полосой из 24 столбиков: часы выше ровной доли по рабочим часам — тёплым цветом.
+/* Профиль суток полосой из 24 столбиков: часы выше ровной доли по рабочим часам - тёплым цветом.
    Наведение на столбик показывает час, долю суток и сколько это единиц в час. */
 function HourStrip({ profile, perDay, unit }: { profile: number[]; perDay?: number | null; unit: string }) {
   const [hovered, setHovered] = useState<number | null>(null)
@@ -183,7 +183,7 @@ function HourStrip({ profile, perDay, unit }: { profile: number[]; perDay?: numb
               className="pointer-events-none absolute bottom-full z-10 mb-2 rounded-[10px] bg-ink px-3 py-2 text-[12px] whitespace-nowrap text-white shadow-float"
             >
               <div className="num font-medium">
-                {hh(hovered)}–{hh(hovered + 1)}
+                {hh(hovered)}-{hh(hovered + 1)}
               </div>
               {profile[hovered] > 0 ? (
                 <>
@@ -277,7 +277,7 @@ function Solutions({ processKey, fallback }: { processKey: string; fallback: str
   )
 }
 
-/* Пояснения к расчёту важны для проверки, но не для первого взгляда — прячем их под раскрытие. */
+/* Пояснения к расчёту важны для проверки, но не для первого взгляда - прячем их под раскрытие. */
 function Notes({ notes }: { notes: string[] }) {
   const [open, setOpen] = useState(false)
   return (

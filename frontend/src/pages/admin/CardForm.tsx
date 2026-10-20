@@ -23,7 +23,7 @@ export function CardForm({
   form: ProductWrite
   errors: ProductErrors
   onChange: (patch: Partial<ProductWrite>) => void
-  /** Кабинет производителя: компания — из привязки учётной записи, отметки реестра и испытаний ставит админ. */
+  /** Кабинет производителя: компания - из привязки учётной записи, отметки реестра и испытаний ставит админ. */
   vendor?: boolean
 }) {
   const solutionTypes = useSolutionTypes()
@@ -32,7 +32,7 @@ export function CardForm({
   const processes = form.processes ?? []
   const badges = form.badges ?? []
 
-  // Процессы, которые умеет выбранный тип решения, — по каждому отмеченному типу объекта.
+  // Процессы, которые умеет выбранный тип решения, - по каждому отмеченному типу объекта.
   const processGroups = (objectTypes.data ?? [])
     .filter((t) => selectedTypes.includes(t.key))
     .map((t) => ({
@@ -58,7 +58,7 @@ export function CardForm({
         </Field>
         {vendor ? (
           <p className="text-[12.5px] text-ink-3">
-            Производитель — <span className="font-medium text-ink-2">{form.manufacturer_name}</span>, по привязке
+            Производитель - <span className="font-medium text-ink-2">{form.manufacturer_name}</span>, по привязке
             учётной записи
           </p>
         ) : (
@@ -128,7 +128,7 @@ export function CardForm({
               max={9}
               value={form.trl ?? ''}
               onChange={(e) => onChange({ trl: e.target.value === '' ? null : Number(e.target.value) })}
-              placeholder="1–9"
+              placeholder="1-9"
               className="num h-9 rounded-[10px]"
             />
           </Field>
@@ -201,7 +201,7 @@ export function CardForm({
         </AnimatePresence>
         {selectedTypes.length > 0 && processGroups.length === 0 && form.solution_type && (
           <p className="text-[12.5px] text-ink-3">
-            У выбранных объектов нет процессов для этого типа решения — продукт будет виден только в каталоге.
+            У выбранных объектов нет процессов для этого типа решения - продукт будет виден только в каталоге.
           </p>
         )}
       </FormSection>

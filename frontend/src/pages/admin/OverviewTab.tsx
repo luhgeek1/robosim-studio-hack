@@ -41,12 +41,12 @@ export function OverviewTab() {
   const payback = toSlices(data.avg_payback_years_by_object_type, typeLabel).sort((a, b) => a.value - b.value)
   const top: Slice[] = (data.top_products_in_scenarios ?? []).map((p) => ({
     key: p.product_id ?? p.name ?? '',
-    name: p.name ?? '—',
+    name: p.name ?? '-',
     value: p.count ?? 0,
   }))
   const gaps = [...(data.catalog_gaps ?? [])].sort((a, b) => (b.no_fit_count ?? 0) - (a.no_fit_count ?? 0))
   const projectsTotal = byType.reduce((sum, s) => sum + s.value, 0)
-  // Средняя по платформе — взвешенная числом проектов каждого типа объекта.
+  // Средняя по платформе - взвешенная числом проектов каждого типа объекта.
   const weighted = payback.reduce(
     (acc, s) => {
       const weight = data.projects_by_object_type?.[s.key] ?? 1
@@ -114,7 +114,7 @@ export function OverviewTab() {
               />
               {otherCount > 0 && (
                 <p className="meta mt-2">
-                  Ещё {otherCount} {pluralRu(otherCount, ['тип', 'типа', 'типов'])} — {formatNumber(otherTypes)}{' '}
+                  Ещё {otherCount} {pluralRu(otherCount, ['тип', 'типа', 'типов'])} - {formatNumber(otherTypes)}{' '}
                   {pluralRu(otherTypes, ['решение', 'решения', 'решений'])}
                 </p>
               )}
@@ -162,7 +162,7 @@ export function OverviewTab() {
       </div>
 
       {gaps.length > 0 && (
-        <Panel title="Пробелы каталога" note="Процессы, где подбор не находит решений — сигнал для ФЦ БАС">
+        <Panel title="Пробелы каталога" note="Процессы, где подбор не находит решений - сигнал для ФЦ БАС">
           <ul className="grid grid-cols-1 gap-x-8 divide-line sm:grid-cols-2">
             {gaps.slice(0, 10).map((gap, i) => (
               <motion.li

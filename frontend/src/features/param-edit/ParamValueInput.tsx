@@ -44,7 +44,7 @@ export function ParamValueInput({
           aria-label={label}
         />
         <span className="text-muted-foreground">
-          {param.value === true ? 'да' : param.value === false ? 'нет' : '—'}
+          {param.value === true ? 'да' : param.value === false ? 'нет' : '-'}
         </span>
       </label>
     )

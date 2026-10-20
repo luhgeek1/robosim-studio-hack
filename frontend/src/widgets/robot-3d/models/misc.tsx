@@ -8,7 +8,7 @@ import { mm, type ModelProps } from '../types'
 
 type G = THREE.Group
 
-/** Two-link arm in the x–y plane of its group: shoulder at the origin, links along +x. */
+/** Two-link arm in the x-y plane of its group: shoulder at the origin, links along +x. */
 function ArmLinks({
   a,
   b,

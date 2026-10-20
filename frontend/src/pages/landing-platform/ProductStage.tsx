@@ -170,7 +170,7 @@ export function ProductStage() {
         <aside className="platform-stage-result">
           <span className="platform-mini-label">Результат примера</span>
           <h2>
-            От оценки —<br />к проверке.
+            От оценки -<br />к проверке.
           </h2>
           {before && after ? (
             <>

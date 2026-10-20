@@ -104,7 +104,7 @@ STYLES = {
 def number(value: Any, digits: int = 1) -> str:
     """Russian number: thin groups, decimal comma, no trailing zeros (20 000, 0,85, 1,7)."""
     if value is None:
-        return "—"
+        return "-"
     if isinstance(value, bool):
         return "да" if value else "нет"
     if not isinstance(value, int | float):
@@ -116,11 +116,11 @@ def number(value: Any, digits: int = 1) -> str:
 
 
 def money(value: Any) -> str:
-    return "—" if value is None else f"{number(value / MILLION, 1)} млн ₽"
+    return "-" if value is None else f"{number(value / MILLION, 1)} млн ₽"
 
 
 def p(text: Any, style: str = "body") -> Paragraph:
-    return Paragraph(escape(str(text)) if text is not None else "—", STYLES[style])
+    return Paragraph(escape(str(text)) if text is not None else "-", STYLES[style])
 
 
 def table(rows: Sequence[Sequence[Any]], widths: Sequence[float], *, zebra: bool = True) -> Table:
@@ -192,7 +192,7 @@ class Builder:
     def cover(self) -> None:
         m = self.m
         self.add(Spacer(1, 30 * mm), p(m.title, "title"))
-        self.add(p(f"{m.project['name']} — {m.project['object_type_name']}", "h2"))
+        self.add(p(f"{m.project['name']} - {m.project['object_type_name']}", "h2"))
         versions = m.versions
         facts: list[list[Any]] = [
             ["Показатель", "Значение"],
@@ -205,7 +205,7 @@ class Builder:
             ],
             [
                 "Движок расчёта / планировка",
-                f"{versions.get('engine_version')} / v{versions.get('layout_version') or '—'}",
+                f"{versions.get('engine_version')} / v{versions.get('layout_version') or '-'}",
             ],
             ["Сценариев", len(m.scenarios)],
         ]
@@ -258,7 +258,7 @@ class Builder:
         )
         rows: list[list[Any]] = [["Группа", "Параметр", "Значение", "Происхождение"]]
         for param in m.params[:PARAMS_LIMIT]:
-            value = number(param.value, 2) if isinstance(param.value, int | float) else (param.value or "—")
+            value = number(param.value, 2) if isinstance(param.value, int | float) else (param.value or "-")
             rows.append(
                 [
                     param.group,
@@ -293,8 +293,8 @@ class Builder:
         self.h1("Подбор решений")
         self.add(
             p(
-                "Для каждого процесса — лучшие кандидаты каталога со статусом жёстких проверок и объяснимым "
-                "скорингом. Оценка числа роботов и окупаемости — покупка одного решения.",
+                "Для каждого процесса - лучшие кандидаты каталога со статусом жёстких проверок и объяснимым "
+                "скорингом. Оценка числа роботов и окупаемости - покупка одного решения.",
                 "small",
             )
         )
@@ -334,10 +334,10 @@ class Builder:
                         self.m.process_names.get(s["process_key"], s["process_key"]),
                         s["product_name"],
                         count["analytic"],
-                        count.get("simulated") or "—",
+                        count.get("simulated") or "-",
                         count.get("reserve"),
                         count["final"],
-                        s.get("chargers_count") or "—",
+                        s.get("chargers_count") or "-",
                         count["explanation"],
                     ]
                 )
@@ -365,11 +365,11 @@ class Builder:
         self.add(
             p(
                 "Суммы с НДС, до налога на прибыль. NPV, IRR и ROI проекта считаются на полном CAPEX "
-                "до финансирования; показатели собственника — на собственном взносе и платежах долга "
+                "до финансирования; показатели собственника - на собственном взносе и платежах долга "
                 "с отдельной ставкой. RaaS входит в оба потока. Годовой эффект, простая окупаемость "
                 "по ТЗ и TCO включают проценты. Каждая строка раскрывается в формулу "
                 "с подставленными значениями; "
-                "полная трасса с источниками — в Excel-версии отчёта.",
+                "полная трасса с источниками - в Excel-версии отчёта.",
                 "small",
             )
         )
@@ -377,7 +377,7 @@ class Builder:
             if scenario.is_baseline:
                 continue
             result = scenario.result
-            self.add(CondPageBreak(90 * mm), p(f"{scenario.name} — {scenario_kind(scenario.kind)}", "h1"))
+            self.add(CondPageBreak(90 * mm), p(f"{scenario.name} - {scenario_kind(scenario.kind)}", "h1"))
             self.add(boxed(result["interpretation"]["headline"], _LIGHT), Spacer(1, 2 * mm))
             self.add(p(result["interpretation"].get("summary", "")))
             self._lines("CAPEX", result["capex"]["items"], "amount_rub")
@@ -408,7 +408,7 @@ class Builder:
             fmt = money if is_money else number
             rows.append([label, fmt(metrics.get(key)), fmt(metrics.get(f"owner_{key}"))])
         self.add(p("Проект и собственные средства", "h2"), table(rows, [0.46, 0.27, 0.27]))
-        self.add(p("При нулевом первоначальном взносе ROI собственника не определён (—).", "small"))
+        self.add(p("При нулевом первоначальном взносе ROI собственника не определён (-).", "small"))
         for key, title in (
             ("cashflow", "Поток проекта до финансирования относительно «как сейчас»"),
             ("owner_cashflow", "Поток собственника после финансирования относительно «как сейчас»"),
@@ -438,7 +438,7 @@ class Builder:
         self.add(table(rows, [0.3, *[0.7 / max(1, len(names))] * len(names)]))
         curves = {names[sid]: points for sid, points in comparison.get("overlay", {}).items() if sid in names}
         if curves:
-            self.add(p("Накопленный поток проекта до финансирования: пересечение нуля — окупаемость", "h2"))
+            self.add(p("Накопленный поток проекта до финансирования: пересечение нуля - окупаемость", "h2"))
             self.add(picture(charts.comparison_chart(curves)))
 
     def risks(self) -> None:
@@ -505,7 +505,7 @@ class Builder:
             self.add(
                 p(
                     "Средние маршруты по графу: "
-                    + "; ".join(f"{k.lower()} — {number(v)} м" for k, v in routes.items()),
+                    + "; ".join(f"{k.lower()} - {number(v)} м" for k, v in routes.items()),
                     "small",
                 )
             )
@@ -527,7 +527,7 @@ class Builder:
         sla = summary["sla"]
         rows = [
             ["Показатель", "Значение"],
-            ["Режим", MODE_LABELS.get(sim.get("config", {}).get("mode", ""), "—")],
+            ["Режим", MODE_LABELS.get(sim.get("config", {}).get("mode", ""), "-")],
             ["Парк", fleet],
             ["SLA", f"{number(sla['achieved_pct'])} % при цели {number(sla['target_pct'], 0)} %"],
             [
@@ -606,7 +606,7 @@ class Builder:
         self.h1("Нормативы и допущения")
         self.add(
             p(
-                "Каждое число расчёта — параметр объекта, ТТХ из каталога или норматив "
+                "Каждое число расчёта - параметр объекта, ТТХ из каталога или норматив "
                 "с источником. Допущения "
                 "команды отмечены и имеют обоснование; их можно изменить в сценарии с фиксацией причины.",
                 "small",
@@ -627,7 +627,7 @@ class Builder:
         self.h1("Источники")
         rows: list[list[Any]] = [["Источник", "Ссылка"]]
         for source in self.m.sources:
-            rows.append([source["title"], source.get("url") or "—"])
+            rows.append([source["title"], source.get("url") or "-"])
         self.add(table(rows, [0.6, 0.4]))
 
     def closing(self) -> None:

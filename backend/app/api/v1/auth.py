@@ -102,7 +102,7 @@ async def login(
     operation_id="refreshTokens",
     summary="Обновить пару токенов",
     description="Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; "
-    "для других клиентов — refresh-токен в теле.",
+    "для других клиентов - refresh-токен в теле.",
     responses={401: {"description": "Токен недействителен"}},
 )
 async def refresh(

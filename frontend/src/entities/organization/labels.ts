@@ -11,5 +11,5 @@ export function initialOf(name: string | null | undefined): string {
   return (cleaned[0] ?? '?').toUpperCase()
 }
 
-// Название в кавычках для текста; «ООО «Север»» уже закавычено — вторые кавычки не добавляем.
+// Название в кавычках для текста; «ООО «Север»» уже закавычено - вторые кавычки не добавляем.
 export const quoted = (name: string) => (/[«"]/.test(name) ? name : `«${name}»`)

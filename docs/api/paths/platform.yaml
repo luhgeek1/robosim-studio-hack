@@ -16,7 +16,7 @@ projectReports:
     summary: Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача)
     description: |
       Сейчас формируются `pdf` («предТЭО» с графиками, планировкой и имитацией), `xlsx` (входы и живые формулы
-      из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` — 422.
+      из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` - 422.
       Сценарии с устаревшим расчётом пересчитываются.
     requestBody:
       required: true
@@ -83,8 +83,8 @@ assistExplain:
   post:
     tags: [assist]
     operationId: explain
-    summary: Вопрос по расчёту или имитации — ответ с цитатами из трассы
-    description: LLM отвечает только по данным расчёта (трасса, симуляция, нормативы); без LLM — шаблонные ответы на типовые вопросы.
+    summary: Вопрос по расчёту или имитации - ответ с цитатами из трассы
+    description: LLM отвечает только по данным расчёта (трасса, симуляция, нормативы); без LLM - шаблонные ответы на типовые вопросы.
     parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
     requestBody:
       required: true
@@ -137,7 +137,7 @@ demoWhatIf:
     security: []
     parameters:
       - {name: demo_key, in: path, required: true, schema: {type: string}}
-      - {name: revision, in: query, schema: {type: string, maxLength: 64}, description: "Версия открытого примера; при несовпадении — 409"}
+      - {name: revision, in: query, schema: {type: string, maxLength: 64}, description: "Версия открытого примера; при несовпадении - 409"}
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/platform.yaml#/DemoWhatIfRequest'}}}
@@ -252,7 +252,7 @@ adminProduct:
   delete:
     tags: [admin]
     operationId: adminDeleteProduct
-    summary: Скрыть продукт (мягкое удаление — расчёты, где он использован, сохраняются)
+    summary: Скрыть продукт (мягкое удаление - расчёты, где он использован, сохраняются)
     responses:
       '204': {description: "Скрыт"}
 
@@ -273,13 +273,13 @@ adminCatalogImport:
   post:
     tags: [admin]
     operationId: adminImportCatalog
-    summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+    summary: Загрузить таблицу решений организатора (CSV) - новая версия каталога (ТЗ 3.3.2, 3.3.6)
     description: |
       Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
-      обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
-      процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+      обновляются, новые id добавляются (тип решения - по тому, как файл классифицирует уже известные продукты;
+      процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются -
       они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
-      С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+      С `dry_run=true` ничего не пишет: тот же ответ - предпросмотр.
     parameters:
       - {name: dry_run, in: query, schema: {type: boolean, default: false}, description: "Только предпросмотр: ничего не сохранять"}
     requestBody:
@@ -291,7 +291,7 @@ adminCatalogImport:
             required: [file]
             properties:
               file: {type: string, format: binary}
-              notes: {type: string, maxLength: 2000, description: "Что за выгрузка — пишется в журнал"}
+              notes: {type: string, maxLength: 2000, description: "Что за выгрузка - пишется в журнал"}
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/catalog.yaml#/CatalogImportResult'}}}}
       '413': {description: "Файл больше 20 МБ", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
@@ -399,8 +399,8 @@ adminParameterDefault:
     operationId: adminSetParameterDefault
     summary: Задать значение по умолчанию с источником и обоснованием
     description: |
-      Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона — 422 (у проекта это
-      было бы предупреждением, у умолчания — ошибка во всех проектах). Проекты без своего значения, у которых
+      Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона - 422 (у проекта это
+      было бы предупреждением, у умолчания - ошибка во всех проектах). Проекты без своего значения, у которых
       меняется действующее значение, получают новую версию: их сохранённые расчёты становятся устаревшими,
       а пересчёт показывает изменение параметра в диффе. Старые расчёты хранят свой снимок входов (ТЗ 3.1.5).
     requestBody:
@@ -428,11 +428,11 @@ adminSources:
   get:
     tags: [admin]
     operationId: adminListSources
-    summary: Реестр источников данных — ссылки, даты, где используются (ТЗ 3.3.4)
+    summary: Реестр источников данных - ссылки, даты, где используются (ТЗ 3.3.4)
     description: |
       Источники каталога, нормативов и параметров по умолчанию (загрузки пользователей в проекты не входят).
       Сначала самые используемые. Источник старше `stale_after_months` месяцев (норматив
-      `source_stale_after_months`) — `stale`, без даты получения — `undated`.
+      `source_stale_after_months`) - `stale`, без даты получения - `undated`.
     parameters:
       - {$ref: '../components/common.yaml#/parameters/Page'}
       - {name: page_size, in: query, schema: {type: integer, minimum: 1, maximum: 200, default: 50}}
@@ -451,7 +451,7 @@ adminSource:
     operationId: adminUpdateSource
     summary: Исправить название, ссылку, дату получения или примечание источника
     description: |
-      Правка — событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
+      Правка - событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
       и расчёты не устаревают; экраны и отчёты показывают исправленный источник. Сид не перезаписывает
       источник, который правил администратор.
     requestBody:

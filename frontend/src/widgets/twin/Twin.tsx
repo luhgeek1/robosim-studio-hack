@@ -68,7 +68,7 @@ export function Twin({
     onViewChange?.(next)
   }
   const [command, setCommand] = useState({ action: 'home' as CameraAction, id: 0 })
-  // One map layer at a time: the route graph or the run's flow and congestion — they draw on the same edges.
+  // One map layer at a time: the route graph or the run's flow and congestion - they draw on the same edges.
   const [layer, setLayer] = useState<'none' | 'graph' | 'heat'>('none')
   const routes = layer === 'graph'
   const heatOn = layer === 'heat' && Boolean(heat)
@@ -133,7 +133,7 @@ export function Twin({
             toolbarClassName="top-16 right-4"
             toolbarExtra={heatToggle}
             infoCorner="top-left"
-            // На узкой сцене левый верхний угол делит строку с переключателем 3D / 2D — масштаб уходит под панель.
+            // На узкой сцене левый верхний угол делит строку с переключателем 3D / 2D - масштаб уходит под панель.
             infoClassName={switcher ? '@max-[34rem]:top-28' : undefined}
           >
             {(v) => (
@@ -256,7 +256,7 @@ function MapLegendStrip({ robots, heat }: { robots: boolean; heat: boolean }) {
       {heat ? (
         <>
           <span className="font-medium text-ink">Поток и заторы:</span>
-          <span>толщина — число проездов</span>
+          <span>толщина - число проездов</span>
           <Dot color="#287d9c" label="роботы не ждали" />
           <Dot color="var(--warn)" label="ждали немного" />
           <Dot color="var(--crit)" label="затор" />

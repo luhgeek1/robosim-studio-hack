@@ -4,7 +4,7 @@ import { cn } from '@/shared/lib/utils'
 import { InfoHint } from '@/shared/ui/info-hint'
 import { PROVENANCE_HINT, PROVENANCE_LABEL, PROVENANCE_TONE, SOURCE_DOT, SOURCE_KIND_LABEL } from './labels'
 
-/* Происхождение значения точкой (в графиках — без подписи) вместо плашки. Источник — в подсказке. */
+/* Происхождение значения точкой (в графиках - без подписи) вместо плашки. Источник - в подсказке. */
 export function SourceMark({ provenance, compact }: { provenance: Provenance; compact?: boolean }) {
   const tone = PROVENANCE_TONE[provenance.status]
   const source = provenance.source
@@ -25,7 +25,7 @@ export function SourceMark({ provenance, compact }: { provenance: Provenance; co
     >
       <div className="space-y-1 text-left">
         <div className="font-medium">
-          {PROVENANCE_LABEL[provenance.status]} — {PROVENANCE_HINT[provenance.status].toLowerCase()}
+          {PROVENANCE_LABEL[provenance.status]} - {PROVENANCE_HINT[provenance.status].toLowerCase()}
         </div>
         {source && (
           <div>

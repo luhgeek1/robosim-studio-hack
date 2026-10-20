@@ -82,7 +82,7 @@ class Context:
             salary = self.books.params.optional(group.salary_param) if group.salary_param else None
             if headcount is None or salary is None:
                 self.warnings.append(
-                    f"Нет численности или зарплаты группы «{group.name}» — она не входит в базу"
+                    f"Нет численности или зарплаты группы «{group.name}» - она не входит в базу"
                 )
                 continue
             lines.append(LaborLine(group.key, group.name, headcount, salary))
@@ -176,7 +176,7 @@ class Context:
     def demand(self, process: ProcessDef) -> dict[str, TraceStep]:
         if not process.demand:
             raise CalculationError(
-                f"У процесса «{process.name}» нет модели спроса — роботизация не считается"
+                f"У процесса «{process.name}» нет модели спроса - роботизация не считается"
             )
         ns = process.key
         scaled = self.inp.volume_factor != 1.0

@@ -188,24 +188,24 @@ def _explain(
         worst = max(points, key=lambda p: p.count)
         return (
             f"Даже {worst.count} роботов дают SLA {fmt(worst.sla_achieved_pct)} % при цели {fmt(target)} %: "
-            "ограничение не в числе роботов — смотрите узкое место прогона"
+            "ограничение не в числе роботов - смотрите узкое место прогона"
         )
     best = by_count[recommended]
     parts = [
-        f"{recommended} — минимальное N, при котором все {runs} прогонов пикового режима "
+        f"{recommended} - минимальное N, при котором все {runs} прогонов пикового режима "
         f"держат SLA ≥ {fmt(target)} % (худший {fmt(best.sla_min_pct)} %, "
         f"в среднем {fmt(best.sla_achieved_pct)} %)"
     ]
     below = by_count.get(recommended - 1)
     if below is not None:
         parts.append(
-            f"{below.count} — в среднем {fmt(below.sla_achieved_pct)} %, "
+            f"{below.count} - в среднем {fmt(below.sla_achieved_pct)} %, "
             f"худший прогон {fmt(below.sla_min_pct)} %"
         )
     if analytic != recommended and analytic in by_count:
         parts.append(
             f"по циклу {analytic}: загрузка {fmt(round(by_count[analytic].utilization * PERCENT))} %"
             if analytic > recommended
-            else f"по циклу {analytic} — SLA {fmt(by_count[analytic].sla_achieved_pct)} %"
+            else f"по циклу {analytic} - SLA {fmt(by_count[analytic].sla_achieved_pct)} %"
         )
     return "; ".join(parts)

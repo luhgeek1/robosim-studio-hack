@@ -15,7 +15,7 @@ class AdminParameterDefault(ParameterDef):
     object_type: str
     group_name: str
     applies_to_blank: bool = Field(
-        description="false — данные демо-объекта организатора: пустой проект обязательное поле не заполняет"
+        description="false - данные демо-объекта организатора: пустой проект обязательное поле не заполняет"
     )
     projects_total: int
     projects_using_default: int
@@ -46,7 +46,7 @@ class ParameterDefaultWrite(ApiModel):
     value: bool | int | float | str
     unit: str | None = None
     status: Literal["default", "assumption"] | None = Field(
-        default=None, description="Без значения — прежний статус (у параметра без умолчания — assumption)"
+        default=None, description="Без значения - прежний статус (у параметра без умолчания - assumption)"
     )
     source: SourceWrite
     rationale: str = Field(min_length=1, max_length=2000)
@@ -112,7 +112,7 @@ class SourceList(ApiModel):
     page: int
     page_size: int
     total: int
-    stale_after_months: int = Field(description="Порог устаревания — норматив source_stale_after_months")
+    stale_after_months: int = Field(description="Порог устаревания - норматив source_stale_after_months")
     stale_before: date = Field(description="Источник, полученный раньше этой даты, устарел")
     freshness_counts: dict[Freshness, int]
 

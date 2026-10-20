@@ -3,7 +3,7 @@
 
 ObjectTypeKey:
   type: string
-  description: warehouse — склад (в полной глубине), airport, hospital — параметры и подбор; custom — свой объект.
+  description: warehouse - склад (в полной глубине), airport, hospital - параметры и подбор; custom - свой объект.
   enum: [warehouse, airport, hospital, custom]
 
 ObjectType:
@@ -16,7 +16,7 @@ ObjectType:
     industry: {type: string, example: "Торговля и услуги"}
     depth:
       type: string
-      description: full — расчёт, симуляция, отчёт; basic — параметры, подбор, аналитическая экономика без симуляции.
+      description: full - расчёт, симуляция, отчёт; basic - параметры, подбор, аналитическая экономика без симуляции.
       enum: [full, basic]
     demo_projects:
       type: array
@@ -50,7 +50,7 @@ ParameterGroup:
 
 ParameterDef:
   type: object
-  description: Описание одного параметра объекта — по нему фронт строит форму, валидацию и подсказки (ТЗ 4.5.3).
+  description: Описание одного параметра объекта - по нему фронт строит форму, валидацию и подсказки (ТЗ 4.5.3).
   required: [key, name, type, required]
   properties:
     key: {type: string, example: "pallets_in_per_day"}
@@ -72,7 +72,7 @@ ParameterDef:
     example: {type: [string, "null"], example: "1000"}
     affects:
       type: array
-      description: Какие процессы зависят от параметра — для подсветки «что пересчитается».
+      description: Какие процессы зависят от параметра - для подсветки «что пересчитается».
       items: {type: string}
     order: {type: integer}
 
@@ -87,7 +87,7 @@ SizingModel:
 
 ProcessDef:
   type: object
-  description: Процесс объекта, который можно роботизировать. Иерархия ТЗ 3.3.1 — отрасль → объект → процесс → тип решения → продукт.
+  description: Процесс объекта, который можно роботизировать. Иерархия ТЗ 3.3.1 - отрасль → объект → процесс → тип решения → продукт.
   required: [key, name, demand_unit, solution_types]
   properties:
     key: {type: string, example: "pallet_transport"}
@@ -116,10 +116,10 @@ SolutionType:
   required: [key, name, sizing_model, capability_keys]
   properties:
     key: {type: string, example: "amr_transport"}
-    name: {type: string, example: "AMR — транспортный мобильный робот"}
+    name: {type: string, example: "AMR - транспортный мобильный робот"}
     description: {type: string}
     sizing_model:
-      description: null — категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог.
+      description: null - категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог.
       oneOf: [{$ref: '#/SizingModel'}, {type: "null"}]
     capability_keys:
       type: array
@@ -135,7 +135,7 @@ NormCategory:
 Norm:
   type: object
   description: |
-    Норматив расчётной модели. ТЗ 3.5.1 запрещает недокументированные коэффициенты — каждый норматив имеет источник
+    Норматив расчётной модели. ТЗ 3.5.1 запрещает недокументированные коэффициенты - каждый норматив имеет источник
     и обоснование, и пользователь видит его в интерфейсе (ТЗ 3.2.5, 3.5.8).
   required: [key, name, value, unit, category, source, editable_by_user]
   properties:
@@ -148,7 +148,7 @@ Norm:
       type: [object, "null"]
       properties: {min: {type: number, example: 0.7}, max: {type: number, example: 0.85}}
     source: {$ref: './common.yaml#/Source'}
-    rationale: {type: string, example: "Лист «Легенда» датасета организатора: загрузка AMR 70–85 %"}
+    rationale: {type: string, example: "Лист «Легенда» датасета организатора: загрузка AMR 70-85 %"}
     affects: {type: array, items: {type: string}, description: "Ключи метрик, на которые влияет"}
     editable_by_user: {type: boolean, description: "Можно ли переопределить в сценарии (ТЗ 3.5.3)"}
     object_types: {type: array, items: {$ref: '#/ObjectTypeKey'}}

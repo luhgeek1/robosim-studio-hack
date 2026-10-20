@@ -94,7 +94,7 @@ export function LandingHero({ workspace }: { workspace: string }) {
             <motion.p className="cm-description" {...enter(0.35)}>
               Ваш объект. Ваши роботы.
               <br />
-              Проверьте, как они будут работать вместе — ещё до внедрения.
+              Проверьте, как они будут работать вместе - ещё до внедрения.
             </motion.p>
             <motion.div className="cm-actions" {...enter(0.45)}>
               <Link to="/demo" className="landing-button landing-button-orange">
