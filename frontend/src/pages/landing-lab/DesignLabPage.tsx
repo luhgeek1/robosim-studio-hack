@@ -15,7 +15,7 @@ const CONCEPTS = [
     description:
       'От крупного плана робота к целому объекту. Пространственная история со сменой камеры и света, интерактивными отраслями и финансовыми сценариями.',
     tools: 'Impeccable → Web Design Studio → собственная 3D-сцена + GSAP',
-    fresh: true,
+    fresh: false,
   },
   {
     label: '02 / Атлас возможностей',
@@ -27,7 +27,7 @@ const CONCEPTS = [
     description:
       'Самостоятельная арт-дирекция: выразительная типографика, пространственный атлас и собственный ритм переходов. Другое прочтение того же продукта.',
     tools: 'Design Taste → Three.js → Motion Lab → локальная адаптация',
-    fresh: true,
+    fresh: false,
   },
   {
     label: '03 / Редакционный',
@@ -55,9 +55,45 @@ const CONCEPTS = [
   },
 ]
 
+const LATEST = [
+  {
+    label: 'Новая версия / Платформа',
+    name: 'Сначала проверьте. Потом внедряйте.',
+    href: '/design-lab/platform',
+    image: 'platform-preview.png',
+    alt: 'Продуктовая композиция с параметрами, 3D-складом и результатом расчёта',
+    stack: 'React · GSAP · Three.js',
+    description:
+      'Развитие действующего лендинга: компактная продуктовая сцена, все отрасли одновременно, объёмные модели и понятный путь до отчёта. Без длинных закреплённых экранов.',
+    tools: 'Система РобоМеры · Impeccable · GSAP · собственная композиция',
+    fresh: true,
+  },
+]
+
+function ConceptCard({ concept }: { concept: (typeof CONCEPTS)[number] }) {
+  return (
+    <article>
+      <a href={concept.href} className="lab-gallery-preview">
+        <img src={'/design-lab/' + concept.image} width="1440" height="900" alt={concept.alt} />
+        {concept.fresh && <strong className="lab-gallery-new">Новая итерация</strong>}
+        <span>
+          Открыть вариант <ArrowUpRight size={20} />
+        </span>
+      </a>
+      <div className="lab-gallery-title">
+        <span>{concept.label}</span>
+        <span>{concept.stack}</span>
+      </div>
+      <h2>{concept.name}</h2>
+      <p>{concept.description}</p>
+      <div className="lab-gallery-tools">{concept.tools}</div>
+    </article>
+  )
+}
+
 export function DesignLabPage() {
   useEffect(() => {
-    document.title = 'РобоМера — четыре направления лендинга'
+    document.title = 'РобоМера — новая итерация лендинга'
   }, [])
   return (
     <div className="lab-editorial lab-gallery">
@@ -70,35 +106,26 @@ export function DesignLabPage() {
       </header>
       <main className="lab-wrap">
         <div className="lab-gallery-intro">
-          <p>Один продукт. Четыре направления.</p>
+          <p>РобоМера / Новая итерация</p>
           <h1>
-            Почувствовать движение.
+            От эффектной сцены.
             <br />
-            <span>Увидеть возможности.</span>
+            <span>К цельному продукту.</span>
           </h1>
           <div>
-            Две новые визуальные истории и два варианта первого раунда. Откройте каждый на весь экран, прокрутите до
-            конца и попробуйте интерактивные блоки.
+            Новые версии развивают сильные стороны действующего лендинга: ясную подачу, плотную композицию и наглядность
+            продукта. Предыдущие эксперименты сохранены ниже для сравнения.
           </div>
         </div>
+        <div className="lab-gallery-grid lab-gallery-latest">
+          {LATEST.map((concept) => (
+            <ConceptCard key={concept.href} concept={concept} />
+          ))}
+        </div>
+        <h2 className="lab-gallery-archive-title">Предыдущие направления</h2>
         <div className="lab-gallery-grid">
           {CONCEPTS.map((concept) => (
-            <article key={concept.href}>
-              <a href={concept.href} className="lab-gallery-preview">
-                <img src={'/design-lab/' + concept.image} width="1440" height="900" alt={concept.alt} />
-                {concept.fresh && <strong className="lab-gallery-new">Новое направление</strong>}
-                <span>
-                  Открыть вариант <ArrowUpRight size={20} />
-                </span>
-              </a>
-              <div className="lab-gallery-title">
-                <span>{concept.label}</span>
-                <span>{concept.stack}</span>
-              </div>
-              <h2>{concept.name}</h2>
-              <p>{concept.description}</p>
-              <div className="lab-gallery-tools">{concept.tools}</div>
-            </article>
+            <ConceptCard key={concept.href} concept={concept} />
           ))}
         </div>
         <aside className="lab-gallery-reference">
