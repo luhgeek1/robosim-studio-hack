@@ -6,7 +6,7 @@ import { WarehouseSet } from '../landing-cinematic/WarehouseSet'
 import { RobotModel } from '../landing-cinematic/RobotModel'
 
 export type StageMotion = { progress: number; plan: boolean }
-type Props = { motion: RefObject<StageMotion>; playing: boolean; onFailure: () => void }
+type Props = { motion: RefObject<StageMotion>; plan: boolean; playing: boolean; onFailure: () => void }
 const route: [number, number, number][] = [
   [-9, 0.1, 8],
   [9, 0.1, 8],
@@ -18,7 +18,7 @@ const route: [number, number, number][] = [
   [-9, 0.1, -8],
   [-9, 0.1, 8],
 ]
-const target = new Vector3(0, 0.5, 0)
+const target = new Vector3(0, -1, 0)
 
 function MovingRobot({ index, playing }: { index: number; playing: boolean }) {
   const ref = useRef<Group>(null)
@@ -39,9 +39,12 @@ function MovingRobot({ index, playing }: { index: number; playing: boolean }) {
   )
 }
 
-function World({ motion, playing, onFailure }: Props) {
-  const { camera, gl, size } = useThree()
+function World({ motion, plan, playing, onFailure }: Props) {
+  const { camera, gl, size, invalidate } = useThree()
   const pan = useRef(0)
+  useEffect(() => {
+    invalidate()
+  }, [invalidate, plan, playing])
   useEffect(() => {
     const fail = (event: Event) => {
       event.preventDefault()
@@ -55,10 +58,10 @@ function World({ motion, playing, onFailure }: Props) {
     pan.current = playing ? MathUtils.damp(pan.current, destination, 6, Math.min(delta, 0.05)) : destination
     const p = pan.current
     const angle = 0.68 - p * 0.45
-    const distance = size.width / size.height < 1.3 ? 35 : 30
+    const distance = size.width / size.height < 1.3 ? 38 : 34
     camera.position.set(
       Math.sin(angle) * distance * (1 - p * 0.88),
-      24 + p * 16,
+      27 + p * 13,
       Math.cos(angle) * distance * (1 - p * 0.88),
     )
     camera.lookAt(target)
@@ -68,7 +71,7 @@ function World({ motion, playing, onFailure }: Props) {
       <ambientLight intensity={0.8} />
       <directionalLight
         position={[-10, 18, 12]}
-        intensity={3.2}
+        intensity={2}
         color="#fff3dc"
         castShadow
         shadow-mapSize={[1024, 1024]}
@@ -78,7 +81,7 @@ function World({ motion, playing, onFailure }: Props) {
         shadow-camera-bottom={-18}
         shadow-normalBias={0.04}
       />
-      <directionalLight position={[12, 9, -10]} intensity={1.8} color="#c7deee" />
+      <directionalLight position={[12, 9, -10]} intensity={1.2} color="#c7deee" />
       <Environment resolution={128} frames={1}>
         <Lightformer
           form="rect"
