@@ -20,6 +20,7 @@ class User(ApiModel):
     last_login_at: datetime | None = None
     is_active: bool = True
     guest_expires_at: datetime | None = None
+    email_verified: bool
 
     @classmethod
     def from_domain(cls, user: UserProfile) -> "User":
@@ -36,7 +37,7 @@ class RegisterRequest(ApiModel):
 
 class LoginRequest(ApiModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=128)
 
 
 class RefreshRequest(ApiModel):

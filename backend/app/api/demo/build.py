@@ -52,7 +52,6 @@ async def _project(uow: UnitOfWork, item: Example, version: str) -> UUID:
             id=DEMO_OWNER_ID,
             email=DEMO_OWNER.email,
             name="Публичные примеры",
-            password_hash="!disabled",  # noqa: S106 — invalid hash; this account cannot log in.
             role=DEMO_OWNER.role,
             is_active=False,
         )

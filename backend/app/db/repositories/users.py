@@ -10,8 +10,10 @@ from app.domain.admin import UserQuery
 from app.domain.auth import CurrentUser, UserProfile
 
 
-def to_current_user(user: User) -> CurrentUser:
-    return CurrentUser(id=user.id, email=user.email, role=user.role, auth_version=user.auth_version)
+def to_current_user(user: User, session_id: UUID | None = None) -> CurrentUser:
+    return CurrentUser(
+        id=user.id, email=user.email, role=user.role, auth_version=user.auth_version, session_id=session_id
+    )
 
 
 def to_profile(user: User) -> UserProfile:
@@ -27,6 +29,7 @@ def to_profile(user: User) -> UserProfile:
         last_login_at=user.last_login_at,
         is_active=user.is_active,
         guest_expires_at=user.guest_expires_at,
+        email_verified=user.email_verified_at is not None,
     )
 
 

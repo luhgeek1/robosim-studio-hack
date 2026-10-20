@@ -88,6 +88,10 @@ class UnauthorizedError(DomainError):
     default_detail = "Требуется вход"
 
 
+class SessionCompromisedError(UnauthorizedError):
+    pass
+
+
 class TokenExpiredError(UnauthorizedError):
     error_code = ErrorCode.TOKEN_EXPIRED
     default_detail = "Сессия истекла, войдите снова"

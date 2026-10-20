@@ -44,9 +44,17 @@ class Settings(BaseSettings):
     client_ip_header: str | None = None
     auth_rate_limit_per_min: int = 20
     public_web_url: str = "http://localhost:5173"
-    public_api_url: str = "http://localhost:8000"
+    public_api_url: str = "http://localhost:5173"
     resend_api_key: SecretStr | None = None
     email_from: str | None = None
+    yandex_client_id: str | None = None
+    yandex_client_secret: SecretStr | None = None
+    google_client_id: str | None = None
+    google_client_secret: SecretStr | None = None
+    vk_client_id: str | None = None
+    verification_ttl_hours: int = Field(default=24, ge=1, le=72)
+    password_reset_ttl_minutes: int = Field(default=30, ge=5, le=60)
+    recent_auth_minutes: int = Field(default=10, ge=1, le=30)
     email_poll_interval_s: int = Field(default=5, ge=1)
     email_max_attempts: int = Field(default=5, ge=1, le=10)
     invitation_ttl_hours: int = Field(default=168, ge=1)
@@ -67,13 +75,24 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_integrations(self) -> Self:
+        oauth_enabled = bool(self.yandex_client_id or self.google_client_id or self.vk_client_id)
+        for client_id, secret in (
+            (self.yandex_client_id, self.yandex_client_secret),
+            (self.google_client_id, self.google_client_secret),
+        ):
+            if bool(client_id) != bool(secret):
+                raise ValueError("OAuth client ID and secret must be set together")
+        if oauth_enabled and self.public_api_url.rstrip("/") != self.public_web_url.rstrip("/"):
+            raise ValueError("OAuth requires API and web on the same public origin (use the /api proxy)")
+        if oauth_enabled and self.stage == "prod" and not self.cookie_secure:
+            raise ValueError("OAuth in prod requires RS_COOKIE_SECURE=true")
         for value in (self.public_web_url, self.public_api_url):
             url = urlsplit(value)
             if url.scheme not in {"http", "https"} or not url.hostname or url.query or url.fragment:
                 raise ValueError("Public URLs must be absolute HTTP(S) URLs without query or fragment")
             if url.username or url.password or url.path not in {"", "/"}:
                 raise ValueError("Public URLs must contain only an origin")
-            if self.stage == "prod" and self.email_enabled and url.scheme != "https":
+            if self.stage == "prod" and (self.email_enabled or oauth_enabled) and url.scheme != "https":
                 raise ValueError("Public URLs must use HTTPS in prod")
         if bool(self.resend_api_key) != bool(self.email_from):
             raise ValueError("RS_RESEND_API_KEY and RS_EMAIL_FROM must be set together")

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.10.0
+  version: 0.11.0
   license:
     name: MIT
     identifier: MIT
@@ -285,7 +285,14 @@ paths:
       tags:
         - auth
       operationId: logout
-      summary: Выход (отзыв refresh-токена)
+      summary: Выход (отзыв сессии и обоих токенов)
+      description: Для web-cookies обязателен X-CSRF-Token, для mobile — refresh_token в теле.
+      parameters:
+        - name: X-CSRF-Token
+          in: header
+          required: false
+          schema:
+            type: string
       responses:
         '204':
           description: Вышли
@@ -5879,6 +5886,8 @@ components:
         is_active:
           type: boolean
           default: true
+        email_verified:
+          type: boolean
         guest_expires_at:
           type:
             - string
@@ -6415,6 +6424,7 @@ components:
           format: email
         password:
           type: string
+          maxLength: 128
     UserUpdate:
       type: object
       properties:

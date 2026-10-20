@@ -11,6 +11,7 @@ class CurrentUser:
     email: str
     role: Role
     auth_version: int
+    session_id: UUID | None = None
 
     def can(self, permission: Permission) -> bool:
         return has_permission(self.role, permission)
@@ -29,6 +30,7 @@ class UserProfile:
     last_login_at: datetime | None
     is_active: bool
     guest_expires_at: datetime | None = None
+    email_verified: bool = False
 
 
 @dataclass(frozen=True, slots=True)

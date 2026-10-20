@@ -18,6 +18,7 @@ ClientKind = Literal["web", "mobile"]
 @dataclass(frozen=True, slots=True)
 class TokenClaims:
     user_id: UUID
+    session_id: UUID
     jti: str
     typ: TokenType
     auth_version: int
@@ -42,25 +43,50 @@ class TokenCodec:
         self._ttl: dict[TokenType, int] = {"access": settings.access_ttl_s, "refresh": settings.refresh_ttl_s}
 
     def _encode(
-        self, typ: TokenType, user_id: UUID, role: Role, auth_version: int, client: ClientKind
+        self,
+        typ: TokenType,
+        user_id: UUID,
+        role: Role,
+        auth_version: int,
+        client: ClientKind,
+        session_id: UUID,
+        refresh_expires_at: datetime | None,
     ) -> str:
         now = datetime.now(UTC)
         payload = {
             "sub": str(user_id),
+            "sid": str(session_id),
             "jti": uuid4().hex,
             "typ": typ,
             "av": auth_version,
             "src": client,
             "role": role.value,
             "iat": int(now.timestamp()),
-            "exp": int((now + timedelta(seconds=self._ttl[typ])).timestamp()),
+            "exp": int(
+                (
+                    refresh_expires_at
+                    if typ == "refresh" and refresh_expires_at
+                    else now + timedelta(seconds=self._ttl[typ])
+                ).timestamp()
+            ),
         }
         return jwt.encode(payload, self._secret, algorithm=self._algorithm)
 
-    def issue(self, user_id: UUID, role: Role, auth_version: int, client: ClientKind) -> IssuedTokens:
-        refresh = self._encode("refresh", user_id, role, auth_version, client)
+    def issue(
+        self,
+        user_id: UUID,
+        role: Role,
+        auth_version: int,
+        client: ClientKind,
+        session_id: UUID | None = None,
+        refresh_expires_at: datetime | None = None,
+    ) -> IssuedTokens:
+        session_id = session_id or uuid4()
+        refresh = self._encode("refresh", user_id, role, auth_version, client, session_id, refresh_expires_at)
         return IssuedTokens(
-            access=self._encode("access", user_id, role, auth_version, client),
+            access=self._encode(
+                "access", user_id, role, auth_version, client, session_id, refresh_expires_at
+            ),
             refresh=refresh,
             csrf=self.csrf_for(refresh),
             access_ttl_s=self._ttl["access"],
@@ -84,6 +110,7 @@ class TokenCodec:
         try:
             return TokenClaims(
                 user_id=UUID(payload["sub"]),
+                session_id=UUID(payload["sid"]),
                 jti=str(payload["jti"]),
                 typ=expected,
                 auth_version=int(payload["av"]),

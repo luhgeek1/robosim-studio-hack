@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Path, Response, status
 
-from app.api.deps import SettingsDep, UowDep, rate_limited, registered_user
+from app.api.deps import SettingsDep, UowDep, rate_limited, registered_user, verified_user
 from app.api.schemas.organizations import (
     IncomingInvitation,
     IncomingInvitationList,
@@ -20,6 +20,7 @@ from app.service.organizations import OrganizationService
 
 router = APIRouter(tags=["organizations"])
 
+VerifiedDep = Annotated[CurrentUser, Depends(verified_user)]
 MemberDep = Annotated[CurrentUser, Depends(registered_user)]
 OrganizationIdPath = Annotated[UUID, Path()]
 NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"description": "Не найдено"}}
@@ -38,7 +39,7 @@ async def list_organizations(user: MemberDep, uow: UowDep) -> OrganizationList:
     summary="Создать организацию (создатель — владелец)",
     status_code=status.HTTP_201_CREATED,
 )
-async def create_organization(payload: OrganizationWrite, user: MemberDep, uow: UowDep) -> Organization:
+async def create_organization(payload: OrganizationWrite, user: VerifiedDep, uow: UowDep) -> Organization:
     return Organization.from_domain(await OrganizationService(uow, user).create(payload.name))
 
 
@@ -91,7 +92,7 @@ async def delete_organization(organization_id: OrganizationIdPath, user: MemberD
 async def invite_to_organization(
     organization_id: OrganizationIdPath,
     payload: InvitationCreate,
-    user: MemberDep,
+    user: VerifiedDep,
     uow: UowDep,
     settings: SettingsDep,
 ) -> OrganizationInvitation:

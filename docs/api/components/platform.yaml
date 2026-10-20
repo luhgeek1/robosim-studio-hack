@@ -22,6 +22,7 @@ User:
     created_at: {type: string, format: date-time}
     last_login_at: {type: [string, "null"], format: date-time}
     is_active: {type: boolean, default: true}
+    email_verified: {type: boolean}
     guest_expires_at: {type: [string, "null"], format: date-time, description: "Срок удаления гостевого пространства; null для аккаунтов"}
 
 RegisterRequest:
@@ -39,7 +40,7 @@ LoginRequest:
   required: [email, password]
   properties:
     email: {type: string, format: email}
-    password: {type: string}
+    password: {type: string, maxLength: 128}
 
 TokenPair:
   type: object

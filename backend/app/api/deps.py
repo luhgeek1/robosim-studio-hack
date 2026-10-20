@@ -7,7 +7,7 @@ from redis.asyncio import Redis
 
 from app.api.guest_limits import guard_guest
 from app.core.config import Settings
-from app.core.errors import ForbiddenError, RateLimitedError, UnauthorizedError
+from app.core.errors import ForbiddenError, RateLimitedError, SessionCompromisedError, UnauthorizedError
 from app.core.security.tokens import ClientKind, TokenCodec
 from app.db.repositories.users import to_current_user
 from app.db.session import Database
@@ -17,6 +17,7 @@ from app.infra.client_ip import client_ip
 from app.infra.rate_limit import RateLimiter
 from app.infra.revocation import RevocationStore
 from app.service.auth.guests import ensure_guest_active
+from app.service.auth.session_store import live_session
 
 _bearer = HTTPBearer(auto_error=False, description="Access-токен из /auth/login или /auth/refresh")
 
@@ -43,8 +44,14 @@ def get_codec(request: Request) -> TokenCodec:
 
 async def _uow(db: Annotated[Database, Depends(get_database)]) -> AsyncIterator[UnitOfWork]:
     async with UnitOfWork(db.session()) as uow:
-        yield uow
-        await uow.commit()
+        try:
+            yield uow
+        except SessionCompromisedError:
+            # Persist this security-only revocation even though the request answers 401.
+            await uow.commit()
+            raise
+        else:
+            await uow.commit()
 
 
 SettingsDep = Annotated[Settings, Depends(get_settings_dep)]
@@ -88,7 +95,8 @@ async def current_user(
     ensure_guest_active(user)
     if user.role == Role.GUEST:
         await guard_guest(request, user, uow, redis)
-    return to_current_user(user)
+    await live_session(uow, claims)
+    return to_current_user(user, claims.session_id)
 
 
 CurrentUserDep = Annotated[CurrentUser, Depends(current_user)]
@@ -134,3 +142,16 @@ def rate_limited(bucket: str) -> Callable[[Request, RedisDep, SettingsDep], Awai
             raise RateLimitedError()
 
     return dependency
+
+
+async def verified_user(
+    user: Annotated[CurrentUser, Depends(registered_user)], uow: UowDep, settings: SettingsDep
+) -> CurrentUser:
+    row = await uow.users.get(user.id)
+    if (settings.email_enabled or settings.stage == "prod") and (
+        row is None or row.email_verified_at is None
+    ):
+        raise ForbiddenError(
+            "Подтвердите свою почту в настройках аккаунта, чтобы создавать команды и приглашать коллег"
+        )
+    return user

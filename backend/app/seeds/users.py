@@ -1,8 +1,10 @@
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 
 from app.core.config import Settings
 from app.core.security.passwords import hash_password
-from app.db.models import Manufacturer, User
+from app.db.models import Manufacturer, User, UserCredential
 from app.db.uow import UnitOfWork
 from app.domain.auth import Role
 
@@ -23,9 +25,12 @@ async def seed_demo_users(uow: UnitOfWork, settings: Settings) -> int:
         if await uow.users.email_exists(email):
             continue
         password_hash = password_hash or await hash_password(settings.demo_password.get_secret_value())
-        uow.users.add(
-            User(email=email, password_hash=password_hash, name=name, role=role, organization=organization)
+        user = User(
+            email=email, name=name, role=role, organization=organization, email_verified_at=datetime.now(UTC)
         )
+        uow.users.add(user)
+        await uow.flush()
+        uow.session.add(UserCredential(user_id=user.id, password_hash=password_hash))
         inserted += 1
     await uow.flush()
     return inserted

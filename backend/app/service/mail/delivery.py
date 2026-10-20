@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import Settings
-from app.db.models import EmailOutbox, OrganizationInvitation
+from app.db.models import AuthEmailToken, EmailOutbox, OrganizationInvitation
 from app.db.session import Database
 from app.db.uow import UnitOfWork
 from app.domain.organization import InvitationStatus
@@ -26,13 +26,8 @@ async def deliver_next(db: Database, settings: Settings) -> bool:
         )
         if message is None:
             return False
-        invitation = await uow.session.get(OrganizationInvitation, message.invitation_id)
         now = datetime.now(UTC)
-        if (
-            invitation is None
-            or invitation.status != InvitationStatus.PENDING
-            or (invitation.expires_at is not None and invitation.expires_at <= now)
-        ):
+        if not await _deliverable(uow, message, now):
             message.status = "cancelled"
             message.payload = {}
         elif message.created_at < now - timedelta(hours=23):
@@ -46,10 +41,24 @@ async def deliver_next(db: Database, settings: Settings) -> bool:
         return True
 
 
+async def _deliverable(uow: UnitOfWork, message: EmailOutbox, now: datetime) -> bool:
+    if message.auth_email_token_id:
+        token = await uow.session.get(AuthEmailToken, message.auth_email_token_id)
+        return token is not None and token.consumed_at is None and token.expires_at > now
+    if message.invitation_id:
+        invitation = await uow.session.get(OrganizationInvitation, message.invitation_id)
+        return (
+            invitation is not None
+            and invitation.status == InvitationStatus.PENDING
+            and (invitation.expires_at is None or invitation.expires_at > now)
+        )
+    return False
+
+
 async def _send(message: EmailOutbox, settings: Settings, now: datetime) -> None:
     message.attempts += 1
     try:
-        message.provider_id = await send_email(settings, message.payload, f"invitation/{message.id}")
+        message.provider_id = await send_email(settings, message.payload, f"email/{message.id}")
     except EmailDeliveryError as exc:
         message.last_error = exc.code
         if not exc.retryable or message.attempts >= settings.email_max_attempts:

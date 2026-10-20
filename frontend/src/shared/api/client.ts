@@ -47,15 +47,18 @@ export const setUnauthorizedHandler = (handler: (() => void) | null) => {
 
 export const apiUrl = (path: string) => `${baseURL}${path}`
 
+export const withAuthLock = <T>(action: () => Promise<T>): Promise<T> =>
+  typeof navigator !== 'undefined' && navigator.locks ? navigator.locks.request('robomera-auth', action) : action()
+
 // Several requests can hit 401 at once; they all wait for one refresh instead of rotating the token N times.
 export function refreshAccessToken(): Promise<string | null> {
-  refreshing ??= (async () => {
+  refreshing ??= withAuthLock(async () => {
     const csrf = readCookie(CSRF_COOKIE)
     if (!csrf) return null
     const { data } = await apiPublic.post<TokenPair>('/auth/refresh', {}, { headers: { 'X-CSRF-Token': csrf } })
     accessToken = data.access_token
     return accessToken
-  })().finally(() => {
+  }).finally(() => {
     refreshing = null
   })
   return refreshing

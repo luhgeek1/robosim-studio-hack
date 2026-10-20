@@ -17,7 +17,6 @@ from app.api.deps import (
 from app.api.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenPair, User
 from app.core.config import Settings
 from app.core.errors import ForbiddenError, RateLimitedError, UnauthorizedError
-from app.db.repositories.users import to_profile
 from app.domain.auth import Role
 from app.infra.client_ip import client_ip
 from app.infra.rate_limit import RateLimiter
@@ -65,7 +64,7 @@ async def register(
     revocations: RevocationsDep,
     settings: SettingsDep,
 ) -> TokenPair:
-    result = await AuthService(uow, codec, revocations).register(Registration(**payload.model_dump()), client)
+    result = await AuthService(uow, codec).register(Registration(**payload.model_dump()), client)
     await _keep_guest_work(request, result, uow, codec, revocations)
     return _token_pair(result, response, settings, web=client == "web")
 
@@ -91,7 +90,7 @@ async def login(
     revocations: RevocationsDep,
     settings: SettingsDep,
 ) -> TokenPair:
-    result = await AuthService(uow, codec, revocations).login(payload.email, payload.password, client)
+    result = await AuthService(uow, codec).login(payload.email, payload.password, client)
     await _keep_guest_work(request, result, uow, codec, revocations)
     return _token_pair(result, response, settings, web=client == "web")
 
@@ -118,7 +117,7 @@ async def refresh(
     token = cookie_token or (payload.refresh_token if payload else None)
     if not token:
         raise UnauthorizedError("Нет refresh-токена")
-    service = AuthService(uow, codec, revocations)
+    service = AuthService(uow, codec)
     try:
         result = await service.refresh(token, csrf=x_csrf, from_cookie=cookie_token is not None)
     except UnauthorizedError:
@@ -146,7 +145,9 @@ async def logout(
     token = request.cookies.get(REFRESH_COOKIE) or (payload.refresh_token if payload else None)
     if not token:
         raise UnauthorizedError("Нет refresh-токена")
-    await AuthService(uow, codec, revocations).logout(token)
+    await AuthService(uow, codec).logout(
+        token, csrf=request.headers.get("X-CSRF-Token"), from_cookie=bool(request.cookies.get(REFRESH_COOKIE))
+    )
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     clear_auth_cookies(response, settings)
     return response
@@ -184,9 +185,7 @@ async def start_guest(
     if not await RateLimiter(redis, limit=10, window_s=3600).hit(f"guest-start:{ip}"):
         raise RateLimitedError("Можно начать до 10 демо-сессий в час. Попробуйте позже.")
     row = await create_guest(uow)
-    result = SessionResult(
-        user=to_profile(row), tokens=codec.issue(row.id, row.role, row.auth_version, client)
-    )
+    result = await AuthService(uow, codec).create_session(row, client, "guest")
     return _token_pair(result, response, settings, web=client == "web")
 
 

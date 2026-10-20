@@ -8,7 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.errors import STATUS_TITLES, DomainError, ErrorCode
+from app.api.cookies import clear_auth_cookies
+from app.core.errors import STATUS_TITLES, DomainError, ErrorCode, UnauthorizedError
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +94,12 @@ def _validation_details(exc: RequestValidationError) -> list[dict[str, Any]]:
 def register_problem_handlers(app: FastAPI, *, expose_internal: bool) -> None:
     @app.exception_handler(DomainError)
     async def _domain(request: Request, exc: DomainError) -> JSONResponse:
-        return _response(
+        response = _response(
             request, exc.status_code, detail=exc.detail, error_code=exc.error_code, details=exc.details
         )
+        if isinstance(exc, UnauthorizedError) and request.url.path == "/api/v1/auth/refresh":
+            clear_auth_cookies(response, request.app.state.settings)
+        return response
 
     @app.exception_handler(RequestValidationError)
     async def _validation(request: Request, exc: RequestValidationError) -> JSONResponse:

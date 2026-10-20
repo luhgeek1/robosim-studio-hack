@@ -32,8 +32,6 @@ def ensure_guest_active(user: User) -> None:
 async def create_guest(uow: UnitOfWork) -> User:
     user = User(
         email=f"guest-{uuid4().hex}@guest.robomera.demo",
-        # Not a password hash: this identity cannot be entered through password login.
-        password_hash="!guest",  # noqa: S106 — deliberately invalid hash; password login is impossible
         name="Гость",
         role=Role.GUEST,
         guest_expires_at=datetime.now(UTC) + timedelta(seconds=GUEST_TTL_S),

@@ -1,5 +1,5 @@
 import { readCookie } from '@/shared/lib/cookies'
-import { api, apiPublic } from '@/shared/api/client'
+import { api, apiPublic, withAuthLock } from '@/shared/api/client'
 import type { LoginRequest, RegisterRequest, Res, TokenPair } from '@/shared/api/types'
 
 const keepGuest = () => ({ headers: { 'X-Keep-Guest-CSRF': readCookie('csrf_token') || undefined } })
@@ -11,6 +11,9 @@ export const sessionApi = {
     apiPublic.post<TokenPair>('/auth/login', body, guest ? keepGuest() : undefined).then((r) => r.data),
   register: (body: RegisterRequest, guest = false) =>
     apiPublic.post<TokenPair>('/auth/register', body, guest ? keepGuest() : undefined).then((r) => r.data),
-  logout: () => api.post('/auth/logout').then(() => undefined),
+  logout: () =>
+    withAuthLock(() => api.post('/auth/logout', {}, { headers: { 'X-CSRF-Token': readCookie('csrf_token') } })).then(
+      () => undefined,
+    ),
   me: () => api.get<Res<'/api/v1/me', 'get'>>('/me').then((r) => r.data),
 }

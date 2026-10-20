@@ -186,6 +186,10 @@ class OrganizationService:
             not token or not secrets.compare_digest(invitation.token_hash, token_hash(token))
         ):
             raise ForbiddenError("Откройте ссылку из письма, чтобы подтвердить приглашение на вашу почту")
+        if invitation.token_hash:
+            user = await self._uow.users.get(self._user.id)
+            if user is not None:
+                user.email_verified_at = user.email_verified_at or datetime.now(UTC)
         invitation.status = InvitationStatus.ACCEPTED
         invitation.responded_at = datetime.now(UTC)
         if await self._repo.membership(invitation.organization_id, self._user.id) is None:

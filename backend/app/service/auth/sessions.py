@@ -1,15 +1,18 @@
+import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from app.core.errors import ConflictError, ForbiddenError, UnauthorizedError
+from sqlalchemy.exc import IntegrityError
+
+from app.core.errors import ConflictError, ForbiddenError, SessionCompromisedError, UnauthorizedError
 from app.core.security.passwords import hash_password, needs_rehash, verify_password
 from app.core.security.tokens import ClientKind, IssuedTokens, TokenCodec
-from app.db.models import User
+from app.db.models import User, UserCredential
 from app.db.repositories.users import to_profile
 from app.db.uow import UnitOfWork
 from app.domain.auth import Role, UserProfile
-from app.infra.revocation import RevocationStore
 from app.service.auth.guests import ensure_guest_active
+from app.service.auth.session_store import jti_hash, live_session, new_session
 
 _BAD_CREDENTIALS = "Неверный email или пароль"
 
@@ -30,13 +33,12 @@ class SessionResult:
 
 
 class AuthService:
-    def __init__(self, uow: UnitOfWork, codec: TokenCodec, revocations: RevocationStore) -> None:
+    def __init__(self, uow: UnitOfWork, codec: TokenCodec) -> None:
         self._uow = uow
         self._codec = codec
-        self._revocations = revocations
 
-    def _session(self, user: User, client: ClientKind) -> SessionResult:
-        tokens = self._codec.issue(user.id, user.role, user.auth_version, client)
+    async def create_session(self, user: User, client: ClientKind, method: str) -> SessionResult:
+        tokens = await new_session(self._uow, self._codec, user, client, method)
         return SessionResult(user=to_profile(user), tokens=tokens)
 
     async def register(self, data: Registration, client: ClientKind) -> SessionResult:
@@ -45,7 +47,6 @@ class AuthService:
             raise ConflictError("Пользователь с таким email уже зарегистрирован")
         user = User(
             email=email,
-            password_hash=await hash_password(data.password),
             name=data.name.strip(),
             role=Role.USER,
             organization=data.organization,
@@ -55,34 +56,57 @@ class AuthService:
             last_login_at=datetime.now(UTC),
         )
         self._uow.users.add(user)
-        await self._uow.flush()
-        return self._session(user, client)
+        try:
+            await self._uow.flush()
+            self._uow.session.add(
+                UserCredential(user_id=user.id, password_hash=await hash_password(data.password))
+            )
+            await self._uow.flush()
+        except IntegrityError as exc:
+            raise ConflictError("Пользователь с таким email уже зарегистрирован") from exc
+        return await self.create_session(user, client, "password")
 
     async def login(self, email: str, password: str, client: ClientKind) -> SessionResult:
         user = await self._uow.users.get_by_email(email.strip().lower())
-        if user is None or not await verify_password(password, user.password_hash):
+        credential = await self._uow.session.get(UserCredential, user.id) if user else None
+        if credential is None:
+            # Keep unknown users and social-only accounts on the same expensive password path.
+            await hash_password(password[:128])
             raise UnauthorizedError(_BAD_CREDENTIALS)
-        if not user.is_active:
+        if not await verify_password(password, credential.password_hash):
+            raise UnauthorizedError(_BAD_CREDENTIALS)
+        if user is None or not user.is_active:
             raise ForbiddenError("Учётная запись отключена администратором")
-        if needs_rehash(user.password_hash):
-            user.password_hash = await hash_password(password)
+        if needs_rehash(credential.password_hash):
+            credential.password_hash = await hash_password(password)
         self._uow.users.touch_login(user, datetime.now(UTC))
         await self._uow.flush()
-        return self._session(user, client)
+        return await self.create_session(user, client, "password")
 
     async def refresh(self, refresh_token: str, *, csrf: str | None, from_cookie: bool) -> SessionResult:
         claims = self._codec.decode(refresh_token, "refresh")
         if from_cookie and not self._codec.csrf_matches(refresh_token, csrf):
             raise ForbiddenError("Нет или неверный CSRF-токен")
-        if await self._revocations.is_revoked(claims.jti):
-            raise UnauthorizedError("Токен уже использован")
         user = await self._uow.users.get(claims.user_id)
         if user is None or not user.is_active or user.auth_version != claims.auth_version:
             raise UnauthorizedError("Сессия недействительна, войдите снова")
         ensure_guest_active(user)
-        await self._revocations.revoke(claims.jti, claims.expires_at)
-        return self._session(user, claims.client)
+        session = await live_session(self._uow, claims, lock=True)
+        if not secrets.compare_digest(session.refresh_jti_hash, jti_hash(claims.jti)):
+            session.revoked_at = datetime.now(UTC)
+            raise SessionCompromisedError("Обнаружено повторное использование refresh-токена. Войдите снова.")
+        tokens = self._codec.issue(
+            user.id, user.role, user.auth_version, claims.client, session.id, session.expires_at
+        )
+        session.refresh_jti_hash = jti_hash(self._codec.decode(tokens.refresh, "refresh").jti)
+        session.last_seen_at = datetime.now(UTC)
+        await self._uow.flush()
+        return SessionResult(user=to_profile(user), tokens=tokens)
 
-    async def logout(self, refresh_token: str) -> None:
+    async def logout(self, refresh_token: str, *, csrf: str | None = None, from_cookie: bool = False) -> None:
         claims = self._codec.decode(refresh_token, "refresh")
-        await self._revocations.revoke(claims.jti, claims.expires_at)
+        if from_cookie and not self._codec.csrf_matches(refresh_token, csrf):
+            raise ForbiddenError("Нет или неверный CSRF-токен")
+        session = await live_session(self._uow, claims, lock=True)
+        session.revoked_at = datetime.now(UTC)
+        await self._uow.flush()
