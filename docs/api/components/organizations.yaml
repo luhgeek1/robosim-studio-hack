@@ -2,7 +2,7 @@
 
 OrganizationRole:
   type: string
-  description: owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
+  description: owner - переименовывает, приглашает, исключает, удаляет организацию; member - работает с общими проектами.
   enum: [owner, member]
 
 InvitationStatus:
@@ -11,7 +11,7 @@ InvitationStatus:
 
 Organization:
   type: object
-  description: Организация глазами текущего пользователя — с его ролью.
+  description: Организация глазами текущего пользователя - с его ролью.
   required: [id, name, role, members_count, projects_count, created_at]
   properties:
     id: {type: string, format: uuid}
@@ -54,7 +54,7 @@ OrganizationInvitation:
     created_at: {type: string, format: date-time}
     invited_by_name: {type: [string, "null"]}
     invitee_registered: {type: boolean}
-    email_delivery: {type: string, enum: [disabled, queued, sent, failed, cancelled], description: 'sent — Resend принял письмо; доставка в ящик не подтверждается.'}
+    email_delivery: {type: string, enum: [disabled, queued, sent, failed, cancelled], description: 'sent - Resend принял письмо; доставка в ящик не подтверждается.'}
     expires_at: {type: [string, "null"], format: date-time}
 
 OrganizationDetail:

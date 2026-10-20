@@ -15,12 +15,12 @@ info:
     - Авторизация: `Authorization: Bearer <access>`. Для `X-Client: web` refresh-токен живёт в httpOnly-cookie,
       обновление требует `X-CSRF-Token`. Гостевые эндпоинты помечены `security: []`.
     - Ошибки: всегда `Problem` с `error_code` из закрытого списка.
-    - Деньги — в рублях (`amount_rub`), не в миллионах. Время — ISO 8601 UTC.
+    - Деньги - в рублях (`amount_rub`), не в миллионах. Время - ISO 8601 UTC.
     - Любое значение, влияющее на расчёт, несёт `provenance` (статус и источник).
     - Долгие операции (симуляция, Монте-Карло, отчёты, обогащение) возвращают 202 + `Job`/`SimulationRun`;
-      прогресс — SSE `GET /api/v1/jobs/{job_id}/stream` или опрос.
+      прогресс - SSE `GET /api/v1/jobs/{job_id}/stream` или опрос.
     - Пагинация: `page` (с 1) и `page_size`; ответ содержит `items`, `total`, `page`, `page_size`.
-    - Версии входов (`VersionStamp`) сохраняются с каждым расчётом — расчёт воспроизводим (ТЗ 3.1.5).
+    - Версии входов (`VersionStamp`) сохраняются с каждым расчётом - расчёт воспроизводим (ТЗ 3.1.5).
 security:
   - bearerAuth: []
 tags:
@@ -29,9 +29,9 @@ tags:
   - name: auth
     description: Регистрация, вход, профиль, ключи API
   - name: reference
-    description: Справочники — типы объектов, параметры, процессы, нормативы
+    description: Справочники - типы объектов, параметры, процессы, нормативы
   - name: catalog
-    description: Каталог решений — поиск, карточки, сравнение
+    description: Каталог решений - поиск, карточки, сравнение
   - name: organizations
     description: 'Организации: общие проекты, участники, приглашения по email'
   - name: projects
@@ -51,7 +51,7 @@ tags:
   - name: reports
     description: Отчёты PDF / Excel / DOCX
   - name: assist
-    description: Ассистент (LLM) — импорт, объяснения, проверка допущений
+    description: Ассистент (LLM) - импорт, объяснения, проверка допущений
   - name: demo
     description: Демо для гостя без авторизации
   - name: support
@@ -253,7 +253,7 @@ paths:
         - auth
       operationId: refreshTokens
       summary: Обновить пару токенов
-      description: Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; для других клиентов — refresh-токен в теле.
+      description: Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; для других клиентов - refresh-токен в теле.
       security: []
       parameters:
         - $ref: '#/components/parameters/XClient'
@@ -286,7 +286,7 @@ paths:
         - auth
       operationId: logout
       summary: Выход (отзыв сессии и обоих токенов)
-      description: Для web-cookies обязателен X-CSRF-Token, для mobile — refresh_token в теле.
+      description: Для web-cookies обязателен X-CSRF-Token, для mobile - refresh_token в теле.
       parameters:
         - name: X-CSRF-Token
           in: header
@@ -541,7 +541,7 @@ paths:
         - auth
       operationId: finishOAuth
       summary: Возврат из сервиса входа
-      description: Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка — /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity — конфликт, автоматического связывания нет.
+      description: Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка - /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity - конфликт, автоматического связывания нет.
       security: []
       parameters:
         - name: provider
@@ -702,8 +702,8 @@ paths:
       tags:
         - organizations
       operationId: acceptInvitation
-      summary: Принять приглашение — стать участником организации
-      description: Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token — 403, истёкшее/отозванное/принятое — 404. GET никогда не принимает приглашение.
+      summary: Принять приглашение - стать участником организации
+      description: Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token - 403, истёкшее/отозванное/принятое - 404. GET никогда не принимает приглашение.
       requestBody:
         required: false
         content:
@@ -756,7 +756,7 @@ paths:
       tags:
         - organizations
       operationId: createOrganization
-      summary: Создать организацию (создатель — владелец)
+      summary: Создать организацию (создатель - владелец)
       requestBody:
         required: true
         content:
@@ -831,7 +831,7 @@ paths:
         - organizations
       operationId: inviteToOrganization
       summary: Пригласить пользователя по email (владелец)
-      description: Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod — 503. Истёкшее приглашение можно создать заново.
+      description: Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod - 503. Истёкшее приглашение можно создать заново.
       requestBody:
         required: true
         content:
@@ -925,7 +925,7 @@ paths:
       tags:
         - reference
       operationId: getObjectType
-      summary: Тип объекта — схема формы параметров
+      summary: Тип объекта - схема формы параметров
       security: []
       parameters:
         - name: object_type
@@ -1243,7 +1243,7 @@ paths:
       tags:
         - catalog
       operationId: getProduct
-      summary: Карточка продукта — предложения, ТТХ с источниками, кейсы
+      summary: Карточка продукта - предложения, ТТХ с источниками, кейсы
       security: []
       parameters:
         - $ref: '#/components/parameters/ProductId'
@@ -1261,7 +1261,7 @@ paths:
       tags:
         - catalog
       operationId: compareProducts
-      summary: Сравнение 2–5 продуктов по группам характеристик
+      summary: Сравнение 2-5 продуктов по группам характеристик
       security: []
       requestBody:
         required: true
@@ -1283,11 +1283,11 @@ paths:
       tags:
         - projects
       operationId: listProjects
-      summary: Проекты рабочей области — личные или организации
+      summary: Проекты рабочей области - личные или организации
       parameters:
         - name: organization_id
           in: query
-          description: Организация; без значения — личные проекты пользователя
+          description: Организация; без значения - личные проекты пользователя
           schema:
             type: string
             format: uuid
@@ -1611,7 +1611,7 @@ paths:
         - assist
       operationId: importProjectParamsText
       summary: Умный импорт из свободного текста (ассистент)
-      description: Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM — 503 LLM_UNAVAILABLE.
+      description: Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM - 503 LLM_UNAVAILABLE.
       parameters:
         - $ref: '#/components/parameters/ProjectId'
       requestBody:
@@ -1713,7 +1713,7 @@ paths:
       tags:
         - params
       operationId: getProjectDataQuality
-      summary: Панель доверия — происхождение параметров и их влияние
+      summary: Панель доверия - происхождение параметров и их влияние
       parameters:
         - $ref: '#/components/parameters/ProjectId'
       responses:
@@ -1728,7 +1728,7 @@ paths:
       tags:
         - params
       operationId: getProjectProcesses
-      summary: Процессы объекта — спрос, пик, текущая стоимость («где деньги»)
+      summary: Процессы объекта - спрос, пик, текущая стоимость («где деньги»)
       parameters:
         - $ref: '#/components/parameters/ProjectId'
       responses:
@@ -1897,7 +1897,7 @@ paths:
         - matching
       operationId: getMatching
       summary: Подбор решений по процессам с причинами и скорингом (ТЗ 3.4)
-      description: Возвращает последний результат; если параметры менялись — пересчитывает автоматически.
+      description: Возвращает последний результат; если параметры менялись - пересчитывает автоматически.
       responses:
         '200':
           description: OK
@@ -2137,7 +2137,7 @@ paths:
       tags:
         - calculations
       operationId: runSensitivity
-      summary: Чувствительность к параметрам — торнадо и тепловая карта (ТЗ 3.5.6)
+      summary: Чувствительность к параметрам - торнадо и тепловая карта (ТЗ 3.5.6)
       parameters:
         - $ref: '#/components/parameters/ScenarioId'
       requestBody:
@@ -2166,7 +2166,7 @@ paths:
       operationId: runMonteCarlo
       summary: Монте-Карло по неопределённости входов
       description: |
-        method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+        method=analytic выполняется синхронно; surrogate и des - как фоновая задача (202 + Job).
         Пока имитация не готова, surrogate и des отвечают 409.
       parameters:
         - $ref: '#/components/parameters/ScenarioId'
@@ -2250,7 +2250,7 @@ paths:
       tags:
         - calculations
       operationId: getCalculationTrace
-      summary: Трасса расчёта — каждая метрика с формулой, входами и источниками (ТЗ 3.5.8)
+      summary: Трасса расчёта - каждая метрика с формулой, входами и источниками (ТЗ 3.5.8)
       parameters:
         - $ref: '#/components/parameters/CalculationId'
         - name: section
@@ -2326,7 +2326,7 @@ paths:
       summary: Запустить имитацию (фоновая задача, до 60 с; прогресс по SSE)
       description: |
         Использует планировку проекта, состав сценария и параметры объекта. Возвращает SimulationRun со status=queued;
-        прогресс — `GET /jobs/{id}/stream` или опрос `GET /simulations/{id}`.
+        прогресс - `GET /jobs/{id}/stream` или опрос `GET /simulations/{id}`.
       requestBody:
         required: true
         content:
@@ -2373,7 +2373,7 @@ paths:
       tags:
         - simulation
       operationId: runFleetSweep
-      summary: Перебор количества роботов — кривая N → SLA, загрузка, окупаемость (фоновая задача)
+      summary: Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача)
       parameters:
         - $ref: '#/components/parameters/ScenarioId'
       requestBody:
@@ -2437,7 +2437,7 @@ paths:
       tags:
         - simulation
       operationId: getSimulationTimeline
-      summary: KPI по времени — графики очереди, SLA, загрузки
+      summary: KPI по времени - графики очереди, SLA, загрузки
       parameters:
         - $ref: '#/components/parameters/SimulationId'
         - name: step_min
@@ -2466,7 +2466,7 @@ paths:
       summary: Журнал событий для 2D-плеера (постранично по времени)
       description: |
         Плеер запрашивает окно `[from_s, to_s)`, интерполирует движение по рёбрам планировки и держит буфер на следующее окно.
-        Первый запрос — с from_s=0; в ответе есть `tasks_snapshot` для стартового состояния.
+        Первый запрос - с from_s=0; в ответе есть `tasks_snapshot` для стартового состояния.
       parameters:
         - $ref: '#/components/parameters/SimulationId'
         - name: from_s
@@ -2602,7 +2602,7 @@ paths:
       summary: Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача)
       description: |
         Сейчас формируются `pdf` («предТЭО» с графиками, планировкой и имитацией), `xlsx` (входы и живые формулы
-        из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` — 422.
+        из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` - 422.
         Сценарии с устаревшим расчётом пересчитываются.
       requestBody:
         required: true
@@ -2741,8 +2741,8 @@ paths:
       tags:
         - assist
       operationId: explain
-      summary: Вопрос по расчёту или имитации — ответ с цитатами из трассы
-      description: LLM отвечает только по данным расчёта (трасса, симуляция, нормативы); без LLM — шаблонные ответы на типовые вопросы.
+      summary: Вопрос по расчёту или имитации - ответ с цитатами из трассы
+      description: LLM отвечает только по данным расчёта (трасса, симуляция, нормативы); без LLM - шаблонные ответы на типовые вопросы.
       parameters:
         - $ref: '#/components/parameters/ProjectId'
       requestBody:
@@ -2895,7 +2895,7 @@ paths:
           schema:
             type: string
             maxLength: 64
-          description: Версия открытого примера; при несовпадении — 409
+          description: Версия открытого примера; при несовпадении - 409
       requestBody:
         required: true
         content:
@@ -3139,7 +3139,7 @@ paths:
       tags:
         - admin
       operationId: adminDeleteProduct
-      summary: Скрыть продукт (мягкое удаление — расчёты, где он использован, сохраняются)
+      summary: Скрыть продукт (мягкое удаление - расчёты, где он использован, сохраняются)
       responses:
         '204':
           description: Скрыт
@@ -3198,13 +3198,13 @@ paths:
       tags:
         - admin
       operationId: adminImportCatalog
-      summary: Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+      summary: Загрузить таблицу решений организатора (CSV) - новая версия каталога (ТЗ 3.3.2, 3.3.6)
       description: |
         Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
-        обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
-        процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+        обновляются, новые id добавляются (тип решения - по тому, как файл классифицирует уже известные продукты;
+        процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются -
         они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
-        С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+        С `dry_run=true` ничего не пишет: тот же ответ - предпросмотр.
       parameters:
         - name: dry_run
           in: query
@@ -3227,7 +3227,7 @@ paths:
                 notes:
                   type: string
                   maxLength: 2000
-                  description: Что за выгрузка — пишется в журнал
+                  description: Что за выгрузка - пишется в журнал
       responses:
         '200':
           description: OK
@@ -3410,8 +3410,8 @@ paths:
       operationId: adminSetParameterDefault
       summary: Задать значение по умолчанию с источником и обоснованием
       description: |
-        Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона — 422 (у проекта это
-        было бы предупреждением, у умолчания — ошибка во всех проектах). Проекты без своего значения, у которых
+        Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона - 422 (у проекта это
+        было бы предупреждением, у умолчания - ошибка во всех проектах). Проекты без своего значения, у которых
         меняется действующее значение, получают новую версию: их сохранённые расчёты становятся устаревшими,
         а пересчёт показывает изменение параметра в диффе. Старые расчёты хранят свой снимок входов (ТЗ 3.1.5).
       requestBody:
@@ -3462,11 +3462,11 @@ paths:
       tags:
         - admin
       operationId: adminListSources
-      summary: Реестр источников данных — ссылки, даты, где используются (ТЗ 3.3.4)
+      summary: Реестр источников данных - ссылки, даты, где используются (ТЗ 3.3.4)
       description: |
         Источники каталога, нормативов и параметров по умолчанию (загрузки пользователей в проекты не входят).
         Сначала самые используемые. Источник старше `stale_after_months` месяцев (норматив
-        `source_stale_after_months`) — `stale`, без даты получения — `undated`.
+        `source_stale_after_months`) - `stale`, без даты получения - `undated`.
       parameters:
         - $ref: '#/components/parameters/Page'
         - name: page_size
@@ -3517,7 +3517,7 @@ paths:
       operationId: adminUpdateSource
       summary: Исправить название, ссылку, дату получения или примечание источника
       description: |
-        Правка — событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
+        Правка - событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
         и расчёты не устаревают; экраны и отчёты показывают исправленный источник. Сид не перезаписывает
         источник, который правил администратор.
       requestBody:
@@ -3661,7 +3661,7 @@ paths:
       tags:
         - admin
       operationId: adminListManufacturers
-      summary: Производители — для привязки учётной записи вендора
+      summary: Производители - для привязки учётной записи вендора
       responses:
         '200':
           description: OK
@@ -4027,10 +4027,10 @@ components:
       type: string
       description: |
         Откуда взялось значение и можно ли ему верить.
-        user — ввёл пользователь; imported — из файла пользователя; llm_suggested — предложил ассистент, не подтверждено;
-        default — значение по умолчанию из справочника (с источником); assumption — допущение команды с обоснованием;
-        derived — вычислено из других параметров; confirmed — подтверждено первичным источником (для ТТХ и нормативов);
-        vendor_claim — заявка производителя без независимого подтверждения; missing — данных нет.
+        user - ввёл пользователь; imported - из файла пользователя; llm_suggested - предложил ассистент, не подтверждено;
+        default - значение по умолчанию из справочника (с источником); assumption - допущение команды с обоснованием;
+        derived - вычислено из других параметров; confirmed - подтверждено первичным источником (для ТТХ и нормативов);
+        vendor_claim - заявка производителя без независимого подтверждения; missing - данных нет.
       enum:
         - user
         - imported
@@ -4192,7 +4192,7 @@ components:
           example: Торговля и услуги
         depth:
           type: string
-          description: full — расчёт, симуляция, отчёт; basic — параметры, подбор, аналитическая экономика без симуляции.
+          description: full - расчёт, симуляция, отчёт; basic - параметры, подбор, аналитическая экономика без симуляции.
           enum:
             - full
             - basic
@@ -4227,7 +4227,7 @@ components:
             example: warehouse_cross_dock
     ParameterDef:
       type: object
-      description: Описание одного параметра объекта — по нему фронт строит форму, валидацию и подсказки (ТЗ 4.5.3).
+      description: Описание одного параметра объекта - по нему фронт строит форму, валидацию и подсказки (ТЗ 4.5.3).
       required:
         - key
         - name
@@ -4296,14 +4296,14 @@ components:
           example: '1000'
         affects:
           type: array
-          description: Какие процессы зависят от параметра — для подсветки «что пересчитается».
+          description: Какие процессы зависят от параметра - для подсветки «что пересчитается».
           items:
             type: string
         order:
           type: integer
     ProcessDef:
       type: object
-      description: Процесс объекта, который можно роботизировать. Иерархия ТЗ 3.3.1 — отрасль → объект → процесс → тип решения → продукт.
+      description: Процесс объекта, который можно роботизировать. Иерархия ТЗ 3.3.1 - отрасль → объект → процесс → тип решения → продукт.
       required:
         - key
         - name
@@ -4362,7 +4362,7 @@ components:
     Norm:
       type: object
       description: |
-        Норматив расчётной модели. ТЗ 3.5.1 запрещает недокументированные коэффициенты — каждый норматив имеет источник
+        Норматив расчётной модели. ТЗ 3.5.1 запрещает недокументированные коэффициенты - каждый норматив имеет источник
         и обоснование, и пользователь видит его в интерфейсе (ТЗ 3.2.5, 3.5.8).
       required:
         - key
@@ -4402,7 +4402,7 @@ components:
           $ref: '#/components/schemas/Source'
         rationale:
           type: string
-          example: 'Лист «Легенда» датасета организатора: загрузка AMR 70–85 %'
+          example: 'Лист «Легенда» датасета организатора: загрузка AMR 70-85 %'
         affects:
           type: array
           items:
@@ -4441,7 +4441,7 @@ components:
           example: amr_transport
         solution_type_name:
           type: string
-          example: AMR — транспортный
+          example: AMR - транспортный
         subtype:
           type:
             - string
@@ -4533,7 +4533,7 @@ components:
               example: Интеграция с WMS по REST API вендора; QR-разметка пола
             missing_key_specs:
               type: array
-              description: Ключевые ТТХ без данных — влияют на статус «требует проверки».
+              description: Ключевые ТТХ без данных - влияют на статус «требует проверки».
               items:
                 type: string
             similar_products:
@@ -4610,7 +4610,7 @@ components:
             - string
             - 'null'
           format: uuid
-          description: Организация, чьим участникам виден проект; null — личный проект автора.
+          description: Организация, чьим участникам виден проект; null - личный проект автора.
         organization:
           type:
             - string
@@ -4670,7 +4670,7 @@ components:
           default: false
     ProjectParam:
       type: object
-      description: Параметр объекта в проекте — значение, происхождение, валидация, история правок.
+      description: Параметр объекта в проекте - значение, происхождение, валидация, история правок.
       required:
         - key
         - name
@@ -4738,7 +4738,7 @@ components:
             - number
             - 'null'
           example: 100000
-          description: null — не хватает параметров для оценки спроса
+          description: null - не хватает параметров для оценки спроса
         avg_per_hour:
           type:
             - number
@@ -4757,7 +4757,7 @@ components:
           maxItems: 24
           items:
             type: number
-          description: Доли суточного объёма по часам (сумма = 1). Источник профиля — допущение с источником.
+          description: Доли суточного объёма по часам (сумма = 1). Источник профиля - допущение с источником.
         profile_provenance:
           oneOf:
             - $ref: '#/components/schemas/Provenance'
@@ -4801,7 +4801,7 @@ components:
     Layout:
       type: object
       description: |
-        Планировка объекта — единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
+        Планировка объекта - единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
         пользователь может подправить зоны и станции в простом редакторе. Не CAD. Сохранение или перегенерация
         повышает версию проекта: расчёты становятся stale.
       required:
@@ -4864,7 +4864,7 @@ components:
             $ref: '#/components/schemas/LayoutEdge'
         generated:
           type: boolean
-          description: false — после ручной правки в редакторе
+          description: false - после ручной правки в редакторе
         generator:
           type: object
           properties:
@@ -4896,10 +4896,10 @@ components:
           items:
             type: string
           example:
-            - В здании помещается 19 500 из 20 000 паллетомест при 5 ярусах — проверьте высоту потолков и площадь
+            - В здании помещается 19 500 из 20 000 паллетомест при 5 ярусах - проверьте высоту потолков и площадь
         params_changed:
           type: boolean
-          description: Параметры объекта менялись после генерации — стоит перегенерировать
+          description: Параметры объекта менялись после генерации - стоит перегенерировать
         updated_at:
           type: string
           format: date-time
@@ -4940,7 +4940,7 @@ components:
             $ref: '#/components/schemas/LayoutEdge'
     LayoutStats:
       type: object
-      description: Что вытекает из геометрии — попадает в расчёт цикла и в имитацию.
+      description: Что вытекает из геометрии - попадает в расчёт цикла и в имитацию.
       properties:
         avg_route_m:
           type: object
@@ -4950,7 +4950,7 @@ components:
             dock_in_to_storage: 91.1
             storage_to_dock_out: 98.2
             pod_to_station: 42.5
-          description: Ключи — LayoutRoute.key. В расчёт идут как входы `layout_route_<key>_m` (вид `layout` в трассе)
+          description: Ключи - LayoutRoute.key. В расчёт идут как входы `layout_route_<key>_m` (вид `layout` в трассе)
         routes:
           type: array
           items:
@@ -4980,11 +4980,11 @@ components:
     LayoutTemplate:
       type: string
       description: |
-        warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
-        warehouse_flow_through — приёмка и отгрузка на противоположных фасадах;
-        hospital_floor — больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
+        warehouse_u_flow - ворота приёмки и отгрузки на одном фасаде (по умолчанию);
+        warehouse_flow_through - приёмка и отгрузка на противоположных фасадах;
+        hospital_floor - больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
         и типовой этаж отделений;
-        airport_apron — аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
+        airport_apron - аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
       enum:
         - warehouse_u_flow
         - warehouse_flow_through
@@ -5089,7 +5089,7 @@ components:
                 type: string
         estimate:
           type: object
-          description: Быстрая аналитическая оценка без симуляции — для сортировки и карточки.
+          description: Быстрая аналитическая оценка без симуляции - для сортировки и карточки.
           properties:
             robots_count:
               type:
@@ -5150,7 +5150,7 @@ components:
           type:
             - number
             - 'null'
-          description: Если null — из нормативов (ключевая ставка ЦБ)
+          description: Если null - из нормативов (ключевая ставка ЦБ)
         overrides:
           type: array
           items:
@@ -5249,7 +5249,7 @@ components:
             type: string
         assumptions_used:
           type: array
-          description: Все нормативы и допущения, участвовавшие в расчёте — раздел «Допущения» отчёта.
+          description: Все нормативы и допущения, участвовавшие в расчёте - раздел «Допущения» отчёта.
           items:
             $ref: '#/components/schemas/Norm'
         calibration:
@@ -5275,7 +5275,7 @@ components:
                 - 'null'
             checks:
               type: array
-              description: Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами — каждое число против их числа.
+              description: Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами - каждое число против их числа.
               items:
                 type: object
                 required:
@@ -5320,7 +5320,7 @@ components:
             $ref: '#/components/schemas/TraceItem'
         undocumented_constants:
           type: integer
-          description: Должно быть 0 — счётчик для слайда
+          description: Должно быть 0 - счётчик для слайда
     Metrics:
       type: object
       description: 'Все показатели ТЗ 3.5.2 + классические финансовые (по Q&A: ROI с вычетом CAPEX, окупаемость простая и дисконтированная).'
@@ -5353,7 +5353,7 @@ components:
           type:
             - number
             - 'null'
-          description: null — не окупается в горизонте
+          description: null - не окупается в горизонте
         discounted_payback_years:
           type:
             - number
@@ -5514,7 +5514,7 @@ components:
           type: object
           description: |
             Накопленный денежный поток каждого сценария относительно «как сейчас» по годам, с точки 0 (старт, минус
-            первоначальные вложения). База — линия нуля; пересечение нуля — окупаемость. Один график на все сценарии.
+            первоначальные вложения). База - линия нуля; пересечение нуля - окупаемость. Один график на все сценарии.
           additionalProperties:
             type: array
             items:
@@ -5532,7 +5532,7 @@ components:
           type: number
         items:
           type: array
-          description: Отсортировано по размаху — готовая торнадо-диаграмма.
+          description: Отсортировано по размаху - готовая торнадо-диаграмма.
           items:
             type: object
             required:
@@ -5556,7 +5556,7 @@ components:
                   - norm
                   - catalog
                   - group
-                description: catalog — цена оборудования; group — группа параметров (все зарплаты, все объёмы)
+                description: catalog - цена оборудования; group - группа параметров (все зарплаты, все объёмы)
               unit:
                 type:
                   - string
@@ -5584,7 +5584,7 @@ components:
                 oneOf:
                   - $ref: '#/components/schemas/ProvenanceStatus'
                   - type: 'null'
-                description: null — группа параметров
+                description: null - группа параметров
         heatmap:
           type:
             - object
@@ -5679,7 +5679,7 @@ components:
                 type: number
         surrogate_quality:
           type: object
-          description: Если method=surrogate — качество метамодели.
+          description: Если method=surrogate - качество метамодели.
           properties:
             r2:
               type: number
@@ -5735,7 +5735,7 @@ components:
           enum:
             - run
             - sweep
-          description: sweep — прогон рекомендованного N, записанный перебором флота
+          description: sweep - прогон рекомендованного N, записанный перебором флота
         job_id:
           type:
             - string
@@ -5911,7 +5911,7 @@ components:
           $ref: '#/components/schemas/Bottleneck'
         vs_analytic:
           type: object
-          description: Сверка «расчёт против имитации» — блок, который должен быть на экране (ТЗ 3.6.2).
+          description: Сверка «расчёт против имитации» - блок, который должен быть на экране (ТЗ 3.6.2).
           required:
             - analytic_throughput_per_hour
             - sim_throughput_per_hour
@@ -5937,7 +5937,7 @@ components:
           type:
             - object
             - 'null'
-          description: Тот же день ручным процессом (если compare_baseline); пока не поддерживается — null.
+          description: Тот же день ручным процессом (если compare_baseline); пока не поддерживается - null.
           properties:
             throughput_per_hour:
               type: number
@@ -5962,7 +5962,7 @@ components:
                 type: number
         skipped_processes:
           type: array
-          description: Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) — их N остаётся по расчёту.
+          description: Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) - их N остаётся по расчёту.
           items:
             type: object
             properties:
@@ -6030,7 +6030,7 @@ components:
             $ref: '#/components/schemas/SimEvent'
         tasks_snapshot:
           type: array
-          description: Очередь задач на момент from_s — чтобы плеер стартовал не с пустой сцены.
+          description: Очередь задач на момент from_s - чтобы плеер стартовал не с пустой сцены.
           items:
             type: object
             properties:
@@ -6048,7 +6048,7 @@ components:
       type: object
       description: |
         Событие журнала. move: робот идёт по узлам path, прибытие в момент eta; фронт интерполирует положение по рёбрам.
-        Остальные типы — состояние в узле на dur секунд.
+        Остальные типы - состояние в узле на dur секунд.
       required:
         - t
         - type
@@ -6147,7 +6147,7 @@ components:
             - string
             - 'null'
           format: uuid
-          description: 'Фоновая задача: прогресс — GET /jobs/{id} или SSE'
+          description: 'Фоновая задача: прогресс - GET /jobs/{id} или SSE'
         error:
           oneOf:
             - $ref: '#/components/schemas/Problem'
@@ -6214,7 +6214,7 @@ components:
           description: Срок удаления гостевого пространства; null для аккаунтов
     Organization:
       type: object
-      description: Организация глазами текущего пользователя — с его ролью.
+      description: Организация глазами текущего пользователя - с его ролью.
       required:
         - id
         - name
@@ -6312,7 +6312,7 @@ components:
             - sent
             - failed
             - cancelled
-          description: sent — Resend принял письмо; доставка в ящик не подтверждается.
+          description: sent - Resend принял письмо; доставка в ящик не подтверждается.
         expires_at:
           type:
             - string
@@ -6320,7 +6320,7 @@ components:
           format: date-time
     OrganizationRole:
       type: string
-      description: owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
+      description: owner - переименовывает, приглашает, исключает, удаляет организацию; member - работает с общими проектами.
       enum:
         - owner
         - member
@@ -6382,7 +6382,7 @@ components:
             - string
             - 'null'
           format: uuid
-          description: У одобренного нового продукта — созданная карточка
+          description: У одобренного нового продукта - созданная карточка
         product_name:
           type: string
         card:
@@ -6407,7 +6407,7 @@ components:
           description: Версия каталога, на которой вендор готовил заявку
         product_changed_since:
           type: boolean
-          description: Карточку меняли после подачи заявки — сверьте перед решением
+          description: Карточку меняли после подачи заявки - сверьте перед решением
         reviewed_at:
           type:
             - string
@@ -6435,7 +6435,7 @@ components:
           type: integer
     VendorOverview:
       type: object
-      description: Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3).
+      description: Спрос - агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3).
       required:
         - manufacturer
         - products
@@ -6677,7 +6677,7 @@ components:
         - cancelled
     Role:
       type: string
-      description: guest — временная сессия с проектами на 24 часа; user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
+      description: guest - временная сессия с проектами на 24 часа; user - проекты; admin - каталог, нормативы, пользователи; vendor - свои продукты с модерацией.
       enum:
         - guest
         - user
@@ -6696,7 +6696,7 @@ components:
           type:
             - string
             - 'null'
-          description: Для X-Client=web всегда null — токен в httpOnly-cookie
+          description: Для X-Client=web всегда null - токен в httpOnly-cookie
         token_type:
           type: string
           default: bearer
@@ -7063,7 +7063,7 @@ components:
           format: email
     ObjectTypeKey:
       type: string
-      description: warehouse — склад (в полной глубине), airport, hospital — параметры и подбор; custom — свой объект.
+      description: warehouse - склад (в полной глубине), airport, hospital - параметры и подбор; custom - свой объект.
       enum:
         - warehouse
         - airport
@@ -7136,11 +7136,11 @@ components:
           example: amr_transport
         name:
           type: string
-          example: AMR — транспортный мобильный робот
+          example: AMR - транспортный мобильный робот
         description:
           type: string
         sizing_model:
-          description: null — категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог.
+          description: null - категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог.
           oneOf:
             - $ref: '#/components/schemas/SizingModel'
             - type: 'null'
@@ -7216,9 +7216,9 @@ components:
     Badge:
       type: string
       description: |
-        in_registry_719 — есть в реестре промпродукции (ПП 719); tested_fcbas — протестировано ФЦ БАС;
-        specs_confirmed — все ключевые ТТХ подтверждены первичными источниками; domestic — отечественный производитель;
-        has_cases — есть реализованные внедрения.
+        in_registry_719 - есть в реестре промпродукции (ПП 719); tested_fcbas - протестировано ФЦ БАС;
+        specs_confirmed - все ключевые ТТХ подтверждены первичными источниками; domestic - отечественный производитель;
+        has_cases - есть реализованные внедрения.
       enum:
         - in_registry_719
         - tested_fcbas
@@ -7283,7 +7283,7 @@ components:
           type: integer
     CatalogFacets:
       type: object
-      description: Значения фильтров с количествами — для панели фильтров каталога.
+      description: Значения фильтров с количествами - для панели фильтров каталога.
       properties:
         solution_types:
           type: array
@@ -7329,7 +7329,7 @@ components:
     ProductOffer:
       type: object
       description: |
-        Предложение продукта в отрасли. Дубли строк каталога организатора — это разные предложения одного продукта
+        Предложение продукта в отрасли. Дубли строк каталога организатора - это разные предложения одного продукта
         (разная отрасль, сценарий, иногда цена); по Q&A их нельзя объединять.
       required:
         - id
@@ -7398,18 +7398,18 @@ components:
           type:
             - string
             - 'null'
-          description: Если задан — в таблицу добавляются оценки для процесса
+          description: Если задан - в таблицу добавляются оценки для процесса
         project_id:
           type:
             - string
             - 'null'
           format: uuid
-          description: Если задан — проверки совместимости с объектом
+          description: Если задан - проверки совместимости с объектом
     CandidateStatus:
       type: string
       description: |
-        fit — все жёсткие проверки пройдены; check — не хватает данных по ключевому ограничению (ТЗ 3.4.3);
-        excluded — подтверждённое несоответствие; manual — добавлено пользователем вручную с предупреждением (ТЗ 3.4.4).
+        fit - все жёсткие проверки пройдены; check - не хватает данных по ключевому ограничению (ТЗ 3.4.3);
+        excluded - подтверждённое несоответствие; manual - добавлено пользователем вручную с предупреждением (ТЗ 3.4.4).
       enum:
         - fit
         - check
@@ -7475,7 +7475,7 @@ components:
         - archived
     DataQualitySummary:
       type: object
-      description: Сводка происхождения параметров — «панель доверия» на экране объекта.
+      description: Сводка происхождения параметров - «панель доверия» на экране объекта.
       required:
         - score
         - counts
@@ -7552,7 +7552,7 @@ components:
             - string
             - 'null'
           format: uuid
-          description: Создать в организации (нужно быть её участником); без значения — личный проект. Копия остаётся в рабочей области исходного проекта.
+          description: Создать в организации (нужно быть её участником); без значения - личный проект. Копия остаётся в рабочей области исходного проекта.
         notes:
           type:
             - string
@@ -7585,7 +7585,7 @@ components:
             - string
             - 'null'
           format: uuid
-          description: Перенести в организацию или (null) в личное пространство — может автор или владелец организации.
+          description: Перенести в организацию или (null) в личное пространство - может автор или владелец организации.
     AuditEvent:
       type: object
       required:
@@ -7674,7 +7674,7 @@ components:
           type:
             - string
             - 'null'
-          example: Значение 12 000 выше типичного диапазона 500–5 000 палл/сут
+          example: Значение 12 000 выше типичного диапазона 500-5 000 палл/сут
         how_to_fix:
           type:
             - string
@@ -7716,7 +7716,7 @@ components:
           type:
             - string
             - 'null'
-          description: Если отличается от базовой единицы — бэкенд конвертирует
+          description: Если отличается от базовой единицы - бэкенд конвертирует
         note:
           type:
             - string
@@ -8033,7 +8033,7 @@ components:
         provider:
           type: string
           example: rules
-          description: rules — детерминированный разбор шаблона; gemini — ассистент
+          description: rules - детерминированный разбор шаблона; gemini - ассистент
         mapped:
           type: array
           items:
@@ -8130,7 +8130,7 @@ components:
           type: array
           items:
             type: string
-          description: Если пусто — применить все mapped
+          description: Если пусто - применить все mapped
         overwrite_user_values:
           type: boolean
           default: false
@@ -8275,7 +8275,7 @@ components:
       maxItems: 2
       items:
         type: number
-      description: '[x, y] в метрах, начало координат — левый верхний угол'
+      description: '[x, y] в метрах, начало координат - левый верхний угол'
     Zone:
       type: object
       required:
@@ -8393,7 +8393,7 @@ components:
           type: number
         width_m:
           type: number
-          description: Ширина прохода — участвует в жёстких проверках и заторах
+          description: Ширина прохода - участвует в жёстких проверках и заторах
         capacity:
           type: integer
           description: Сколько роботов одновременно на участке
@@ -8445,7 +8445,7 @@ components:
           description: Сколько пар «откуда → куда» усреднено
     LayoutDerivationStep:
       type: object
-      description: Шаг вывода геометрии — формула, подставленные значения и входы (параметры объекта и нормативы).
+      description: Шаг вывода геометрии - формула, подставленные значения и входы (параметры объекта и нормативы).
       required:
         - key
         - name
@@ -8500,7 +8500,7 @@ components:
                   - metric
     LayoutUpdate:
       type: object
-      description: Частичное обновление — присланные массивы замещают целиком. Длины прямых рёбер пересчитываются по координатам узлов.
+      description: Частичное обновление - присланные массивы замещают целиком. Длины прямых рёбер пересчитываются по координатам узлов.
       properties:
         zones:
           type: array
@@ -8536,7 +8536,7 @@ components:
           description: 'Зарезервировано: генератор детерминирован'
         overrides:
           type: object
-          description: Переопределения генератора; неизвестный ключ — 409.
+          description: Переопределения генератора; неизвестный ключ - 409.
           properties:
             aspect_ratio:
               type: number
@@ -8588,10 +8588,10 @@ components:
           description: weight × points
         explanation:
           type: string
-          example: Ориентировочный CAPEX 34 млн ₽ — второй по экономичности среди подходящих
+          example: Ориентировочный CAPEX 34 млн ₽ - второй по экономичности среди подходящих
     Reason:
       type: object
-      description: Причина соответствия, проверки или исключения — показывается пользователю дословно.
+      description: Причина соответствия, проверки или исключения - показывается пользователю дословно.
       required:
         - code
         - text
@@ -8733,7 +8733,7 @@ components:
           description: Пользователь подтвердил, что видит причины исключения
     ScenarioKind:
       type: string
-      description: baseline — как сейчас (без роботизации); purchase — покупка; raas — роботы как услуга; lease — лизинг или кредит.
+      description: baseline - как сейчас (без роботизации); purchase - покупка; raas - роботы как услуга; lease - лизинг или кредит.
       enum:
         - baseline
         - purchase
@@ -8778,7 +8778,7 @@ components:
           format: uuid
         explanation:
           type: string
-          example: Аналитически 10; при 11 симуляция даёт SLA 91 %; при 12 — 97 %; резерв +1 на отказ
+          example: Аналитически 10; при 11 симуляция даёт SLA 91 %; при 12 - 97 %; резерв +1 на отказ
     ScenarioItem:
       type: object
       description: Одна связка «процесс → продукт → количество» в сценарии.
@@ -8804,7 +8804,7 @@ components:
             - string
             - 'null'
           format: uuid
-          description: Предложение каталога (отрасль объекта); null — у продукта нет предложений
+          description: Предложение каталога (отрасль объекта); null - у продукта нет предложений
         count_mode:
           $ref: '#/components/schemas/CountMode'
         count_manual:
@@ -8837,10 +8837,10 @@ components:
           type:
             - string
             - 'null'
-          description: Причина ручных значений — фиксация изменения (ТЗ 3.5.4)
+          description: Причина ручных значений - фиксация изменения (ТЗ 3.5.4)
         stations:
           type: object
-          description: Для goods-to-person — станции отбора.
+          description: Для goods-to-person - станции отбора.
           properties:
             count_mode:
               $ref: '#/components/schemas/CountMode'
@@ -8852,7 +8852,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/CandidateStatus'
             - type: 'null'
-          description: null — позиция не из подбора
+          description: null - позиция не из подбора
         notes:
           type:
             - string
@@ -8976,7 +8976,7 @@ components:
           enum:
             - fresh
             - stale
-          description: stale — параметры или каталог изменились после расчёта
+          description: stale - параметры или каталог изменились после расчёта
         payback_years:
           type:
             - number
@@ -9132,7 +9132,7 @@ components:
             - not_recommended
             - insufficient_data
             - baseline
-          description: baseline — у базового сценария нет вердикта, он точка отсчёта
+          description: baseline - у базового сценария нет вердикта, он точка отсчёта
         band:
           type: string
           enum:
@@ -9143,7 +9143,7 @@ components:
             - none
         headline:
           type: string
-          example: Роботизация отбора окупается за 2,6 года — привлекательно
+          example: Роботизация отбора окупается за 2,6 года - привлекательно
         summary:
           type: string
         key_drivers:
@@ -9245,7 +9245,7 @@ components:
           description: Параметр объекта, норматив, ТТХ, другая метрика, результат симуляции или маршрут по планировке
     SizingResult:
       type: object
-      description: Как получилось число роботов для процесса — сердце «паспорт против физики».
+      description: Как получилось число роботов для процесса - сердце «паспорт против физики».
       required:
         - process_key
         - product_id
@@ -9272,7 +9272,7 @@ components:
           properties:
             cycle_components:
               type: array
-              description: Из чего состоит цикл — показываем таблицей.
+              description: Из чего состоит цикл - показываем таблицей.
               items:
                 type: object
                 required:
@@ -9296,7 +9296,7 @@ components:
               type:
                 - number
                 - 'null'
-              description: null — у модели нет цикла (площадь, станция) или количество задано вручную
+              description: null - у модели нет цикла (площадь, станция) или количество задано вручную
             nominal_throughput_per_hour:
               type:
                 - number
@@ -9317,7 +9317,7 @@ components:
               type:
                 - number
                 - 'null'
-              description: Заявка производителя — для сравнения
+              description: Заявка производителя - для сравнения
         count:
           $ref: '#/components/schemas/CountResult'
         stations_count:
@@ -9333,7 +9333,7 @@ components:
           description: fleet_throughput / demand_peak
     CostItem:
       type: object
-      description: Строка CAPEX или OPEX с формулой и входами — раскрывается по клику (ТЗ 3.5.8).
+      description: Строка CAPEX или OPEX с формулой и входами - раскрывается по клику (ТЗ 3.5.8).
       required:
         - key
         - name
@@ -9478,7 +9478,7 @@ components:
           default: payback_years
         parameters:
           type: array
-          description: 'Если пусто — стандартный набор (≥3 по ТЗ 3.5.6): цена оборудования, объём операций, стоимость труда, загрузка, сервис.'
+          description: 'Если пусто - стандартный набор (≥3 по ТЗ 3.5.6): цена оборудования, объём операций, стоимость труда, загрузка, сервис.'
           items:
             type: object
             required:
@@ -9507,7 +9507,7 @@ components:
                 example: 20
         heatmap:
           type: object
-          description: Опционально — двумерная сетка по двум параметрам.
+          description: Опционально - двумерная сетка по двум параметрам.
           properties:
             x_key:
               type: string
@@ -9533,7 +9533,7 @@ components:
           default: payback_years
         distributions:
           type: array
-          description: Если пусто — треугольные распределения по min/max датасета для ключевых параметров.
+          description: Если пусто - треугольные распределения по min/max датасета для ключевых параметров.
           items:
             type: object
             required:
@@ -9563,7 +9563,7 @@ components:
             - surrogate
             - des
           default: analytic
-          description: des — честная симуляция, медленно
+          description: des - честная симуляция, медленно
         seed:
           type:
             - integer
@@ -9654,7 +9654,7 @@ components:
           type: array
           items:
             type: string
-          description: Ключи метрик-предков — фронт строит дерево
+          description: Ключи метрик-предков - фронт строит дерево
         norm_keys:
           type: array
           items:
@@ -9724,7 +9724,7 @@ components:
                   - 'Цена Ronavi H1500: 2,70 → 2,85 млн ₽ (каталог 2026-09-25.1)'
     Narrative:
       type: object
-      description: Текст для руководителя — executive summary и следующие шаги. Всегда есть fallback из шаблонов.
+      description: Текст для руководителя - executive summary и следующие шаги. Всегда есть fallback из шаблонов.
       required:
         - executive_summary
         - key_findings
@@ -9756,7 +9756,7 @@ components:
           format: date-time
     SimulationMode:
       type: string
-      description: normal — обычный день; peak — день с пиковым коэффициентом; custom — параметры заданы явно.
+      description: normal - обычный день; peak - день с пиковым коэффициентом; custom - параметры заданы явно.
       enum:
         - normal
         - peak
@@ -9771,7 +9771,7 @@ components:
           type:
             - integer
             - 'null'
-          description: Какой робот флота (0..N-1); null — случайный
+          description: Какой робот флота (0..N-1); null - случайный
         at_hour:
           type: number
           example: 14
@@ -9833,11 +9833,11 @@ components:
         record_events:
           type: boolean
           default: true
-          description: false — только KPI, быстрее (для перебора N)
+          description: false - только KPI, быстрее (для перебора N)
         compare_baseline:
           type: boolean
           default: false
-          description: Прогнать тем же движком ручной процесс для «SLA как сейчас» — пока не поддерживается, summary.baseline = null
+          description: Прогнать тем же движком ручной процесс для «SLA как сейчас» - пока не поддерживается, summary.baseline = null
     StateShare:
       type: object
       description: Доли времени по состояниям (сумма = 1).
@@ -10031,7 +10031,7 @@ components:
                 type:
                   - integer
                   - 'null'
-                description: N плюс резерв — как в сценарии после применения
+                description: N плюс резерв - как в сценарии после применения
               capex_rub:
                 type:
                   - number
@@ -10054,7 +10054,7 @@ components:
           type:
             - integer
             - 'null'
-          description: N после совместной проверки всех моделируемых процессов; null — парк не подтверждён
+          description: N после совместной проверки всех моделируемых процессов; null - парк не подтверждён
         candidate_count:
           type:
             - integer
@@ -10090,7 +10090,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/FleetEconomics'
             - type: 'null'
-          description: N по имитации — то, что берёт расчёт
+          description: N по имитации - то, что берёт расчёт
         job_id:
           type:
             - string
@@ -10103,10 +10103,10 @@ components:
           format: date-time
         explanation:
           type: string
-          example: 12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 %
+          example: 12 - минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 - простой 38 %
     FleetSweepRequest:
       type: object
-      description: Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость».
+      description: Перебор количества роботов для процесса - кривая «N → SLA, загрузка, окупаемость».
       required:
         - process_key
       properties:
@@ -10117,7 +10117,7 @@ components:
             - integer
             - 'null'
           minimum: 1
-          description: Вместе с to_count — полный перебор диапазона вместо поиска
+          description: Вместе с to_count - полный перебор диапазона вместо поиска
         to_count:
           type:
             - integer
@@ -10318,12 +10318,12 @@ components:
           items:
             type: string
             format: uuid
-          description: Если пусто — все сценарии проекта
+          description: Если пусто - все сценарии проекта
         sections:
           type: array
           items:
             $ref: '#/components/schemas/ReportSection'
-          description: Если пусто — все
+          description: Если пусто - все
         simulation_ids:
           type: array
           items:
@@ -10342,7 +10342,7 @@ components:
         live_formulas:
           type: boolean
           default: false
-          description: Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении
+          description: Для xlsx - проверочные формулы в защищённом снимке; входы меняются в приложении
     AssistStatus:
       type: object
       required:
@@ -10470,7 +10470,7 @@ components:
             properties:
               label:
                 type: string
-                example: Запустить перебор 10–14 роботов
+                example: Запустить перебор 10-14 роботов
               action:
                 type: string
                 example: fleet_sweep
@@ -10650,7 +10650,7 @@ components:
     DemoWhatIfRequest:
       type: object
       additionalProperties: false
-      description: Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией.
+      description: Ограниченный what-if для гостя - без сохранения. Изменение нагрузки снимает подтверждение имитацией.
       properties:
         fleet_source:
           type: string
@@ -10748,7 +10748,7 @@ components:
           type: boolean
         eligibility_reason:
           type: string
-          example: Только для ОКВЭД раздела C; у объекта 52.10 — не применимо
+          example: Только для ОКВЭД раздела C; у объекта 52.10 - не применимо
         conditions:
           type: array
           items:
@@ -10800,7 +10800,7 @@ components:
                 - 'null'
     RfqStatus:
       type: string
-      description: sent — ждёт ответа; answered — производитель назвал цену и срок; declined — отказ с причиной.
+      description: sent - ждёт ответа; answered - производитель назвал цену и срок; declined - отказ с причиной.
       enum:
         - sent
         - answered
@@ -10988,12 +10988,12 @@ components:
           items:
             type: string
             format: uri
-          description: Если пусто — ищем сайт производителя сами
+          description: Если пусто - ищем сайт производителя сами
         spec_keys:
           type: array
           items:
             type: string
-          description: Если пусто — все недостающие ключевые ТТХ
+          description: Если пусто - все недостающие ключевые ТТХ
     EnrichmentProposal:
       type: object
       required:
@@ -11034,7 +11034,7 @@ components:
           maximum: 1
     EnrichmentJob:
       type: object
-      description: Заявка на обогащение ТТХ продукта из открытых источников. Результат — предложения, которые админ принимает или отклоняет.
+      description: Заявка на обогащение ТТХ продукта из открытых источников. Результат - предложения, которые админ принимает или отклоняет.
       required:
         - id
         - product_id
@@ -11154,10 +11154,10 @@ components:
       properties:
         dry_run:
           type: boolean
-          description: true — предпросмотр, ничего не сохранено
+          description: true - предпросмотр, ничего не сохранено
         catalog_version:
           type: string
-          description: После применения — новая версия; в предпросмотре и без изменений — текущая
+          description: После применения - новая версия; в предпросмотре и без изменений - текущая
         created:
           type: integer
           description: Новые продукты (id нет в каталоге)
@@ -11168,7 +11168,7 @@ components:
           type: integer
         conflicts:
           type: integer
-          description: Карточки, которые правил или скрыл администратор, — не тронуты
+          description: Карточки, которые правил или скрыл администратор, - не тронуты
         offers_created:
           type: integer
           description: 'Новые предложения: строки-дубли сохраняются как отдельные предложения'
@@ -11188,7 +11188,7 @@ components:
             properties:
               row:
                 type: integer
-                description: Номер строки файла, заголовок — строка 1
+                description: Номер строки файла, заголовок - строка 1
               message:
                 type: string
         items:
@@ -11279,7 +11279,7 @@ components:
               example: Персонал
             applies_to_blank:
               type: boolean
-              description: 'false — данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё'
+              description: 'false - данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё'
             projects_total:
               type: integer
               description: Проектов этого типа объекта
@@ -11310,12 +11310,12 @@ components:
             - type: number
             - type: string
             - type: boolean
-          description: В единице параметра (проценты — в процентах)
+          description: В единице параметра (проценты - в процентах)
         unit:
           type:
             - string
             - 'null'
-          description: Если указана — должна совпадать с единицей параметра
+          description: Если указана - должна совпадать с единицей параметра
         status:
           type:
             - string
@@ -11324,7 +11324,7 @@ components:
             - default
             - assumption
             - null
-          description: default — значение из источника, assumption — допущение. Без значения — прежний статус (у параметра без умолчания — assumption)
+          description: default - значение из источника, assumption - допущение. Без значения - прежний статус (у параметра без умолчания - assumption)
         source:
           $ref: '#/components/schemas/SourceWrite'
         rationale:
@@ -11345,7 +11345,7 @@ components:
           description: 'Проектов с новой версией: их сохранённые расчёты устарели'
     SourceFreshness:
       type: string
-      description: fresh — получен не раньше порога, stale — раньше (норматив source_stale_after_months), undated — без даты получения
+      description: fresh - получен не раньше порога, stale - раньше (норматив source_stale_after_months), undated - без даты получения
       enum:
         - fresh
         - stale
@@ -11412,7 +11412,7 @@ components:
           type: integer
         stale_after_months:
           type: integer
-          description: Порог устаревания — норматив source_stale_after_months
+          description: Порог устаревания - норматив source_stale_after_months
         stale_before:
           type: string
           format: date
@@ -11519,7 +11519,7 @@ components:
             type: integer
         catalog_gaps:
           type: array
-          description: Процессы, для которых чаще всего нет подходящих решений — сигнал для ФЦ БАС.
+          description: Процессы, для которых чаще всего нет подходящих решений - сигнал для ФЦ БАС.
           items:
             type: object
             properties:
@@ -11534,7 +11534,7 @@ components:
           description: Запросы КП производителям за период
     ProposalStatus:
       type: string
-      description: pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+      description: pending - на модерации; approved - правка в каталоге; rejected - отказ с причиной; withdrawn - отозвана вендором.
       enum:
         - pending
         - approved
@@ -11542,7 +11542,7 @@ components:
         - withdrawn
     ProposalKind:
       type: string
-      description: update — правка существующей карточки; new_product — новый продукт производителя.
+      description: update - правка существующей карточки; new_product - новый продукт производителя.
       enum:
         - new_product
         - update
@@ -11579,7 +11579,7 @@ components:
             - vendor_claim
             - confirmed
           default: vendor_claim
-          description: С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+          description: С каким статусом принять ТТХ - заявка производителя или подтверждено (администратор проверил источник).
     ManufacturerList:
       type: object
       required:
@@ -11612,7 +11612,7 @@ components:
           $ref: '#/components/schemas/Product'
         missing_key_specs:
           type: array
-          description: Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки».
+          description: Ключевые ТТХ типа решения без значения - подбор не может их проверить и ставит «требует проверки».
           items:
             $ref: '#/components/schemas/KeySpec'
         relevant_projects:
@@ -11733,7 +11733,7 @@ components:
             - string
             - 'null'
           format: uuid
-          description: null — предложить новый продукт
+          description: null - предложить новый продукт
         card:
           description: Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор.
           oneOf:
@@ -11741,14 +11741,14 @@ components:
             - type: 'null'
         specs:
           type: array
-          description: Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения.
+          description: Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта - после его одобрения.
           items:
             $ref: '#/components/schemas/SpecWrite'
         comment:
           type: string
           minLength: 1
           maxLength: 2000
-          description: Что изменилось и почему — для модератора
+          description: Что изменилось и почему - для модератора
     RfqReply:
       type: object
       required:
@@ -11778,7 +11778,7 @@ components:
           description: Обязателен при отказе
     IntegrationProjectCreate:
       type: object
-      description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи.
+      description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры - канонические ключи.
       required:
         - name
         - object_type
@@ -11831,7 +11831,7 @@ components:
       in: header
       required: false
       description: |
-        web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле.
+        web - refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other - оба токена в теле.
       schema:
         type: string
         enum:

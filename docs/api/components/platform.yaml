@@ -5,7 +5,7 @@
 
 Role:
   type: string
-  description: guest — временная сессия с проектами на 24 часа; user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
+  description: guest - временная сессия с проектами на 24 часа; user - проекты; admin - каталог, нормативы, пользователи; vendor - свои продукты с модерацией.
   enum: [guest, user, admin, vendor]
 
 User:
@@ -47,7 +47,7 @@ TokenPair:
   required: [access_token, token_type, expires_in]
   properties:
     access_token: {type: string}
-    refresh_token: {type: [string, "null"], description: "Для X-Client=web всегда null — токен в httpOnly-cookie"}
+    refresh_token: {type: [string, "null"], description: "Для X-Client=web всегда null - токен в httpOnly-cookie"}
     token_type: {type: string, default: bearer}
     expires_in: {type: integer, description: "Секунд до истечения access-токена"}
     user: {$ref: '#/User'}
@@ -116,12 +116,12 @@ ReportRequest:
   required: [format]
   properties:
     format: {$ref: '#/ReportFormat'}
-    scenario_ids: {type: array, items: {type: string, format: uuid}, description: "Если пусто — все сценарии проекта"}
-    sections: {type: array, items: {$ref: '#/ReportSection'}, description: "Если пусто — все"}
+    scenario_ids: {type: array, items: {type: string, format: uuid}, description: "Если пусто - все сценарии проекта"}
+    sections: {type: array, items: {$ref: '#/ReportSection'}, description: "Если пусто - все"}
     simulation_ids: {type: array, items: {type: string, format: uuid}}
     visual_ids: {type: array, items: {type: string, format: uuid}, description: "Загруженные снимки имитации"}
     title: {type: [string, "null"]}
-    live_formulas: {type: boolean, default: false, description: "Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении"}
+    live_formulas: {type: boolean, default: false, description: "Для xlsx - проверочные формулы в защищённом снимке; входы меняются в приложении"}
 
 Report:
   type: object
@@ -135,7 +135,7 @@ Report:
     versions: {oneOf: [{$ref: './common.yaml#/VersionStamp'}, {type: "null"}], description: "null, пока отчёт не собран"}
     sections: {type: array, items: {$ref: '#/ReportSection'}}
     disclaimer: {type: string, example: "Предварительная оценка. Результат требует верификации при обследовании объекта."}
-    job_id: {type: [string, "null"], format: uuid, description: "Фоновая задача: прогресс — GET /jobs/{id} или SSE"}
+    job_id: {type: [string, "null"], format: uuid, description: "Фоновая задача: прогресс - GET /jobs/{id} или SSE"}
     error: {oneOf: [{$ref: './common.yaml#/Problem'}, {type: "null"}]}
     created_at: {type: string, format: date-time}
     finished_at: {type: [string, "null"], format: date-time}
@@ -212,13 +212,13 @@ ExplainResponse:
       items:
         type: object
         properties:
-          label: {type: string, example: "Запустить перебор 10–14 роботов"}
+          label: {type: string, example: "Запустить перебор 10-14 роботов"}
           action: {type: string, example: "fleet_sweep"}
           payload: {type: object, additionalProperties: true}
 
 Narrative:
   type: object
-  description: Текст для руководителя — executive summary и следующие шаги. Всегда есть fallback из шаблонов.
+  description: Текст для руководителя - executive summary и следующие шаги. Всегда есть fallback из шаблонов.
   required: [executive_summary, key_findings, next_steps, generated_by, generated_at]
   properties:
     executive_summary: {type: string}
@@ -299,7 +299,7 @@ DemoSnapshot:
 DemoWhatIfRequest:
   type: object
   additionalProperties: false
-  description: Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией.
+  description: Ограниченный what-if для гостя - без сохранения. Изменение нагрузки снимает подтверждение имитацией.
   properties:
     fleet_source:
       type: string
@@ -335,7 +335,7 @@ SupportMeasure:
     kind: {type: string, enum: [subsidy, loan, lease, tax, grant]}
     description: {type: string}
     eligible: {type: boolean}
-    eligibility_reason: {type: string, example: "Только для ОКВЭД раздела C; у объекта 52.10 — не применимо"}
+    eligibility_reason: {type: string, example: "Только для ОКВЭД раздела C; у объекта 52.10 - не применимо"}
     conditions: {type: array, items: {type: string}}
     estimated_benefit_rub: {type: [number, "null"]}
     effect_on_metrics: {type: object, additionalProperties: {type: number}, example: {capex_rub: -8240000, payback_years: -0.5}}
@@ -372,7 +372,7 @@ AnalyticsOverview:
     demand_by_industry: {type: object, additionalProperties: {type: integer}}
     catalog_gaps:
       type: array
-      description: Процессы, для которых чаще всего нет подходящих решений — сигнал для ФЦ БАС.
+      description: Процессы, для которых чаще всего нет подходящих решений - сигнал для ФЦ БАС.
       items: {type: object, properties: {object_type: {type: string}, process_key: {type: string}, no_fit_count: {type: integer}}}
     rfq_count: {type: integer, description: "Запросы КП производителям за период"}
 
@@ -388,7 +388,7 @@ AdminParameterDefault:
         group_name: {type: string, example: "Персонал"}
         applies_to_blank:
           type: boolean
-          description: "false — данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё"
+          description: "false - данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё"
         projects_total: {type: integer, description: "Проектов этого типа объекта"}
         projects_using_default: {type: integer, description: "Из них берут значение из умолчания (своего значения нет)"}
 
@@ -403,12 +403,12 @@ ParameterDefaultWrite:
   type: object
   required: [value, source, rationale]
   properties:
-    value: {oneOf: [{type: number}, {type: string}, {type: boolean}], description: "В единице параметра (проценты — в процентах)"}
-    unit: {type: [string, "null"], description: "Если указана — должна совпадать с единицей параметра"}
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}], description: "В единице параметра (проценты - в процентах)"}
+    unit: {type: [string, "null"], description: "Если указана - должна совпадать с единицей параметра"}
     status:
       type: [string, "null"]
       enum: [default, assumption, null]
-      description: "default — значение из источника, assumption — допущение. Без значения — прежний статус (у параметра без умолчания — assumption)"
+      description: "default - значение из источника, assumption - допущение. Без значения - прежний статус (у параметра без умолчания - assumption)"
     source: {$ref: './reference.yaml#/SourceWrite'}
     rationale: {type: string, minLength: 1, maxLength: 2000, description: "Почему такое значение"}
 
@@ -421,7 +421,7 @@ ParameterDefaultResult:
 
 SourceFreshness:
   type: string
-  description: "fresh — получен не раньше порога, stale — раньше (норматив source_stale_after_months), undated — без даты получения"
+  description: "fresh - получен не раньше порога, stale - раньше (норматив source_stale_after_months), undated - без даты получения"
   enum: [fresh, stale, undated]
 
 SourceUsage:
@@ -452,7 +452,7 @@ SourceList:
     page: {type: integer}
     page_size: {type: integer}
     total: {type: integer}
-    stale_after_months: {type: integer, description: "Порог устаревания — норматив source_stale_after_months"}
+    stale_after_months: {type: integer, description: "Порог устаревания - норматив source_stale_after_months"}
     stale_before: {type: string, format: date, description: "Источник, полученный раньше этой даты, устарел"}
     freshness_counts:
       type: object
@@ -472,7 +472,7 @@ SourceUpdate:
 
 IntegrationProjectCreate:
   type: object
-  description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи.
+  description: Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры - канонические ключи.
   required: [name, object_type, params]
   properties:
     external_id: {type: [string, "null"], description: "Идентификатор объекта во внешней системе"}

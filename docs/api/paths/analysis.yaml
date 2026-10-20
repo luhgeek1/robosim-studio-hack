@@ -6,7 +6,7 @@ projectMatching:
     tags: [matching]
     operationId: getMatching
     summary: Подбор решений по процессам с причинами и скорингом (ТЗ 3.4)
-    description: Возвращает последний результат; если параметры менялись — пересчитывает автоматически.
+    description: Возвращает последний результат; если параметры менялись - пересчитывает автоматически.
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/analysis.yaml#/MatchingResult'}}}}
       '409': {description: "Не хватает обязательных параметров", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
@@ -128,7 +128,7 @@ scenarioSensitivity:
   post:
     tags: [calculations]
     operationId: runSensitivity
-    summary: Чувствительность к параметрам — торнадо и тепловая карта (ТЗ 3.5.6)
+    summary: Чувствительность к параметрам - торнадо и тепловая карта (ТЗ 3.5.6)
     parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
     requestBody:
       required: false
@@ -143,7 +143,7 @@ scenarioMonteCarlo:
     operationId: runMonteCarlo
     summary: Монте-Карло по неопределённости входов
     description: |
-      method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+      method=analytic выполняется синхронно; surrogate и des - как фоновая задача (202 + Job).
       Пока имитация не готова, surrogate и des отвечают 409.
     parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
     requestBody:
@@ -191,7 +191,7 @@ calculationTrace:
   get:
     tags: [calculations]
     operationId: getCalculationTrace
-    summary: Трасса расчёта — каждая метрика с формулой, входами и источниками (ТЗ 3.5.8)
+    summary: Трасса расчёта - каждая метрика с формулой, входами и источниками (ТЗ 3.5.8)
     parameters:
       - {$ref: '../components/common.yaml#/parameters/CalculationId'}
       - {name: section, in: query, schema: {type: string, enum: [demand, sizing, capex, opex, baseline, effect, cashflow, metrics]}}

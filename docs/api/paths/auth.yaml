@@ -39,7 +39,7 @@ refresh:
     tags: [auth]
     operationId: refreshTokens
     summary: Обновить пару токенов
-    description: Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; для других клиентов — refresh-токен в теле.
+    description: Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; для других клиентов - refresh-токен в теле.
     security: []
     parameters:
       - {$ref: '../components/common.yaml#/parameters/XClient'}
@@ -58,7 +58,7 @@ logout:
     tags: [auth]
     operationId: logout
     summary: Выход (отзыв сессии и обоих токенов)
-    description: Для web-cookies обязателен X-CSRF-Token, для mobile — refresh_token в теле.
+    description: Для web-cookies обязателен X-CSRF-Token, для mobile - refresh_token в теле.
     parameters:
       - {name: X-CSRF-Token, in: header, required: false, schema: {type: string}}
     responses:

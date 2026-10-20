@@ -14,7 +14,7 @@ scenarioSimulations:
     summary: Запустить имитацию (фоновая задача, до 60 с; прогресс по SSE)
     description: |
       Использует планировку проекта, состав сценария и параметры объекта. Возвращает SimulationRun со status=queued;
-      прогресс — `GET /jobs/{id}/stream` или опрос `GET /simulations/{id}`.
+      прогресс - `GET /jobs/{id}/stream` или опрос `GET /simulations/{id}`.
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/simulation.yaml#/SimulationRequest'}}}
@@ -37,7 +37,7 @@ scenarioFleetSweep:
   post:
     tags: [simulation]
     operationId: runFleetSweep
-    summary: Перебор количества роботов — кривая N → SLA, загрузка, окупаемость (фоновая задача)
+    summary: Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача)
     parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
     requestBody:
       required: true
@@ -77,7 +77,7 @@ simulationTimeline:
   get:
     tags: [simulation]
     operationId: getSimulationTimeline
-    summary: KPI по времени — графики очереди, SLA, загрузки
+    summary: KPI по времени - графики очереди, SLA, загрузки
     parameters:
       - {$ref: '../components/common.yaml#/parameters/SimulationId'}
       - {name: step_min, in: query, schema: {type: number, default: 5}}
@@ -92,7 +92,7 @@ simulationReplay:
     summary: Журнал событий для 2D-плеера (постранично по времени)
     description: |
       Плеер запрашивает окно `[from_s, to_s)`, интерполирует движение по рёбрам планировки и держит буфер на следующее окно.
-      Первый запрос — с from_s=0; в ответе есть `tasks_snapshot` для стартового состояния.
+      Первый запрос - с from_s=0; в ответе есть `tasks_snapshot` для стартового состояния.
     parameters:
       - {$ref: '../components/common.yaml#/parameters/SimulationId'}
       - {name: from_s, in: query, schema: {type: number, default: 0}}

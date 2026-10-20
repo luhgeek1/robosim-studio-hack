@@ -2,27 +2,27 @@
 
 ProposalStatus:
   type: string
-  description: pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+  description: pending - на модерации; approved - правка в каталоге; rejected - отказ с причиной; withdrawn - отозвана вендором.
   enum: [pending, approved, rejected, withdrawn]
 
 ProposalKind:
   type: string
-  description: update — правка существующей карточки; new_product — новый продукт производителя.
+  description: update - правка существующей карточки; new_product - новый продукт производителя.
   enum: [new_product, update]
 
 ProposalWrite:
   type: object
   required: [comment]
   properties:
-    product_id: {type: [string, "null"], format: uuid, description: "null — предложить новый продукт"}
+    product_id: {type: [string, "null"], format: uuid, description: "null - предложить новый продукт"}
     card:
       description: Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор.
       oneOf: [{$ref: './catalog.yaml#/ProductWrite'}, {type: 'null'}]
     specs:
       type: array
-      description: Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения.
+      description: Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта - после его одобрения.
       items: {$ref: './catalog.yaml#/SpecWrite'}
-    comment: {type: string, minLength: 1, maxLength: 2000, description: "Что изменилось и почему — для модератора"}
+    comment: {type: string, minLength: 1, maxLength: 2000, description: "Что изменилось и почему - для модератора"}
 
 ProposalPerson:
   type: object
@@ -39,7 +39,7 @@ Proposal:
     kind: {$ref: '#/ProposalKind'}
     status: {$ref: '#/ProposalStatus'}
     manufacturer: {$ref: './catalog.yaml#/Manufacturer'}
-    product_id: {type: [string, "null"], format: uuid, description: "У одобренного нового продукта — созданная карточка"}
+    product_id: {type: [string, "null"], format: uuid, description: "У одобренного нового продукта - созданная карточка"}
     product_name: {type: string}
     card:
       oneOf: [{$ref: './catalog.yaml#/ProductWrite'}, {type: 'null'}]
@@ -49,7 +49,7 @@ Proposal:
       oneOf: [{$ref: '#/ProposalPerson'}, {type: 'null'}]
     created_at: {type: string, format: date-time}
     catalog_version: {type: string, description: "Версия каталога, на которой вендор готовил заявку"}
-    product_changed_since: {type: boolean, description: "Карточку меняли после подачи заявки — сверьте перед решением"}
+    product_changed_since: {type: boolean, description: "Карточку меняли после подачи заявки - сверьте перед решением"}
     reviewed_at: {type: [string, "null"], format: date-time}
     reviewer_name: {type: [string, "null"]}
     review_comment: {type: [string, "null"]}
@@ -71,7 +71,7 @@ ProposalReview:
       type: string
       enum: [vendor_claim, confirmed]
       default: vendor_claim
-      description: С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+      description: С каким статусом принять ТТХ - заявка производителя или подтверждено (администратор проверил источник).
 
 KeySpec:
   type: object
@@ -87,7 +87,7 @@ VendorProduct:
     product: {$ref: './catalog.yaml#/Product'}
     missing_key_specs:
       type: array
-      description: Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки».
+      description: Ключевые ТТХ типа решения без значения - подбор не может их проверить и ставит «требует проверки».
       items: {$ref: '#/KeySpec'}
     relevant_projects: {type: integer, description: "Проекты платформы с типами объектов этого продукта"}
     scenarios_count: {type: integer, description: "Сценарии, в которые продукт включён"}
@@ -106,7 +106,7 @@ VendorGap:
 
 VendorOverview:
   type: object
-  description: Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3).
+  description: Спрос - агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3).
   required: [manufacturer, products, projects_total, projects_by_object_type, scenarios_with_products, proposals_by_status, gaps]
   properties:
     manufacturer: {$ref: './catalog.yaml#/Manufacturer'}
@@ -159,7 +159,7 @@ VendorFit:
 
 RfqStatus:
   type: string
-  description: sent — ждёт ответа; answered — производитель назвал цену и срок; declined — отказ с причиной.
+  description: sent - ждёт ответа; answered - производитель назвал цену и срок; declined - отказ с причиной.
   enum: [sent, answered, declined]
 
 RfqRequest:

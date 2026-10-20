@@ -11,7 +11,7 @@ organizations:
   post:
     tags: [organizations]
     operationId: createOrganization
-    summary: Создать организацию (создатель — владелец)
+    summary: Создать организацию (создатель - владелец)
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationWrite'}}}
@@ -54,7 +54,7 @@ organizationInvitations:
     tags: [organizations]
     operationId: inviteToOrganization
     summary: Пригласить пользователя по email (владелец)
-    description: Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod — 503. Истёкшее приглашение можно создать заново.
+    description: Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod - 503. Истёкшее приглашение можно создать заново.
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/organizations.yaml#/InvitationCreate'}}}
@@ -105,8 +105,8 @@ myInvitationAccept:
   post:
     tags: [organizations]
     operationId: acceptInvitation
-    summary: Принять приглашение — стать участником организации
-    description: Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token — 403, истёкшее/отозванное/принятое — 404. GET никогда не принимает приглашение.
+    summary: Принять приглашение - стать участником организации
+    description: Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token - 403, истёкшее/отозванное/принятое - 404. GET никогда не принимает приглашение.
     requestBody:
       required: false
       content: {application/json: {schema: {$ref: '../components/organizations.yaml#/InvitationAccept'}}}

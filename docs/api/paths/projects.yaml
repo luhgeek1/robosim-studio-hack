@@ -4,9 +4,9 @@ projects:
   get:
     tags: [projects]
     operationId: listProjects
-    summary: Проекты рабочей области — личные или организации
+    summary: Проекты рабочей области - личные или организации
     parameters:
-      - {name: organization_id, in: query, description: "Организация; без значения — личные проекты пользователя", schema: {type: string, format: uuid}}
+      - {name: organization_id, in: query, description: "Организация; без значения - личные проекты пользователя", schema: {type: string, format: uuid}}
       - {$ref: '../components/common.yaml#/parameters/Page'}
       - {$ref: '../components/common.yaml#/parameters/PageSize'}
       - {name: q, in: query, schema: {type: string}}
@@ -165,7 +165,7 @@ projectImportText:
     tags: [params, assist]
     operationId: importProjectParamsText
     summary: Умный импорт из свободного текста (ассистент)
-    description: Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM — 503 LLM_UNAVAILABLE.
+    description: Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM - 503 LLM_UNAVAILABLE.
     parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
     requestBody:
       required: true
@@ -218,7 +218,7 @@ projectDataQuality:
   get:
     tags: [params]
     operationId: getProjectDataQuality
-    summary: Панель доверия — происхождение параметров и их влияние
+    summary: Панель доверия - происхождение параметров и их влияние
     parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/DataQualityReport'}}}}
@@ -227,7 +227,7 @@ projectProcesses:
   get:
     tags: [params]
     operationId: getProjectProcesses
-    summary: Процессы объекта — спрос, пик, текущая стоимость («где деньги»)
+    summary: Процессы объекта - спрос, пик, текущая стоимость («где деньги»)
     parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ProcessDemandList'}}}}

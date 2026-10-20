@@ -13,18 +13,18 @@ info:
     - Авторизация: `Authorization: Bearer <access>`. Для `X-Client: web` refresh-токен живёт в httpOnly-cookie,
       обновление требует `X-CSRF-Token`. Гостевые эндпоинты помечены `security: []`.
     - Ошибки: всегда `Problem` с `error_code` из закрытого списка.
-    - Деньги — в рублях (`amount_rub`), не в миллионах. Время — ISO 8601 UTC.
+    - Деньги - в рублях (`amount_rub`), не в миллионах. Время - ISO 8601 UTC.
     - Любое значение, влияющее на расчёт, несёт `provenance` (статус и источник).
     - Долгие операции (симуляция, Монте-Карло, отчёты, обогащение) возвращают 202 + `Job`/`SimulationRun`;
-      прогресс — SSE `GET /api/v1/jobs/{job_id}/stream` или опрос.
+      прогресс - SSE `GET /api/v1/jobs/{job_id}/stream` или опрос.
     - Пагинация: `page` (с 1) и `page_size`; ответ содержит `items`, `total`, `page`, `page_size`.
-    - Версии входов (`VersionStamp`) сохраняются с каждым расчётом — расчёт воспроизводим (ТЗ 3.1.5).
+    - Версии входов (`VersionStamp`) сохраняются с каждым расчётом - расчёт воспроизводим (ТЗ 3.1.5).
 
 tags:
   - {name: system, description: "Здоровье, версии, фоновые задачи"}
   - {name: auth, description: "Регистрация, вход, профиль, ключи API"}
-  - {name: reference, description: "Справочники — типы объектов, параметры, процессы, нормативы"}
-  - {name: catalog, description: "Каталог решений — поиск, карточки, сравнение"}
+  - {name: reference, description: "Справочники - типы объектов, параметры, процессы, нормативы"}
+  - {name: catalog, description: "Каталог решений - поиск, карточки, сравнение"}
   - {name: organizations, description: "Организации: общие проекты, участники, приглашения по email"}
   - {name: projects, description: "Проекты пользователя и его организаций"}
   - {name: params, description: "Параметры объекта, импорт, валидация, процессы"}
@@ -34,7 +34,7 @@ tags:
   - {name: calculations, description: "Экономика, трасса расчёта, сравнение, чувствительность, Монте-Карло"}
   - {name: simulation, description: "Имитация работы роботов и данные для 2D-плеера"}
   - {name: reports, description: "Отчёты PDF / Excel / DOCX"}
-  - {name: assist, description: "Ассистент (LLM) — импорт, объяснения, проверка допущений"}
+  - {name: assist, description: "Ассистент (LLM) - импорт, объяснения, проверка допущений"}
   - {name: demo, description: "Демо для гостя без авторизации"}
   - {name: support, description: "Меры господдержки"}
   - {name: rfq, description: "Запрос коммерческого предложения вендорам"}

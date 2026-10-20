@@ -5,13 +5,13 @@
 CandidateStatus:
   type: string
   description: |
-    fit — все жёсткие проверки пройдены; check — не хватает данных по ключевому ограничению (ТЗ 3.4.3);
-    excluded — подтверждённое несоответствие; manual — добавлено пользователем вручную с предупреждением (ТЗ 3.4.4).
+    fit - все жёсткие проверки пройдены; check - не хватает данных по ключевому ограничению (ТЗ 3.4.3);
+    excluded - подтверждённое несоответствие; manual - добавлено пользователем вручную с предупреждением (ТЗ 3.4.4).
   enum: [fit, check, excluded, manual]
 
 Reason:
   type: object
-  description: Причина соответствия, проверки или исключения — показывается пользователю дословно.
+  description: Причина соответствия, проверки или исключения - показывается пользователю дословно.
   required: [code, text, severity]
   properties:
     code: {type: string, example: "LIFT_HEIGHT_BELOW_TOP_LEVEL"}
@@ -32,7 +32,7 @@ ScoreComponent:
     weight: {type: number, example: 0.25}
     points: {type: number, minimum: 0, maximum: 100, description: "Баллы до взвешивания"}
     contribution: {type: number, description: "weight × points"}
-    explanation: {type: string, example: "Ориентировочный CAPEX 34 млн ₽ — второй по экономичности среди подходящих"}
+    explanation: {type: string, example: "Ориентировочный CAPEX 34 млн ₽ - второй по экономичности среди подходящих"}
 
 Candidate:
   type: object
@@ -56,7 +56,7 @@ Candidate:
           why_needed: {type: string}
     estimate:
       type: object
-      description: Быстрая аналитическая оценка без симуляции — для сортировки и карточки.
+      description: Быстрая аналитическая оценка без симуляции - для сортировки и карточки.
       properties:
         robots_count: {type: [integer, "null"]}
         capex_rub: {type: [number, "null"]}
@@ -127,7 +127,7 @@ ManualAddRequest:
 
 ScenarioKind:
   type: string
-  description: baseline — как сейчас (без роботизации); purchase — покупка; raas — роботы как услуга; lease — лизинг или кредит.
+  description: baseline - как сейчас (без роботизации); purchase - покупка; raas - роботы как услуга; lease - лизинг или кредит.
   enum: [baseline, purchase, raas, lease]
 
 CountMode:
@@ -145,7 +145,7 @@ CountResult:
     final: {type: integer}
     source: {type: string, enum: [analytic, simulated, manual]}
     simulation_id: {type: [string, "null"], format: uuid}
-    explanation: {type: string, example: "Аналитически 10; при 11 симуляция даёт SLA 91 %; при 12 — 97 %; резерв +1 на отказ"}
+    explanation: {type: string, example: "Аналитически 10; при 11 симуляция даёт SLA 91 %; при 12 - 97 %; резерв +1 на отказ"}
 
 ScenarioItem:
   type: object
@@ -156,7 +156,7 @@ ScenarioItem:
     process_key: {type: string}
     product_id: {type: string, format: uuid}
     product_name: {type: string}
-    offer_id: {type: [string, "null"], format: uuid, description: "Предложение каталога (отрасль объекта); null — у продукта нет предложений"}
+    offer_id: {type: [string, "null"], format: uuid, description: "Предложение каталога (отрасль объекта); null - у продукта нет предложений"}
     count_mode: {$ref: '#/CountMode'}
     count_manual: {type: [integer, "null"]}
     count_result: {oneOf: [{$ref: '#/CountResult'}, {type: "null"}]}
@@ -164,12 +164,12 @@ ScenarioItem:
     price_source: {type: string, enum: [catalog, override]}
     price_override_rub: {type: [number, "null"], description: "Своя цена за единицу (ТЗ 3.5.3)"}
     throughput_override_per_hour: {type: [number, "null"], description: "Своя производительность робота, ед/ч (ТЗ 3.5.3)"}
-    override_reason: {type: [string, "null"], description: "Причина ручных значений — фиксация изменения (ТЗ 3.5.4)"}
+    override_reason: {type: [string, "null"], description: "Причина ручных значений - фиксация изменения (ТЗ 3.5.4)"}
     stations:
       type: object
-      description: Для goods-to-person — станции отбора.
+      description: Для goods-to-person - станции отбора.
       properties: {count_mode: {$ref: '#/CountMode'}, count: {type: [integer, "null"]}}
-    candidate_status: {oneOf: [{$ref: '#/CandidateStatus'}, {type: "null"}], description: "null — позиция не из подбора"}
+    candidate_status: {oneOf: [{$ref: '#/CandidateStatus'}, {type: "null"}], description: "null - позиция не из подбора"}
     notes: {type: [string, "null"]}
 
 ScenarioItemWrite:
@@ -226,7 +226,7 @@ CalculationSummary:
   properties:
     calculation_id: {type: string, format: uuid}
     computed_at: {type: string, format: date-time}
-    status: {type: string, enum: [fresh, stale], description: "stale — параметры или каталог изменились после расчёта"}
+    status: {type: string, enum: [fresh, stale], description: "stale - параметры или каталог изменились после расчёта"}
     payback_years: {type: [number, "null"]}
     capex_rub: {type: [number, "null"]}
     effect_rub_year: {type: [number, "null"]}
@@ -245,7 +245,7 @@ Scenario:
     items: {type: array, items: {$ref: '#/ScenarioItem'}}
     financing: {$ref: '#/Financing'}
     horizon_years: {type: integer, example: 5, description: "По умолчанию из датасета: склад 5, аэропорт и больница 7"}
-    discount_rate_pct: {type: [number, "null"], description: "Если null — из нормативов (ключевая ставка ЦБ)"}
+    discount_rate_pct: {type: [number, "null"], description: "Если null - из нормативов (ключевая ставка ЦБ)"}
     overrides: {type: array, items: {$ref: '#/NormOverride'}}
     last_calculation: {oneOf: [{$ref: '#/CalculationSummary'}, {type: "null"}]}
     is_recommended: {type: boolean, default: false}
@@ -290,7 +290,7 @@ TraceInput:
 
 CostItem:
   type: object
-  description: Строка CAPEX или OPEX с формулой и входами — раскрывается по клику (ТЗ 3.5.8).
+  description: Строка CAPEX или OPEX с формулой и входами - раскрывается по клику (ТЗ 3.5.8).
   required: [key, name, amount_rub, formula, inputs]
   properties:
     key: {type: string, example: "capex_integration"}
@@ -346,7 +346,7 @@ Metrics:
     scenario_cost_rub_year: {type: number}
     opex_delta_rub_year: {type: number, description: "Изменение OPEX относительно базы (отрицательное = экономия)"}
     effect_rub_year: {type: number, description: "Годовой эффект после OPEX и процентов по финансированию (Доп. 2.1)"}
-    payback_years: {type: [number, "null"], description: "null — не окупается в горизонте"}
+    payback_years: {type: [number, "null"], description: "null - не окупается в горизонте"}
     discounted_payback_years: {type: [number, "null"], description: "По потоку проекта без долга и его обслуживания"}
     roi_pct: {type: [number, "null"], description: "Накопленный поток проекта (CAPEX уже вычтен) / CAPEX × 100; null при нулевых вложениях"}
     npv_rub: {type: number, description: "NPV проекта: весь CAPEX в момент 0, без кредитных поступлений и платежей"}
@@ -385,9 +385,9 @@ Interpretation:
   description: Рекомендация не по жёсткому порогу, а по диапазонам с рисками и текстом (ТЗ 3.5.7).
   required: [verdict, band, headline, summary]
   properties:
-    verdict: {type: string, enum: [attractive, reasonable, questionable, not_recommended, insufficient_data, baseline], description: "baseline — у базового сценария нет вердикта, он точка отсчёта"}
+    verdict: {type: string, enum: [attractive, reasonable, questionable, not_recommended, insufficient_data, baseline], description: "baseline - у базового сценария нет вердикта, он точка отсчёта"}
     band: {type: string, enum: [lt3, from3to5, gt5, never, none]}
-    headline: {type: string, example: "Роботизация отбора окупается за 2,6 года — привлекательно"}
+    headline: {type: string, example: "Роботизация отбора окупается за 2,6 года - привлекательно"}
     summary: {type: string}
     key_drivers: {type: array, items: {type: string}}
     caveats: {type: array, items: {type: string}}
@@ -405,7 +405,7 @@ Risk:
 
 SizingResult:
   type: object
-  description: Как получилось число роботов для процесса — сердце «паспорт против физики».
+  description: Как получилось число роботов для процесса - сердце «паспорт против физики».
   required: [process_key, product_id, demand_peak_per_hour, robot, count]
   properties:
     process_key: {type: string}
@@ -419,7 +419,7 @@ SizingResult:
       properties:
         cycle_components:
           type: array
-          description: Из чего состоит цикл — показываем таблицей.
+          description: Из чего состоит цикл - показываем таблицей.
           items:
             type: object
             required: [key, name, seconds]
@@ -428,12 +428,12 @@ SizingResult:
               name: {type: string, example: "Пробег с грузом (68 м при 1,2 м/с)"}
               seconds: {type: number}
               inputs: {type: array, items: {$ref: '#/TraceInput'}}
-        cycle_time_s: {type: [number, "null"], description: "null — у модели нет цикла (площадь, станция) или количество задано вручную"}
+        cycle_time_s: {type: [number, "null"], description: "null - у модели нет цикла (площадь, станция) или количество задано вручную"}
         nominal_throughput_per_hour: {type: [number, "null"], description: "3600 / цикл"}
         availability: {type: number, description: "Доля времени в работе с учётом зарядки и простоев"}
         utilization_target: {type: [number, "null"]}
         effective_throughput_per_hour: {type: [number, "null"]}
-        vendor_claim_per_hour: {type: [number, "null"], description: "Заявка производителя — для сравнения"}
+        vendor_claim_per_hour: {type: [number, "null"], description: "Заявка производителя - для сравнения"}
     count: {$ref: '#/CountResult'}
     stations_count: {type: [integer, "null"]}
     chargers_count: {type: integer}
@@ -474,7 +474,7 @@ CalculationRun:
     warnings: {type: array, items: {type: string}}
     assumptions_used:
       type: array
-      description: Все нормативы и допущения, участвовавшие в расчёте — раздел «Допущения» отчёта.
+      description: Все нормативы и допущения, участвовавшие в расчёте - раздел «Допущения» отчёта.
       items: {$ref: './reference.yaml#/Norm'}
     calibration:
       type: [object, "null"]
@@ -486,7 +486,7 @@ CalculationRun:
         within_tolerance: {type: [boolean, "null"]}
         checks:
           type: array
-          description: Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами — каждое число против их числа.
+          description: Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами - каждое число против их числа.
           items:
             type: object
             required: [key, name, ours, reference, deviation_pct]
@@ -510,7 +510,7 @@ TraceItem:
     formula: {type: string, example: "capex_rub / effect_rub_year"}
     formula_rendered: {type: string, example: "41 200 000 / 15 800 000 = 2,61 года"}
     inputs: {type: array, items: {$ref: '#/TraceInput'}}
-    depends_on: {type: array, items: {type: string}, description: "Ключи метрик-предков — фронт строит дерево"}
+    depends_on: {type: array, items: {type: string}, description: "Ключи метрик-предков - фронт строит дерево"}
     norm_keys: {type: array, items: {type: string}}
     section: {type: string, enum: [demand, sizing, capex, opex, baseline, effect, cashflow, metrics]}
 
@@ -521,7 +521,7 @@ CalculationTrace:
   properties:
     calculation_id: {type: string, format: uuid}
     items: {type: array, items: {$ref: '#/TraceItem'}}
-    undocumented_constants: {type: integer, description: "Должно быть 0 — счётчик для слайда"}
+    undocumented_constants: {type: integer, description: "Должно быть 0 - счётчик для слайда"}
 
 RerunResult:
   type: object
@@ -586,7 +586,7 @@ ComparisonTable:
       type: object
       description: |
         Накопленный денежный поток каждого сценария относительно «как сейчас» по годам, с точки 0 (старт, минус
-        первоначальные вложения). База — линия нуля; пересечение нуля — окупаемость. Один график на все сценарии.
+        первоначальные вложения). База - линия нуля; пересечение нуля - окупаемость. Один график на все сценарии.
       additionalProperties:
         type: array
         items: {$ref: '#/CashflowPoint'}
@@ -599,7 +599,7 @@ SensitivityRequest:
     metric: {type: string, enum: [payback_years, npv_rub, roi_pct, effect_rub_year, tco_rub], default: payback_years}
     parameters:
       type: array
-      description: "Если пусто — стандартный набор (≥3 по ТЗ 3.5.6): цена оборудования, объём операций, стоимость труда, загрузка, сервис."
+      description: "Если пусто - стандартный набор (≥3 по ТЗ 3.5.6): цена оборудования, объём операций, стоимость труда, загрузка, сервис."
       items:
         type: object
         required: [key]
@@ -611,7 +611,7 @@ SensitivityRequest:
           high_pct: {type: [number, "null"], example: 20}
     heatmap:
       type: object
-      description: Опционально — двумерная сетка по двум параметрам.
+      description: Опционально - двумерная сетка по двум параметрам.
       properties:
         x_key: {type: string}
         y_key: {type: string}
@@ -625,14 +625,14 @@ SensitivityResult:
     base_value: {type: number}
     items:
       type: array
-      description: Отсортировано по размаху — готовая торнадо-диаграмма.
+      description: Отсортировано по размаху - готовая торнадо-диаграмма.
       items:
         type: object
         required: [key, name, low_input, high_input, metric_at_low, metric_at_high, swing, rank]
         properties:
           key: {type: string}
           name: {type: string}
-          kind: {type: string, enum: [param, norm, catalog, group], description: "catalog — цена оборудования; group — группа параметров (все зарплаты, все объёмы)"}
+          kind: {type: string, enum: [param, norm, catalog, group], description: "catalog - цена оборудования; group - группа параметров (все зарплаты, все объёмы)"}
           unit: {type: [string, "null"]}
           base_input: {type: number}
           low_input: {type: number}
@@ -641,7 +641,7 @@ SensitivityResult:
           metric_at_high: {type: [number, "null"]}
           swing: {type: number, description: "Размах метрики запроса (metric_at_high − metric_at_low по модулю) в её единицах; для окупаемости годы за горизонтом считаются равными горизонту"}
           rank: {type: integer}
-          provenance_status: {oneOf: [{$ref: './common.yaml#/ProvenanceStatus'}, {type: "null"}], description: "null — группа параметров"}
+          provenance_status: {oneOf: [{$ref: './common.yaml#/ProvenanceStatus'}, {type: "null"}], description: "null - группа параметров"}
     heatmap:
       type: [object, "null"]
       properties:
@@ -659,7 +659,7 @@ MonteCarloRequest:
     metric: {type: string, enum: [payback_years, npv_rub, roi_pct], default: payback_years}
     distributions:
       type: array
-      description: Если пусто — треугольные распределения по min/max датасета для ключевых параметров.
+      description: Если пусто - треугольные распределения по min/max датасета для ключевых параметров.
       items:
         type: object
         required: [key, dist]
@@ -667,7 +667,7 @@ MonteCarloRequest:
           key: {type: string}
           dist: {type: string, enum: [triangular, uniform, normal]}
           params: {type: object, additionalProperties: {type: number}, example: {low: 0.8, mode: 1.0, high: 1.25}}
-    method: {type: string, enum: [analytic, surrogate, des], default: analytic, description: "des — честная симуляция, медленно"}
+    method: {type: string, enum: [analytic, surrogate, des], default: analytic, description: "des - честная симуляция, медленно"}
     seed: {type: [integer, "null"]}
 
 MonteCarloResult:
@@ -699,7 +699,7 @@ MonteCarloResult:
         properties: {key: {type: string}, name: {type: string}, correlation: {type: number}}
     surrogate_quality:
       type: object
-      description: Если method=surrogate — качество метамодели.
+      description: Если method=surrogate - качество метамодели.
       properties: {r2: {type: number}, mae: {type: number}, trained_on_runs: {type: integer}}
 
 SurveyPriorities:
