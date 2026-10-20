@@ -45,7 +45,7 @@ export function QuestionsSection({ workspace }: { workspace: string }) {
     <section className="landing-faq-section" id="questions" aria-labelledby="faq-title">
       <div className="landing-container">
         <div className="landing-section-label">
-          <span>04 / ПЕРЕД ПЕРВЫМ РАСЧЁТОМ</span>
+          <span>03 / ПЕРЕД ПЕРВЫМ РАСЧЁТОМ</span>
           <span>ЕСТЬ ВОПРОСЫ? РАЗБЕРЁМСЯ.</span>
         </div>
         <div className="landing-faq-layout">
