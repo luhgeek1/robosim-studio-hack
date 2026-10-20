@@ -108,7 +108,7 @@ export function Twin({
   return (
     <div className={`@container relative h-full w-full overflow-hidden ${className}`}>
       {switcher && (
-        <div className="absolute top-4 right-4 z-20">
+        <div data-map-control className="absolute top-4 right-4 z-20">
           <Segmented
             size="sm"
             value={view}
@@ -219,7 +219,7 @@ export function Twin({
                   <Robots3D tracks={tracks} frame={frame} selectedId={selectedRobot} onSelect={onSelectRobot} />
                 )}
                 <MapCamera command={command} extent={{ w: frame.w, h: frame.h }} />
-                <LabelProjector labels={labels} refs={labelRefs} />
+                <LabelProjector labels={labels} refs={labelRefs} layout={layout} frame={frame} />
                 {captureRef && <FrameCapture capture={captureRef} />}
               </Suspense>
             </Canvas>
