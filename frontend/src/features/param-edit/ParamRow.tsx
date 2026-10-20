@@ -23,6 +23,7 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
   const flagged = check.status !== 'ok'
   const error = check.status === 'error'
   const dimensions = def?.type === 'dimensions'
+  const boolean = def?.type === 'boolean'
   const lastWordAt = param.name.lastIndexOf(' ') + 1
 
   const commit = (value: ParamValue) => update.mutateAsync({ key: param.key, value, unit: param.unit ?? null })
@@ -36,9 +37,12 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
   return (
     <div
       id={`param-${param.key}`}
-      className="group/row grid scroll-mt-48 grid-cols-1 items-start gap-x-6 gap-y-2.5 px-4 py-3.5 transition-colors hover:bg-surface-2/70 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-6"
+      className={cn(
+        'group/row grid scroll-mt-48 items-start gap-y-2.5 px-4 py-3.5 transition-colors hover:bg-surface-2/70 sm:px-6',
+        boolean ? 'grid-cols-[minmax(0,1fr)_auto] gap-x-4' : 'grid-cols-1 gap-x-6 sm:grid-cols-[minmax(0,1fr)_auto]',
+      )}
     >
-      <div className="min-w-0 pt-1">
+      <div className={cn('min-w-0', boolean ? 'pt-1.5' : 'pt-1')}>
         <div className="flex items-start text-[14px] font-medium">
           {flagged && (
             <span className={cn('mt-2 mr-2 size-1.5 shrink-0 rounded-full', error ? 'bg-crit' : 'bg-warn')} />
@@ -68,11 +72,12 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
         )}
       </div>
 
-      {/* На телефоне поле под названием; у габаритов история и сброс ниже, чтобы размеры помещались целиком. */}
+      {/* Тумблер у правого края; остальные поля на телефоне под названием, у габаритов действия ниже. */}
       <div className={cn('flex items-start gap-1.5', dimensions && 'max-sm:flex-wrap max-sm:gap-y-1')}>
         <span
           className={cn(
-            'mt-1 flex h-6 shrink-0 items-center justify-end max-sm:order-last max-sm:mt-0 max-sm:h-10 sm:w-14',
+            'flex shrink-0 items-center justify-end sm:w-14',
+            boolean ? 'h-8' : 'mt-1 h-6 max-sm:order-last max-sm:mt-0 max-sm:h-10',
             dimensions && 'max-sm:mt-0 max-sm:ml-auto',
           )}
         >
@@ -107,8 +112,10 @@ export function ParamRow({ projectId, param }: { projectId: string; param: Proje
         </span>
         <div
           className={cn(
-            'min-w-0 flex-1 sm:flex-none sm:shrink-0',
-            dimensions ? 'max-sm:basis-full sm:w-72' : 'sm:w-50',
+            'min-w-0',
+            boolean
+              ? 'shrink-0'
+              : ['flex-1 sm:flex-none sm:shrink-0', dimensions ? 'max-sm:basis-full sm:w-72' : 'sm:w-50'],
           )}
         >
           <ParamValueInput param={param} pending={pending} onCommit={commit} suffix={param.unit} />
