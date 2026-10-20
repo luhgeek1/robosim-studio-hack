@@ -7,9 +7,10 @@ ProjectStatus:
 DataQualitySummary:
   type: object
   description: Сводка происхождения параметров - «панель доверия» на экране объекта.
-  required: [score, counts]
+  required: [score, counts, filled_score]
   properties:
     score: {type: number, minimum: 0, maximum: 1, description: "Взвешенная доля подтверждённых и введённых значений среди влияющих на результат"}
+    filled_score: {type: number, minimum: 0, maximum: 1, description: "Доля всех параметров с непустым значением, включая примеры и допущения; не показатель достоверности."}
     counts:
       type: object
       description: Количество параметров по статусам происхождения.

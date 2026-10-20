@@ -202,6 +202,25 @@ async def test_data_quality_counts_statuses(client: AsyncClient) -> None:
     assert report["summary"]["score"] > 0
 
 
+async def test_filled_data_is_distinct_from_confirmed_data(client: AsyncClient) -> None:
+    headers = await _auth(client)
+    project = await _demo(client, headers)
+    assert project["data_quality"]["score"] == 0
+    assert project["data_quality"]["filled_score"] > 0
+    url = f"{PROJECTS}/{project['id']}"
+    params = (await client.get(f"{url}/params", headers=headers)).json()["params"]
+    expected = sum(p["value"] is not None and p["value"] != "" for p in params) / len(params)
+    assert project["data_quality"]["filled_score"] == round(expected, 3)
+    await client.patch(f"{url}/params/pickers", json={"value": 0}, headers=headers)
+    updated = (await client.get(url, headers=headers)).json()["data_quality"]
+    assert updated["score"] > 0
+    assert updated["filled_score"] == project["data_quality"]["filled_score"]
+    await client.patch(f"{url}/params/pickers", json={"value": None}, headers=headers)
+    cleared = (await client.get(url, headers=headers)).json()["data_quality"]
+    assert cleared["filled_score"] < updated["filled_score"]
+    assert cleared["score"] == 0
+
+
 async def test_hospital_and_airport_demo_processes(client: AsyncClient) -> None:
     headers = await _auth(client)
     for object_type in ("hospital", "airport"):

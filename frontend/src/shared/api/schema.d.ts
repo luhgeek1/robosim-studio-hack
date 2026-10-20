@@ -3996,6 +3996,8 @@ export interface components {
     DataQualitySummary: {
       /** @description Взвешенная доля подтверждённых и введённых значений среди влияющих на результат */
       score: number
+      /** @description Доля всех параметров с непустым значением, включая примеры и допущения; не показатель достоверности. */
+      filled_score: number
       /**
        * @description Количество параметров по статусам происхождения.
        * @example {
