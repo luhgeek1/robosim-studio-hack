@@ -71,10 +71,19 @@ async def _issue(uow: UnitOfWork, settings: Settings, user: User, purpose: Purpo
     link = f"{settings.public_web_url.rstrip('/')}/{route}#token={raw_token}"
     subject = "Подтвердите почту в РобоМере" if purpose == "verify_email" else "Смена пароля РобоМеры"
     instruction = "Подтвердить почту" if purpose == "verify_email" else "Задать новый пароль"
-    text = f"{subject}\n\n{instruction}: {link}\n\nЕсли это не вы, проигнорируйте письмо."
+    expiry = (
+        f"{settings.verification_ttl_hours} ч"
+        if purpose == "verify_email"
+        else f"{settings.password_reset_ttl_minutes} мин"
+    )
+    text = (
+        f"{subject}\n\n{instruction}: {link}\n\nСсылка действует {expiry}. "
+        "Если это не вы, проигнорируйте письмо."
+    )
     html = (
         f'<html lang="ru"><body><h1>{subject}</h1><p><a href="{escape(link, quote=True)}">'
-        f"{instruction}</a></p><p>Если это не вы, проигнорируйте письмо.</p></body></html>"
+        f"{instruction}</a></p><p>Ссылка действует {expiry}. "
+        "Если это не вы, проигнорируйте письмо.</p></body></html>"
     )
     uow.session.add(
         EmailOutbox(

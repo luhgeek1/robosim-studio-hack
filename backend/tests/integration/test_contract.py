@@ -46,7 +46,7 @@ def test_operation_ids_match(app_ops: dict, contract_ops: dict) -> None:
 
 def test_success_status_codes_match(app_ops: dict, contract_ops: dict) -> None:
     def success(op: dict) -> set[str]:
-        return {code for code in op["responses"] if code.startswith("2")}
+        return {code for code in op["responses"] if code.startswith(("2", "3"))}
 
     mismatched = [
         (key, success(op), success(contract_ops[key]))

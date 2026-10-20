@@ -180,7 +180,9 @@ class OrganizationService:
             for invitation, organization, inviter in rows
         ]
 
-    async def accept(self, invitation_id: UUID, token: str | None = None) -> OrganizationInfo:
+    async def accept(
+        self, invitation_id: UUID, token: str | None = None, *, allow_legacy_unverified: bool = False
+    ) -> OrganizationInfo:
         invitation = await self._incoming(invitation_id)
         if invitation.token_hash and (
             not token or not secrets.compare_digest(invitation.token_hash, token_hash(token))
@@ -190,6 +192,10 @@ class OrganizationService:
             user = await self._uow.users.get(self._user.id)
             if user is not None:
                 user.email_verified_at = user.email_verified_at or datetime.now(UTC)
+        elif not allow_legacy_unverified:
+            user = await self._uow.users.get(self._user.id)
+            if user is None or user.email_verified_at is None:
+                raise ForbiddenError("Подтвердите почту в настройках аккаунта, чтобы принять приглашение")
         invitation.status = InvitationStatus.ACCEPTED
         invitation.responded_at = datetime.now(UTC)
         if await self._repo.membership(invitation.organization_id, self._user.id) is None:

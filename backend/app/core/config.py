@@ -84,6 +84,8 @@ class Settings(BaseSettings):
                 raise ValueError("OAuth client ID and secret must be set together")
         if oauth_enabled and self.public_api_url.rstrip("/") != self.public_web_url.rstrip("/"):
             raise ValueError("OAuth requires API and web on the same public origin (use the /api proxy)")
+        if oauth_enabled and self.cookie_samesite == "strict":
+            raise ValueError("OAuth requires SameSite=lax or none for the current-session callback")
         if oauth_enabled and self.stage == "prod" and not self.cookie_secure:
             raise ValueError("OAuth in prod requires RS_COOKIE_SECURE=true")
         for value in (self.public_web_url, self.public_api_url):
@@ -116,6 +118,10 @@ class Settings(BaseSettings):
             raise ValueError("RS_JWT_SECRET must be set in prod")
         if self.csrf_key.get_secret_value() == DEV_CSRF_KEY:
             raise ValueError("RS_CSRF_KEY must be set in prod")
+        if not self.cookie_secure:
+            raise ValueError("RS_COOKIE_SECURE must be true in prod")
+        if len(self.csrf_key.get_secret_value()) < 32:
+            raise ValueError("RS_CSRF_KEY must be at least 32 characters")
         if len(self.jwt_secret.get_secret_value()) < 32:
             raise ValueError("RS_JWT_SECRET must be at least 32 characters")
         return self

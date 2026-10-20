@@ -486,6 +486,104 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '409':
           $ref: '#/components/responses/Conflict'
+  /api/v1/auth/oauth/providers:
+    get:
+      tags:
+        - auth
+      operationId: listOAuthProviders
+      summary: Сервисы входа и их доступность
+      security: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthProviderList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/auth/oauth/{provider}/start:
+    post:
+      tags:
+        - auth
+      operationId: startOAuth
+      summary: Начать вход или подключение сервиса
+      description: Authorization Code + PKCE S256. Устанавливает httpOnly SameSite=Lax cookie на 10 минут; одноразовое состояние в Redis. intent=link требует Bearer, текущую refresh-cookie, подтверждённую почту и вход за последние RS_RECENT_AUTH_MINUTES. Возврат только на относительный путь приложения. Гостевой перенос требует keep_guest_csrf. Фронт переходит на authorization_url целиком.
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - yandex
+              - google
+              - vk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthStartRequest'
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthAuthorization'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/auth/oauth/{provider}/callback:
+    get:
+      tags:
+        - auth
+      operationId: finishOAuth
+      summary: Возврат из сервиса входа
+      description: Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка — /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity — конфликт, автоматического связывания нет.
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - yandex
+              - google
+              - vk
+        - name: state
+          in: query
+          schema:
+            type: string
+            maxLength: 128
+            pattern: ^[A-Za-z0-9_-]*$
+        - name: code
+          in: query
+          schema:
+            type: string
+            maxLength: 4096
+        - name: device_id
+          in: query
+          schema:
+            type: string
+            maxLength: 512
+        - name: error
+          in: query
+          schema:
+            type: string
+            maxLength: 256
+      responses:
+        '303':
+          description: Переход в приложение
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/me:
     get:
       tags:
@@ -6791,6 +6889,58 @@ components:
             - string
             - 'null'
           maxLength: 128
+    OAuthProviderInfo:
+      type: object
+      required:
+        - id
+        - name
+        - enabled
+      properties:
+        id:
+          type: string
+          enum:
+            - yandex
+            - google
+            - vk
+        name:
+          type: string
+        enabled:
+          type: boolean
+    OAuthProviderList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OAuthProviderInfo'
+    OAuthStartRequest:
+      type: object
+      properties:
+        return_to:
+          type: string
+          default: /projects
+          maxLength: 2048
+        intent:
+          type: string
+          enum:
+            - login
+            - link
+          default: login
+        keep_guest_csrf:
+          type:
+            - string
+            - 'null'
+          maxLength: 128
+    OAuthAuthorization:
+      type: object
+      required:
+        - authorization_url
+      properties:
+        authorization_url:
+          type: string
+          format: uri
     UserUpdate:
       type: object
       properties:

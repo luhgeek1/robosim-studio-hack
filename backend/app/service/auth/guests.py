@@ -15,6 +15,7 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import Role
 from app.domain.common.provenance import SourceKind
 from app.domain.jobs import JobStatus
+from app.service.auth.cleanup import purge_auth_history
 
 MAX_GUEST_SCENARIOS = 30
 GUEST_TTL_S = 24 * 60 * 60
@@ -99,6 +100,7 @@ async def guest_cleanup_loop(db: Database) -> None:
     while True:
         try:
             await purge_expired_guests(db)
+            await purge_auth_history(db)
         except Exception:
             logger.exception("guest_cleanup_failed")
         await asyncio.sleep(CLEANUP_INTERVAL_S)

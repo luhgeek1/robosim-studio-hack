@@ -155,10 +155,15 @@ async def accept_invitation(
     invitation_id: Annotated[UUID, Path()],
     user: MemberDep,
     uow: UowDep,
+    settings: SettingsDep,
     payload: Annotated[InvitationAccept | None, Body()] = None,
 ) -> Organization:
     return Organization.from_domain(
-        await OrganizationService(uow, user).accept(invitation_id, payload.token if payload else None)
+        await OrganizationService(uow, user).accept(
+            invitation_id,
+            payload.token if payload else None,
+            allow_legacy_unverified=settings.stage != "prod" and not settings.email_enabled,
+        )
     )
 
 
