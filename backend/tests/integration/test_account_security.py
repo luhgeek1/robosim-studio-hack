@@ -46,6 +46,9 @@ async def test_register_queues_verification_and_accepts_token_once(
     assert response.status_code == 201
     assert response.json()["user"]["email_verified"] is False
     token = await _email_token(settings, "verify_email")
+    assert (
+        await client.post("/api/v1/auth/email/verification", headers=bearer(response.json()["access_token"]))
+    ).status_code == 202
     auth = bearer(response.json()["access_token"])
     assert (
         await client.post("/api/v1/organizations", headers=auth, json={"name": "Команда"})

@@ -39,6 +39,10 @@ class RequestTracingMiddleware:
             if message["type"] == "http.response.start":
                 status_code = int(message["status"])
                 headers = MutableHeaders(scope=message)
+                if str(scope.get("path", "")).startswith(("/api/v1/auth", "/api/v1/me")) or Headers(
+                    scope=scope
+                ).get("authorization"):
+                    headers["Cache-Control"] = "no-store"
                 headers["X-Request-ID"] = request_id
                 headers["X-Process-Time-Ms"] = f"{(time.perf_counter() - started) * 1000:.2f}"
             await send(message)

@@ -192,3 +192,35 @@ async def test_revocation_during_provider_exchange_prevents_link(
             assert await uow.session.scalar(select(OAuthIdentity.id)) is None
     finally:
         await db.dispose()
+
+
+async def test_social_account_can_add_password_then_unlink_provider(
+    client: AsyncClient, settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _configure(settings, monkeypatch)
+    assert (await client.get(f"{BASE}/providers")).json()["items"][0]["enabled"] is True
+    await _finish(client, await _start(client))
+    pair = (
+        await client.post("/api/v1/auth/refresh", headers={"X-CSRF-Token": client.cookies["csrf_token"]})
+    ).json()
+    assert (
+        await client.put(
+            "/api/v1/me/password", headers=bearer(pair["access_token"]), json={"password": "NewPassword123!"}
+        )
+    ).status_code == 204
+    signed = (
+        await client.post(
+            "/api/v1/auth/login", json={"email": "new@example.com", "password": "NewPassword123!"}
+        )
+    ).json()
+    auth = bearer(signed["access_token"])
+    assert (await client.delete("/api/v1/me/identities/google", headers=auth)).status_code == 204
+    assert (await client.get("/api/v1/me", headers=auth)).status_code == 401
+    fresh = (
+        await client.post(
+            "/api/v1/auth/login", json={"email": "new@example.com", "password": "NewPassword123!"}
+        )
+    ).json()
+    security = (await client.get("/api/v1/me/security", headers=bearer(fresh["access_token"]))).json()
+    assert security["has_password"] is True
+    assert security["identities"] == []

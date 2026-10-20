@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWorkspaceStore } from '@/entities/organization/workspace'
+import { parseApiProblem } from '@/shared/api/problem'
 import { refreshAccessToken, setAccessToken, setUnauthorizedHandler } from '@/shared/api/client'
 import type { LoginRequest, RegisterRequest, TokenPair, User } from '@/shared/api/types'
 import { sessionApi } from './api'
@@ -75,7 +76,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         clear()
       },
       logout: async () => {
-        await sessionApi.logout().catch(() => undefined)
+        try {
+          await sessionApi.logout()
+        } catch (error) {
+          if (parseApiProblem(error).status !== 401) throw error
+        }
         clear()
       },
     }),

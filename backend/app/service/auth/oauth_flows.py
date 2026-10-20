@@ -63,7 +63,7 @@ class OAuthFlows:
             if user is None or user.role == Role.GUEST:
                 raise UnauthorizedError("Сначала войдите в свой аккаунт РобоМеры")
             row = await self._cookie_user(cookie)
-            if row.id != user.id:
+            if row.id != user.id or user.session_id != self._codec.decode(cookie or "", "refresh").session_id:
                 raise UnauthorizedError("Учётная запись изменилась. Обновите страницу.")
             await require_recent_auth(self._uow, user, self._settings)
             if row.email_verified_at is None:

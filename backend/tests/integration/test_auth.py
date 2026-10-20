@@ -134,3 +134,22 @@ async def test_cookie_logout_requires_csrf(client: AsyncClient) -> None:
     assert (
         await client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": response.cookies["csrf_token"]})
     ).status_code == 204
+
+
+async def test_auth_responses_are_not_cached_and_revoked_cookie_logout_clears_cookies(
+    client: AsyncClient,
+) -> None:
+    signed = await client.post(
+        "/api/v1/auth/login", json={"email": "user@robomera.demo", "password": "Demo12345!"}
+    )
+    assert signed.headers["cache-control"] == "no-store"
+    auth = bearer(signed.json()["access_token"])
+    sessions = (await client.get("/api/v1/me/security", headers=auth)).json()["sessions"]
+    current = next(s for s in sessions if s["current"])
+    await client.delete(f"/api/v1/me/sessions/{current['id']}", headers=auth)
+    response = await client.post(
+        "/api/v1/auth/logout", headers={"X-CSRF-Token": client.cookies["csrf_token"]}
+    )
+    assert response.status_code == 401
+    assert "csrf_token" not in client.cookies
+    assert "refresh_token" not in client.cookies

@@ -12,8 +12,8 @@ export const sessionApi = {
   register: (body: RegisterRequest, guest = false) =>
     apiPublic.post<TokenPair>('/auth/register', body, guest ? keepGuest() : undefined).then((r) => r.data),
   logout: () =>
-    withAuthLock(() => api.post('/auth/logout', {}, { headers: { 'X-CSRF-Token': readCookie('csrf_token') } })).then(
-      () => undefined,
-    ),
+    withAuthLock(() =>
+      apiPublic.post('/auth/logout', {}, { headers: { 'X-CSRF-Token': readCookie('csrf_token') } }),
+    ).then(() => undefined),
   me: () => api.get<Res<'/api/v1/me', 'get'>>('/me').then((r) => r.data),
 }

@@ -97,7 +97,10 @@ def register_problem_handlers(app: FastAPI, *, expose_internal: bool) -> None:
         response = _response(
             request, exc.status_code, detail=exc.detail, error_code=exc.error_code, details=exc.details
         )
-        if isinstance(exc, UnauthorizedError) and request.url.path == "/api/v1/auth/refresh":
+        if isinstance(exc, UnauthorizedError) and request.url.path in {
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/logout",
+        }:
             clear_auth_cookies(response, request.app.state.settings)
         return response
 

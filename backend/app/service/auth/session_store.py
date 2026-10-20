@@ -2,11 +2,11 @@ import hashlib
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.errors import UnauthorizedError
 from app.core.security.tokens import ClientKind, IssuedTokens, TokenClaims, TokenCodec
-from app.db.models import AuthSession, User
+from app.db.models import AuthEmailToken, AuthSession, User
 from app.db.uow import UnitOfWork
 
 
@@ -48,3 +48,18 @@ async def live_session(uow: UnitOfWork, claims: TokenClaims, *, lock: bool = Fal
     ):
         raise UnauthorizedError("Сессия завершена. Войдите снова.")
     return session
+
+
+async def revoke_all_sessions(uow: UnitOfWork, user: User) -> None:
+    user.auth_version += 1
+    await uow.session.execute(
+        update(AuthSession)
+        .where(AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None))
+        .values(revoked_at=datetime.now(UTC))
+    )
+
+    await uow.session.execute(
+        update(AuthEmailToken)
+        .where(AuthEmailToken.user_id == user.id, AuthEmailToken.consumed_at.is_(None))
+        .values(consumed_at=datetime.now(UTC))
+    )

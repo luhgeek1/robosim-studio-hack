@@ -9,8 +9,9 @@ from sqlalchemy import select, update
 from app.core.config import Settings
 from app.core.errors import ServiceUnavailableError, UnauthorizedError
 from app.core.security.passwords import hash_password
-from app.db.models import AuthEmailToken, AuthSession, EmailOutbox, User, UserCredential
+from app.db.models import AuthEmailToken, EmailOutbox, User, UserCredential
 from app.db.uow import UnitOfWork
+from app.service.auth.session_store import revoke_all_sessions
 from app.service.mail.invitations import token_hash
 
 Purpose = Literal["verify_email", "reset_password"]
@@ -137,18 +138,3 @@ async def consume_email(
     await uow.flush()
     result: UUID = user.id
     return result
-
-
-async def revoke_all_sessions(uow: UnitOfWork, user: User) -> None:
-    user.auth_version += 1
-    await uow.session.execute(
-        update(AuthSession)
-        .where(AuthSession.user_id == user.id, AuthSession.revoked_at.is_(None))
-        .values(revoked_at=datetime.now(UTC))
-    )
-
-    await uow.session.execute(
-        update(AuthEmailToken)
-        .where(AuthEmailToken.user_id == user.id, AuthEmailToken.consumed_at.is_(None))
-        .values(consumed_at=datetime.now(UTC))
-    )

@@ -10,7 +10,7 @@ from app.db.models import AuthSession, OAuthIdentity, User, UserCredential
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
 from app.domain.auth.security import AccountSecurity, IdentityInfo, OAuthProvider, SessionInfo
-from app.service.auth.email_tokens import revoke_all_sessions
+from app.service.auth.session_store import revoke_all_sessions
 
 
 async def security_snapshot(uow: UnitOfWork, user: CurrentUser) -> AccountSecurity:
