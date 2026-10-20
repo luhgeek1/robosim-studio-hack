@@ -1,79 +1,134 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ComponentRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrthographicCamera } from '@react-three/drei'
-import { useReducedMotion, type MotionValue } from 'framer-motion'
-import { MathUtils, OrthographicCamera as ThreeOrthographicCamera, PCFShadowMap } from 'three'
+import { OrbitControls } from '@react-three/drei'
+import { MathUtils, PCFShadowMap, PerspectiveCamera, Vector3 } from 'three'
 import { SceneBoundary } from '@/shared/ui/boundary'
 import { ObjectModel, SceneFallback, SceneLighting } from './LandingScene'
+import { journeyBlend, type WarehouseJourneyController } from './warehouse-journey'
 
-function CameraRig({
-  progress,
-  reduced,
-  playing,
-}: {
-  progress: MotionValue<number>
-  reduced: boolean
-  playing: boolean
-}) {
-  const invalidate = useThree((state) => state.invalidate)
-  const current = useRef(progress.get())
-  useEffect(() => progress.on('change', () => invalidate()), [progress, invalidate])
-  useFrame(({ camera, size }, delta) => {
-    if (!(camera instanceof ThreeOrthographicCamera)) return
-    const target = reduced ? 0 : progress.get()
-    current.current = playing ? MathUtils.damp(current.current, target, 5, Math.min(delta, 0.05)) : target
-    const p = current.current
-    const angle = MathUtils.lerp(0.68, -0.55, p)
-    const elevation = 0.56 + Math.sin((p * Math.PI) / 2) * 0.5
-    camera.position.set(Math.sin(angle) * 28, 0.5 + elevation * 28, Math.cos(angle) * 28)
-    camera.lookAt(0, 0.5, 0)
-    const zoom = Math.min(size.width / 18.8, size.height / 14.7) * (1 + Math.sin(p * Math.PI) * 0.08)
-    if (camera.zoom !== zoom) {
-      camera.zoom = zoom
-      camera.updateProjectionMatrix()
-    }
-  })
-  return null
+const JOURNEY_CAMERA = { position: [1.5, 1.3, 4.6] as [number, number, number], fov: 58, near: 0.08, far: 120 }
+
+function MapFallback({ controller, onReady }: { controller: WarehouseJourneyController; onReady: () => void }) {
+  useEffect(() => {
+    controller.showFallback()
+    onReady()
+  }, [controller, onReady])
+  return <SceneFallback />
 }
 
-export default function SimulationMap({ progress, paused }: { progress: MotionValue<number>; paused: boolean }) {
-  const reduced = !!useReducedMotion()
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(true)
-  const [pageVisible, setPageVisible] = useState(!document.hidden)
+function CameraRig({
+  controller,
+  onReady,
+  onFailure,
+}: {
+  controller: WarehouseJourneyController
+  onReady: () => void
+  onFailure: () => void
+}) {
+  const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
+  const frames = useRef(0)
+  const wasInteractive = useRef(false)
+  const orbitPosition = useRef<Vector3 | null>(null)
+  const { invalidate, gl } = useThree()
+  useEffect(() => controller.connectRenderer(invalidate), [controller, invalidate])
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
-    if (ref.current) observer.observe(ref.current)
-    const change = () => setPageVisible(!document.hidden)
-    document.addEventListener('visibilitychange', change)
-    return () => {
-      observer.disconnect()
-      document.removeEventListener('visibilitychange', change)
+    const lost = (event: Event) => {
+      event.preventDefault()
+      onFailure()
     }
-  }, [])
-  const playing = !paused && !reduced && visible && pageVisible
+    gl.domElement.addEventListener('webglcontextlost', lost)
+    return () => gl.domElement.removeEventListener('webglcontextlost', lost)
+  }, [gl, onFailure])
+
+  useFrame(({ camera }, delta) => {
+    if (!(camera instanceof PerspectiveCamera)) return
+    const pose = controller.update(delta)
+    const rise = journeyBlend(pose.progress, 0.08, 0.67)
+    const fov = MathUtils.lerp(58, 26.5, rise)
+    if (camera.aspect !== pose.aspect || camera.fov !== fov) {
+      // Keep the drawing buffer stable; compensate projection for the scaled CSS surface.
+      camera.aspect = pose.aspect
+      camera.fov = fov
+      camera.updateProjectionMatrix()
+    }
+    if (wasInteractive.current && !pose.interactive) orbitPosition.current = camera.position.clone()
+    if (!pose.interactive || !wasInteractive.current) {
+      camera.position.set(MathUtils.lerp(1.5, 17, rise), MathUtils.lerp(1.3, 15, rise), MathUtils.lerp(4.6, 21, rise))
+      if (orbitPosition.current) camera.position.lerp(orbitPosition.current, journeyBlend(pose.dock, 0.6, 1))
+      camera.lookAt(
+        MathUtils.lerp(0.2, -3 * (1 - pose.dock), rise),
+        MathUtils.lerp(1.1, 0.5, rise),
+        MathUtils.lerp(-3, 0, rise),
+      )
+      if (controls.current && pose.interactive) {
+        controls.current.target.set(0, 0.5, 0)
+        controls.current.update()
+      }
+    }
+    if (controls.current) controls.current.enabled = pose.interactive
+    wasInteractive.current = pose.interactive
+    if (pose.moving || frames.current < 3) invalidate()
+    if (++frames.current === 3) requestAnimationFrame(onReady)
+  })
+  return (
+    <OrbitControls
+      ref={controls}
+      enabled={false}
+      makeDefault
+      enableZoom={false}
+      enablePan={false}
+      enableDamping
+      rotateSpeed={0.65}
+      minPolarAngle={Math.PI / 6}
+      maxPolarAngle={Math.PI / 2.5}
+      target={[0, 0.5, 0]}
+    />
+  )
+}
+
+export default function SimulationMap({
+  controller,
+  paused,
+  active,
+  reduced,
+  onReady,
+}: {
+  controller: WarehouseJourneyController
+  paused: boolean
+  active: boolean
+  reduced: boolean
+  onReady: () => void
+}) {
+  const [failed, setFailed] = useState(false)
+  const onFailure = useCallback(() => setFailed(true), [])
+  const fallback = <MapFallback controller={controller} onReady={onReady} />
   return (
     <div
       className="cm-map"
-      ref={ref}
       role="img"
-      aria-label="Детализированная 3D-модель склада: шесть стеллажей с паллетами, четыре робота и станции зарядки"
+      aria-label="3D-модель склада: шесть стеллажей с паллетами, мобильные роботы и станции зарядки"
     >
-      <SceneBoundary fallback={<SceneFallback />}>
-        <Canvas
-          dpr={[1.5, 2]}
-          shadows={{ type: PCFShadowMap }}
-          frameloop={playing ? 'always' : 'demand'}
-          fallback={<SceneFallback />}
-          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        >
-          <OrthographicCamera makeDefault position={[17, 15, 21]} near={0.1} far={100} />
-          <CameraRig progress={progress} reduced={reduced} playing={playing} />
-          <SceneLighting />
-          <group position={[0, -0.5, 0]}>
-            <ObjectModel kind="warehouse" playing={playing} />
-          </group>
-        </Canvas>
+      <SceneBoundary fallback={fallback}>
+        {failed ? (
+          fallback
+        ) : (
+          <Canvas
+            resize={{ scroll: false, offsetSize: true }}
+            camera={JOURNEY_CAMERA}
+            dpr={[1, 1.5]}
+            shadows={{ type: PCFShadowMap }}
+            frameloop={active && !paused && !reduced ? 'always' : 'demand'}
+            fallback={<SceneFallback />}
+            gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+          >
+            <CameraRig controller={controller} onReady={onReady} onFailure={onFailure} />
+            <SceneLighting />
+            <group position={[0, -0.5, 0]}>
+              <ObjectModel kind="warehouse" playing={active && !paused && !reduced} />
+            </group>
+          </Canvas>
+        )}
       </SceneBoundary>
     </div>
   )

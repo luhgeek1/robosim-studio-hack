@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { Instance, Instances, Line, OrbitControls, OrthographicCamera, RoundedBox } from '@react-three/drei'
 import { useReducedMotion } from 'framer-motion'
 import { Group, MathUtils, PCFShadowMap, Quaternion, Vector3 } from 'three'
@@ -195,10 +195,13 @@ function Robot({
   )
 }
 
-function Route({ points }: { points: Point[] }) {
+const Route = memo(function Route({ points }: { points: Point[] }) {
+  // Drei disposes a line's material when its points array changes. Keep the closed
+  // path stable when playback changes so a click never recompiles its shaders.
+  const closedPath = useMemo(() => [...points, points[0]], [points])
   return (
     <Line
-      points={[...points, points[0]]}
+      points={closedPath}
       color={ORANGE}
       lineWidth={1.1}
       transparent
@@ -208,7 +211,7 @@ function Route({ points }: { points: Point[] }) {
       gapSize={0.14}
     />
   )
-}
+})
 
 const ROUTES: Record<ObjectKind, Point[][]> = {
   warehouse: [
@@ -444,17 +447,33 @@ function Airport() {
   )
 }
 
-export function ObjectModel({ kind, playing }: { kind: ObjectKind; playing: boolean }) {
+const STRUCTURES = { warehouse: memo(Warehouse), hospital: memo(Hospital), airport: memo(Airport) }
+
+const StaticObject = memo(function StaticObject({ kind }: { kind: ObjectKind }) {
   const paths = ROUTES[kind]
+  const Structure = STRUCTURES[kind]
   return (
-    <Instances limit={1400} castShadow receiveShadow frustumCulled={false}>
+    <Instances limit={1400} frames={1} castShadow receiveShadow frustumCulled={false}>
       <boxGeometry />
       <meshStandardMaterial roughness={0.96} metalness={0} />
       <Floor>
-        {kind === 'warehouse' ? <Warehouse /> : kind === 'hospital' ? <Hospital /> : <Airport />}
+        <Structure />
         {paths.map((points, i) => (
           <Route key={`route-${i}`} points={points} />
         ))}
+      </Floor>
+    </Instances>
+  )
+})
+
+export function ObjectModel({ kind, playing }: { kind: ObjectKind; playing: boolean }) {
+  const paths = ROUTES[kind]
+  return (
+    <>
+      <StaticObject kind={kind} />
+      <Instances limit={64} castShadow receiveShadow frustumCulled={false}>
+        <boxGeometry />
+        <meshStandardMaterial roughness={0.96} metalness={0} />
         {Array.from({ length: 4 }, (_, i) => (
           <Robot
             key={`${kind}-${i}`}
@@ -464,8 +483,8 @@ export function ObjectModel({ kind, playing }: { kind: ObjectKind; playing: bool
             tall={kind === 'hospital'}
           />
         ))}
-      </Floor>
-    </Instances>
+      </Instances>
+    </>
   )
 }
 
@@ -493,15 +512,19 @@ export function SceneLighting() {
   )
 }
 
-function CameraFit() {
-  const size = useThree((state) => state.size)
+function PreviewCamera() {
+  // Match the model layer's aspect ratio without changing framing on buffer resize.
   return (
     <OrthographicCamera
       makeDefault
+      manual
       position={[17, 15, 21]}
       near={0.1}
       far={100}
-      zoom={Math.min(size.width / 18.8, size.height / 14.7)}
+      left={-9.4}
+      right={9.4}
+      top={7.35}
+      bottom={-7.35}
     />
   )
 }
@@ -544,10 +567,10 @@ function FloatingStage({ playing, children }: { playing: boolean; children: Reac
   )
 }
 
-export default function LandingScene({ kind, paused }: { kind: ObjectKind; paused: boolean }) {
+function LandingScene({ kind, paused, resizeDelay = 0 }: { kind: ObjectKind; paused: boolean; resizeDelay?: number }) {
   const reducedMotion = useReducedMotion()
   const container = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(false)
   const [pageVisible, setPageVisible] = useState(!document.hidden)
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
@@ -568,13 +591,16 @@ export default function LandingScene({ kind, paused }: { kind: ObjectKind; pause
     >
       <SceneBoundary fallback={<SceneFallback />}>
         <Canvas
+          // CSS scales the live canvas during FLIP. Resize its drawing buffer only
+          // after the move, keeping allocation and camera updates off that frame.
+          resize={{ debounce: reducedMotion ? 0 : resizeDelay, scroll: false, offsetSize: true }}
           shadows={{ type: PCFShadowMap }}
           fallback={<SceneFallback />}
           dpr={[1.5, 2]}
           frameloop={playing ? 'always' : 'demand'}
           gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         >
-          <CameraFit />
+          <PreviewCamera />
           <SceneLighting />
           <FloatingStage playing={playing}>
             <ObjectModel kind={kind} playing={playing} />
@@ -594,3 +620,5 @@ export default function LandingScene({ kind, paused }: { kind: ObjectKind; pause
     </div>
   )
 }
+
+export default memo(LandingScene)

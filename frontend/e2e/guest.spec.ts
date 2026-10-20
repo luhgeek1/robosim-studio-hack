@@ -86,11 +86,11 @@ test('own blank project → CSV preview → apply → manual edit → reset', as
   await page.getByRole('button', { name: 'Сбросить', exact: true }).click()
   await page.getByRole('alertdialog').getByRole('button', { name: 'Сбросить демо', exact: true }).click()
   await expect(page).toHaveURL(/\/demo$/)
-  await expect(page.getByRole('heading', { name: 'Демо без регистрации' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'От объекта до решения. Пройдите путь сами.' })).toBeVisible()
   await page
     .getByRole('navigation', { name: 'Разделы', exact: true })
     .getByRole('link', { name: 'Проекты', exact: true })
     .click()
   await expect(page).toHaveURL(/\/demo$/)
-  await expect(page.getByRole('heading', { name: 'Демо без регистрации' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'От объекта до решения. Пройдите путь сами.' })).toBeVisible()
 })

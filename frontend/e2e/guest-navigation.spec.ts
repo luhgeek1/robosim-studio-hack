@@ -19,7 +19,9 @@ test('guest Projects opens the demo chooser on desktop, mobile and direct entry'
   const projectUrl = page.url()
   await projects.click()
   await expect(page).toHaveURL(/\/demo$/)
-  await expect(page.getByRole('heading', { name: 'Демо без регистрации', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'От объекта до решения. Пройдите путь сами.', exact: true }),
+  ).toBeVisible()
 
   await page.goto(projectUrl)
   await expect(page.getByRole('button', { name: 'Загрузить файл', exact: true })).toBeVisible()

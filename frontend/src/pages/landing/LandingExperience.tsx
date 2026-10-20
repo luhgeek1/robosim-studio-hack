@@ -1,57 +1,40 @@
-import { lazy, Suspense, useRef, useState } from 'react'
-import { motion, useInView, useMotionValueEvent, useScroll } from 'framer-motion'
+import { useRef, useState } from 'react'
+import { motion, useMotionValueEvent } from 'framer-motion'
 import { ArrowDown, ArrowUpRight, Pause, Play } from 'lucide-react'
 import { Link } from 'react-router'
-import type { ObjectKind } from './LandingScene'
 import { useLandingMotion } from './use-landing-motion'
+import { ApplicationsSection } from './ApplicationsSection'
+import { WarehouseJourney } from './WarehouseJourney'
+import { useWarehouseJourney } from './warehouse-journey'
 import './experience.css'
 
-const SimulationMap = lazy(() => import('./SimulationMap'))
-const LandingScene = lazy(() => import('./LandingScene'))
+export { ApplicationsSection } from './ApplicationsSection'
 
-const OBJECTS: { id: ObjectKind; title: string; subtitle: string; text: string; tags: string[]; demo: string }[] = [
-  {
-    id: 'warehouse',
-    title: 'Склад',
-    subtitle: 'ВНУТРЕННЯЯ ЛОГИСТИКА',
-    text: 'От приёмки до отгрузки. Проверьте, как парк справится с потоком паллет и узкими проходами.',
-    tags: ['Перевозка паллет', 'Комплектация'],
-    demo: 'warehouse_demo_01',
-  },
-  {
-    id: 'hospital',
-    title: 'Больница',
-    subtitle: 'СЕРВИСНАЯ ДОСТАВКА',
-    text: 'Питание, бельё, медикаменты. Оцените доставку между отделениями с учётом графика работы.',
-    tags: ['Доставка питания', 'Между отделениями'],
-    demo: 'hospital_demo_01',
-  },
-  {
-    id: 'airport',
-    title: 'Аэропорт',
-    subtitle: 'НАЗЕМНОЕ ОБСЛУЖИВАНИЕ',
-    text: 'Багаж и наземные маршруты. Сравните варианты роботизации для нагрузки вашего аэропорта.',
-    tags: ['Перевозка багажа', 'Пиковая нагрузка'],
-    demo: 'airport_demo_01',
-  },
-]
+export function LandingExperience({ workspace }: { workspace: string }) {
+  return (
+    <WarehouseJourney>
+      <LandingHero workspace={workspace} />
+      <ApplicationsSection />
+    </WarehouseJourney>
+  )
+}
 
 export function LandingHero({ workspace }: { workspace: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [paused, setPaused] = useState(false)
+  const { controller, progress: scrollYProgress, paused, togglePaused } = useWarehouseJourney()!
   const [chapter, setChapter] = useState(0)
+  const chapterIndex = useRef(0)
   const { enter, reveal } = useLandingMotion()
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
-  useMotionValueEvent(scrollYProgress, 'change', (value) => setChapter(value < 0.25 ? 0 : value < 0.75 ? 1 : 2))
+  useMotionValueEvent(scrollYProgress, 'change', (value) => {
+    const next = value < 0.25 ? 0 : value < 0.75 ? 1 : 2
+    if (next !== chapterIndex.current) {
+      chapterIndex.current = next
+      setChapter(next)
+    }
+  })
   return (
-    <div className="cm-story" ref={ref}>
+    <div className="cm-story" ref={(node) => controller.bindStory(node)}>
       <div className="cm-stage" aria-label="3D-сцена, ракурс которой меняется при прокрутке">
         <div className="cm-stage-atmosphere" aria-hidden="true" />
-        <div className="cm-stage-model">
-          <Suspense fallback={<div className="lp-map-loading">Собираем модель объекта…</div>}>
-            <SimulationMap progress={scrollYProgress} paused={paused} />
-          </Suspense>
-        </div>
         <div className="cm-stage-caption" aria-hidden="true">
           <span>ROBOМЕРА / DIGITAL TWIN</span>
           <span>СХЕМАТИЧЕСКАЯ МОДЕЛЬ СКЛАДА</span>
@@ -66,7 +49,7 @@ export function LandingHero({ workspace }: { workspace: string }) {
           <button
             type="button"
             className="cm-pause"
-            onClick={() => setPaused(!paused)}
+            onClick={togglePaused}
             aria-label={paused ? 'Продолжить анимацию' : 'Приостановить анимацию'}
             aria-pressed={paused}
           >
@@ -166,90 +149,5 @@ export function LandingHero({ workspace }: { workspace: string }) {
         </section>
       </div>
     </div>
-  )
-}
-
-function ObjectPreview({ kind }: { kind: ObjectKind }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const visible = useInView(ref, { once: true, margin: '200px' })
-  const [paused, setPaused] = useState(false)
-  return (
-    <div className="lp-object-preview" ref={ref}>
-      {visible && (
-        <Suspense fallback={<div className="lp-object-loading" />}>
-          <LandingScene kind={kind} paused={paused} />
-        </Suspense>
-      )}
-      <button
-        type="button"
-        className="lp-preview-pause"
-        onClick={() => setPaused(!paused)}
-        aria-label={paused ? 'Продолжить движение роботов' : 'Приостановить движение роботов'}
-        aria-pressed={paused}
-      >
-        {paused ? <Play size={12} /> : <Pause size={12} />}
-      </button>
-    </div>
-  )
-}
-
-export function ApplicationsSection() {
-  const { reveal } = useLandingMotion()
-  return (
-    <section className="lp-applications" id="applications" aria-labelledby="applications-title">
-      <div className="landing-container">
-        <div className="lp-section-meta">
-          <span>01 / СРЕДА ПРИМЕНЕНИЯ</span>
-          <span>ВАШ ОБЪЕКТ. ВАШИ УСЛОВИЯ.</span>
-        </div>
-        <motion.div className="lp-applications-heading" {...reveal()}>
-          <h2 id="applications-title">
-            Разные пространства.
-            <br />
-            <span>Один точный подход.</span>
-          </h2>
-          <p>
-            У каждого объекта своя логика.
-            <br />
-            Соберите её в модели и проверьте,
-            <br />
-            где роботизация имеет смысл.
-          </p>
-        </motion.div>
-        <div className="lp-objects">
-          {OBJECTS.map((object, index) => (
-            <motion.article className="lp-object" key={object.id} {...reveal(index * 0.08)}>
-              <div className="lp-object-index">
-                <span>0{index + 1}</span>
-                <span className="lp-object-interaction">ВРАЩАЙТЕ МОДЕЛЬ</span>
-              </div>
-              <ObjectPreview kind={object.id} />
-              <Link
-                to={`/demo/${object.demo}`}
-                aria-label={`Изучить сценарий: ${object.title}`}
-                className="lp-object-link"
-              >
-                <div className="lp-object-copy">
-                  <span className="lp-object-subtitle">{object.subtitle}</span>
-                  <h3>{object.title}</h3>
-                  <p>{object.text}</p>
-                  <div className="lp-object-tags">
-                    {object.tags.map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
-                  </div>
-                  <span className="lp-object-action">
-                    Изучить сценарий <ArrowUpRight size={16} />
-                  </span>
-                </div>
-              </Link>
-            </motion.article>
-          ))}
-        </div>
-        <p className="lp-applications-note">
-          <span /> 3D-модели типовых объектов. В проекте планировка строится по вашим параметрам.
-        </p>
-      </div>
-    </section>
   )
 }
