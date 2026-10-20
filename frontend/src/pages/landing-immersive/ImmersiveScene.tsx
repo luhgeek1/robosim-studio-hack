@@ -34,9 +34,9 @@ function World({ signalRef, invalidateRef, onReady, onFailure }: Props) {
     const rise = blend(p, 0.1, 0.64)
     const dock = blend(p, 0.63, 0.94)
     camera.position.set(
-      MathUtils.lerp(0, 23, rise),
-      MathUtils.lerp(compact ? 3.8 : 2.35, 27, rise),
-      MathUtils.lerp(compact ? 20 : 15, 34, rise),
+      MathUtils.lerp(0, 23 - dock * 5, rise),
+      MathUtils.lerp(compact ? 3.8 : 2.35, 27 - dock * 5, rise),
+      MathUtils.lerp(compact ? 20 : 15, 34 - dock * 6, rise),
     )
     target.set(MathUtils.lerp(0, -9.5 + dock * 9.5, rise), MathUtils.lerp(2.2, 0, rise), -4)
     camera.lookAt(target)

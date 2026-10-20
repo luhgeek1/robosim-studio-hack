@@ -126,7 +126,10 @@ export function Warehouse({ signalRef }: { signalRef: RefObject<ImmersiveSignal>
   const robotRef = useRef<Group>(null)
   useFrame(() => {
     const p = signalRef.current.progress
-    if (routeRef.current) routeRef.current.scale.setScalar(blend(p, 0.32, 0.52))
+    if (routeRef.current) {
+      routeRef.current.visible = p > 0.32
+      routeRef.current.scale.setScalar(blend(p, 0.32, 0.52))
+    }
     if (robotRef.current) robotRef.current.position.set(2.7, 0.015, 7 - blend(p, 0.25, 0.67) * 7)
   })
   return (

@@ -1,0 +1,148 @@
+.im-product-frame {
+  position: absolute;
+  z-index: 1;
+  top: 28%;
+  left: 4.5%;
+  width: 91%;
+  height: 63%;
+  background: #252e2b;
+  border: 1px solid #71847660;
+  border-radius: 12px;
+  opacity: var(--reveal);
+  overflow: hidden;
+}
+.im-product-bar {
+  height: 48px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  border-bottom: 1px solid #71847650;
+}
+.im-product-bar i {
+  font-style: normal;
+  color: #8a9a8e;
+  margin: 0 16px;
+}
+.im-product-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #c8d9bd;
+}
+.im-product-status > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b6cd9d;
+}
+.im-product-sidebar {
+  position: absolute;
+  top: 48px;
+  bottom: 40px;
+  left: 0;
+  width: 20%;
+  padding: 23px 20px;
+}
+.im-product-title {
+  display: block;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  font-size: 23px;
+  line-height: 1.2;
+  margin: 15px 0 20px;
+}
+.im-product-frame dl {
+  margin: 0;
+  font-size: 10px;
+}
+.im-product-sidebar dl div {
+  margin-bottom: 16px;
+}
+.im-product-frame dt {
+  color: #bdc8bd;
+}
+.im-product-frame dd {
+  margin: 3px 0 0;
+  font-size: 12px;
+}
+.im-product-layers {
+  display: grid;
+  gap: 14px;
+  margin-top: 25px;
+  font-size: 11px;
+  color: #c8d2c7;
+}
+.im-product-layers span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.im-product-result {
+  position: absolute;
+  top: 48px;
+  bottom: 40px;
+  right: 0;
+  width: 24%;
+  padding: 23px 25px;
+  background: var(--im-paper);
+  color: var(--im-dark);
+}
+.im-frame-number {
+  font-size: 69px;
+  letter-spacing: -0.05em;
+  line-height: 1.2;
+  margin-top: 9px;
+}
+.im-frame-number span {
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.im-product-result > p {
+  font-size: 11px;
+}
+.im-frame-verified {
+  margin: 17px 0;
+  font-size: 10px;
+  color: #45634b;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.im-product-result dl div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid #24342d20;
+}
+.im-product-result dt {
+  color: #536153;
+}
+.im-product-source {
+  display: block;
+  margin-top: 17px;
+  font-size: 9px;
+  color: #536153;
+  line-height: 1.6;
+}
+.im-product-footer {
+  position: absolute;
+  bottom: 0;
+  height: 40px;
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #71847650;
+  font-size: 9px;
+  color: #c2cdbb;
+}
+.im-product-footer a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--im-paper);
+}
