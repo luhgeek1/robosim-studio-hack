@@ -89,19 +89,20 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
     ]
   })
 
-  const picks = fromScenario.length ? fromScenario : fromMatching
+  const showScenario = guided && fromScenario.length > 0
+  const picks = showScenario ? fromScenario : fromMatching
   if (scenarios.isPending || picks.length === 0) return null
 
-  const calc = fromScenario.length ? scenario?.last_calculation : null
+  const calc = showScenario ? scenario?.last_calculation : null
   const verdict = calc?.verdict && calc.verdict in VERDICT_LABEL ? (calc.verdict as Verdict) : null
   const stale = calc?.status === 'stale'
 
   return (
     <section className="card mb-10 overflow-hidden">
-      {!fromScenario.length && (
+      {!showScenario && (
         <div className="space-y-2 border-b border-line px-5 py-4 text-sm text-ink-3">
           {matching.processes
-            .filter((p) => p.selection_reason)
+            .filter((p) => p.recommended_product_id && p.selection_reason)
             .map((p) => (
               <p key={p.process_key}>
                 <span className="font-medium text-ink">{p.name}.</span> {p.selection_reason}
@@ -151,7 +152,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
           })}
         </div>
       )}
-      {(calc || scenario) && (
+      {showScenario && (
         <footer className="grid grid-cols-2 items-center gap-x-5 gap-y-5 border-t border-line bg-surface-2 px-5 py-5 sm:gap-x-8 sm:px-8 md:grid-cols-[repeat(3,auto)_1fr]">
           {calc && (
             <>

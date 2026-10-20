@@ -196,7 +196,10 @@ function ProjectCard({ project }: { project: Project }) {
               <Metric value={formatYears(metrics.payback_years)} label="Окупаемость" />
               <Metric value={formatRub(metrics.capex_rub)} label="Вложения" />
             </div>
-            <div className="mt-4">
+            <div
+              className="mt-4"
+              title="Оценка рассчитанного сценария по окупаемости и NPV. Заполненность данных на этот ярлык напрямую не влияет."
+            >
               <VerdictBadge verdict={metrics.verdict} />
             </div>
           </>

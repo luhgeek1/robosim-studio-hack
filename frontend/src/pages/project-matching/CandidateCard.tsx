@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
+import { AddCandidateDialog } from '@/features/scenario-compose/AddCandidateDialog'
 import { BADGE_LABEL } from '@/entities/catalog'
 import { CANDIDATE_STATUS_LABEL, CRITERION_LABEL, useAddManualCandidate } from '@/entities/matching'
 import { problemText } from '@/shared/api/problem'
@@ -102,19 +103,22 @@ export function CandidateCard({
       cornerPinned={selected}
       aside={<ScoreButton candidate={candidate} />}
       details={
-        <CardFigures
-          items={[
-            {
-              value: isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '-',
-              label: isNum(estimate?.robots_count) ? 'роботов нужно' : 'роботов: не оценено',
-            },
-            { value: isNum(estimate?.capex_rub) ? formatRub(estimate.capex_rub) : '-', label: 'CAPEX' },
-            {
-              value: isNum(estimate?.payback_years) ? formatYears(estimate.payback_years) : '-',
-              label: 'окупаемость',
-            },
-          ]}
-        />
+        <div className="space-y-3">
+          <CardFigures
+            items={[
+              {
+                value: isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '-',
+                label: isNum(estimate?.robots_count) ? 'роботов нужно' : 'роботов: не оценено',
+              },
+              { value: isNum(estimate?.capex_rub) ? formatRub(estimate.capex_rub) : '-', label: 'CAPEX' },
+              {
+                value: isNum(estimate?.payback_years) ? formatYears(estimate.payback_years) : '-',
+                label: 'окупаемость',
+              },
+            ]}
+          />
+          {!excluded && <AddCandidateDialog projectId={projectId} processKey={processKey} candidate={candidate} />}
+        </div>
       }
     />
   )
