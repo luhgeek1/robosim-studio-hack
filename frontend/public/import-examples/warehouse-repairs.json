@@ -1,0 +1,236 @@
+{
+  "project": {
+    "name": "Учебный пример: warehouse",
+    "object_type": "warehouse"
+  },
+  "params": {
+    "area_m2": {
+      "value": "20 000 м²",
+      "unit": "м²"
+    },
+    "robotized_area_m2": {
+      "value": 10000,
+      "unit": "м²"
+    },
+    "ceiling_height_m": {
+      "value": "10 000",
+      "unit": "мм"
+    },
+    "floors": {
+      "value": 1,
+      "unit": "шт."
+    },
+    "main_aisle_width_m": {
+      "value": 3.5,
+      "unit": "м"
+    },
+    "aisle_width_m": {
+      "value": 2.8,
+      "unit": "м"
+    },
+    "floor_type": {
+      "value": "Промышленый бетон",
+      "unit": null
+    },
+    "floor_flatness_mm": {
+      "value": 3,
+      "unit": "мм/2м"
+    },
+    "min_temperature_c": {
+      "value": null,
+      "unit": "°C"
+    },
+    "shifts_per_day": {
+      "value": 2,
+      "unit": "смен"
+    },
+    "working_days_per_year": {
+      "value": 365,
+      "unit": "дн."
+    },
+    "shift_hours": {
+      "value": "11 ч",
+      "unit": "ч"
+    },
+    "peak_factor": {
+      "value": 1.5,
+      "unit": null
+    },
+    "scheduled_peak_factor": {
+      "value": 1,
+      "unit": null
+    },
+    "pallets_in_per_day": {
+      "value": 1000,
+      "unit": "поддон/сут"
+    },
+    "pallets_out_per_day": {
+      "value": 1000,
+      "unit": "поддон/сут"
+    },
+    "pallets_internal_per_day": {
+      "value": 0,
+      "unit": "поддон/сут"
+    },
+    "order_lines_per_day": {
+      "value": 100000,
+      "unit": "строк/сут"
+    },
+    "pieces_per_day": {
+      "value": 150000,
+      "unit": "шт./сут"
+    },
+    "piece_pick_pct": {
+      "value": 30,
+      "unit": "%"
+    },
+    "sku_count": {
+      "value": 2000,
+      "unit": "SKU"
+    },
+    "a_class_sku_pct": {
+      "value": 20,
+      "unit": "%"
+    },
+    "boxes_per_pallet": {
+      "value": 33,
+      "unit": "короб/поддон"
+    },
+    "inventory_counts_per_year": {
+      "value": 12,
+      "unit": "раз/год"
+    },
+    "cleaning_area_m2": {
+      "value": null,
+      "unit": "м²"
+    },
+    "staff_total": {
+      "value": 180,
+      "unit": "чел."
+    },
+    "pickers": {
+      "value": 100,
+      "unit": "чел."
+    },
+    "forklift_operators": {
+      "value": 25,
+      "unit": "чел."
+    },
+    "packers": {
+      "value": 20,
+      "unit": "чел."
+    },
+    "inventory_staff": {
+      "value": 2,
+      "unit": "чел."
+    },
+    "cleaners": {
+      "value": null,
+      "unit": "чел."
+    },
+    "picker_salary_rub_month": {
+      "value": 100000,
+      "unit": "руб./мес."
+    },
+    "forklift_salary_rub_month": {
+      "value": 120000,
+      "unit": "руб./мес."
+    },
+    "packer_salary_rub_month": {
+      "value": 100000,
+      "unit": "руб./мес."
+    },
+    "inventory_staff_salary_rub_month": {
+      "value": 100000,
+      "unit": "руб./мес."
+    },
+    "cleaner_salary_rub_month": {
+      "value": 65000,
+      "unit": "руб./мес."
+    },
+    "payroll_tax_coeff": {
+      "value": 1.302,
+      "unit": null
+    },
+    "picker_productivity_lines_per_hour": {
+      "value": 150,
+      "unit": "строк/ч·чел"
+    },
+    "time_loss_pct": {
+      "value": 25,
+      "unit": "%"
+    },
+    "pick_route_length_m": {
+      "value": 25,
+      "unit": "м"
+    },
+    "pallet_route_length_m": {
+      "value": null,
+      "unit": "м"
+    },
+    "dock_doors": {
+      "value": null,
+      "unit": "шт."
+    },
+    "conveyor_length_m": {
+      "value": 350,
+      "unit": "м"
+    },
+    "storage_type": {
+      "value": "selective_pallet_racking",
+      "unit": null
+    },
+    "pallet_positions": {
+      "value": 20000,
+      "unit": "м/п"
+    },
+    "pallet_weight_kg": {
+      "value": 800,
+      "unit": "кг"
+    },
+    "item_weight_kg": {
+      "value": 1.8,
+      "unit": "кг"
+    },
+    "pallet_dims_mm": {
+      "value": "1200×800×1600",
+      "unit": "мм"
+    },
+    "item_dims_mm": {
+      "value": "300×200×150",
+      "unit": "мм"
+    },
+    "nonstandard_cargo_pct": {
+      "value": 5,
+      "unit": "%"
+    },
+    "power_kw": {
+      "value": 500,
+      "unit": "кВт"
+    },
+    "has_wms": {
+      "value": "возможно",
+      "unit": null
+    },
+    "erp_system": {
+      "value": "1С:ERP",
+      "unit": null
+    },
+    "capex_budget_mln_rub": {
+      "value": 80,
+      "unit": "млн руб."
+    },
+    "horizon_years": {
+      "value": 5,
+      "unit": "лет"
+    },
+    "pallet_lead_time_min": {
+      "value": 20,
+      "unit": "мин"
+    },
+    "sla_target_share": {
+      "value": 0.95,
+      "unit": "доля"
+    }
+  }
+}

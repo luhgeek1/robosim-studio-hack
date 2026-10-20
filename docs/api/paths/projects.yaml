@@ -71,7 +71,8 @@ projectExport:
   get:
     tags: [projects]
     operationId: exportProjectJson
-    summary: Полный снимок проекта (параметры, сценарии, расчёты) в JSON
+    summary: Параметры и метаданные проекта в JSON
+    description: Снимок для повторного импорта параметров; сценарии, расчёты и планировка в этот файл не входят.
     parameters: [{$ref: '../components/common.yaml#/parameters/ProjectId'}]
     responses:
       '200': {description: "OK", content: {application/json: {schema: {type: object, additionalProperties: true}}}}
@@ -172,6 +173,22 @@ projectImportText:
     responses:
       '200': {description: "Результат разбора", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ImportResult'}}}}
       '503': {description: "Ассистент недоступен", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+
+projectImportReview:
+  post:
+    tags: [params]
+    operationId: reviewImport
+    summary: Исправить строки и повторно проверить импорт без изменения проекта
+    parameters:
+      - {$ref: '../components/common.yaml#/parameters/ProjectId'}
+      - {name: import_id, in: path, required: true, schema: {type: string, format: uuid}}
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/projects.yaml#/ImportReview'}}}
+    responses:
+      '200': {description: "Проверенный предпросмотр", content: {application/json: {schema: {$ref: '../components/projects.yaml#/ImportResult'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+      '422': {$ref: '../components/common.yaml#/responses/ValidationError'}
 
 projectImportApply:
   post:

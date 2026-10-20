@@ -297,6 +297,52 @@ class ImportUnmapped(ApiModel):
     suggestion_key: str | None = None
 
 
+class ImportIssue(ApiModel):
+    code: str
+    severity: Literal["error", "warning", "info"]
+    message: str
+    how_to_fix: str
+
+
+class ImportSuggestion(ApiModel):
+    key: str
+    value: Scalar
+    unit: str | None
+    message: str
+
+
+class ImportReviewRow(ApiModel):
+    row_id: str
+    key: str | None
+    name: str
+    value: Scalar
+    unit: str | None
+    raw_field: str
+    raw_value: str
+    raw_unit: str | None
+    location: str
+    confidence: float
+    suggestion_key: str | None = None
+    excluded: bool
+    status: str | None = None
+    issues: list[ImportIssue]
+    suggestion: ImportSuggestion | None
+    conflict_with_current: ImportConflict | None
+
+
+class ImportEdit(ApiModel):
+    row_id: str
+    key: str | None = Field(max_length=64)
+    value: Scalar
+    unit: str | None = Field(max_length=64)
+    excluded: bool = False
+
+
+class ImportReview(ApiModel):
+    edits: list[ImportEdit] = Field(max_length=10000)
+    overwrite_user_values: bool = False
+
+
 class ImportResult(ApiModel):
     import_id: UUID
     source_kind: Literal["xlsx_template", "xlsx_freeform", "csv", "json", "text_llm", "pdf_llm"]
@@ -305,11 +351,14 @@ class ImportResult(ApiModel):
     unmapped: list[ImportUnmapped]
     warnings: list[str]
     applied: bool
+    rows: list[ImportReviewRow]
+    validation: ValidationReport
 
 
 class ImportApply(ApiModel):
     accept_keys: list[str] = Field(default_factory=list, description="Если пусто — применить все mapped")
     overwrite_user_values: bool = False
+    row_ids: list[str] | None = Field(default=None, max_length=10000)
 
 
 class SmartImportRequest(ApiModel):

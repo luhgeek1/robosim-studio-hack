@@ -94,6 +94,19 @@ async def test_user_values_are_protected_by_default(client: AsyncClient) -> None
     applied = await client.post(
         f"{PROJECTS}/{project_id}/import/{parsed['import_id']}/apply", headers=headers
     )
+    assert applied.status_code == 422  # Imported active area exceeds the protected manual total.
+    active = next(row for row in parsed["rows"] if row["key"] == "robotized_area_m2")
+    reviewed = await client.post(
+        f"{PROJECTS}/{project_id}/import/{parsed['import_id']}/review",
+        json={
+            "edits": [{"row_id": active["row_id"], "key": "robotized_area_m2", "value": 4000, "unit": "м²"}]
+        },
+        headers=headers,
+    )
+    assert reviewed.status_code == 200
+    applied = await client.post(
+        f"{PROJECTS}/{project_id}/import/{parsed['import_id']}/apply", headers=headers
+    )
     params = {p["key"]: p for p in applied.json()["params"]}
     assert params["area_m2"]["value"] == 5000
 

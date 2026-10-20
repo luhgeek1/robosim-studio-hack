@@ -11,6 +11,7 @@ from app.api.schemas.projects import (
     DataQualitySummary,
     ImportApply,
     ImportResult,
+    ImportReview,
     ParamHistoryItem,
     ParamHistoryList,
     ParamsBulkUpsert,
@@ -145,6 +146,8 @@ def _import_result(view: ImportView) -> ImportResult:
             "unmapped": view.unmapped,
             "warnings": view.warnings,
             "applied": view.applied,
+            "rows": view.rows,
+            "validation": ValidationReport.from_domain(view.validation),
         }
     )
 
@@ -186,6 +189,25 @@ async def import_text(
 
 
 @router.post(
+    "/import/{import_id}/review",
+    operation_id="reviewImport",
+    summary="Исправить строки и повторно проверить импорт без изменения проекта",
+    responses={404: {"description": "Не найдено"}},
+)
+async def review_import(
+    project_id: ProjectIdPath,
+    import_id: Annotated[UUID, Path()],
+    payload: ImportReview,
+    user: OwnerDep,
+    uow: UowDep,
+) -> ImportResult:
+    view = await ImportService(uow, user).review(
+        project_id, import_id, [edit.model_dump() for edit in payload.edits], payload.overwrite_user_values
+    )
+    return _import_result(view)
+
+
+@router.post(
     "/import/{import_id}/apply",
     operation_id="applyImport",
     summary="Применить выбранные значения импорта к проекту",
@@ -200,6 +222,6 @@ async def apply_import(
 ) -> ProjectParams:
     request = payload or ImportApply()
     context = await ImportService(uow, user).apply(
-        project_id, import_id, request.accept_keys, request.overwrite_user_values
+        project_id, import_id, request.accept_keys, request.overwrite_user_values, request.row_ids
     )
     return _params(context)

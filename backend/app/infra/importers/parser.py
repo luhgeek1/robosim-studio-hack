@@ -10,6 +10,7 @@ from typing import Any
 
 from app.domain.reference import ParameterDef
 from app.infra.importers.collector import RawRow, build_import, cell_text, clean_unit
+from app.infra.importers.json_syntax import read_json
 from app.infra.importers.matching import ParameterMatcher, normalize
 from app.infra.importers.models import ImportFormatError, ImportSourceKind, ParsedImport
 from app.infra.importers.tabular import KEY_HEADERS, NAME_HEADERS, UNIT_HEADERS, VALUE_HEADERS, table_rows
@@ -75,9 +76,9 @@ def _parse_csv(content: bytes, matcher: ParameterMatcher, *, bounded: bool = Fal
     if not text.strip():
         raise ImportFormatError("CSV-файл пустой")
     reader = csv.reader(io.StringIO(text), delimiter=_delimiter(text))
-    table: list[Sequence[Any]] = list(islice(reader, 10_001)) if bounded else list(reader)
-    if bounded and len(table) > 10_000:
-        raise ImportFormatError("Лимит демо: до 10 000 строк в CSV")
+    table: list[Sequence[Any]] = list(islice(reader, 10_001))
+    if len(table) > 10_000:
+        raise ImportFormatError("Допускается до 10 000 строк в CSV")
     warnings: list[str] = []
     rows = table_rows(table, "CSV", warnings)
     return build_import(ImportSourceKind.CSV, rows, matcher, warnings)
@@ -98,19 +99,19 @@ def _pick(item: dict[str, Any], aliases: set[str]) -> Any:
 def _json_item_row(item: Any, number: int, warnings: list[str]) -> RawRow | None:
     location = f"JSON, элемент {number}"
     if not isinstance(item, dict):
-        warnings.append(f"{location}: ожидается объект с полями key и value, элемент пропущен")
-        return None
+        warnings.append(f"{location}: ожидается объект с полями key и value, выберите параметр вручную")
+        return RawRow(f"Элемент {number}", _json_raw(item), None, location)
     key, name = cell_text(_pick(item, KEY_HEADERS)), cell_text(_pick(item, NAME_HEADERS))
     if not key and not name:
-        warnings.append(f"{location}: нет поля key или name, элемент пропущен")
-        return None
+        warnings.append(f"{location}: нет поля key или name, выберите параметр вручную")
+        return RawRow(f"Элемент {number}", _json_raw(_pick(item, VALUE_HEADERS)), None, location)
     value = _json_raw(_pick(item, VALUE_HEADERS))
     return RawRow(name or key, value, clean_unit(_pick(item, UNIT_HEADERS)), location, key or None)
 
 
 def _json_field_row(field: str, value: Any) -> RawRow:
     location = f"JSON, поле «{field}»"
-    if isinstance(value, dict) and _pick(value, VALUE_HEADERS) is not None:
+    if isinstance(value, dict) and any(normalize(key) in VALUE_HEADERS for key in value):
         unit = clean_unit(_pick(value, UNIT_HEADERS))
         return RawRow(field, _json_raw(_pick(value, VALUE_HEADERS)), unit, location, field)
     return RawRow(field, _json_raw(value), None, location, field)
@@ -127,22 +128,25 @@ def _json_rows(data: Any, warnings: list[str]) -> list[RawRow]:
 
 def _parse_json(content: bytes, matcher: ParameterMatcher, *, bounded: bool = False) -> ParsedImport:
     try:
-        data = json.loads(_decode(content), object_pairs_hook=_unique_fields)
+        data, warnings = read_json(_decode(content), _unique_fields)
     except json.JSONDecodeError as error:
         message = (
             f"Некорректный JSON: строка {error.lineno}, столбец {error.colno}. "
             "Проверьте кавычки, запятые и скобки; затем загрузите файл снова"
         )
         raise ImportFormatError(message) from error
-    warnings: list[str] = []
+    except RecursionError as error:
+        raise ImportFormatError(
+            "Слишком глубокая вложенность JSON. Используйте плоский список параметров"
+        ) from error
     object_type = None
     if isinstance(data, dict) and isinstance(data.get("params"), dict | list):
         project = data.get("project", {})
         object_type = project.get("object_type") if isinstance(project, dict) else None
         data = data["params"]
         warnings.append("Из снимка проекта загружаются параметры объекта; расчёты и сценарии не переносятся")
-    if bounded and isinstance(data, dict | list) and len(data) > 10_000:
-        raise ImportFormatError("Лимит демо: до 10 000 полей в JSON")
+    if isinstance(data, dict | list) and len(data) > 10_000:
+        raise ImportFormatError("Допускается до 10 000 полей в JSON")
     rows = _json_rows(data, warnings)
     return replace(build_import(ImportSourceKind.JSON, rows, matcher, warnings), object_type=object_type)
 

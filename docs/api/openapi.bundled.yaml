@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.10.0
+  version: 0.12.0
   license:
     name: MIT
     identifier: MIT
@@ -1115,7 +1115,8 @@ paths:
       tags:
         - projects
       operationId: exportProjectJson
-      summary: Полный снимок проекта (параметры, сценарии, расчёты) в JSON
+      summary: Параметры и метаданные проекта в JSON
+      description: Снимок для повторного импорта параметров; сценарии, расчёты и планировка в этот файл не входят.
       parameters:
         - $ref: '#/components/parameters/ProjectId'
       responses:
@@ -1326,6 +1327,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /api/v1/projects/{project_id}/import/{import_id}/review:
+    post:
+      tags:
+        - params
+      operationId: reviewImport
+      summary: Исправить строки и повторно проверить импорт без изменения проекта
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - name: import_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportReview'
+      responses:
+        '200':
+          description: Проверенный предпросмотр
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/v1/projects/{project_id}/import/{import_id}/apply:
     post:
       tags:
@@ -7252,79 +7284,131 @@ components:
                 - type: 'null'
             current_status:
               $ref: '#/components/schemas/ProvenanceStatus'
-    ImportResult:
+    ImportIssue:
       type: object
-      description: |
-        Результат разбора файла или текста. Ничего не применяется автоматически: фронт показывает таблицу,
-        пользователь снимает галочки и нажимает «Применить» (POST …/import/{import_id}/apply).
       required:
-        - import_id
-        - source_kind
-        - mapped
-        - unmapped
-        - warnings
-        - applied
+        - code
+        - severity
+        - message
+        - how_to_fix
       properties:
-        import_id:
+        code:
           type: string
-          format: uuid
-        source_kind:
+        severity:
           type: string
           enum:
-            - xlsx_template
-            - xlsx_freeform
-            - csv
-            - json
-            - text_llm
-            - pdf_llm
-        provider:
+            - error
+            - warning
+            - info
+        message:
           type: string
-          example: rules
-          description: rules — детерминированный разбор шаблона; gemini — ассистент
-        mapped:
-          type: array
-          items:
-            $ref: '#/components/schemas/ImportMappedItem'
-        unmapped:
-          type: array
-          description: Поля из файла, которые не удалось сопоставить.
-          items:
-            type: object
-            properties:
-              raw_field:
-                type: string
-              raw_value:
-                type: string
-              suggestion_key:
-                type:
-                  - string
-                  - 'null'
-        warnings:
-          type: array
-          items:
-            type: string
-        applied:
-          type: boolean
-    SmartImportRequest:
+        how_to_fix:
+          type: string
+    ImportSuggestion:
       type: object
       required:
-        - text
+        - key
+        - value
+        - unit
+        - message
       properties:
-        text:
+        key:
           type: string
-          maxLength: 20000
-          example: Склад 7 000 м², 24 сотрудника, два стеллажных ряда, проходы 2,8 м, 600 паллет в сутки…
-    ImportApply:
+        value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: boolean
+            - type: 'null'
+        unit:
+          type:
+            - string
+            - 'null'
+        message:
+          type: string
+    ImportConflict:
       type: object
       properties:
-        accept_keys:
+        current_value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: boolean
+            - type: 'null'
+        current_status:
+          type:
+            - string
+            - 'null'
+    ImportReviewRow:
+      type: object
+      required:
+        - row_id
+        - key
+        - name
+        - value
+        - unit
+        - raw_field
+        - raw_value
+        - raw_unit
+        - location
+        - confidence
+        - excluded
+        - issues
+        - suggestion
+        - conflict_with_current
+      properties:
+        row_id:
+          type: string
+        key:
+          type:
+            - string
+            - 'null'
+        name:
+          type: string
+        value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: boolean
+            - type: 'null'
+        unit:
+          type:
+            - string
+            - 'null'
+        raw_field:
+          type: string
+        raw_value:
+          type: string
+        raw_unit:
+          type:
+            - string
+            - 'null'
+        location:
+          type: string
+        confidence:
+          type: number
+        suggestion_key:
+          type:
+            - string
+            - 'null'
+        excluded:
+          type: boolean
+        status:
+          type:
+            - string
+            - 'null'
+        issues:
           type: array
           items:
-            type: string
-          description: Если пусто — применить все mapped
-        overwrite_user_values:
-          type: boolean
-          default: false
+            $ref: '#/components/schemas/ImportIssue'
+        suggestion:
+          oneOf:
+            - $ref: '#/components/schemas/ImportSuggestion'
+            - type: 'null'
+        conflict_with_current:
+          oneOf:
+            - $ref: '#/components/schemas/ImportConflict'
+            - type: 'null'
     ValidationIssue:
       type: object
       required:
@@ -7386,6 +7470,137 @@ components:
           type: boolean
         can_simulate:
           type: boolean
+    ImportResult:
+      type: object
+      description: |
+        Результат разбора файла или текста. Ничего не применяется автоматически: фронт показывает таблицу,
+        пользователь снимает галочки и нажимает «Применить» (POST …/import/{import_id}/apply).
+      required:
+        - import_id
+        - source_kind
+        - mapped
+        - unmapped
+        - warnings
+        - applied
+        - rows
+        - validation
+      properties:
+        import_id:
+          type: string
+          format: uuid
+        source_kind:
+          type: string
+          enum:
+            - xlsx_template
+            - xlsx_freeform
+            - csv
+            - json
+            - text_llm
+            - pdf_llm
+        provider:
+          type: string
+          example: rules
+          description: rules — детерминированный разбор шаблона; gemini — ассистент
+        mapped:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportMappedItem'
+        unmapped:
+          type: array
+          description: Поля из файла, которые не удалось сопоставить.
+          items:
+            type: object
+            properties:
+              raw_field:
+                type: string
+              raw_value:
+                type: string
+              suggestion_key:
+                type:
+                  - string
+                  - 'null'
+        warnings:
+          type: array
+          items:
+            type: string
+        applied:
+          type: boolean
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportReviewRow'
+        validation:
+          $ref: '#/components/schemas/ValidationReport'
+    SmartImportRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          maxLength: 20000
+          example: Склад 7 000 м², 24 сотрудника, два стеллажных ряда, проходы 2,8 м, 600 паллет в сутки…
+    ImportEdit:
+      type: object
+      required:
+        - row_id
+        - key
+        - value
+        - unit
+      properties:
+        row_id:
+          type: string
+        key:
+          type:
+            - string
+            - 'null'
+          maxLength: 64
+        value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: boolean
+            - type: 'null'
+        unit:
+          type:
+            - string
+            - 'null'
+          maxLength: 64
+        excluded:
+          type: boolean
+          default: false
+    ImportReview:
+      type: object
+      required:
+        - edits
+      properties:
+        edits:
+          type: array
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/ImportEdit'
+        overwrite_user_values:
+          type: boolean
+          default: false
+    ImportApply:
+      type: object
+      properties:
+        row_ids:
+          type:
+            - array
+            - 'null'
+          maxItems: 10000
+          items:
+            type: string
+          description: Явный выбор строк; [] не применяет ничего. Если задан, приоритетнее accept_keys. Ошибочные строки блокируют применение; исключённые пропускаются.
+        accept_keys:
+          type: array
+          items:
+            type: string
+          description: Если пусто — применить все mapped
+        overwrite_user_values:
+          type: boolean
+          default: false
     DataQualityReport:
       type: object
       description: 'Развёрнутая панель доверия: какие параметры откуда и насколько они важны для результата.'

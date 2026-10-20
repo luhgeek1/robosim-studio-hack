@@ -49,12 +49,14 @@ def _cell(cells: Sequence[Any], index: int | None) -> Any:
 def _to_row(cells: Sequence[Any], columns: Columns, location: str) -> RawRow | None:
     name, key = cell_text(_cell(cells, columns.name)), cell_text(_cell(cells, columns.key))
     label = name or key
-    if not label:
-        return None
     value = _cell(cells, columns.value)
+    if not label and value is None:
+        return None
     if isinstance(value, str):
         value = value.strip()
-    return RawRow(label, value, clean_unit(_cell(cells, columns.unit)), location, key or None)
+    return RawRow(
+        label or "Поле без названия", value, clean_unit(_cell(cells, columns.unit)), location, key or None
+    )
 
 
 def table_rows(table: list[Sequence[Any]], place: str, warnings: list[str]) -> list[RawRow]:
