@@ -3,7 +3,15 @@ import { useWorkspaceId } from '@/entities/organization'
 import { api } from '@/shared/api/client'
 import { qk } from '@/shared/api/keys'
 import { useInvalidateProject } from '@/shared/api/invalidate'
-import type { ImportApply, ImportResult, ParamUpsert, ProjectCreate, ProjectUpdate, Res } from '@/shared/api/types'
+import type {
+  ImportApply,
+  ImportResult,
+  ImportReview,
+  ParamUpsert,
+  ProjectCreate,
+  ProjectUpdate,
+  Res,
+} from '@/shared/api/types'
 
 export const projectApi = {
   list: (organizationId: string | null) =>
@@ -59,6 +67,8 @@ export const projectApi = {
         body,
       )
       .then((r) => r.data),
+  reviewImport: (id: string, importId: string, body: ImportReview) =>
+    api.post<ImportResult>(`/projects/${id}/import/${importId}/review`, body).then((r) => r.data),
 }
 
 export function useProjects() {
@@ -179,6 +189,13 @@ export function useResetParam(id: string) {
 
 export function useImportFile(id: string) {
   return useMutation({ mutationFn: (file: File) => projectApi.importFile(id, file) })
+}
+
+export function useReviewImport(id: string) {
+  return useMutation({
+    mutationFn: ({ importId, body }: { importId: string; body: ImportReview }) =>
+      projectApi.reviewImport(id, importId, body),
+  })
 }
 
 export function useApplyImport(id: string) {
