@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui/button'
 import { Spinner } from '@/shared/ui/states'
 import { problemText } from '@/shared/api/problem'
 import { authApi, type ProviderId } from './api'
+import { ProviderIcon } from './ProviderIcon'
 
 export function ProviderButtons({
   returnTo,
@@ -33,17 +34,22 @@ export function ProviderButtons({
       <p className="meta mb-4">Вход через сервисы временно недоступен. Используйте почту и пароль.</p>
     ) : null
   return (
-    <div className="mb-5 space-y-3">
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-5 space-y-4">
+      <div className="grid gap-2">
         {available.map((p) => (
           <Button
             key={p.id}
             variant="outline"
-            className="h-11 grow text-sm"
+            type="button"
+            className="relative h-11 w-full gap-3 border-line bg-white px-4 text-sm"
             disabled={disabled || !!pending}
+            aria-busy={pending === p.id}
             onClick={() => void start(p.id)}
           >
-            {pending === p.id && <Spinner />} {p.name}
+            <span className="absolute left-4 flex size-5 items-center justify-center" aria-hidden="true">
+              {pending === p.id ? <Spinner /> : <ProviderIcon provider={p.id} />}
+            </span>
+            Войти через {p.name}
           </Button>
         ))}
       </div>
@@ -52,7 +58,11 @@ export function ProviderButtons({
           {error}
         </p>
       )}
-      <p className="text-center text-xs text-ink-3">или с почтой и паролем</p>
+      <div className="flex items-center gap-3 text-xs text-ink-3">
+        <span className="h-px flex-1 bg-line" aria-hidden="true" />
+        <span>или с почтой и паролем</span>
+        <span className="h-px flex-1 bg-line" aria-hidden="true" />
+      </div>
     </div>
   )
 }

@@ -137,7 +137,7 @@ export function LoginPage() {
               </Link>
             )}
             <ProviderButtons
-              returnTo={safeReturnPath(back?.from) ?? requestedReturn ?? '/projects'}
+              returnTo={safeReturnPath(back?.from) ?? requestedReturn ?? '/app'}
               keepGuest={user?.role === 'guest'}
               disabled={pending}
             />

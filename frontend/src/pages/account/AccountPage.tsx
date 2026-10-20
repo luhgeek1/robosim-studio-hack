@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useSession } from '@/entities/session'
 import { authApi, type ProviderId } from '@/features/auth/api'
 import { authErrorText, PROVIDER_NAMES } from '@/features/auth/links'
+import { ProviderIcon } from '@/features/auth/ProviderIcon'
 import { problemText } from '@/shared/api/problem'
 import { formatDateTime } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
@@ -105,11 +106,14 @@ export function AccountPage() {
                 const connected = data.identities.some((i) => i.provider === p.id)
                 return (
                   <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
-                    <div>
-                      <p className="font-medium">{p.name}</p>
-                      <p className="mt-1 text-sm text-ink-3">
-                        {connected ? 'Подключён' : p.enabled ? 'Не подключён' : 'Пока недоступен'}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <ProviderIcon provider={p.id} />
+                      <div>
+                        <p className="font-medium">{p.name}</p>
+                        <p className="mt-1 text-sm text-ink-3">
+                          {connected ? 'Подключён' : p.enabled ? 'Не подключён' : 'Пока недоступен'}
+                        </p>
+                      </div>
                     </div>
                     {connected ? (
                       <Button
