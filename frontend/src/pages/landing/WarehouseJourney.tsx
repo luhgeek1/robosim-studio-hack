@@ -21,10 +21,12 @@ export function WarehouseJourney({ children }: { children: ReactNode }) {
     controller.setReduced(reduced)
   }, [controller, reduced])
   useEffect(() => {
+    const stopObservingLayout = controller.observeLayout()
     window.addEventListener('scroll', controller.wake, { passive: true })
     window.addEventListener('resize', controller.wake)
     document.addEventListener('visibilitychange', controller.wake)
     return () => {
+      stopObservingLayout()
       window.removeEventListener('scroll', controller.wake)
       window.removeEventListener('resize', controller.wake)
       document.removeEventListener('visibilitychange', controller.wake)
