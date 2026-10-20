@@ -570,7 +570,7 @@ function FloatingStage({ playing, children }: { playing: boolean; children: Reac
 function LandingScene({ kind, paused, resizeDelay = 0 }: { kind: ObjectKind; paused: boolean; resizeDelay?: number }) {
   const reducedMotion = useReducedMotion()
   const container = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(false)
   const [pageVisible, setPageVisible] = useState(!document.hidden)
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))

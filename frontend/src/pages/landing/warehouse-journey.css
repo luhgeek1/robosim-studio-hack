@@ -9,6 +9,10 @@
 .cm-experience .cm-narrative {
   z-index: 3;
 }
+.cm-experience .cm-chapter:last-child {
+  opacity: var(--journey-outro, 1);
+  visibility: var(--journey-outro-visibility, visible);
+}
 .cm-experience .cm-stage-atmosphere {
   display: none;
 }
@@ -61,6 +65,9 @@
 }
 .cm-shared-pause[hidden] {
   display: none;
+}
+.cm-experience .lp-section-meta {
+  opacity: var(--journey-row, 1);
 }
 .cm-experience .lp-objects:not(.lp-objects--focused) .lp-object:not([data-object='warehouse']) .lp-object-preview {
   opacity: var(--journey-row, 1);

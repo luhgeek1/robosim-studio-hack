@@ -120,29 +120,15 @@ function ObjectPreview({
   muted: boolean
   content: LegacyAnimationControls
 }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [loaded, setLoaded] = useState(false)
   const [paused, setPaused] = useState(false)
   const { reduced } = useLandingMotion()
   const journey = useWarehouseJourney()
   const shared = kind === 'warehouse' ? journey?.controller : undefined
-  useEffect(() => {
-    if (shared || loaded || muted || !ref.current) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return
-        setLoaded(true)
-        observer.disconnect()
-      },
-      { rootMargin: '200px' },
-    )
-    observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [loaded, muted, shared])
   return (
-    <div className="lp-object-preview" ref={ref}>
+    <div className="lp-object-preview">
       <div className="lp-object-model" ref={(node) => shared?.bindTarget(node)}>
-        {loaded && !shared && (
+        {/* Prepare the offscreen renderers at startup; creating WebGL contexts during docking stalls the scroll. */}
+        {!shared && (
           <Suspense fallback={<div className="lp-object-loading" />}>
             <LandingScene
               kind={kind}

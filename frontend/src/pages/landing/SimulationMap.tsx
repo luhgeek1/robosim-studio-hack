@@ -55,7 +55,7 @@ function CameraRig({
     if (wasInteractive.current && !pose.interactive) orbitPosition.current = camera.position.clone()
     if (!pose.interactive || !wasInteractive.current) {
       camera.position.set(MathUtils.lerp(1.5, 17, rise), MathUtils.lerp(1.3, 15, rise), MathUtils.lerp(4.6, 21, rise))
-      if (orbitPosition.current) camera.position.lerp(orbitPosition.current, journeyBlend(pose.progress, 0.9, 1))
+      if (orbitPosition.current) camera.position.lerp(orbitPosition.current, journeyBlend(pose.dock, 0.6, 1))
       camera.lookAt(
         MathUtils.lerp(0.2, -3 * (1 - pose.dock), rise),
         MathUtils.lerp(1.1, 0.5, rise),

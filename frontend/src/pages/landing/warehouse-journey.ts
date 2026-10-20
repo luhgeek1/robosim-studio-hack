@@ -7,6 +7,10 @@ export function journeyBlend(value: number, start: number, end: number) {
   const t = MathUtils.clamp((value - start) / (end - start), 0, 1)
   return t * t * (3 - 2 * t)
 }
+function smoothMinimum(a: number, b: number, range: number) {
+  const overlap = Math.max(range - Math.abs(a - b), 0) / range
+  return Math.min(a, b) - overlap * overlap * range * 0.25
+}
 type JourneyPose = { progress: number; dock: number; aspect: number; interactive: boolean; moving: boolean }
 export class WarehouseJourneyController {
   private surface: HTMLDivElement | null = null
@@ -24,6 +28,10 @@ export class WarehouseJourneyController {
   private wasActive = true
   private layoutUntil = 0
   private applicationShift = 0
+  private focusRelease = 1
+  private focusFrom = 1
+  private focusTo = 1
+  private focusStarted = 0
   private result: JourneyPose = { progress: 0, dock: 0, aspect: 1, interactive: false, moving: false }
   private readonly progress: MotionValue<number>
   private readonly onActive: (active: boolean) => void
@@ -48,7 +56,12 @@ export class WarehouseJourneyController {
     this.wake()
   }
   setSelection(selected: ObjectKind | null, explore: () => void) {
-    if (this.selected !== selected) this.layoutUntil = performance.now() + 800
+    if (this.selected !== selected) {
+      this.focusStarted = performance.now()
+      this.layoutUntil = this.focusStarted + 800
+      this.focusFrom = this.focusRelease
+      this.focusTo = selected ? 0 : 1
+    }
     this.selected = selected
     this.explore = explore
     this.wake()
@@ -79,14 +92,21 @@ export class WarehouseJourneyController {
     const height = node.offsetHeight
     const compact = width <= 800
     const staticView = this.reduced || this.fallback
+    const now = performance.now()
     const chapterRect = chapter.getBoundingClientRect()
     const destinationRect = destination.getBoundingClientRect()
     const application = destination.closest<HTMLElement>('.lp-applications')!
+    const previewRect = this.pauseButton ? destination.parentElement!.getBoundingClientRect() : null
+    const fadingCardOpacity =
+      this.selected !== null || now < this.layoutUntil
+        ? Number(getComputedStyle(destination.closest('.lp-object')!).opacity)
+        : 1
+    const previousShift = this.applicationShift
     const applicationTop = application.getBoundingClientRect().top - this.applicationShift
     const destinationTop = destinationRect.top - this.applicationShift
     const top = chapterRect.top + scrollY
     // Expanding a card changes its geometry, never the completed scroll timeline.
-    if (this.selected === null && performance.now() > this.layoutUntil) {
+    if (this.selected === null && now > this.layoutUntil) {
       this.endScroll = compact
         ? top + chapterRect.height - height * 0.15
         : destinationTop + scrollY - Math.max(150, (height - destinationRect.height) * 0.4)
@@ -101,19 +121,32 @@ export class WarehouseJourneyController {
     if (Math.abs(this.current - desired) < 0.00015) this.current = desired
     this.lastScroll = scrollY
     this.progress.set(this.current)
+    // Keep travelling after the model lands instead of pinning the whole row
+    // motionless, then abruptly handing it back to native scrolling.
+    const naturalEnd = applicationTop + scrollY - top - distance
+    const joinRange = 32
+    const pinStart = Math.max(96, naturalEnd + joinRange + height * 0.08)
+    const pinEnd = Math.max(pinStart - height * 0.12, naturalEnd + joinRange)
+    const travellingTop = MathUtils.lerp(pinStart, pinEnd, journeyBlend(this.current, 0.8, 0.94))
+    this.focusRelease = MathUtils.lerp(
+      this.focusFrom,
+      this.focusTo,
+      journeyBlend(now, this.focusStarted, this.focusStarted + 650),
+    )
     const applicationShift =
       compact || staticView
         ? 0
-        : Math.min(0, 96 - applicationTop) *
+        : (smoothMinimum(applicationTop, travellingTop, joinRange) - applicationTop) *
           journeyBlend(this.current, 0.66, 0.84) *
-          (1 - journeyBlend(this.current, 0.9, 1))
-    const applicationReveal = compact || staticView ? 1 : journeyBlend(this.current, 0.86, 0.94)
+          this.focusRelease
+    // Reveal the next section as the final paragraph leaves, before the model finishes docking.
+    const applicationReveal = compact || staticView ? 1 : journeyBlend(this.current, 0.755, 0.825)
     application.style.transform = applicationShift ? `translate3d(0,${applicationShift}px,0)` : 'none'
     application.style.opacity = String(applicationReveal)
     application.inert = applicationReveal < 0.5
     this.applicationShift = applicationShift
     const visibleDestinationTop = destinationTop + applicationShift
-    let dock = journeyBlend(this.current, 0.68, 0.98)
+    let dock = compact ? journeyBlend(this.current, 0.68, 0.98) : journeyBlend(this.current, 0.66, 0.86)
     let x = destinationRect.left * dock
     let y = visibleDestinationTop * dock
     let modelWidth = MathUtils.lerp(width, destinationRect.width, dock)
@@ -131,7 +164,7 @@ export class WarehouseJourneyController {
       modelWidth = destinationRect.width
       modelHeight = destinationRect.height
     }
-    const cardOpacity = dock === 1 ? Number(getComputedStyle(destination.closest('.lp-object')!).opacity) : 1
+    const cardOpacity = dock === 1 ? fadingCardOpacity : 1
     const visible =
       !document.hidden &&
       cardOpacity > 0.001 &&
@@ -147,15 +180,22 @@ export class WarehouseJourneyController {
     node.style.setProperty('--journey-shade', String(staticView ? 0 : 1 - journeyBlend(this.current, 0.08, 0.57)))
     node.parentElement!.style.setProperty(
       '--journey-row',
-      String(staticView ? 1 : journeyBlend(this.current, 0.82, 0.98)),
+      String(staticView ? 1 : journeyBlend(this.current, 0.76, 0.86)),
     )
-    node.parentElement!.style.setProperty('--journey-hero-chrome', String(1 - journeyBlend(this.current, 0.62, 0.82)))
-    node.parentElement!.style.setProperty('--journey-hero-visibility', this.current >= 0.82 ? 'hidden' : 'visible')
+    node.parentElement!.style.setProperty('--journey-hero-chrome', String(1 - journeyBlend(this.current, 0.62, 0.755)))
+    node.parentElement!.style.setProperty('--journey-hero-visibility', this.current >= 0.755 ? 'hidden' : 'visible')
+    chapter.style.setProperty(
+      '--journey-outro',
+      String(compact || staticView ? 1 : 1 - journeyBlend(this.current, 0.72, 0.78)),
+    )
+    chapter.style.setProperty(
+      '--journey-outro-visibility',
+      compact || staticView || this.current < 0.78 ? 'visible' : 'hidden',
+    )
     node.dataset.progress = this.current.toFixed(5)
     node.dataset.docked = String(interactive)
-    if (this.pauseButton) {
-      const preview = destination.parentElement!.getBoundingClientRect()
-      this.pauseButton.style.transform = `translate3d(${preview.right - 50}px,${preview.bottom - 40}px,0)`
+    if (this.pauseButton && previewRect) {
+      this.pauseButton.style.transform = `translate3d(${previewRect.right - 50}px,${previewRect.bottom + applicationShift - previousShift - 40}px,0)`
       this.pauseButton.hidden = !interactive
     }
     if (visible !== this.wasActive) {
@@ -166,7 +206,7 @@ export class WarehouseJourneyController {
     this.result.dock = dock
     this.result.aspect = modelWidth / Math.max(1, modelHeight)
     this.result.interactive = interactive
-    this.result.moving = this.current !== desired || performance.now() < this.layoutUntil
+    this.result.moving = this.current !== desired || now < this.layoutUntil
     return this.result
   }
 }
