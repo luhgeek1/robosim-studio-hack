@@ -14,7 +14,7 @@ test('landing → guest copy → real calculation → 2D/3D replay → report �
     .first()
     .click()
   expect((await session).status()).toBe(200)
-  await page.getByRole('link', { name: 'Начать со склада', exact: true }).click()
+  await page.getByRole('button', { name: 'Открыть демо', exact: true }).click()
   await expect(page).toHaveURL(/\/projects\/[\w-]+\/object$/)
   const projectPath = new URL(page.url()).pathname.replace('/object', '')
   await expect(page.getByRole('complementary', { name: 'Режим проекта' })).toBeVisible()
@@ -60,9 +60,8 @@ test('landing → guest copy → real calculation → 2D/3D replay → report �
 })
 
 test('own blank project → CSV preview → apply → manual edit → reset', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('link', { name: 'Создать проект', exact: true }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.goto('/demo?new=1')
+  await expect(page.getByRole('heading', { name: 'Новый проект оценки' })).toBeVisible()
   await page.getByLabel('Название', { exact: true }).fill('Собственный склад из CSV')
   await expect(page.getByRole('radio', { name: 'Пустой проект', exact: true })).toBeChecked()
   await page.getByRole('button', { name: 'Создать проект', exact: true }).click()
@@ -87,7 +86,7 @@ test('own blank project → CSV preview → apply → manual edit → reset', as
   await page.getByRole('button', { name: 'Сбросить', exact: true }).click()
   await page.getByRole('alertdialog').getByRole('button', { name: 'Сбросить демо', exact: true }).click()
   await expect(page).toHaveURL(/\/demo$/)
-  await expect(page.getByRole('heading', { name: 'От объекта до решения. Пройдите путь сами.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Новый проект оценки' })).toBeVisible()
   await page
     .getByRole('navigation', { name: 'Разделы', exact: true })
     .getByRole('link', { name: 'Проекты', exact: true })
