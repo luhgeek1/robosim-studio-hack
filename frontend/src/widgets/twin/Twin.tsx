@@ -219,7 +219,7 @@ export function Twin({
                   <Robots3D tracks={tracks} frame={frame} selectedId={selectedRobot} onSelect={onSelectRobot} />
                 )}
                 <MapCamera command={command} extent={{ w: frame.w, h: frame.h }} />
-                <LabelProjector labels={labels} refs={labelRefs} layout={layout} frame={frame} />
+                <LabelProjector labels={labels} refs={labelRefs} />
                 {captureRef && <FrameCapture capture={captureRef} />}
               </Suspense>
             </Canvas>
