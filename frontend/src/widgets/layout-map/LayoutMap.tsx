@@ -14,13 +14,12 @@ import {
   dotsPath,
   edgePaths,
   isMarkerKind,
-  polygonCenter,
   polygonPath,
-  polygonSize,
   scaleBarMeters,
   type MarkerKind,
 } from './geometry'
 import { MapLegend } from './MapLegend'
+import { ZoneLabels } from './ZoneLabels'
 import { useViewport, type FitPadding, type LayoutMapView } from './useViewport'
 
 export type LayoutHighlight = {
@@ -119,7 +118,7 @@ export function LayoutMap({
               {highlight && <HighlightLayer layout={layout} highlight={highlight} k={view.k} />}
               {typeof children === 'function' ? children(view) : children}
             </g>
-            <ZoneLabels layout={layout} view={view} />
+            <ZoneLabels layout={layout} view={view} size={size} />
           </svg>
         )}
 
@@ -162,6 +161,7 @@ export function LayoutMap({
         </div>
 
         <div
+          data-map-control
           className={cn(
             'pointer-events-none absolute flex gap-2',
             infoCorner === 'bottom' ? 'inset-x-2 bottom-2 items-end justify-between' : 'top-4 left-4 items-start',
@@ -304,52 +304,6 @@ function HighlightLayer({ layout, highlight, k }: { layout: LayoutGeometry; high
         .map((n) => (
           <circle key={n.id} cx={n.x} cy={n.y} r={7 / k} strokeWidth={2} {...nonScaling} />
         ))}
-    </g>
-  )
-}
-
-const LABEL_CHAR_PX = 6.6
-const LABEL_TOP_MIN_PX = 44
-const LABEL_TOP_OFFSET_PX = 10
-
-function ZoneLabels({ layout, view }: { layout: LayoutGeometry; view: LayoutMapView }) {
-  const items = useMemo(
-    () =>
-      layout.zones
-        .filter((z) => z.kind !== 'corridor')
-        .map((z) => ({ id: z.id, name: z.name, center: polygonCenter(z.polygon), size: polygonSize(z.polygon) })),
-    [layout.zones],
-  )
-  return (
-    <g pointerEvents="none" fontSize={11} fontWeight={600} textAnchor="middle" dominantBaseline="middle">
-      {items.map((item) => {
-        const widthPx = item.size[0] * view.k
-        const heightPx = item.size[1] * view.k
-        if (heightPx < 14 || widthPx < 36) return null
-        const fits = item.name.length * LABEL_CHAR_PX < widthPx - 8
-        // Docks, chargers and stations sit on the zone's middle line: a tall zone takes its name at the top.
-        const top = heightPx >= LABEL_TOP_MIN_PX
-        const y = top
-          ? (item.center[1] - item.size[1] / 2) * view.k + view.ty + LABEL_TOP_OFFSET_PX
-          : item.center[1] * view.k + view.ty
-        const text = fits
-          ? item.name
-          : `${item.name.slice(0, Math.max(3, Math.floor((widthPx - 8) / LABEL_CHAR_PX) - 1))}…`
-        return (
-          <text
-            key={item.id}
-            x={item.center[0] * view.k + view.tx}
-            y={y}
-            fill="var(--foreground)"
-            stroke="var(--card)"
-            strokeWidth={3}
-            paintOrder="stroke"
-            strokeLinejoin="round"
-          >
-            {text}
-          </text>
-        )
-      })}
     </g>
   )
 }

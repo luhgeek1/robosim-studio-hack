@@ -106,7 +106,7 @@ export function Twin({
   const span = Math.max(frame.w, frame.h)
 
   return (
-    <div className={`@container relative h-full w-full overflow-hidden ${className}`}>
+    <div data-map-host className={`@container relative h-full w-full overflow-hidden ${className}`}>
       {switcher && (
         <div data-map-control className="absolute top-4 right-4 z-20">
           <Segmented
