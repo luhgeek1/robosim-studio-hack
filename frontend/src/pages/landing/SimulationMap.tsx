@@ -114,6 +114,8 @@ export default function SimulationMap({
           fallback
         ) : (
           <Canvas
+            // Canvas defaults to pointer-events: auto, overriding the flight surface.
+            style={{ pointerEvents: 'inherit' }}
             resize={{ scroll: false, offsetSize: true }}
             camera={JOURNEY_CAMERA}
             dpr={[1, 1.5]}

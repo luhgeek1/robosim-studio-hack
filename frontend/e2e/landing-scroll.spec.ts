@@ -1,5 +1,29 @@
 import { expect, test } from '@playwright/test'
 
+test('hero text clicks do not open the warehouse or move its model', async ({ page }) => {
+  await page.goto('/')
+  const surface = page.locator('.cm-shared-warehouse')
+  await expect(surface).toHaveAttribute('data-ready', 'true')
+  await page.evaluate(() => document.fonts.ready)
+  const title = page.locator('#landing-title')
+  await expect(title).toBeVisible()
+  await expect(title).toHaveCSS('opacity', '1')
+  const before = await surface.evaluate((node) => ({ transform: node.style.transform, scroll: scrollY }))
+  const bounds = (await title.boundingBox())!
+  const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 }
+  const hitsModel = await page.evaluate(
+    ({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest('.cm-shared-warehouse')),
+    point,
+  )
+  expect(hitsModel).toBe(false)
+  await page.mouse.click(point.x, point.y)
+  // Card opening waits for its exit animation before changing the layout.
+  await page.waitForTimeout(1000)
+  await expect(page.locator('.lp-objects--focused')).toHaveCount(0)
+  await expect(surface).toHaveAttribute('data-docked', 'false')
+  expect(await surface.evaluate((node) => ({ transform: node.style.transform, scroll: scrollY }))).toEqual(before)
+})
+
 for (const viewport of [
   { width: 1366, height: 768 },
   { width: 1470, height: 1100 },

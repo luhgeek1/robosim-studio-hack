@@ -58,7 +58,7 @@ export class WarehouseJourneyController {
     this.wake()
   }
   exploreWarehouse() {
-    if (!this.selected) this.explore?.()
+    if (this.result.interactive && !this.selected) this.explore?.()
   }
   connectRenderer(invalidate: () => void) {
     this.invalidate = invalidate
