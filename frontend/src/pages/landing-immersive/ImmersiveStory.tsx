@@ -37,7 +37,7 @@ export function ImmersiveStory() {
       aria-label="Изнутри объекта — к решению"
     >
       <div className="im-stage">
-        {!staticView && <ProductFrame />}
+        {!staticView && <ProductFrame initiallyHidden />}
         <div className="im-world" aria-label="Архитектурная иллюстрация склада с мобильным роботом">
           <img
             className="im-scene-poster"

@@ -1,9 +1,9 @@
 import { ArrowUpRight, Check, Layers3, Route, SlidersHorizontal } from 'lucide-react'
 import { WAREHOUSE } from './scene-state'
 
-export function ProductFrame() {
+export function ProductFrame({ initiallyHidden = false }: { initiallyHidden?: boolean }) {
   return (
-    <div className="im-product-frame">
+    <div className="im-product-frame" inert={initiallyHidden}>
       <div className="im-product-bar">
         <span>
           РобоМера <i>/</i> Демонстрационный склад
@@ -60,11 +60,7 @@ export function ProductFrame() {
             <dd>5</dd>
           </div>
         </dl>
-        <span className="im-product-source">
-          Снимок демо от 19.10.2026.
-          <br />
-          Результат для заданных условий.
-        </span>
+        <span className="im-product-source">Снимок демо от 19.10.2026. Результат для заданных условий.</span>
       </div>
       <div className="im-product-footer">
         <span>Схема объясняет процесс. Точная планировка и события — в демо.</span>

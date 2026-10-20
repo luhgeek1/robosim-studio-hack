@@ -30,7 +30,7 @@
 @media (max-width: 760px) {
   .im-static-product {
     margin: 0 6% 50px;
-    height: 640px;
+    height: 700px;
   }
   .im-static-product .im-product-bar {
     height: 48px;
@@ -79,7 +79,7 @@
   .im-static-product .im-product-result {
     top: 383px;
     width: 100%;
-    bottom: 60px;
+    bottom: 80px;
     padding: 17px 18px;
   }
   .im-static-product .im-frame-number {
@@ -104,22 +104,22 @@
   }
   .im-static-product .im-product-source {
     margin-top: 10px;
-    font-size: 8px;
-  }
-  .im-static-product .im-product-source br {
-    display: none;
+    font-size: 11px;
   }
   .im-static-product .im-product-footer {
-    height: 60px;
+    height: 80px;
     padding: 10px 15px;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
   }
   .im-static-product .im-product-footer > span {
-    font-size: 7px;
-    max-width: 150px;
+    font-size: 10px;
+    line-height: 1.5;
   }
   .im-static-product .im-product-footer a {
-    font-size: 9px;
+    font-size: 11px;
     white-space: nowrap;
   }
 }

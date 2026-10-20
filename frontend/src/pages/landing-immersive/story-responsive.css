@@ -127,7 +127,7 @@
     object-position: 72% center;
   }
   .im-story-static .im-scene-shade {
-    background: linear-gradient(180deg, #171d1e 42%, #171d1e00 72%, #171d1e90 100%);
+    background: linear-gradient(180deg, #171d1e 40%, #171d1edb 73%, #171d1e20 86%, #171d1e90 100%);
   }
   .im-scroll-link {
     top: auto;
