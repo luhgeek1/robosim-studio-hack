@@ -95,65 +95,38 @@ export function ProjectStarter() {
 
             <div className="mt-5 grid overflow-hidden rounded-xl border border-line bg-popover md:grid-cols-[1.2fr_1fr]">
               <fieldset className="min-w-0 p-5 sm:p-6">
-                <legend className="sr-only">Начальные данные</legend>
-                <h3 className="mb-4 text-[16px] font-semibold">С чего начнём?</h3>
-                <div className="flex gap-1 rounded-lg bg-surface-2 p-1">
-                  {(
-                    [
-                      ['blank', 'Свои данные'],
-                      ['demo', 'Готовый пример'],
-                    ] as const
-                  ).map(([value, label]) => (
-                    <label key={value} className="relative flex min-w-0 flex-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name={`${id}-init`}
-                        value={value}
-                        checked={mode === value}
-                        disabled={value === 'demo' && !demos.length}
-                        onChange={() => setMode(value)}
-                        className="peer sr-only"
-                      />
-                      <span
-                        className={cn(
-                          'flex min-h-10 w-full items-center justify-center rounded-md px-2 text-center text-[13px] font-medium transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-ring peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
-                          mode === value ? 'bg-ink text-canvas' : 'text-ink-3 hover:text-ink',
-                        )}
-                      >
-                        {label}
-                      </span>
-                    </label>
+                <legend className="sr-only">Исходные данные</legend>
+                <h3 className="mb-2 text-[16px] font-semibold">Исходные данные</h3>
+                <div className="space-y-1">
+                  <DataOption
+                    id={`${id}-blank`}
+                    group={`${id}-init`}
+                    value="blank"
+                    title="Свои данные"
+                    description="Вручную или из Excel, CSV, JSON на следующем шаге."
+                    checked={mode === 'blank'}
+                    onChange={() => setMode('blank')}
+                  />
+                  {demos.map((item) => (
+                    <DataOption
+                      key={item.key}
+                      id={`${id}-${item.key}`}
+                      group={`${id}-init`}
+                      value={item.key}
+                      title={item.name}
+                      checked={mode === 'demo' && item.key === demo?.key}
+                      onChange={() => {
+                        draft.setDemoKey(item.key)
+                        setMode('demo')
+                      }}
+                    />
                   ))}
                 </div>
-                {mode === 'demo' && demo ? (
-                  <div className="mt-4">
-                    <Label htmlFor={`${id}-demo`} className="text-xs text-ink-3">
-                      Набор исходных данных
-                    </Label>
-                    <select
-                      id={`${id}-demo`}
-                      value={demo.key}
-                      onChange={(event) => draft.setDemoKey(event.target.value)}
-                      className="mt-2 h-11 w-full min-w-0 truncate rounded-md border border-input bg-transparent px-3 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {demos.map((item) => (
-                        <option key={item.key} value={item.key}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
-                    <details key={demo.key} className="mt-3 text-[12px] leading-relaxed text-ink-3">
-                      <summary className="cursor-pointer font-medium text-ink-2">Что входит в пример</summary>
-                      <p className="mt-2">
-                        {demo.description ?? 'Готовые параметры объекта. Их можно изменить после создания проекта.'}
-                      </p>
-                    </details>
-                  </div>
-                ) : (
-                  <p className="mt-4 max-w-100 text-[13px] leading-relaxed text-ink-3">
-                    Создайте объект с вашими параметрами. На следующем шаге укажите площадь, режим работы и объёмы
-                    операций вручную или загрузите Excel, CSV или JSON.
-                  </p>
+                {mode === 'demo' && demo?.description && (
+                  <details key={demo.key} className="mt-3 pl-8 text-[12px] leading-relaxed text-ink-3">
+                    <summary className="cursor-pointer font-medium text-ink-2">Описание примера</summary>
+                    <p className="mt-2">{demo.description}</p>
+                  </details>
                 )}
               </fieldset>
 
@@ -216,5 +189,53 @@ export function ProjectStarter() {
         </p>
       )}
     </section>
+  )
+}
+
+function DataOption({
+  id,
+  group,
+  value,
+  title,
+  description,
+  checked,
+  onChange,
+}: {
+  id: string
+  group: string
+  value: string
+  title: string
+  description?: string
+  checked: boolean
+  onChange: () => void
+}) {
+  return (
+    <label
+      className={cn(
+        'flex cursor-pointer items-start gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-surface-2',
+        checked && 'bg-surface-2',
+      )}
+    >
+      <input
+        type="radio"
+        name={group}
+        value={value}
+        checked={checked}
+        onChange={onChange}
+        aria-labelledby={`${id}-label`}
+        aria-describedby={description ? `${id}-description` : undefined}
+        className="mt-0.5 size-4 shrink-0 accent-ink focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ring"
+      />
+      <span className="min-w-0">
+        <span id={`${id}-label`} className="block text-[13px] leading-relaxed font-medium text-ink-2">
+          {title}
+        </span>
+        {description && (
+          <span id={`${id}-description`} className="mt-1 block text-[12px] leading-relaxed text-ink-3">
+            {description}
+          </span>
+        )}
+      </span>
+    </label>
   )
 }
