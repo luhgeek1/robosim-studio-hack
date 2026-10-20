@@ -1,7 +1,15 @@
 import type { ComponentType } from 'react'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
 import { AppShell } from '@/widgets/app-shell'
-import { NotFoundPage, RequireAccount, RequireAdmin, RequireAuth, RequireVendor, RootRedirect } from './guards'
+import {
+  NotFoundPage,
+  PublicHome,
+  RequireAccount,
+  RequireAdmin,
+  RequireAuth,
+  RequireVendor,
+  RootRedirect,
+} from './guards'
 import { RouteError } from './RouteError'
 
 const page = (loader: () => Promise<{ Component: ComponentType }>) => ({ lazy: loader })
@@ -35,7 +43,8 @@ const router = createBrowserRouter([
   {
     path: '/',
     errorElement: <RouteError />,
-    ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))),
+    Component: PublicHome,
+    children: [{ index: true, ...page(() => import('@/pages/landing').then((m) => ({ Component: m.LandingPage }))) }],
   },
   {
     Component: AppShell,

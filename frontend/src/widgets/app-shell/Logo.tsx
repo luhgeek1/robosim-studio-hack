@@ -1,12 +1,15 @@
 import { Link } from 'react-router'
+import { sessionHome, useSession } from '@/entities/session'
 
 export function Logo({ compact = false }: { compact?: boolean }) {
+  const { user } = useSession()
+  const home = sessionHome(user)
   return (
     <Link
-      to="/"
+      to={home.path}
       className="workspace-logo -mx-1 flex min-h-10 min-w-10 shrink-0 items-center gap-2.5 rounded-md px-1 select-none"
-      title="РобоМера — на главную"
-      aria-label="РобоМера — на главную"
+      title={home.label}
+      aria-label={home.label}
     >
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
         <path

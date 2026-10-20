@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ProviderButtons } from '@/features/auth/ProviderButtons'
 import { authErrorText, safeReturnPath } from '@/features/auth/links'
-import { useSession } from '@/entities/session'
+import { sessionHome, useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
 import { problemText } from '@/shared/api/problem'
 import type { User } from '@/shared/api/types'
@@ -22,8 +22,6 @@ const DEMO_ACCOUNTS = [
   { email: 'admin@robomera.demo', label: 'Администратор', hint: 'каталог, нормативы и пользователи' },
   { email: 'vendor@robomera.demo', label: 'Производитель', hint: 'свои карточки и спрос' },
 ]
-
-const HOME: Partial<Record<User['role'], string>> = { admin: '/admin', vendor: '/vendor' }
 
 type Mode = 'login' | 'register'
 const SWAP: Transition = { type: 'spring', stiffness: 170, damping: 26, mass: 1 }
@@ -51,7 +49,7 @@ export function LoginPage() {
   const target = (me: User) =>
     previousReturn && (back?.keepGuest || !back?.userId || back?.userId === me.id)
       ? previousReturn
-      : (requestedReturn ?? HOME[me.role] ?? '/projects')
+      : (requestedReturn ?? sessionHome(me).path)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [email, setEmail] = useState(reauth ? (user?.email ?? '') : '')
