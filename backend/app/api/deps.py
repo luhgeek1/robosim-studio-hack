@@ -15,7 +15,6 @@ from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser, Permission, Role
 from app.infra.client_ip import client_ip
 from app.infra.rate_limit import RateLimiter
-from app.infra.revocation import RevocationStore
 from app.service.auth.guests import ensure_guest_active
 from app.service.auth.session_store import live_session
 
@@ -59,13 +58,6 @@ RedisDep = Annotated["Redis", Depends(get_redis)]
 CodecDep = Annotated[TokenCodec, Depends(get_codec)]
 # scope="function": commit runs before the response is sent, so a failed commit is a 500, not a lost write.
 UowDep = Annotated[UnitOfWork, Depends(_uow, scope="function")]
-
-
-def get_revocations(redis: RedisDep) -> RevocationStore:
-    return RevocationStore(redis)
-
-
-RevocationsDep = Annotated[RevocationStore, Depends(get_revocations)]
 
 
 def client_kind(
@@ -151,7 +143,5 @@ async def verified_user(
     if (settings.email_enabled or settings.stage == "prod") and (
         row is None or row.email_verified_at is None
     ):
-        raise ForbiddenError(
-            "Подтвердите свою почту в настройках аккаунта, чтобы создавать команды и приглашать коллег"
-        )
+        raise ForbiddenError("Подтвердите почту в настройках аккаунта для работы с командами и приглашениями")
     return user

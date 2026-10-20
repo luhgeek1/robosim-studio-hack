@@ -128,3 +128,16 @@ async def test_expired_invitation_cannot_be_accepted_and_can_be_replaced(
         assert response.json()["id"] != invitation_id
     finally:
         await db.dispose()
+
+
+async def test_invitation_preview_needs_secret_and_does_not_accept(
+    client: AsyncClient, settings: Settings
+) -> None:
+    invitation_id, _, recipient, token = await _invite(client, settings)
+    url = f"/api/v1/auth/invitations/{invitation_id}/preview"
+    assert (await client.post(url, json={"token": "wrong" * 8})).status_code == 404
+    preview = await client.post(url, json={"token": token})
+    assert preview.status_code == 200
+    assert preview.json()["email"] == "vendor@robomera.demo"
+    assert preview.json()["organization_name"] == '<Команда & "друзья">'
+    assert (await client.get(ACCEPT, headers=recipient)).json()["items"][0]["id"] == invitation_id

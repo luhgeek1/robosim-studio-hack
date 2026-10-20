@@ -4,11 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, Path, Response, status
 
 from app.api.deps import SettingsDep, UowDep, rate_limited, registered_user, verified_user
+from app.api.schemas.account import EmailTokenRequest
 from app.api.schemas.organizations import (
     IncomingInvitation,
     IncomingInvitationList,
     InvitationAccept,
     InvitationCreate,
+    InvitationPreview,
     Organization,
     OrganizationDetail,
     OrganizationInvitation,
@@ -16,6 +18,7 @@ from app.api.schemas.organizations import (
     OrganizationWrite,
 )
 from app.domain.auth import CurrentUser
+from app.service.mail.invitations import preview_invitation
 from app.service.organizations import OrganizationService
 
 router = APIRouter(tags=["organizations"])
@@ -137,7 +140,7 @@ async def remove_member(
 @router.get(
     "/me/invitations", operation_id="listMyInvitations", summary="Приглашения в организации, ждущие ответа"
 )
-async def list_my_invitations(user: MemberDep, uow: UowDep) -> IncomingInvitationList:
+async def list_my_invitations(user: VerifiedDep, uow: UowDep) -> IncomingInvitationList:
     items = await OrganizationService(uow, user).incoming()
     return IncomingInvitationList(items=[IncomingInvitation.from_domain(i) for i in items])
 
@@ -167,7 +170,19 @@ async def accept_invitation(
     responses=NOT_FOUND,
 )
 async def decline_invitation(
-    invitation_id: Annotated[UUID, Path()], user: MemberDep, uow: UowDep
+    invitation_id: Annotated[UUID, Path()], user: VerifiedDep, uow: UowDep
 ) -> Response:
     await OrganizationService(uow, user).decline(invitation_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/auth/invitations/{invitation_id}/preview",
+    operation_id="previewInvitation",
+    summary="Открыть сведения приглашения по секретной ссылке",
+    dependencies=[Depends(rate_limited("invitation-preview"))],
+)
+async def invitation_preview(
+    invitation_id: Annotated[UUID, Path()], payload: EmailTokenRequest, uow: UowDep
+) -> InvitationPreview:
+    return InvitationPreview.model_validate(await preview_invitation(uow, invitation_id, payload.token))

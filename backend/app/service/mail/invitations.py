@@ -2,10 +2,14 @@ import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
 from html import escape
+from uuid import UUID
 
 from app.core.config import Settings
-from app.db.models import EmailOutbox, OrganizationInvitation
+from app.core.errors import NotFoundError
+from app.db.models import EmailOutbox, Organization, OrganizationInvitation
 from app.db.uow import UnitOfWork
+from app.domain.organization import InvitationStatus
+from app.domain.organization.models import InvitationPreview
 
 
 def token_hash(token: str) -> str:
@@ -47,4 +51,27 @@ def queue_invitation(
                 "text": text,
             },
         )
+    )
+
+
+async def preview_invitation(uow: UnitOfWork, invitation_id: UUID, token: str) -> InvitationPreview:
+    invitation = await uow.session.get(OrganizationInvitation, invitation_id)
+    if (
+        invitation is None
+        or invitation.status != InvitationStatus.PENDING
+        or not invitation.token_hash
+        or (invitation.expires_at is None or invitation.expires_at <= datetime.now(UTC))
+        or not secrets.compare_digest(invitation.token_hash, token_hash(token))
+    ):
+        raise NotFoundError("Приглашение не найдено, отозвано или срок ссылки истёк")
+    organization = await uow.session.get(Organization, invitation.organization_id)
+    if organization is None:
+        raise NotFoundError("Организация больше не существует")
+    inviter = await uow.users.get(invitation.invited_by) if invitation.invited_by else None
+    return InvitationPreview(
+        id=invitation.id,
+        email=invitation.email,
+        organization_name=organization.name,
+        invited_by_name=inviter.name if inviter else None,
+        expires_at=invitation.expires_at,
     )

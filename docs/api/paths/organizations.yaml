@@ -123,3 +123,18 @@ myInvitationDecline:
     responses:
       '204': {description: "Отклонено"}
       '404': {$ref: '../components/common.yaml#/responses/NotFound'}
+
+invitationPreview:
+  post:
+    tags: [organizations]
+    operationId: previewInvitation
+    summary: Открыть приглашение по секрету письма
+    description: Не принимает приглашение и не подтверждает почту. Сведения видит только обладатель секретной ссылки. Токен передаётся в JSON, не в query.
+    security: []
+    parameters: [{name: invitation_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    requestBody:
+      required: true
+      content: {application/json: {schema: {$ref: '../components/account.yaml#/EmailTokenRequest'}}}
+    responses:
+      '200': {description: Успешно, content: {application/json: {schema: {$ref: '../components/organizations.yaml#/InvitationPreview'}}}}
+      '404': {$ref: '../components/common.yaml#/responses/NotFound'}

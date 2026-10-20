@@ -102,3 +102,11 @@ class IncomingInvitation(ApiModel):
 
 class IncomingInvitationList(ApiModel):
     items: list[IncomingInvitation]
+
+
+class InvitationPreview(ApiModel):
+    id: UUID
+    email: EmailStr
+    organization_name: str
+    invited_by_name: str | None
+    expires_at: datetime

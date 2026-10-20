@@ -63,3 +63,12 @@ class IncomingInvitation:
     invited_by_email: str | None
     created_at: datetime
     requires_email_link: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class InvitationPreview:
+    id: UUID
+    email: str
+    organization_name: str
+    invited_by_name: str | None
+    expires_at: datetime

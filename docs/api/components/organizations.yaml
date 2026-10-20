@@ -98,3 +98,13 @@ IncomingInvitationList:
   required: [items]
   properties:
     items: {type: array, items: {$ref: '#/IncomingInvitation'}}
+
+InvitationPreview:
+  type: object
+  required: [id, email, organization_name, invited_by_name, expires_at]
+  properties:
+    id: {type: string, format: uuid}
+    email: {type: string, format: email}
+    organization_name: {type: string}
+    invited_by_name: {type: [string, 'null']}
+    expires_at: {type: string, format: date-time}
