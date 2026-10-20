@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, ChevronDown } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ProviderButtons } from '@/features/auth/ProviderButtons'
 import { accountReturnPath, authErrorText, safeReturnPath } from '@/features/auth/links'
@@ -130,11 +130,6 @@ export function LoginPage() {
               Продолжить без регистрации
             </Link>
           )}
-          <ProviderButtons
-            returnTo={previousReturn ?? requestedReturn ?? '/app'}
-            keepGuest={user?.role === 'guest'}
-            disabled={pending}
-          />
           {authError && (
             <p role="alert" className="mb-4 text-sm text-crit">
               {authError}
@@ -256,9 +251,20 @@ export function LoginPage() {
             </>
           )}
 
+          <ProviderButtons
+            returnTo={previousReturn ?? requestedReturn ?? '/app'}
+            keepGuest={user?.role === 'guest'}
+            disabled={pending}
+          />
           {mode === 'login' && (
-            <div className="mt-5 border-t border-line pt-4">
-              <h2 className="mb-2 text-xs font-medium text-ink-3">Демо-аккаунты</h2>
+            <details open className="group/demo mt-5 border-t border-line pt-3">
+              <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-2 rounded text-xs font-medium text-ink-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                <span>Демо-аккаунты</span>
+                <ChevronDown
+                  className="size-3.5 transition-transform group-open/demo:rotate-180 motion-reduce:transition-none"
+                  aria-hidden="true"
+                />
+              </summary>
               <div className="space-y-1">
                 {DEMO_ACCOUNTS.map((account) => (
                   <button
@@ -276,7 +282,7 @@ export function LoginPage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </details>
           )}
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-ink-3">
             <Link to="/catalog" className="underline underline-offset-4 hover:text-ink">

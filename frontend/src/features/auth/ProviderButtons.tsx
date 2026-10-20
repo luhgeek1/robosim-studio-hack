@@ -31,10 +31,15 @@ export function ProviderButtons({
   }
   if (!available.length)
     return providers.isError ? (
-      <p className="meta mb-4">Вход через сервисы временно недоступен. Используйте почту и пароль.</p>
+      <p className="meta mt-4">Вход через сервисы временно недоступен. Используйте почту и пароль.</p>
     ) : null
   return (
-    <div className="mb-4 space-y-3">
+    <div className="mt-4 space-y-3">
+      <div className="flex items-center gap-3 text-xs text-ink-3">
+        <span className="h-px flex-1 bg-line" aria-hidden="true" />
+        <span>или</span>
+        <span className="h-px flex-1 bg-line" aria-hidden="true" />
+      </div>
       <div className="grid grid-cols-2 gap-2">
         {available.map((p, index) => (
           <Button
@@ -59,11 +64,6 @@ export function ProviderButtons({
           {error}
         </p>
       )}
-      <div className="flex items-center gap-3 text-xs text-ink-3">
-        <span className="h-px flex-1 bg-line" aria-hidden="true" />
-        <span>или с почтой и паролем</span>
-        <span className="h-px flex-1 bg-line" aria-hidden="true" />
-      </div>
     </div>
   )
 }
