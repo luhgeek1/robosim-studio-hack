@@ -122,13 +122,16 @@ export class WarehouseJourneyController {
     if (Math.abs(this.current - desired) < 0.00015) this.current = desired
     this.lastScroll = scrollY
     this.progress.set(this.current)
-    // Keep travelling after the model lands instead of pinning the whole row
-    // motionless, then abruptly handing it back to native scrolling.
+    // Finish the entrance when the warehouse lands. Continuing to counter-scroll
+    // the row from the WebGL loop makes it bounce against native scrolling.
+    const dockEnd = 0.86
+    const entranceProgress = Math.min(this.current, dockEnd)
+    const entranceTop = applicationTop + scrollY - Math.min(scrollY, top + distance * dockEnd)
     const naturalEnd = applicationTop + scrollY - top - distance
     const joinRange = 32
     const pinStart = Math.max(96, naturalEnd + joinRange + height * 0.08)
     const pinEnd = Math.max(pinStart - height * 0.12, naturalEnd + joinRange)
-    const travellingTop = MathUtils.lerp(pinStart, pinEnd, journeyBlend(this.current, 0.8, 0.94))
+    const travellingTop = MathUtils.lerp(pinStart, pinEnd, journeyBlend(entranceProgress, 0.8, 0.94))
     this.focusRelease = MathUtils.lerp(
       this.focusFrom,
       this.focusTo,
@@ -137,17 +140,20 @@ export class WarehouseJourneyController {
     const applicationShift =
       compact || staticView
         ? 0
-        : (smoothMinimum(applicationTop, travellingTop, joinRange) - applicationTop) *
+        : (smoothMinimum(entranceTop, travellingTop, joinRange) - entranceTop) *
           journeyBlend(this.current, 0.66, 0.84) *
           this.focusRelease
     // Reveal the next section as the final paragraph leaves, before the model finishes docking.
     const applicationReveal = compact || staticView ? 1 : journeyBlend(this.current, 0.755, 0.825)
     application.style.transform = applicationShift ? `translate3d(0,${applicationShift}px,0)` : 'none'
+    // The following section must follow the visible bottom, not the old layout
+    // position. Once docked both offsets stay constant during native scrolling.
+    application.style.marginBottom = `${applicationShift}px`
     application.style.opacity = String(applicationReveal)
     application.inert = applicationReveal < 0.5
     this.applicationShift = applicationShift
     const visibleDestinationTop = destinationTop + applicationShift
-    let dock = compact ? journeyBlend(this.current, 0.68, 0.98) : journeyBlend(this.current, 0.66, 0.86)
+    let dock = compact ? journeyBlend(this.current, 0.68, 0.98) : journeyBlend(this.current, 0.66, dockEnd)
     let x = destinationRect.left * dock
     let y = visibleDestinationTop * dock
     let modelWidth = MathUtils.lerp(width, destinationRect.width, dock)

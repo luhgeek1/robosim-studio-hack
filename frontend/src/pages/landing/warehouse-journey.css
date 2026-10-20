@@ -1,4 +1,6 @@
 .cm-experience {
+  /* Contain the entrance's negative margin so the dark background ends with the cards. */
+  display: flow-root;
   position: relative;
   isolation: isolate;
   background: #0c1213;
