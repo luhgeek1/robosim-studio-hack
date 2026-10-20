@@ -7,6 +7,8 @@ primary_region = "arn"
 [env]
   RS_STAGE = "prod"
   RS_COOKIE_SECURE = "true"
+  RS_PUBLIC_WEB_URL = "https://prooood.ru"
+  RS_PUBLIC_API_URL = "https://prooood.ru"
   RS_DOCS_ENABLED = "true"
   RS_JOBS_BACKEND = "arq"
   RS_CLIENT_IP_HEADER = "X-Robomera-Client-IP"
