@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from dataclasses import replace
 from io import BytesIO
 from typing import Any
 from zipfile import BadZipFile
@@ -84,11 +85,14 @@ def parse_template(workbook: Workbook, matcher: ParameterMatcher) -> ParsedImpor
         unit = clean_unit(padded[unit_at]) if unit_at is not None else None
         label = cell_text(padded[name_at]) if name_at is not None else key
         rows.append(RawRow(label or key, value, unit, location, key))
-    return build_import(ImportSourceKind.XLSX_TEMPLATE, rows, matcher)
+    return replace(
+        build_import(ImportSourceKind.XLSX_TEMPLATE, rows, matcher),
+        object_type=template_object_type(workbook),
+    )
 
 
 def _score(result: ParsedImport) -> float:
-    return sum(item.confidence for item in result.mapped)
+    return sum(item.confidence for item in result.rows)
 
 
 def parse_freeform(workbook: Workbook, matcher: ParameterMatcher) -> ParsedImport:
@@ -110,4 +114,4 @@ def parse_freeform(workbook: Workbook, matcher: ParameterMatcher) -> ParsedImpor
         for other, result in candidates
         if other != title
     ]
-    return ParsedImport(best.source_kind, best.mapped, best.unmapped, [*best.warnings, *skipped])
+    return replace(best, warnings=[*best.warnings, *skipped])

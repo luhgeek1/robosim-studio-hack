@@ -234,3 +234,40 @@ def test_unsupported_format(warehouse: ObjectTypeDetail, filename: str) -> None:
 def test_broken_xlsx(warehouse: ObjectTypeDetail) -> None:
     with pytest.raises(ImportFormatError):
         parse_file(b"not a zip", "broken.xlsx", warehouse.parameters)
+
+
+def test_review_preserves_invalid_duplicate_and_unknown_rows(warehouse: ObjectTypeDetail) -> None:
+    payload = [
+        {"key": "area_m2", "value": "много"},
+        {"key": "area_m2", "value": 20000},
+        {"name": "Неизвестная площадь", "value": 12000},
+    ]
+    result = parse_file(json.dumps(payload).encode(), "review.json", warehouse.parameters)
+    assert len(result.rows) == 3
+    assert result.rows[0].raw_value == "много"
+    assert result.rows[0].key == result.rows[1].key == "area_m2"
+    assert result.rows[1].location == "JSON, элемент 2"
+    assert result.rows[2].key is None
+
+
+def test_project_export_import_extracts_params(warehouse: ObjectTypeDetail) -> None:
+    payload = {
+        "project": {"object_type": "warehouse", "name": "Проверка"},
+        "params": {"area_m2": {"value": 20000, "unit": "м²", "status": "user"}},
+        "exported_at": "2026-10-20",
+    }
+    result = parse_file(json.dumps(payload).encode(), "export.json", warehouse.parameters)
+    assert result.object_type == "warehouse"
+    assert result.rows[0].key == "area_m2"
+    assert len(result.rows) == 1
+    assert result.mapped[0].value == 20000
+
+
+def test_json_repeated_keys_are_not_silently_overwritten(warehouse: ObjectTypeDetail) -> None:
+    with pytest.raises(ImportFormatError, match="повторяется"):
+        parse_file(b'{"area_m2": 20000, "area_m2": 1}', "duplicate.json", warehouse.parameters)
+
+
+def test_broken_json_reports_line_and_column(warehouse: ObjectTypeDetail) -> None:
+    with pytest.raises(ImportFormatError, match="строка 2, столбец"):
+        parse_file(b'{\n"area_m2": 20000,}', "broken.json", warehouse.parameters)

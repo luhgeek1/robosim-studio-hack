@@ -3,6 +3,7 @@ import io
 import json
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import replace
 from itertools import islice
 from pathlib import PurePath
 from typing import Any
@@ -126,15 +127,36 @@ def _json_rows(data: Any, warnings: list[str]) -> list[RawRow]:
 
 def _parse_json(content: bytes, matcher: ParameterMatcher, *, bounded: bool = False) -> ParsedImport:
     try:
-        data = json.loads(_decode(content))
+        data = json.loads(_decode(content), object_pairs_hook=_unique_fields)
     except json.JSONDecodeError as error:
-        message = f"Файл не является корректным JSON: строка {error.lineno}, {error.msg}"
+        message = (
+            f"Некорректный JSON: строка {error.lineno}, столбец {error.colno}. "
+            "Проверьте кавычки, запятые и скобки; затем загрузите файл снова"
+        )
         raise ImportFormatError(message) from error
     warnings: list[str] = []
+    object_type = None
+    if isinstance(data, dict) and isinstance(data.get("params"), dict | list):
+        project = data.get("project", {})
+        object_type = project.get("object_type") if isinstance(project, dict) else None
+        data = data["params"]
+        warnings.append("Из снимка проекта загружаются параметры объекта; расчёты и сценарии не переносятся")
     if bounded and isinstance(data, dict | list) and len(data) > 10_000:
         raise ImportFormatError("Лимит демо: до 10 000 полей в JSON")
     rows = _json_rows(data, warnings)
-    return build_import(ImportSourceKind.JSON, rows, matcher, warnings)
+    return replace(build_import(ImportSourceKind.JSON, rows, matcher, warnings), object_type=object_type)
+
+
+def _unique_fields(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ImportFormatError(
+                f"JSON: поле «{key}» повторяется. Уберите повтор или используйте список [{{key, value}}], "
+                "чтобы выбрать нужную строку при импорте"
+            )
+        result[key] = value
+    return result
 
 
 def parse_file(
