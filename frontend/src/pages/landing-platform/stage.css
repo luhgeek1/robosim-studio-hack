@@ -276,3 +276,8 @@
   background: #98ad82;
   margin: 0 9px 2px 0;
 }
+.platform-world-note {
+  background: #223026;
+  padding: 6px 9px;
+  border-radius: 4px;
+}

@@ -34,7 +34,10 @@ function usePlatformExample() {
   return { query, before: sweep?.by_formula, after: verified ? sweep.by_simulation : undefined }
 }
 
-function ScenePoster() {
+function ScenePoster({ onFallback }: { onFallback?: () => void }) {
+  useEffect(() => {
+    onFallback?.()
+  }, [onFallback])
   return (
     <img
       className="platform-scene-poster"
@@ -131,7 +134,7 @@ export function ProductStage() {
             <span>Цифровая модель</span>
             <span>Иллюстрация процессов</span>
           </div>
-          <SceneBoundary fallback={<ScenePoster />}>
+          <SceneBoundary fallback={<ScenePoster onFallback={onFailure} />}>
             {failed ? (
               <ScenePoster />
             ) : (
@@ -143,24 +146,26 @@ export function ProductStage() {
           <div className="platform-world-note">
             <span /> Приёмка <ArrowRight size={12} /> Хранение <ArrowRight size={12} /> Отгрузка
           </div>
-          <div className="platform-world-controls">
-            <button
-              aria-pressed={plan}
-              onClick={() => {
-                motion.current.plan = !plan
-                setPlan(!plan)
-              }}
-            >
-              <Maximize2 size={14} /> {plan ? 'Перспектива' : 'Вид сверху'}
-            </button>
-            <button
-              aria-label={paused ? 'Включить движение модели' : 'Приостановить движение модели'}
-              aria-pressed={paused}
-              onClick={() => setPaused(!paused)}
-            >
-              {paused ? <CirclePlay size={17} /> : <CirclePause size={17} />}
-            </button>
-          </div>
+          {!failed && (
+            <div className="platform-world-controls">
+              <button
+                aria-pressed={plan}
+                onClick={() => {
+                  motion.current.plan = !plan
+                  setPlan(!plan)
+                }}
+              >
+                <Maximize2 size={14} /> {plan ? 'Перспектива' : 'Вид сверху'}
+              </button>
+              <button
+                aria-label={paused ? 'Включить движение модели' : 'Приостановить движение модели'}
+                aria-pressed={paused}
+                onClick={() => setPaused(!paused)}
+              >
+                {paused ? <CirclePlay size={17} /> : <CirclePause size={17} />}
+              </button>
+            </div>
+          )}
         </div>
         <aside className="platform-stage-result">
           <span className="platform-mini-label">Результат примера</span>

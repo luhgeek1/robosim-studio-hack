@@ -1,0 +1,614 @@
+.platform-workflow {
+  padding-block: 72px 84px;
+}
+.platform-section-heading {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  align-items: end;
+  gap: 70px;
+  margin-bottom: 40px;
+}
+.platform-section-heading h2,
+.platform-faq h2 {
+  font-size: clamp(32px, 3.4vw, 48px);
+  line-height: 1.14;
+}
+.platform-section-heading h2 span,
+.platform-faq h2 span {
+  color: #a1b09f;
+}
+.platform-section-heading > p {
+  max-width: 415px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #b4c0b6;
+}
+.platform-pipeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid #58654f;
+  border-bottom: 1px solid var(--pf-line);
+  margin-bottom: 38px;
+}
+.platform-pipeline > a {
+  padding: 25px 24px 28px;
+  transition: background 0.2s;
+}
+.platform-pipeline > a:first-child {
+  padding-left: 0;
+}
+.platform-pipeline > a + a {
+  border-left: 1px solid var(--pf-line);
+}
+.platform-pipeline > a:hover {
+  background: #243128;
+}
+.platform-pipeline > a > div {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  margin-bottom: 27px;
+  color: #b7c7aa;
+}
+.platform-pipeline > a > div > span {
+  font: 10px var(--font-mono);
+  color: #8c9f8a;
+}
+.platform-pipeline > a > div > svg:last-child {
+  margin-left: auto;
+}
+.platform-pipeline h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.platform-pipeline p {
+  font-size: 12px;
+  color: var(--pf-muted);
+  line-height: 1.6;
+}
+.platform-capabilities {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 24px;
+}
+.platform-match {
+  background: #dde0d2;
+  color: #253329;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  min-height: 355px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.platform-feature-copy {
+  padding: 32px 0 32px 32px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+.platform-feature-copy h3,
+.platform-trace h3 {
+  font-size: 30px;
+  line-height: 1.16;
+}
+.platform-feature-copy h3 span {
+  color: #67755e;
+}
+.platform-feature-copy p {
+  font-size: 12px;
+  color: #5d6a55;
+  line-height: 1.8;
+  margin: 22px 0;
+  max-width: 230px;
+}
+.platform-feature-copy a,
+.platform-trace a,
+.platform-economics > a,
+.platform-report-copy a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: auto;
+  font-size: 11px;
+}
+.platform-robot-detail {
+  position: relative;
+  min-width: 0;
+}
+.platform-portrait-world {
+  position: absolute;
+  inset: 30px -35px 5px -45px;
+}
+.platform-portrait-world img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.platform-model-tag {
+  position: absolute;
+  top: 30px;
+  left: 20px;
+  font-size: 8px;
+  color: #68745e;
+}
+.platform-match-checks {
+  position: absolute;
+  bottom: 28px;
+  left: 26px;
+  right: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.platform-match-checks > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  background: #c6cfbc;
+  font-size: 8px;
+  border-radius: 3px;
+  color: #43563a;
+}
+.platform-trace {
+  padding: 31px;
+  border-radius: 10px;
+  background: #27332c;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.platform-trace > svg {
+  position: absolute;
+  right: 30px;
+  top: 33px;
+  color: #acbf9e;
+}
+.platform-trace h3 {
+  font-size: 25px;
+}
+.platform-trace > p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #b4c2b1;
+  margin: 17px 0;
+  max-width: 305px;
+}
+.platform-trace-lines {
+  display: grid;
+  font-size: 10px;
+  margin-bottom: 24px;
+}
+.platform-trace-lines > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #43513e;
+}
+.platform-trace-lines > div > svg {
+  margin-left: auto;
+  color: #a5ba91;
+}
+.platform-trace-dot {
+  width: 5px;
+  height: 5px;
+  background: #98ae82;
+  border-radius: 50%;
+}
+.platform-trace a {
+  color: #c8d5bc;
+}
+.platform-industries {
+  background: #e9eadf;
+  color: #253128;
+  padding: 72px 0 27px;
+}
+.platform-industries .platform-section-heading h2 span {
+  color: #718069;
+}
+.platform-industries .platform-section-heading > p {
+  color: #606e56;
+}
+.platform-industry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid #b5bfaa;
+}
+.platform-industry-grid article {
+  min-width: 0;
+  padding: 26px 26px 30px;
+  border-right: 1px solid #bbc4af;
+}
+.platform-industry-grid article:first-child {
+  padding-left: 0;
+}
+.platform-industry-grid article:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+.platform-industry-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.platform-industry-title h3 {
+  font-size: 26px;
+}
+.platform-industry-title svg {
+  color: #849275;
+}
+.platform-industry-model {
+  min-width: 0;
+  overflow: hidden;
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  mix-blend-mode: multiply;
+}
+.platform-industry-grid article:hover .platform-industry-model {
+  min-width: 0;
+  overflow: hidden;
+  transform: translateY(-8px);
+}
+.platform-industry-grid h4 {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 0 12px;
+}
+.platform-industry-grid p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #626f59;
+  max-width: 315px;
+}
+.platform-industry-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 22px;
+}
+.platform-industry-tags > span {
+  font-size: 9px;
+  padding: 5px 8px;
+  border: 1px solid #b6c1a9;
+  border-radius: 3px;
+}
+.platform-industries-foot {
+  border-top: 1px solid #b5bfaa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  padding-top: 25px;
+  font-size: 10px;
+  color: #5b6b50;
+}
+.platform-industries-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 12px;
+  color: #2f4629;
+  white-space: nowrap;
+}
+.platform-decision {
+  padding-block: 80px;
+}
+.platform-decision-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+.platform-economics {
+  border: 1px solid #43533d;
+  border-radius: 10px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+}
+.platform-economics-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.platform-economics-title h3 {
+  font-size: 24px;
+}
+.platform-economics-title > span {
+  color: #b5c5a7;
+  font-size: 9px;
+  border: 1px solid #506448;
+  border-radius: 4px;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+.platform-finance-numbers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 34px 0;
+}
+.platform-finance-numbers > div {
+  display: grid;
+  gap: 9px;
+}
+.platform-finance-numbers span {
+  font-size: 10px;
+  color: #a9b99f;
+}
+.platform-finance-numbers strong {
+  font-size: 29px;
+  font-weight: 450;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+.platform-scenarios {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-block: 1px solid #40503a;
+  padding-block: 22px;
+  gap: 17px;
+}
+.platform-scenarios span {
+  color: #e2b294;
+  font-size: 12px;
+}
+.platform-scenarios p {
+  font-size: 9px;
+  line-height: 1.8;
+  color: #a5b49a;
+  margin-top: 10px;
+}
+.platform-economics .platform-example-note {
+  font-size: 9px;
+  color: #a6b79c;
+  line-height: 1.8;
+  margin: 18px 0 28px;
+}
+.platform-economics > a {
+  color: #f0b18c;
+}
+.platform-report {
+  background: #2c3b2f;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  min-height: 365px;
+}
+.platform-report-sheets {
+  position: relative;
+  min-width: 0;
+  align-self: stretch;
+  perspective: 900px;
+}
+.platform-sheet {
+  position: absolute;
+  padding: 22px;
+  width: 216px;
+  height: 290px;
+  box-shadow: 8px 18px 35px #10201060;
+  color: #30432c;
+}
+.platform-sheet-back {
+  top: 38px;
+  left: 15px;
+  background: #b5c7a4;
+  transform: rotate(-12deg);
+  transition: transform 0.7s;
+}
+.platform-sheet-back > span {
+  font-size: 8px;
+  display: block;
+  margin-bottom: 30px;
+}
+.platform-sheet-back > b {
+  font-size: 15px;
+  display: block;
+  margin-bottom: 18px;
+}
+.platform-sheet-back > i {
+  display: block;
+  height: 14px;
+  border-bottom: 1px solid #93aa7e;
+}
+.platform-sheet-front {
+  top: 64px;
+  left: 47px;
+  background: #e9eadd;
+  transform: rotate(5deg);
+  transition: transform 0.7s;
+}
+.platform-sheet-front > svg {
+  margin-bottom: 20px;
+  color: #b66642;
+}
+.platform-sheet-front > span {
+  font-size: 7px;
+  display: block;
+  margin-bottom: 17px;
+}
+.platform-sheet-front > b {
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+.platform-sheet-rule {
+  width: 100%;
+  height: 1px;
+  background: #c3cdb5;
+  margin: 18px 0 10px;
+}
+.platform-sheet-front > p {
+  font-size: 6px;
+}
+.platform-sheet-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  margin-top: 20px;
+}
+.platform-sheet-footer > span {
+  color: #778965;
+}
+.platform-report:hover .platform-sheet-front {
+  transform: rotate(0deg) translateY(-8px);
+}
+.platform-report:hover .platform-sheet-back {
+  transform: rotate(-16deg) translateX(-7px);
+}
+.platform-report-copy {
+  padding: 33px 25px 32px 12px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+.platform-report-copy h3 {
+  font-size: 25px;
+  line-height: 1.2;
+}
+.platform-report-copy p {
+  color: #b6c7aa;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 19px 0;
+}
+.platform-report-copy a {
+  color: #d5e5c7;
+  font-size: 10px;
+}
+.platform-faq {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 70px;
+  padding: 0 0 85px;
+}
+.platform-faq h2 {
+  font-size: 33px;
+}
+.platform-faq details {
+  border-bottom: 1px solid #3d4e37;
+  padding: 0 0 20px;
+  margin-bottom: 21px;
+}
+.platform-faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding-block: 5px;
+}
+.platform-faq summary::-webkit-details-marker {
+  display: none;
+}
+.platform-faq summary > span {
+  width: 13px;
+  height: 13px;
+  position: relative;
+  flex-shrink: 0;
+}
+.platform-faq summary > span:before,
+.platform-faq summary > span:after {
+  content: '';
+  position: absolute;
+  background: #9bae8d;
+  top: 6px;
+  left: 0;
+  width: 13px;
+  height: 1px;
+}
+.platform-faq summary > span:after {
+  transform: rotate(90deg);
+  transition: transform 0.2s;
+}
+.platform-faq details[open] summary > span:after {
+  transform: rotate(0);
+}
+.platform-faq details > p {
+  padding-top: 15px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #b0bfa7;
+  max-width: 530px;
+}
+.platform-final {
+  background: #ec7950;
+  color: #253027;
+  padding: 62px 0;
+  position: relative;
+  overflow: hidden;
+}
+.platform-final > .platform-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.platform-final h2 {
+  font-size: clamp(37px, 4.4vw, 63px);
+  line-height: 1.06;
+}
+.platform-final h2 > span {
+  color: #7e3f28;
+}
+.platform-final p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin-top: 23px;
+  color: #663e29;
+}
+.platform-final .platform-actions {
+  margin-top: 25px;
+}
+.platform-final .platform-button {
+  background: #233128;
+  color: #f3ebd5;
+}
+.platform-final .platform-button:hover {
+  background: #344c39;
+}
+.platform-final .platform-actions > a:last-child {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.platform-final-mark {
+  width: 330px;
+  height: 330px;
+  color: #b85b37;
+  margin-right: 45px;
+}
+.platform-final-mark svg {
+  width: 100%;
+  height: 100%;
+}
+.platform-footer {
+  padding-block: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+}
+.platform-footer > span {
+  font-size: 11px;
+  color: #a1b298;
+}
+.platform-footer > a:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #a1b298;
+}
