@@ -1,18 +1,21 @@
-import { ArrowRight, Boxes, Check, Hospital, Plane, Warehouse } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Building2, ChevronDown, HeartPulse, Plane, Warehouse } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useDemo, useDemoList, type DemoSnapshot } from '@/entities/demo/api'
-import { DEMO_PROJECTS } from '@/entities/demo/navigation'
+import { useWorkspace } from '@/entities/organization'
+import { OBJECT_TYPE_LABEL, useCreateProject } from '@/entities/project'
 import { useJourneyStore } from '@/entities/project/journey'
+import { useObjectTypes } from '@/entities/reference'
 import { useSession } from '@/entities/session'
-import { CreateProjectDialog } from '@/features/project-create'
+import { ProjectChoice } from '@/features/project-create'
 import { api } from '@/shared/api/client'
-import type { Project } from '@/shared/api/types'
-import { formatNumber, formatRub, formatYears, pluralRu } from '@/shared/lib/format'
+import type { ObjectTypeKey, Project } from '@/shared/api/types'
 import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
+import { Label } from '@/shared/ui/label'
 import { ErrorBlock, LoadingBlock, Spinner } from '@/shared/ui/states'
 
-const ICONS = [Warehouse, Boxes, Hospital, Plane]
+const OBJECT_TYPE_ICON = { warehouse: Warehouse, airport: Plane, hospital: HeartPulse, custom: Building2 }
 const DESTINATION: Record<string, string> = {
   decision: 'comparison',
   evidence: 'matching',
@@ -25,10 +28,8 @@ export function DemoPage() {
   const { status, user, startGuest } = useSession()
   const { demoKey } = useParams()
   const [params] = useSearchParams()
-  const list = useDemoList()
   const [error, setError] = useState<unknown>(null)
   const starting = useRef(false)
-  const [ownOpen, setOwnOpen] = useState(params.get('new') === '1')
   useEffect(() => {
     if (status === 'restoring' || user || starting.current || error) return
     starting.current = true
@@ -42,104 +43,167 @@ export function DemoPage() {
   if (status === 'restoring' || !user) return <LoadingBlock className="p-8" label="Открываем гостевое пространство…" />
   if (demoKey)
     return <OpenExample key={`${user.id}:${demoKey}`} demoKey={demoKey} userId={user.id} step={params.get('step')} />
+  return <DemoSetup key={`${user.id}:${params.get('new')}`} initialBlank={params.get('new') === '1'} />
+}
+
+function DemoSetup({ initialBlank }: { initialBlank: boolean }) {
+  const navigate = useNavigate()
+  const objectTypes = useObjectTypes()
+  const examples = useDemoList()
+  const create = useCreateProject()
+  const workspace = useWorkspace()
+  const [objectType, setObjectType] = useState<ObjectTypeKey>('warehouse')
+  const [selection, setSelection] = useState<string | null>(initialBlank ? 'blank' : null)
+  const [name, setName] = useState('')
+  const selected = objectTypes.data?.find((type) => type.key === objectType)
+  const demos = selected?.demo_projects ?? []
+  const demo = demos.find((item) => item.key === selection) ?? demos[0]
+  const blank = selection === 'blank' || demos.length === 0
+  const details = examples.data?.find((item) => item.key === demo?.key)
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!selected || create.isPending) return
+    if (!blank && demo) {
+      navigate(`/demo/${demo.key}`)
+      return
+    }
+    try {
+      const project = await create.mutateAsync({
+        name: name.trim() || `Новый объект: ${OBJECT_TYPE_LABEL[objectType]}`,
+        object_type: objectType,
+        init: { mode: 'blank' },
+        organization_id: workspace.id,
+      })
+      navigate(`/projects/${project.id}`)
+    } catch {
+      // The mutation error is shown beside the form so its inputs remain available.
+    }
+  }
+
   return (
-    <div className="mx-auto w-full max-w-300 px-4 pt-10 pb-16 sm:px-6 sm:pt-16">
-      <div className="max-w-200">
-        <p className="hud mb-5 text-ink-3">РОБОМЕРА / ПОПРОБОВАТЬ БЕЗ РЕГИСТРАЦИИ</p>
-        <h1 className="display text-[clamp(2rem,5vw,3.5rem)] leading-[1.06]">
-          От объекта до решения.
-          <br />
-          <span className="text-ink-3">Пройдите путь сами.</span>
-        </h1>
-        <p className="mt-5 max-w-170 text-base leading-relaxed text-ink-3">
-          Готовый объект, подобранные роботы, экономика и проверка в имитации. Это ваша личная копия: исследуйте её,
-          меняйте параметры и скачивайте отчёт.
-        </p>
-        <div className="mt-7 flex flex-wrap items-center gap-4">
-          <Button asChild size="lg">
-            <Link to="/demo/warehouse_demo_01">
-              Начать со склада <ArrowRight />
-            </Link>
-          </Button>
-          <span className="text-sm text-ink-3">5 шагов · все инструменты доступны</span>
-        </div>
-      </div>
-      <div className="my-10 flex flex-wrap gap-x-6 gap-y-3 border-y border-line py-5 text-sm text-ink-3">
-        {[
-          'Модель объекта и 3D-роботы',
-          'Покупка, RaaS и лизинг',
-          'Реальная имитация → расчёт',
-          'Отчёт PDF и Excel',
-        ].map((label) => (
-          <span className="flex items-center gap-2" key={label}>
-            <Check size={15} className="text-ok" />
-            {label}
-          </span>
-        ))}
-      </div>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="h2">Выберите объект</h2>
-        <span className="text-sm text-ink-3">Исходные данные и допущения раскрыты внутри</span>
-      </div>
-      {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {DEMO_PROJECTS.map((demo, i) => {
-          const details = list.data?.find((item) => item.key === demo.key)
-          const Icon = ICONS[i]
-          const headline = details?.headline
-          return (
-            <Link
-              key={demo.key}
-              to={`/demo/${demo.key}`}
-              className="group card relative overflow-hidden p-6 transition-colors hover:bg-surface-2 sm:p-7"
-            >
-              <div className="mb-6 flex items-start justify-between">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-surface-2 text-ink-2">
-                  <Icon size={30} strokeWidth={1.3} />
+    <div className="mx-auto w-full max-w-xl px-4 py-6 sm:py-8">
+      <form
+        onSubmit={submit}
+        className="overflow-hidden rounded-xl bg-popover text-popover-foreground ring-1 ring-foreground/10"
+        aria-labelledby="demo-setup-title"
+      >
+        <header className="space-y-2 border-b px-4 py-4 sm:px-5">
+          <h1 id="demo-setup-title" className="text-base leading-none font-medium">
+            Новый проект оценки
+          </h1>
+          <p className="text-sm text-muted-foreground">Выберите объект и начальные данные.</p>
+        </header>
+        <div className="space-y-5 px-4 py-5 sm:px-5">
+          {objectTypes.error ? (
+            <ErrorBlock error={objectTypes.error} onRetry={() => void objectTypes.refetch()} />
+          ) : !objectTypes.data ? (
+            <LoadingBlock label="Загружаем объекты…" />
+          ) : (
+            <>
+              <fieldset className="min-w-0 space-y-2" disabled={create.isPending}>
+                <legend className="mb-2 text-sm font-medium">Тип объекта</legend>
+                <div className="grid grid-cols-3 gap-2">
+                  {objectTypes.data.map((type) => {
+                    const Icon = OBJECT_TYPE_ICON[type.key]
+                    return (
+                      <ProjectChoice
+                        key={type.key}
+                        name="object-type"
+                        value={type.key}
+                        active={type.key === objectType}
+                        compact
+                        onChange={() => {
+                          setObjectType(type.key)
+                          setSelection(blank ? 'blank' : null)
+                          create.reset()
+                        }}
+                      >
+                        <Icon className="size-5 shrink-0" aria-hidden="true" />
+                        <span className="font-medium leading-snug sm:hidden">
+                          {type.key === 'hospital' ? 'Медицина' : type.name}
+                        </span>
+                        <span className="hidden font-medium leading-snug sm:block">{type.name}</span>
+                      </ProjectChoice>
+                    )
+                  })}
                 </div>
-                <span className="hud text-ink-3">{i === 0 ? 'НАЧНИТЕ ЗДЕСЬ' : `0${i + 1} / ПРИМЕР`}</span>
-              </div>
-              <h3 className="h2">{details?.name ?? demo.label}</h3>
-              <p className="mt-2 min-h-12 text-sm leading-relaxed text-ink-3">
-                {details?.description ?? 'Подготовленный объект с независимой копией параметров и расчётов.'}
-              </p>
-              {headline?.robots_total != null && (
-                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-line pt-4 text-sm">
-                  <span>
-                    <strong className="num text-lg">{formatNumber(headline.robots_total)}</strong>{' '}
-                    {pluralRu(headline.robots_total, ['робот', 'робота', 'роботов'])}
-                  </span>
-                  {headline.capex_rub != null && <span>{formatRub(headline.capex_rub)} вложений</span>}
-                  {headline.payback_years != null && <span>{formatYears(headline.payback_years)} до окупаемости</span>}
+              </fieldset>
+              <fieldset className="min-w-0 space-y-2" disabled={create.isPending}>
+                <legend className="mb-2 text-sm font-medium">Начальные данные</legend>
+                <div className="grid gap-2">
+                  {demos.map((item) => (
+                    <ProjectChoice
+                      key={item.key}
+                      name="initial-data"
+                      value={item.key}
+                      active={!blank && item.key === demo?.key}
+                      onChange={() => {
+                        setSelection(item.key)
+                        create.reset()
+                      }}
+                    >
+                      <span className="font-medium">
+                        {examples.data?.find((example) => example.key === item.key)?.name ?? item.name}
+                      </span>
+                    </ProjectChoice>
+                  ))}
+                  <ProjectChoice
+                    name="initial-data"
+                    value="blank"
+                    active={blank}
+                    onChange={() => {
+                      setSelection('blank')
+                      create.reset()
+                    }}
+                  >
+                    <span className="font-medium">Пустой проект</span>
+                  </ProjectChoice>
+                </div>
+                {!blank && demo && (
+                  <details key={demo.key} className="group rounded-md bg-muted/40 px-3">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-xs font-medium [&::-webkit-details-marker]:hidden">
+                      Описание набора
+                      <ChevronDown
+                        className="size-4 shrink-0 transition-transform group-open:rotate-180"
+                        aria-hidden="true"
+                      />
+                    </summary>
+                    <p className="pb-3 text-xs leading-relaxed text-muted-foreground">
+                      {details?.description ?? demo.description}
+                    </p>
+                  </details>
+                )}
+              </fieldset>
+              {blank && (
+                <div className="space-y-2">
+                  <Label htmlFor="demo-project-name">Название</Label>
+                  <Input
+                    id="demo-project-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Например: РЦ Подмосковье"
+                    maxLength={200}
+                    className="h-11"
+                    disabled={create.isPending}
+                  />
                 </div>
               )}
-              <span className="mt-6 flex items-center justify-between text-sm font-medium">
-                Открыть и исследовать{' '}
-                <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-              </span>
-            </Link>
-          )
-        })}
-      </div>
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-5 rounded-2xl bg-surface-2 p-6">
-        <div>
-          <h2 className="h3">Хотите начать с чистого листа?</h2>
-          <p className="mt-1 max-w-160 text-sm text-ink-3">
-            Введите свои тестовые параметры или загрузите Excel. Для конфиденциальных данных сначала создайте аккаунт.
-          </p>
+              {create.error && <ErrorBlock error={create.error} />}
+            </>
+          )}
         </div>
-        <CreateProjectDialog
-          initialMode="blank"
-          open={ownOpen}
-          onOpenChange={setOwnOpen}
-          trigger={<Button variant="outline">Создать свой проект</Button>}
-        />
-      </div>
-      <p className="mt-6 text-sm text-ink-3">
-        Гостевые проекты хранятся 24 часа. «Сохранить в аккаунт» перенесёт ваши правки и результаты после регистрации
-        или входа.
-      </p>
-      <details id="demo-limits" className="mt-4 text-xs leading-relaxed text-ink-3">
+        <footer className="flex items-center justify-end gap-2 border-t px-4 py-3 sm:px-5">
+          <Button asChild variant="outline" className="h-11 px-4">
+            <Link to="/">Отмена</Link>
+          </Button>
+          <Button type="submit" className="h-11 px-5 max-sm:flex-1" disabled={!selected || create.isPending}>
+            {create.isPending && <Spinner />}
+            {blank ? 'Создать проект' : 'Открыть демо'}
+          </Button>
+        </footer>
+      </form>
+      <details id="demo-limits" className="mt-3 text-xs leading-relaxed text-muted-foreground">
         <summary className="cursor-pointer">Лимиты гостевого пространства</summary>
         <p className="mt-2">
           До 10 проектов, 30 сценариев и 100 фоновых задач. Две задачи одновременно, до 12 запусков в минуту. Файлы до 5
