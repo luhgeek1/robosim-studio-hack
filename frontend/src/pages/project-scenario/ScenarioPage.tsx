@@ -1,8 +1,9 @@
 import { ArrowLeft, ArrowRight, Calculator, ListTree, RotateCcw, Save, Star } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { useProject, useProjectId } from '@/entities/project'
 import { SCENARIO_KIND_LABEL, useCalculate, useCalculation, useScenario, useUpdateScenario } from '@/entities/scenario'
+import { parseApiProblem } from '@/shared/api/problem'
 import { formatDateTime } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Textarea } from '@/shared/ui/textarea'
@@ -16,6 +17,7 @@ import { TraceSheet } from './TraceSheet'
 
 export function ScenarioPage() {
   const projectId = useProjectId()
+  const [searchParams] = useSearchParams()
   const { scenarioId = '' } = useParams()
   const project = useProject(projectId).data!
   const scenario = useScenario(scenarioId)
@@ -26,7 +28,9 @@ export function ScenarioPage() {
 
   const [draft, setDraft] = useState<Draft | null>(null)
   const [syncedAt, setSyncedAt] = useState<string | null>(null)
-  const [tab, setTab] = useState<string | null>(null)
+  const [tab, setTab] = useState<string | null>(searchParams.has('edit') ? 'config' : null)
+  const [failure, setFailure] = useState<string | null>(null)
+  const [itemErrors, setItemErrors] = useState<Record<string, string>>({})
   const [traceOpen, setTraceOpen] = useState(false)
   const [traceQuery, setTraceQuery] = useState('')
 
@@ -35,6 +39,17 @@ export function ScenarioPage() {
     setSyncedAt(scenario.data.updated_at)
     setDraft(toDraft(scenario.data))
   }
+
+  const focusItem = (key: string) => {
+    const row = document.getElementById(`scenario-item-${key}`)
+    row?.scrollIntoView({ block: 'center' })
+    const control = row?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    ;(control ?? row)?.focus({ preventScroll: true })
+  }
+  useEffect(() => {
+    const key = Object.keys(itemErrors)[0]
+    if (key && tab === 'config') focusItem(key)
+  }, [itemErrors, tab])
 
   if (scenario.isPending) return <LoadingBlock rows={5} />
   if (scenario.isError) return <ErrorBlock error={scenario.error} onRetry={() => scenario.refetch()} />
@@ -52,9 +67,22 @@ export function ScenarioPage() {
     await update.mutateAsync(toUpdate(draft, isBaseline))
   }
   const saveAndCalculate = async () => {
-    if (dirty) await save()
-    await calculate.mutateAsync()
-    setTab('result')
+    setFailure(null)
+    setItemErrors({})
+    try {
+      if (dirty) await save()
+      await calculate.mutateAsync()
+      setTab('result')
+    } catch (error) {
+      const problem = parseApiProblem(error)
+      setFailure(problem.detail)
+      const errors: Record<string, string> = {}
+      for (const detail of problem.details) {
+        if (detail.loc?.[0] === 'items' && detail.loc[1]) errors[detail.loc[1]] = detail.msg ?? problem.detail
+      }
+      setItemErrors(errors)
+      setTab('config')
+    }
   }
   const openTrace = (query: string) => {
     setTraceQuery(query)
@@ -100,6 +128,7 @@ export function ScenarioPage() {
                 <span className="size-1.5 rounded-full bg-ink-4" />
                 {SCENARIO_KIND_LABEL[current.kind]}
               </span>
+              {current.origin === 'recommendation' && <span>На основе рекомендации подбора · состав можно менять</span>}
               {current.is_recommended && (
                 <span className="flex items-center gap-1 font-medium text-ink">
                   <Star size={12} className="fill-warn text-warn" /> рекомендуем
@@ -138,9 +167,35 @@ export function ScenarioPage() {
         </div>
       </div>
 
+      {failure && (
+        <div role="alert" className="rounded-xl border border-crit/30 bg-crit-soft/50 p-4 text-sm">
+          <p className="font-medium text-crit">Расчёт не выполнен</p>
+          <p className="mt-1">{failure}</p>
+          {Object.keys(itemErrors).map((key) => (
+            <Button
+              key={key}
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => {
+                setTab('config')
+                focusItem(key)
+              }}
+            >
+              Перейти к количеству
+            </Button>
+          ))}
+        </div>
+      )}
+      {isBaseline && (
+        <p className="rounded-xl border border-line bg-card p-4 text-sm text-ink-3">
+          «Как сейчас» - база без роботизации: текущие расходы на персонал и другие введённые затраты. Уже установленный
+          парк роботов и его обслуживание отдельно не моделируются (ТЗ §3.5.5).
+        </p>
+      )}
       {(dirty || problems.length > 0) && (
         <div className="sticky top-34 z-20 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white/95 px-4 py-2.5 text-sm shadow-float backdrop-blur">
-          <span className="font-medium">Есть несохранённые изменения</span>
+          <span className="font-medium">{dirty ? 'Есть несохранённые изменения' : 'Проверьте состав сценария'}</span>
           {problems.length > 0 && <span className="text-warn">{problems[0]}</span>}
           <div className="ml-auto flex flex-wrap gap-2">
             <Button variant="ghost" size="sm" onClick={() => setDraft(toDraft(current))} disabled={busy}>
@@ -204,15 +259,20 @@ export function ScenarioPage() {
         </div>
       )}
       {activeTab === 'config' && (
-        <div className="pt-1">
+        <fieldset disabled={busy} className="pt-1">
           <ScenarioEditor
             projectId={projectId}
             objectType={project.object_type}
             scenario={current}
             draft={draft}
-            onChange={setDraft}
+            itemErrors={itemErrors}
+            onChange={(value) => {
+              setDraft(value)
+              setFailure(null)
+              setItemErrors({})
+            }}
           />
-        </div>
+        </fieldset>
       )}
 
       <div className="hairline mt-10 flex flex-wrap-reverse items-center justify-between gap-3 pt-6 sm:mt-12">

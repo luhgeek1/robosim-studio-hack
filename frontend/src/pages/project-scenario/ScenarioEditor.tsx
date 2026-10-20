@@ -1,11 +1,11 @@
-import { Link2, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { useMatching } from '@/entities/matching'
 import { useProcesses } from '@/entities/project'
 import { useNorms } from '@/entities/reference'
 import { FINANCING_KIND_LABEL } from '@/entities/scenario'
 import type { Financing, ObjectTypeKey, Scenario } from '@/shared/api/types'
-import { formatRub, formatValue } from '@/shared/lib/format'
+import { formatValue } from '@/shared/lib/format'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
@@ -22,6 +22,7 @@ import {
 import { AddItemDialog } from './AddItemDialog'
 import type { Draft, ItemDraft } from './draft'
 import { NumberField } from './NumberField'
+import { ItemRow } from './ItemRow'
 
 const NORM_CATEGORY_LABEL: Record<string, string> = {
   capex: 'CAPEX',
@@ -41,13 +42,16 @@ export function ScenarioEditor({
   scenario,
   draft,
   onChange,
+  itemErrors,
 }: {
   projectId: string
   objectType: ObjectTypeKey
   scenario: Scenario
   draft: Draft
   onChange: (draft: Draft) => void
+  itemErrors: Record<string, string>
 }) {
+  const matching = useMatching(projectId)
   const processes = useProcesses(projectId)
   const processName = useMemo(
     () => new Map((processes.data?.processes ?? []).map((p) => [p.process_key, p.name])),
@@ -65,21 +69,22 @@ export function ScenarioEditor({
       {!scenario.is_baseline && (
         <Section
           title="Состав: процесс, решение, количество"
-          description="Количество считается из времени цикла на планировке; своя цена или производительность - только с причиной"
+          description="Количество рассчитывается по нагрузке и характеристикам робота или задаётся вручную. Своя цена и производительность требуют обоснования."
           actions={
             <AddItemDialog
               projectId={projectId}
+              items={draft.items}
               onAdd={(processKey, candidate) =>
                 onChange({
                   ...draft,
                   items: [
-                    ...draft.items,
+                    ...draft.items.filter((item) => item.process_key !== processKey),
                     {
                       uid: `new-${candidate.product.id}-${Date.now()}`,
                       process_key: processKey,
                       product_id: candidate.product.id,
                       offer_id: candidate.offer_id,
-                      count_mode: 'auto',
+                      count_mode: candidate.estimate?.robots_count == null ? 'manual' : 'auto',
                       count_manual: null,
                       product_name: candidate.product.name,
                       price_rub: candidate.product.price_from.amount_rub,
@@ -97,7 +102,7 @@ export function ScenarioEditor({
         >
           {draft.items.length === 0 ? (
             <p className="text-muted-foreground">
-              В сценарии пока нет решений. Добавьте их из подбора - или создайте сценарий «из рекомендации».
+              Нажмите «Добавить решение»: выберите процесс, посмотрите модели и соберите свой состав.
             </p>
           ) : (
             <div className="space-y-3">
@@ -105,6 +110,10 @@ export function ScenarioEditor({
                 <ItemRow
                   key={item.uid}
                   item={item}
+                  error={itemErrors[item.process_key]}
+                  candidate={matching.data?.processes
+                    .find((p) => p.process_key === item.process_key)
+                    ?.candidates.find((c) => c.product.id === item.product_id)}
                   processName={processName.get(item.process_key) ?? item.process_key}
                   onChange={(patch) => setItem(item.uid, patch)}
                   onRemove={() => onChange({ ...draft, items: draft.items.filter((i) => i.uid !== item.uid) })}
@@ -248,110 +257,6 @@ export function ScenarioEditor({
   )
 }
 
-function ItemRow({
-  item,
-  processName,
-  onChange,
-  onRemove,
-}: {
-  item: ItemDraft
-  processName: string
-  onChange: (patch: Partial<ItemDraft>) => void
-  onRemove: () => void
-}) {
-  const [showOverrides, setShowOverrides] = useState(
-    item.price_override_rub != null || item.throughput_override_per_hour != null,
-  )
-  return (
-    <div className="rounded-md border bg-raised/40 p-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="text-xs text-muted-foreground">{processName}</div>
-          <Link
-            to={`/catalog/${item.product_id}`}
-            className="inline-flex items-center gap-1 font-medium hover:text-primary"
-          >
-            {item.product_name} <Link2 className="size-3" />
-          </Link>
-          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span>цена за единицу {formatRub(item.price_override_rub ?? item.price_rub)}</span>
-            {item.price_override_rub != null && <WarnMark>своя цена</WarnMark>}
-            {item.candidate_status === 'check' && <WarnMark>требует проверки ТТХ</WarnMark>}
-            {item.count_result && (
-              <span>
-                в последнем расчёте: {item.count_result.final} шт. ({item.count_result.analytic} по циклу + резерв{' '}
-                {item.count_result.reserve})
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-end gap-2">
-          <Field label="Количество">
-            <Select
-              value={item.count_mode ?? 'auto'}
-              onValueChange={(v) => onChange({ count_mode: v as ItemDraft['count_mode'] })}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">по расчёту</SelectItem>
-                <SelectItem value="manual">задать вручную</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          {item.count_mode === 'manual' && (
-            <Field label="Штук">
-              <NumberField
-                value={item.count_manual}
-                onChange={(v) => onChange({ count_manual: v })}
-                integer
-                min={1}
-                className="w-24"
-              />
-            </Field>
-          )}
-          <Button variant="ghost" size="sm" onClick={() => setShowOverrides((s) => !s)}>
-            {showOverrides ? 'Скрыть свои значения' : 'Своя цена / производительность'}
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Убрать из сценария" onClick={onRemove}>
-            <Trash2 />
-          </Button>
-        </div>
-      </div>
-      {showOverrides && (
-        <div className="mt-3 grid grid-cols-1 gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-[180px_200px_1fr]">
-          <Field label="Своя цена за единицу">
-            <NumberField
-              value={item.price_override_rub}
-              onChange={(v) => onChange({ price_override_rub: v })}
-              placeholder="каталог"
-              suffix="₽"
-              min={0}
-            />
-          </Field>
-          <Field label="Своя производительность">
-            <NumberField
-              value={item.throughput_override_per_hour}
-              onChange={(v) => onChange({ throughput_override_per_hour: v })}
-              placeholder="из цикла"
-              suffix="ед/ч"
-              min={0}
-            />
-          </Field>
-          <Field label="Причина (обязательна)" className="sm:col-span-2 lg:col-span-1">
-            <Input
-              value={item.override_reason ?? ''}
-              onChange={(e) => onChange({ override_reason: e.target.value || null })}
-              placeholder="Например: КП вендора от 20.09, скидка 12 %"
-            />
-          </Field>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function NormOverrides({
   objectType,
   draft,
@@ -488,14 +393,5 @@ function Field({ label, children, className }: { label: string; children: ReactN
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
-  )
-}
-
-function WarnMark({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-warn">
-      <span className="size-1.5 rounded-full bg-warn" />
-      {children}
-    </span>
   )
 }

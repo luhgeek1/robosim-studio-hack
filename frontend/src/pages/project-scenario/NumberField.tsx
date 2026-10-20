@@ -21,6 +21,8 @@ export function NumberField({
   min,
   integer,
   ariaLabel,
+  invalid: externalInvalid,
+  required,
 }: {
   value: number | null | undefined
   onChange: (value: number | null) => void
@@ -30,6 +32,8 @@ export function NumberField({
   min?: number
   integer?: boolean
   ariaLabel?: string
+  invalid?: boolean
+  required?: boolean
 }) {
   const [text, setText] = useState(show(value))
   const [synced, setSynced] = useState(value)
@@ -47,7 +51,8 @@ export function NumberField({
       <Input
         inputMode="decimal"
         aria-label={ariaLabel}
-        aria-invalid={invalid || undefined}
+        aria-invalid={invalid || externalInvalid || undefined}
+        required={required}
         value={text}
         placeholder={placeholder}
         className={cn('num', suffix && 'pr-12')}

@@ -1,0 +1,118 @@
+import { expect, test, type Page } from '@playwright/test'
+
+test.setTimeout(360_000)
+
+async function setup(page: Page) {
+  const account = await page.request.post('/api/v1/auth/register', {
+    headers: { 'X-Client': 'web' },
+    data: { email: `scenario-${crypto.randomUUID()}@example.com`, password: 'ScenarioDemo123!', name: 'Проверка сценариев' },
+  })
+  expect(account.status()).toBe(201)
+  const headers = { Authorization: `Bearer ${(await account.json()).access_token}` }
+  const result = await page.request.post('/api/v1/projects', { headers, data: {
+    name: 'Склад · проверка сценариев', object_type: 'warehouse', init: { mode: 'demo', demo_key: 'warehouse_demo_01' },
+  } })
+  expect(result.status()).toBe(201)
+  const project = await result.json()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1366, height: 900 })
+  return { headers, project }
+}
+
+test('project completeness and repeated recommendation do not create extra variants', async ({ page }) => {
+  const { project, headers } = await setup(page)
+  await page.goto('/projects')
+  await expect(page.getByText(/91 % параметров заполнено/)).toBeVisible()
+  await page.goto(`/projects/${project.id}/matching`)
+  await expect(page.getByRole('heading', { name: 'Автоподбор: 1 из 6 процессов' })).toBeVisible()
+  await page.getByText('Почему процессы вошли или не вошли в рекомендацию', { exact: true }).click()
+  await expect(page.getByText(/У рассчитанных кандидатов NPV покупки не положительный/).first()).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath('matching-explained.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Сценарий из рекомендации', exact: true }).click()
+  await expect(page).toHaveURL(new RegExp(`/projects/${project.id}/scenarios/[^/]+$`), { timeout: 120_000 })
+  const first = page.url()
+  await page.goto(`/projects/${project.id}/matching`)
+  await page.getByRole('button', { name: 'Сценарий из рекомендации', exact: true }).click()
+  await expect(page).toHaveURL(first, { timeout: 120_000 })
+  const scenarios = await page.request.get(`/api/v1/projects/${project.id}/scenarios`, { headers })
+  expect((await scenarios.json()).items.filter((s: { is_baseline: boolean }) => !s.is_baseline)).toHaveLength(1)
+  await expect(page.getByText('На основе рекомендации подбора · состав можно менять')).toBeVisible()
+})
+
+test('visual picker replaces an occupied process and manual inventory calculates', async ({ page }) => {
+  const { project, headers } = await setup(page)
+  const created = await page.request.post(`/api/v1/projects/${project.id}/scenarios`, { headers, data: { name: 'Мой состав', kind: 'purchase', from_recommendation: false } })
+  const scenario = await created.json()
+  await page.goto(`/projects/${project.id}/scenarios/${scenario.id}`)
+  await page.getByRole('button', { name: 'Добавить решение', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.locator('canvas').first()).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath('visual-picker.png'), fullPage: true })
+  await dialog.getByRole('article', { name: /AMR 800/ }).getByRole('button', { name: 'Добавить', exact: true }).click()
+  await page.getByRole('button', { name: 'Добавить решение', exact: true }).click()
+  await dialog.getByRole('article', { name: /Ronavi H1500/ }).getByRole('button', { name: 'Заменить', exact: true }).click()
+  await expect(page.locator('[id^="scenario-item-"]')).toHaveCount(1)
+  await expect(page.locator('#scenario-item-pallet_transport')).toContainText('Ronavi H1500')
+  await page.getByRole('button', { name: 'Добавить решение', exact: true }).click()
+  await dialog.getByRole('button', { name: /Инвентаризация остатков/ }).click()
+  await dialog.getByRole('article', { name: 'Робот инвентаризатор', exact: true }).getByRole('button', { name: 'Добавить', exact: true }).click()
+  await expect(page.getByLabel('Штук: Робот инвентаризатор', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Сохранить и рассчитать', exact: true })).toBeDisabled()
+  await page.screenshot({ path: test.info().outputPath('manual-count-required.png'), fullPage: true })
+  await page.getByLabel('Штук: Робот инвентаризатор', { exact: true }).fill('2')
+  await page.getByRole('button', { name: 'Сохранить и рассчитать', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Пересчитать', exact: true })).toBeEnabled({ timeout: 120_000 })
+  const saved = await page.request.get(`/api/v1/scenarios/${scenario.id}`, { headers })
+  const body = await saved.json()
+  expect(body.items).toHaveLength(2)
+  expect(body.last_calculation.status).toBe('fresh')
+  expect(body.items.find((i: { product_name: string }) => i.product_name === 'Робот инвентаризатор').count_result.final).toBe(2)
+})
+
+test('server sizing error leads to the quantity field and recovers', async ({ page }) => {
+  const { project, headers } = await setup(page)
+  const matching = await page.request.get(`/api/v1/projects/${project.id}/matching`, { headers })
+  const process = (await matching.json()).processes.find((p: { name: string }) => p.name === 'Инвентаризация остатков')
+  const robot = process.candidates[0].product
+  const created = await page.request.post(`/api/v1/projects/${project.id}/scenarios`, { headers, data: { name: 'Проверка ошибки', kind: 'purchase', items: [{ process_key: process.process_key, product_id: robot.id }] } })
+  const scenario = await created.json()
+  await page.goto(`/projects/${project.id}/scenarios/${scenario.id}`)
+  await page.getByRole('button', { name: 'Рассчитать', exact: true }).click()
+  await expect(page.getByText('Расчёт не выполнен', { exact: true })).toBeVisible()
+  const quantity = page.getByLabel(`Количество: ${robot.name}`, { exact: true })
+  await expect(quantity).toBeFocused()
+  await expect(quantity).toHaveAttribute('aria-invalid', 'true')
+  await page.screenshot({ path: test.info().outputPath('calculation-error.png'), fullPage: true })
+  await quantity.click()
+  await page.getByRole('option', { name: 'задать вручную', exact: true }).click()
+  await page.getByLabel(`Штук: ${robot.name}`, { exact: true }).fill('2')
+  await page.getByRole('button', { name: 'Сохранить и рассчитать', exact: true }).click()
+  await expect(page.getByText('Расчёт не выполнен', { exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Пересчитать', exact: true })).toBeEnabled()
+})
+
+test('candidate creates a custom scenario and comparison skips unrelated empty drafts', async ({ page }) => {
+  const { project, headers } = await setup(page)
+  await page.request.post(`/api/v1/projects/${project.id}/scenarios`, { headers, data: { name: 'Пустой эксперимент', kind: 'purchase' } })
+  await page.goto(`/projects/${project.id}/matching`)
+  await page.locator('#candidates').getByRole('article').first().hover()
+  await page.getByRole('button', { name: 'В свой сценарий', exact: true }).first().click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Сценарий для решения').click()
+  await page.getByRole('option', { name: 'Пустой эксперимент', exact: true }).click()
+  await expect(dialog).toBeVisible()
+  await dialog.getByLabel('Сценарий для решения').click()
+  await page.getByRole('option', { name: 'Новый сценарий покупки', exact: true }).click()
+  await dialog.getByLabel('Название', { exact: true }).fill('AMR вручную')
+  await page.getByRole('button', { name: 'Добавить и открыть сценарий', exact: true }).click()
+  await expect(page).toHaveURL(/scenarios\/[^/]+\?edit=1$/)
+  await expect(page.locator('[id^="scenario-item-"]')).toHaveCount(1)
+  await page.goto(`/projects/${project.id}/scenarios`)
+  await page.getByRole('button', { name: 'Собрать покупку, RaaS и лизинг', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Собрать покупку, RaaS и лизинг', exact: true })).toHaveCount(0, { timeout: 120_000 })
+  const result = await page.request.get(`/api/v1/projects/${project.id}/scenarios`, { headers })
+  const scenarios = (await result.json()).items
+  expect(scenarios.find((s: { name: string }) => s.name === 'Пустой эксперимент').last_calculation).toBeNull()
+  for (const kind of ['purchase', 'raas', 'lease']) expect(scenarios.find((s: { kind: string; items: unknown[] }) => s.kind === kind && s.items.length).last_calculation.status).toBe('fresh')
+  await page.screenshot({ path: test.info().outputPath('comparison-variants.png'), fullPage: true })
+})

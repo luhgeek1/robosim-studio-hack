@@ -86,7 +86,10 @@ export function draftProblems(draft: Draft): string[] {
     if (overridden && !item.override_reason?.trim()) {
       problems.push(`«${item.product_name}»: укажите причину своей цены или производительности`)
     }
-    if (item.count_mode === 'manual' && !(item.count_manual && item.count_manual >= 1)) {
+    if (
+      item.count_mode === 'manual' &&
+      !(item.count_manual && Number.isInteger(item.count_manual) && item.count_manual >= 1)
+    ) {
       problems.push(`«${item.product_name}»: задайте количество вручную (не меньше 1)`)
     }
   }
