@@ -180,9 +180,168 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Выход (отзыв refresh-токена) */
+    /**
+     * Выход (отзыв сессии и обоих токенов)
+     * @description Для web-cookies обязателен X-CSRF-Token, для mobile — refresh_token в теле.
+     */
     post: operations['logout']
     delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/auth/invitations/{invitation_id}/preview': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Открыть приглашение по секрету письма
+     * @description Не принимает приглашение и не подтверждает почту. Сведения видит только обладатель секретной ссылки. Токен передаётся в JSON, не в query.
+     */
+    post: operations['previewInvitation']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/auth/email/verification': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Отправить подтверждение своей почты */
+    post: operations['requestEmailVerification']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/auth/email/verify': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Подтвердить почту */
+    post: operations['verifyEmail']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/auth/password/forgot': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Запросить сброс пароля */
+    post: operations['requestPasswordReset']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/auth/password/reset': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Задать пароль по ссылке из письма */
+    post: operations['resetPassword']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/me/security': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Способы входа и активные сессии */
+    get: operations['getAccountSecurity']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/me/password': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    /** Изменить или добавить пароль */
+    put: operations['changePassword']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/me/sessions/{session_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Завершить свою сессию */
+    delete: operations['revokeSession']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/me/identities/{provider}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Отключить сервис входа */
+    delete: operations['unlinkIdentity']
     options?: never
     head?: never
     patch?: never
@@ -269,7 +428,10 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Принять приглашение — стать участником организации */
+    /**
+     * Принять приглашение — стать участником организации
+     * @description Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token — 403, истёкшее/отозванное/принятое — 404. GET никогда не принимает приглашение.
+     */
     post: operations['acceptInvitation']
     delete?: never
     options?: never
@@ -348,7 +510,7 @@ export interface paths {
     put?: never
     /**
      * Пригласить пользователя по email (владелец)
-     * @description Приглашение появляется у адресата в уведомлениях; незарегистрированный адрес увидит его после регистрации.
+     * @description Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod — 503. Истёкшее приглашение можно создать заново.
      */
     post: operations['inviteToOrganization']
     delete?: never
@@ -667,7 +829,10 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Полный снимок проекта (параметры, сценарии, расчёты) в JSON */
+    /**
+     * Параметры и метаданные проекта в JSON
+     * @description Снимок для повторного импорта параметров; сценарии, расчёты и планировка в этот файл не входят.
+     */
     get: operations['exportProjectJson']
     put?: never
     post?: never
@@ -789,6 +954,23 @@ export interface paths {
      * @description Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM — 503 LLM_UNAVAILABLE.
      */
     post: operations['importProjectParamsText']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/projects/{project_id}/import/{import_id}/review': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Исправить строки и повторно проверить импорт без изменения проекта */
+    post: operations['reviewImport']
     delete?: never
     options?: never
     head?: never
@@ -3223,6 +3405,7 @@ export interface components {
       last_login_at?: string | null
       /** @default true */
       is_active: boolean
+      email_verified?: boolean
       /**
        * Format: date-time
        * @description Срок удаления гостевого пространства; null для аккаунтов
@@ -3267,6 +3450,13 @@ export interface components {
       created_at: string
       invited_by_name?: string | null
       invitee_registered: boolean
+      /**
+       * @description sent — Resend принял письмо; доставка в ящик не подтверждается.
+       * @enum {string}
+       */
+      email_delivery?: 'disabled' | 'queued' | 'sent' | 'failed' | 'cancelled'
+      /** Format: date-time */
+      expires_at?: string | null
     }
     /**
      * @description owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
@@ -3280,6 +3470,7 @@ export interface components {
       /** Format: uuid */
       organization_id: string
       organization_name: string
+      requires_email_link?: boolean
       invited_by_name?: string | null
       invited_by_email?: string | null
       /** Format: date-time */
@@ -3437,6 +3628,60 @@ export interface components {
       email: string
       password: string
     }
+    EmailTokenRequest: {
+      token: string
+    }
+    InvitationPreview: {
+      /** Format: uuid */
+      id: string
+      /** Format: email */
+      email: string
+      organization_name: string
+      invited_by_name: string | null
+      /** Format: date-time */
+      expires_at: string
+    }
+    EmailAccepted: {
+      message: string
+    }
+    EmailRequest: {
+      /** Format: email */
+      email: string
+    }
+    PasswordReset: components['schemas']['EmailTokenRequest'] & {
+      password: string
+    }
+    ConnectedIdentity: {
+      /** @enum {string} */
+      provider: 'yandex' | 'google' | 'vk'
+      /** Format: date-time */
+      connected_at: string
+    }
+    AccountSession: {
+      /** Format: uuid */
+      id: string
+      /** @enum {string} */
+      method: 'password' | 'guest' | 'yandex' | 'google' | 'vk'
+      /** @enum {string} */
+      client: 'web' | 'mobile'
+      /** Format: date-time */
+      created_at: string
+      /** Format: date-time */
+      last_seen_at: string
+      /** Format: date-time */
+      expires_at: string
+      current: boolean
+    }
+    AccountSecurity: {
+      has_password: boolean
+      email_verified: boolean
+      identities: components['schemas']['ConnectedIdentity'][]
+      sessions: components['schemas']['AccountSession'][]
+    }
+    PasswordChange: {
+      password: string
+      current_password?: string | null
+    }
     UserUpdate: {
       name?: string
       organization?: string | null
@@ -3465,6 +3710,10 @@ export interface components {
     }
     IncomingInvitationList: {
       items: components['schemas']['IncomingInvitation'][]
+    }
+    InvitationAccept: {
+      /** @description Секрет из фрагмента ссылки письма. Обязателен для почтового приглашения. */
+      token?: string | null
     }
     OrganizationList: {
       items: components['schemas']['Organization'][]
@@ -3803,6 +4052,60 @@ export interface components {
         current_status?: components['schemas']['ProvenanceStatus']
       } | null
     }
+    ImportIssue: {
+      code: string
+      /** @enum {string} */
+      severity: 'error' | 'warning' | 'info'
+      message: string
+      how_to_fix: string
+    }
+    ImportSuggestion: {
+      key: string
+      value: number | string | boolean | null
+      unit: string | null
+      message: string
+    }
+    ImportConflict: {
+      current_value?: number | string | boolean | null
+      current_status?: string | null
+    }
+    ImportReviewRow: {
+      row_id: string
+      key: string | null
+      name: string
+      value: number | string | boolean | null
+      unit: string | null
+      raw_field: string
+      raw_value: string
+      raw_unit: string | null
+      location: string
+      confidence: number
+      suggestion_key?: string | null
+      excluded: boolean
+      status?: string | null
+      issues: components['schemas']['ImportIssue'][]
+      suggestion: components['schemas']['ImportSuggestion'] | null
+      conflict_with_current: components['schemas']['ImportConflict'] | null
+    }
+    ValidationIssue: {
+      key: string
+      name?: string
+      /** @enum {string} */
+      severity: 'error' | 'warning' | 'info'
+      /** @example REQUIRED_MISSING */
+      code: string
+      message: string
+      how_to_fix?: string | null
+      blocks?: ('matching' | 'calculation' | 'simulation' | 'report')[]
+    }
+    ValidationReport: {
+      /** @enum {string} */
+      status: 'ok' | 'warnings' | 'errors'
+      issues: components['schemas']['ValidationIssue'][]
+      can_match: boolean
+      can_calculate: boolean
+      can_simulate: boolean
+    }
     /**
      * @description Результат разбора файла или текста. Ничего не применяется автоматически: фронт показывает таблицу,
      *     пользователь снимает галочки и нажимает «Применить» (POST …/import/{import_id}/apply).
@@ -3826,35 +4129,33 @@ export interface components {
       }[]
       warnings: string[]
       applied: boolean
+      rows: components['schemas']['ImportReviewRow'][]
+      validation: components['schemas']['ValidationReport']
     }
     SmartImportRequest: {
       /** @example Склад 7 000 м², 24 сотрудника, два стеллажных ряда, проходы 2,8 м, 600 паллет в сутки… */
       text: string
     }
+    ImportEdit: {
+      row_id: string
+      key: string | null
+      value: number | string | boolean | null
+      unit: string | null
+      /** @default false */
+      excluded: boolean
+    }
+    ImportReview: {
+      edits: components['schemas']['ImportEdit'][]
+      /** @default false */
+      overwrite_user_values: boolean
+    }
     ImportApply: {
+      /** @description Явный выбор строк; [] не применяет ничего. Если задан, приоритетнее accept_keys. Ошибочные строки блокируют применение; исключённые пропускаются. */
+      row_ids?: string[] | null
       /** @description Если пусто — применить все mapped */
       accept_keys?: string[]
       /** @default false */
       overwrite_user_values: boolean
-    }
-    ValidationIssue: {
-      key: string
-      name?: string
-      /** @enum {string} */
-      severity: 'error' | 'warning' | 'info'
-      /** @example REQUIRED_MISSING */
-      code: string
-      message: string
-      how_to_fix?: string | null
-      blocks?: ('matching' | 'calculation' | 'simulation' | 'report')[]
-    }
-    ValidationReport: {
-      /** @enum {string} */
-      status: 'ok' | 'warnings' | 'errors'
-      issues: components['schemas']['ValidationIssue'][]
-      can_match: boolean
-      can_calculate: boolean
-      can_simulate: boolean
     }
     /** @description Развёрнутая панель доверия: какие параметры откуда и насколько они важны для результата. */
     DataQualityReport: {
@@ -5515,6 +5816,15 @@ export interface components {
         'application/json': components['schemas']['Problem']
       }
     }
+    /** @description Некорректный запрос */
+    BadRequest: {
+      headers: {
+        [name: string]: unknown
+      }
+      content: {
+        'application/json': components['schemas']['Problem']
+      }
+    }
     /** @description Задача принята, результат позже */
     JobAccepted: {
       headers: {
@@ -5798,7 +6108,9 @@ export interface operations {
   logout: {
     parameters: {
       query?: never
-      header?: never
+      header?: {
+        'X-CSRF-Token'?: string
+      }
       path?: never
       cookie?: never
     }
@@ -5812,6 +6124,230 @@ export interface operations {
         content?: never
       }
       401: components['responses']['Unauthorized']
+    }
+  }
+  previewInvitation: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        invitation_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EmailTokenRequest']
+      }
+    }
+    responses: {
+      /** @description Успешно */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InvitationPreview']
+        }
+      }
+      404: components['responses']['NotFound']
+    }
+  }
+  requestEmailVerification: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Успешно */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['EmailAccepted']
+        }
+      }
+      400: components['responses']['BadRequest']
+      /** @description Почта не настроена */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+    }
+  }
+  verifyEmail: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EmailTokenRequest']
+      }
+    }
+    responses: {
+      /** @description Успешно */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      400: components['responses']['BadRequest']
+    }
+  }
+  requestPasswordReset: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EmailRequest']
+      }
+    }
+    responses: {
+      /** @description Успешно */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['EmailAccepted']
+        }
+      }
+      400: components['responses']['BadRequest']
+      /** @description Почта не настроена */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
+    }
+  }
+  resetPassword: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PasswordReset']
+      }
+    }
+    responses: {
+      /** @description Успешно */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      400: components['responses']['BadRequest']
+    }
+  }
+  getAccountSecurity: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Успешно */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AccountSecurity']
+        }
+      }
+      400: components['responses']['BadRequest']
+    }
+  }
+  changePassword: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PasswordChange']
+      }
+    }
+    responses: {
+      /** @description Успешно */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      400: components['responses']['BadRequest']
+    }
+  }
+  revokeSession: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        session_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Успешно */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      400: components['responses']['BadRequest']
+    }
+  }
+  unlinkIdentity: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        provider: 'yandex' | 'google' | 'vk'
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Успешно */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      400: components['responses']['BadRequest']
+      409: components['responses']['Conflict']
     }
   }
   getMe: {
@@ -5958,7 +6494,11 @@ export interface operations {
       }
       cookie?: never
     }
-    requestBody?: never
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['InvitationAccept']
+      }
+    }
     responses: {
       /** @description OK */
       200: {
@@ -6127,7 +6667,7 @@ export interface operations {
       }
     }
     responses: {
-      /** @description Отправлено */
+      /** @description Создано; письмо в очереди */
       201: {
         headers: {
           [name: string]: unknown
@@ -6139,6 +6679,15 @@ export interface operations {
       403: components['responses']['Forbidden']
       404: components['responses']['NotFound']
       409: components['responses']['Conflict']
+      /** @description Почта не настроена */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
     }
   }
   revokeOrganizationInvitation: {
@@ -6905,6 +7454,35 @@ export interface operations {
           'application/json': components['schemas']['Problem']
         }
       }
+    }
+  }
+  reviewImport: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        project_id: components['parameters']['ProjectId']
+        import_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ImportReview']
+      }
+    }
+    responses: {
+      /** @description Проверенный предпросмотр */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImportResult']
+        }
+      }
+      404: components['responses']['NotFound']
+      422: components['responses']['ValidationError']
     }
   }
   applyImport: {
