@@ -3,6 +3,8 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy import select
+
 from app.core.errors import ConflictError, ErrorCode, NotFoundError
 from app.core.versions import ENGINE_VERSION
 from app.db.models import Job, Layout, Scenario, SimulationRun
@@ -151,7 +153,13 @@ class SimulationService:
         await self._uow.flush()
         run = self.new_run(scenario, draft, raw, job_id=job.id)
         await self._uow.flush()
-        job.payload = {"kind": SIMULATION_JOB, "simulation_id": str(run.id)}
+        job.payload = {
+            "kind": SIMULATION_JOB,
+            "simulation_id": str(run.id),
+            "project_id": str(scenario.project_id),
+            "scenario_id": str(scenario.id),
+            "label": f"{draft.evaluation.snapshot.project.name} · {scenario.name}",
+        }
         return run
 
     async def runs(self, scenario_id: UUID) -> list[SimulationRun]:
@@ -169,6 +177,9 @@ class SimulationService:
         if run.status in {JobStatus.QUEUED, JobStatus.RUNNING}:
             run.status = JobStatus.CANCELLED
             run.finished_at = datetime.now(UTC)
+            job = await self._uow.jobs.get(run.job_id) if run.job_id else None
+            if job is not None:
+                job.status, job.finished_at = run.status, run.finished_at
         else:
             await self._repo.delete(run)
         await self._uow.flush()
@@ -211,6 +222,13 @@ class SimulationService:
 
     async def start_sweep(self, scenario_id: UUID, sweep: SweepRequest, raw: dict[str, Any]) -> Job:
         scenario = await self._scenarios.owned(scenario_id)
+        # Serialize starts so navigating back or retrying a response cannot duplicate the search.
+        await self._uow.session.scalar(select(Scenario).where(Scenario.id == scenario_id).with_for_update())
+        existing = await self._uow.jobs.active_sweep(scenario_id)
+        if existing is not None:
+            if existing.owner_id != self._user.id:
+                raise ConflictError("Этот сценарий уже проверяет другой участник. Дождитесь завершения.")
+            return existing
         draft = await self._prepare(scenario, replace(sweep.request, mode=SimMode.PEAK))
         if self._user.role == Role.GUEST:
             validate_guest_sweep(draft.inp, sweep.low, sweep.high)
@@ -225,6 +243,8 @@ class SimulationService:
             owner_id=self._user.id,
             payload={
                 "kind": SWEEP_JOB,
+                "project_id": str(scenario.project_id),
+                "label": f"{draft.evaluation.snapshot.project.name} · {scenario.name}",
                 "scenario_id": str(scenario.id),
                 "process_key": sweep.process_key,
                 "low": sweep.low,

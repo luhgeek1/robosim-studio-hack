@@ -35,3 +35,10 @@ class JobInfo:
     finished_at: datetime | None
     result_url: str | None
     error: dict[str, Any] | None
+    project_id: UUID | None = None
+    scenario_id: UUID | None = None
+    label: str | None = None
+    kind: str | None = None
+    completed_runs: int = 0
+    progress_updated_at: datetime | None = None
+    eta_seconds: int | None = None

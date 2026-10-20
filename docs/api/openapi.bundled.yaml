@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.12.0
+  version: 0.12.1
   license:
     name: MIT
     identifier: MIT
@@ -113,6 +113,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SystemVersion'
+  /api/v1/jobs:
+    get:
+      tags:
+        - system
+      operationId: listJobs
+      summary: Мои активные задачи и завершённые за сутки
+      description: До 100 задач текущего пользователя, активные первыми, затем новые. Не зависит от выбранного проекта или организации.
+      responses:
+        '200':
+          description: Фоновые задачи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/jobs/{job_id}:
     get:
       tags:
@@ -2374,6 +2390,10 @@ paths:
         - simulation
       operationId: runFleetSweep
       summary: Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача)
+      description: |
+        Повторный запуск возвращает свою активную задачу этого сценария. Если перебор запущен другим
+        участником, возвращается 409. После успешного применения парка воркер сохраняет экономику
+        в той же транзакции; присутствие браузера и дополнительный calculate не требуются.
       parameters:
         - $ref: '#/components/parameters/ScenarioId'
       requestBody:
@@ -2385,6 +2405,12 @@ paths:
       responses:
         '202':
           $ref: '#/components/responses/JobAccepted'
+        '409':
+          description: Сценарий не готов или уже проверяется другим участником
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}:
     get:
       tags:
@@ -2402,7 +2428,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/FleetSweepResult'
         '409':
-          description: Ещё считается
+          description: Результат недоступен; текущий статус и ошибку проверяйте через GET /jobs/{job_id}
           content:
             application/json:
               schema:
@@ -4086,6 +4112,15 @@ components:
       example:
         amount_rub: 2700000
         vat_included: true
+    JobList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
     Job:
       type: object
       description: |
@@ -4109,11 +4144,47 @@ components:
           type: number
           minimum: 0
           maximum: 1
+          description: Доля модельного времени текущего прогона; при новом прогоне сбрасывается. Завершение задачи определяется status.
         stage:
           type:
             - string
             - 'null'
           example: Прогон пикового дня, час 14 из 24
+        project_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+        scenario_id:
+          type:
+            - string
+            - 'null'
+          format: uuid
+        label:
+          type:
+            - string
+            - 'null'
+          description: Название проекта и сценария при запуске
+        kind:
+          type:
+            - string
+            - 'null'
+          description: simulation или fleet_sweep для имитации
+        completed_runs:
+          type: integer
+          minimum: 0
+          default: 0
+        progress_updated_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        eta_seconds:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          description: Оценка остатка текущего прогона, не всего перебора
         created_at:
           type: string
           format: date-time
@@ -9989,6 +10060,7 @@ components:
         Кандидат N находится отдельным поиском процесса. Затем весь моделируемый парк проверяется совместно:
         SLA каждого процесса должен выдерживаться в каждом повторе при общих ресурсах.
         Только совместно прошедший парк атомарно записывается в сценарий, если физические входы и версия сценария не изменились.
+        В той же транзакции воркер сохраняет расчёт экономики; завершение не зависит от открытой страницы.
       required:
         - process_key
         - points
@@ -11818,6 +11890,55 @@ components:
         auto_calculate:
           type: boolean
           default: false
+  responses:
+    Unauthorized:
+      description: Нет или истёк токен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    RateLimited:
+      description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: Недостаточно прав или чужой проект
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Конфликт состояния
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ValidationError:
+      description: Ошибка валидации запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    JobAccepted:
+      description: Задача принята, результат позже
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Job'
   parameters:
     JobId:
       name: job_id
@@ -11902,52 +12023,3 @@ components:
       schema:
         type: string
         format: uuid
-  responses:
-    NotFound:
-      description: Не найдено
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    RateLimited:
-      description: Слишком много запросов
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    Unauthorized:
-      description: Нет или истёк токен
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    Forbidden:
-      description: Недостаточно прав или чужой проект
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    Conflict:
-      description: Конфликт состояния
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    ValidationError:
-      description: Ошибка валидации запроса
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    BadRequest:
-      description: Некорректный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    JobAccepted:
-      description: Задача принята, результат позже
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Job'

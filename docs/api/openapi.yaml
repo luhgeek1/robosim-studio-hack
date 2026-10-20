@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.12.0
+  version: 0.12.1
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -50,6 +50,7 @@ paths:
   /api/v1/health: {$ref: './paths/auth.yaml#/health'}
   /api/v1/ready: {$ref: './paths/auth.yaml#/ready'}
   /api/v1/version: {$ref: './paths/auth.yaml#/version'}
+  /api/v1/jobs: {$ref: './paths/auth.yaml#/jobList'}
   /api/v1/jobs/{job_id}: {$ref: './paths/auth.yaml#/jobs'}
   /api/v1/jobs/{job_id}/stream: {$ref: './paths/auth.yaml#/jobStream'}
   /api/v1/auth/guest: {$ref: './paths/auth.yaml#/guestSession'}
@@ -214,6 +215,7 @@ components:
     ProvenanceStatus: {$ref: './components/common.yaml#/ProvenanceStatus'}
     Source: {$ref: './components/common.yaml#/Source'}
     Money: {$ref: './components/common.yaml#/Money'}
+    JobList: {$ref: './components/common.yaml#/JobList'}
     Job: {$ref: './components/common.yaml#/Job'}
     VersionStamp: {$ref: './components/common.yaml#/VersionStamp'}
     ObjectType: {$ref: './components/reference.yaml#/ObjectType'}

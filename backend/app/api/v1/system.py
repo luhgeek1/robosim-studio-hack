@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import text
 
 from app.api.deps import CurrentUserDep, RedisDep, SettingsDep, UowDep
-from app.api.schemas.system import CheckState, Health, Job, SystemVersion
+from app.api.schemas.system import CheckState, Health, Job, JobList, SystemVersion
 from app.core.errors import NotFoundError
 from app.core.versions import ENGINE_VERSION
 from app.db.repositories.jobs import to_info
@@ -69,6 +69,11 @@ async def version(settings: SettingsDep, uow: UowDep) -> SystemVersion:
         llm_enabled=False,
         build_sha=settings.build_sha,
     )
+
+
+@router.get("/jobs", operation_id="listJobs", summary="Мои активные задачи и завершённые за сутки")
+async def list_jobs(user: CurrentUserDep, uow: UowDep) -> JobList:
+    return JobList(items=[Job.from_domain(to_info(job)) for job in await uow.jobs.recent(user.id)])
 
 
 @router.get(

@@ -195,3 +195,17 @@ guestSession:
       '204': {description: "Гостевые проекты, файлы, задачи и сессия удалены"}
       '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}
       '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
+
+jobList:
+  get:
+    tags: [system]
+    operationId: listJobs
+    summary: Мои активные задачи и завершённые за сутки
+    description: До 100 задач текущего пользователя, активные первыми, затем новые. Не зависит от выбранного проекта или организации.
+    responses:
+      '200':
+        description: Фоновые задачи
+        content:
+          application/json:
+            schema: {$ref: '../components/common.yaml#/JobList'}
+      '401': {$ref: '../components/common.yaml#/responses/Unauthorized'}

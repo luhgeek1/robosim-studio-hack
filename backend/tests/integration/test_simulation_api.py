@@ -107,6 +107,9 @@ async def test_fleet_sweep_sets_the_scenario_count(client: AsyncClient) -> None:
     job_id = response.json()["id"]
     job = (await client.get(f"/api/v1/jobs/{job_id}", headers=headers)).json()
     assert job["status"] == "done", job
+    assert job["completed_runs"] > 1
+    assert job["progress_updated_at"]
+    await _assert_background_completion(client, headers, project_id, scenario_id, job_id)
     result = (
         await client.get(f"/api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}", headers=headers)
     ).json()
@@ -371,3 +374,23 @@ async def test_airport_baggage_and_terminal_trips_are_simulated_and_swept(client
             await client.get(f"/api/v1/scenarios/{scenario_id}/fleet-sweep/{job_id}", headers=headers)
         ).json()
         assert result["recommended_count"] is not None, (process_key, result)
+
+
+async def _assert_background_completion(
+    client: AsyncClient, headers: dict[str, str], project_id: str, scenario_id: str, job_id: str
+) -> None:
+    tasks = (await client.get("/api/v1/jobs", headers=headers)).json()["items"]
+    task = next(item for item in tasks if item["id"] == job_id)
+    assert task["project_id"] == project_id
+    assert task["scenario_id"] == scenario_id
+    assert task["kind"] == "fleet_sweep"
+    # The worker finishes the economics without another request from the initiating browser.
+    scenario = (await client.get(f"/api/v1/scenarios/{scenario_id}", headers=headers)).json()
+    saved = (
+        await client.get(
+            f"/api/v1/calculations/{scenario['last_calculation']['calculation_id']}", headers=headers
+        )
+    ).json()
+    assert saved["sizing"][0]["count"]["source"] == "simulated"
+    other = bearer((await login(client, "vendor@robomera.demo"))["access"])
+    assert (await client.get("/api/v1/jobs", headers=other)).json()["items"] == []
