@@ -1,10 +1,7 @@
 import { useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Building2, Check, ChevronDown, HeartPulse, Plane, Warehouse } from 'lucide-react'
 import { useNavigate } from 'react-router'
-import { quoted, useWorkspace } from '@/entities/organization'
-import { OBJECT_TYPE_LABEL, useCreateProject } from '@/entities/project'
-import { useObjectTypes } from '@/entities/reference'
-import type { ObjectTypeKey } from '@/shared/api/types'
+import { quoted } from '@/entities/organization'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import {
@@ -19,8 +16,7 @@ import {
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Spinner } from '@/shared/ui/states'
-
-type InitMode = 'demo' | 'blank'
+import { useProjectDraft, type InitMode } from './useProjectDraft'
 
 const OBJECT_TYPE_ICON = { warehouse: Warehouse, airport: Plane, hospital: HeartPulse, custom: Building2 }
 
@@ -42,29 +38,28 @@ export function CreateProjectDialog({
     onOpenChange?.(next)
   }
   const navigate = useNavigate()
-  const objectTypes = useObjectTypes()
-  const create = useCreateProject()
-  const workspace = useWorkspace()
-  const [objectType, setObjectType] = useState<ObjectTypeKey>('warehouse')
-  const [preferredMode, setMode] = useState<InitMode>(initialMode)
-  const [name, setName] = useState('')
-  const [demoKey, setDemoKey] = useState<string | null>(null)
+  const draft = useProjectDraft(initialMode)
+  const {
+    objectTypes,
+    create,
+    workspace,
+    objectType,
+    setObjectType,
+    mode,
+    setMode,
+    name,
+    setName,
+    setDemoKey,
+    selected,
+    demos,
+    demo,
+  } = draft
   const titleRef = useRef<HTMLHeadingElement>(null)
-
-  const selected = objectTypes.data?.find((t) => t.key === objectType)
-  const demos = selected?.demo_projects ?? []
-  const demo = demos.find((d) => d.key === demoKey) ?? demos[0]
-
-  const mode: InitMode = demo ? preferredMode : 'blank'
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    const project = await create.mutateAsync({
-      name: name.trim() || (mode === 'demo' && demo ? demo.name : `Новый объект: ${OBJECT_TYPE_LABEL[objectType]}`),
-      object_type: objectType,
-      init: mode === 'demo' && demo ? { mode: 'demo', demo_key: demo.key } : { mode: 'blank' },
-      organization_id: workspace.id,
-    })
+    const project = await draft.submit()
+    if (!project) return
     setOpen(false)
     navigate(`/projects/${project.id}`)
   }
