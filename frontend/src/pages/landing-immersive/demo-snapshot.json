@@ -1,0 +1,828 @@
+{
+  "source_url": "https://prooood.ru/api/v1/demo/projects/warehouse_demo_01",
+  "retrieved_at": "2026-10-20",
+  "prepared_at": "2026-10-19T20:28:54.339779Z",
+  "revision": "aa305674d65fa2c77eda",
+  "demo": {
+    "key": "warehouse_demo_01",
+    "name": "Склад: перевозка паллет",
+    "object_type": "warehouse",
+    "description": "Данные организатора · склад 20 000 м². От исходной формулы до проверенного парка и его стоимости.",
+    "headline": {
+      "robots_total": 13,
+      "capex_rub": 40301800.0,
+      "payback_years": 2.2193990793253415,
+      "effect_rub_year": 18158879.3,
+      "verdict": "attractive"
+    },
+    "image_url": null,
+    "scope": "Горизонтальное перемещение паллет. Работа с ярусами и остальные функции погрузчика остаются у людей."
+  },
+  "sweep": {
+    "process_key": "pallet_transport",
+    "points": [
+      {
+        "count": 10,
+        "sla_achieved_pct": 88.9,
+        "sla_min_pct": 69.12,
+        "utilization": 0.6634,
+        "throughput_per_hour": 127.09,
+        "queue_max": 49,
+        "robots_total": 12,
+        "capex_rub": 37549600.0,
+        "payback_years": null,
+        "npv_rub": 29383042.849729918,
+        "simulation_id": null,
+        "passed": false,
+        "runs": 5
+      },
+      {
+        "count": 11,
+        "sla_achieved_pct": 100.0,
+        "sla_min_pct": 100.0,
+        "utilization": 0.6243,
+        "throughput_per_hour": 127.2,
+        "queue_max": 21,
+        "robots_total": 13,
+        "capex_rub": 40301800.0,
+        "payback_years": 2.2193990793253415,
+        "npv_rub": 25325328.240479413,
+        "simulation_id": "fd6f3cce-8ba5-4499-92be-ece1d45103e8",
+        "passed": true,
+        "runs": 5
+      },
+      {
+        "count": 12,
+        "sla_achieved_pct": 100.0,
+        "sla_min_pct": 100.0,
+        "utilization": 0.5714,
+        "throughput_per_hour": 127.2,
+        "queue_max": 9,
+        "robots_total": 14,
+        "capex_rub": 42684400.0,
+        "payback_years": 2.4002444173134565,
+        "npv_rub": 21740112.16713159,
+        "simulation_id": null,
+        "passed": true,
+        "runs": 5
+      },
+      {
+        "count": 14,
+        "sla_achieved_pct": 100.0,
+        "sla_min_pct": 100.0,
+        "utilization": 0.4788,
+        "throughput_per_hour": 127.2,
+        "queue_max": 7,
+        "robots_total": 17,
+        "capex_rub": 50201800.0,
+        "payback_years": 3.009464209767433,
+        "npv_rub": 10698979.041251985,
+        "simulation_id": null,
+        "passed": true,
+        "runs": 5
+      }
+    ],
+    "recommended_count": 11,
+    "candidate_count": 11,
+    "joint_validation": {
+      "status": "passed",
+      "replications": 5,
+      "fleet": {
+        "pallet_transport": 11
+      },
+      "processes": [
+        {
+          "process_key": "pallet_transport",
+          "target_pct": 95.0,
+          "sla_min_pct": 100.0,
+          "passed": true
+        }
+      ],
+      "skipped_processes": []
+    },
+    "analytic_count": 14,
+    "target_pct": 95.0,
+    "explanation": "11 — минимальное N, при котором все 5 прогонов пикового режима держат SLA ≥ 95 % (худший 100 %, в среднем 100 %); 10 — в среднем 88,9 %, худший прогон 69,12 %; по циклу 14: загрузка 48 %. Совместно все имитируемые процессы держат SLA во всех 5 прогонах. Подтверждён парк этих процессов; резерв добавляется в расчёте.",
+    "simulation_id": "fd6f3cce-8ba5-4499-92be-ece1d45103e8",
+    "applied": true,
+    "by_formula": {
+      "working": 14,
+      "reserve": 3,
+      "total": 17,
+      "capex_rub": 50201800.0,
+      "payback_years": 3.009464209767433,
+      "npv_rub": 10698979.041251985
+    },
+    "by_simulation": {
+      "working": 11,
+      "reserve": 2,
+      "total": 13,
+      "capex_rub": 40301800.0,
+      "payback_years": 2.2193990793253415,
+      "npv_rub": 25325328.240479413
+    },
+    "job_id": "1ca814ee-b96c-4986-a795-019024d845f5",
+    "computed_at": "2026-10-19T20:28:53.285385Z"
+  },
+  "comparison": {
+    "scenarios": [
+      {
+        "name": "Как сейчас",
+        "kind": "baseline",
+        "status": "fresh",
+        "metrics": {
+          "capex_rub": 0.0,
+          "payback_years": null,
+          "npv_rub": 0.0,
+          "discount_rate_pct": 18.0,
+          "labor_cash_realization_pct": 0.0,
+          "horizon_years": 5
+        }
+      },
+      {
+        "name": "Покупка",
+        "kind": "purchase",
+        "status": "fresh",
+        "metrics": {
+          "capex_rub": 40301800.0,
+          "payback_years": 2.2193990793253415,
+          "npv_rub": 25325328.240479413,
+          "discount_rate_pct": 18.0,
+          "labor_cash_realization_pct": 100.0,
+          "horizon_years": 5
+        }
+      },
+      {
+        "name": "Робот как услуга",
+        "kind": "raas",
+        "status": "fresh",
+        "metrics": {
+          "capex_rub": 10219000.0,
+          "payback_years": 1.484914157096594,
+          "npv_rub": 15618214.01326104,
+          "discount_rate_pct": 18.0,
+          "labor_cash_realization_pct": 100.0,
+          "horizon_years": 5
+        }
+      },
+      {
+        "name": "Лизинг",
+        "kind": "lease",
+        "status": "fresh",
+        "metrics": {
+          "capex_rub": 40301800.0,
+          "payback_years": 2.5005811732473373,
+          "npv_rub": 25325328.240479413,
+          "discount_rate_pct": 18.0,
+          "labor_cash_realization_pct": 100.0,
+          "horizon_years": 5
+        }
+      }
+    ],
+    "rows": [
+      {
+        "metric_key": "capex_rub",
+        "name": "CAPEX",
+        "unit": "₽",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 40301800.0,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 10219000.0,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 40301800.0
+        },
+        "better": "lower",
+        "best_scenario_id": "d949a269-0600-41f0-8639-9ba6115c8ff0"
+      },
+      {
+        "metric_key": "opex_rub_year",
+        "name": "OPEX роботизации в год",
+        "unit": "₽/год",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 9729960.7,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 21006960.7,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 9729960.7
+        },
+        "better": "lower",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "scenario_cost_rub_year",
+        "name": "Затраты в год после внедрения",
+        "unit": "₽/год",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 237484800.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 219325920.7,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 230602920.7,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 221367826.70148367
+        },
+        "better": "lower",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "effect_rub_year",
+        "name": "Годовой эффект с учётом процентов",
+        "unit": "₽/год",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 18158879.3,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 6881879.300000001,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 16116973.29851634
+        },
+        "better": "higher",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "project_effect_rub_year",
+        "name": "Годовой эффект проекта до процентов",
+        "unit": "₽/год",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 18158879.3,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 6881879.300000001,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 18158879.3
+        },
+        "better": "higher",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "payback_years",
+        "name": "Простая окупаемость по годовому эффекту",
+        "unit": "лет",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": null,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 2.2193990793253415,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 1.484914157096594,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 2.5005811732473373
+        },
+        "better": "lower",
+        "best_scenario_id": "d949a269-0600-41f0-8639-9ba6115c8ff0"
+      },
+      {
+        "metric_key": "discounted_payback_years",
+        "name": "Дисконтированная окупаемость проекта",
+        "unit": "лет",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": null,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 2.9650881478956865,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 2.2587735454858193,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 2.9650881478956865
+        },
+        "better": "lower",
+        "best_scenario_id": "d949a269-0600-41f0-8639-9ba6115c8ff0"
+      },
+      {
+        "metric_key": "roi_pct",
+        "name": "ROI проекта за горизонт",
+        "unit": "%",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": null,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 155.07172686736706,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 309.9544373826455,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 155.07172686736706
+        },
+        "better": "higher",
+        "best_scenario_id": "d949a269-0600-41f0-8639-9ba6115c8ff0"
+      },
+      {
+        "metric_key": "npv_rub",
+        "name": "NPV проекта",
+        "unit": "₽",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 25325328.240479413,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 15618214.01326104,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 25325328.240479413
+        },
+        "better": "higher",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "irr_pct",
+        "name": "IRR проекта",
+        "unit": "%",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": null,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 44.750667863125365,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 70.66287536902266,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 44.750667863125365
+        },
+        "better": "higher",
+        "best_scenario_id": "d949a269-0600-41f0-8639-9ba6115c8ff0"
+      },
+      {
+        "metric_key": "owner_npv_rub",
+        "name": "NPV собственных средств",
+        "unit": "₽",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 25325328.240479413,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 15618214.01326104,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 24944222.075717945
+        },
+        "better": "higher",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "owner_roi_pct",
+        "name": "ROI собственных средств",
+        "unit": "%",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": null,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 155.07172686736706,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 309.9544373826455,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 282.0890299657794
+        },
+        "better": "higher",
+        "best_scenario_id": "d949a269-0600-41f0-8639-9ba6115c8ff0"
+      },
+      {
+        "metric_key": "owner_upfront_rub",
+        "name": "Собственные вложения в момент 0",
+        "unit": "₽",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": -0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 40301800.0,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 10219000.0,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 19983400.0
+        },
+        "better": "lower",
+        "best_scenario_id": "d949a269-0600-41f0-8639-9ba6115c8ff0"
+      },
+      {
+        "metric_key": "tco_rub",
+        "name": "TCO за горизонт, включая проценты",
+        "unit": "₽",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 1393228555.6654074,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 1331901858.4467757,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 1361554311.7092745,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 1338027576.451227
+        },
+        "better": "lower",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "fte_released",
+        "name": "Высвобождаемая трудоёмкость",
+        "unit": "FTE",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 14.875,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 14.875,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 14.875
+        },
+        "better": "none",
+        "best_scenario_id": null
+      },
+      {
+        "metric_key": "labor_savings_rub_year",
+        "name": "Ожидаемая денежная экономия ФОТ",
+        "unit": "₽/год",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 27888840.0,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 27888840.0,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 27888840.0
+        },
+        "better": "higher",
+        "best_scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24"
+      },
+      {
+        "metric_key": "labor_cash_realization_pct",
+        "name": "Доля реализации экономии ФОТ",
+        "unit": "%",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 100.0,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 100.0,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 100.0
+        },
+        "better": "none",
+        "best_scenario_id": null
+      },
+      {
+        "metric_key": "robots_total",
+        "name": "Роботов",
+        "unit": "шт",
+        "values": {
+          "35154fc0-95a6-4d36-a5ac-fd2722b15214": 0.0,
+          "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": 13.0,
+          "d949a269-0600-41f0-8639-9ba6115c8ff0": 13.0,
+          "38747e75-c4e4-471c-95e4-b0a2f85c399a": 13.0
+        },
+        "better": "none",
+        "best_scenario_id": null
+      }
+    ],
+    "recommendation": {
+      "scenario_id": "7e1f7fa0-95eb-42c1-8439-7075cfa72f24",
+      "rationale": [
+        "Максимальный NPV проекта среди актуальных окупаемых сценариев: 25,3 млн ₽",
+        "Окупаемость 2,2 лет, ROI проекта 155 %",
+        "TCO с процентами за 5 лет ниже базы на 61,3 млн ₽"
+      ],
+      "caveats": []
+    },
+    "verdict": {
+      "verdict": "attractive",
+      "band": "lt3",
+      "headline": "Роботизация «перемещение паллет» окупается за 2,2 года — привлекательно",
+      "summary": "CAPEX 40,3 млн ₽, OPEX роботизации 9,7 млн ₽/год, чистый эффект с процентами 18,2 млн ₽/год. NPV проекта до финансирования 25,3 млн ₽ при ставке до налога 18 %, IRR проекта 44,8 %, дисконтированная окупаемость 3 года. ROI проекта за 5 лет 155 %; TCO с процентами 1 331,9 против 1 393,2 млн ₽. Роботов 13, высвобождается 14,9 FTE.",
+      "key_drivers": [
+        "Ожидаемая денежная экономия ФОТ: Перемещение паллет (приёмка → хранение → отгрузка): 27,9 млн ₽/год, 14,9 FTE",
+        "Крупнейшая статья CAPEX — роботы: amr 800 (грузоподъемность до 800 кг) × 13: 58 %",
+        "OPEX роботизации забирает 35 % экономии ФОТ"
+      ],
+      "caveats": [
+        "Цены оборудования и облагаемых услуг учитываются с НДС; вычет НДС не моделируется. ФОТ не содержит НДС. Денежные потоки рассчитаны до налога на прибыль.",
+        "Результат опирается на 22 допущений команды (с обоснованием в реестре нормативов), например: время захвата груза, время отдачи груза, доля высвобождаемого персонала — перемещение грузов",
+        "Экономия растёт с индексацией зарплат 8 % в год"
+      ]
+    },
+    "cashflow_overlay": {
+      "35154fc0-95a6-4d36-a5ac-fd2722b15214": [
+        {
+          "period": 0,
+          "capex_rub": 0.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": 0.0,
+          "cumulative_rub": 0.0,
+          "discounted_cumulative_rub": 0.0
+        },
+        {
+          "period": 1,
+          "capex_rub": 0.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": 0.0,
+          "cumulative_rub": 0.0,
+          "discounted_cumulative_rub": 0.0
+        },
+        {
+          "period": 2,
+          "capex_rub": 0.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": 0.0,
+          "cumulative_rub": 0.0,
+          "discounted_cumulative_rub": 0.0
+        },
+        {
+          "period": 3,
+          "capex_rub": 0.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": 0.0,
+          "cumulative_rub": 0.0,
+          "discounted_cumulative_rub": 0.0
+        },
+        {
+          "period": 4,
+          "capex_rub": 0.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": 0.0,
+          "cumulative_rub": 0.0,
+          "discounted_cumulative_rub": 0.0
+        },
+        {
+          "period": 5,
+          "capex_rub": 0.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": 0.0,
+          "cumulative_rub": 0.0,
+          "discounted_cumulative_rub": 0.0
+        }
+      ],
+      "7e1f7fa0-95eb-42c1-8439-7075cfa72f24": [
+        {
+          "period": 0,
+          "capex_rub": 40301800.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": -40301800.0,
+          "cumulative_rub": -40301800.0,
+          "discounted_cumulative_rub": -40301800.0
+        },
+        {
+          "period": 1,
+          "capex_rub": 0.0,
+          "opex_rub": 6858720.525,
+          "savings_rub": 18592560.0,
+          "financing_rub": 0.0,
+          "net_rub": 11733839.475000001,
+          "cumulative_rub": -28567960.524999984,
+          "discounted_cumulative_rub": -29893856.60307353
+        },
+        {
+          "period": 2,
+          "capex_rub": 0.0,
+          "opex_rub": 9742824.735,
+          "savings_rub": 30119947.200000003,
+          "financing_rub": 0.0,
+          "net_rub": 20377122.465000004,
+          "cumulative_rub": -8190838.05999998,
+          "discounted_cumulative_rub": -14088040.131470311
+        },
+        {
+          "period": 3,
+          "capex_rub": 0.0,
+          "opex_rub": 10381831.25175,
+          "savings_rub": 32529542.976000004,
+          "financing_rub": 0.0,
+          "net_rub": 22147711.724250004,
+          "cumulative_rub": 13956873.664250018,
+          "discounted_cumulative_rub": 470604.1246707211
+        },
+        {
+          "period": 4,
+          "capex_rub": 0.0,
+          "opex_rub": 11064937.3167375,
+          "savings_rub": 35131906.41408001,
+          "financing_rub": 0.0,
+          "net_rub": 24066969.097342506,
+          "cumulative_rub": 38023842.76159252,
+          "discounted_cumulative_rub": 13877599.668039592
+        },
+        {
+          "period": 5,
+          "capex_rub": 1674284.6250000005,
+          "opex_rub": 11795319.845166378,
+          "savings_rub": 37942458.92720641,
+          "financing_rub": 0.0,
+          "net_rub": 24472854.457040034,
+          "cumulative_rub": 62496697.218632534,
+          "discounted_cumulative_rub": 25325328.240479413
+        }
+      ],
+      "d949a269-0600-41f0-8639-9ba6115c8ff0": [
+        {
+          "period": 0,
+          "capex_rub": 10219000.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": -10219000.0,
+          "cumulative_rub": -10219000.0,
+          "discounted_cumulative_rub": -10219000.0
+        },
+        {
+          "period": 1,
+          "capex_rub": 0.0,
+          "opex_rub": 4055220.5249999994,
+          "savings_rub": 18592560.0,
+          "financing_rub": 11700000.0,
+          "net_rub": 2837339.4749999996,
+          "cumulative_rub": -7381660.525000002,
+          "discounted_cumulative_rub": -7783165.353124968
+        },
+        {
+          "period": 2,
+          "capex_rub": 0.0,
+          "opex_rub": 5817924.734999999,
+          "savings_rub": 30119947.200000003,
+          "financing_rub": 16380000.0,
+          "net_rub": 7922022.465000004,
+          "cumulative_rub": 540361.9400000013,
+          "discounted_cumulative_rub": -1638331.4404477994
+        },
+        {
+          "period": 3,
+          "capex_rub": 0.0,
+          "opex_rub": 6260686.25175,
+          "savings_rub": 32529542.976000004,
+          "financing_rub": 17199000.0,
+          "net_rub": 9069856.724250002,
+          "cumulative_rub": 9610218.66425,
+          "discounted_cumulative_rub": 4323675.792920048
+        },
+        {
+          "period": 4,
+          "capex_rub": 0.0,
+          "opex_rub": 6737735.066737499,
+          "savings_rub": 35131906.41408001,
+          "financing_rub": 18058950.000000004,
+          "net_rub": 10335221.347342502,
+          "cumulative_rub": 19945440.011592504,
+          "discounted_cumulative_rub": 10081121.443143288
+        },
+        {
+          "period": 5,
+          "capex_rub": 0.0,
+          "opex_rub": 7251757.482666377,
+          "savings_rub": 37942458.92720641,
+          "financing_rub": 18961897.500000004,
+          "net_rub": 11728803.944540031,
+          "cumulative_rub": 31674243.956132542,
+          "discounted_cumulative_rub": 15618214.01326104
+        }
+      ],
+      "38747e75-c4e4-471c-95e4-b0a2f85c399a": [
+        {
+          "period": 0,
+          "capex_rub": 40301800.0,
+          "opex_rub": 0.0,
+          "savings_rub": 0.0,
+          "financing_rub": 0.0,
+          "net_rub": -40301800.0,
+          "cumulative_rub": -40301800.0,
+          "discounted_cumulative_rub": -40301800.0
+        },
+        {
+          "period": 1,
+          "capex_rub": 0.0,
+          "opex_rub": 6858720.525,
+          "savings_rub": 18592560.0,
+          "financing_rub": 0.0,
+          "net_rub": 11733839.475000001,
+          "cumulative_rub": -28567960.524999984,
+          "discounted_cumulative_rub": -29893856.60307353
+        },
+        {
+          "period": 2,
+          "capex_rub": 0.0,
+          "opex_rub": 9742824.735,
+          "savings_rub": 30119947.200000003,
+          "financing_rub": 0.0,
+          "net_rub": 20377122.465000004,
+          "cumulative_rub": -8190838.05999998,
+          "discounted_cumulative_rub": -14088040.131470311
+        },
+        {
+          "period": 3,
+          "capex_rub": 0.0,
+          "opex_rub": 10381831.25175,
+          "savings_rub": 32529542.976000004,
+          "financing_rub": 0.0,
+          "net_rub": 22147711.724250004,
+          "cumulative_rub": 13956873.664250018,
+          "discounted_cumulative_rub": 470604.1246707211
+        },
+        {
+          "period": 4,
+          "capex_rub": 0.0,
+          "opex_rub": 11064937.3167375,
+          "savings_rub": 35131906.41408001,
+          "financing_rub": 0.0,
+          "net_rub": 24066969.097342506,
+          "cumulative_rub": 38023842.76159252,
+          "discounted_cumulative_rub": 13877599.668039592
+        },
+        {
+          "period": 5,
+          "capex_rub": 1674284.6250000005,
+          "opex_rub": 11795319.845166378,
+          "savings_rub": 37942458.92720641,
+          "financing_rub": 0.0,
+          "net_rub": 24472854.457040034,
+          "cumulative_rub": 62496697.218632534,
+          "discounted_cumulative_rub": 25325328.240479413
+        }
+      ]
+    }
+  },
+  "params": [
+    {
+      "key": "area_m2",
+      "name": "Общая площадь склада",
+      "value": 20000,
+      "unit": "м²",
+      "provenance": {
+        "status": "default",
+        "source": {
+          "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+          "kind": "organizer_dataset",
+          "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+          "url": null,
+          "retrieved_at": "2026-09-15",
+          "note": null
+        },
+        "confidence": null,
+        "raw_value": null,
+        "note": "Типичный FFC/RDC в логистическом парке. Источник: отраслевые бенчмарки РФ 2023–2024",
+        "changed_by": null,
+        "changed_at": null
+      }
+    },
+    {
+      "key": "aisle_width_m",
+      "name": "Ширина рабочих проходов между стеллажами",
+      "value": 2.8,
+      "unit": "м",
+      "provenance": {
+        "status": "default",
+        "source": {
+          "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+          "kind": "organizer_dataset",
+          "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+          "url": null,
+          "retrieved_at": "2026-09-15",
+          "note": null
+        },
+        "confidence": null,
+        "raw_value": null,
+        "note": "Узкий проход (1.5-2.0 м) - только специализированные решения",
+        "changed_by": null,
+        "changed_at": null
+      }
+    },
+    {
+      "key": "shifts_per_day",
+      "name": "Количество рабочих смен в сутки",
+      "value": 2,
+      "unit": "смен",
+      "provenance": {
+        "status": "default",
+        "source": {
+          "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+          "kind": "organizer_dataset",
+          "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+          "url": null,
+          "retrieved_at": "2026-09-15",
+          "note": null
+        },
+        "confidence": null,
+        "raw_value": null,
+        "note": "Стандартно: 2 смены по 12 ч/сутки",
+        "changed_by": null,
+        "changed_at": null
+      }
+    },
+    {
+      "key": "shift_hours",
+      "name": "Продолжительность смены",
+      "value": 11,
+      "unit": "ч",
+      "provenance": {
+        "status": "default",
+        "source": {
+          "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+          "kind": "organizer_dataset",
+          "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+          "url": null,
+          "retrieved_at": "2026-09-15",
+          "note": null
+        },
+        "confidence": null,
+        "raw_value": null,
+        "note": "С учётом перерывов на обед и техн. пауз",
+        "changed_by": null,
+        "changed_at": null
+      }
+    },
+    {
+      "key": "pallets_in_per_day",
+      "name": "Приёмка паллет в сутки",
+      "value": 1000,
+      "unit": "поддон/сут",
+      "provenance": {
+        "status": "default",
+        "source": {
+          "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+          "kind": "organizer_dataset",
+          "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+          "url": null,
+          "retrieved_at": "2026-09-15",
+          "note": null
+        },
+        "confidence": null,
+        "raw_value": null,
+        "note": "Входящий поток. 1 еврооддон ≈ 33 короба",
+        "changed_by": null,
+        "changed_at": null
+      }
+    },
+    {
+      "key": "pallets_out_per_day",
+      "name": "Отгрузка паллет в сутки",
+      "value": 1000,
+      "unit": "поддон/сут",
+      "provenance": {
+        "status": "default",
+        "source": {
+          "id": "7f90729a-df7e-4b0a-b50c-eec1612b7592",
+          "kind": "organizer_dataset",
+          "title": "Датасеты_хакатон.xlsx, лист «Склад»",
+          "url": null,
+          "retrieved_at": "2026-09-15",
+          "note": null
+        },
+        "confidence": null,
+        "raw_value": null,
+        "note": "Исходящий поток. Включая консолидацию",
+        "changed_by": null,
+        "changed_at": null
+      }
+    }
+  ]
+}
