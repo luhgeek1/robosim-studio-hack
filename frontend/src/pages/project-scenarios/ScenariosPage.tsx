@@ -52,14 +52,15 @@ export function ScenariosPage() {
   const buildSet = useBuildComparisonSet(projectId)
   const navigate = useNavigate()
 
-  const fromRecommendation = async () => {
-    const scenario = await create.mutateAsync({
-      name: 'Покупка по рекомендации подбора',
-      kind: 'purchase',
-      from_recommendation: true,
-    })
-    navigate(`/projects/${projectId}/scenarios/${scenario.id}`)
-  }
+  const fromRecommendation = () =>
+    create.mutate(
+      {
+        name: 'Покупка по рекомендации подбора',
+        kind: 'purchase',
+        from_recommendation: true,
+      },
+      { onSuccess: (scenario) => navigate(`/projects/${projectId}/scenarios/${scenario.id}`) },
+    )
 
   const robotized = scenarios.data?.filter((s) => !s.is_baseline) ?? []
   const fresh = robotized.filter((s) => s.last_calculation?.status === 'fresh')
@@ -69,7 +70,7 @@ export function ScenariosPage() {
   const needsSet = scenarios.data !== undefined && robotized.filter((s) => s.last_calculation).length < 2
   const buildSetButton = (compact = false) => (
     <Button
-      variant={robotized.length ? 'default' : 'outline'}
+      variant="outline"
       onClick={() => buildSet.mutate()}
       disabled={buildSet.isPending}
       className="max-sm:text-[13px]"
@@ -91,23 +92,21 @@ export function ScenariosPage() {
       }
       dense
       nextDisabled={!robotized.some((s) => s.last_calculation)}
+      lead="Создайте один сценарий из подбора или соберите свой. Покупка, RaaS и лизинг создаются отдельной кнопкой для сравнения способов внедрения."
       actions={
         <div className="flex max-w-full flex-wrap items-center gap-2 max-sm:flex-nowrap">
           <NewScenarioDialog projectId={projectId} />
-          {needsSet && robotized.length > 0 ? (
-            buildSetButton()
-          ) : (
-            <Button
-              onClick={fromRecommendation}
-              disabled={create.isPending}
-              className="max-sm:text-[13px]"
-              aria-label="Из рекомендации подбора"
-            >
-              {create.isPending ? <Spinner /> : <Sparkles />}
-              <span className="sm:hidden">Из подбора</span>
-              <span className="hidden sm:inline">Из рекомендации подбора</span>
-            </Button>
-          )}
+          <Button
+            onClick={fromRecommendation}
+            disabled={create.isPending}
+            className="max-sm:text-[13px]"
+            aria-label="Из рекомендации подбора"
+          >
+            {create.isPending ? <Spinner /> : <Sparkles />}
+            <span className="sm:hidden">Из подбора</span>
+            <span className="hidden sm:inline">Из рекомендации подбора</span>
+          </Button>
+          {needsSet && robotized.length > 0 && buildSetButton()}
         </div>
       }
     >
@@ -179,8 +178,8 @@ function BaselineStrip({ projectId, scenario }: { projectId: string; scenario: S
         <span className="min-w-0">
           <span className="block text-[15px] font-medium">{scenario.name}</span>
           <span className="block text-[12.5px] text-ink-3">
-            Точка отсчёта: ничего не покупаем, затраты на персонал остаются · горизонт {scenario.horizon_years}{' '}
-            {pluralRu(scenario.horizon_years, ['год', 'года', 'лет'])}
+            База без роботизации: текущие затраты на персонал. Установленный парк не моделируется · горизонт{' '}
+            {scenario.horizon_years} {pluralRu(scenario.horizon_years, ['год', 'года', 'лет'])}
           </span>
         </span>
       </span>
@@ -251,12 +250,15 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
             ? scenario.items
                 .map(
                   (i) =>
-                    `${formatNumber(i.count_result?.final ?? i.count_manual ?? 0)} × ${shortName(i.product_name ?? 'решение')}`,
+                    `${i.count_result?.final != null || i.count_manual != null ? formatNumber(i.count_result?.final ?? i.count_manual) + ' × ' : 'Количество не рассчитано · '}${shortName(i.product_name ?? 'решение')}`,
                 )
                 .join(', ')
             : 'добавьте решения в сценарий'}
           {fleet > 0 && scenario.items.length > 1 && ` · всего ${formatNumber(fleet)}`}
         </div>
+        {scenario.origin === 'recommendation' && (
+          <p className="mt-1 text-xs text-ink-3">На основе рекомендации подбора · состав можно менять</p>
+        )}
         <CountOriginMark scenario={scenario} />
 
         {calc && !stale ? (

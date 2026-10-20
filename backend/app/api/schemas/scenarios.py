@@ -182,6 +182,7 @@ class CalculationSummary(ApiModel):
 
 
 class Scenario(ApiModel):
+    origin: Literal["manual", "recommendation"] = "manual"
     id: UUID
     project_id: UUID
     name: str
@@ -203,6 +204,7 @@ class Scenario(ApiModel):
             id=view.id,
             project_id=view.project_id,
             name=view.name,
+            origin=view.origin,
             kind=view.kind,
             is_baseline=view.is_baseline,
             items=[ScenarioItem.from_domain(item) for item in view.items],
@@ -232,7 +234,11 @@ class ScenarioCreate(ApiModel):
     discount_rate_pct: float | None = Field(default=None, ge=0, le=100)
     overrides: list[NormOverride] = Field(default_factory=list)
     from_recommendation: bool = Field(
-        default=False, description="Заполнить items лучшими fit-кандидатами по каждому процессу"
+        default=False,
+        description=(
+            "Заполнить items рекомендацией подбора; повтор возвращает неизменённый сценарий "
+            "того же состава и условий"
+        ),
     )
 
 

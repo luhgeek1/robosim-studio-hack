@@ -1,30 +1,43 @@
-import { Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { CANDIDATE_STATUS_LABEL, useMatching } from '@/entities/matching'
 import type { Candidate, CandidateStatus } from '@/shared/api/types'
-import { formatRub } from '@/shared/lib/format'
+import { formatRub, formatYears } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/ui/dialog'
+import { Input } from '@/shared/ui/input'
 import { ErrorBlock, LoadingBlock } from '@/shared/ui/states'
 import { ToneBadge, type Tone } from '@/shared/ui/tone'
+import { RobotStage } from '@/widgets/robot-card'
+import type { ItemDraft } from './draft'
 
 const STATUS_TONE: Record<CandidateStatus, Tone> = { fit: 'ok', check: 'warn', manual: 'info', excluded: 'crit' }
 
 export function AddItemDialog({
   projectId,
+  items,
   onAdd,
 }: {
   projectId: string
+  items: ItemDraft[]
   onAdd: (processKey: string, candidate: Candidate) => void
 }) {
   const [open, setOpen] = useState(false)
   const matching = useMatching(projectId)
   const [processKey, setProcessKey] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
   const processes = matching.data?.processes ?? []
   const current = processes.find((p) => p.process_key === processKey) ?? processes[0]
-  // Excluded candidates stay visible (with reasons) but cannot be added here: that is a manual override (ТЗ 3.4.4).
-  const candidates = (current?.candidates ?? []).filter((c) => c.status !== 'excluded')
+  const existing = items.find((i) => i.process_key === current?.process_key)
+  const candidates = (current?.candidates ?? []).filter(
+    (c) =>
+      c.status !== 'excluded' &&
+      `${c.product.name} ${c.product.manufacturer.name}`
+        .toLocaleLowerCase('ru')
+        .includes(search.trim().toLocaleLowerCase('ru')),
+  )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -33,63 +46,141 @@ export function AddItemDialog({
           <Plus /> Добавить решение
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Добавить решение в сценарий</DialogTitle>
-          <DialogDescription>Кандидаты из подбора: подходящие и требующие проверки.</DialogDescription>
+          <DialogTitle>Решения для вашего сценария</DialogTitle>
+          <DialogDescription>
+            Те же кандидаты, что в подборе. Выберите процесс и робота. Для сравнения двух решений на один процесс
+            создайте копию сценария.
+          </DialogDescription>
         </DialogHeader>
         {matching.isPending && <LoadingBlock rows={3} />}
-        {matching.isError && <ErrorBlock error={matching.error} />}
+        {matching.isError && <ErrorBlock error={matching.error} onRetry={() => matching.refetch()} />}
         {current && (
-          // На телефоне процессы - строка фишек над списком кандидатов.
-          <div className="flex max-h-[60vh] min-w-0 flex-col gap-3 sm:grid sm:grid-cols-[220px_1fr] sm:gap-4">
-            <div className="scroll-thin flex shrink-0 gap-1 overflow-x-auto pb-1 sm:block sm:space-y-1 sm:overflow-x-visible sm:overflow-y-auto sm:pb-0">
+          <div className="grid max-h-[70vh] min-h-0 gap-5 sm:grid-cols-[220px_1fr]">
+            <nav className="space-y-1 overflow-y-auto" aria-label="Процесс для решения">
               {processes.map((p) => (
                 <button
                   key={p.process_key}
                   type="button"
-                  onClick={() => setProcessKey(p.process_key)}
+                  onClick={() => {
+                    setProcessKey(p.process_key)
+                    setSearch('')
+                  }}
+                  aria-current={p.process_key === current.process_key ? 'true' : undefined}
                   className={cn(
-                    'w-56 shrink-0 rounded-md px-2.5 py-2 text-left hover:bg-raised sm:w-full',
+                    'w-full rounded-lg px-3 py-2.5 text-left hover:bg-raised',
                     p.process_key === current.process_key && 'bg-raised font-medium',
                   )}
                 >
-                  <div className="leading-snug">{p.name}</div>
-                  {p.demand_summary && <div className="text-xs text-muted-foreground">{p.demand_summary}</div>}
+                  <span className="block text-sm leading-snug">{p.name}</span>
+                  <span className="mt-1 block text-xs text-ink-3">
+                    {items.some((i) => i.process_key === p.process_key)
+                      ? 'Есть в составе · можно заменить'
+                      : 'Ещё не добавлен'}
+                  </span>
                 </button>
               ))}
-            </div>
-            <div className="min-h-0 space-y-2 overflow-y-auto pr-1">
-              {candidates.length === 0 && (
-                <p className="text-muted-foreground">{current.no_fit_message ?? 'Подходящих решений нет.'}</p>
+            </nav>
+            <div className="flex min-h-0 flex-col gap-3">
+              <div className="relative">
+                <Search className="absolute top-2.5 left-3 size-4 text-ink-3" />
+                <Input
+                  aria-label="Поиск решения"
+                  placeholder="Название робота или производителя"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              {current.demand_summary && (
+                <p className="text-xs text-ink-3">Нагрузка процесса: {current.demand_summary}</p>
               )}
-              {candidates.map((c) => (
-                <div key={c.product.id} className="flex flex-wrap items-center gap-3 rounded-md border p-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{c.product.name}</span>
-                      <ToneBadge tone={STATUS_TONE[c.status]}>{CANDIDATE_STATUS_LABEL[c.status]}</ToneBadge>
-                      {c.score != null && (
-                        <span className="num text-xs text-muted-foreground">балл {Math.round(c.score)}</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {c.product.manufacturer.name} · {c.product.solution_type_name ?? c.product.solution_type} · от{' '}
-                      {formatRub(c.product.price_from.amount_rub)}
-                      {c.estimate?.robots_count != null && ` · оценка ≈ ${c.estimate.robots_count} шт.`}
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      onAdd(current.process_key, c)
-                      setOpen(false)
-                    }}
+              {existing && (
+                <p className="text-sm text-warn">
+                  Сейчас: «{existing.product_name}». Кнопка «Заменить» поменяет только решение для этого процесса.
+                </p>
+              )}
+              <div className="min-h-0 space-y-3 overflow-y-auto pr-2">
+                {candidates.length === 0 && (
+                  <p className="py-6 text-sm text-ink-3">
+                    {search
+                      ? 'По этому запросу решений нет. Измените название.'
+                      : (current.no_fit_message ?? 'Нет доступных кандидатов.')}
+                  </p>
+                )}
+                {candidates.map((c) => (
+                  <article
+                    key={c.product.id}
+                    aria-label={c.product.name}
+                    className="overflow-hidden rounded-xl border border-line"
                   >
-                    Добавить
-                  </Button>
-                </div>
-              ))}
+                    <div className="grid grid-cols-[150px_1fr]">
+                      <div className="relative min-h-40" aria-label={`3D-модель: ${c.product.name}`}>
+                        <RobotStage productId={c.product.id} solutionType={c.product.solution_type} />
+                      </div>
+                      <div className="min-w-0 space-y-2 p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ToneBadge tone={STATUS_TONE[c.status]}>{CANDIDATE_STATUS_LABEL[c.status]}</ToneBadge>
+                          {current.recommended_product_id === c.product.id && (
+                            <span className="text-xs font-medium">Выбор алгоритма</span>
+                          )}
+                        </div>
+                        <Link
+                          to={`/catalog/${c.product.id}`}
+                          target="_blank"
+                          className="block text-sm font-semibold hover:underline"
+                        >
+                          {c.product.name}
+                        </Link>
+                        <p className="text-xs text-ink-3">
+                          {c.product.manufacturer.name} · {c.product.solution_type_name}
+                        </p>
+                        <p className="text-sm">
+                          От {formatRub(c.product.price_from.amount_rub)} за единицу
+                          {c.estimate?.robots_count != null && ` · ≈ ${c.estimate.robots_count} шт.`}
+                        </p>
+                        {c.estimate?.npv_rub != null && (
+                          <p className="text-xs text-ink-3">
+                            NPV покупки: {formatRub(c.estimate.npv_rub)} · окупаемость{' '}
+                            {formatYears(c.estimate.payback_years)}
+                          </p>
+                        )}
+                        {c.estimate?.sizing_issue && (
+                          <p className="text-xs text-warn">
+                            {c.estimate.sizing_issue} Количество задайте вручную после добавления.
+                          </p>
+                        )}
+                        <div className="flex items-end justify-between gap-3">
+                          <details className="min-w-0 flex-1 text-xs text-ink-3">
+                            <summary className="cursor-pointer">Условия и недостающие данные</summary>
+                            <ul className="mt-2 space-y-1">
+                              {c.reasons
+                                .filter((r) => r.severity !== 'info')
+                                .map((r, i) => (
+                                  <li key={`${r.code}-${i}`}>{r.text}</li>
+                                ))}
+                              {!c.reasons.some((r) => r.severity !== 'info') && (
+                                <li>В известных данных ограничений не найдено.</li>
+                              )}
+                            </ul>
+                          </details>
+                          <Button
+                            size="sm"
+                            disabled={existing?.product_id === c.product.id}
+                            onClick={() => {
+                              onAdd(current.process_key, c)
+                              setOpen(false)
+                            }}
+                          >
+                            {existing?.product_id === c.product.id ? 'В составе' : existing ? 'Заменить' : 'Добавить'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         )}

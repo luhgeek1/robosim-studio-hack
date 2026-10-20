@@ -224,3 +224,60 @@ async def test_project_copy_takes_scenarios_along(client: AsyncClient) -> None:
     listed = (await client.get(f"/api/v1/projects/{copy['id']}/scenarios", headers=headers)).json()
     assert [s["kind"] for s in listed["items"]] == ["baseline", "purchase"]
     assert listed["items"][1]["last_calculation"] is None
+
+
+async def test_missing_sizing_points_to_item_and_manual_count_recovers(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client)
+    matching = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=headers)).json()
+    process = next(p for p in matching["processes"] if "Инвентаризация" in p["name"])
+    candidate = process["candidates"][0]
+    item = {"process_key": process["process_key"], "product_id": candidate["product"]["id"]}
+    scenario = (
+        await client.post(
+            f"/api/v1/projects/{project_id}/scenarios",
+            json={"name": "Инвентаризация", "kind": "purchase", "items": [item]},
+            headers=headers,
+        )
+    ).json()
+    url = f"/api/v1/scenarios/{scenario['id']}"
+    failed = await client.post(f"{url}/calculate", headers=headers)
+    assert failed.status_code == 409
+    problem = failed.json()
+    assert problem["details"][0]["loc"] == ["items", process["process_key"], "count_manual"]
+    assert problem["details"][0]["code"] == "COUNT_REQUIRED"
+    assert "Состав и условия" in problem["detail"]
+    assert "spec:" not in problem["detail"]
+    saved = await client.patch(
+        url, json={"items": [{**item, "count_mode": "manual", "count_manual": 2}]}, headers=headers
+    )
+    assert saved.status_code == 200
+    calculated = await client.post(f"{url}/calculate", headers=headers)
+    assert calculated.status_code == 200, calculated.text
+    assert calculated.json()["sizing"][0]["count"]["final"] == 2
+
+
+async def test_recommendation_reuses_unchanged_scenario_and_preserves_edits(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client)
+    url = f"/api/v1/projects/{project_id}/scenarios"
+    payload = {"name": "Из подбора", "kind": "purchase", "from_recommendation": True}
+    first = (await client.post(url, json=payload, headers=headers)).json()
+    repeated = (await client.post(url, json=payload, headers=headers)).json()
+    assert first["id"] == repeated["id"]
+    assert first["origin"] == "recommendation"
+    assert len((await client.get(url, headers=headers)).json()["items"]) == 2
+    copied = (
+        await client.post(
+            f"/api/v1/scenarios/{first['id']}/copy",
+            json={"kind": "raas"},
+            headers=headers,
+        )
+    ).json()
+    assert copied["origin"] == "recommendation"
+    await client.patch(f"/api/v1/scenarios/{first['id']}", json={"name": "Мой эксперимент"}, headers=headers)
+    fresh = (await client.post(url, json=payload, headers=headers)).json()
+    assert fresh["id"] != first["id"]
+    edited = (await client.get(f"/api/v1/scenarios/{first['id']}", headers=headers)).json()
+    assert edited["name"] == "Мой эксперимент"
+    assert edited["origin"] == "recommendation"
+    custom = await _purchase(client, headers, project_id)
+    assert custom["origin"] == "manual"

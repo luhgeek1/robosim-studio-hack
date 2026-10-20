@@ -59,6 +59,8 @@ Candidate:
       description: Быстрая аналитическая оценка без симуляции - для сортировки и карточки.
       properties:
         robots_count: {type: [integer, "null"]}
+        npv_rub: {type: [number, "null"], description: "NPV покупки для отдельного процесса с затратами объекта."}
+        sizing_issue: {type: [string, "null"], description: "Почему нельзя автоматически рассчитать количество; null при доступной оценке."}
         capex_rub: {type: [number, "null"]}
         payback_years: {type: [number, "null"]}
         note: {type: [string, "null"], example: "Аналитическая оценка по циклу; точное число даст симуляция"}
@@ -84,7 +86,7 @@ ProcessMatching:
     candidates: {type: array, items: {$ref: '#/Candidate'}}
     no_fit_message: {type: [string, "null"], description: "Текст, если подходящих нет (допустимый ответ по Q&A)"}
     recommended_product_id: {type: [string, "null"], format: uuid, description: "Продукт для сценария из рекомендации; тот же выбор, что при создании"}
-    selection_reason: {type: [string, "null"], description: "Причина выбора с учётом NPV и статуса проверок"}
+    selection_reason: {type: [string, "null"], description: "Причина включения или невключения процесса в рекомендацию с учётом NPV и полноты данных"}
 
 MatchingResult:
   type: object
@@ -237,6 +239,7 @@ Scenario:
   type: object
   required: [id, project_id, name, kind, is_baseline, items, financing, horizon_years, overrides, created_at, updated_at]
   properties:
+    origin: {type: string, enum: [manual, recommendation], default: manual, description: "Происхождение состава. Сохраняется после правки и копирования; не текущий экономический вердикт."}
     id: {type: string, format: uuid}
     project_id: {type: string, format: uuid}
     name: {type: string, example: "Покупка: AMR на паллеты + goods-to-person на отбор"}
@@ -263,7 +266,7 @@ ScenarioCreate:
     horizon_years: {type: [integer, "null"]}
     discount_rate_pct: {type: [number, "null"]}
     overrides: {type: array, items: {$ref: '#/NormOverride'}}
-    from_recommendation: {type: boolean, default: false, description: "Заполнить items лучшими fit-кандидатами по каждому процессу"}
+    from_recommendation: {type: boolean, default: false, description: "Заполнить items рекомендацией подбора. Повтор возвращает неизменённый сценарий того же состава и условий; правки пользователя сохраняются отдельно."}
 
 ScenarioUpdate:
   type: object
@@ -430,14 +433,14 @@ SizingResult:
               inputs: {type: array, items: {$ref: '#/TraceInput'}}
         cycle_time_s: {type: [number, "null"], description: "null - у модели нет цикла (площадь, станция) или количество задано вручную"}
         nominal_throughput_per_hour: {type: [number, "null"], description: "3600 / цикл"}
-        availability: {type: number, description: "Доля времени в работе с учётом зарядки и простоев"}
+        availability: {type: [number, "null"], description: "Доля времени в работе с учётом зарядки и простоев; null при ручном количестве без модели производительности."}
         utilization_target: {type: [number, "null"]}
         effective_throughput_per_hour: {type: [number, "null"]}
         vendor_claim_per_hour: {type: [number, "null"], description: "Заявка производителя - для сравнения"}
     count: {$ref: '#/CountResult'}
     stations_count: {type: [integer, "null"]}
     chargers_count: {type: integer}
-    fleet_throughput_per_hour: {type: number}
+    fleet_throughput_per_hour: {type: [number, "null"], description: "null, если производительность не оценена и количество задано вручную."}
     coverage_of_peak: {type: number, description: "fleet_throughput / demand_peak"}
 
 CalculationRun:

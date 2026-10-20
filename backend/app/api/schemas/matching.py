@@ -6,6 +6,7 @@ from pydantic import Field
 from app.api.schemas.base import ApiModel
 from app.api.schemas.catalog import Product
 from app.engine.matching import CandidateStatus
+from app.service.matching.explanations import omission_reason, sizing_issue
 from app.service.matching.service import (
     ESTIMATE_NOTE,
     CandidateView,
@@ -47,6 +48,8 @@ class Estimate(ApiModel):
     capex_rub: float | None = None
     payback_years: float | None = None
     note: str | None = None
+    npv_rub: float | None = None
+    sizing_issue: str | None = None
 
 
 class Candidate(ApiModel):
@@ -101,6 +104,8 @@ class Candidate(ApiModel):
                 capex_rub=view.data.input.capex_estimate_rub,
                 payback_years=view.economics.payback_years if view.economics else None,
                 note=ESTIMATE_NOTE,
+                npv_rub=view.economics.npv_rub if view.economics else None,
+                sizing_issue=sizing_issue(view.data),
             ),
         )
 
@@ -133,7 +138,7 @@ class ProcessMatching(ApiModel):
             candidates=[Candidate.from_domain(c) for c in view.candidates],
             no_fit_message=view.no_fit_message,
             recommended_product_id=chosen.data.product.id if chosen else None,
-            selection_reason=selection_reason(chosen) if chosen else None,
+            selection_reason=selection_reason(chosen) if chosen else omission_reason(view),
         )
 
 

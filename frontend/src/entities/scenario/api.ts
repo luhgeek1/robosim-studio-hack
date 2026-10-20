@@ -247,7 +247,7 @@ export function pickMainScenario(scenarios: Scenario[] | undefined): Scenario | 
   )
 }
 
-const VARIANT_NAME: Record<'raas' | 'lease', string> = { raas: 'Роботы как услуга (RaaS)', lease: 'Лизинг' }
+const VARIANT_NAME: Record<'raas' | 'lease', string> = { raas: 'RaaS', lease: 'Лизинг' }
 
 /* ТЗ 3.5.5: «как сейчас» и не меньше двух вариантов роботизации в одной таблице. Одна кнопка собирает набор:
    покупку из рекомендации подбора (если её нет), её копии как RaaS и лизинг, и считает всё, что не посчитано. */
@@ -266,17 +266,27 @@ export function useBuildComparisonSet(projectId: string) {
       }
       // Число роботов проверяется имитацией до копий: RaaS и лизинг наследуют тот же парк.
       await calculateWithFleetCheck(main.id)
+      const variantIds = new Set([main.id])
       for (const kind of ['raas', 'lease'] as const) {
-        if (existing.some((s) => s.kind === kind && s.items.length > 0)) continue
-        await scenarioApi.copy(main.id, { kind, name: VARIANT_NAME[kind] })
+        const variant = existing.find((s) => s.kind === kind && s.items.length > 0)
+        const result =
+          variant ??
+          (await scenarioApi.copy(main.id, {
+            kind,
+            name: `${VARIANT_NAME[kind]}: ${main.name}`.slice(0, 200),
+          }))
+        variantIds.add(result.id)
       }
       const all = await scenarioApi.list(projectId)
       // One after another: each calculation re-picks the recommended scenario from the others' results.
-      for (const s of all.filter((s) => !s.last_calculation || s.last_calculation.status === 'stale')) {
+      for (const s of all.filter(
+        (s) =>
+          (s.is_baseline || variantIds.has(s.id)) && (!s.last_calculation || s.last_calculation.status === 'stale'),
+      )) {
         await scenarioApi.calculate(s.id)
       }
       return main
     },
-    onSuccess: refresh,
+    onSettled: refresh,
   })
 }

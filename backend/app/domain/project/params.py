@@ -214,7 +214,7 @@ def data_quality(
     for param in params:
         counts[param.provenance.status.value] = counts.get(param.provenance.status.value, 0) + 1
     relevant = [p for p in params if p.definition.affects] or list(params)
-    trusted = sum(p.provenance.status in _TRUSTED for p in relevant)
+    trusted = sum(p.provenance.status in _TRUSTED and p.value not in (None, "") for p in relevant)
     score = round(trusted / len(relevant), 3) if relevant else 0.0
     items = [
         DataQualityItem(
@@ -226,4 +226,6 @@ def data_quality(
         )
         for p in params
     ]
-    return DataQualitySummary(score=score, counts=counts), items
+    filled = sum(p.value is not None and p.value != "" for p in params)
+    filled_score = round(filled / len(params), 3) if params else 0.0
+    return DataQualitySummary(score=score, counts=counts, filled_score=filled_score), items

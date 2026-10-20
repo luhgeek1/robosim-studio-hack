@@ -113,6 +113,7 @@ class ValidationReport:
 class DataQualitySummary:
     score: float
     counts: dict[str, int]
+    filled_score: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)

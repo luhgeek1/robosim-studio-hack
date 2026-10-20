@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { GitCompareArrows, RotateCw, Sparkles, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
@@ -19,6 +20,7 @@ import { Segmented } from '@/shared/ui/v0'
 import { CandidateCard } from './CandidateCard'
 import { MAX_COMPARE, STATUS_ORDER } from './labels'
 import { useJourney } from '@/entities/project/journey'
+import { RecommendationCoverage } from './RecommendationCoverage'
 import { RecommendedBlock } from './RecommendedBlock'
 import { WeightsPopover } from './WeightsPopover'
 
@@ -49,10 +51,17 @@ export function MatchingPage() {
       {
         onSuccess: async (scenario) => {
           setChecking(true)
-          await calculateWithFleetCheck(scenario.id).catch(() => undefined)
-          await refreshScenarios()
-          setChecking(false)
-          navigate(`/projects/${projectId}/scenarios/${scenario.id}`)
+          let failed = false
+          try {
+            await calculateWithFleetCheck(scenario.id)
+          } catch (error) {
+            failed = true
+            toast.error('Сценарий сохранён, но расчёт не завершён', { description: parseApiProblem(error).detail })
+          } finally {
+            await refreshScenarios()
+            setChecking(false)
+          }
+          navigate(`/projects/${projectId}/scenarios/${scenario.id}${failed ? '?edit=1' : ''}`)
         },
       },
     )
@@ -133,13 +142,14 @@ export function MatchingPage() {
 
       {data && (
         <div className={TOP_COLUMN}>
+          {!guided && <RecommendationCoverage projectId={projectId} matching={data} />}
           <RecommendedBlock projectId={projectId} matching={data} />
         </div>
       )}
       {data && <h2 className="h2 mb-5">{guided ? 'Почему выбраны эти роботы' : 'Все кандидаты'}</h2>}
 
       {data && (
-        <details open={!guided} className="rounded-xl border border-line p-5">
+        <details id="candidates" open={!guided} className="rounded-xl border border-line p-5">
           <summary className="cursor-pointer text-sm font-medium">
             Кандидаты, ограничения и сравнение характеристик
           </summary>

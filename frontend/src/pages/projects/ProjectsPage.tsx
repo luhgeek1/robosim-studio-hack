@@ -116,7 +116,7 @@ function ProjectCard({ project }: { project: Project }) {
   const copy = useCopyProject()
   const remove = useDeleteProject()
   const metrics = project.headline_metrics
-  const score = project.data_quality.score
+  const score = project.data_quality.filled_score
   const canManage = project.organization_id === null || project.owner_id === user?.id || organization?.role === 'owner'
 
   return (
@@ -196,7 +196,10 @@ function ProjectCard({ project }: { project: Project }) {
               <Metric value={formatYears(metrics.payback_years)} label="Окупаемость" />
               <Metric value={formatRub(metrics.capex_rub)} label="Вложения" />
             </div>
-            <div className="mt-4">
+            <div
+              className="mt-4"
+              title="Оценка рассчитанного сценария по окупаемости и NPV. Заполненность данных на этот ярлык напрямую не влияет."
+            >
               <VerdictBadge verdict={metrics.verdict} />
             </div>
           </>
@@ -212,11 +215,14 @@ function ProjectCard({ project }: { project: Project }) {
         )}
       </div>
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-[12px]">
-        <span className="flex items-center gap-2 text-ink-3">
+        <span
+          title="Заполненность всех параметров, включая данные примера и допущения. Подтверждение источников показано на странице объекта."
+          className="flex items-center gap-2 text-ink-3"
+        >
           <ConfidenceRing value={score * 100} size={18} />
           <span>
-            <span className="num font-medium text-ink-2">{formatPct(score, { share: true, digits: 0 })}</span> данных
-            введено
+            <span className="num font-medium text-ink-2">{formatPct(score, { share: true, digits: 0 })}</span>{' '}
+            параметров заполнено
           </span>
         </span>
         <span className="flex items-center gap-2 font-medium text-ink-2" aria-hidden>

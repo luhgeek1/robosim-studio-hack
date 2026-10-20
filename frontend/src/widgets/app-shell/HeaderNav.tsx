@@ -176,7 +176,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
   useEffect(() => {
     if (gone) close(tab.id)
   }, [gone, close, tab.id])
-  const score = project.data?.data_quality.score
+  const score = project.data?.data_quality.filled_score
   const onClose = () => {
     const next = close(tab.id)
     if (active) navigate(next ? next.path : '/projects')
@@ -228,6 +228,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
           {active && score !== undefined && (
             <motion.span
               key="score"
+              title="Доля заполненных параметров, включая данные примера и допущения"
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: 'auto' }}
               exit={{ opacity: 0, width: 0 }}

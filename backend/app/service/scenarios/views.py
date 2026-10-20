@@ -87,6 +87,7 @@ class ScenarioView:
     updated_at: datetime
     last_calculation: CalculationSummary | None = None
     warnings: list[str] = field(default_factory=list)
+    origin: str = "manual"
 
 
 def financing_from_json(data: dict[str, Any] | None) -> Financing:
@@ -186,6 +187,7 @@ def scenario_view(
         id=scenario.id,
         project_id=scenario.project_id,
         name=scenario.name,
+        origin=scenario.origin,
         kind=scenario.kind,
         is_baseline=scenario.is_baseline,
         items=[_item_view(item, names, prices, run) for item in scenario.items],

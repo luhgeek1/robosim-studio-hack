@@ -115,10 +115,11 @@ def resolve_count(
     ns = process.key
     sized = outcome is not None and outcome.robots is not None
     if not sized and not (item.count_mode == CountMode.MANUAL and item.count_manual):
-        missing = ", ".join(outcome.missing) if outcome else "нет модели производительности"
         raise CalculationError(
-            f"Не удалось рассчитать число роботов «{item.product_name}» для процесса «{process.name}» "
-            f"({missing}). Задайте количество вручную."
+            f"Не удалось рассчитать число роботов «{item.product_name}» для процесса «{process.name}». "
+            "В разделе «Состав и условия» у этого решения выберите «Количество → задать вручную» "
+            "и заполните поле «Штук». Либо укажите свою производительность с обоснованием.",
+            process_key=process.key,
         )
     analytic = outcome.robots or 0 if outcome else 0
     reserve = outcome.reserve or 0 if outcome else 0

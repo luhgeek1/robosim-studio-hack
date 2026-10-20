@@ -24,10 +24,11 @@ from app.domain.reference import ObjectTypeKey
 class DataQualitySummary(ApiModel):
     score: float = Field(ge=0, le=1)
     counts: dict[str, int]
+    filled_score: float = Field(ge=0, le=1)
 
     @classmethod
     def from_domain(cls, item: DataQualitySummaryInfo) -> "DataQualitySummary":
-        return cls(score=item.score, counts=item.counts)
+        return cls(score=item.score, counts=item.counts, filled_score=item.filled_score)
 
 
 class HeadlineMetrics(ApiModel):

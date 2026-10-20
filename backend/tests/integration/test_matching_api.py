@@ -144,3 +144,22 @@ async def test_candidates_are_of_the_process_solution_types(client: AsyncClient)
     allowed = {t["key"] for t in picking["solution_types"]}
     assert {c["product"]["solution_type"] for c in picking["candidates"]} <= allowed
     assert "palletizing_arm" not in {c["product"]["solution_type"] for c in picking["candidates"]}
+
+
+async def test_recommendation_explains_economics_and_missing_sizing(client: AsyncClient) -> None:
+    project_id, headers = await _demo(client)
+    body = (await client.get(f"/api/v1/projects/{project_id}/matching", headers=headers)).json()
+    assert all(p["selection_reason"] for p in body["processes"])
+    pallets = _process(body, "pallet_transport")
+    assert pallets["recommended_product_id"] is not None
+    assert pallets["candidates"][0]["estimate"]["npv_rub"] > 0
+    assert pallets["candidates"][0]["estimate"]["sizing_issue"] is None
+    picking = _process(body, "order_picking")
+    assert picking["recommended_product_id"] is None
+    assert "NPV" in picking["selection_reason"]
+    shuttle = next(
+        c for p in body["processes"] for c in p["candidates"] if c["product"]["name"] == "Pallet Shuttle"
+    )
+    assert shuttle["estimate"]["robots_count"] is None
+    assert "Не хватает данных" in shuttle["estimate"]["sizing_issue"]
+    assert "spec:" not in shuttle["estimate"]["sizing_issue"]

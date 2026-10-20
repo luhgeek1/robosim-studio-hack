@@ -16,6 +16,7 @@ count_mode_enum = pg_enum(CountMode, "count_mode")
 class Scenario(UuidPkMixin, TimestampMixin, Base):
     __tablename__ = "scenarios"
     __table_args__ = (
+        sa.UniqueConstraint("project_id", "recommendation_key", name="uq_scenarios_project_recommendation"),
         sa.Index("ix_scenarios_project_created", "project_id", "created_at"),
         sa.Index(
             "uq_scenarios_one_baseline", "project_id", unique=True, postgresql_where=sa.text("is_baseline")
@@ -26,6 +27,8 @@ class Scenario(UuidPkMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(sa.String(200))
     kind: Mapped[ScenarioKind] = mapped_column(scenario_kind_enum)
     is_baseline: Mapped[bool] = mapped_column(sa.Boolean, default=False)
+    origin: Mapped[str] = mapped_column(sa.String(20), default="manual", server_default="manual")
+    recommendation_key: Mapped[str | None] = mapped_column(sa.String(64))
     financing: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     horizon_years: Mapped[int | None] = mapped_column(sa.Integer)
     discount_rate_pct: Mapped[float | None] = mapped_column(sa.Float)
