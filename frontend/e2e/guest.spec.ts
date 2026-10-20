@@ -91,5 +91,6 @@ test('own blank project → CSV preview → apply → manual edit → reset', as
     .getByRole('navigation', { name: 'Разделы', exact: true })
     .getByRole('link', { name: 'Проекты', exact: true })
     .click()
-  await expect(page.getByText(/Проектов пока нет/)).toBeVisible()
+  await expect(page).toHaveURL(/\/demo$/)
+  await expect(page.getByRole('heading', { name: 'Демо без регистрации' })).toBeVisible()
 })

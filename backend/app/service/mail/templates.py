@@ -19,14 +19,16 @@ class EmailMessage:
 
 def render_email(message: EmailMessage, web_url: str) -> str:
     paragraphs = "".join(
-        f'<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#3d3d3a">{escape(text)}</p>'
+        '<p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#565650;'
+        f'text-align:center;word-break:break-word">{escape(text)}</p>'
         for text in message.paragraphs
     )
     facts = "".join(
-        '<tr><td style="padding:8px 16px;font-size:13px;line-height:1.5;color:#66625c;vertical-align:top">'
-        f'{escape(label)}</td><td style="padding:8px 16px;font-size:13px;line-height:1.5;'
-        f'color:#242c2b;word-break:break-word">{escape(value)}</td></tr>'
-        for label, value in message.facts
+        '<tr><td width="32%" style="padding:14px 18px;font-size:12px;line-height:1.6;'
+        f'color:#73736b;text-align:left;vertical-align:top;{_fact_border(index)}">'
+        f'{escape(label)}</td><td style="padding:14px 18px;font-size:13px;line-height:1.5;'
+        f'color:#242824;text-align:right;word-break:break-word;{_fact_border(index)}">{escape(value)}</td></tr>'
+        for index, (label, value) in enumerate(message.facts)
     )
     return _SHELL.substitute(
         preview=escape(message.preview),
@@ -38,3 +40,7 @@ def render_email(message: EmailMessage, web_url: str) -> str:
         footnote=escape(message.footnote),
         web_url=escape(web_url.rstrip("/"), quote=True),
     )
+
+
+def _fact_border(index: int) -> str:
+    return "border-top:1px solid #e8e6df" if index else ""

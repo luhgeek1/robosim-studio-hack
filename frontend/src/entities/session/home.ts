@@ -12,3 +12,5 @@ export const sessionHome = (user: Pick<User, 'role'> | null) =>
 
 export const workspaceHome = (user: Pick<User, 'role'> | null) =>
   user && user.role !== 'guest' ? sessionHome(user).path : '/demo'
+
+export const projectsHome = (user: Pick<User, 'role'> | null) => (user && user.role !== 'guest' ? '/projects' : '/demo')
