@@ -170,6 +170,9 @@ sequenceDiagram
 
 ## Подключение провайдеров и Resend
 
+Пошаговое создание приложений в кабинетах Google, Яндекса и VK — [OAUTH_SETUP.md](OAUTH_SETUP.md).
+Для VK учтены ограничения localhost и выбор публичного PKCE-клиента.
+
 Пример переменных — `backend/.env.example`. Ключи добавляются в серверное окружение/Fly Secrets, не в Git и не в `VITE_*`.
 
 ```
