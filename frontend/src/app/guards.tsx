@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useWorkspaceStore } from '@/entities/organization'
-import { sessionHome, useSession } from '@/entities/session'
+import { sessionHome, useSession, workspaceHome } from '@/entities/session'
+import { accountReturnPath } from '@/features/auth/links'
 import { Button } from '@/shared/ui/button'
 import { EmptyState, LoadingBlock } from '@/shared/ui/states'
 
@@ -47,14 +48,23 @@ export function RequireVendor() {
 export function PublicHome() {
   const { status, user } = useSession()
   if (status === 'restoring') return <LoadingBlock className="m-6" label="Восстанавливаем вход…" />
-  if (user) return <Navigate to={sessionHome(user).path} replace />
+  if (user && user.role !== 'guest') return <Navigate to={sessionHome(user).path} replace />
+  return <Outlet />
+}
+
+export function DemoEntry() {
+  const { status, user } = useSession()
+  const { pathname, search } = useLocation()
+  if (status === 'restoring') return <LoadingBlock className="p-8" label="Восстанавливаем вход…" />
+  if (user && user.role !== 'guest' && /^\/demo\/?$/.test(pathname))
+    return <Navigate to={accountReturnPath(pathname + search) ?? '/projects'} replace />
   return <Outlet />
 }
 
 export function RootRedirect() {
   const { status, user } = useSession()
   if (status === 'restoring') return <LoadingBlock className="p-8" />
-  return <Navigate to={user ? sessionHome(user).path : '/catalog'} replace />
+  return <Navigate to={workspaceHome(user)} replace />
 }
 
 export function NotFoundPage() {

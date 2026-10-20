@@ -3,7 +3,7 @@ import { LayoutGroup, motion, type Transition } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ProviderButtons } from '@/features/auth/ProviderButtons'
-import { authErrorText, safeReturnPath } from '@/features/auth/links'
+import { accountReturnPath, authErrorText, safeReturnPath } from '@/features/auth/links'
 import { sessionHome, useSession } from '@/entities/session'
 import { cn } from '@/shared/lib/utils'
 import { problemText } from '@/shared/api/problem'
@@ -38,14 +38,14 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const params = new URLSearchParams(location.search)
-  const requestedReturn = safeReturnPath(params.get('return_to'))
+  const requestedReturn = accountReturnPath(params.get('return_to'))
   const authErrorKey = params.get('auth_error')
   const authError = authErrorText(authErrorKey)
   const reauth = params.get('reauth') === '1'
   const back = location.state as { from?: string; userId?: string | null; keepGuest?: boolean } | null
   // Возвращаем на прежнюю страницу только её владельца: другой учётке прошлый проект чужой.
   // Возврат туда, откуда отправили на вход; иначе админ — в админ-панель, производитель — в кабинет, остальные — в проекты.
-  const previousReturn = safeReturnPath(back?.from)
+  const previousReturn = accountReturnPath(back?.from)
   const target = (me: User) =>
     previousReturn && (back?.keepGuest || !back?.userId || back?.userId === me.id)
       ? previousReturn
@@ -132,12 +132,12 @@ export function LoginPage() {
                   : 'Создайте учётную запись для своих проектов.'}
             </p>
             {user?.role === 'guest' && (
-              <Link className="mb-4 block text-sm text-signal" to={back?.from ?? '/projects'}>
+              <Link className="mb-4 block text-sm text-signal" to={safeReturnPath(back?.from) ?? '/demo'}>
                 Продолжить без регистрации
               </Link>
             )}
             <ProviderButtons
-              returnTo={safeReturnPath(back?.from) ?? requestedReturn ?? '/app'}
+              returnTo={previousReturn ?? requestedReturn ?? '/app'}
               keepGuest={user?.role === 'guest'}
               disabled={pending}
             />

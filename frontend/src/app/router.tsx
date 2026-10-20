@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
 import { AppShell } from '@/widgets/app-shell'
 import {
+  DemoEntry,
   NotFoundPage,
   PublicHome,
   RequireAccount,
@@ -55,8 +56,13 @@ const router = createBrowserRouter([
         errorElement: <RouteError />,
         children: [
           {
-            path: 'demo/:demoKey?',
-            ...page(() => import('@/pages/demo/DemoPage').then((m) => ({ Component: m.DemoPage }))),
+            Component: DemoEntry,
+            children: [
+              {
+                path: 'demo/:demoKey?',
+                ...page(() => import('@/pages/demo/DemoPage').then((m) => ({ Component: m.DemoPage }))),
+              },
+            ],
           },
           { path: 'app', Component: RootRedirect },
           {

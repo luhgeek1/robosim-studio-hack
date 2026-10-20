@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { Link } from 'react-router'
-import { useSession } from '@/entities/session'
+import { sessionHome, useSession } from '@/entities/session'
 import { Accent, ScrollProgress } from './motion'
 import { useLandingMotion } from './use-landing-motion'
 import { QuestionsSection } from './QuestionsSection'
@@ -72,15 +72,10 @@ function Brand({ footer = false }: { footer?: boolean }) {
 export function LandingPage() {
   const { reveal, enter } = useLandingMotion()
   const [menuOpen, setMenuOpen] = useState(false)
-  const { status, user } = useSession()
-  const workspace =
-    status === 'authenticated'
-      ? user?.role === 'admin'
-        ? '/admin'
-        : user?.role === 'vendor'
-          ? '/vendor'
-          : '/projects'
-      : '/demo?new=1'
+  const { user } = useSession()
+  const account = user && user.role !== 'guest'
+  const workspace = account ? sessionHome(user).path : '/demo?new=1'
+  const signIn = account ? sessionHome(user).path : '/login'
 
   useEffect(() => {
     document.title = 'РобоМера — роботизация начинается с расчёта'
@@ -109,11 +104,9 @@ export function LandingPage() {
                 Каталог роботов <ArrowUpRight size={13} />
               </Link>
             </nav>
-            <Link className="landing-header-login" to={workspace}>
-              <span className="hidden min-[701px]:inline">
-                {status === 'authenticated' ? 'В кабинет' : 'Войти в платформу'}
-              </span>
-              <span className="min-[701px]:hidden">{status === 'authenticated' ? 'Кабинет' : 'Войти'}</span>
+            <Link className="landing-header-login" to={signIn}>
+              <span className="hidden min-[701px]:inline">{account ? 'В кабинет' : 'Войти в платформу'}</span>
+              <span className="min-[701px]:hidden">{account ? 'Кабинет' : 'Войти'}</span>
               <ArrowUpRight size={17} />
             </Link>
             <button
@@ -143,7 +136,7 @@ export function LandingPage() {
               <Link to="/catalog">
                 Каталог роботов <ArrowUpRight size={18} />
               </Link>
-              <Link to={workspace}>
+              <Link to={signIn}>
                 Открыть платформу <ArrowUpRight size={18} />
               </Link>
             </nav>
@@ -232,7 +225,7 @@ export function LandingPage() {
                   <span>ваш сценарий.</span>
                 </h2>
                 <Link
-                  to={status === 'authenticated' ? '/projects?new=1' : '/demo?new=1'}
+                  to={account ? '/projects?new=1' : '/demo?new=1'}
                   state={{ from: '/projects?new=1' }}
                   className="landing-cta-button"
                 >

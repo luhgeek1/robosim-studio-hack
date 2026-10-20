@@ -10,6 +10,15 @@ export function safeReturnPath(value: string | null | undefined): string | null 
     : null
 }
 
+export function accountReturnPath(value: string | null | undefined): string | null {
+  const path = safeReturnPath(value)
+  if (!path) return null
+  const url = new URL(path, 'https://routing.invalid')
+  if (!/^\/demo(?:\/|$)/.test(url.pathname)) return path
+  // Сохраняем намерение создать объект, но не возвращаем вошедшего человека в гостевой экран.
+  return /^\/demo\/?$/.test(url.pathname) && url.searchParams.get('new') === '1' ? '/projects?new=1' : null
+}
+
 export const PROVIDER_NAMES = { yandex: 'Яндекс ID', google: 'Google', vk: 'VK ID' } as const
 
 export function authErrorText(key: string | null): string | null {

@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "lint": "oxlint --deny-warnings src",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "check": "npm run typecheck && npm run lint && prettier --check \"src/**/*.{ts,tsx,css}\" && vite build",
+    "check": "npm run typecheck && npm run lint && npm run test:routing && prettier --check \"src/**/*.{ts,tsx,css}\" && vite build",
+    "test:routing": "node --experimental-strip-types --test tests/routing.test.ts",
     "gen:api": "npx -y openapi-typescript ../docs/api/openapi.bundled.yaml -o src/shared/api/schema.d.ts && prettier --write src/shared/api/schema.d.ts",
     "test:e2e": "playwright test"
   },

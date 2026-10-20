@@ -43,7 +43,7 @@ export function WorkspaceMenu() {
   const { status, user, logout } = useSession()
   const workspace = useWorkspace()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const [creating, setCreating] = useState(false)
   if (status === 'restoring') return null
   if (!user) {
@@ -58,7 +58,7 @@ export function WorkspaceMenu() {
     if (pathname === '/login') return null
     return (
       <Button asChild size="sm" variant="outline">
-        <Link to="/login" state={{ from: pathname, keepGuest: true }}>
+        <Link to="/login" state={{ from: pathname + search, keepGuest: true }}>
           <span className="sm:hidden">Войти</span>
           <span className="hidden sm:inline">Войти</span>
         </Link>
@@ -174,7 +174,7 @@ export function WorkspaceMenu() {
             onSelect={async () => {
               try {
                 await logout()
-                navigate('/login')
+                navigate('/demo', { replace: true })
               } catch {
                 toast.error('Не удалось закрыть сессию на сервере. Обновите страницу и повторите выход.')
               }
