@@ -112,6 +112,7 @@ export function MapToolbar({
   return (
     // In the bottom corner the help card opens upwards, above the toolbar.
     <div
+      data-map-control
       className={
         placement === 'bottom-right'
           ? 'absolute right-4 bottom-4 z-20 flex flex-col-reverse items-end gap-2'
