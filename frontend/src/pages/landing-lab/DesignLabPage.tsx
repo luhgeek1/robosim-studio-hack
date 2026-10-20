@@ -68,6 +68,18 @@ const LATEST = [
     tools: 'Система РобоМеры · Impeccable · GSAP · собственная композиция',
     fresh: true,
   },
+  {
+    label: 'Новая версия / OpenDesign Cloud',
+    name: 'Проверка перед внедрением.',
+    href: '/design-lab/system/index.html',
+    image: 'system-preview.png',
+    alt: 'Тёмная продуктовая композиция с объёмным складом, проверками и панелью решения',
+    stack: 'OpenDesign Cloud · Local Codex',
+    description:
+      'Система Linear адаптирована к РобоМере: компактный интерактивный склад, маршруты, очереди и зарядка, четыре финансовых сценария и состав отчёта.',
+    tools: 'Linear (адаптация) → Design Taste → Three.js → Design Review',
+    fresh: true,
+  },
 ]
 
 function ConceptCard({ concept }: { concept: (typeof CONCEPTS)[number] }) {
