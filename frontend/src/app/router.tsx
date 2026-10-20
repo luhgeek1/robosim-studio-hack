@@ -104,6 +104,31 @@ const router = createBrowserRouter([
               },
             ],
           },
+          {
+            path: 'invitations/:invitationId',
+            ...page(() => import('@/pages/auth-link/InvitationPage').then((m) => ({ Component: m.InvitationPage }))),
+          },
+          {
+            path: 'forgot-password',
+            ...page(() => import('@/pages/auth-link/AuthLinkPages').then((m) => ({ Component: m.ForgotPasswordPage }))),
+          },
+          {
+            path: 'reset-password',
+            ...page(() => import('@/pages/auth-link/AuthLinkPages').then((m) => ({ Component: m.ResetPasswordPage }))),
+          },
+          {
+            path: 'verify-email',
+            ...page(() => import('@/pages/auth-link/AuthLinkPages').then((m) => ({ Component: m.VerifyEmailPage }))),
+          },
+          {
+            Component: RequireAccount,
+            children: [
+              {
+                path: 'account',
+                ...page(() => import('@/pages/account/AccountPage').then((m) => ({ Component: m.AccountPage }))),
+              },
+            ],
+          },
           { path: 'login', ...page(() => import('@/pages/login').then((m) => ({ Component: m.LoginPage }))) },
           { path: 'catalog', ...page(() => import('@/pages/catalog').then((m) => ({ Component: m.CatalogPage }))) },
           {
