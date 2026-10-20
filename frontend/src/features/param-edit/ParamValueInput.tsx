@@ -36,16 +36,16 @@ export function ParamValueInput({
 
   if (type === 'boolean') {
     return (
-      <label className="flex h-8 items-center gap-2">
+      <label className="inline-flex h-8 shrink-0 items-center gap-2 text-sm whitespace-nowrap">
+        <span className="min-w-6 text-muted-foreground">
+          {param.value === true ? 'да' : param.value === false ? 'нет' : '-'}
+        </span>
         <Switch
           checked={param.value === true}
           disabled={pending}
           onCheckedChange={(checked) => void onCommit(checked)}
           aria-label={label}
         />
-        <span className="text-muted-foreground">
-          {param.value === true ? 'да' : param.value === false ? 'нет' : '-'}
-        </span>
       </label>
     )
   }
@@ -96,7 +96,6 @@ function TextValueInput({
   const [draft, setDraft] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const numeric = type === 'number' || type === 'integer'
-  const inlineSuffix = suffix && suffix.length <= 6
   const shown = draft ?? toDraft(param.value, type)
 
   const commit = async () => {
@@ -126,7 +125,14 @@ function TextValueInput({
 
   return (
     <div className="space-y-1">
-      <div className="relative">
+      <div
+        className={cn(
+          suffix &&
+            'flex h-8 items-center gap-2 rounded-lg border border-input pr-2.5 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 max-sm:h-10 dark:bg-input/30',
+          suffix && pending && 'cursor-not-allowed bg-input/50 opacity-50 dark:bg-input/80',
+          suffix && error && 'border-destructive ring-3 ring-destructive/20 dark:ring-destructive/40',
+        )}
+      >
         <Input
           value={shown}
           inputMode={numeric ? 'decimal' : 'text'}
@@ -134,9 +140,12 @@ function TextValueInput({
           aria-label={label}
           aria-invalid={error ? true : undefined}
           disabled={pending}
-          className={cn('max-sm:h-10', numeric && 'num text-right')}
-          // Длинная единица стоит под полем, чтобы не отнимать ширину у самого значения.
-          style={inlineSuffix ? { paddingRight: `calc(${suffix.length * 0.5}rem + 1.25rem)` } : undefined}
+          className={cn(
+            'max-sm:h-10',
+            numeric && 'num text-right',
+            suffix &&
+              'h-full flex-1 rounded-none border-0 pr-0 focus-visible:ring-0 disabled:bg-transparent disabled:opacity-100 aria-invalid:ring-0 max-sm:h-full dark:bg-transparent dark:disabled:bg-transparent',
+          )}
           onChange={(event) => {
             setDraft(event.target.value)
             if (error) setError(null)
@@ -152,10 +161,8 @@ function TextValueInput({
         />
         {suffix && (
           <span
-            className={cn(
-              'pointer-events-none text-[12.5px] wrap-anywhere text-ink-3',
-              inlineSuffix ? 'absolute top-1/2 right-3 -translate-y-1/2' : 'mt-1 block',
-            )}
+            aria-hidden="true"
+            className="pointer-events-none max-w-[55%] shrink-0 text-[12.5px] leading-tight wrap-anywhere text-ink-3"
           >
             {suffix}
           </span>
