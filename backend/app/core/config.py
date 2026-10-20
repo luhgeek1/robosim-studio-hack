@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Self
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -42,6 +43,13 @@ class Settings(BaseSettings):
     # Set only behind a private proxy which overwrites this header (see deploy/fly/nginx.conf).
     client_ip_header: str | None = None
     auth_rate_limit_per_min: int = 20
+    public_web_url: str = "http://localhost:5173"
+    public_api_url: str = "http://localhost:8000"
+    resend_api_key: SecretStr | None = None
+    email_from: str | None = None
+    email_poll_interval_s: int = Field(default=5, ge=1)
+    email_max_attempts: int = Field(default=5, ge=1, le=10)
+    invitation_ttl_hours: int = Field(default=168, ge=1)
     worker_heartbeat_ttl_s: int = 90
     jobs_backend: Literal["inline", "arq"] = Field(
         default="inline", description="inline — in the API process after the response; arq — the worker"
@@ -52,6 +60,28 @@ class Settings(BaseSettings):
     seed_on_startup: bool = True
     data_root: Path = Field(default=REPO_ROOT, description="Folder with case/dataset and research/")
     demo_password: SecretStr = SecretStr("Demo12345!")
+
+    @property
+    def email_enabled(self) -> bool:
+        return bool(self.resend_api_key and self.email_from)
+
+    @model_validator(mode="after")
+    def _validate_integrations(self) -> Self:
+        for value in (self.public_web_url, self.public_api_url):
+            url = urlsplit(value)
+            if url.scheme not in {"http", "https"} or not url.hostname or url.query or url.fragment:
+                raise ValueError("Public URLs must be absolute HTTP(S) URLs without query or fragment")
+            if url.username or url.password or url.path not in {"", "/"}:
+                raise ValueError("Public URLs must contain only an origin")
+            if self.stage == "prod" and self.email_enabled and url.scheme != "https":
+                raise ValueError("Public URLs must use HTTPS in prod")
+        if bool(self.resend_api_key) != bool(self.email_from):
+            raise ValueError("RS_RESEND_API_KEY and RS_EMAIL_FROM must be set together")
+        if self.email_from and (
+            "@" not in self.email_from or "\n" in self.email_from or "\r" in self.email_from
+        ):
+            raise ValueError("RS_EMAIL_FROM must contain a valid sender address")
+        return self
 
     @property
     def docs_open(self) -> bool:

@@ -1,5 +1,6 @@
 from app.db.models.auth import ApiKey, User
 from app.db.models.catalog import Manufacturer, Product, ProductCase, ProductOffer, ProductSpec
+from app.db.models.email import EmailOutbox
 from app.db.models.jobs import Job
 from app.db.models.layouts import Layout, StoredFile
 from app.db.models.matching import ManualCandidate, MatchingSettings
@@ -27,6 +28,7 @@ __all__ = [
     "AuditEvent",
     "CalculationRun",
     "DataVersion",
+    "EmailOutbox",
     "Industry",
     "Job",
     "Layout",
