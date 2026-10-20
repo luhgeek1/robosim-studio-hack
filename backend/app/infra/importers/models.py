@@ -29,11 +29,24 @@ class UnmappedField:
 
 
 @dataclass(frozen=True, slots=True)
+class ImportRow:
+    key: str | None
+    raw_field: str
+    raw_value: str
+    unit: str | None
+    location: str
+    confidence: float
+    suggestion_key: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ParsedImport:
     source_kind: ImportSourceKind
     mapped: list[MappedValue] = field(default_factory=list)
     unmapped: list[UnmappedField] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    rows: list[ImportRow] = field(default_factory=list)
+    object_type: str | None = None
 
 
 class ImportFormatError(ValueError):

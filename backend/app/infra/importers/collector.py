@@ -5,7 +5,7 @@ from app.core.parsing import first_number, parse_scalar
 from app.domain.common.provenance import Scalar
 from app.domain.reference import ParameterDef
 from app.infra.importers.matching import EXACT_CONFIDENCE, Match, ParameterMatcher
-from app.infra.importers.models import ImportSourceKind, MappedValue, ParsedImport, UnmappedField
+from app.infra.importers.models import ImportRow, ImportSourceKind, MappedValue, ParsedImport, UnmappedField
 
 _EMPTY_TEXTS = {"", "-", "—", "–"}
 _NUMERIC_TYPES = {"number", "integer"}
@@ -115,10 +115,22 @@ def build_import(
     notes = list(warnings or [])
     candidates: list[_Candidate] = []
     unmapped: list[UnmappedField] = []
+    review: list[ImportRow] = []
     for index, row in enumerate(rows):
         if is_empty(row.value):
             continue
         match, suggestion = _resolve(row, matcher)
+        review.append(
+            ImportRow(
+                match.param.key if match else None,
+                row.label,
+                cell_text(row.value),
+                row.unit,
+                row.location,
+                match.confidence if match else 0,
+                suggestion,
+            )
+        )
         if match is None:
             unmapped.append(UnmappedField(row.label, cell_text(row.value), suggestion))
         else:
@@ -135,4 +147,4 @@ def build_import(
             continue
         chosen[key] = candidate
     mapped = [_mapped(item, notes) for item in sorted(chosen.values(), key=lambda item: item.index)]
-    return ParsedImport(kind, [item for item in mapped if item is not None], unmapped, notes)
+    return ParsedImport(kind, [item for item in mapped if item is not None], unmapped, notes, review)
