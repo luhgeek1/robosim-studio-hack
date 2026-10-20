@@ -12,6 +12,17 @@ function SceneFailure({ onFailure }: { onFailure: () => void }) {
   return null
 }
 
+function SolutionHeading() {
+  return (
+    <article className="im-chapter im-solution" id="immersive-solution">
+      <h2>
+        Теперь это —<br className="im-mobile-break" /> основа решения.
+      </h2>
+      <p>Модель уточняет парк. Парк меняет экономику.</p>
+    </article>
+  )
+}
+
 export function ImmersiveStory() {
   const rootRef = useRef<HTMLElement>(null)
   const signalRef = useRef<ImmersiveSignal>({ progress: 0, compact: false })
@@ -114,12 +125,7 @@ export function ImmersiveStory() {
             loading="lazy"
           />
         </article>
-        <article className="im-chapter im-solution" id="immersive-solution">
-          <h2>
-            Теперь это —<br className="im-mobile-break" /> основа решения.
-          </h2>
-          <p>Модель уточняет парк. Парк меняет экономику.</p>
-        </article>
+        <SolutionHeading />
         {staticView && (
           <div className="im-static-product">
             <ProductFrame />

@@ -34,6 +34,8 @@ export function useImmersiveMotion(
       root.style.setProperty('--dock', String(blend(progress, 0.64, 0.9)))
       root.style.setProperty('--shade', String(1 - blend(progress, 0.03, 0.4)))
       root.style.setProperty('--reveal', String(blend(progress, 0.72, 0.91)))
+      root.style.setProperty('--solution', String(blend(progress, 0.76, 0.88)))
+      root.style.setProperty('--story-offset', `${progress * (rect.height - innerHeight)}px`)
       root.style.setProperty('--progress', String(progress))
       if (product) product.inert = progress < 0.91
       invalidateRef.current?.()
