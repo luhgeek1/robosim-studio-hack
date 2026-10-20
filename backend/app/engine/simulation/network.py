@@ -140,7 +140,7 @@ class Network:
             names = ", ".join(self.nodes[n].label or n for n in sorted(missing)[:3])
             raise SimulationError(
                 f"«{label}»: нет доступного маршрута к точкам {names} и обратно. "
-                f"Минимальная ширина проезда для робота с зазором — {width_m:g} м. "
+                f"Минимальная ширина проезда для робота с зазором - {width_m:g} м. "
                 "Проверьте ширину и направление проходов на планировке. SLA не подтверждён."
             )
 

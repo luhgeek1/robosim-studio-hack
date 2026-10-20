@@ -87,13 +87,13 @@ def _manufacturer(ref: ManufacturerRef) -> Manufacturer:
 
 
 class ProposalWrite(ApiModel):
-    product_id: UUID | None = Field(default=None, description="null — предложить новый продукт")
+    product_id: UUID | None = Field(default=None, description="null - предложить новый продукт")
     card: ProductWrite | None = Field(
         default=None, description="Новая карточка и цены; производитель берётся из привязки учётной записи"
     )
     specs: list[SpecWrite] = Field(default_factory=list, description="Сохраняются со статусом vendor_claim")
     comment: str = Field(
-        min_length=1, max_length=2000, description="Что изменилось и почему — для модератора"
+        min_length=1, max_length=2000, description="Что изменилось и почему - для модератора"
     )
 
 
@@ -116,7 +116,7 @@ class Proposal(ApiModel):
     created_at: datetime
     catalog_version: str = Field(description="Версия каталога, на которой вендор готовил заявку")
     product_changed_since: bool = Field(
-        description="Карточку меняли после подачи заявки — сверьте перед решением"
+        description="Карточку меняли после подачи заявки - сверьте перед решением"
     )
     reviewed_at: datetime | None = None
     reviewer_name: str | None = None
@@ -172,7 +172,7 @@ class KeySpec(ApiModel):
 class VendorProduct(ApiModel):
     product: Product
     missing_key_specs: list[KeySpec] = Field(
-        description="Ключевые ТТХ типа решения без значения — подбор их проверить не может"
+        description="Ключевые ТТХ типа решения без значения - подбор их проверить не может"
     )
     relevant_projects: int = Field(description="Проекты платформы с типами объектов этого продукта")
     scenarios_count: int = Field(description="Сценарии, в которые продукт включён")
@@ -196,7 +196,7 @@ class VendorOverview(ApiModel):
     scenarios_with_products: int
     proposals_by_status: dict[str, int]
     gaps: list[VendorGapItem] = Field(
-        description="Процессы без подходящих продуктов в каталоге — там, где работают ваши типы решений"
+        description="Процессы без подходящих продуктов в каталоге - там, где работают ваши типы решений"
     )
 
     @classmethod
@@ -341,7 +341,7 @@ class Rfq(ApiModel):
     product: Product
     quantity: int | None = None
     message: str | None = None
-    object: RfqObject = Field(description="Снимок объекта на момент запроса — не живой проект")
+    object: RfqObject = Field(description="Снимок объекта на момент запроса - не живой проект")
     contact: RfqContact | None = Field(default=None, description="Только производителю и только с согласия")
     created_at: datetime
     price: Money | None = None

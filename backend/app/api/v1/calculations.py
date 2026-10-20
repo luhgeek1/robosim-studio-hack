@@ -35,7 +35,7 @@ async def get_calculation(calculation_id: CalculationIdPath, user: OwnerDep, uow
 @router.get(
     "/calculations/{calculation_id}/trace",
     operation_id="getCalculationTrace",
-    summary="Трасса расчёта — каждая метрика с формулой, входами и источниками (ТЗ 3.5.8)",
+    summary="Трасса расчёта - каждая метрика с формулой, входами и источниками (ТЗ 3.5.8)",
 )
 async def get_trace(
     calculation_id: CalculationIdPath,

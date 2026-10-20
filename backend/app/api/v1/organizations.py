@@ -39,7 +39,7 @@ async def list_organizations(user: MemberDep, uow: UowDep) -> OrganizationList:
 @router.post(
     "/organizations",
     operation_id="createOrganization",
-    summary="Создать организацию (создатель — владелец)",
+    summary="Создать организацию (создатель - владелец)",
     status_code=status.HTTP_201_CREATED,
 )
 async def create_organization(payload: OrganizationWrite, user: VerifiedDep, uow: UowDep) -> Organization:
@@ -148,7 +148,7 @@ async def list_my_invitations(user: VerifiedDep, uow: UowDep) -> IncomingInvitat
 @router.post(
     "/me/invitations/{invitation_id}/accept",
     operation_id="acceptInvitation",
-    summary="Принять приглашение — стать участником организации",
+    summary="Принять приглашение - стать участником организации",
     responses=NOT_FOUND,
 )
 async def accept_invitation(

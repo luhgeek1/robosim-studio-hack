@@ -108,7 +108,7 @@ class Drivers:
         value = self.snapshot.input.params.get(key)
         meta = self.snapshot.input.param_meta.get(key)
         if value is None or meta is None:
-            raise InvalidInputError(f"Параметр {key} не задан в проекте — его нельзя варьировать")
+            raise InvalidInputError(f"Параметр {key} не задан в проекте - его нельзя варьировать")
         driver = percent_driver(key, meta.name, DriverKind.PARAM, meta.unit, value, low_pct, high_pct)
         return replace(driver, status=meta.status.value)
 
@@ -292,7 +292,7 @@ def _recommendation(driver: Driver, snapshot: Snapshot) -> str:
         rationale = (norm.rationale or "").split(". ")[0] if norm else ""
         return (
             f"Проверить на пилоте или у вендора «{driver.name}»: сейчас допущение команды "
-            f"({fmt(driver.base)} {driver.unit or ''}, диапазон {fmt(driver.low)}–{fmt(driver.high)}). "
+            f"({fmt(driver.base)} {driver.unit or ''}, диапазон {fmt(driver.low)}-{fmt(driver.high)}). "
             f"{rationale}".strip()
         )
     status = "значение по умолчанию из демо-набора" if driver.status == "default" else "допущение"

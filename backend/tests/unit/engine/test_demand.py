@@ -71,6 +71,6 @@ def test_day_profile_sums_to_the_day_and_peaks_in_the_middle() -> None:
     profile = day_profile(22, 1.5, 3)
     assert sum(profile) == pytest.approx(1.0)
     assert profile[22] == profile[23] == 0
-    # A 3-hour window centred in 22 working hours spans 9.5–12.5: two full peak hours at 1.5 / 22.
+    # A 3-hour window centred in 22 working hours spans 9.5-12.5: two full peak hours at 1.5 / 22.
     assert profile[10] == profile[11] == pytest.approx(1.5 / 22)
     assert profile[0] < profile[10]

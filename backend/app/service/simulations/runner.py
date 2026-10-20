@@ -176,7 +176,7 @@ async def run_fleet_sweep(db: Database, job_id: UUID) -> None:
     except Exception:
         # The scenario could change while the sweep ran (product replaced, process removed): the job must end.
         logger.exception("fleet_sweep_apply_failed", extra={"job_id": str(job_id)})
-        await _fail(db, job_id, None, "Сценарий изменился во время перебора — запустите перебор ещё раз")
+        await _fail(db, job_id, None, "Сценарий изменился во время перебора - запустите перебор ещё раз")
 
 
 async def _finish_sweep(
@@ -243,7 +243,7 @@ async def _finish_sweep(
 
 
 async def _best_run(result: JointSweep, payload: dict[str, Any]) -> tuple[SimResult, int] | None:
-    """The recommended fleet once more, with events, in the requested mode — for the player and the report."""
+    """The recommended fleet once more, with events, in the requested mode - for the player and the report."""
     if not result.validation.fleet or result.validation.status == "not_run":
         return None
     inp = load_input(payload["engine_input"])

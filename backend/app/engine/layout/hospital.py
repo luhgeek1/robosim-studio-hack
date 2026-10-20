@@ -131,7 +131,7 @@ class HospitalSketch(Sketch):
             EdgeKind.CORRIDOR,
             b.zone(
                 ZoneKind.CORRIDOR,
-                f"Коридор типового этажа отделений (этажи 2–{int(floors.value)})",
+                f"Коридор типового этажа отделений (этажи 2-{int(floors.value)})",
                 (ward_x, d, width, d + corridor),
             ),
         )

@@ -43,7 +43,7 @@ def _snapshot(row: ParameterRow, source_title: str | None) -> dict[str, Any] | N
 
 
 class ParameterDefaultsAdmin:
-    """Reference defaults of object parameters (ТЗ 2.1.6, 3.1.4) — edited in place, versioned by projects.
+    """Reference defaults of object parameters (ТЗ 2.1.6, 3.1.4) - edited in place, versioned by projects.
 
     A default is read live when a project has no own value. A change therefore restamps exactly the projects
     whose effective value moves: their version grows, saved calculations turn stale and keep their own input
@@ -99,7 +99,7 @@ class ParameterDefaultsAdmin:
 
     async def _checked_value(self, object_type: str, row: ParameterRow, change: DefaultChange) -> SpecScalar:
         if change.unit is not None and change.unit != (row.unit or ""):
-            raise InvalidInputError(f"Единица параметра «{row.name}» — {row.unit or 'без единицы'}")
+            raise InvalidInputError(f"Единица параметра «{row.name}» - {row.unit or 'без единицы'}")
         detail = await self._reference.object_type(object_type)
         definition = next(param for param in detail.parameters if param.key == row.key)
         value = _normalized(definition, change.value)

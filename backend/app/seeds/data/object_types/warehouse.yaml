@@ -39,7 +39,7 @@ parameters:
   dataset_row: Площадь активной (роботизируемой) зоны
   step: null
   enum_values: null
-  hint: 'Часть склада, куда планируется допустить роботов: проезды, зона хранения, отбора. Если не знаете — возьмите примерно
+  hint: 'Часть склада, куда планируется допустить роботов: проезды, зона хранения, отбора. Если не знаете - возьмите примерно
     половину общей площади.'
   example: '10000'
   affects: [pallet_transport, order_picking, high_bay_storage]
@@ -69,7 +69,7 @@ parameters:
   dataset_row: Количество этажей (мезонинов)
   step: null
   enum_values: null
-  hint: Сколько уровней, по которым перемещается груз. Больше одного — нужны лифты или подъёмники, это увеличивает затраты
+  hint: Сколько уровней, по которым перемещается груз. Больше одного - нужны лифты или подъёмники, это увеличивает затраты
     на внедрение.
   example: '1'
   affects: [pallet_transport, order_picking, floor_cleaning]
@@ -99,7 +99,7 @@ parameters:
   dataset_row: Ширина рабочих проходов между стеллажами
   step: null
   enum_values: null
-  hint: Расстояние между стеллажами в самом узком месте. Проход 1,5–2 м подходит только для узкопроходной техники.
+  hint: Расстояние между стеллажами в самом узком месте. Проход 1,5-2 м подходит только для узкопроходной техники.
   example: '2.8'
   affects: [pallet_transport, order_picking, high_bay_storage, inventory_count, floor_cleaning]
   order: 6
@@ -175,7 +175,7 @@ parameters:
   dataset_row: Рабочих дней в году
   step: null
   enum_values: null
-  hint: Сколько дней в году склад принимает и отгружает товар. Круглогодичный склад — 365.
+  hint: Сколько дней в году склад принимает и отгружает товар. Круглогодичный склад - 365.
   example: '365'
   affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
   order: 11
@@ -190,7 +190,7 @@ parameters:
   step: null
   enum_values: null
   hint: Чистое рабочее время одной смены без обеда и технических пауз. В примечании датасета сказано «2 смены по 12 ч», но
-    в значении 11 ч — используем значение 11 ч, так как оно уже учитывает перерывы.
+    в значении 11 ч - используем значение 11 ч, так как оно уже учитывает перерывы.
   example: '11'
   affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
   order: 12
@@ -205,7 +205,7 @@ parameters:
   step: null
   enum_values: null
   hint: 'Во сколько раз самый загруженный час больше среднего. Посчитать: максимум паллет или строк за час из WMS, делённый
-    на средний час. Для интернет-торговли — до 2,5. Роботов подбираем под пик.'
+    на средний час. Для интернет-торговли - до 2,5. Роботов подбираем под пик.'
   example: '1.5'
   affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting]
   order: 13
@@ -240,7 +240,7 @@ parameters:
   step: null
   enum_values: null
   hint: Сколько паллет в среднем принимается за сутки (входящий поток). Берётся из WMS или журнала приёмки. Один европоддон
-    — около 33 коробов.
+    - около 33 коробов.
   example: '1000'
   affects: [pallet_transport, high_bay_storage]
   order: 15
@@ -288,7 +288,7 @@ parameters:
   dataset_row: Объём отбора (строк/сутки, всего)
   step: null
   enum_values: null
-  hint: Строка — одна позиция в заказе, сколько бы штук в ней ни было. Главный показатель для отбора заказов, берётся из WMS.
+  hint: Строка - одна позиция в заказе, сколько бы штук в ней ни было. Главный показатель для отбора заказов, берётся из WMS.
   example: '100000'
   affects: [order_picking]
   order: 18
@@ -316,7 +316,7 @@ parameters:
   dataset_row: Доля мелкоштучного отбора (piece-pick)
   step: null
   enum_values: null
-  hint: Какая часть отбора — поштучная (остальное — коробами или паллетами). Поштучный отбор лучше всего роботизируется системами
+  hint: Какая часть отбора - поштучная (остальное - коробами или паллетами). Поштучный отбор лучше всего роботизируется системами
     «товар к человеку».
   example: '30'
   affects: [order_picking]
@@ -385,7 +385,7 @@ parameters:
     value: 12
     status: assumption
     rationale: 'В датасете нет. Методика ФЦ БАС «Инвентаризация складов» (research/fcbas_scenarios, PDF стр. 9): базовый сценарий
-      — 12 полных проверок в год.'
+      - 12 полных проверок в год.'
 - key: cleaning_area_m2
   group: operations
   name: Площадь уборки
@@ -473,7 +473,7 @@ parameters:
   default:
     value: 2
     status: assumption
-    rationale: 'В датасете нет. Методика ФЦ БАС «Инвентаризация складов» (PDF стр. 9): традиционный метод — 2 человека, 160
+    rationale: 'В датасете нет. Методика ФЦ БАС «Инвентаризация складов» (PDF стр. 9): традиционный метод - 2 человека, 160
       ч на одну полную инвентаризацию; при 12 проверках в год это 3 840 ч, то есть около 2 полных ставок.'
 - key: cleaners
   group: staff
@@ -484,7 +484,7 @@ parameters:
   dataset_row: null
   step: null
   enum_values: null
-  hint: Сколько уборщиков или операторов поломоечных машин во всех сменах вместе. Если не знаете — оставьте пустым, платформа
+  hint: Сколько уборщиков или операторов поломоечных машин во всех сменах вместе. Если не знаете - оставьте пустым, платформа
     оценит по площади уборки.
   example: '4'
   affects: [floor_cleaning]
@@ -553,8 +553,8 @@ parameters:
     value: 100000
     status: assumption
     rationale: 'В датасете нет. Берём зарплату отборщика с листа «Склад» (100 000 руб./мес.). Сверка: в методике ФЦ БАС «Инвентаризация
-      складов» час работы 2 человек стоит 1 700 руб., то есть 850 руб./ч на человека с взносами — около 105–115 тыс. руб./мес.
-      gross при 165–176 ч в месяц, порядок совпадает.'
+      складов» час работы 2 человек стоит 1 700 руб., то есть 850 руб./ч на человека с взносами - около 105-115 тыс. руб./мес.
+      gross при 165-176 ч в месяц, порядок совпадает.'
 - key: cleaner_salary_rub_month
   group: staff
   name: Зарплата уборщика
@@ -670,7 +670,7 @@ parameters:
   dataset_row: Протяжённость конвейерной/транспортной системы
   step: null
   enum_values: null
-  hint: Общая длина конвейеров на складе. Если конвейера нет — 0. Конвейер может заменить часть перевозок роботами или мешать
+  hint: Общая длина конвейеров на складе. Если конвейера нет - 0. Конвейер может заменить часть перевозок роботами или мешать
     их маршрутам.
   example: '350'
   affects: [pallet_transport, parcel_sorting]
@@ -685,7 +685,7 @@ parameters:
   dataset_row: Тип стеллажной системы
   step: null
   enum_values:
-  # number — стеллажи уже под автоматическое хранение (1) или их придётся менять (0).
+  # number - стеллажи уже под автоматическое хранение (1) или их придётся менять (0).
   - {value: selective_pallet_racking, label: Фронтальные паллетные, number: '0'}
   - {value: pallet_shuttle, label: Паллетный шаттл (Shuttle), number: '1'}
   - {value: autostore, label: Кубическое хранение контейнеров (AutoStore), number: '1'}
@@ -748,7 +748,7 @@ parameters:
   dataset_row: Средние габариты паллеты (Д×Ш×В)
   step: null
   enum_values: null
-  hint: Длина × ширина × высота паллеты вместе с грузом, в миллиметрах. Европаллета — 1200×800.
+  hint: Длина × ширина × высота паллеты вместе с грузом, в миллиметрах. Европаллета - 1200×800.
   example: 1200×800×1600
   affects: [pallet_transport, high_bay_storage]
   order: 48
@@ -819,7 +819,7 @@ parameters:
   dataset_row: Наличие ERP/1С
   step: null
   enum_values: null
-  hint: Какая учётная система используется. Интеграция — через REST API или COM-коннектор.
+  hint: Какая учётная система используется. Интеграция - через REST API или COM-коннектор.
   example: 1С:ERP
   affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count]
   order: 53
@@ -834,7 +834,7 @@ parameters:
   step: null
   enum_values: null
   hint: Сколько компания готова вложить в покупку и внедрение. Решения дороже бюджета помечаются; аренда роботов (RaaS) и
-    лизинг — альтернатива.
+    лизинг - альтернатива.
   example: '80'
   affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting, inventory_count, floor_cleaning]
   order: 54
@@ -882,7 +882,7 @@ parameters:
   dataset_row: null
   step: null
   enum_values: null
-  hint: Какая доля паллет и строк заказа должна обрабатываться в норматив. 0,95 — 95 %. Имитация подбирает наименьшее число
+  hint: Какая доля паллет и строк заказа должна обрабатываться в норматив. 0,95 - 95 %. Имитация подбирает наименьшее число
     роботов, при котором эта доля достигается.
   example: '0.95'
   affects: [pallet_transport, order_picking, high_bay_storage, parcel_sorting]
@@ -890,7 +890,7 @@ parameters:
   default:
     value: 0.95
     status: assumption
-    rationale: 'В датасете и ТЗ нет. Допущение команды: 95 % операций в срок — рабочая цель уровня сервиса, при которой редкие
+    rationale: 'В датасете и ТЗ нет. Допущение команды: 95 % операций в срок - рабочая цель уровня сервиса, при которой редкие
       пиковые задержки допустимы; меньшая цель занижает число роботов, 100 % требует флота под худший случай. Пользователь
       меняет значение в сценарии.'
 labor_groups:
@@ -903,7 +903,7 @@ processes:
 - key: pallet_transport
   name: Перемещение паллет (приёмка → хранение → отгрузка)
   description: Перевозка паллет от ворот приёмки в зону хранения, из хранения к воротам отгрузки и внутри склада. Норматив
-    — «Норматив обработки паллеты» (pallet_lead_time_min) для доли «Целевая доля операций в срок» (sla_target_share).
+    - «Норматив обработки паллеты» (pallet_lead_time_min) для доли «Целевая доля операций в срок» (sla_target_share).
   demand_unit: pallet
   demand_formula: приёмка + отгрузка + внутрискладские перемещения, палл/сут; в пик × пиковый коэффициент
   demand_params: [pallets_internal_per_day, pallets_in_per_day, pallets_out_per_day, shifts_per_day, shift_hours, peak_factor]
@@ -925,9 +925,9 @@ processes:
   labor_release: labor_release_share_transport
   labor_release_by_type: {tow_tractor: labor_release_share_transport * tow_driving_share}
   labor_allocation_note: 'Датасет не делит операторов погрузчиков по операциям. Допущение команды: при фронтальных стеллажах
-    каждый цикл погрузчика — это перевозка паллеты между воротами и стеллажом и подъём на ярус. Подъём занимает около минуты
-    (норматив fork_lift_cycle_extra_s = 60 с) из цикла в 3–4 минуты, поэтому 30 % времени операторов относим к высотному хранению,
-    70 % — к перемещению паллет.'
+    каждый цикл погрузчика - это перевозка паллеты между воротами и стеллажом и подъём на ярус. Подъём занимает около минуты
+    (норматив fork_lift_cycle_extra_s = 60 с) из цикла в 3-4 минуты, поэтому 30 % времени операторов относим к высотному хранению,
+    70 % - к перемещению паллет.'
   solution_types: [amr_transport, fmr_forklift, tow_tractor]
   sizing_model: transport_cycle
   simulation:
@@ -1001,7 +1001,7 @@ processes:
 - key: order_picking
   name: Отбор заказов
   description: 'Сборка заказов по строкам: вместо того чтобы отборщик ходил по складу, роботы подвозят товар к станции или
-    подсказывают, что брать. Цель — доля строк в срок «Целевая доля операций в срок» (sla_target_share).'
+    подсказывают, что брать. Цель - доля строк в срок «Целевая доля операций в срок» (sla_target_share).'
   demand_unit: line
   demand_formula: строк отбора в сутки; в пик × пиковый коэффициент
   demand_params: [order_lines_per_day, shifts_per_day, shift_hours, peak_factor]
@@ -1069,9 +1069,9 @@ processes:
 - key: high_bay_storage
   name: Высотное хранение и размещение паллет
   description: Размещение паллет в ячейки и выдача из ячеек автоматической системой хранения или беспилотным штабелёром. Цель
-    — доля операций в срок «Целевая доля операций в срок» (sla_target_share).
+    - доля операций в срок «Целевая доля операций в срок» (sla_target_share).
   demand_unit: pallet
-  demand_formula: размещение (= приёмка) + выдача (= отгрузка), палл/сут; ёмкость — паллетомест
+  demand_formula: размещение (= приёмка) + выдача (= отгрузка), палл/сут; ёмкость - паллетомест
   demand_params: [pallets_in_per_day, pallets_out_per_day, shifts_per_day, shift_hours, peak_factor]
   demand:
     per_day: pallets_in_per_day + pallets_out_per_day
@@ -1083,9 +1083,9 @@ processes:
   labor_allocation: {forklift_operators: 0.3}
   labor_release: labor_release_share_transport
   labor_allocation_note: 'Датасет не делит операторов погрузчиков по операциям. Допущение команды: при фронтальных стеллажах
-    каждый цикл погрузчика — это перевозка паллеты между воротами и стеллажом и подъём на ярус. Подъём занимает около минуты
-    (норматив fork_lift_cycle_extra_s = 60 с) из цикла в 3–4 минуты, поэтому 30 % времени операторов относим к высотному хранению,
-    70 % — к перемещению паллет.'
+    каждый цикл погрузчика - это перевозка паллеты между воротами и стеллажом и подъём на ярус. Подъём занимает около минуты
+    (норматив fork_lift_cycle_extra_s = 60 с) из цикла в 3-4 минуты, поэтому 30 % времени операторов относим к высотному хранению,
+    70 % - к перемещению паллет.'
   solution_types: [asrs_storage, fmr_forklift]
   sizing_model: station_throughput
   unit_weight: pallet_weight_kg
@@ -1097,14 +1097,14 @@ processes:
     solution_types: [asrs_storage]
     message: Сейчас стеллажи не под автоматическое хранение
     why_needed: Шаттлу, кубическому хранению и кранам-штабелёрам нужна своя стеллажная система; её замена не входит в цену
-      каталога — уточните у поставщика (параметр «Тип стеллажной системы»)
+      каталога - уточните у поставщика (параметр «Тип стеллажной системы»)
   - key: floor_flatness_for_automated_storage
     kind: object
     condition: floor_flatness_mm <= high_bay_floor_flatness_max_mm
     severity: warning
     solution_types: [asrs_storage]
     message: Пол ровнее, чем требует автоматическое хранение, не будет
-    why_needed: Отклонение пола больше допустимого для автоматических систем (DIN 15185, FM2) — понадобится шлифовка или
+    why_needed: Отклонение пола больше допустимого для автоматических систем (DIN 15185, FM2) - понадобится шлифовка или
       выравнивание пола
   - key: payload_vs_pallet
     spec: payload_kg
@@ -1150,7 +1150,7 @@ processes:
 - key: parcel_sorting
   name: Сортировка коробов и посылок по направлениям
   description: Разбор отгружаемых коробов по направлениям и укладка на паллеты. Поток коробов оценивается из отгрузки паллет
-    и числа коробов на паллете. Цель — «Целевая доля операций в срок» (sla_target_share).
+    и числа коробов на паллете. Цель - «Целевая доля операций в срок» (sla_target_share).
   demand_unit: item
   demand_formula: отгрузка паллет в сутки × коробов на паллете, коробов/сут
   demand_params: [pallets_out_per_day, boxes_per_pallet, shifts_per_day, shift_hours, peak_factor]
@@ -1163,8 +1163,8 @@ processes:
   labor_groups: [packers]
   labor_allocation: {packers: 1.0}
   labor_release: labor_release_share_sorting
-  labor_allocation_note: Операторы упаковочных линий — единственная группа, которая сейчас разбирает и упаковывает отгрузку;
-    вся группа относится к сортировке. Датасет отмечает, что функция автоматизируется частично — это учитывает доля высвобождения,
+  labor_allocation_note: Операторы упаковочных линий - единственная группа, которая сейчас разбирает и упаковывает отгрузку;
+    вся группа относится к сортировке. Датасет отмечает, что функция автоматизируется частично - это учитывает доля высвобождения,
     а не распределение.
   solution_types: [sorting_robot, palletizing_arm]
   sizing_model: station_throughput
@@ -1189,7 +1189,7 @@ processes:
     why_needed: 'Нужна минимальная рабочая температура робота: на объекте бывает до {required} °C'
 - key: inventory_count
   name: Инвентаризация остатков
-  description: Пересчёт остатков в ячейках роботом-сканером вместо людей с терминалами и подъёмной техникой. Цель — выполнить
+  description: Пересчёт остатков в ячейках роботом-сканером вместо людей с терминалами и подъёмной техникой. Цель - выполнить
     «Полных инвентаризаций в год» (inventory_counts_per_year).
   demand_unit: m2
   demand_formula: площадь склада × полных инвентаризаций в год ÷ рабочих дней в году, м²/сут
@@ -1235,10 +1235,10 @@ processes:
     why_needed: 'Нужна минимальная рабочая температура робота: на объекте бывает до {required} °C'
 - key: floor_cleaning
   name: Уборка пола
-  description: Влажная уборка или подметание проездов и проходов автономной поломоечной машиной. Цель — норматив «Кратность
+  description: Влажная уборка или подметание проездов и проходов автономной поломоечной машиной. Цель - норматив «Кратность
     уборки в сутки» (cleaning_passes_per_day из реестра нормативов) по всей площади уборки.
   demand_unit: m2
-  demand_formula: площадь уборки (если не задана — общая площадь склада) × кратность уборки в сутки, м²/сут
+  demand_formula: площадь уборки (если не задана - общая площадь склада) × кратность уборки в сутки, м²/сут
   demand_params: [cleaning_area_m2, area_m2, shifts_per_day, shift_hours, scheduled_peak_factor]
   demand: {per_day: 'coalesce(cleaning_area_m2, area_m2) * cleaning_passes_per_day', hours_per_day: shifts_per_day * shift_hours,
     peak_factor: scheduled_peak_factor, manual_rate: manual_cleaning_m2_per_hour}
@@ -1287,14 +1287,14 @@ checks:
   severity: info
   params: [pick_route_length_m, picker_productivity_lines_per_hour]
   message: С таким маршрутом на строку отборщик не успел бы сделать заявленную выработку даже без остановок
-  how_to_fix: Если отбор пакетный, маршрут делится между строками — укажите путь на одну строку; иначе проверьте выработку
+  how_to_fix: Если отбор пакетный, маршрут делится между строками - укажите путь на одну строку; иначе проверьте выработку
     (строк в час) и маршрут (метры на строку, а не за смену)
 - key: robotized_area_within_total
   expression: robotized_area_m2 <= area_m2
   severity: error
   params: [robotized_area_m2, area_m2]
   message: Зона для роботов больше общей площади склада
-  how_to_fix: 'Проверьте площади: зона роботизации — часть склада'
+  how_to_fix: 'Проверьте площади: зона роботизации - часть склада'
 - key: cleaning_area_within_total
   expression: cleaning_area_m2 <= area_m2
   severity: error
@@ -1325,7 +1325,7 @@ checks:
   severity: warning
   params: [order_lines_per_day, shift_hours, time_loss_pct, pickers, picker_productivity_lines_per_hour]
   message: Текущий штат отборщиков при указанной выработке не собирает суточный объём строк
-  how_to_fix: Проверьте выработку отборщика, число отборщиков и потери рабочего времени — одно из чисел, вероятно, неточно
+  how_to_fix: Проверьте выработку отборщика, число отборщиков и потери рабочего времени - одно из чисел, вероятно, неточно
 - key: storage_holds_daily_receipts
   expression: pallet_positions >= pallets_in_per_day
   severity: warning
@@ -1336,7 +1336,7 @@ checks:
   expression: aisle_width_m <= main_aisle_width_m
   severity: info
   params: [aisle_width_m, main_aisle_width_m]
-  message: Рабочие проходы шире главных проездов — так бывает редко
+  message: Рабочие проходы шире главных проездов - так бывает редко
   how_to_fix: 'Проверьте ширину: для подбора роботов важна самая узкая точка маршрута'
 - key: item_lighter_than_pallet
   expression: item_weight_kg <= pallet_weight_kg
@@ -1353,11 +1353,11 @@ demo_projects:
   description: 'Тот же склад из датасета организатора (здание, 1 000 паллет приёмки и 1 000 отгрузки, 100 000 строк отбора
     в сутки), но работающий как круглосуточный фулфилмент интернет-магазина: 3 смены по 8 ч, 360 дней в году, штучный отбор
     мелких товаров. Показывает, как при такой загрузке окупаются сразу несколько типов роботов. Отличия от данных организатора
-    — допущения команды, они помечены у каждого параметра.'
+    - допущения команды, они помечены у каждого параметра.'
   params:
     shifts_per_day:
       value: 3
-      rationale: 'Допущение команды для витрины «фулфилмент 24/7», не данные организатора: круглосуточная работа — 3 смены
+      rationale: 'Допущение команды для витрины «фулфилмент 24/7», не данные организатора: круглосуточная работа - 3 смены
         вместо 2 по датасету.'
     shift_hours:
       value: 8
@@ -1367,7 +1367,7 @@ demo_projects:
       rationale: 'Допущение команды: фулфилмент работает без выходных, кроме ≈5 праздничных дней в году.'
     picker_productivity_lines_per_hour:
       value: 75
-      rationale: 'Допущение команды: штучный отбор смешанных мелких товаров интернет-магазина — 75 строк/ч на человека,
+      rationale: 'Допущение команды: штучный отбор смешанных мелких товаров интернет-магазина - 75 строк/ч на человека,
         вдвое ниже 150 строк/ч датасета (там отбор для оптовых заказов).'
     pickers:
       value: 270
@@ -1378,10 +1378,10 @@ demo_projects:
       rationale: 'Допущение команды: водители погрузчиков на три смены (≈13 на смену) вместо 25 на две смены по датасету.'
     cleaners:
       value: 14
-      rationale: 'В датасете организатора уборщиков нет; допущение команды: ≈4–5 уборщиков на смену для 20 000 м² × 3 смены.'
+      rationale: 'В датасете организатора уборщиков нет; допущение команды: ≈4-5 уборщиков на смену для 20 000 м² × 3 смены.'
     staff_total:
       value: 360
-      rationale: 'Допущение команды: общая численность вслед за тремя сменами — 270 комплектовщиков, 40 водителей, 14 уборщиков
+      rationale: 'Допущение команды: общая численность вслед за тремя сменами - 270 комплектовщиков, 40 водителей, 14 уборщиков
         и ≈36 прочих сотрудников.'
 site_costs:
 - key: capex_integration
@@ -1390,21 +1390,21 @@ site_costs:
   formula: wms_integration_rub
   solution_types: [amr_transport, fmr_forklift, tow_tractor, autonomous_truck, goods_to_person, asrs_storage, sorting_robot,
     pick_assist, piece_picking_arm, palletizing_arm, inventory_robot]
-  note: Роботы получают задания из WMS и учёта (ФЦ БАС — интеграция обязательна). Уборщикам интеграция не нужна.
+  note: Роботы получают задания из WMS и учёта (ФЦ БАС - интеграция обязательна). Уборщикам интеграция не нужна.
 - key: capex_wms_implementation
   kind: capex
   name: Внедрение WMS (на складе её нет)
   formula: wms_implementation_rub - has_wms * wms_implementation_rub
   solution_types: [amr_transport, fmr_forklift, tow_tractor, autonomous_truck, goods_to_person, asrs_storage, sorting_robot,
     pick_assist, piece_picking_arm, palletizing_arm, inventory_robot]
-  note: Датасет склада — «наличие WMS обязательно для роботизации». Если WMS нет, её внедрение входит в CAPEX; если есть,
+  note: Датасет склада - «наличие WMS обязательно для роботизации». Если WMS нет, её внедрение входит в CAPEX; если есть,
     статья равна нулю.
 - key: capex_g2p_pods
   kind: capex
   name: Мобильные стеллажи для «товар к человеку»
   formula: sku_count / g2p_sku_per_pod * g2p_pod_rub
   solution_types: [goods_to_person]
-  note: Стеллажи-поды не входят в цену робота подвоза. Их число — число SKU (датасет) на вместимость стеллажа.
+  note: Стеллажи-поды не входят в цену робота подвоза. Их число - число SKU (датасет) на вместимость стеллажа.
 - key: capex_site_preparation
   kind: capex
   name: 'Подготовка площадки: QR-разметка, зоны безопасности, стыки пола'

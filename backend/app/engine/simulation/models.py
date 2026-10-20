@@ -43,7 +43,7 @@ class ResourceKind(StrEnum):
 
 
 class SimulationError(ValueError):
-    """The scenario cannot be simulated as given — the message tells the user what is missing."""
+    """The scenario cannot be simulated as given - the message tells the user what is missing."""
 
 
 @dataclass(frozen=True, slots=True)

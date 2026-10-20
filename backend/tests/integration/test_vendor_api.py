@@ -135,7 +135,7 @@ async def test_card_proposal_keeps_company_and_admin_badges(client: AsyncClient)
     assert detail["name"] == "Ронави Тест-1 Pro"
     assert detail["manufacturer"]["name"] == DEMO_VENDOR_MANUFACTURER
     assert detail["price_from"]["amount_rub"] == 2_900_000
-    assert "tested_fcbas" in detail["badges"], "отметку испытаний ставил админ — правка вендора её не снимает"
+    assert "tested_fcbas" in detail["badges"], "отметку испытаний ставил админ - правка вендора её не снимает"
     assert "in_registry_719" not in detail["badges"]
 
 
@@ -266,7 +266,7 @@ async def test_fit_shows_how_products_pass_matching_without_project_data(client:
     assert body["projects_analysed"] == 1
     assert "Секрет" not in response.text, "вендор видит счётчики, а не чужие проекты"
     seen = [p for p in body["products"] if p["appearances"] > 0]
-    assert seen, "продукты «Ронави» — кандидаты в подборе демо-склада"
+    assert seen, "продукты «Ронави» - кандидаты в подборе демо-склада"
     for item in seen:
         assert item["appearances"] == item["fit"] + item["check"] + item["excluded"] + item["manual"]
     assert any(p["missing"] or p["blocking"] for p in body["products"])

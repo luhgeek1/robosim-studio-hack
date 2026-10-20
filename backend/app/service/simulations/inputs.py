@@ -96,8 +96,8 @@ class InputBuilder:
 
     @staticmethod
     def _charge_min(specs: Book, norms: Book) -> float | None:
-        """The vendor's charging time; without it the cycle model's assumption — availability
-        `analytic_availability_default` = runtime / (runtime + charge) — not a robot that never charges."""
+        """The vendor's charging time; without it the cycle model's assumption - availability
+        `analytic_availability_default` = runtime / (runtime + charge) - not a robot that never charges."""
         charge = specs.optional("charging_time_min")
         if charge is not None:
             return charge.value
@@ -130,7 +130,7 @@ class InputBuilder:
         )
 
     def _station_rate(self, sizing: ItemSizing, spec: dict[str, Any]) -> float:
-        """The product's own station rate when the vendor gives one — the same choice the cycle model made."""
+        """The product's own station rate when the vendor gives one - the same choice the cycle model made."""
         own = sizing.item.specs.optional("station_throughput_lines_h")
         return own.value if own is not None else self._value(spec.get("station_lines_per_hour"))
 

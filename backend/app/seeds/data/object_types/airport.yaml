@@ -281,7 +281,7 @@ parameters:
   dataset_row: Объём перемещения багажа (единиц/сутки)
   step: null
   enum_values: null
-  hint: Сколько единиц багажа перемещается за сутки. В датасете это около 1,5 места на пассажира — выше обычного; проверьте
+  hint: Сколько единиц багажа перемещается за сутки. В датасете это около 1,5 места на пассажира - выше обычного; проверьте
     по данным системы обработки багажа.
   example: '35000'
   affects: [baggage_handling]
@@ -311,7 +311,7 @@ parameters:
   step: null
   enum_values: null
   hint: 'Средние длина × ширина × высота места багажа, в миллиметрах. В датасете нет. Для ориентира: по правилам IATA сумма
-    трёх измерений стандартного места — не более 158 см.'
+    трёх измерений стандартного места - не более 158 см.'
   example: 750×500×300
   affects: [baggage_handling]
   order: 20
@@ -319,7 +319,7 @@ parameters:
     value: 750×500×300
     status: assumption
     rationale: Габаритов багажа в датасете нет, а ТЗ 3.2.1 их требует. По правилам IATA сумма трёх измерений
-      стандартного места — до 158 см; берём типовой чемодан 75×50×30 см (сумма 155 см).
+      стандартного места - до 158 см; берём типовой чемодан 75×50×30 см (сумма 155 см).
 - key: bags_per_cart
   group: ramp
   name: Мест багажа на одной тележке
@@ -413,7 +413,7 @@ parameters:
   step: null
   enum_values: null
   hint: Сколько рейсов заправляется за сутки. В датасете значение совпадает с числом взлётов и посадок (280), хотя заправляют
-    обычно только вылетающие рейсы — вероятно, около половины. В расчёте не участвует.
+    обычно только вылетающие рейсы - вероятно, около половины. В расчёте не участвует.
   example: '280'
   affects: []
   order: 26
@@ -448,7 +448,7 @@ parameters:
   default:
     value: 200
     status: assumption
-    rationale: 'Длин маршрутов в датасете нет. Оценка: сторона квадрата площадью одного терминала — 85 000 м² на 2 терминала
+    rationale: 'Длин маршрутов в датасете нет. Оценка: сторона квадрата площадью одного терминала - 85 000 м² на 2 терминала
       = 42 500 м², √42 500 ≈ 206 м, округлено до 200 м. Заменить замером по поэтажному плану.'
 - key: waste_containers_per_day
   group: terminal_logistics
@@ -572,7 +572,7 @@ parameters:
   dataset_row: Годовая текучесть (персонал терминала)
   step: null
   enum_values: null
-  hint: Какая доля сотрудников терминала увольняется за год. Высокая текучесть — дополнительный довод за роботов.
+  hint: Какая доля сотрудников терминала увольняется за год. Высокая текучесть - дополнительный довод за роботов.
   example: '35'
   affects: [cart_and_waste_logistics, terminal_cleaning]
   order: 37
@@ -635,7 +635,7 @@ parameters:
   step: null
   enum_values: null
   hint: Есть ли СКУД. Роботы открывают двери и проходят турникеты через неё, поэтому интеграция считается на каждую режимную
-    зону. В датасете — «Да (OSDP)».
+    зону. В датасете - «Да (OSDP)».
   example: Да (OSDP)
   affects: [cart_and_waste_logistics, terminal_cleaning, passenger_assistance, security_patrol]
   order: 41
@@ -649,7 +649,7 @@ parameters:
   dataset_row: Требования по сертификации оборудования для airside
   step: null
   enum_values: null
-  hint: Да — роботы на перроне должны иметь допуск; без подтверждённого допуска они получают «требует проверки». В датасете
+  hint: Да - роботы на перроне должны иметь допуск; без подтверждённого допуска они получают «требует проверки». В датасете
     требования указаны как EASA/ИКАО; для российских аэропортов уточните их у службы авиабезопасности.
   example: EASA/ИКАО
   affects: [baggage_handling]
@@ -692,7 +692,7 @@ parameters:
   dataset_row: Наличие FIDS/AODB системы
   step: null
   enum_values: null
-  hint: FIDS — табло с информацией о рейсах, AODB — операционная база данных аэропорта. Из них роботы получают расписание.
+  hint: FIDS - табло с информацией о рейсах, AODB - операционная база данных аэропорта. Из них роботы получают расписание.
   example: Да
   affects: [baggage_handling, passenger_assistance]
   order: 45
@@ -762,14 +762,14 @@ parameters:
   dataset_row: null
   step: null
   enum_values: null
-  hint: Какая доля рейсов тележек и заявок должна выполняться в норматив. 0,95 — 95 %.
+  hint: Какая доля рейсов тележек и заявок должна выполняться в норматив. 0,95 - 95 %.
   example: '0.95'
   affects: [cart_and_waste_logistics, passenger_assistance]
   order: 50
   default:
     value: 0.95
     status: assumption
-    rationale: 'В датасете и ТЗ нет. То же допущение команды, что и для склада: 95 % операций в срок — рабочая цель уровня
+    rationale: 'В датасете и ТЗ нет. То же допущение команды, что и для склада: 95 % операций в срок - рабочая цель уровня
       сервиса, при которой редкие пиковые задержки допустимы. Пользователь меняет значение.'
 labor_groups:
 - {key: ground_staff, name: Персонал наземного обслуживания, headcount_param: ground_staff, salary_param: ground_staff_salary_rub_month}
@@ -778,9 +778,9 @@ processes:
 - key: baggage_handling
   name: Перевозка багажа между терминалом и самолётом
   description: 'Доставка багажа от зала сортировки к стоянке самолёта и обратно беспилотными тягачами с тележками или багажными
-    AMR. Норматив — «Время оборота самолёта» (turnaround_min): багаж должен успеть за стоянку.'
+    AMR. Норматив - «Время оборота самолёта» (turnaround_min): багаж должен успеть за стоянку.'
   demand_unit: bag
-  demand_formula: мест багажа в сутки; пик — рейсов в пиковый час ÷ среднечасовых рейсов
+  demand_formula: мест багажа в сутки; пик - рейсов в пиковый час ÷ среднечасовых рейсов
   demand_params: [baggage_per_day, operating_hours_per_day, flights_per_day, flights_peak_hour]
   demand:
     per_day: baggage_per_day
@@ -817,7 +817,7 @@ processes:
     when: airside_certification
     solution_types: [tow_tractor, autonomous_truck, amr_transport]
     message: Нет подтверждённого допуска к работе на перроне
-    why_needed: Датасет — допуск техники на перрон обязателен (EASA/ИКАО); нужен документ производителя или решение службы
+    why_needed: Датасет - допуск техники на перрон обязателен (EASA/ИКАО); нужен документ производителя или решение службы
       авиабезопасности
   - key: outdoor_protection
     spec: ip_rating
@@ -827,7 +827,7 @@ processes:
     unit: IP
     solution_types: [tow_tractor, autonomous_truck, amr_transport]
     message: Степень защиты ниже нужной для работы на улице
-    why_needed: Перрон — открытая зона, нужна защита от пыли и дождя не ниже IP{required}
+    why_needed: Перрон - открытая зона, нужна защита от пыли и дождя не ниже IP{required}
   - key: towing_vs_baggage_train
     spec: towing_capacity_kg
     comparison: gte
@@ -862,10 +862,10 @@ processes:
     why_needed: 'Нужна минимальная рабочая температура: на перроне зимой бывает до {required} °C'
 - key: cart_and_waste_logistics
   name: Грузовые тележки и вывоз мусора в терминале
-  description: Перевозка грузов, расходных материалов и мусорных контейнеров внутри терминала. Цель — «Целевая доля операций
+  description: Перевозка грузов, расходных материалов и мусорных контейнеров внутри терминала. Цель - «Целевая доля операций
     в срок» (sla_target_share).
   demand_unit: trip
-  demand_formula: рейсов грузовых тележек + контейнеров мусора в сутки; пик — по пассажиропотоку
+  demand_formula: рейсов грузовых тележек + контейнеров мусора в сутки; пик - по пассажиропотоку
   demand_params: [internal_cart_trips_per_day, waste_containers_per_day, operating_hours_per_day, pax_per_day, pax_peak_hour]
   demand:
     per_day: internal_cart_trips_per_day + waste_containers_per_day
@@ -903,7 +903,7 @@ processes:
     why_needed: 'Нужен уровень шума робота: в зоне допускается не больше {required} дБА, особенно ночью'
 - key: terminal_cleaning
   name: Уборка терминала
-  description: Влажная уборка залов терминала автономными поломоечными машинами. Цель — норматив «Кратность уборки в сутки»
+  description: Влажная уборка залов терминала автономными поломоечными машинами. Цель - норматив «Кратность уборки в сутки»
     (cleaning_passes_per_day из реестра нормативов) по всей площади роботизированной уборки.
   demand_unit: m2
   demand_formula: площадь для роботизированной уборки × кратность уборки в сутки, м²/сут
@@ -913,8 +913,8 @@ processes:
   labor_groups: [terminal_staff]
   labor_allocation: {terminal_staff: 0.1}
   labor_release: labor_release_share_cleaning
-  labor_allocation_note: 'В терминале работают 8 поломоечных машин (датасет), поэтому база — машинная уборка, а не ручная:
-    51 000 м² × 2 уборки в сутки (норматив cleaning_passes_per_day) / 1000 м²/ч (верх норматива manual_cleaning_m2_per_hour —
+  labor_allocation_note: 'В терминале работают 8 поломоечных машин (датасет), поэтому база - машинная уборка, а не ручная:
+    51 000 м² × 2 уборки в сутки (норматив cleaning_passes_per_day) / 1000 м²/ч (верх норматива manual_cleaning_m2_per_hour -
     машина с оператором, ФЦ БАС) ≈ 102 ч в сутки ≈ 4,3 поста 24/7 × 4,2 FTE (норматив fte_per_24x7_post) ≈ 18 операторов из 180,
     то есть 0,1. Остальной персонал терминала (санузлы, урны, помощь пассажирам) в роботизируемые процессы не входит.'
   solution_types: [cleaning_robot]
@@ -931,9 +931,9 @@ processes:
 - key: passenger_assistance
   name: Помощь и навигация пассажиров
   description: 'Роботы-консультанты и сопровождающие у стоек регистрации и выходов: подсказывают дорогу, провожают трансферных
-    пассажиров. Эффект — сервис, а не замещение персонала, поэтому группы персонала не заданы.'
+    пассажиров. Эффект - сервис, а не замещение персонала, поэтому группы персонала не заданы.'
   demand_unit: trip
-  demand_formula: пассажиров в сутки × доля трансферных, сопровождений/сут; пик — по пассажиропотоку
+  demand_formula: пассажиров в сутки × доля трансферных, сопровождений/сут; пик - по пассажиропотоку
   demand_params: [pax_per_day, transfer_pax_pct, operating_hours_per_day, pax_peak_hour]
   demand: {per_day: pax_per_day * transfer_pax_pct, hours_per_day: operating_hours_per_day, peak_factor: pax_peak_hour * operating_hours_per_day
       / pax_per_day}
@@ -941,7 +941,7 @@ processes:
   labor_groups: []
   labor_allocation: {}
   labor_allocation_note: Сопровождение пассажиров сейчас не выполняет ни одна группа персонала из датасета; эффект процесса
-    — сервис, ФОТ не распределяется.
+    - сервис, ФОТ не распределяется.
   solution_types: [service_robot, delivery_robot]
   sizing_model: station_throughput
   requirements:
@@ -956,7 +956,7 @@ processes:
 - key: security_patrol
   name: Патрулирование терминала
   description: Регулярный объезд залов терминала роботом с камерами. Сотрудников службы безопасности в датасете нет, поэтому
-    эффект по персоналу не считается. Число обходов — параметр «Обходов терминала в сутки» (patrol_rounds_per_day), в датасете
+    эффект по персоналу не считается. Число обходов - параметр «Обходов терминала в сутки» (patrol_rounds_per_day), в датасете
     его нет.
   demand_unit: m2
   demand_formula: площадь терминалов × обходов в сутки, м²/сут
@@ -982,13 +982,13 @@ checks:
   severity: warning
   params: [pax_per_day, pax_per_year_mln]
   message: Пассажиров в сутки заметно больше, чем даёт годовой пассажиропоток
-  how_to_fix: Годовой поток — в миллионах пассажиров; суточный — среднее за год, а не пиковый день
+  how_to_fix: Годовой поток - в миллионах пассажиров; суточный - среднее за год, а не пиковый день
 - key: pax_day_matches_year
   expression: mln(pax_per_year_mln) <= pax_per_day * working_days_per_year * cross_check_ratio_max
   severity: warning
   params: [pax_per_day, pax_per_year_mln]
   message: Годовой пассажиропоток заметно больше, чем даёт суточный
-  how_to_fix: Годовой поток — в миллионах пассажиров; суточный — среднее за год
+  how_to_fix: Годовой поток - в миллионах пассажиров; суточный - среднее за год
 - key: bag_within_iata_size
   expression: baggage_dims_mm_length + baggage_dims_mm_width + baggage_dims_mm_height <= iata_bag_linear_max_mm
   severity: warning
@@ -1035,7 +1035,7 @@ checks:
   expression: refuelling_flights_per_day < flights_per_day
   severity: info
   params: [refuelling_flights_per_day, flights_per_day]
-  message: Заправок столько же или больше, чем взлётов и посадок, — вероятно, посадки посчитаны как заправки
+  message: Заправок столько же или больше, чем взлётов и посадок, - вероятно, посадки посчитаны как заправки
   how_to_fix: 'Заправляют вылетающие рейсы: укажите число заправок, а не всех движений'
 - key: cleaning_machines_within_staff
   expression: cleaning_machines <= terminal_staff
@@ -1053,13 +1053,13 @@ site_costs:
   name: Интеграция с AODB/FIDS
   formula: wms_integration_rub
   solution_types: [tow_tractor, amr_transport, autonomous_truck, sorting_robot, delivery_robot, service_robot]
-  note: Датасет аэропорта — FIDS/AODB есть; тягачи и доставщики получают задания из систем аэропорта.
+  note: Датасет аэропорта - FIDS/AODB есть; тягачи и доставщики получают задания из систем аэропорта.
 - key: capex_access_control
   kind: capex
   name: Интеграция роботов со СКУД режимных зон
   formula: access_control * security_zones * access_point_integration_rub
   solution_types: [tow_tractor, amr_transport, autonomous_truck, delivery_robot, service_robot, cleaning_robot]
-  note: Датасет — «AMR должны интегрироваться со СКУД для прохода через двери», режимных зон 4 (airside, landside, стерильная,
+  note: Датасет - «AMR должны интегрироваться со СКУД для прохода через двери», режимных зон 4 (airside, landside, стерильная,
     перрон). Если СКУД нет, статья равна нулю.
 - key: capex_wifi
   kind: capex
@@ -1076,4 +1076,4 @@ site_costs:
   formula: connectivity_rub_per_year
 descriptive_params:
   apron_area_m2: Зона операции по ТЗ 3.2.1; процессы перрона (багаж, тележки) считаются по рейсам, багажу и длине маршрута
-    из датасета, а не по площади, поэтому площадь перрона — для описания объекта в отчёте.
+    из датасета, а не по площади, поэтому площадь перрона - для описания объекта в отчёте.

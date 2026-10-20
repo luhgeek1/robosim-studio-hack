@@ -28,7 +28,7 @@ ScenarioIdPath = Annotated[UUID, Path()]
 @router.post(
     "/scenarios/{scenario_id}/sensitivity",
     operation_id="runSensitivity",
-    summary="Чувствительность к параметрам — торнадо и тепловая карта (ТЗ 3.5.6)",
+    summary="Чувствительность к параметрам - торнадо и тепловая карта (ТЗ 3.5.6)",
     responses={409: {"description": "Нет расчёта"}},
 )
 async def run_sensitivity(

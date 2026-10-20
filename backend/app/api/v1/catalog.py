@@ -97,7 +97,7 @@ async def list_spec_keys(uow: UowDep) -> SpecKeyList:
 @router.get(
     "/products/{product_id}",
     operation_id="getProduct",
-    summary="Карточка продукта — предложения, ТТХ с источниками, кейсы",
+    summary="Карточка продукта - предложения, ТТХ с источниками, кейсы",
     responses={404: {"description": "Не найдено"}},
 )
 async def get_product(product_id: Annotated[UUID, Path()], uow: UowDep) -> ProductDetail:
@@ -105,7 +105,7 @@ async def get_product(product_id: Annotated[UUID, Path()], uow: UowDep) -> Produ
 
 
 @router.post(
-    "/compare", operation_id="compareProducts", summary="Сравнение 2–5 продуктов по группам характеристик"
+    "/compare", operation_id="compareProducts", summary="Сравнение 2-5 продуктов по группам характеристик"
 )
 async def compare_products(payload: CompareRequest, uow: UowDep, user: OptionalUserDep) -> CompareResult:
     result = await CatalogService(uow).compare(payload.product_ids)

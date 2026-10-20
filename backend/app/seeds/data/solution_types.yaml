@@ -1,10 +1,10 @@
 - key: amr_transport
-  name: AMR — транспортный мобильный робот
+  name: AMR - транспортный мобильный робот
   description: Автономная платформа, подъезжает под паллету, тележку или стеллаж и перевозит груз по складу.
   sizing_model: transport_cycle
   capability_keys: [payload_kg, min_aisle_width_mm, max_speed_mps, operating_temp_min_c, runtime_h, charging_time_min, width_mm]
 - key: fmr_forklift
-  name: FMR — автономный погрузчик или штабелёр
+  name: FMR - автономный погрузчик или штабелёр
   description: Беспилотный вилочный погрузчик или штабелёр; берёт паллету с пола или яруса стеллажа.
   sizing_model: transport_cycle
   capability_keys: [payload_kg, lift_height_mm, min_aisle_width_mm, max_speed_mps, operating_temp_min_c, runtime_h, width_mm]
@@ -15,7 +15,7 @@
   capability_keys: [towing_capacity_kg, max_speed_mps, operating_temp_min_c, operating_temp_max_c, runtime_h]
 - key: autonomous_truck
   name: Беспилотный грузовик для территории
-  description: Автономный грузовой автомобиль для перевозок по закрытой территории (склад — склад, перрон).
+  description: Автономный грузовой автомобиль для перевозок по закрытой территории (склад - склад, перрон).
   sizing_model: transport_cycle
   capability_keys: [payload_kg, max_speed_mps, operating_temp_min_c, operating_temp_max_c, range_km]
 - key: goods_to_person

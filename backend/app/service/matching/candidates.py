@@ -24,7 +24,7 @@ class CandidateData:
 
 
 def choose_offer(offers: Sequence[ProductOffer], industry_key: str | None) -> ProductOffer | None:
-    """Offer of the facility's industry (Q&A: для склада — «Торговля и услуги»), otherwise the cheapest."""
+    """Offer of the facility's industry (Q&A: для склада - «Торговля и услуги»), otherwise the cheapest."""
     matching = [o for o in offers if o.industry_key == industry_key]
     pool = matching or list(offers)
     return min(pool, key=lambda o: o.price_rub) if pool else None

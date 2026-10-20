@@ -18,7 +18,7 @@ ProjectIdPath = Annotated[UUID, Path()]
     "",
     operation_id="getMatching",
     summary="Подбор решений по процессам с причинами и скорингом (ТЗ 3.4)",
-    description="Возвращает последний результат; если параметры менялись — пересчитывает автоматически.",
+    description="Возвращает последний результат; если параметры менялись - пересчитывает автоматически.",
     responses={409: {"description": "Не хватает обязательных параметров"}},
 )
 async def get_matching(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) -> MatchingResult:

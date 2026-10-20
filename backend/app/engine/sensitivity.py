@@ -48,7 +48,7 @@ class Driver:
     dist: str = "triangular"
 
     def sample(self, rng: random.Random) -> float:
-        """Triangular low–base–high by default; uniform low–high; normal around base, σ = (high − low) / 2."""
+        """Triangular low-base-high by default; uniform low-high; normal around base, σ = (high − low) / 2."""
         if self.dist == "uniform":
             return rng.uniform(self.low, self.high)
         if self.dist == "normal":
@@ -192,7 +192,7 @@ def evaluate_metric(inp: CalculationInput, metric: str) -> tuple[float | None, M
 
 
 def _comparable(value: float | None, metric: str, horizon: int) -> float | None:
-    """Paybacks beyond the horizon — longer ones and «never» alike — all read «не окупается за горизонт»:
+    """Paybacks beyond the horizon - longer ones and «never» alike - all read «не окупается за горизонт»:
     capped at the horizon, so an 8-year payback does not rank worse than no payback at all."""
     if metric == "payback_years":
         return float(horizon) if value is None else min(value, float(horizon))
@@ -271,8 +271,8 @@ def monte_carlo(
     seed: int | None,
     thresholds: Mapping[str, float],
 ) -> MonteCarloOutcome:
-    """Triangular sampling low–base–high for every driver at once; the analytic model is re-run each time."""
-    rng = random.Random(seed)  # noqa: S311 — a reproducible model sample, not cryptography
+    """Triangular sampling low-base-high for every driver at once; the analytic model is re-run each time."""
+    rng = random.Random(seed)  # noqa: S311 - a reproducible model sample, not cryptography
     samples: list[list[float]] = []
     values: list[float] = []
     paybacks: list[float | None] = []
@@ -296,7 +296,7 @@ def monte_carlo(
         paybacks.append(metrics.payback_years)
         npvs.append(metrics.npv_rub)
     if not values:
-        raise CalculationError("Ни один прогон Монте-Карло не рассчитался — проверьте сценарий")
+        raise CalculationError("Ни один прогон Монте-Карло не рассчитался - проверьте сценарий")
     probability = {
         f"payback_le_{years:g}y": sum(1 for p in paybacks if p is not None and p <= years) / len(paybacks)
         for years in thresholds.values()

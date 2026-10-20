@@ -2,7 +2,7 @@ key: hospital
 name: Медицинское учреждение
 description: 'Больница или поликлиника: доставка питания, белья, медикаментов и анализов между отделениями, вывоз отходов,
   уборка. Типовой этаж с лифтовым холлом и имитация доставок через лифты: число роботов проверяется так же, как на складе. Отрасли «Здравоохранение»
-  в каталоге организатора нет; ближайшая — «Торговля и услуги», там роботы-уборщики и робот-курьер для помещений.'
+  в каталоге организатора нет; ближайшая - «Торговля и услуги», там роботы-уборщики и робот-курьер для помещений.'
 industry: Торговля и услуги
 depth: full
 dataset_sheet: Медучреждение
@@ -76,7 +76,7 @@ parameters:
   dataset_row: Количество лифтов (грузовых/медицинских)
   step: null
   enum_values: null
-  hint: Сколько лифтов могут возить тележки и роботов. Лифт — частое узкое место доставки.
+  hint: Сколько лифтов могут возить тележки и роботов. Лифт - частое узкое место доставки.
   example: '4'
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
   order: 4
@@ -118,7 +118,7 @@ parameters:
   dataset_row: Количество операционных
   step: null
   enum_values: null
-  hint: Сколько операционных. Доставка стерильных наборов и срочных медикаментов туда — приоритетная.
+  hint: Сколько операционных. Доставка стерильных наборов и срочных медикаментов туда - приоритетная.
   example: '12'
   affects: [medication_delivery, linen_transport]
   order: 7
@@ -146,7 +146,7 @@ parameters:
   dataset_row: Режим работы стационара
   step: null
   enum_values: null
-  hint: Как работает стационар, например «24/7/365» — круглосуточно без выходных. Определяет требования к надёжности роботов.
+  hint: Как работает стационар, например «24/7/365» - круглосуточно без выходных. Определяет требования к надёжности роботов.
   example: 24/7/365
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
   order: 9
@@ -303,7 +303,7 @@ parameters:
   dataset_row: Количество точек раздачи питания (отделений)
   step: null
   enum_values: null
-  hint: Куда доставляется питание. Один рейс робота — одно отделение или несколько по цепочке.
+  hint: Куда доставляется питание. Один рейс робота - одно отделение или несколько по цепочке.
   example: '18'
   affects: [meal_delivery]
   order: 19
@@ -345,7 +345,7 @@ parameters:
   dataset_row: Объём грязного белья (кг/сутки)
   step: null
   enum_values: null
-  hint: Сколько килограммов грязного белья вывозится из отделений за сутки. Ориентир — 2,5–3,5 кг на койку.
+  hint: Сколько килограммов грязного белья вывозится из отделений за сутки. Ориентир - 2,5-3,5 кг на койку.
   example: '1800'
   affects: [linen_transport]
   order: 22
@@ -415,7 +415,7 @@ parameters:
   dataset_row: Количество наименований медикаментов в обращении
   step: null
   enum_values: null
-  hint: Сколько разных препаратов в обращении — аналог товарных позиций на складе.
+  hint: Сколько разных препаратов в обращении - аналог товарных позиций на складе.
   example: '2800'
   affects: [medication_delivery]
   order: 27
@@ -429,7 +429,7 @@ parameters:
   dataset_row: Объём выдачи медикаментов (заявок/сутки)
   step: null
   enum_values: null
-  hint: Сколько заявок аптека собирает за сутки. Одна заявка — одно отделение на одну смену.
+  hint: Сколько заявок аптека собирает за сутки. Одна заявка - одно отделение на одну смену.
   example: '340'
   affects: [medication_delivery]
   order: 28
@@ -718,7 +718,7 @@ parameters:
     value: 55000
     status: assumption
     rationale: 'В датасете нет зарплаты сотрудников прачечной. Берём строку того же листа «Средняя з/п санитара/транспортировщика
-      (gross)» (55 000 руб./мес., Москва и МО 2024–2025): та же работа по перевозке тележек. Уточнить у заказчика.'
+      (gross)» (55 000 руб./мес., Москва и МО 2024-2025): та же работа по перевозке тележек. Уточнить у заказчика.'
 - key: payroll_tax_coeff
   group: staff
   name: Коэффициент страховых взносов на зарплату
@@ -756,8 +756,8 @@ parameters:
   dataset_row: Обеззараживание робота между рейсами
   step: null
   enum_values: null
-  hint: Да — после каждого рейса с отходами робот обрабатывают ультрафиолетом или дезсредством. Добавляет время к рейсу
-    и расходники в эксплуатационные затраты. В датасете — «Обязательно для Б-маршрутов».
+  hint: Да - после каждого рейса с отходами робот обрабатывают ультрафиолетом или дезсредством. Добавляет время к рейсу
+    и расходники в эксплуатационные затраты. В датасете - «Обязательно для Б-маршрутов».
   example: Обязательно для Б-маршрутов
   affects: [waste_transport, lab_sample_delivery, meal_delivery]
   order: 51
@@ -771,7 +771,7 @@ parameters:
   dataset_row: Требования к уровню шума в палатах (ночное время)
   step: null
   enum_values: null
-  hint: Максимальный уровень шума ночью. Указанный в датасете СанПиН 2.1.3.2630-10 утратил силу; действующие нормы шума —
+  hint: Максимальный уровень шума ночью. Указанный в датасете СанПиН 2.1.3.2630-10 утратил силу; действующие нормы шума -
     СанПиН 1.2.3685-21.
   example: '30'
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
@@ -842,7 +842,7 @@ parameters:
   dataset_row: Наличие системы управления лифтами (BMS)
   step: null
   enum_values:
-  # number — все лифты маршрута управляются через API (1); «частично» считается как «нет»: роботу нужен каждый лифт маршрута.
+  # number - все лифты маршрута управляются через API (1); «частично» считается как «нет»: роботу нужен каждый лифт маршрута.
   - {value: 'yes', label: Да, number: '1'}
   - {value: partial, label: Да (частично), number: '0'}
   - {value: 'no', label: Нет, number: '0'}
@@ -860,7 +860,7 @@ parameters:
   dataset_row: null
   step: null
   enum_values: null
-  hint: Среднее время от вызова лифта до выхода на нужном этаже, в минутах. Замерьте секундомером в часы пик. Лифты — главное
+  hint: Среднее время от вызова лифта до выхода на нужном этаже, в минутах. Замерьте секундомером в часы пик. Лифты - главное
     узкое место доставки; если поле пустое, расчёт помечается как требующий проверки.
   example: '4'
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery]
@@ -917,7 +917,7 @@ parameters:
   dataset_row: Планируемый бюджет на роботизацию (CAPEX)
   step: null
   enum_values: null
-  hint: Сколько учреждение готово вложить. Медицина часто начинает с пилота на 1–3 робота.
+  hint: Сколько учреждение готово вложить. Медицина часто начинает с пилота на 1-3 робота.
   example: '35'
   affects: [meal_delivery, linen_transport, waste_transport, medication_delivery, lab_sample_delivery, floor_cleaning]
   order: 62
@@ -945,14 +945,14 @@ parameters:
   dataset_row: null
   step: null
   enum_values: null
-  hint: Какая доля доставок должна укладываться в норматив. 0,95 — 95 %.
+  hint: Какая доля доставок должна укладываться в норматив. 0,95 - 95 %.
   example: '0.95'
   affects: [meal_delivery, medication_delivery, lab_sample_delivery]
   order: 64
   default:
     value: 0.95
     status: assumption
-    rationale: 'В датасете и ТЗ нет. То же допущение команды, что и для склада: 95 % доставок в срок — рабочая цель уровня
+    rationale: 'В датасете и ТЗ нет. То же допущение команды, что и для склада: 95 % доставок в срок - рабочая цель уровня
       сервиса; сами нормативы времени (питание 20 мин, пробы 30 мин) взяты из датасета. Пользователь меняет значение.'
 labor_groups:
 - {key: orderlies, name: Санитары и транспортировщики, headcount_param: orderlies, salary_param: orderly_salary_rub_month}
@@ -961,7 +961,7 @@ labor_groups:
 processes:
 - key: meal_delivery
   name: Доставка питания из пищеблока в отделения
-  description: Робот везёт тележку с питанием от пищеблока до отделений, сам вызывает лифт. Норматив — «Норматив доставки
+  description: Робот везёт тележку с питанием от пищеблока до отделений, сам вызывает лифт. Норматив - «Норматив доставки
     питания» (meal_delivery_norm_min) из датасета.
   demand_unit: portion
   demand_formula: 'коек × занятость × кормлений в сутки, порций/сут. Считаем по формуле, а не по строке «Общее количество
@@ -982,7 +982,7 @@ processes:
   labor_allocation: {kitchen_staff: 1.0}
   labor_release: labor_release_share_transport * meal_transport_share
   labor_allocation_note: Вся группа «Сотрудники пищеблока (раздача)» относится к доставке питания. Датасет отмечает, что роботы
-    заменяют только перевозку, — это учитывает доля высвобождения.
+    заменяют только перевозку, - это учитывает доля высвобождения.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
   simulation:
@@ -1041,7 +1041,7 @@ processes:
     formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: linen_transport
   name: Перевозка белья (чистое и грязное)
-  description: Сбор грязного белья из отделений в прачечную и развоз чистого. Цель — «Смен белья в сутки» (linen_changes_per_day)
+  description: Сбор грязного белья из отделений в прачечную и развоз чистого. Цель - «Смен белья в сутки» (linen_changes_per_day)
     в каждой точке.
   demand_unit: kg
   demand_formula: грязное + чистое бельё, кг/сут; рейсов ≈ кг ÷ масса контейнера
@@ -1061,7 +1061,7 @@ processes:
   labor_allocation: {laundry_staff: 1.0}
   labor_release: labor_release_share_transport
   labor_allocation_note: Строка датасета «Численность сотрудников прачечной (транспорт белья)» уже описывает только перевозку
-    белья — вся группа относится к процессу.
+    белья - вся группа относится к процессу.
   solution_types: [delivery_robot, amr_transport, tow_tractor]
   sizing_model: elevator_cycle
   simulation:
@@ -1120,8 +1120,8 @@ processes:
     formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: waste_transport
   name: Вывоз медицинских отходов
-  description: Вывоз контейнеров с отходами классов А и Б из отделений; для класса Б — отдельный маршрут и обеззараживание
-    робота. Цель — «Вывозов отходов из отделений в сутки» (waste_pickups_per_day) по СанПиН 2.1.3684-21.
+  description: Вывоз контейнеров с отходами классов А и Б из отделений; для класса Б - отдельный маршрут и обеззараживание
+    робота. Цель - «Вывозов отходов из отделений в сутки» (waste_pickups_per_day) по СанПиН 2.1.3684-21.
   demand_unit: kg
   demand_formula: отходы класса А + класса Б, кг/сут; рейсов = точек сбора × вывозов в сутки
   demand_params: [waste_class_a_kg_per_day, waste_class_b_kg_per_day, operating_hours_per_day]
@@ -1139,9 +1139,9 @@ processes:
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}
   labor_release: labor_release_share_transport
-  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
-    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
-    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % - уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % - вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % - перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot, amr_transport]
   sizing_model: elevator_cycle
@@ -1161,7 +1161,7 @@ processes:
     unit: кг
     solution_types: [delivery_robot, amr_transport]
     message: Грузоподъёмность меньше отходов, которые забираются из одной точки за один вывоз
-    why_needed: Нужна грузоподъёмность, чтобы проверить, заберёт ли робот отходы одной точки за один вывоз — {required} кг
+    why_needed: Нужна грузоподъёмность, чтобы проверить, заберёт ли робот отходы одной точки за один вывоз - {required} кг
       (суточные отходы ÷ точек сбора ÷ вывозов в сутки)
   - key: width_in_corridor
     spec: width_mm
@@ -1198,7 +1198,7 @@ processes:
 - key: medication_delivery
   name: Доставка медикаментов и расходников
   description: Доставка собранных заявок из аптеки и расходных материалов в отделения; срочные доставки идут вне очереди.
-    Цель — «Целевая доля доставок в срок» (sla_target_share).
+    Цель - «Целевая доля доставок в срок» (sla_target_share).
   demand_unit: trip
   demand_formula: заявок на медикаменты + рейсов расходных материалов в сутки
   demand_params: [medication_orders_per_day, supply_trips_per_day, operating_hours_per_day]
@@ -1214,9 +1214,9 @@ processes:
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}
   labor_release: labor_release_share_transport
-  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
-    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
-    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % - уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % - вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % - перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
@@ -1260,7 +1260,7 @@ processes:
     formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: lab_sample_delivery
   name: Доставка проб в лабораторию
-  description: Доставка биоматериалов от мест забора в лабораторию и развоз результатов. Норматив — «Норматив доставки пробы»
+  description: Доставка биоматериалов от мест забора в лабораторию и развоз результатов. Норматив - «Норматив доставки пробы»
     (lab_delivery_norm_min) из датасета.
   demand_unit: item
   demand_formula: проб в сутки; рейсы с результатами анализов учитываются отдельно как попутная нагрузка
@@ -1278,9 +1278,9 @@ processes:
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.15}
   labor_release: labor_release_share_transport
-  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
-    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
-    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % - уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % - вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % - перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
     расписанию и должностным инструкциям.'
   solution_types: [delivery_robot]
   sizing_model: elevator_cycle
@@ -1324,10 +1324,10 @@ processes:
     formula: elevator_rides_per_trip * coalesce(min_to_s(elevator_cycle_min), elevator_wait_transfer_s + floors * elevator_ride_floor_share * elevator_floor_travel_s)
 - key: floor_cleaning
   name: Уборка коридоров и холлов
-  description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель — норматив «Кратность уборки в сутки»
+  description: Влажная уборка коридоров и холлов автономной поломоечной машиной. Цель - норматив «Кратность уборки в сутки»
     (cleaning_passes_per_day из реестра нормативов) по всей площади уборки.
   demand_unit: m2
-  demand_formula: площадь уборки (если не задана — общая площадь зданий) × кратность уборки в сутки, м²/сут
+  demand_formula: площадь уборки (если не задана - общая площадь зданий) × кратность уборки в сутки, м²/сут
   demand_params: [cleaning_area_m2, area_m2, operating_hours_per_day, scheduled_peak_factor]
   demand: {per_day: 'coalesce(cleaning_area_m2, area_m2) * cleaning_passes_per_day', hours_per_day: operating_hours_per_day,
     peak_factor: scheduled_peak_factor, manual_rate: manual_cleaning_m2_per_hour}
@@ -1335,9 +1335,9 @@ processes:
   labor_groups: [orderlies]
   labor_allocation: {orderlies: 0.3}
   labor_release: labor_release_share_cleaning
-  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % — уборка
-    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % — вывоз отходов, доставка медикаментов и доставка
-    проб; оставшиеся 25 % — перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
+  labor_allocation_note: 'Датасет не делит санитаров и транспортировщиков по видам работ. Допущение команды: 30 % - уборка
+    (самая объёмная ежедневная работа: вся площадь дважды в сутки), по 15 % - вывоз отходов, доставка медикаментов и доставка
+    проб; оставшиеся 25 % - перевозка пациентов на каталках и прочие работы, которые роботы не заменяют. Уточнить по штатному
     расписанию и должностным инструкциям.'
   solution_types: [cleaning_robot]
   sizing_model: area_coverage
@@ -1384,7 +1384,7 @@ checks:
   expression: waste_class_b_kg_per_day <= waste_class_a_kg_per_day
   severity: info
   params: [waste_class_b_kg_per_day, waste_class_a_kg_per_day]
-  message: Опасных отходов класса Б больше, чем неопасных класса А — так бывает редко
+  message: Опасных отходов класса Б больше, чем неопасных класса А - так бывает редко
   how_to_fix: Проверьте объёмы отходов по журналу учёта
 demo_projects:
 - {key: hospital_demo_01, name: 'Многопрофильная больница на 650 коек, 9 этажей (данные организатора)', description: 'Демо-объект
@@ -1396,20 +1396,20 @@ site_costs:
   name: Интеграция с МИС
   formula: wms_integration_rub
   solution_types: [delivery_robot, amr_transport, tow_tractor]
-  note: Датасет больницы — МИС есть; доставщики получают заявки из МИС.
+  note: Датасет больницы - МИС есть; доставщики получают заявки из МИС.
 - key: capex_access_control
   kind: capex
   name: Интеграция роботов со СКУД отделений
   formula: has_access_control * medication_delivery_points * access_point_integration_rub
   solution_types: [delivery_robot, amr_transport, tow_tractor]
-  note: Датасет — «интеграция роботов через API дверей»; дверь с контролем доступа на каждую точку доставки (22 по датасету).
+  note: Датасет - «интеграция роботов через API дверей»; дверь с контролем доступа на каждую точку доставки (22 по датасету).
     Если СКУД нет, статья равна нулю.
 - key: capex_elevators
   kind: capex
   name: Интеграция роботов с лифтами
   formula: elevators * (elevator_integration_rub_per_elevator - elevator_control * (elevator_integration_rub_per_elevator - elevator_api_connection_rub))
   solution_types: [delivery_robot, amr_transport, tow_tractor]
-  note: Лифты управляются через API — подключение программное; иначе (в датасете BMS «частично») IoT-модуль вызова на каждый
+  note: Лифты управляются через API - подключение программное; иначе (в датасете BMS «частично») IoT-модуль вызова на каждый
     лифт.
 - key: capex_wifi
   kind: capex
@@ -1429,9 +1429,9 @@ site_costs:
   name: Расходники на обеззараживание роботов
   formula: robot_disinfection * waste_points * waste_pickups_per_day * working_days_per_year * disinfection_consumables_rub_per_trip
   solution_types: [delivery_robot, amr_transport, tow_tractor]
-  note: Датасет — обеззараживание «учитывается в OPEX». Рейсы вывоза отходов — точки сбора × вывозов в сутки × дней в году.
+  note: Датасет - обеззараживание «учитывается в OPEX». Рейсы вывоза отходов - точки сбора × вывозов в сутки × дней в году.
 descriptive_params:
-  facility_type: Тип учреждения по ТЗ 3.2.1 идентифицирует объект в отчёте; модель процессов одна — многопрофильный стационар
+  facility_type: Тип учреждения по ТЗ 3.2.1 идентифицирует объект в отчёте; модель процессов одна - многопрофильный стационар
     с койками, питанием, бельём и отходами, поэтому тип не меняет формулы.
-  inpatient_schedule: Режим работы стационара в датасете — строка «24/7/365»; в расчёт он входит числами «Часов работы в сутки»
-    и «Рабочих дней в году», сама строка — для отчёта.
+  inpatient_schedule: Режим работы стационара в датасете - строка «24/7/365»; в расчёт он входит числами «Часов работы в сутки»
+    и «Рабочих дней в году», сама строка - для отчёта.

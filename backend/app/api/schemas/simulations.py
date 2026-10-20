@@ -15,7 +15,7 @@ from app.service.simulations.service import Replay
 
 class RobotFailure(ApiModel):
     robot_index: int | None = Field(
-        default=None, ge=0, description="Какой робот флота (0..N-1); null — случайный"
+        default=None, ge=0, description="Какой робот флота (0..N-1); null - случайный"
     )
     at_hour: float = Field(ge=0, examples=[14])
     duration_hours: float = Field(gt=0, examples=[2])
@@ -37,7 +37,7 @@ class SimulationRequest(ApiModel):
     dispatch_policy: Dispatch = Dispatch.NEAREST_IDLE
     record_events: bool = True
     compare_baseline: bool = Field(
-        default=False, description="Ручной процесс тем же движком — пока не поддерживается"
+        default=False, description="Ручной процесс тем же движком - пока не поддерживается"
     )
 
     def to_request(self) -> RunRequest:

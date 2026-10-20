@@ -106,7 +106,7 @@ def test_the_lift_ride_grows_with_the_floors() -> None:
 
 
 def _references(object_type: ObjectTypeSeed) -> str:
-    """Everything that can read a parameter: the object's formulas, rules, costs, checks — and the code."""
+    """Everything that can read a parameter: the object's formulas, rules, costs, checks - and the code."""
     prose = {"name", "description", "demand_formula", "demand_params", "labor_allocation_note"}
     texts = [p.model_dump_json(exclude=prose) for p in object_type.processes]
     texts += [g.model_dump_json() for g in object_type.labor_groups]

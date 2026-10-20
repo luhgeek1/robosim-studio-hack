@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     invitation_ttl_hours: int = Field(default=168, ge=1)
     worker_heartbeat_ttl_s: int = 90
     jobs_backend: Literal["inline", "arq"] = Field(
-        default="inline", description="inline — in the API process after the response; arq — the worker"
+        default="inline", description="inline - in the API process after the response; arq - the worker"
     )
     job_timeout_s: int = 300
 

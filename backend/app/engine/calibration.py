@@ -110,7 +110,7 @@ def _throughput(case: CalibrationCase, norms: Book) -> float:
 
 
 def calibrate_warehouse(case: CalibrationCase, norms: Book) -> Calibration:
-    """ФЦ БАС «1 робот = 3 человека»: 4,4 млн ₽ против 9,4 млн за 3 года — recomputed with our norm set."""
+    """ФЦ БАС «1 робот = 3 человека»: 4,4 млн ₽ против 9,4 млн за 3 года - recomputed with our norm set."""
     robot_cost, extra = _warehouse_costs(case, norms)
     i, e = case.inputs, case.expected
     people = i["people_replaced"] * i["person_cost_rub_year"] * i["years"]
@@ -141,7 +141,7 @@ def calibrate_warehouse(case: CalibrationCase, norms: Book) -> Calibration:
         "Структура расчёта та же (CAPEX первого года + владение по годам против ФОТ), расходятся нормативы. "
         f"Наша линия дороже на {fmt(round(checks[0].deviation_pct))} %: в модельном кейсе ФЦ БАС нет статей "
         f"{gap}. Производительность робота у нас в {ratio} раза ниже: ФЦ БАС закладывает {hourly} палл/ч "
-        "круглосуточно (идеальный цикл без зарядки), мы — эффективную скорость, загрузку парка и зарядку "
+        "круглосуточно (идеальный цикл без зарядки), мы - эффективную скорость, загрузку парка и зарядку "
         "по их же паспорту H1500 (240 мин работы на 80 мин зарядки). "
         "Итоговое число роботов проверит имитация."
     )

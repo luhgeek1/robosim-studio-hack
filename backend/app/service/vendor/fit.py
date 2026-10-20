@@ -15,7 +15,7 @@ from app.service.matching.service import MatchingService
 from app.service.projects.context import ProjectLoader
 from app.service.vendor.proposals import vendor_manufacturer
 
-# Response-time cap, not a model coefficient: matching one project takes ~0.1–0.3 s, so the vendor's page
+# Response-time cap, not a model coefficient: matching one project takes ~0.1-0.3 s, so the vendor's page
 # stays within a few seconds on the most recently edited projects.
 FIT_PROJECTS_LIMIT = 30
 TOP_PLACES = 3

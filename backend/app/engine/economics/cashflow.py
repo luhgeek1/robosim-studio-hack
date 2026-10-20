@@ -109,7 +109,7 @@ class _Model:
         months = [
             m for start, end in zip(starts, ends, strict=True) for m in range(start + interval, end, interval)
         ]
-        # a battery bought a year before the whole fleet is replaced is wasted — skip it
+        # a battery bought a year before the whole fleet is replaced is wasted - skip it
         return [m for m in months if not any(0 <= r - m < MONTHS_PER_YEAR for r in replacements)]
 
     def residual(self, replacements: list[int]) -> float:
@@ -173,7 +173,7 @@ def _month(model: _Model, month: int, schedule: _Schedule) -> _Month:
     ):
         if month in months:
             events += cost * model.prices(month)
-            model.events.append(f"{label} — месяц {month}")
+            model.events.append(f"{label} - месяц {month}")
     payment = schedule.debt.get(month)
     return _Month(
         labor=labor,
@@ -202,7 +202,7 @@ def _schedule(model: _Model) -> _Schedule:
 
 
 def simulate(plan: CashflowPlan) -> CashflowOutcome:
-    """Monthly incremental cash flow against «как сейчас» (for the baseline itself — its own costs).
+    """Monthly incremental cash flow against «как сейчас» (for the baseline itself - its own costs).
 
     Index 0 of `flows` is the upfront investment; month m flows happen at the end of month m.
     TCO counts CAPEX, remaining labor, OPEX, RaaS fees, interest and replacements; principal repayments are
@@ -272,7 +272,7 @@ def _yearly(rows: list[CashflowRow], months: int) -> list[CashflowRow]:
 
 def _overlay(plan: CashflowPlan, yearly: list[CashflowRow]) -> list[CashflowRow]:
     """Cumulative cash flow against «как сейчас» by year, from the start: the baseline is the zero line and a
-    scenario's curve crosses it at the payback — one chart for purchase, RaaS and lease side by side."""
+    scenario's curve crosses it at the payback - one chart for purchase, RaaS and lease side by side."""
     if plan.is_baseline:
         return [CashflowRow(period, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) for period in range(len(yearly) + 1)]
     upfront = plan.upfront

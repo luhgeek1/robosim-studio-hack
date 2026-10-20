@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 from app.domain.reference import ParameterDef
 
 EXACT_CONFIDENCE = 1.0
-# Min ratio for an automatic fuzzy match: tolerates 1–2 typos in a typical 20–40 character name,
+# Min ratio for an automatic fuzzy match: tolerates 1-2 typos in a typical 20-40 character name,
 # while unrelated names in the organizer dataset stay well below it.
 FUZZY_MATCH_THRESHOLD = 0.85
 # Closest distinct parameters in the dataset differ by one letter («отходов класса А/Б»): when the runner-up

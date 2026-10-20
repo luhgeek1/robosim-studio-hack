@@ -116,7 +116,7 @@ async def validation(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) -> 
 @router.get(
     "/data-quality",
     operation_id="getProjectDataQuality",
-    summary="Панель доверия — происхождение параметров и их влияние",
+    summary="Панель доверия - происхождение параметров и их влияние",
 )
 async def data_quality_report(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) -> DataQualityReport:
     impact = await AnalysisService(uow, user).param_impact(project_id)
@@ -129,7 +129,7 @@ async def data_quality_report(project_id: ProjectIdPath, user: OwnerDep, uow: Uo
 @router.get(
     "/processes",
     operation_id="getProjectProcesses",
-    summary="Процессы объекта — спрос, пик, текущая стоимость («где деньги»)",
+    summary="Процессы объекта - спрос, пик, текущая стоимость («где деньги»)",
     responses={409: {"description": "Не хватает обязательных параметров"}},
 )
 async def processes(project_id: ProjectIdPath, user: OwnerDep, uow: UowDep) -> ProcessDemandList:
@@ -177,7 +177,7 @@ async def import_file(
     operation_id="importProjectParamsText",
     summary="Умный импорт из свободного текста (ассистент)",
     description="Описание объекта словами → предложения параметров со статусом llm_suggested. "
-    "Без LLM — 503 LLM_UNAVAILABLE.",
+    "Без LLM - 503 LLM_UNAVAILABLE.",
     tags=["params", "assist"],
     responses={503: {"description": "Ассистент недоступен"}},
 )

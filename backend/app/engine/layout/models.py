@@ -9,7 +9,7 @@ Point = tuple[float, float]
 
 
 class LayoutError(ValueError):
-    """The layout cannot be built or accepted as given — the message tells the user what to change."""
+    """The layout cannot be built or accepted as given - the message tells the user what to change."""
 
     def __init__(self, message: str, details: list[dict[str, Any]] | None = None) -> None:
         super().__init__(message)

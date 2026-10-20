@@ -13,7 +13,7 @@ PRODUCTIVE = frozenset({State.MOVING, State.LOADING, State.UNLOADING})
 
 
 def sampler(model: Model) -> Generator[simpy.Event, Any]:
-    """Once a minute: cumulative demand and completions, queue and fleet state — the KPI timeline."""
+    """Once a minute: cumulative demand and completions, queue and fleet state - the KPI timeline."""
     while True:
         counters = model.counters
         queue = sum(t.units for q in model.queues.values() for t in q) + sum(

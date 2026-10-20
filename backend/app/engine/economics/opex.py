@@ -165,7 +165,7 @@ class OpexLines(LineBuilder):
                 [q(equipment), share, interval],
                 Section.OPEX,
             )
-            lines.append(Line(battery, note="В денежном потоке — в годы замены"))
+            lines.append(Line(battery, note="В денежном потоке - в годы замены"))
             parts["battery"] = battery.value
         else:
             fees = [q(self._raas_fee(item)) for item in self.inp.items]

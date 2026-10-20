@@ -101,7 +101,7 @@ async def replay_example(
 ) -> SimulationReplay:
     item = example(demo_key)
     if to_s is not None and not from_s < to_s <= from_s + 3600:
-        raise InvalidInputError("Окно воспроизведения — от 1 до 3600 секунд")
+        raise InvalidInputError("Окно воспроизведения - от 1 до 3600 секунд")
     snapshot = await DemoCache(redis, item.key, await revision(uow, item)).ready(expected_revision)
     if snapshot.simulation is None:
         raise NotFoundError("У примера нет имитации")

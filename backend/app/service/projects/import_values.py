@@ -137,7 +137,7 @@ def _embedded_unit(
             issues.append(
                 issue(
                     "UNIT_CONFLICT",
-                    f"В значении указано «{embedded}», в колонке — «{unit}»",
+                    f"В значении указано «{embedded}», в колонке - «{unit}»",
                     "Уточните единицу: они противоречат друг другу",
                 )
             )

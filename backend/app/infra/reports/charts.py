@@ -103,7 +103,7 @@ def tornado_chart(items: list[dict[str, Any]], base: float | None) -> bytes:
     axis.axvline(center, color="#333333", linewidth=0.8)
     low, high = axis.get_xlim()
     axis.xaxis.set_major_formatter(lambda value, _: _millions(value, high - low))
-    axis.set_xlabel("NPV, млн ₽ (синий — нижняя граница драйвера, оранжевый — верхняя)")
+    axis.set_xlabel("NPV, млн ₽ (синий - нижняя граница драйвера, оранжевый - верхняя)")
     return _png(figure)
 
 

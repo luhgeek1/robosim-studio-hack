@@ -27,7 +27,7 @@ from app.domain.vendor import (
 )
 from app.service.admin.catalog import CatalogAdminService, check_specs
 
-NOT_BOUND = "Учётная запись производителя не привязана к компании — обратитесь к администратору платформы"
+NOT_BOUND = "Учётная запись производителя не привязана к компании - обратитесь к администратору платформы"
 NOT_YOURS = "Продукт не найден среди продуктов вашей компании"
 # Badges the admin grants (registry, ФЦ БАС tests); a vendor cannot award them to itself.
 _ADMIN_BADGES = frozenset({Badge.IN_REGISTRY_719, Badge.TESTED_FCBAS})

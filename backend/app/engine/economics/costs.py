@@ -36,7 +36,7 @@ class AnnualCosts:
 
 
 class CostModel(OpexLines):
-    """Annual CAPEX, OPEX, baseline and labor savings (ТЗ 3.5.2) — each line is a traced formula."""
+    """Annual CAPEX, OPEX, baseline and labor savings (ТЗ 3.5.2) - each line is a traced formula."""
 
     def hardware(self) -> tuple[list[Line], TraceStep, TraceStep, TraceStep]:
         """Robots, chargers and G2P stations: priced for purchase, used as a base for RaaS and lease."""
@@ -104,7 +104,7 @@ class CostModel(OpexLines):
                 step = self._share(
                     "capex_raas_setup", "Подключение к RaaS", hardware, "raas_setup_fee_share", Section.CAPEX
                 )
-            lines.append(Line(step, note="Роботы, зарядки, сервис и ПО — в абонентской плате"))
+            lines.append(Line(step, note="Роботы, зарядки, сервис и ПО - в абонентской плате"))
         else:
             lines += hardware_lines
             lines.append(

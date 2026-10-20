@@ -79,7 +79,7 @@ def infer_solution_type(keys: CatalogKeys, known: Iterable[tuple[CatalogKeys, st
     """Solution type of a new product by how the same file classifies products already in the catalog.
 
     The most specific organizer classification wins, and only when every known product with it has one
-    solution type; an ambiguous or unseen classification returns None — the admin adds such a product by hand.
+    solution type; an ambiguous or unseen classification returns None - the admin adds such a product by hand.
     """
     pairs = list(known)
     for level in _LEVELS:

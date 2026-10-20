@@ -255,7 +255,7 @@ class TraceItem(ApiModel):
 class CalculationTrace(ApiModel):
     calculation_id: UUID
     items: list[TraceItem]
-    undocumented_constants: int = Field(description="Должно быть 0 — счётчик для слайда")
+    undocumented_constants: int = Field(description="Должно быть 0 - счётчик для слайда")
 
 
 class RerunDiff(ApiModel):

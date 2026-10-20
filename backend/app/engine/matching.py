@@ -112,7 +112,7 @@ def _required(requirement: Requirement, values: Mapping[str, float | None]) -> f
 
 
 def _holds(source: str, values: Mapping[str, float | None]) -> bool | None:
-    """A condition or a yes/no number (1 — yes); None when the object has not given the values yet."""
+    """A condition or a yes/no number (1 - yes); None when the object has not given the values yet."""
     expression = parse(source)
     try:
         if isinstance(expression.tree, ast.Compare):
@@ -182,7 +182,7 @@ def _check_requirement(
         text = (
             f"Нет подтверждённых данных: {name}"
             if fact is None
-            else f"{name}: значение — допущение, нужна проверка"
+            else f"{name}: значение - допущение, нужна проверка"
         )
         result.reasons.append(
             Reason("SPEC_MISSING", text, Severity.WARNING, requirement.spec, required, None, unit)
@@ -223,11 +223,11 @@ def evaluate(
     if candidate.stage == "rnd":
         severity = Severity.WARNING if include_rnd else Severity.BLOCKING
         result.reasons.append(
-            Reason("RND_STAGE", "Продукт в стадии НИОКР — серийных внедрений нет", severity)
+            Reason("RND_STAGE", "Продукт в стадии НИОКР - серийных внедрений нет", severity)
         )
     if candidate.price_rub <= 0:
         result.reasons.append(
-            Reason("PRICE_MISSING", "Нет цены в каталоге — экономику не оценить", Severity.WARNING)
+            Reason("PRICE_MISSING", "Нет цены в каталоге - экономику не оценить", Severity.WARNING)
         )
     if any(r.severity == Severity.BLOCKING for r in result.reasons):
         result.status = CandidateStatus.EXCLUDED
@@ -269,7 +269,7 @@ def _economics(
     if economics:
         own = economics.get(c.product_id)
         if own is None:
-            return 0.0, "Экономика не оценена — нет модели производительности"
+            return 0.0, "Экономика не оценена - нет модели производительности"
         npv = f"NPV покупки {fmt(own.npv_rub / 1e6)} млн ₽ за горизонт"
         if not pays_back(own, payback_limit_years):
             term = (
@@ -278,7 +278,7 @@ def _economics(
                 else f"окупаемость {fmt(own.payback_years)} лет"
             )
             limit = (
-                f" — дольше порога {fmt(payback_limit_years)} лет (ТЗ 3.5.7)" if payback_limit_years else ""
+                f" - дольше порога {fmt(payback_limit_years)} лет (ТЗ 3.5.7)" if payback_limit_years else ""
             )
             return 0.0, f"{npv}; {term}{limit}: баллов за экономику нет, ставится после окупающихся"
         known = [
@@ -322,7 +322,7 @@ def _components(
     notes = {
         "performance": f"Нужно ≈{c.robots_estimate} шт."
         if c.robots_estimate
-        else "Производительность не оценена — нет ТТХ",
+        else "Производительность не оценена - нет ТТХ",
         "cost_efficiency": economics_note,
         "infrastructure_fit": f"Пройдено проверок: {result.checks_passed} из {result.checks_evaluated}",
         "maturity": f"УГТ {c.trl} из {TRL_SCALE_MAX}" if c.trl else "УГТ не указан",
@@ -346,7 +346,7 @@ def rank(
 ) -> list[CandidateResult]:
     """Explainable score = Σ weight × points; points are relative to the best candidate of the process.
 
-    `economics` — the quick purchase estimate per product; without it the economics criterion compares CAPEX.
+    `economics` - the quick purchase estimate per product; without it the economics criterion compares CAPEX.
     With it, a candidate that pays back within `payback_limit_years` is never placed after one that does not
     (ТЗ 3.5.7): a high score from few cheap machines does not make a loss-making purchase a recommendation."""
     known = economics or {}

@@ -38,7 +38,7 @@ async def list_object_types(uow: UowDep) -> ObjectTypeList:
 @router.get(
     "/object-types/{object_type}",
     operation_id="getObjectType",
-    summary="Тип объекта — схема формы параметров",
+    summary="Тип объекта - схема формы параметров",
     responses={404: {"description": "Не найдено"}},
 )
 async def get_object_type(object_type: Annotated[ObjectTypeKey, Path()], uow: UowDep) -> ObjectType:
