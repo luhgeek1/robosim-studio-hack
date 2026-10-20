@@ -6,6 +6,10 @@
   "outputDirectory": ".",
   "rewrites": [
     {
+      "source": "/design-lab/immersive",
+      "destination": "/design-lab/immersive/index.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://prooood.ru/api/:path*"
     },
