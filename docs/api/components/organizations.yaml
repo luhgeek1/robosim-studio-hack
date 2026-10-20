@@ -54,6 +54,8 @@ OrganizationInvitation:
     created_at: {type: string, format: date-time}
     invited_by_name: {type: [string, "null"]}
     invitee_registered: {type: boolean}
+    email_delivery: {type: string, enum: [disabled, queued, sent, failed, cancelled], description: 'sent — Resend принял письмо; доставка в ящик не подтверждается.'}
+    expires_at: {type: [string, "null"], format: date-time}
 
 OrganizationDetail:
   allOf:
@@ -73,6 +75,11 @@ InvitationCreate:
   properties:
     email: {type: string, format: email}
 
+InvitationAccept:
+  type: object
+  properties:
+    token: {type: [string, "null"], minLength: 20, maxLength: 256, description: Секрет из фрагмента ссылки письма. Обязателен для почтового приглашения.}
+
 IncomingInvitation:
   type: object
   description: Приглашение на email текущего пользователя, ждущее ответа.
@@ -81,6 +88,7 @@ IncomingInvitation:
     id: {type: string, format: uuid}
     organization_id: {type: string, format: uuid}
     organization_name: {type: string}
+    requires_email_link: {type: boolean}
     invited_by_name: {type: [string, "null"]}
     invited_by_email: {type: [string, "null"]}
     created_at: {type: string, format: date-time}

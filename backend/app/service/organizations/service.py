@@ -1,8 +1,12 @@
+import secrets
 from datetime import UTC, datetime
 from uuid import UUID
 
-from app.core.errors import ConflictError, ForbiddenError, NotFoundError
-from app.db.models import Organization, OrganizationInvitation, OrganizationMember, User
+from sqlalchemy import select
+
+from app.core.config import Settings
+from app.core.errors import ConflictError, ForbiddenError, NotFoundError, ServiceUnavailableError
+from app.db.models import EmailOutbox, Organization, OrganizationInvitation, OrganizationMember, User
 from app.db.repositories.organizations import OrganizationRepository
 from app.db.uow import UnitOfWork
 from app.domain.auth import CurrentUser
@@ -15,6 +19,7 @@ from app.domain.organization import (
     OrganizationInfo,
     OrganizationRole,
 )
+from app.service.mail.invitations import queue_invitation, token_hash
 
 ORGANIZATION_NOT_FOUND = "Организация не найдена или вы в ней не состоите"
 INVITATION_NOT_FOUND = "Приглашение не найдено или уже неактуально"
@@ -54,6 +59,17 @@ class OrganizationService:
         organization, member = await self._member(organization_id)
         rows = await self._repo.members(organization_id)
         invitations = await self._repo.pending_invitations(organization_id)
+        delivery = dict(
+            (
+                await self._uow.session.execute(
+                    select(EmailOutbox.invitation_id, EmailOutbox.status).where(
+                        EmailOutbox.invitation_id.in_([i.id for i in invitations])
+                    )
+                )
+            )
+            .tuples()
+            .all()
+        )
         registered = await self._repo.users_by_email([i.email for i in invitations])
         inviters = await self._repo.users({i.invited_by for i in invitations if i.invited_by})
         projects = await self._repo.project_counts([organization_id])
@@ -73,6 +89,8 @@ class OrganizationService:
                     created_at=i.created_at,
                     invited_by_name=_name(inviters.get(i.invited_by) if i.invited_by else None),
                     invitee_registered=i.email.lower() in registered,
+                    email_delivery=delivery.get(i.id, "disabled"),
+                    expires_at=i.expires_at,
                 )
                 for i in invitations
             ],
@@ -90,8 +108,10 @@ class OrganizationService:
         await self._repo.delete(organization)
         await self._uow.flush()
 
-    async def invite(self, organization_id: UUID, email: str) -> InvitationInfo:
-        await self._owner(organization_id)
+    async def invite(self, organization_id: UUID, email: str, settings: Settings) -> InvitationInfo:
+        organization, _ = await self._owner(organization_id)
+        if settings.stage == "prod" and not settings.email_enabled:
+            raise ServiceUnavailableError("Отправка приглашений не настроена. Обратитесь к администратору.")
         address = email.strip().lower()
         invitee = (await self._repo.users_by_email([address])).get(address)
         if invitee and await self._repo.membership(organization_id, invitee.id):
@@ -100,6 +120,11 @@ class OrganizationService:
         if invitation is None:
             raise ConflictError("Приглашение на этот адрес уже отправлено и ждёт ответа")
         inviter = await self._uow.users.get(self._user.id)
+        if settings.email_enabled:
+            queue_invitation(
+                self._uow, settings, invitation, organization.name, _name(inviter) or self._user.email
+            )
+            await self._uow.flush()
         return InvitationInfo(
             id=invitation.id,
             email=invitation.email,
@@ -107,6 +132,8 @@ class OrganizationService:
             created_at=invitation.created_at,
             invited_by_name=_name(inviter),
             invitee_registered=invitee is not None,
+            email_delivery="queued" if settings.email_enabled else "disabled",
+            expires_at=invitation.expires_at,
         )
 
     async def revoke(self, organization_id: UUID, invitation_id: UUID) -> None:
@@ -116,6 +143,7 @@ class OrganizationService:
             invitation is None
             or invitation.organization_id != organization_id
             or invitation.status != InvitationStatus.PENDING
+            or (invitation.expires_at is not None and invitation.expires_at <= datetime.now(UTC))
         ):
             raise NotFoundError(INVITATION_NOT_FOUND)
         invitation.status = InvitationStatus.REVOKED
@@ -147,12 +175,17 @@ class OrganizationService:
                 invited_by_name=_name(inviter),
                 invited_by_email=inviter.email if inviter else None,
                 created_at=invitation.created_at,
+                requires_email_link=invitation.token_hash is not None,
             )
             for invitation, organization, inviter in rows
         ]
 
-    async def accept(self, invitation_id: UUID) -> OrganizationInfo:
+    async def accept(self, invitation_id: UUID, token: str | None = None) -> OrganizationInfo:
         invitation = await self._incoming(invitation_id)
+        if invitation.token_hash and (
+            not token or not secrets.compare_digest(invitation.token_hash, token_hash(token))
+        ):
+            raise ForbiddenError("Откройте ссылку из письма, чтобы подтвердить приглашение на вашу почту")
         invitation.status = InvitationStatus.ACCEPTED
         invitation.responded_at = datetime.now(UTC)
         if await self._repo.membership(invitation.organization_id, self._user.id) is None:
@@ -178,6 +211,7 @@ class OrganizationService:
             invitation is None
             or invitation.email.lower() != self._user.email.lower()
             or invitation.status != InvitationStatus.PENDING
+            or (invitation.expires_at is not None and invitation.expires_at <= datetime.now(UTC))
         ):
             raise NotFoundError(INVITATION_NOT_FOUND)
         return invitation

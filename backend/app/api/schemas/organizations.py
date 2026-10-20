@@ -57,6 +57,8 @@ class OrganizationInvitation(ApiModel):
     created_at: datetime
     invited_by_name: str | None = None
     invitee_registered: bool
+    email_delivery: str
+    expires_at: datetime | None = None
 
     @classmethod
     def from_domain(cls, item: InvitationInfo) -> "OrganizationInvitation":
@@ -80,6 +82,10 @@ class InvitationCreate(ApiModel):
     email: EmailStr
 
 
+class InvitationAccept(ApiModel):
+    token: str | None = Field(default=None, min_length=20, max_length=256)
+
+
 class IncomingInvitation(ApiModel):
     id: UUID
     organization_id: UUID
@@ -87,6 +93,7 @@ class IncomingInvitation(ApiModel):
     invited_by_name: str | None = None
     invited_by_email: str | None = None
     created_at: datetime
+    requires_email_link: bool
 
     @classmethod
     def from_domain(cls, item: IncomingInvitationInfo) -> "IncomingInvitation":

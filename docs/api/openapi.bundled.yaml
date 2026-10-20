@@ -410,6 +410,13 @@ paths:
         - organizations
       operationId: acceptInvitation
       summary: Принять приглашение — стать участником организации
+      description: Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token — 403, истёкшее/отозванное/принятое — 404. GET никогда не принимает приглашение.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationAccept'
       responses:
         '200':
           description: OK
@@ -531,7 +538,7 @@ paths:
         - organizations
       operationId: inviteToOrganization
       summary: Пригласить пользователя по email (владелец)
-      description: Приглашение появляется у адресата в уведомлениях; незарегистрированный адрес увидит его после регистрации.
+      description: Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod — 503. Истёкшее приглашение можно создать заново.
       requestBody:
         required: true
         content:
@@ -540,7 +547,7 @@ paths:
               $ref: '#/components/schemas/InvitationCreate'
       responses:
         '201':
-          description: Отправлено
+          description: Создано; письмо в очереди
           content:
             application/json:
               schema:
@@ -551,6 +558,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '503':
+          description: Почта не настроена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/organizations/{organization_id}/invitations/{invitation_id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
@@ -5964,6 +5977,20 @@ components:
             - 'null'
         invitee_registered:
           type: boolean
+        email_delivery:
+          type: string
+          enum:
+            - disabled
+            - queued
+            - sent
+            - failed
+            - cancelled
+          description: sent — Resend принял письмо; доставка в ящик не подтверждается.
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
     OrganizationRole:
       type: string
       description: owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
@@ -5987,6 +6014,8 @@ components:
           format: uuid
         organization_name:
           type: string
+        requires_email_link:
+          type: boolean
         invited_by_name:
           type:
             - string
@@ -6463,6 +6492,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/IncomingInvitation'
+    InvitationAccept:
+      type: object
+      properties:
+        token:
+          type:
+            - string
+            - 'null'
+          minLength: 20
+          maxLength: 256
+          description: Секрет из фрагмента ссылки письма. Обязателен для почтового приглашения.
     OrganizationList:
       type: object
       required:

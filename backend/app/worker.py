@@ -10,12 +10,17 @@ from app.core.logging import configure_logging
 from app.db.session import Database
 from app.infra.worker_heartbeat import HEARTBEAT_KEY
 from app.service.jobs.queue import JOB_FUNCTION, execute
+from app.service.mail.delivery import deliver_batch
 
 _settings = get_settings()
 
 
 async def heartbeat(ctx: dict[str, Any]) -> None:
     await ctx["redis"].set(HEARTBEAT_KEY, "1", ex=_settings.worker_heartbeat_ttl_s)
+
+
+async def deliver_emails(ctx: dict[str, Any]) -> None:
+    await deliver_batch(ctx["db"], _settings)
 
 
 async def on_startup(ctx: dict[str, Any]) -> None:
@@ -37,7 +42,10 @@ run_job.__qualname__ = JOB_FUNCTION
 
 class WorkerSettings:
     functions: ClassVar[list[WorkerCoroutine]] = [run_job]
-    cron_jobs: ClassVar[list[Any]] = [cron(heartbeat, second={0, 30}, run_at_startup=True)]
+    cron_jobs: ClassVar[list[Any]] = [
+        cron(heartbeat, second={0, 30}, run_at_startup=True),
+        cron(deliver_emails, second={5, 20, 35, 50}),
+    ]
     on_startup = on_startup
     on_shutdown = on_shutdown
     job_timeout = _settings.job_timeout_s

@@ -1,12 +1,13 @@
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Response, status
+from fastapi import APIRouter, Body, Depends, Path, Response, status
 
-from app.api.deps import UowDep, registered_user
+from app.api.deps import SettingsDep, UowDep, rate_limited, registered_user
 from app.api.schemas.organizations import (
     IncomingInvitation,
     IncomingInvitationList,
+    InvitationAccept,
     InvitationCreate,
     Organization,
     OrganizationDetail,
@@ -84,12 +85,17 @@ async def delete_organization(organization_id: OrganizationIdPath, user: MemberD
     operation_id="inviteToOrganization",
     summary="Пригласить пользователя по email (владелец)",
     status_code=status.HTTP_201_CREATED,
-    responses={**NOT_FOUND, **CONFLICT},
+    responses={**NOT_FOUND, **CONFLICT, 503: {"description": "Почта не настроена"}},
+    dependencies=[Depends(rate_limited("organization-invite"))],
 )
 async def invite_to_organization(
-    organization_id: OrganizationIdPath, payload: InvitationCreate, user: MemberDep, uow: UowDep
+    organization_id: OrganizationIdPath,
+    payload: InvitationCreate,
+    user: MemberDep,
+    uow: UowDep,
+    settings: SettingsDep,
 ) -> OrganizationInvitation:
-    invitation = await OrganizationService(uow, user).invite(organization_id, str(payload.email))
+    invitation = await OrganizationService(uow, user).invite(organization_id, str(payload.email), settings)
     return OrganizationInvitation.from_domain(invitation)
 
 
@@ -142,9 +148,14 @@ async def list_my_invitations(user: MemberDep, uow: UowDep) -> IncomingInvitatio
     responses=NOT_FOUND,
 )
 async def accept_invitation(
-    invitation_id: Annotated[UUID, Path()], user: MemberDep, uow: UowDep
+    invitation_id: Annotated[UUID, Path()],
+    user: MemberDep,
+    uow: UowDep,
+    payload: Annotated[InvitationAccept | None, Body()] = None,
 ) -> Organization:
-    return Organization.from_domain(await OrganizationService(uow, user).accept(invitation_id))
+    return Organization.from_domain(
+        await OrganizationService(uow, user).accept(invitation_id, payload.token if payload else None)
+    )
 
 
 @router.post(

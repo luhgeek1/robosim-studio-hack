@@ -49,4 +49,6 @@ class OrganizationInvitation(UuidPkMixin, CreatedAtMixin, Base):
     status: Mapped[InvitationStatus] = mapped_column(
         pg_enum(InvitationStatus, "invitation_status"), default=InvitationStatus.PENDING
     )
+    token_hash: Mapped[str | None] = mapped_column(sa.String(64))
+    expires_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))
     responded_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True))

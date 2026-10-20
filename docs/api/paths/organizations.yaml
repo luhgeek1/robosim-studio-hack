@@ -54,12 +54,13 @@ organizationInvitations:
     tags: [organizations]
     operationId: inviteToOrganization
     summary: Пригласить пользователя по email (владелец)
-    description: Приглашение появляется у адресата в уведомлениях; незарегистрированный адрес увидит его после регистрации.
+    description: Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod — 503. Истёкшее приглашение можно создать заново.
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/organizations.yaml#/InvitationCreate'}}}
     responses:
-      '201': {description: "Отправлено", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationInvitation'}}}}
+      '503': {description: Почта не настроена, content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '201': {description: "Создано; письмо в очереди", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/OrganizationInvitation'}}}}
       '403': {$ref: '../components/common.yaml#/responses/Forbidden'}
       '404': {$ref: '../components/common.yaml#/responses/NotFound'}
       '409': {$ref: '../components/common.yaml#/responses/Conflict'}
@@ -105,6 +106,10 @@ myInvitationAccept:
     tags: [organizations]
     operationId: acceptInvitation
     summary: Принять приглашение — стать участником организации
+    description: Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token — 403, истёкшее/отозванное/принятое — 404. GET никогда не принимает приглашение.
+    requestBody:
+      required: false
+      content: {application/json: {schema: {$ref: '../components/organizations.yaml#/InvitationAccept'}}}
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/organizations.yaml#/Organization'}}}}
       '404': {$ref: '../components/common.yaml#/responses/NotFound'}

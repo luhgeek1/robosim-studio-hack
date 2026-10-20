@@ -151,3 +151,9 @@ class LlmUnavailableError(DomainError):
     status_code = 503
     error_code = ErrorCode.LLM_UNAVAILABLE
     default_detail = "Ассистент недоступен: загрузите файл по шаблону или заполните форму"
+
+
+class ServiceUnavailableError(DomainError):
+    status_code = 503
+    error_code = ErrorCode.HTTP_ERROR
+    default_detail = "Сервис временно недоступен"
