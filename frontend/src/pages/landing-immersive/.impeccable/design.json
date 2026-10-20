@@ -1,0 +1,398 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-20T12:54:15+00:00",
+  "title": "Design System: РобоМера — immersive",
+  "extensions": {
+    "colorMeta": {
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Графит",
+        "tonalRamp": [
+          "oklch(15.00% 0.00910 208.75)",
+          "oklch(26.43% 0.00910 208.75)",
+          "oklch(37.86% 0.00910 208.75)",
+          "oklch(49.29% 0.00910 208.75)",
+          "oklch(60.71% 0.00910 208.75)",
+          "oklch(72.14% 0.00910 208.75)",
+          "oklch(83.57% 0.00910 208.75)",
+          "oklch(95.00% 0.00910 208.75)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Бумага",
+        "tonalRamp": [
+          "oklch(15.00% 0.00671 97.35)",
+          "oklch(26.43% 0.00671 97.35)",
+          "oklch(37.86% 0.00671 97.35)",
+          "oklch(49.29% 0.00671 97.35)",
+          "oklch(60.71% 0.00671 97.35)",
+          "oklch(72.14% 0.00671 97.35)",
+          "oklch(83.57% 0.00671 97.35)",
+          "oklch(95.00% 0.00671 97.35)"
+        ]
+      },
+      "signal": {
+        "role": "primary",
+        "displayName": "Сигнальный оранжевый",
+        "tonalRamp": [
+          "oklch(15.00% 0.18944 36.24)",
+          "oklch(26.43% 0.18944 36.24)",
+          "oklch(37.86% 0.18944 36.24)",
+          "oklch(49.29% 0.18944 36.24)",
+          "oklch(60.71% 0.18944 36.24)",
+          "oklch(72.14% 0.18944 36.24)",
+          "oklch(83.57% 0.18944 36.24)",
+          "oklch(95.00% 0.18944 36.24)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Приглушённая подпись",
+        "tonalRamp": [
+          "oklch(15.00% 0.01479 148.74)",
+          "oklch(26.43% 0.01479 148.74)",
+          "oklch(37.86% 0.01479 148.74)",
+          "oklch(49.29% 0.01479 148.74)",
+          "oklch(60.71% 0.01479 148.74)",
+          "oklch(72.14% 0.01479 148.74)",
+          "oklch(83.57% 0.01479 148.74)",
+          "oklch(95.00% 0.01479 148.74)"
+        ]
+      },
+      "signal-hover": {
+        "role": "primary",
+        "displayName": "Оранжевый при наведении",
+        "tonalRamp": [
+          "oklch(15.00% 0.14697 36.45)",
+          "oklch(26.43% 0.14697 36.45)",
+          "oklch(37.86% 0.14697 36.45)",
+          "oklch(49.29% 0.14697 36.45)",
+          "oklch(60.71% 0.14697 36.45)",
+          "oklch(72.14% 0.14697 36.45)",
+          "oklch(83.57% 0.14697 36.45)",
+          "oklch(95.00% 0.14697 36.45)"
+        ]
+      },
+      "chrome": {
+        "role": "neutral",
+        "displayName": "Панель прибора",
+        "tonalRamp": [
+          "oklch(15.00% 0.01358 173.15)",
+          "oklch(26.43% 0.01358 173.15)",
+          "oklch(37.86% 0.01358 173.15)",
+          "oklch(49.29% 0.01358 173.15)",
+          "oklch(60.71% 0.01358 173.15)",
+          "oklch(72.14% 0.01358 173.15)",
+          "oklch(83.57% 0.01358 173.15)",
+          "oklch(95.00% 0.01358 173.15)"
+        ]
+      },
+      "selected": {
+        "role": "neutral",
+        "displayName": "Тёмный зелёный выбор",
+        "tonalRamp": [
+          "oklch(15.00% 0.03439 158.69)",
+          "oklch(26.43% 0.03439 158.69)",
+          "oklch(37.86% 0.03439 158.69)",
+          "oklch(49.29% 0.03439 158.69)",
+          "oklch(60.71% 0.03439 158.69)",
+          "oklch(72.14% 0.03439 158.69)",
+          "oklch(83.57% 0.03439 158.69)",
+          "oklch(95.00% 0.03439 158.69)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Приглушённые чернила",
+        "tonalRamp": [
+          "oklch(15.00% 0.02267 147.57)",
+          "oklch(26.43% 0.02267 147.57)",
+          "oklch(37.86% 0.02267 147.57)",
+          "oklch(49.29% 0.02267 147.57)",
+          "oklch(60.71% 0.02267 147.57)",
+          "oklch(72.14% 0.02267 147.57)",
+          "oklch(83.57% 0.02267 147.57)",
+          "oklch(95.00% 0.02267 147.57)"
+        ]
+      },
+      "chalk-muted": {
+        "role": "neutral",
+        "displayName": "Приглушённый мел",
+        "tonalRamp": [
+          "oklch(15.00% 0.02268 138.98)",
+          "oklch(26.43% 0.02268 138.98)",
+          "oklch(37.86% 0.02268 138.98)",
+          "oklch(49.29% 0.02268 138.98)",
+          "oklch(60.71% 0.02268 138.98)",
+          "oklch(72.14% 0.02268 138.98)",
+          "oklch(83.57% 0.02268 138.98)",
+          "oklch(95.00% 0.02268 138.98)"
+        ]
+      },
+      "reserve": {
+        "role": "neutral",
+        "displayName": "Резерв",
+        "tonalRamp": [
+          "oklch(15.00% 0.05734 131.26)",
+          "oklch(26.43% 0.05734 131.26)",
+          "oklch(37.86% 0.05734 131.26)",
+          "oklch(49.29% 0.05734 131.26)",
+          "oklch(60.71% 0.05734 131.26)",
+          "oklch(72.14% 0.05734 131.26)",
+          "oklch(83.57% 0.05734 131.26)",
+          "oklch(95.00% 0.05734 131.26)"
+        ]
+      },
+      "report": {
+        "role": "neutral",
+        "displayName": "Фон отчёта",
+        "tonalRamp": [
+          "oklch(15.00% 0.03230 159.88)",
+          "oklch(26.43% 0.03230 159.88)",
+          "oklch(37.86% 0.03230 159.88)",
+          "oklch(49.29% 0.03230 159.88)",
+          "oklch(60.71% 0.03230 159.88)",
+          "oklch(72.14% 0.03230 159.88)",
+          "oklch(83.57% 0.03230 159.88)",
+          "oklch(95.00% 0.03230 159.88)"
+        ]
+      },
+      "map": {
+        "role": "neutral",
+        "displayName": "Схема",
+        "tonalRamp": [
+          "oklch(15.00% 0.01627 118.13)",
+          "oklch(26.43% 0.01627 118.13)",
+          "oklch(37.86% 0.01627 118.13)",
+          "oklch(49.29% 0.01627 118.13)",
+          "oklch(60.71% 0.01627 118.13)",
+          "oklch(72.14% 0.01627 118.13)",
+          "oklch(83.57% 0.01627 118.13)",
+          "oklch(95.00% 0.01627 118.13)"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Лист",
+        "tonalRamp": [
+          "oklch(15.00% 0.01202 101.49)",
+          "oklch(26.43% 0.01202 101.49)",
+          "oklch(37.86% 0.01202 101.49)",
+          "oklch(49.29% 0.01202 101.49)",
+          "oklch(60.71% 0.01202 101.49)",
+          "oklch(72.14% 0.01202 101.49)",
+          "oklch(83.57% 0.01202 101.49)",
+          "oklch(95.00% 0.01202 101.49)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Главный тезис",
+        "purpose": "Три строки первого экрана; мобильный размер задан адаптивным CSS."
+      },
+      "headline": {
+        "displayName": "Заголовок раздела",
+        "purpose": "Начало продуктового аргумента."
+      },
+      "title": {
+        "displayName": "Заголовок объяснения",
+        "purpose": "Описание процесса или доказательства."
+      },
+      "body": {
+        "displayName": "Основной текст",
+        "purpose": "Короткие объяснения с единицами и условиями."
+      },
+      "label": {
+        "displayName": "Техническая подпись",
+        "purpose": "Исходные условия, названия схем и небольшие метки."
+      },
+      "fleet-number": {
+        "displayName": "Состав парка",
+        "purpose": "Итог выбранной оценки; табличные цифры."
+      }
+    },
+    "shadows": [
+      {
+        "name": "report-sheet",
+        "value": "12px 25px 50px #10271c40",
+        "purpose": "Материальная глубина листов отчёта."
+      },
+      {
+        "name": "finance-selection",
+        "value": "0 2px 0 #ff6b42",
+        "purpose": "Линейный индикатор выбранного способа внедрения."
+      }
+    ],
+    "motion": [
+      {
+        "name": "scroll-blend",
+        "value": "t * t * (3 - 2 * t)",
+        "purpose": "Плавная интерполяция нормализованного прогресса прокрутки."
+      },
+      {
+        "name": "camera-rise",
+        "value": "progress 0.10–0.64",
+        "purpose": "Подъём из складского прохода к общему виду того же склада."
+      },
+      {
+        "name": "world-dock",
+        "value": "progress 0.64–0.90; scale 1 → 0.51",
+        "purpose": "Уменьшение модели и размещение внутри интерфейса."
+      },
+      {
+        "name": "chrome-reveal",
+        "value": "progress 0.72–0.91",
+        "purpose": "Проявление рамки; inert снимается при progress ≥ 0.91."
+      },
+      {
+        "name": "solution-heading",
+        "value": "opacity: smoothstep(0.76, 0.88); translateY(progress * (storyHeight - viewportHeight)); padding-top: 9svh",
+        "purpose": "Заголовок решения проявляется над рамкой без пересечения с её верхней строкой; в DOM следует после модели, статичная версия сохраняет обычный поток."
+      },
+      {
+        "name": "model-copy-mask",
+        "value": "background: linear-gradient(90deg, #171d1e 65%, #171d1e00); mask-image: linear-gradient(0deg, transparent, #000 70px, #000 calc(100% - 60px), transparent)",
+        "purpose": "Мягкая подложка сохраняет контраст текста при прохождении светлого пола за ним; применяется только к движущейся истории."
+      },
+      {
+        "name": "button-hover",
+        "value": "background 180ms, transform 180ms; translateY(-2px)",
+        "purpose": "Обратная связь основного действия."
+      },
+      {
+        "name": "static-fallback",
+        "value": "max-width: 760px | prefers-reduced-motion: reduce | scene failure | 12000ms load timeout",
+        "purpose": "Кадры того же мира в потоке документа; reduced motion отключает анимации и переходы."
+      },
+      {
+        "name": "demand-rendering",
+        "value": "frameloop=\"demand\"; requestAnimationFrame on scroll/resize",
+        "purpose": "Нет постоянного движения сцены в состоянии покоя."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-product",
+        "value": "1100px"
+      },
+      {
+        "name": "compact-sections",
+        "value": "1000px"
+      },
+      {
+        "name": "static-mobile",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Основное действие",
+      "kind": "button",
+      "description": "Открытие демо или отчёта; оранжевое действие с видимым фокусом.",
+      "html": "<a class=\"ds-primary\" href=\"https://prooood.ru/demo\">Открыть демо<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:space-between;gap:35px;min-height:54px;padding:14px 22px;background:#ff6b42;color:#171d1e;font:550 14px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;text-decoration:none;border:0;border-radius:0;transition:background 180ms,transform 180ms;box-sizing:border-box}.ds-primary:hover{background:#ff8c6c;transform:translateY(-2px)}.ds-primary:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Действие в шапке",
+      "kind": "button",
+      "description": "Компактная обведённая ссылка на тёмном фоне.",
+      "html": "<div class=\"ds-header-surface\"><a class=\"ds-header-action\" href=\"https://prooood.ru/demo\">Открыть демо<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></div>",
+      "css": ".ds-header-surface{background:#171d1e;padding:20px;display:inline-block}.ds-header-action{display:flex;align-items:center;gap:30px;padding:10px 17px;border:1px solid #ffffff40;color:#f5f4ef;font:400 12px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;text-decoration:none}.ds-header-action:hover{color:#ff6b42}.ds-header-action:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}",
+      "refersTo": "button-header"
+    },
+    {
+      "name": "Второе действие",
+      "kind": "button",
+      "description": "Текстовая ссылка со стрелкой, наследующая цвет поверхности.",
+      "html": "<div class=\"ds-link-surface\"><a class=\"ds-secondary\" href=\"https://prooood.ru/demo?new=1\">Рассчитать свой объект<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></div>",
+      "css": ".ds-link-surface{background:#171d1e;color:#f5f4ef;padding:20px;display:inline-block}.ds-secondary{display:inline-flex;gap:12px;align-items:center;font:400 13px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;color:inherit;text-decoration:none}.ds-secondary:hover{color:#ff6b42}.ds-secondary:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}",
+      "refersTo": "link-secondary"
+    },
+    {
+      "name": "Навигация",
+      "kind": "nav",
+      "description": "Три ссылки над сценой; на узком экране центральная группа скрыта.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основная навигация\"><a href=\"#immersive-model\">Как это работает</a><a href=\"#immersive-process\">Для вашего объекта</a><a href=\"https://prooood.ru/catalog\">Каталог<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></nav>",
+      "css": ".ds-nav{display:flex;flex-wrap:wrap;gap:30px;padding:25px;background:#171d1e;color:#f5f4ef;font:400 12px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif}.ds-nav a{display:flex;gap:7px;align-items:center;color:inherit;text-decoration:none}.ds-nav a:hover{color:#ff6b42}.ds-nav a:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}"
+    },
+    {
+      "name": "Выбор объекта",
+      "kind": "custom",
+      "description": "Три варианта видны одновременно; показан активный склад. Изменение содержимого выполняет React.",
+      "html": "<div class=\"ds-object-surface\"><div class=\"ds-objects\" role=\"group\" aria-label=\"Выберите тип объекта\"><button type=\"button\" aria-pressed=\"true\">Склад<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button><button type=\"button\" aria-pressed=\"false\">Больница<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button><button type=\"button\" aria-pressed=\"false\">Аэропорт<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button></div></div>",
+      "css": ".ds-object-surface{background:#f5f4ef;padding:16px}.ds-objects{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #21362a30;border-bottom:1px solid #21362a30}.ds-objects button{display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;padding:20px 24px;font:400 22px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;background:transparent;border:0;border-radius:0;color:#697467;cursor:pointer}.ds-objects button+button{border-left:1px solid #21362a30}.ds-objects button[aria-pressed=true]{background:#24392d;color:#f5f4ef}.ds-objects button[aria-pressed=true] svg{color:#ff6b42}.ds-objects button:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}@media(max-width:760px){.ds-objects button{padding:17px 12px;font-size:17px}}",
+      "refersTo": "object-option-selected"
+    },
+    {
+      "name": "Источник оценки парка",
+      "kind": "custom",
+      "description": "Компактная группа с выбранной имитацией; состояние меняет число, состав и инвестиции в приложении.",
+      "html": "<div class=\"ds-fleet-surface\"><div class=\"ds-fleet-toggle\" role=\"group\" aria-label=\"Источник оценки парка\"><button type=\"button\" aria-pressed=\"false\">По формуле</button><button type=\"button\" aria-pressed=\"true\">После имитации</button></div></div>",
+      "css": ".ds-fleet-surface{background:#171d1e;padding:20px}.ds-fleet-toggle{display:inline-flex;gap:4px;padding:4px;border:1px solid #ffffff30;border-radius:6px}.ds-fleet-toggle button{cursor:pointer;padding:9px 13px;border:0;border-radius:3px;background:transparent;color:#c0cabd;font:400 12px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif}.ds-fleet-toggle button[aria-pressed=true]{background:#f5f4ef;color:#171d1e}.ds-fleet-toggle button:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}",
+      "refersTo": "fleet-option-selected"
+    },
+    {
+      "name": "Способ внедрения",
+      "kind": "custom",
+      "description": "Открытая строка с тонким оранжевым подчёркиванием выбранного варианта.",
+      "html": "<div class=\"ds-finance-surface\"><div class=\"ds-finance\" role=\"group\" aria-label=\"Способ внедрения\"><button type=\"button\" aria-pressed=\"true\">Покупка<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button><button type=\"button\" aria-pressed=\"false\">RaaS<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button><button type=\"button\" aria-pressed=\"false\">Лизинг<svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button></div></div>",
+      "css": ".ds-finance-surface{background:#f5f4ef;padding:20px}.ds-finance{display:flex;gap:32px;border-bottom:1px solid #21362a30}.ds-finance button{display:flex;justify-content:space-between;align-items:center;gap:16px;width:180px;padding:16px 0;font:400 23px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;color:#707d6f;border:0;background:transparent;cursor:pointer}.ds-finance button[aria-pressed=true]{color:#171d1e;box-shadow:0 2px 0 #ff6b42}.ds-finance button[aria-pressed=true] svg{color:#d8552f}.ds-finance button:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}"
+    },
+    {
+      "name": "Результат в рамке продукта",
+      "kind": "card",
+      "description": "Фрагмент рамки: светлый итог с подписью источника. Размер демонстрационного фрагмента не задаёт ширину runtime-панели.",
+      "html": "<div class=\"ds-frame\"><div class=\"ds-bar\">РобоМера / Демонстрационный склад</div><div class=\"ds-result\"><span class=\"ds-label\">СОСТАВ ПАРКА</span><div class=\"ds-number\">13 <span>роботов</span></div><p>11 в работе + 2 в резерве</p><div class=\"ds-verified\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m20 6-11 11-5-5\"/></svg>Проверен имитацией</div><p class=\"ds-source\">Снимок демо от 19.10.2026. Результат для заданных условий.</p></div></div>",
+      "css": ".ds-frame{max-width:360px;background:#252e2b;color:#f5f4ef;border:1px solid #71847660;border-radius:12px;overflow:hidden;font:400 11px/1.6 'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif}.ds-bar{height:48px;padding:0 20px;display:flex;align-items:center;border-bottom:1px solid #71847650}.ds-result{padding:23px 25px;background:#f5f4ef;color:#171d1e}.ds-label{font:400 10px/1.6 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;letter-spacing:.06em}.ds-number{font-size:69px;letter-spacing:-.05em;line-height:1.2;margin-top:9px}.ds-number span{font-size:15px;letter-spacing:-.02em}.ds-result p{margin:0}.ds-verified{margin:17px 0;font-size:10px;color:#45634b;display:flex;align-items:center;gap:7px}.ds-result .ds-source{margin-top:17px;font-size:9px;color:#536153;line-height:1.6}@media(max-width:760px){.ds-result .ds-source{font-size:11px}}",
+      "refersTo": "product-frame"
+    },
+    {
+      "name": "Раскрывающийся вопрос",
+      "kind": "custom",
+      "description": "Нативный details: строка вопроса, ответ и поворот знака при раскрытии.",
+      "html": "<div class=\"ds-questions\"><details><summary>Это готовый проект внедрения?<svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg></summary><p>Это предварительная оценка. Она помогает сравнить варианты и определить, что уточнить на обследовании.</p></details></div>",
+      "css": ".ds-questions{background:#f5f4ef;color:#171d1e;padding:20px;font-family:'Onest Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;line-height:1.6}.ds-questions details{border-top:1px solid #21362a30;border-bottom:1px solid #21362a30}.ds-questions summary{display:flex;align-items:center;justify-content:space-between;gap:20px;list-style:none;cursor:pointer;font-size:17px;padding:23px 0}.ds-questions summary::-webkit-details-marker{display:none}.ds-questions summary svg{flex-shrink:0;color:#61745e}.ds-questions details[open] summary svg{transform:rotate(45deg)}.ds-questions p{padding-bottom:25px;max-width:560px;color:#5a665b;font-size:13px;margin:0}.ds-questions summary:focus-visible{outline:2px solid #ff6b42;outline-offset:6px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Изнутри объекта — к решению",
+    "overview": "Спокойная промышленная архитектура, крупная русская типографика и ясный продуктовый результат.\nНаправление Persuade ведёт от знакомого складского пространства к пониманию маршрутов, состава парка и экономики.\nОдин и тот же склад сохраняет узнаваемость на низком ракурсе, сверху и внутри интерфейса.\n\nЭто локальная система маршрута `/design-lab/immersive`. Исторический\n[корневой DESIGN.md](../../../../DESIGN.md) описывает другое направление motion-editorial и остаётся без изменений.\nЭта страница не переопределяет оформление рабочих экранов или остальных вариантов галереи.\nИз [PRODUCT.md](../../../../docs/PRODUCT.md) переносится проверяемость результата: условия, источник и граница\nпредварительной оценки остаются видимыми рядом с числами.",
+    "keyCharacteristics": [
+      "Полноэкранная складская архитектура с непрерывным переходом к модели и интерфейсу.",
+      "Графит, тёплая бумага и сигнальный оранжевый; приглушённые зелёные оттенки поддерживают материалы и состояния.",
+      "Крупные заголовки Onest и компактные технические подписи JetBrains Mono.",
+      "Чередование светлых и тёмных продуктовых разделов с действующими переключателями.",
+      "Статичные кадры того же пространства сохраняют смысл при ограничениях устройства и движения."
+    ],
+    "rules": [
+      {
+        "name": "The Signal Rule",
+        "body": "Оранжевый связывает действие и смысловой результат; резерв и вспомогательный текст имеют собственные спокойные тона.",
+        "section": "colors"
+      },
+      {
+        "name": "The Same World Rule",
+        "body": "Низкий ракурс, вид сверху, сцена в интерфейсе и запасные изображения показывают одно узнаваемое пространство.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do сохранять один склад во всех ракурсах, в интерфейсе и в запасных изображениях.",
+      "Do показывать источник, дату и ограничения рядом с результатом.",
+      "Do сохранять русский интерфейс, единицы измерения и видимый фокус.",
+      "Do проверять широкий экран, мобильный поток, reduced motion и отказ WebGL.",
+      "Do применять эту систему только внутри `/design-lab/immersive`."
+    ],
+    "donts": [
+      "Don't переносить локальную систему поверх исторического корневого DESIGN.md.",
+      "Don't выдавать пространственную иллюстрацию за воспроизведение событий имитации.",
+      "Don't превращать результат одного примера в универсальное обещание экономии.",
+      "Don't делать невидимые ссылки интерфейса доступными для фокуса до его проявления.",
+      "Don't уменьшать источник мобильного продуктового блока ниже текущих 11 px и его пояснение ниже 10 px."
+    ]
+  }
+}
