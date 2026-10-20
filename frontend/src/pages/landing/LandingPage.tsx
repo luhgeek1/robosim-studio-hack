@@ -17,6 +17,7 @@ import { sessionHome, useSession } from '@/entities/session'
 import { Accent, ScrollProgress } from './motion'
 import { useLandingMotion } from './use-landing-motion'
 import { QuestionsSection } from './QuestionsSection'
+import { ProductValueSection, ProjectOutcomeSection } from './ProductValue'
 import './landing.css'
 import { ApplicationsSection, LandingHero } from './LandingExperience'
 
@@ -100,6 +101,7 @@ export function LandingPage() {
             <nav className="landing-nav" aria-label="Основная навигация">
               <a href="#applications">Для кого</a>
               <a href="#workflow">Как это работает</a>
+              <a href="#possibilities">Возможности</a>
               <Link to="/catalog">
                 Каталог роботов <ArrowUpRight size={13} />
               </Link>
@@ -132,6 +134,9 @@ export function LandingPage() {
               </a>
               <a href="#workflow">
                 Как это работает <ArrowDownRight size={18} />
+              </a>
+              <a href="#possibilities">
+                Возможности <ArrowDownRight size={18} />
               </a>
               <Link to="/catalog">
                 Каталог роботов <ArrowUpRight size={18} />
@@ -190,6 +195,9 @@ export function LandingPage() {
               ))}
             </div>
           </section>
+
+          <ProductValueSection />
+          <ProjectOutcomeSection />
 
           <section id="start" className="landing-final-cta" aria-labelledby="create-project-title">
             <div className="landing-launch-scenery" aria-hidden="true">
