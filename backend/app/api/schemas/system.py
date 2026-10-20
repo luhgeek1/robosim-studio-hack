@@ -36,6 +36,18 @@ class Job(ApiModel):
     result_url: str | None = None
     error: dict[str, Any] | None = None
 
+    project_id: UUID | None = None
+    scenario_id: UUID | None = None
+    label: str | None = None
+    kind: str | None = None
+    completed_runs: int = 0
+    progress_updated_at: datetime | None = None
+    eta_seconds: int | None = None
+
     @classmethod
     def from_domain(cls, job: JobInfo) -> "Job":
         return cls.model_validate(job)
+
+
+class JobList(ApiModel):
+    items: list[Job]

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { BackgroundJobs } from '@/widgets/background-jobs/BackgroundJobs'
 import { ArrowLeft, ArrowRight, Check, ChevronDown } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, Outlet, matchPath, useLocation, useMatch } from 'react-router'
@@ -234,6 +235,7 @@ export function AppShell() {
         </>
       )}
       <GuestSessionNotice />
+      <BackgroundJobs />
       <main id="workspace-main" className="flex min-h-0 flex-1 flex-col" tabIndex={-1}>
         <Outlet />
       </main>

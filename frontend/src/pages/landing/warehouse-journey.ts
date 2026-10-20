@@ -7,10 +7,6 @@ export function journeyBlend(value: number, start: number, end: number) {
   const t = MathUtils.clamp((value - start) / (end - start), 0, 1)
   return t * t * (3 - 2 * t)
 }
-function smoothMinimum(a: number, b: number, range: number) {
-  const overlap = Math.max(range - Math.abs(a - b), 0) / range
-  return Math.min(a, b) - overlap * overlap * range * 0.25
-}
 type JourneyPose = { progress: number; dock: number; aspect: number; interactive: boolean; moving: boolean }
 export class WarehouseJourneyController {
   private surface: HTMLDivElement | null = null
@@ -27,11 +23,7 @@ export class WarehouseJourneyController {
   private lastScroll = 0
   private wasActive = true
   private layoutUntil = 0
-  private applicationShift = 0
-  private focusRelease = 1
-  private focusFrom = 1
-  private focusTo = 1
-  private focusStarted = 0
+  private dirty = true
   private result: JourneyPose = { progress: 0, dock: 0, aspect: 1, interactive: false, moving: false }
   private readonly progress: MotionValue<number>
   private readonly onActive: (active: boolean) => void
@@ -41,27 +33,26 @@ export class WarehouseJourneyController {
   }
   bindSurface = (node: HTMLDivElement | null) => {
     this.surface = node
+    this.dirty = true
   }
   bindStory = (node: HTMLDivElement | null) => {
     this.story = node
+    this.dirty = true
   }
   bindTarget = (node: HTMLDivElement | null) => {
     this.target = node
+    this.dirty = true
   }
   bindPause = (node: HTMLButtonElement | null) => {
     this.pauseButton = node
+    this.dirty = true
   }
   setReduced(reduced: boolean) {
     this.reduced = reduced
     this.wake()
   }
   setSelection(selected: ObjectKind | null, explore: () => void) {
-    if (this.selected !== selected) {
-      this.focusStarted = performance.now()
-      this.layoutUntil = this.focusStarted + 800
-      this.focusFrom = this.focusRelease
-      this.focusTo = selected ? 0 : 1
-    }
+    if (this.selected !== selected) this.layoutUntil = performance.now() + 800
     this.selected = selected
     this.explore = explore
     this.wake()
@@ -75,19 +66,35 @@ export class WarehouseJourneyController {
       if (this.invalidate === invalidate) this.invalidate = null
     }
   }
+  observeLayout() {
+    const observer = new ResizeObserver(this.wake)
+    for (const node of [this.surface, this.story, this.target, this.surface?.parentElement]) {
+      if (node) observer.observe(node)
+    }
+    document.fonts.addEventListener('loadingdone', this.wake)
+    return () => {
+      observer.disconnect()
+      document.fonts.removeEventListener('loadingdone', this.wake)
+    }
+  }
   wake = () => {
+    this.dirty = true
     if (this.fallback) this.update(0)
     else this.invalidate?.()
   }
   showFallback() {
     this.fallback = true
-    this.update(0)
+    this.wake()
   }
   update(delta: number): JourneyPose {
+    // Robot playback does not change page geometry. Once the flight settles,
+    // only scroll, resize or a card layout change should touch the DOM again.
+    if (!this.dirty && !this.result.moving) return this.result
     const node = this.surface
     const chapter = this.story
     const destination = this.target
     if (!node || !chapter || !destination) return this.result
+    this.dirty = false
     const width = node.offsetWidth
     const height = node.offsetHeight
     const compact = width <= 800
@@ -102,15 +109,12 @@ export class WarehouseJourneyController {
       this.selected !== null || now < this.layoutUntil
         ? Number(getComputedStyle(destination.closest('.lp-object')!).opacity)
         : 1
-    const previousShift = this.applicationShift
-    const applicationTop = application.getBoundingClientRect().top - this.applicationShift
-    const destinationTop = destinationRect.top - this.applicationShift
     const top = chapterRect.top + scrollY
     // Expanding a card changes its geometry, never the completed scroll timeline.
     if (this.selected === null && now > this.layoutUntil) {
       this.endScroll = compact
         ? top + chapterRect.height - height * 0.15
-        : destinationTop + scrollY - Math.max(150, (height - destinationRect.height) * 0.4)
+        : destinationRect.top + scrollY - Math.max(150, (height - destinationRect.height) * 0.4)
     }
     const distance = Math.max(height * 2.6, this.endScroll - top)
     const desired = this.selected ? 1 : MathUtils.clamp((scrollY - top) / distance, 0, 1)
@@ -122,40 +126,15 @@ export class WarehouseJourneyController {
     if (Math.abs(this.current - desired) < 0.00015) this.current = desired
     this.lastScroll = scrollY
     this.progress.set(this.current)
-    // Finish the entrance when the warehouse lands. Continuing to counter-scroll
-    // the row from the WebGL loop makes it bounce against native scrolling.
-    const dockEnd = 0.86
-    const entranceProgress = Math.min(this.current, dockEnd)
-    const entranceTop = applicationTop + scrollY - Math.min(scrollY, top + distance * dockEnd)
-    const naturalEnd = applicationTop + scrollY - top - distance
-    const joinRange = 32
-    const pinStart = Math.max(96, naturalEnd + joinRange + height * 0.08)
-    const pinEnd = Math.max(pinStart - height * 0.12, naturalEnd + joinRange)
-    const travellingTop = MathUtils.lerp(pinStart, pinEnd, journeyBlend(entranceProgress, 0.8, 0.94))
-    this.focusRelease = MathUtils.lerp(
-      this.focusFrom,
-      this.focusTo,
-      journeyBlend(now, this.focusStarted, this.focusStarted + 650),
-    )
-    const applicationShift =
-      compact || staticView
-        ? 0
-        : (smoothMinimum(entranceTop, travellingTop, joinRange) - entranceTop) *
-          journeyBlend(this.current, 0.66, 0.84) *
-          this.focusRelease
+    // The cards always use native document scrolling. Translating the entire
+    // section here used to cancel each wheel gesture after the model had landed.
     // Reveal the next section as the final paragraph leaves, before the model finishes docking.
     const applicationReveal = compact || staticView ? 1 : journeyBlend(this.current, 0.755, 0.825)
-    application.style.transform = applicationShift ? `translate3d(0,${applicationShift}px,0)` : 'none'
-    // The following section must follow the visible bottom, not the old layout
-    // position. Once docked both offsets stay constant during native scrolling.
-    application.style.marginBottom = `${applicationShift}px`
     application.style.opacity = String(applicationReveal)
     application.inert = applicationReveal < 0.5
-    this.applicationShift = applicationShift
-    const visibleDestinationTop = destinationTop + applicationShift
-    let dock = compact ? journeyBlend(this.current, 0.68, 0.98) : journeyBlend(this.current, 0.66, dockEnd)
+    let dock = compact ? journeyBlend(this.current, 0.68, 0.98) : journeyBlend(this.current, 0.66, 0.86)
     let x = destinationRect.left * dock
-    let y = visibleDestinationTop * dock
+    let y = destinationRect.top * dock
     let modelWidth = MathUtils.lerp(width, destinationRect.width, dock)
     let modelHeight = MathUtils.lerp(height, destinationRect.height, dock)
     if (staticView && chapterRect.bottom > height * 0.4) {
@@ -167,7 +146,7 @@ export class WarehouseJourneyController {
     } else if (staticView) {
       dock = 1
       x = destinationRect.left
-      y = visibleDestinationTop
+      y = destinationRect.top
       modelWidth = destinationRect.width
       modelHeight = destinationRect.height
     }
@@ -209,7 +188,7 @@ export class WarehouseJourneyController {
     node.dataset.progress = this.current.toFixed(5)
     node.dataset.docked = String(interactive)
     if (this.pauseButton && previewRect) {
-      this.pauseButton.style.transform = `translate3d(${previewRect.right - experienceRect.left - 50}px,${previewRect.bottom + applicationShift - previousShift - experienceRect.top - 40}px,0)`
+      this.pauseButton.style.transform = `translate3d(${previewRect.right - experienceRect.left - 50}px,${previewRect.bottom - experienceRect.top - 40}px,0)`
       this.pauseButton.hidden = !interactive
     }
     if (visible !== this.wasActive) {

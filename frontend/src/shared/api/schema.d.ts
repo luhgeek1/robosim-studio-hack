@@ -55,6 +55,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/jobs': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Мои активные задачи и завершённые за сутки
+     * @description До 100 задач текущего пользователя, активные первыми, затем новые. Не зависит от выбранного проекта или организации.
+     */
+    get: operations['listJobs']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/jobs/{job_id}': {
     parameters: {
       query?: never
@@ -1478,7 +1498,12 @@ export interface paths {
      */
     get: operations['getLatestFleetSweep']
     put?: never
-    /** Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача) */
+    /**
+     * Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача)
+     * @description Повторный запуск возвращает свою активную задачу этого сценария. Если перебор запущен другим
+     *     участником, возвращается 409. После успешного применения парка воркер сохраняет экономику
+     *     в той же транзакции; присутствие браузера и дополнительный calculate не требуются.
+     */
     post: operations['runFleetSweep']
     delete?: never
     options?: never
@@ -2540,6 +2565,9 @@ export interface components {
       /** @default true */
       vat_included: boolean
     }
+    JobList: {
+      items: components['schemas']['Job'][]
+    }
     /**
      * @description Фоновая задача. Долгие операции (симуляция, Монте-Карло, отчёт, обогащение) возвращают Job сразу;
      *     результат забирается по result_url или по SSE-потоку прогресса.
@@ -2549,9 +2577,24 @@ export interface components {
       id: string
       type: components['schemas']['JobType']
       status: components['schemas']['JobStatus']
+      /** @description Доля модельного времени текущего прогона; при новом прогоне сбрасывается. Завершение задачи определяется status. */
       progress: number
       /** @example Прогон пикового дня, час 14 из 24 */
       stage?: string | null
+      /** Format: uuid */
+      project_id?: string | null
+      /** Format: uuid */
+      scenario_id?: string | null
+      /** @description Название проекта и сценария при запуске */
+      label?: string | null
+      /** @description simulation или fleet_sweep для имитации */
+      kind?: string | null
+      /** @default 0 */
+      completed_runs: number
+      /** Format: date-time */
+      progress_updated_at?: string | null
+      /** @description Оценка остатка текущего прогона, не всего перебора */
+      eta_seconds?: number | null
       /** Format: date-time */
       created_at: string
       /** Format: date-time */
@@ -5072,6 +5115,7 @@ export interface components {
      * @description Кандидат N находится отдельным поиском процесса. Затем весь моделируемый парк проверяется совместно:
      *     SLA каждого процесса должен выдерживаться в каждом повторе при общих ресурсах.
      *     Только совместно прошедший парк атомарно записывается в сценарий, если физические входы и версия сценария не изменились.
+     *     В той же транзакции воркер сохраняет расчёт экономики; завершение не зависит от открытой страницы.
      */
     FleetSweepResult: {
       process_key: string
@@ -5855,6 +5899,15 @@ export interface components {
     }
   }
   responses: {
+    /** @description Нет или истёк токен */
+    Unauthorized: {
+      headers: {
+        [name: string]: unknown
+      }
+      content: {
+        'application/json': components['schemas']['Problem']
+      }
+    }
     /** @description Не найдено */
     NotFound: {
       headers: {
@@ -5866,15 +5919,6 @@ export interface components {
     }
     /** @description Слишком много запросов */
     RateLimited: {
-      headers: {
-        [name: string]: unknown
-      }
-      content: {
-        'application/json': components['schemas']['Problem']
-      }
-    }
-    /** @description Нет или истёк токен */
-    Unauthorized: {
       headers: {
         [name: string]: unknown
       }
@@ -6015,6 +6059,27 @@ export interface operations {
           'application/json': components['schemas']['SystemVersion']
         }
       }
+    }
+  }
+  listJobs: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Фоновые задачи */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['JobList']
+        }
+      }
+      401: components['responses']['Unauthorized']
     }
   }
   getJob: {
@@ -8562,6 +8627,15 @@ export interface operations {
     }
     responses: {
       202: components['responses']['JobAccepted']
+      /** @description Сценарий не готов или уже проверяется другим участником */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Problem']
+        }
+      }
     }
   }
   getFleetSweepResult: {
@@ -8585,7 +8659,7 @@ export interface operations {
           'application/json': components['schemas']['FleetSweepResult']
         }
       }
-      /** @description Ещё считается */
+      /** @description Результат недоступен; текущий статус и ошибку проверяйте через GET /jobs/{job_id} */
       409: {
         headers: {
           [name: string]: unknown

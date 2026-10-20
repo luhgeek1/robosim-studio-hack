@@ -2,7 +2,7 @@ import math
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
-from app.engine.simulation import Prepared, SimInput, SimMode, SimResult, simulate
+from app.engine.simulation import Prepared, SimInput, SimMode, SimResult, run_progress, simulate
 from app.engine.simulation.sweep import Sweep, SweepResult
 from app.engine.trace import fmt
 
@@ -57,6 +57,7 @@ def validate_fleet(
     replications: int,
     prepared: Prepared,
     fixed: frozenset[str] = frozenset(),
+    progress: Callable[[float, str], None] | None = None,
 ) -> JointValidation:
     """Each modeled process must meet its own target on every common-random-number replication."""
     inp = with_fleet(inp, fleet, fixed)
@@ -69,7 +70,14 @@ def validate_fleet(
             seed=inp.config.seed + replication,
             record_events=False,
         )
-        runs.append(simulate(replace(inp, config=config), prepared))
+        stage = f"Общий парк · повтор {replication + 1}/{max(1, replications)}"
+        runs.append(
+            simulate(
+                replace(inp, config=config),
+                prepared,
+                run_progress(progress, stage),
+            )
+        )
     checks: list[ProcessValidation] = []
     for process in inp.processes:
         outcomes = [
@@ -115,9 +123,7 @@ def joint_sweep(
         reason = "Совместная проверка не выполнена: не найден парк с SLA для процессов: " + ", ".join(missing)
         validation = JointValidation("not_run", 0, fleet, [])
     else:
-        if progress:
-            progress(len(target.points), "Проверка всех процессов с общими ресурсами")
-        validation = validate_fleet(inp, fleet, replications, prepared, frozenset(fixed))
+        validation = validate_fleet(inp, fleet, replications, prepared, frozenset(fixed), progress)
         names = {process.key: process.name for process in inp.processes}
         failed = [
             f"{names[p.process_key]}: {fmt(p.sla_min_pct)} % при цели {fmt(p.target_pct)} %"

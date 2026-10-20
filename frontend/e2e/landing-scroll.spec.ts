@@ -93,3 +93,40 @@ for (const viewport of [
     expect(Math.max(...samples.map((sample) => sample.error))).toBeLessThan(1)
   })
 }
+
+test('completed warehouse flight does not counteract subsequent scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1468, height: 844 })
+  await page.goto('/')
+  const surface = page.locator('.cm-shared-warehouse')
+  const target = page.locator('[data-object="warehouse"] .lp-object-model')
+  await expect(surface).toHaveAttribute('data-ready', 'true')
+  await page.evaluate(() => document.fonts.ready)
+  const end = await target.evaluate((el) => {
+    const rect = el.getBoundingClientRect()
+    return rect.top + window.scrollY - Math.max(150, (window.innerHeight - rect.height) * 0.4)
+  })
+
+  for (const phase of [0.87, 0.92, 0.95, 1.02]) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), end * phase)
+    await expect(surface).toHaveAttribute('data-docked', 'true')
+    await page.waitForTimeout(500)
+    for (const delta of [32, -32]) {
+      const movement = await target.evaluate(async (el, delta) => {
+        const before = el.getBoundingClientRect().top
+        const scrollBefore = window.scrollY
+        window.scrollBy({ top: delta, behavior: 'instant' })
+        const immediate = el.getBoundingClientRect().top
+        // The former pinning continued after the flight and cancelled native
+        // scrolling over the following frames. Check the settled position too.
+        await new Promise((resolve) => window.setTimeout(resolve, 450))
+        return {
+          rebound: el.getBoundingClientRect().top - immediate,
+          displacement: el.getBoundingClientRect().top - before,
+          scroll: window.scrollY - scrollBefore,
+        }
+      }, delta)
+      expect(Math.abs(movement.rebound), `phase ${phase}, scroll ${delta}`).toBeLessThan(1)
+      expect(Math.abs(movement.displacement + movement.scroll)).toBeLessThan(1)
+    }
+  }
+})

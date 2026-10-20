@@ -1,6 +1,7 @@
 import { useMatch } from 'react-router'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useSession } from '@/entities/session'
 import { PROJECT_STEPS, type ProjectStep } from './steps'
 
 const GUIDED_STEPS: ProjectStep[] = [
@@ -35,7 +36,10 @@ export const useJourneyStore = create<State>()(
 )
 
 export function useJourney(projectId?: string) {
-  const journey = useJourneyStore((s) => (projectId ? s.projects[projectId] : undefined))
+  const { user } = useSession()
+  const storedJourney = useJourneyStore((s) => (projectId ? s.projects[projectId] : undefined))
+  // Сохранённый демо-маршрут действует только для гостя: после входа проект становится полноценным.
+  const journey = user?.role === 'guest' ? storedJourney : undefined
   const step = useMatch('/projects/:projectId/:step/*')?.params.step
   const guided = Boolean(journey && !journey.full && (!step || GUIDED_STEPS.some((s) => s.id === step)))
   return { journey, guided, steps: guided ? GUIDED_STEPS : PROJECT_STEPS }

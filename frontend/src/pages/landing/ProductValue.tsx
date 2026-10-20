@@ -188,20 +188,22 @@ function EconomicsDiagram() {
 }
 
 export function ProductValueSection() {
-  const { reveal, reduced } = useLandingMotion()
+  const { reduced } = useLandingMotion()
   const [active, setActive] = useState('fit')
   const [paused, setPaused] = useState(false)
   const scrollRange = useRef<HTMLDivElement>(null)
+  const intro = useRef<HTMLDivElement>(null)
   const content = useRef<HTMLDivElement>(null)
+  const introVisible = useInView(intro, { amount: 0.8 })
   const visible = useInView(content, { amount: 0.15 })
   const { scrollYProgress: storyProgress } = useScroll({ target: scrollRange, offset: ['start start', 'end end'] })
-  const introY = useTransform(storyProgress, [0, 0.35, 1], ['0svh', '0svh', '-65svh'])
+  const introY = useTransform(storyProgress, [0, 1], ['0svh', '-65svh'])
   // Explicit endpoints keep native scroll timelines from returning to the underlying opacity.
-  const introOpacity = useTransform(storyProgress, [0, 0.45, 0.65, 0.88, 1], [1, 1, 0.7, 0, 0])
-  const cueOpacity = useTransform(storyProgress, [0, 0.28, 0.48, 1], [0.7, 0.7, 0, 0])
-  const contentY = useTransform(storyProgress, [0, 0.45, 1], ['112svh', '112svh', '0svh'])
-  const contentOpacity = useTransform(storyProgress, [0, 0.45, 0.68, 0.95, 1], [0, 0, 0.65, 1, 1])
-  const contentPointerEvents = useTransform(storyProgress, (value) => (value > 0.6 ? 'auto' : 'none'))
+  const introOpacity = useTransform(storyProgress, [0, 0.18, 0.52, 0.85, 1], [1, 1, 0.6, 0, 0])
+  const cueOpacity = useTransform(storyProgress, [0, 0.18, 0.35, 1], [0.7, 0.4, 0, 0])
+  const contentY = useTransform(storyProgress, [0, 1], ['112svh', '0svh'])
+  const contentOpacity = useTransform(storyProgress, [0, 0.12, 0.4, 0.85, 1], [0, 0, 0.7, 1, 1])
+  const contentPointerEvents = useTransform(storyProgress, (value) => (value > 0.4 ? 'auto' : 'none'))
   const indicatorId = useId()
   return (
     <section
@@ -215,7 +217,7 @@ export function ProductValueSection() {
       <div className="lp-value-stage">
         <div className="lp-value-intro">
           <div className="lp-value-intro-pin">
-            <div className="landing-container lp-value-intro-shell">
+            <div className="landing-container lp-value-intro-shell" ref={intro}>
               <div className="landing-section-label">
                 <span>03 / ВОПРОСЫ ДО ВНЕДРЕНИЯ</span>
                 <span>ОТ СОМНЕНИЙ К АРГУМЕНТАМ</span>
@@ -225,15 +227,13 @@ export function ProductValueSection() {
                   className="lp-value-intro-copy"
                   style={{ y: reduced ? 0 : introY, opacity: reduced ? 1 : introOpacity }}
                 >
-                  <div className="lp-value-heading">
-                    <motion.h2
-                      id="value-title"
-                      aria-label="Сначала разобраться. Потом вкладываться."
-                      initial={reduced ? false : 'hidden'}
-                      whileInView="visible"
-                      viewport={{ once: true, amount: 0.6 }}
-                      variants={{ visible: { transition: { staggerChildren: reduced ? 0 : 0.12 } } }}
-                    >
+                  <motion.div
+                    className="lp-value-heading"
+                    initial={reduced ? false : 'hidden'}
+                    animate={reduced || introVisible ? 'visible' : 'hidden'}
+                    variants={{ visible: { transition: { staggerChildren: reduced ? 0 : 0.16 } } }}
+                  >
+                    <h2 id="value-title" aria-label="Сначала разобраться. Потом вкладываться.">
                       {['Сначала разобраться.', 'Потом вкладываться.'].map((line, index) => (
                         <span
                           className={`lp-value-title-mask${index ? ' lp-value-title-mask--accent' : ''}`}
@@ -241,17 +241,20 @@ export function ProductValueSection() {
                         >
                           <motion.span
                             variants={{ hidden: { y: '110%', opacity: 0 }, visible: { y: 0, opacity: 1 } }}
-                            transition={{ duration: reduced ? 0 : 0.95, ease: EASE }}
+                            transition={{ duration: reduced ? 0 : 0.85, ease: EASE }}
                           >
                             {line}
                           </motion.span>
                         </span>
                       ))}
-                    </motion.h2>
-                    <motion.p {...reveal(0.22, 18)}>
+                    </h2>
+                    <motion.p
+                      variants={{ hidden: { y: 18, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
+                      transition={{ duration: reduced ? 0 : 0.7, ease: EASE }}
+                    >
                       Три вопроса, от которых зависит решение о роботизации. Ответьте на них на модели своего объекта.
                     </motion.p>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </div>
               <motion.span

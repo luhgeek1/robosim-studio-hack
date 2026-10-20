@@ -18,6 +18,7 @@ from app.engine.simulation import SimMode, SimResult, SimulationError, prepare, 
 from app.engine.simulation.joint import JointSweep, joint_sweep, with_fleet
 from app.service.scenarios.calculations import CalculationService
 from app.service.simulations.inputs import load_input
+from app.service.simulations.progress import Progress
 from app.service.simulations.results import pack_events, robots_json, summary_json, timeline_json
 from app.service.simulations.sweep_results import SweepEconomics, apply_sweep, price_sweep, sweep_json
 
@@ -59,8 +60,8 @@ def store_result(run: SimulationRun, result: SimResult, duration_ms: int) -> Non
 
 async def run_simulation(db: Database, job_id: UUID) -> None:
     async with UnitOfWork(db.session()) as uow:
-        job = await uow.jobs.get(job_id)
-        if job is None:
+        job = await uow.session.scalar(select(Job).where(Job.id == job_id).with_for_update())
+        if job is None or job.status != JobStatus.QUEUED:
             return
         run = await uow.session.get(SimulationRun, UUID(job.payload["simulation_id"]))
         if run is None or run.status == JobStatus.CANCELLED:
@@ -74,7 +75,8 @@ async def run_simulation(db: Database, job_id: UUID) -> None:
         inp = load_input(run.engine_input)
     started = time.perf_counter()
     try:
-        result = await asyncio.to_thread(simulate, inp)
+        progress = Progress(db, job_id, run.id)
+        result = await progress.run(simulate, inp, None, lambda value: progress(value, "Имитация дня"))
     except SimulationError as exc:
         await _fail(db, job_id, run.id, str(exc))
         return
@@ -105,65 +107,33 @@ async def _fail(db: Database, job_id: UUID, run_id: UUID | None, detail: str) ->
         await uow.commit()
 
 
-class _Progress:
-    """Carries sweep progress from the worker thread to the event loop, which writes it to the job."""
-
-    def __init__(self, db: Database, job_id: UUID) -> None:
-        self.db = db
-        self.job_id = job_id
-        self.loop = asyncio.get_running_loop()
-        self.pending: list[tuple[int, str]] = []
-
-    def __call__(self, evaluated: float, stage: str) -> None:
-        self.loop.call_soon_threadsafe(self.pending.append, (int(evaluated), stage))
-
-    async def flush(self) -> None:
-        if not self.pending:
-            return
-        evaluated, stage = self.pending[-1]
-        self.pending.clear()
-        async with UnitOfWork(self.db.session()) as uow:
-            job = await uow.jobs.get(self.job_id)
-            if job is not None:
-                # The number of fleet sizes a search needs is not known upfront: progress approaches 1.
-                job.progress = round(evaluated / (evaluated + 1), 3)
-                job.stage = stage
-                await uow.commit()
-
-
-async def _sweep(db: Database, job_id: UUID, payload: dict[str, Any]) -> JointSweep:
+async def _sweep(payload: dict[str, Any], progress: Progress) -> JointSweep:
     inp = load_input(payload["engine_input"])
-    prepared = prepare(inp.plan, inp.settings.two_way_width_m)
-    progress = _Progress(db, job_id)
-    task = asyncio.create_task(
-        asyncio.to_thread(
-            joint_sweep,
-            inp,
-            payload["process_key"],
-            int(payload["replications"]),
-            prepared,
-            progress,
-            (payload.get("low"), payload.get("high")),
-            payload.get("fixed_fleet"),
-        )
+    prepared = await asyncio.to_thread(prepare, inp.plan, inp.settings.two_way_width_m)
+    return await progress.run(
+        joint_sweep,
+        inp,
+        payload["process_key"],
+        int(payload["replications"]),
+        prepared,
+        progress,
+        (payload.get("low"), payload.get("high")),
+        payload.get("fixed_fleet"),
     )
-    while not task.done():
-        await asyncio.sleep(0.5)
-        await progress.flush()
-    return await task
 
 
 async def run_fleet_sweep(db: Database, job_id: UUID) -> None:
     async with UnitOfWork(db.session()) as uow:
-        job = await uow.jobs.get(job_id)
-        if job is None:
+        job = await uow.session.scalar(select(Job).where(Job.id == job_id).with_for_update())
+        if job is None or job.status != JobStatus.QUEUED:
             return
         payload = dict(job.payload)
         job.status, job.started_at, job.stage = JobStatus.RUNNING, _now(), "Перебор флота"
         await uow.commit()
     try:
-        result = await _sweep(db, job_id, payload)
-        best = await _best_run(result, payload)
+        progress = Progress(db, job_id)
+        result = await _sweep(payload, progress)
+        best = await _best_run(result, payload, progress)
     except SimulationError as exc:
         await _fail(db, job_id, None, str(exc))
         return
@@ -191,8 +161,10 @@ async def _finish_sweep(
         scenario = await uow.session.scalar(
             select(Scenario).where(Scenario.id == UUID(payload["scenario_id"])).with_for_update()
         )
-        if job is None or scenario is None:
+        if job is None or job.status != JobStatus.RUNNING:
             return
+        if scenario is None:
+            raise SimulationError("Сценарий удалён во время расчёта")
         await uow.session.scalar(select(Project).where(Project.id == scenario.project_id).with_for_update())
         await uow.session.scalar(
             select(Layout).where(Layout.project_id == scenario.project_id).with_for_update()
@@ -218,6 +190,8 @@ async def _finish_sweep(
         applied = current and apply_sweep(snapshot, payload, result, run)
         if applied:
             job.payload = {**job.payload, "applied_fingerprint": snapshot.physical_fingerprint}
+            await uow.flush()
+            await CalculationService(uow, to_current_user(user)).calculate(scenario.id)
         job.result = {
             **sweep_json(result.result, points, run),
             "candidate_count": result.candidate_count,
@@ -242,7 +216,9 @@ async def _finish_sweep(
         await uow.commit()
 
 
-async def _best_run(result: JointSweep, payload: dict[str, Any]) -> tuple[SimResult, int] | None:
+async def _best_run(
+    result: JointSweep, payload: dict[str, Any], progress: Progress
+) -> tuple[SimResult, int] | None:
     """The recommended fleet once more, with events, in the requested mode - for the player and the report."""
     if not result.validation.fleet or result.validation.status == "not_run":
         return None
@@ -250,7 +226,15 @@ async def _best_run(result: JointSweep, payload: dict[str, Any]) -> tuple[SimRes
     inp = with_fleet(inp, result.validation.fleet, result.fixed_fleet)
     config = replace(inp.config, mode=SimMode.PEAK, record_events=True)
     started = time.perf_counter()
-    best = await asyncio.to_thread(simulate, replace(inp, config=config))
+    best = await progress.run(
+        simulate,
+        replace(inp, config=config),
+        None,
+        lambda value: progress(value, "Запись итогового прогона"),
+    )
+    progress(0, "Сохранение результата и экономики")
+    await asyncio.sleep(0)
+    await progress.flush()
     return best, int((time.perf_counter() - started) * MS_PER_S)
 
 

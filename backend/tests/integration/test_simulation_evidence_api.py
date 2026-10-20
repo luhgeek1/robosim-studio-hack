@@ -11,6 +11,7 @@ from app.db.uow import UnitOfWork
 from app.domain.scenario.models import CountMode
 from app.engine.simulation.joint import JointSweep
 from app.service.simulations import runner
+from app.service.simulations.progress import Progress
 from tests.integration.test_simulation_api import _scenario, _sweep
 
 pytestmark = pytest.mark.integration
@@ -69,9 +70,9 @@ async def test_sweep_finishing_after_an_edit_cannot_overwrite_the_new_scenario(
     _, scenario_id, headers = await _scenario(client)
     original = runner._sweep
 
-    async def edit_during_sweep(db: Database, job_id: UUID, payload: dict[str, Any]) -> JointSweep:
-        result = await original(db, job_id, payload)
-        async with UnitOfWork(db.session()) as uow:
+    async def edit_during_sweep(payload: dict[str, Any], progress: Progress) -> JointSweep:
+        result = await original(payload, progress)
+        async with UnitOfWork(progress.db.session()) as uow:
             scenario = await uow.session.get(Scenario, UUID(scenario_id))
             assert scenario is not None
             scenario.items[0].stations_mode = CountMode.MANUAL

@@ -38,12 +38,17 @@ scenarioFleetSweep:
     tags: [simulation]
     operationId: runFleetSweep
     summary: Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача)
+    description: |
+      Повторный запуск возвращает свою активную задачу этого сценария. Если перебор запущен другим
+      участником, возвращается 409. После успешного применения парка воркер сохраняет экономику
+      в той же транзакции; присутствие браузера и дополнительный calculate не требуются.
     parameters: [{$ref: '../components/common.yaml#/parameters/ScenarioId'}]
     requestBody:
       required: true
       content: {application/json: {schema: {$ref: '../components/simulation.yaml#/FleetSweepRequest'}}}
     responses:
       '202': {$ref: '../components/common.yaml#/responses/JobAccepted'}
+      '409': {description: "Сценарий не готов или уже проверяется другим участником", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
 
 scenarioFleetSweepResult:
   get:
@@ -55,7 +60,7 @@ scenarioFleetSweepResult:
       - {$ref: '../components/common.yaml#/parameters/JobId'}
     responses:
       '200': {description: "OK", content: {application/json: {schema: {$ref: '../components/simulation.yaml#/FleetSweepResult'}}}}
-      '409': {description: "Ещё считается", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
+      '409': {description: "Результат недоступен; текущий статус и ошибку проверяйте через GET /jobs/{job_id}", content: {application/json: {schema: {$ref: '../components/common.yaml#/Problem'}}}}
 
 simulation:
   parameters: [{$ref: '../components/common.yaml#/parameters/SimulationId'}]

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useActiveSweep, jobsKey } from '@/entities/job/api'
 import { calculateWithFleetCheck } from '@/entities/simulation'
 import { api } from '@/shared/api/client'
 import { qk } from '@/shared/api/keys'
@@ -176,14 +177,17 @@ export function useUpdateScenario(projectId: string, id: string) {
 export function useCalculate(projectId: string, id: string) {
   const queryClient = useQueryClient()
   const refresh = useRefreshScenarios(projectId)
-  return useMutation({
+  const active = useActiveSweep(id)
+  const mutation = useMutation({
     // force - перепроверить и уже проверенное N (кнопка «Перепроверить»).
     mutationFn: (force?: boolean) => calculateWithFleetCheck(id, force ?? false),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: jobsKey }),
     onSuccess: ({ calculation }) => {
       queryClient.setQueryData(qk.calculations.one(calculation.id), calculation)
       return Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: qk.scenarios.one(id) })])
     },
   })
+  return { ...mutation, isPending: mutation.isPending || Boolean(active) }
 }
 
 /* Откуда сценарий берёт число роботов процесса: «по имитации» (auto - перебор флота) или «по формуле» (ручное число =

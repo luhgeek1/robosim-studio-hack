@@ -140,8 +140,16 @@ Job:
     id: {type: string, format: uuid}
     type: {$ref: '#/JobType'}
     status: {$ref: '#/JobStatus'}
-    progress: {type: number, minimum: 0, maximum: 1}
+    progress: {type: number, minimum: 0, maximum: 1, description: Доля модельного времени текущего прогона; при новом прогоне сбрасывается. Завершение задачи определяется status.}
     stage: {type: [string, "null"], example: "Прогон пикового дня, час 14 из 24"}
+    project_id: {type: [string, "null"], format: uuid}
+    scenario_id: {type: [string, "null"], format: uuid}
+    label: {type: [string, "null"], description: Название проекта и сценария при запуске}
+    kind: {type: [string, "null"], description: simulation или fleet_sweep для имитации}
+    completed_runs: {type: integer, minimum: 0, default: 0}
+    progress_updated_at: {type: [string, "null"], format: date-time}
+    eta_seconds: {type: [integer, "null"], minimum: 0, description: "Оценка остатка текущего прогона, не всего перебора"}
+
     created_at: {type: string, format: date-time}
     started_at: {type: [string, "null"], format: date-time}
     finished_at: {type: [string, "null"], format: date-time}
@@ -272,3 +280,11 @@ parameters:
     description: |
       web - refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other - оба токена в теле.
     schema: {type: string, enum: [web, mobile], default: web}
+
+JobList:
+  type: object
+  required: [items]
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/Job'}
