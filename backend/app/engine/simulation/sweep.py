@@ -2,7 +2,7 @@ import math
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-from app.engine.simulation import Prepared, SimInput, SimResult, simulate
+from app.engine.simulation import Prepared, SimInput, SimResult, run_progress, simulate
 from app.engine.simulation.models import ProcessModel, SimMode, SimulationError
 from app.engine.trace import fmt
 
@@ -86,7 +86,15 @@ class Sweep:
                 record_events=False,
                 chargers=chargers,
             )
-            runs.append(simulate(replace(self.inp, config=config), self.prepared))
+            stage = f"{self.process.name} · N = {count} · повтор {replication + 1}/{self.replications}"
+            callback = self.progress
+            runs.append(
+                simulate(
+                    replace(self.inp, config=config),
+                    self.prepared,
+                    run_progress(callback, stage),
+                )
+            )
         outcomes = [
             next(p for p in run.record.processes if p.process_key == self.process.key) for run in runs
         ]
@@ -104,8 +112,6 @@ class Sweep:
         )
         self.points[count] = point
         self.results[count] = runs[0]
-        if self.progress is not None:
-            self.progress(len(self.points), f"N = {count}: SLA {mean_sla:.1f} %")
         return point
 
     def run(self, low: int | None = None, high: int | None = None) -> SweepResult:

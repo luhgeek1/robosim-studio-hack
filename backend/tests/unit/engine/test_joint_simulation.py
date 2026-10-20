@@ -126,3 +126,21 @@ def test_process_station_limits_use_subsets_of_the_same_shared_resources() -> No
     assert {event.process_key for event in visits} == {first.key, second.key}
     for event in visits:
         assert event.node in allowed[event.process_key]
+
+
+def test_progress_observes_real_runs_without_changing_results() -> None:
+    plan, prepared = _hospital()
+    inp = SimInput(plan, (replace(MEALS, internal_per_day=12),), SETTINGS, SimConfig(mode=SimMode.PEAK))
+    fractions: list[float] = []
+    expected = simulate(inp, prepared)
+    assert simulate(inp, prepared, fractions.append) == expected
+    assert fractions[0] == 0
+    assert fractions[-1] == 1
+    assert fractions == sorted(fractions)
+    assert any(0 < value < 1 for value in fractions)
+    events: list[tuple[float, str]] = []
+    observed = joint_sweep(inp, MEALS.key, 2, prepared, lambda value, stage: events.append((value, stage)))
+    assert observed == joint_sweep(inp, MEALS.key, 2, prepared)
+    finished = [stage for value, stage in events if value == 1]
+    assert len(finished) == sum(point.runs for point in observed.result.points) + 2
+    assert finished[-2:] == ["Общий парк · повтор 1/2", "Общий парк · повтор 2/2"]
