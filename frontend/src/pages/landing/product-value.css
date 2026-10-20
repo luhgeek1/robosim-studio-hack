@@ -1,7 +1,7 @@
 .lp-value-section {
   --value-paper: #e5e7dd;
-  --value-scroll-distance: 260svh;
-  --value-content-hold: 120svh;
+  --value-scroll-distance: 110svh;
+  --value-content-hold: 24svh;
   position: relative;
   isolation: isolate;
   padding-block: 0;
@@ -1340,7 +1340,11 @@
 }
 @media (min-width: 981px) {
   .lp-value-section {
-    --value-diagram-height: clamp(420px, calc(100svh - 340px), 456px);
+    --value-diagram-height: clamp(
+      420px,
+      calc(100svh - var(--value-tab-height) - var(--value-panel-gap) - 180px),
+      1000px
+    );
     --value-tab-height: 85px;
     --value-panel-gap: 48px;
   }
@@ -1351,6 +1355,9 @@
     );
     padding-bottom: 40px;
   }
+  .lp-value-intro-shell {
+    padding-top: 112px;
+  }
   .landing .lp-value-tab {
     min-height: var(--value-tab-height);
   }
@@ -1359,8 +1366,97 @@
     padding-top: var(--value-panel-gap);
   }
   .lp-value-visual {
+    width: 100%;
     min-height: var(--value-diagram-height);
     height: var(--value-diagram-height);
+  }
+}
+@media (min-width: 1600px) {
+  .lp-value-section .lp-value-intro-shell,
+  .lp-value-section > .lp-value-stage > .lp-value-content-track {
+    width: min(2200px, calc(100% - clamp(112px, 7.6vw, 224px)));
+  }
+  .lp-value-intro-shell .landing-section-label {
+    font-size: clamp(10px, 0.6vw, 12px);
+  }
+  .lp-value-section {
+    --value-tab-height: clamp(85px, 5.8vw, 120px);
+    --value-panel-gap: clamp(32px, 3vw, 64px);
+  }
+  .landing .lp-value-tab {
+    gap: clamp(17px, 1.2vw, 28px);
+    padding-inline: clamp(26px, 1.8vw, 44px);
+  }
+  .lp-value-tab > strong {
+    font-size: clamp(18px, 1.2vw, 26px);
+  }
+  .lp-value-note h3 {
+    font-size: clamp(29px, 2vw, 44px);
+  }
+  .lp-value-note p {
+    font-size: clamp(14px, 0.95vw, 20px);
+  }
+  .lp-value-note-link {
+    margin-top: clamp(25px, 2vw, 44px);
+    font-size: clamp(13px, 0.9vw, 19px);
+  }
+  .lp-value-visual {
+    padding: clamp(28px, 2vw, 44px);
+  }
+  .lp-value-visual-head,
+  .lp-value-note-kicker {
+    font-size: clamp(9px, 0.6vw, 13px);
+  }
+  .lp-value-visual-foot {
+    font-size: clamp(8px, 0.5vw, 11px);
+  }
+  .lp-fit-criteria > div {
+    gap: clamp(11px, 1vw, 22px);
+    padding-block: clamp(20px, 2.4vw, 60px);
+  }
+  .lp-fit-criteria strong {
+    font-size: clamp(14px, 0.95vw, 21px);
+  }
+  .lp-fit-criteria small {
+    font-size: clamp(12px, 0.75vw, 17px);
+  }
+  .lp-fit-machine {
+    padding-block: clamp(24px, 2vw, 44px);
+  }
+  .lp-fit-machine > svg {
+    max-width: min(clamp(360px, 18vw, 480px), calc(var(--value-diagram-height) * 0.5));
+    margin-block: clamp(16px, 1.5vw, 32px);
+  }
+  .lp-fit-machine > .lp-value-micro,
+  .lp-capacity-labels,
+  .lp-finance-baseline > span {
+    font-size: clamp(8px, 0.55vw, 12px);
+  }
+  .lp-fit-result,
+  .lp-capacity-key,
+  .lp-finance-options p {
+    font-size: clamp(11px, 0.7vw, 16px);
+  }
+  .lp-capacity-diagram > svg {
+    max-height: calc(var(--value-diagram-height) - 180px);
+    margin-block: 16px 24px;
+  }
+  .lp-finance-baseline > strong,
+  .lp-finance-summary {
+    font-size: clamp(13px, 0.85vw, 19px);
+  }
+  .lp-finance-options {
+    gap: clamp(12px, 1vw, 24px);
+    margin-top: clamp(32px, 2.5vw, 56px);
+  }
+  .lp-finance-options > div {
+    padding: clamp(20px, 2vw, 44px) clamp(14px, 1.2vw, 26px);
+  }
+  .lp-finance-options strong {
+    font-size: clamp(22px, 1.5vw, 34px);
+  }
+  .lp-finance-summary {
+    margin-top: clamp(28px, 2vw, 44px);
   }
 }
 @media (min-width: 981px) and (max-height: 820px) {
