@@ -1,0 +1,32 @@
+[
+  {
+    "key": "area_m2",
+    "value": 20000,
+    "unit": "м²"
+  },
+  {
+    "key": "area_m2",
+    "value": 10000,
+    "unit": "м²"
+  },
+  {
+    "key": "pickers",
+    "value": -3,
+    "unit": "чел."
+  },
+  {
+    "key": "floors",
+    "value": 2.5,
+    "unit": "шт."
+  },
+  {
+    "name": "Неизвестная площадь",
+    "value": 15000,
+    "unit": "м²"
+  },
+  {
+    "key": "robotized_area_m2",
+    "value": 30000,
+    "unit": "м²"
+  }
+]

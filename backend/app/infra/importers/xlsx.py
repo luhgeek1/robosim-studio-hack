@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from io import BytesIO
 from typing import Any
+from xml.etree.ElementTree import ParseError
 from zipfile import BadZipFile
 
 import openpyxl
@@ -11,7 +12,7 @@ from openpyxl.workbook.workbook import Workbook
 from app.infra.importers.collector import RawRow, build_import, cell_text, clean_unit
 from app.infra.importers.matching import ParameterMatcher
 from app.infra.importers.models import ImportFormatError, ImportSourceKind, ParsedImport
-from app.infra.importers.tabular import table_rows
+from app.infra.importers.tabular import detect_columns, table_rows
 from app.infra.importers.template import (
     COLUMN_KEY,
     COLUMN_NAME,
@@ -35,7 +36,7 @@ def load_workbook(content: bytes, *, bounded: bool = False) -> Workbook:
             workbook.close()
             raise ImportFormatError("Excel: допускается до 20 листов, 10 000 строк и 100 столбцов")
         return workbook
-    except (BadZipFile, InvalidFileException, KeyError, OSError, ValueError) as error:
+    except (BadZipFile, InvalidFileException, KeyError, OSError, ValueError, ParseError) as error:
         message = "Не удалось открыть файл Excel: он повреждён или сохранён не в формате .xlsx"
         raise ImportFormatError(message) from error
 
@@ -68,6 +69,13 @@ def parse_template(workbook: Workbook, matcher: ParameterMatcher) -> ParsedImpor
     header = [cell_text(cell) for cell in table[HEADER_ROW - 1]] if table else []
     missing = [title for title in (COLUMN_KEY, COLUMN_VALUE) if title not in header]
     if missing:
+        if detect_columns(header) is not None:
+            warnings = ["Колонки шаблона переименованы; проверьте сопоставление по распознанным заголовкам"]
+            recovered = table_rows(table, f"Лист «{TEMPLATE_SHEET}»", warnings)
+            return replace(
+                build_import(ImportSourceKind.XLSX_TEMPLATE, recovered, matcher, warnings),
+                object_type=template_object_type(workbook),
+            )
         raise ImportFormatError(
             f"В шаблоне на листе «{TEMPLATE_SHEET}» нет колонок: {', '.join(missing)}. Скачайте шаблон заново"
         )

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: РобоМера API
-  version: 0.11.0
+  version: 0.12.0
   license: {name: MIT, identifier: MIT}
   summary: Платформа экспресс-оценки роботизации объекта (ЛЦТ 2026, задача №1, ФЦ БАС)
   description: |
@@ -107,6 +107,7 @@ paths:
   /api/v1/projects/{project_id}/params/{key}/history: {$ref: './paths/projects.yaml#/projectParamHistory'}
   /api/v1/projects/{project_id}/import: {$ref: './paths/projects.yaml#/projectImport'}
   /api/v1/projects/{project_id}/import/text: {$ref: './paths/projects.yaml#/projectImportText'}
+  /api/v1/projects/{project_id}/import/{import_id}/review: {$ref: './paths/projects.yaml#/projectImportReview'}
   /api/v1/projects/{project_id}/import/{import_id}/apply: {$ref: './paths/projects.yaml#/projectImportApply'}
   /api/v1/projects/{project_id}/validation: {$ref: './paths/projects.yaml#/projectValidation'}
   /api/v1/projects/{project_id}/data-quality: {$ref: './paths/projects.yaml#/projectDataQuality'}

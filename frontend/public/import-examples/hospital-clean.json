@@ -1,0 +1,264 @@
+{
+  "project": {
+    "name": "Учебный пример: hospital",
+    "object_type": "hospital"
+  },
+  "params": {
+    "facility_type": {
+      "value": "multi_profile_hospital",
+      "unit": null
+    },
+    "area_m2": {
+      "value": 45000,
+      "unit": "м²"
+    },
+    "floors": {
+      "value": 9,
+      "unit": "шт."
+    },
+    "elevators": {
+      "value": 4,
+      "unit": "шт."
+    },
+    "beds": {
+      "value": 650,
+      "unit": "коек"
+    },
+    "bed_occupancy_pct": {
+      "value": 82,
+      "unit": "%"
+    },
+    "operating_rooms": {
+      "value": 12,
+      "unit": "шт."
+    },
+    "outpatient_visits_per_day": {
+      "value": 850,
+      "unit": "посещений/сут"
+    },
+    "inpatient_schedule": {
+      "value": "24/7/365",
+      "unit": null
+    },
+    "outpatient_schedule": {
+      "value": "5/2, 08:00-20:00",
+      "unit": null
+    },
+    "operating_hours_per_day": {
+      "value": 24,
+      "unit": "ч/сут"
+    },
+    "working_days_per_year": {
+      "value": 365,
+      "unit": "дн."
+    },
+    "nursing_shifts_per_day": {
+      "value": 3,
+      "unit": "смен/сут"
+    },
+    "logistics_peak_hours": {
+      "value": "07:00-10:00 и 15:00-17:00",
+      "unit": null
+    },
+    "scheduled_peak_factor": {
+      "value": 1,
+      "unit": null
+    },
+    "feedings_per_day": {
+      "value": 3,
+      "unit": "раз/сут"
+    },
+    "meal_portions_per_day": {
+      "value": 1950,
+      "unit": "порций/сут"
+    },
+    "kitchen_to_ward_distance_m": {
+      "value": 180,
+      "unit": "м"
+    },
+    "meal_points": {
+      "value": 18,
+      "unit": "шт."
+    },
+    "meal_cart_weight_kg": {
+      "value": 120,
+      "unit": "кг"
+    },
+    "meal_delivery_norm_min": {
+      "value": 20,
+      "unit": "мин"
+    },
+    "linen_dirty_kg_per_day": {
+      "value": 1800,
+      "unit": "кг/сут"
+    },
+    "linen_clean_kg_per_day": {
+      "value": 1800,
+      "unit": "кг/сут"
+    },
+    "linen_points": {
+      "value": 18,
+      "unit": "шт."
+    },
+    "linen_changes_per_day": {
+      "value": 1.3,
+      "unit": "раз/сут"
+    },
+    "linen_container_weight_kg": {
+      "value": 55,
+      "unit": "кг"
+    },
+    "medication_items_count": {
+      "value": 2800,
+      "unit": "наименований"
+    },
+    "medication_orders_per_day": {
+      "value": 340,
+      "unit": "заявок/сут"
+    },
+    "pharmacy_points": {
+      "value": 2,
+      "unit": "шт."
+    },
+    "medication_delivery_points": {
+      "value": 22,
+      "unit": "шт."
+    },
+    "medication_picking_time_min": {
+      "value": 12,
+      "unit": "мин"
+    },
+    "stat_delivery_pct": {
+      "value": 8,
+      "unit": "%"
+    },
+    "supply_trips_per_day": {
+      "value": 45,
+      "unit": "рейсов/сут"
+    },
+    "lab_samples_per_day": {
+      "value": 1200,
+      "unit": "проб/сут"
+    },
+    "labs": {
+      "value": 2,
+      "unit": "шт."
+    },
+    "lab_delivery_norm_min": {
+      "value": 30,
+      "unit": "мин"
+    },
+    "lab_results_trips_per_day": {
+      "value": 28,
+      "unit": "рейсов/сут"
+    },
+    "waste_class_a_kg_per_day": {
+      "value": 850,
+      "unit": "кг/сут"
+    },
+    "waste_class_b_kg_per_day": {
+      "value": 220,
+      "unit": "кг/сут"
+    },
+    "waste_points": {
+      "value": 20,
+      "unit": "шт."
+    },
+    "waste_pickups_per_day": {
+      "value": 2,
+      "unit": "раз/сут"
+    },
+    "cleaning_area_m2": {
+      "value": null,
+      "unit": "м²"
+    },
+    "orderlies": {
+      "value": 65,
+      "unit": "чел."
+    },
+    "kitchen_staff": {
+      "value": 28,
+      "unit": "чел."
+    },
+    "laundry_staff": {
+      "value": 18,
+      "unit": "чел."
+    },
+    "orderly_salary_rub_month": {
+      "value": 55000,
+      "unit": "руб./мес."
+    },
+    "kitchen_salary_rub_month": {
+      "value": 52000,
+      "unit": "руб./мес."
+    },
+    "laundry_salary_rub_month": {
+      "value": 55000,
+      "unit": "руб./мес."
+    },
+    "payroll_tax_coeff": {
+      "value": 1.302,
+      "unit": null
+    },
+    "staff_turnover_pct": {
+      "value": 45,
+      "unit": "%"
+    },
+    "robot_disinfection": {
+      "value": true,
+      "unit": null
+    },
+    "night_noise_limit_dba": {
+      "value": 30,
+      "unit": "дБА"
+    },
+    "has_access_control": {
+      "value": true,
+      "unit": null
+    },
+    "robot_surface_material": {
+      "value": "Нержавеющая сталь или ABS с антибактер. покрытием",
+      "unit": null
+    },
+    "mis_system": {
+      "value": "Да (ЕМИАС)",
+      "unit": null
+    },
+    "has_lis": {
+      "value": true,
+      "unit": null
+    },
+    "elevator_control": {
+      "value": "partial",
+      "unit": null
+    },
+    "elevator_cycle_min": {
+      "value": null,
+      "unit": "мин"
+    },
+    "corridor_width_m": {
+      "value": 2.4,
+      "unit": "м"
+    },
+    "has_ramps_or_lifts": {
+      "value": false,
+      "unit": null
+    },
+    "charging_power_kw": {
+      "value": 80,
+      "unit": "кВт"
+    },
+    "capex_budget_mln_rub": {
+      "value": 35,
+      "unit": "млн руб."
+    },
+    "horizon_years": {
+      "value": 7,
+      "unit": "лет"
+    },
+    "sla_target_share": {
+      "value": 0.95,
+      "unit": "доля"
+    }
+  }
+}

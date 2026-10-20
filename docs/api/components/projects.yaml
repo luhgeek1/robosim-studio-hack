@@ -170,12 +170,74 @@ ImportMappedItem:
         current_value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
         current_status: {$ref: './common.yaml#/ProvenanceStatus'}
 
+ImportConflict:
+  type: object
+  properties:
+    current_value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    current_status: {type: [string, "null"]}
+
+ImportIssue:
+  type: object
+  required: [code, severity, message, how_to_fix]
+  properties:
+    code: {type: string}
+    severity: {type: string, enum: [error, warning, info]}
+    message: {type: string}
+    how_to_fix: {type: string}
+
+ImportSuggestion:
+  type: object
+  required: [key, value, unit, message]
+  properties:
+    key: {type: string}
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    unit: {type: [string, "null"]}
+    message: {type: string}
+
+ImportReviewRow:
+  type: object
+  required: [row_id, key, name, value, unit, raw_field, raw_value, raw_unit, location, confidence, excluded, issues, suggestion, conflict_with_current]
+  properties:
+    row_id: {type: string}
+    key: {type: [string, "null"]}
+    name: {type: string}
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    unit: {type: [string, "null"]}
+    raw_field: {type: string}
+    raw_value: {type: string}
+    raw_unit: {type: [string, "null"]}
+    location: {type: string}
+    confidence: {type: number}
+    suggestion_key: {type: [string, "null"]}
+    excluded: {type: boolean}
+    status: {type: [string, "null"]}
+    issues: {type: array, items: {$ref: '#/ImportIssue'}}
+    suggestion: {oneOf: [{$ref: '#/ImportSuggestion'}, {type: "null"}]}
+    conflict_with_current: {oneOf: [{$ref: '#/ImportConflict'}, {type: "null"}]}
+
+ImportEdit:
+  type: object
+  required: [row_id, key, value, unit]
+  properties:
+    row_id: {type: string}
+    key: {type: [string, "null"], maxLength: 64}
+    value: {oneOf: [{type: number}, {type: string}, {type: boolean}, {type: "null"}]}
+    unit: {type: [string, "null"], maxLength: 64}
+    excluded: {type: boolean, default: false}
+
+ImportReview:
+  type: object
+  required: [edits]
+  properties:
+    edits: {type: array, maxItems: 10000, items: {$ref: '#/ImportEdit'}}
+    overwrite_user_values: {type: boolean, default: false}
+
 ImportResult:
   type: object
   description: |
     Результат разбора файла или текста. Ничего не применяется автоматически: фронт показывает таблицу,
     пользователь снимает галочки и нажимает «Применить» (POST …/import/{import_id}/apply).
-  required: [import_id, source_kind, mapped, unmapped, warnings, applied]
+  required: [import_id, source_kind, mapped, unmapped, warnings, applied, rows, validation]
   properties:
     import_id: {type: string, format: uuid}
     source_kind: {type: string, enum: [xlsx_template, xlsx_freeform, csv, json, text_llm, pdf_llm]}
@@ -192,10 +254,13 @@ ImportResult:
           suggestion_key: {type: [string, "null"]}
     warnings: {type: array, items: {type: string}}
     applied: {type: boolean}
+    rows: {type: array, items: {$ref: '#/ImportReviewRow'}}
+    validation: {$ref: '#/ValidationReport'}
 
 ImportApply:
   type: object
   properties:
+    row_ids: {type: [array, "null"], maxItems: 10000, items: {type: string}, description: "Явный выбор строк; [] не применяет ничего. Если задан, приоритетнее accept_keys. Ошибочные строки блокируют применение; исключённые пропускаются."}
     accept_keys: {type: array, items: {type: string}, description: "Если пусто — применить все mapped"}
     overwrite_user_values: {type: boolean, default: false}
 

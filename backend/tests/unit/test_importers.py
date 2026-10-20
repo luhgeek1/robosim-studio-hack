@@ -263,6 +263,12 @@ def test_project_export_import_extracts_params(warehouse: ObjectTypeDetail) -> N
     assert result.mapped[0].value == 20000
 
 
+def test_export_empty_values_are_not_read_as_nested_objects(warehouse: ObjectTypeDetail) -> None:
+    payload = {"params": {"area_m2": {"value": None, "unit": "м²"}}}
+    result = parse_file(json.dumps(payload).encode(), "empty.json", warehouse.parameters)
+    assert result.rows == []
+
+
 def test_json_repeated_keys_are_not_silently_overwritten(warehouse: ObjectTypeDetail) -> None:
     with pytest.raises(ImportFormatError, match="повторяется"):
         parse_file(b'{"area_m2": 20000, "area_m2": 1}', "duplicate.json", warehouse.parameters)
@@ -270,4 +276,40 @@ def test_json_repeated_keys_are_not_silently_overwritten(warehouse: ObjectTypeDe
 
 def test_broken_json_reports_line_and_column(warehouse: ObjectTypeDetail) -> None:
     with pytest.raises(ImportFormatError, match="строка 2, столбец"):
-        parse_file(b'{\n"area_m2": 20000,}', "broken.json", warehouse.parameters)
+        parse_file(b'{\n"area_m2": nope}', "broken.json", warehouse.parameters)
+
+
+def test_trailing_comma_repair_does_not_modify_quoted_text(warehouse: ObjectTypeDetail) -> None:
+    content = json.dumps({"area_m2": 20000, "unknown": 'text,} and "quoted"'})[:-1] + ",}"
+    result = parse_file(content.encode(), "trailing.json", warehouse.parameters)
+    assert result.mapped[0].value == 20000
+    assert result.rows[1].raw_value == 'text,} and "quoted"'
+    assert any("Формат JSON восстановлен" in warning for warning in result.warnings)
+
+
+def test_renamed_template_headers_are_recoverable(warehouse: ObjectTypeDetail) -> None:
+    content = _fill_template(build_template(warehouse), {"area_m2": 20000})
+    workbook = openpyxl.load_workbook(BytesIO(content))
+    sheet = workbook[TEMPLATE_SHEET]
+    for cell in sheet[1]:
+        if cell.value == COLUMN_KEY:
+            cell.value = "Key"
+        if cell.value == COLUMN_VALUE:
+            cell.value = "Value"
+    output = BytesIO()
+    workbook.save(output)
+    result = parse_file(output.getvalue(), "renamed.xlsx", warehouse.parameters)
+    assert result.rows[0].key == "area_m2"
+    assert any("переименованы" in warning for warning in result.warnings)
+
+
+def test_values_without_labels_are_available_for_manual_mapping(warehouse: ObjectTypeDetail) -> None:
+    csv = b"key;value\n;20000\n"
+    result = parse_file(csv, "missing-label.csv", warehouse.parameters)
+    assert len(result.rows) == 1
+    assert result.rows[0].key is None
+    assert result.rows[0].raw_value == "20000"
+    payload = ["unexpected", {"value": 20000}]
+    result = parse_file(json.dumps(payload).encode(), "missing-label.json", warehouse.parameters)
+    assert len(result.rows) == 2
+    assert all(row.key is None for row in result.rows)
