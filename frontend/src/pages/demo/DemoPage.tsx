@@ -43,7 +43,7 @@ export function DemoPage() {
   if (demoKey)
     return <OpenExample key={`${user.id}:${demoKey}`} demoKey={demoKey} userId={user.id} step={params.get('step')} />
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Демо без регистрации</h1>
@@ -56,66 +56,76 @@ export function DemoPage() {
         </Button>
       </header>
 
-      <section
-        className="mt-5 rounded-xl border border-line bg-popover p-3 sm:p-4"
-        aria-labelledby="demo-examples-title"
-      >
+      <section className="mt-6" aria-labelledby="demo-examples-title">
         <h2 id="demo-examples-title" className="mb-3 text-sm font-medium">
           Выберите объект
         </h2>
         {list.error && <ErrorBlock className="mb-3" error={list.error} onRetry={() => void list.refetch()} />}
-        <ul className="space-y-2">
+        <ul className="grid auto-cols-[minmax(15rem,1fr)] grid-flow-col snap-x snap-mandatory gap-3 overflow-x-auto px-0.5 pt-0.5 pb-3 lg:auto-cols-auto lg:grid-flow-row lg:grid-cols-4 lg:overflow-visible lg:pb-0">
           {DEMO_PROJECTS.map((demo, i) => {
             const details = list.data?.find((item) => item.key === demo.key)
             const headline = details?.headline
             const Icon = ICONS[i]
             return (
-              <li key={demo.key}>
+              <li key={demo.key} className="min-w-0 snap-start">
                 <Link
                   to={`/demo/${demo.key}`}
                   aria-labelledby={`demo-title-${demo.key}`}
-                  className="group grid grid-cols-[2rem_minmax(0,1fr)_1rem] items-center gap-x-3 gap-y-3 rounded-lg border border-line bg-raised/40 p-3 transition-colors hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:grid-cols-[2.25rem_minmax(0,1fr)_17rem_1rem]"
+                  className="group flex aspect-square flex-col rounded-xl border border-line bg-popover p-4 transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
-                  <span className="flex size-8 items-center justify-center rounded-lg border border-line bg-popover text-ink-2 md:size-9">
-                    <Icon size={19} strokeWidth={1.6} aria-hidden />
-                  </span>
-                  <h3 id={`demo-title-${demo.key}`} className="text-sm leading-snug font-medium">
+                  <div className="flex items-start justify-between gap-3">
+                    <span
+                      className={`flex size-9 items-center justify-center rounded-[10px] ${i === 0 ? 'bg-signal-soft text-[#b84021]' : 'border border-line bg-raised/40 text-ink-2'}`}
+                    >
+                      <Icon size={21} strokeWidth={1.6} aria-hidden />
+                    </span>
+                    {i === 0 ? (
+                      <span className="rounded bg-signal-soft px-2 py-1 text-[10px] leading-none text-[#a63c22]">
+                        Для старта
+                      </span>
+                    ) : (
+                      <span className="font-mono text-[10px] text-ink-4" aria-hidden>
+                        0{i + 1}
+                      </span>
+                    )}
+                  </div>
+                  <h3
+                    id={`demo-title-${demo.key}`}
+                    className="mt-3 min-h-10 text-sm leading-5 font-semibold tracking-tight"
+                  >
                     {details?.name ?? demo.label}
                   </h3>
-                  <ArrowRight
-                    size={16}
-                    className="col-start-3 row-start-1 text-ink-3 transition-transform group-hover:translate-x-0.5 md:col-start-4"
-                    aria-hidden
-                  />
-                  {headline ? (
-                    <dl className="col-span-3 grid grid-cols-3 gap-2 border-t border-line pt-2.5 md:col-span-1 md:col-start-3 md:row-start-1 md:border-0 md:pt-0">
-                      <div>
-                        <dt className="mb-1 text-[10px] text-muted-foreground">Парк</dt>
-                        <dd className="num text-xs font-medium">
-                          {headline.robots_total != null ? (
-                            <>
-                              {formatNumber(headline.robots_total)}{' '}
-                              {pluralRu(headline.robots_total, ['робот', 'робота', 'роботов'])}
-                            </>
-                          ) : (
-                            '—'
-                          )}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="mb-1 text-[10px] text-muted-foreground">Вложения</dt>
-                        <dd className="num text-xs font-medium">{formatRub(headline.capex_rub)}</dd>
-                      </div>
-                      <div>
-                        <dt className="mb-1 text-[10px] text-muted-foreground">Окупаемость</dt>
-                        <dd className="num text-xs font-medium">{formatYears(headline.payback_years)}</dd>
-                      </div>
-                    </dl>
-                  ) : (
-                    <span className="col-span-3 text-xs text-muted-foreground md:col-span-1 md:col-start-3 md:row-start-1">
-                      Открыть пример
-                    </span>
-                  )}
+                  <dl className="mt-3 space-y-1 text-xs">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <dt className="text-[11px] text-muted-foreground">Парк</dt>
+                      <dd className="num font-medium">
+                        {headline?.robots_total != null ? (
+                          <>
+                            {formatNumber(headline.robots_total)}{' '}
+                            {pluralRu(headline.robots_total, ['робот', 'робота', 'роботов'])}
+                          </>
+                        ) : (
+                          '—'
+                        )}
+                      </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <dt className="text-[11px] text-muted-foreground">Вложения</dt>
+                      <dd className="num font-medium">{formatRub(headline?.capex_rub)}</dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <dt className="text-[11px] text-muted-foreground">Окупаемость</dt>
+                      <dd className="num font-medium">{headline ? formatYears(headline.payback_years) : '—'}</dd>
+                    </div>
+                  </dl>
+                  <span className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-3 text-xs font-medium text-ink-2">
+                    Открыть пример
+                    <ArrowRight
+                      size={15}
+                      className="text-ink-3 transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  </span>
                 </Link>
               </li>
             )
