@@ -1,0 +1,118 @@
+.immersive {
+  --im-dark: #171d1e;
+  --im-paper: #f5f4ef;
+  --im-signal: #ff6b42;
+  --im-muted: #bec7bf;
+  color: var(--im-paper);
+  background: var(--im-dark);
+  font-family: var(--font-sans);
+  overflow: clip;
+  line-height: 1.6;
+}
+.immersive *,
+.immersive *::before,
+.immersive *::after {
+  box-sizing: border-box;
+}
+.immersive ::selection {
+  background: var(--im-signal);
+  color: var(--im-dark);
+}
+.immersive a {
+  text-decoration: none;
+}
+.immersive :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--im-signal);
+  outline-offset: 6px;
+}
+.immersive h1,
+.immersive h2,
+.immersive h3,
+.immersive p {
+  margin: 0;
+}
+.immersive h1,
+.immersive h2,
+.immersive h3 {
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+.im-mono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.im-skip {
+  position: fixed;
+  top: -100px;
+  left: 20px;
+  z-index: 100;
+  padding: 14px;
+  background: var(--im-paper);
+  color: var(--im-dark);
+}
+.im-skip:focus {
+  top: 10px;
+}
+.im-header {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 4.5%;
+}
+.im-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 25px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+.im-brand svg {
+  color: var(--im-signal);
+  width: 29px;
+  height: 29px;
+}
+.im-brand > span {
+  color: var(--im-signal);
+  margin-left: -10px;
+}
+.im-header nav {
+  display: flex;
+  gap: 30px;
+  font-size: 12px;
+}
+.im-header nav a {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.im-header-action {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 10px 17px;
+  border: 1px solid #ffffff40;
+  font-size: 12px;
+}
+.im-header a:hover {
+  color: var(--im-signal);
+}
+.im-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px 4.5%;
+  border-top: 1px solid #ffffff25;
+  font-size: 11px;
+}
+.im-footer > a:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
