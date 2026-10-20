@@ -347,6 +347,63 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/auth/oauth/providers': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Сервисы входа и их доступность */
+    get: operations['listOAuthProviders']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/auth/oauth/{provider}/start': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Начать вход или подключение сервиса
+     * @description Authorization Code + PKCE S256. Устанавливает httpOnly SameSite=Lax cookie на 10 минут; одноразовое состояние в Redis. intent=link требует Bearer, текущую refresh-cookie, подтверждённую почту и вход за последние RS_RECENT_AUTH_MINUTES. Возврат только на относительный путь приложения. Гостевой перенос требует keep_guest_csrf. Фронт переходит на authorization_url целиком.
+     */
+    post: operations['startOAuth']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/auth/oauth/{provider}/callback': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Возврат из сервиса входа
+     * @description Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка — /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity — конфликт, автоматического связывания нет.
+     */
+    get: operations['finishOAuth']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/me': {
     parameters: {
       query?: never
@@ -3682,6 +3739,29 @@ export interface components {
       password: string
       current_password?: string | null
     }
+    OAuthProviderInfo: {
+      /** @enum {string} */
+      id: 'yandex' | 'google' | 'vk'
+      name: string
+      enabled: boolean
+    }
+    OAuthProviderList: {
+      items: components['schemas']['OAuthProviderInfo'][]
+    }
+    OAuthStartRequest: {
+      /** @default /projects */
+      return_to: string
+      /**
+       * @default login
+       * @enum {string}
+       */
+      intent: 'login' | 'link'
+      keep_guest_csrf?: string | null
+    }
+    OAuthAuthorization: {
+      /** Format: uri */
+      authorization_url: string
+    }
     UserUpdate: {
       name?: string
       organization?: string | null
@@ -6348,6 +6428,81 @@ export interface operations {
       }
       400: components['responses']['BadRequest']
       409: components['responses']['Conflict']
+    }
+  }
+  listOAuthProviders: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Успешно */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OAuthProviderList']
+        }
+      }
+      400: components['responses']['BadRequest']
+    }
+  }
+  startOAuth: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        provider: 'yandex' | 'google' | 'vk'
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OAuthStartRequest']
+      }
+    }
+    responses: {
+      /** @description Успешно */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OAuthAuthorization']
+        }
+      }
+      404: components['responses']['NotFound']
+    }
+  }
+  finishOAuth: {
+    parameters: {
+      query?: {
+        state?: string
+        code?: string
+        device_id?: string
+        error?: string
+      }
+      header?: never
+      path: {
+        provider: 'yandex' | 'google' | 'vk'
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Переход в приложение */
+      303: {
+        headers: {
+          Location?: string
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      429: components['responses']['RateLimited']
     }
   }
   getMe: {
