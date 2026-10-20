@@ -262,6 +262,7 @@ export function LandingPage() {
                   Каталог роботов <ArrowUpRight size={13} />
                 </Link>
                 <a href="#questions">Вопросы и ответы</a>
+                <a href="/privacy/">Политика конфиденциальности</a>
                 <a href="#top" className="landing-to-top" aria-label="Вернуться наверх">
                   <ArrowRight size={20} />
                 </a>

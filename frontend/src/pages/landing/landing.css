@@ -866,6 +866,7 @@
 }
 .landing-footer-top > div {
   display: flex;
+  flex-wrap: wrap;
   gap: 26px;
   align-items: center;
 }

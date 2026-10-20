@@ -268,6 +268,9 @@ export function LoginPage() {
               </Link>{' '}
               открыт без входа.
             </p>
+            <a href="/privacy/" className="meta mt-3 inline-block underline underline-offset-4">
+              Политика конфиденциальности
+            </a>
           </div>
         </motion.aside>
       </div>
