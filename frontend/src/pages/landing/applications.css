@@ -1,0 +1,339 @@
+.lp-objects-stage {
+  position: relative;
+  margin-top: 48px;
+  overflow-anchor: none;
+}
+.lp-objects-stage .lp-objects {
+  position: relative;
+  margin-top: 0;
+}
+.lp-object-composition {
+  display: block;
+}
+.lp-object-preview {
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+.lp-object-model {
+  position: relative;
+  width: min(100cqw, calc(100cqh * 18.8 / 14.7));
+  aspect-ratio: 18.8 / 14.7;
+  transform: translateZ(0);
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.lp-object-model canvas {
+  /* The buffer catches up after FLIP; its visible surface follows the model now. */
+  width: 100% !important;
+  height: 100% !important;
+}
+.lp-object:not(.lp-object--focused) {
+  cursor: pointer;
+}
+.lp-objects--focused .lp-object:not(.lp-object--focused) {
+  pointer-events: none;
+}
+.lp-object--muted {
+  z-index: 0;
+}
+.lp-object--focused {
+  z-index: 1;
+}
+.landing button.lp-object-action {
+  width: 100%;
+  padding-inline: 0;
+  padding-bottom: 0;
+  border-inline: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  transition: color 0.2s;
+}
+.landing button.lp-object-action:hover {
+  color: #f2d3af;
+}
+.lp-objects.lp-objects--focused {
+  grid-template-columns: minmax(0, 1fr);
+}
+.lp-object.lp-object--focused {
+  padding: 0 0 35px;
+  border-left: 0;
+}
+.lp-object--focused:hover {
+  background: transparent;
+}
+.lp-object--focused > .lp-object-index {
+  display: none;
+}
+.lp-object-focus-bar {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  min-height: 77px;
+}
+.landing .lp-object-focus-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 15px 9px 11px;
+  border: 1px solid #b5c4a83b;
+  border-radius: 30px;
+  background: transparent;
+  color: #d9e0cd;
+  font-size: 11px;
+  line-height: 1.5;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.landing .lp-object-focus-bar button:hover {
+  border-color: #b5c4a88c;
+  background: #b5c4a808;
+}
+.lp-object-focus-bar > span,
+.lp-object-model-hint,
+.lp-object-fact > span,
+.lp-object-detail-kicker,
+.lp-object-detail > span {
+  font-family: 'JetBrains Mono Variable', monospace;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  line-height: 1.8;
+  font-weight: 400;
+}
+.lp-object-focus-bar > span {
+  color: #a6b39a;
+}
+.lp-object-focus-bar > span:last-child {
+  margin-left: auto;
+  color: #7d8e75;
+  font-size: 7px;
+}
+.lp-object--focused .lp-object-composition {
+  display: grid;
+  grid-template-columns: minmax(195px, 1fr) minmax(0, 2.8fr) minmax(195px, 1fr);
+  grid-template-areas: 'intro model details';
+  align-items: center;
+  gap: 28px;
+}
+.lp-object--focused .lp-object-preview {
+  grid-area: model;
+  height: clamp(360px, 34vw, 520px);
+  min-width: 0;
+  margin: 0;
+}
+.lp-object--focused .lp-object-copy {
+  grid-area: intro;
+  min-width: 0;
+  padding-block: 18px;
+}
+.lp-object--focused h3 {
+  font-size: clamp(33px, 3.1vw, 46px);
+}
+.lp-object--focused .lp-object-copy > p {
+  min-height: 0;
+  margin-top: 20px;
+  font-size: 12px;
+}
+.lp-object-model-hint {
+  position: absolute;
+  right: 0;
+  bottom: -15px;
+  left: 0;
+  color: #8a9a80;
+  font-size: 6px;
+  text-align: center;
+  pointer-events: none;
+}
+.lp-object-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block: 27px 25px;
+  padding-top: 21px;
+  border-top: 1px solid #cfdbc426;
+}
+.lp-object-fact > strong {
+  color: #bdc8aa;
+  font-size: clamp(22px, 2.1vw, 31px);
+  font-weight: 450;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+}
+.lp-object-fact > span {
+  color: #8f9e85;
+  font-size: 6px;
+}
+.lp-object-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: 25px;
+  padding: 12px 17px;
+  border: 1px solid #d8a98270;
+  border-radius: 30px;
+  color: #e5bc97;
+  font-size: 11px;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.lp-object-demo:hover {
+  background: #d8a9820c;
+  border-color: #e5bc97;
+}
+.lp-object-details {
+  grid-area: details;
+  min-width: 0;
+}
+.lp-object-detail-kicker {
+  display: block;
+  margin-bottom: 17px;
+  color: #b3bea1;
+  font-size: 7px;
+}
+.lp-object-detail {
+  display: flex;
+  gap: 14px;
+  padding-block: 20px;
+  border-top: 1px solid #cfdbc426;
+}
+.lp-object-detail > span {
+  color: #c4926d;
+  font-size: 7px;
+  padding-top: 3px;
+}
+.lp-object-detail h4 {
+  margin: 0 0 7px;
+  color: #d4ddc8;
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+}
+.lp-object-detail p {
+  margin: 0;
+  color: #9eac95;
+  font-size: 11px;
+  line-height: 1.85;
+}
+@media (max-width: 1100px) {
+  .lp-object--focused .lp-object-composition {
+    grid-template-columns: minmax(165px, 1fr) minmax(0, 2.25fr) minmax(165px, 1fr);
+    gap: 20px;
+  }
+  .lp-object--focused .lp-object-preview {
+    height: 380px;
+  }
+  .lp-object-detail {
+    gap: 9px;
+    padding-block: 16px;
+  }
+  .lp-object-detail h4 {
+    font-size: 12px;
+  }
+  .lp-object-detail p {
+    font-size: 10px;
+  }
+  .lp-object--focused .lp-object-copy > p {
+    font-size: 11px;
+  }
+  .lp-object-model-hint {
+    font-size: 5px;
+  }
+}
+@media (max-width: 800px) {
+  .lp-objects-stage {
+    margin-top: 32px;
+  }
+  .lp-object.lp-object--focused {
+    padding-bottom: 30px;
+  }
+  .lp-object-focus-bar {
+    gap: 16px;
+    min-height: 72px;
+  }
+  .lp-object-focus-bar > span:last-child {
+    display: none;
+  }
+  .lp-object--focused .lp-object-composition {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 'model model' 'intro details';
+    gap: 35px 36px;
+  }
+  .lp-object--focused .lp-object-preview {
+    height: clamp(310px, 64vw, 480px);
+  }
+  .lp-object--focused .lp-object-copy {
+    padding: 0;
+  }
+  .lp-object--focused .lp-object-copy > p {
+    font-size: 12px;
+  }
+  .lp-object-detail h4 {
+    font-size: 14px;
+  }
+  .lp-object-detail p {
+    font-size: 11px;
+  }
+  .lp-object-model-hint {
+    font-size: 6px;
+  }
+}
+@media (max-width: 700px) {
+  .lp-objects-stage {
+    margin-top: 28px;
+  }
+}
+@media (max-width: 540px) {
+  .lp-object--focused .lp-object-composition {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'model' 'intro' 'details';
+    gap: 34px;
+  }
+  .lp-object-focus-bar {
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .lp-object-focus-bar > span {
+    font-size: 7px;
+  }
+  .lp-object--focused .lp-object-preview {
+    height: 285px;
+    margin-inline: -10px;
+  }
+  .lp-object--focused .lp-object-copy > p {
+    max-width: 350px;
+    font-size: 13px;
+  }
+  .lp-object-fact {
+    margin-block: 23px;
+    padding-top: 19px;
+  }
+  .lp-object-fact > strong {
+    font-size: 28px;
+  }
+  .lp-object-fact > span {
+    font-size: 7px;
+  }
+  .lp-object-demo {
+    gap: 35px;
+    padding: 13px 20px;
+    font-size: 12px;
+  }
+  .lp-object-detail {
+    padding-block: 18px;
+  }
+  .lp-object-detail p {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing .lp-object-action,
+  .landing .lp-object-focus-bar button,
+  .lp-object-demo {
+    transition: none;
+  }
+}

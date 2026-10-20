@@ -19,7 +19,7 @@ import { useLandingMotion } from './use-landing-motion'
 import { QuestionsSection } from './QuestionsSection'
 import { ProductValueSection, ProjectOutcomeSection } from './ProductValue'
 import './landing.css'
-import { ApplicationsSection, LandingHero } from './LandingExperience'
+import { LandingExperience } from './LandingExperience'
 
 const STEPS = [
   {
@@ -148,8 +148,7 @@ export function LandingPage() {
           )}
         </div>
         <main id="main" tabIndex={-1}>
-          <LandingHero workspace={workspace} />
-          <ApplicationsSection />
+          <LandingExperience workspace={workspace} />
 
           <section className="landing-workflow landing-container" id="workflow" aria-labelledby="workflow-title">
             <div className="landing-section-label">

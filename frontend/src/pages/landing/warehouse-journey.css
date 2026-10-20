@@ -1,0 +1,77 @@
+.cm-experience {
+  position: relative;
+  isolation: isolate;
+  background: #0c1213;
+}
+.cm-experience .cm-stage {
+  z-index: 2;
+}
+.cm-experience .cm-narrative {
+  z-index: 3;
+}
+.cm-experience .cm-stage-atmosphere {
+  display: none;
+}
+.cm-experience .cm-stage-hud,
+.cm-experience .cm-stage-caption,
+.cm-experience .cm-chapter-indicator {
+  opacity: var(--journey-hero-chrome, 1);
+  visibility: var(--journey-hero-visibility, visible);
+}
+.cm-shared-warehouse {
+  position: fixed;
+  z-index: 1;
+  inset: 0 auto auto 0;
+  width: 100vw;
+  height: 100svh;
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s;
+}
+.cm-shared-warehouse[data-ready='true'] {
+  opacity: 1;
+}
+.cm-shared-warehouse[data-docked='true'] {
+  cursor: grab;
+}
+.cm-shared-warehouse[data-docked='true']:active {
+  cursor: grabbing;
+}
+.cm-shared-warehouse canvas {
+  touch-action: pan-y !important;
+}
+.cm-shared-warehouse .cm-map {
+  opacity: var(--journey-model-opacity, 1);
+}
+.cm-shared-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--journey-shade, 1);
+  background:
+    linear-gradient(90deg, #0c1213f2, #0c1213c7 29%, #0c121338 55%, #0c121300 78%),
+    linear-gradient(0deg, #0c1213a6, transparent 26%, transparent 80%, #0c12134d);
+}
+.cm-experience .cm-shared-pause {
+  position: fixed;
+  z-index: 4;
+  inset: 0 auto auto 0;
+}
+.cm-shared-pause[hidden] {
+  display: none;
+}
+.cm-experience .lp-objects:not(.lp-objects--focused) .lp-object:not([data-object='warehouse']) .lp-object-preview {
+  opacity: var(--journey-row, 1);
+}
+@media (max-width: 800px) {
+  .cm-shared-shade {
+    background: linear-gradient(180deg, #0c1213eb 0%, #0c1213cc 32%, #0c121330 65%, #0c121300 83%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cm-shared-warehouse {
+    transition: none;
+  }
+}
