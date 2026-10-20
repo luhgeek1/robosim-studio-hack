@@ -36,8 +36,9 @@ VK и отправка писем пока не включены. Локальн
 3. В **Branding** укажи сайт `https://prooood.ru` и authorized domain `prooood.ru`; заполни остальные запрошенные поля.
 4. В **Data Access** оставь базовые права: `openid`, email и profile. Для email/profile кабинет может показывать
    `https://www.googleapis.com/auth/userinfo.email` и `https://www.googleapis.com/auth/userinfo.profile`.
-5. В **Audience → Test users** добавь аккаунты для проверки. Для публичного доступа затем используй публикацию
-   приложения; требования проверки смотри в самом кабинете.
+5. В **Audience → Test users** можно добавить аккаунты для проверки. У базовых прав `openid email profile` есть
+   исключение: Google разрешает вход вне списка тестовых пользователей даже в Testing. Для штатного публичного
+   выпуска заверши Branding и переведи приложение в In production, как описано ниже.
 6. Открой **Clients → Create client → Web application**. В **Authorized redirect URIs** вставь callback Google
    из таблицы. Наш серверный поток не требует JavaScript SDK и настройки JavaScript origins.
 7. Сохрани **Client ID** и **Client secret** в менеджере секретов. Google может показать secret только при создании.
@@ -46,6 +47,28 @@ VK и отправка писем пока не включены. Локальн
 Источники: [настройка consent screen](https://developers.google.com/workspace/guides/configure-oauth-consent),
 [создание Web client](https://developers.google.com/identity/protocols/oauth2/web-server#creatingcred),
 [базовые права входа](https://developers.google.com/identity/openid-connect/openid-connect).
+
+### Публичный выпуск Google
+
+Уточнение от 21.10.2026: Testing сам по себе не означает ограничение только тестовыми аккаунтами для нашего
+набора `openid email profile`. Это явно оговорено в [правилах Audience](https://support.google.com/cloud/answer/15549945).
+Полный вход аккаунтом вне списка ещё не проверен; его можно проверить уже сейчас.
+
+Для оформления публичного приложения:
+
+1. Опубликуй политику конфиденциальности на `prooood.ru`, доступную без входа, и добавь ссылку на лендинг.
+   Например, можно создать `/privacy`; такой страницы в текущем коде пока нет. Она должна описывать фактическое
+   использование, хранение и передачу данных Google. Terms of Service для этой проверки опциональны.
+2. Заполни недостающие поля **Branding**, включая URL политики. На скриншоте пользователя именно незавершённый
+   Branding блокирует **Publish app**. Сайт `https://prooood.ru` и authorized domain `prooood.ru` уже указаны.
+3. Для проверки бренда подтверди домен в Google Search Console аккаунтом владельца/редактора Cloud-проекта.
+   Если кабинет предлагает **Verify Branding**, пройди проверку, затем **Publish branding**.
+4. В **Audience** оставь **External**, нажми **Publish app**, дождись статуса **In production**.
+5. Проверь вход аккаунтом, которого нет в Test users. Новые ключи, callback и выкладка API для смены Audience не нужны.
+
+Базовые права входа не требуют проверки sensitive/restricted scopes; проверка названия/логотипа бренда — отдельная
+процедура. Требования к домену, главной странице и политике — в
+[инструкции Google по brand verification](https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification).
 
 ## Яндекс ID
 
