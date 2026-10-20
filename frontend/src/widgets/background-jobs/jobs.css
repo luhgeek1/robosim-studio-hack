@@ -1,0 +1,18 @@
+.job-progress {
+  appearance: none;
+  border: 0;
+  background: var(--color-surface-2);
+  color: var(--color-signal);
+}
+.job-progress::-webkit-progress-bar {
+  background: var(--color-line);
+  border-radius: 999px;
+}
+.job-progress::-webkit-progress-value {
+  background: var(--color-signal);
+  border-radius: 999px;
+}
+.job-progress::-moz-progress-bar {
+  background: var(--color-signal);
+  border-radius: 999px;
+}

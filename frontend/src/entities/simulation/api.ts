@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
+import { jobApi, jobActive, jobsKey, useActiveSweep } from '@/entities/job/api'
 import { api } from '@/shared/api/client'
 import { qk } from '@/shared/api/keys'
 import { parseApiProblem } from '@/shared/api/problem'
@@ -22,8 +23,6 @@ export const isFinal = (status: string) => FINAL.has(status)
 
 const REPLAY_PAGE_S = 3600
 const SWEEP_POLL_MS = 1500
-// The sweep answers within the ТЗ 60 s limit (D-019); three minutes covers a busy worker without polling forever.
-const SWEEP_POLL_LIMIT = 120
 
 export const simulationApi = {
   list: (scenarioId: string) =>
@@ -132,23 +131,25 @@ export function useStartSimulation(scenarioId: string | undefined) {
     mutationFn: (body: SimulationRequest) => simulationApi.start(scenarioId!, body),
     onSuccess: (run) => {
       queryClient.setQueryData(keys.run(run.id), run)
+      void queryClient.invalidateQueries({ queryKey: jobsKey })
       void queryClient.invalidateQueries({ queryKey: keys.list(scenarioId ?? '') })
     },
     meta: { silent: true },
   })
 }
 
-// 409 means the sweep is still running; any other answer ends the wait.
+// The server owns completion and timeout; navigation must not impose a shorter client deadline.
 async function waitForSweep(scenarioId: string, jobId: string): Promise<FleetSweepResult> {
-  for (let attempt = 0; attempt < SWEEP_POLL_LIMIT; attempt++) {
-    try {
-      return await simulationApi.sweepResult(scenarioId, jobId)
-    } catch (error) {
-      if (!isAxiosError(error) || error.response?.status !== 409) throw error
-    }
+  while (true) {
+    const job = await jobApi.get(jobId).catch((error: unknown) => {
+      const problem = parseApiProblem(error)
+      if (problem.code === 'NETWORK_ERROR' || (problem.status ?? 0) >= 500) return null
+      throw error
+    })
+    if (job?.status === 'done') return simulationApi.sweepResult(scenarioId, jobId)
+    if (job && !jobActive(job)) throw new Error(job.error?.detail ?? 'Перебор отменён')
     await new Promise((resolve) => setTimeout(resolve, SWEEP_POLL_MS))
   }
-  throw new Error('Перебор флота не закончился за 3 минуты - попробуйте ещё раз')
 }
 
 async function runSweep(scenarioId: string, body: FleetSweepRequest): Promise<FleetSweepResult> {
@@ -184,7 +185,9 @@ export async function calculateWithFleetCheck(scenarioId: string, force = false)
       // The server checks and applies the whole modeled fleet atomically; another process sweep would repeat it.
       if (result.joint_validation) break
     } catch (error) {
-      skipped.push(parseApiProblem(error).detail)
+      const problem = parseApiProblem(error)
+      if (problem.code !== 'SCENARIO_INCOMPLETE' && problem.code !== 'CONFLICT') throw error
+      skipped.push(problem.detail)
     }
   }
   const calculation = checked.length ? await simulationApi.calculate(scenarioId) : first
@@ -195,7 +198,8 @@ export async function calculateWithFleetCheck(scenarioId: string, force = false)
    детерминированный день, - чтобы сравнение сопоставляло одинаковые парки; затем сценарии пересчитываются. */
 export function useFleetSweep(projectId: string, scenarioId: string, variantIds: string[] = []) {
   const queryClient = useQueryClient()
-  return useMutation({
+  const active = useActiveSweep(scenarioId)
+  const mutation = useMutation({
     mutationFn: async (body: FleetSweepRequest) => {
       const result = await runSweep(scenarioId, body)
       const recalculate = result.applied ? [scenarioId] : []
@@ -214,8 +218,10 @@ export function useFleetSweep(projectId: string, scenarioId: string, variantIds:
         queryClient.invalidateQueries({ queryKey: qk.projects.list }),
       ])
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: jobsKey }),
     meta: { silent: true },
   })
+  return { ...mutation, isPending: mutation.isPending || Boolean(active) }
 }
 
 // Последний перебор хранится на сервере: таблица и «было → стало» остаются после перезагрузки.
