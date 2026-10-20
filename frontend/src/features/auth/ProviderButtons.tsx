@@ -34,22 +34,23 @@ export function ProviderButtons({
       <p className="meta mb-4">Вход через сервисы временно недоступен. Используйте почту и пароль.</p>
     ) : null
   return (
-    <div className="mb-5 space-y-4">
-      <div className="grid gap-2">
-        {available.map((p) => (
+    <div className="mb-4 space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        {available.map((p, index) => (
           <Button
             key={p.id}
             variant="outline"
             type="button"
-            className="relative h-11 w-full gap-3 border-line bg-white px-4 text-sm"
+            className={`h-11 w-full gap-2 border-line bg-card px-3 text-sm ${available.length % 2 === 1 && index === available.length - 1 ? 'col-span-2' : ''}`}
+            aria-label={`Войти через ${p.name}`}
             disabled={disabled || !!pending}
             aria-busy={pending === p.id}
             onClick={() => void start(p.id)}
           >
-            <span className="absolute left-4 flex size-5 items-center justify-center" aria-hidden="true">
+            <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
               {pending === p.id ? <Spinner /> : <ProviderIcon provider={p.id} />}
             </span>
-            Войти через {p.name}
+            {p.name}
           </Button>
         ))}
       </div>
