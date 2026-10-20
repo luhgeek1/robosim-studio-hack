@@ -60,7 +60,8 @@ test('landing → guest copy → real calculation → 2D/3D replay → report �
 })
 
 test('own blank project → CSV preview → apply → manual edit → reset', async ({ page }) => {
-  await page.goto('/demo?new=1')
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Создать проект', exact: true }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.getByLabel('Название', { exact: true }).fill('Собственный склад из CSV')
   await expect(page.getByRole('radio', { name: 'Пустой проект', exact: true })).toBeChecked()
@@ -86,11 +87,10 @@ test('own blank project → CSV preview → apply → manual edit → reset', as
   await page.getByRole('button', { name: 'Сбросить', exact: true }).click()
   await page.getByRole('alertdialog').getByRole('button', { name: 'Сбросить демо', exact: true }).click()
   await expect(page).toHaveURL(/\/demo$/)
-  await expect(page.getByRole('heading', { name: 'Демо без регистрации' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'От объекта до решения. Пройдите путь сами.' })).toBeVisible()
   await page
     .getByRole('navigation', { name: 'Разделы', exact: true })
     .getByRole('link', { name: 'Проекты', exact: true })
     .click()
-  await expect(page).toHaveURL(/\/demo$/)
-  await expect(page.getByRole('heading', { name: 'Демо без регистрации' })).toBeVisible()
+  await expect(page.getByText(/Проектов пока нет/)).toBeVisible()
 })

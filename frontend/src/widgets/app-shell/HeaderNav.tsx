@@ -3,7 +3,7 @@ import { Check, HeartPulse, Menu, Plane, Plus, Warehouse, X } from 'lucide-react
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
 import { OBJECT_TYPE_LABEL, useProject, useProjects } from '@/entities/project'
-import { projectsHome, useSession } from '@/entities/session'
+import { useSession } from '@/entities/session'
 import { compareUrl, useCompareSelection } from '@/features/catalog-compare-selection'
 import { parseApiProblem } from '@/shared/api/problem'
 import { formatDateTime, formatPct } from '@/shared/lib/format'
@@ -135,7 +135,7 @@ export function Sections({ projectId }: { projectId?: string }) {
   return (
     <nav className="flex shrink-0 items-center gap-1" aria-label="Разделы">
       {user && (
-        <SectionLink to={projectsHome(user)} end>
+        <SectionLink to="/projects" end>
           Проекты
         </SectionLink>
       )}
@@ -483,7 +483,7 @@ export function MobileNav({ projectId }: { projectId?: string }) {
         <div className="scroll-thin flex-1 overflow-y-auto p-3">
           <nav className="space-y-0.5" aria-label="Разделы">
             {user && (
-              <MobileLink to={projectsHome(user)} end onGo={go}>
+              <MobileLink to="/projects" end onGo={go}>
                 Проекты
               </MobileLink>
             )}

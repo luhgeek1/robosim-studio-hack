@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { projectsHome, sessionHome, workspaceHome } from '../src/entities/session/home.ts'
+import { sessionHome, workspaceHome } from '../src/entities/session/home.ts'
 import { accountReturnPath } from '../src/features/auth/links.ts'
 
 test('a guest can return to the landing without losing access to the demo entry', () => {
   for (const user of [null, { role: 'guest' as const }]) {
     assert.equal(sessionHome(user).path, '/')
     assert.equal(workspaceHome(user), '/demo')
-    assert.equal(projectsHome(user), '/demo')
   }
 })
 
@@ -19,7 +18,6 @@ test('account homes follow the role rather than the presence of a guest token', 
   ] as const) {
     assert.equal(sessionHome({ role }).path, path)
     assert.equal(workspaceHome({ role }), path)
-    assert.equal(projectsHome({ role }), '/projects')
   }
 })
 

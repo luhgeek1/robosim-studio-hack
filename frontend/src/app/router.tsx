@@ -4,7 +4,6 @@ import { AppShell } from '@/widgets/app-shell'
 import {
   DemoEntry,
   NotFoundPage,
-  ProjectsEntry,
   PublicHome,
   RequireAccount,
   RequireAdmin,
@@ -156,18 +155,13 @@ const router = createBrowserRouter([
             ...page(() => import('@/pages/product').then((m) => ({ Component: m.ProductPage }))),
           },
           {
-            path: 'projects',
-            Component: ProjectsEntry,
-            children: [
-              {
-                index: true,
-                ...page(() => import('@/pages/projects').then((m) => ({ Component: m.ProjectsPage }))),
-              },
-            ],
-          },
-          {
             Component: RequireAuth,
             children: [
+              {
+                path: 'projects',
+                ...page(() => import('@/pages/projects').then((m) => ({ Component: m.ProjectsPage }))),
+              },
+
               {
                 path: 'projects/:projectId',
                 ...page(() => import('@/pages/project').then((m) => ({ Component: m.ProjectLayout }))),

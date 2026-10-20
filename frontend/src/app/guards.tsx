@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useWorkspaceStore } from '@/entities/organization'
-import { projectsHome, sessionHome, useSession, workspaceHome } from '@/entities/session'
+import { sessionHome, useSession, workspaceHome } from '@/entities/session'
 import { accountReturnPath } from '@/features/auth/links'
 import { Button } from '@/shared/ui/button'
 import { EmptyState, LoadingBlock } from '@/shared/ui/states'
@@ -19,14 +19,6 @@ export function RequireAuth() {
   const { status } = useSession()
   if (status === 'restoring') return <LoadingBlock className="p-8" />
   if (status === 'guest') return <Navigate to="/demo" replace />
-  return <Outlet />
-}
-
-export function ProjectsEntry() {
-  const { status, user } = useSession()
-  const { search, hash } = useLocation()
-  if (status === 'restoring') return <LoadingBlock className="p-8" />
-  if (!user || user.role === 'guest') return <Navigate to={`${projectsHome(user)}${search}${hash}`} replace />
   return <Outlet />
 }
 
