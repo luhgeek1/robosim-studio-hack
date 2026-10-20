@@ -240,7 +240,7 @@ export function LoginPage() {
               </TabsContent>
             </Tabs>
 
-            {mode === 'login' && user?.role !== 'guest' && (
+            {mode === 'login' && (
               <div className="hairline mt-6 pt-5">
                 <div className="h3 mb-2 text-[14px]">Демо-доступ для жюри</div>
                 <div className="space-y-1.5">
