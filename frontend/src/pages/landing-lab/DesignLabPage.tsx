@@ -143,7 +143,7 @@ export function DesignLabPage() {
         <aside className="lab-gallery-reference">
           <div>
             <h2>Для сравнения — текущая версия</h2>
-            <p>Оригинальный лендинг доступен рядом. Новые варианты пока не опубликованы.</p>
+            <p>Оригинальный лендинг доступен рядом для сравнения со всеми шестью концепциями.</p>
           </div>
           <Link to="/" className="lab-header-action">
             Открыть исходный <ArrowUpRight size={18} />
@@ -151,7 +151,7 @@ export function DesignLabPage() {
         </aside>
       </main>
       <footer className="lab-footer lab-wrap">
-        <span>РобоМера · Локальные концепции</span>
+        <span>РобоМера · Галерея концепций</span>
         <span>Самостоятельная платформа. Ваш объект. Ваш сценарий.</span>
       </footer>
     </div>
