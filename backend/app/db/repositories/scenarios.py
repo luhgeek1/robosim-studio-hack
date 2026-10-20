@@ -27,6 +27,12 @@ class ScenarioRepository:
         )
         return (await self._session.scalars(statement)).all()
 
+    async def by_recommendation(self, project_id: UUID, key: str) -> Scenario | None:
+        scenario: Scenario | None = await self._session.scalar(
+            select(Scenario).where(Scenario.project_id == project_id, Scenario.recommendation_key == key)
+        )
+        return scenario
+
     async def get_owned(self, scenario_id: UUID, owner_id: UUID, *, lock: bool = False) -> Scenario | None:
         statement = (
             select(Scenario)
@@ -121,6 +127,7 @@ class ScenarioRepository:
             copy = Scenario(
                 project_id=target_project_id,
                 name=scenario.name,
+                origin=scenario.origin,
                 kind=scenario.kind,
                 is_baseline=scenario.is_baseline,
                 financing=dict(scenario.financing),

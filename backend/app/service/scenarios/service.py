@@ -1,3 +1,5 @@
+import hashlib
+import json
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
@@ -184,8 +186,26 @@ class ScenarioService:
         if draft.from_recommendation and not items:
             items = await self._recommended_items(project_id)
         financing = self._financing(draft.kind, draft.financing)
+        recommendation_key = None
+        if draft.from_recommendation and not draft.items:
+            configuration = {
+                "items": [(i.process_key, str(i.product_id), str(i.offer_id)) for i in items],
+                "kind": draft.kind.value,
+                "financing": financing_to_json(financing),
+                "horizon": draft.horizon_years,
+                "discount": draft.discount_rate_pct,
+                "overrides": [str(o) for o in draft.overrides],
+            }
+            recommendation_key = hashlib.sha256(
+                json.dumps(configuration, sort_keys=True).encode()
+            ).hexdigest()
+            existing = await self._repo.by_recommendation(project.id, recommendation_key)
+            if existing is not None:
+                return await self.get(existing.id)
         scenario = Scenario(
             project_id=project.id,
+            origin="recommendation" if recommendation_key else "manual",
+            recommendation_key=recommendation_key,
             name=draft.name.strip(),
             kind=draft.kind,
             is_baseline=False,
@@ -205,6 +225,7 @@ class ScenarioService:
         scenario = await self.owned(scenario_id, lock=True)
         project = await self._loader.project(self._user, scenario.project_id)
         before = _snapshot(scenario)
+        scenario.recommendation_key = None
         if "name" in patch.fields and patch.name:
             scenario.name = patch.name.strip()
         if "items" in patch.fields and patch.items is not None:
@@ -252,6 +273,7 @@ class ScenarioService:
         financing = financing_to_json(Financing()) if target_kind != source.kind else source.financing
         copy = Scenario(
             project_id=source.project_id,
+            origin=source.origin,
             name=(name or f"{KIND_NAMES[target_kind]}: копия «{source.name}»").strip(),
             kind=target_kind,
             is_baseline=False,

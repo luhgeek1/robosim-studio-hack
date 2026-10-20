@@ -98,7 +98,18 @@ class CalculationService:
         try:
             return calculate(snapshot.input, render=render)
         except CalculationError as exc:
-            raise ScenarioIncompleteError(str(exc)) from exc
+            details = (
+                [
+                    {
+                        "loc": ["items", exc.process_key, "count_manual"],
+                        "msg": str(exc),
+                        "code": "COUNT_REQUIRED",
+                    }
+                ]
+                if exc.process_key
+                else None
+            )
+            raise ScenarioIncompleteError(str(exc), details=details) from exc
 
     async def calculate(self, scenario_id: UUID) -> StoredCalculation:
         scenario = await self._scenarios.owned(scenario_id)

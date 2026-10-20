@@ -13,6 +13,10 @@ from app.engine.trace import Book, InputKind, Quantity, TraceStep
 class CalculationError(ValueError):
     """The scenario cannot be calculated as entered - the message tells the user what to fix."""
 
+    def __init__(self, message: str, *, process_key: str | None = None) -> None:
+        super().__init__(message)
+        self.process_key = process_key
+
 
 @dataclass(frozen=True, slots=True)
 class ParamMeta:

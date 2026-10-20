@@ -195,7 +195,7 @@ def test_baseline_costs_labor_only() -> None:
 
 def test_missing_specs_require_manual_count() -> None:
     items = [replace(scenario().items[0], specs=Book.of(InputKind.SPEC, []))]
-    with pytest.raises(CalculationError, match="Задайте количество вручную"):
+    with pytest.raises(CalculationError, match="Количество → задать вручную"):
         calculate(scenario(items=items))
 
 

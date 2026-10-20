@@ -19,7 +19,7 @@ Problem:
     request_id: {type: string, example: "8f1c0d2e-…"}
     details:
       type: array
-      description: Детали валидации (для 422) или доменные подробности.
+      description: Детали валидации (для 422) или доменные подробности. При SCENARIO_INCOMPLETE и code COUNT_REQUIRED loc содержит [items, process_key, count_manual].
       items:
         type: object
         properties:

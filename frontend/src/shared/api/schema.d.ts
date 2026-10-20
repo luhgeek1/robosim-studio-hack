@@ -2424,7 +2424,7 @@ export interface components {
       timestamp: string
       /** @example 8f1c0d2e-… */
       request_id: string
-      /** @description Детали валидации (для 422) или доменные подробности. */
+      /** @description Детали валидации (для 422) или доменные подробности. При SCENARIO_INCOMPLETE и code COUNT_REQUIRED loc содержит [items, process_key, count_manual]. */
       details?: {
         loc?: string[]
         msg?: string
@@ -2990,6 +2990,10 @@ export interface components {
       /** @description Быстрая аналитическая оценка без симуляции - для сортировки и карточки. */
       estimate?: {
         robots_count?: number | null
+        /** @description NPV покупки для отдельного процесса с затратами объекта. */
+        npv_rub?: number | null
+        /** @description Почему нельзя автоматически рассчитать количество; null при доступной оценке. */
+        sizing_issue?: string | null
         capex_rub?: number | null
         payback_years?: number | null
         /** @example Аналитическая оценка по циклу; точное число даст симуляция */
@@ -2997,6 +3001,12 @@ export interface components {
       }
     }
     Scenario: {
+      /**
+       * @description Происхождение состава. Сохраняется после правки и копирования; не текущий экономический вердикт.
+       * @default manual
+       * @enum {string}
+       */
+      origin: 'manual' | 'recommendation'
       /** Format: uuid */
       id: string
       /** Format: uuid */
@@ -4500,7 +4510,7 @@ export interface components {
        * @description Продукт для сценария из рекомендации; тот же выбор, что при создании
        */
       recommended_product_id?: string | null
-      /** @description Причина выбора с учётом NPV и статуса проверок */
+      /** @description Причина включения или невключения процесса в рекомендацию с учётом NPV и полноты данных */
       selection_reason?: string | null
     }
     MatchingRunRequest: {
@@ -4673,7 +4683,7 @@ export interface components {
       discount_rate_pct?: number | null
       overrides?: components['schemas']['NormOverride'][]
       /**
-       * @description Заполнить items лучшими fit-кандидатами по каждому процессу
+       * @description Заполнить items рекомендацией подбора. Повтор возвращает неизменённый сценарий того же состава и условий; правки пользователя сохраняются отдельно.
        * @default false
        */
       from_recommendation: boolean
@@ -4764,8 +4774,8 @@ export interface components {
         cycle_time_s: number | null
         /** @description 3600 / цикл */
         nominal_throughput_per_hour?: number | null
-        /** @description Доля времени в работе с учётом зарядки и простоев */
-        availability?: number
+        /** @description Доля времени в работе с учётом зарядки и простоев; null при ручном количестве без модели производительности. */
+        availability?: number | null
         utilization_target?: number | null
         effective_throughput_per_hour: number | null
         /** @description Заявка производителя - для сравнения */
@@ -4774,7 +4784,8 @@ export interface components {
       count: components['schemas']['CountResult']
       stations_count?: number | null
       chargers_count?: number
-      fleet_throughput_per_hour?: number
+      /** @description null, если производительность не оценена и количество задано вручную. */
+      fleet_throughput_per_hour?: number | null
       /** @description fleet_throughput / demand_peak */
       coverage_of_peak?: number
     }
