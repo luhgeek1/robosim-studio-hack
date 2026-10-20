@@ -93,6 +93,7 @@ export class WarehouseJourneyController {
     const compact = width <= 800
     const staticView = this.reduced || this.fallback
     const now = performance.now()
+    const experienceRect = node.parentElement!.getBoundingClientRect()
     const chapterRect = chapter.getBoundingClientRect()
     const destinationRect = destination.getBoundingClientRect()
     const application = destination.closest<HTMLElement>('.lp-applications')!
@@ -173,7 +174,14 @@ export class WarehouseJourneyController {
       x < width &&
       x + modelWidth > 0
     const interactive = visible && dock === 1 && (this.selected === null || this.selected === 'warehouse')
-    node.style.transform = `translate3d(${x}px,${y}px,0) scale(${modelWidth / width},${modelHeight / height})`
+    // Once landed, let the browser scroll the existing canvas with the page.
+    // A fixed surface following viewport rectangles in rAF trails native scrolling
+    // by a frame, making it bounce against the card even with a stationary camera.
+    const landed = dock === 1
+    node.style.position = landed ? 'absolute' : 'fixed'
+    const surfaceX = landed ? x - experienceRect.left : x
+    const surfaceY = landed ? y - experienceRect.top : y
+    node.style.transform = `translate3d(${surfaceX}px,${surfaceY}px,0) scale(${modelWidth / width},${modelHeight / height})`
     node.style.visibility = visible ? 'visible' : 'hidden'
     node.style.pointerEvents = interactive ? 'auto' : 'none'
     node.style.setProperty('--journey-model-opacity', String(cardOpacity))
@@ -195,7 +203,7 @@ export class WarehouseJourneyController {
     node.dataset.progress = this.current.toFixed(5)
     node.dataset.docked = String(interactive)
     if (this.pauseButton && previewRect) {
-      this.pauseButton.style.transform = `translate3d(${previewRect.right - 50}px,${previewRect.bottom + applicationShift - previousShift - 40}px,0)`
+      this.pauseButton.style.transform = `translate3d(${previewRect.right - experienceRect.left - 50}px,${previewRect.bottom + applicationShift - previousShift - experienceRect.top - 40}px,0)`
       this.pauseButton.hidden = !interactive
     }
     if (visible !== this.wasActive) {

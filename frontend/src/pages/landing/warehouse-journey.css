@@ -59,7 +59,7 @@
     linear-gradient(0deg, #0c1213a6, transparent 26%, transparent 80%, #0c12134d);
 }
 .cm-experience .cm-shared-pause {
-  position: fixed;
+  position: absolute;
   z-index: 4;
   inset: 0 auto auto 0;
 }
