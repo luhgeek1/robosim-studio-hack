@@ -26,7 +26,7 @@ export function ProposalsTab() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="meta max-w-xl">
           Производители предлагают правки своих карточек. Одобренная правка попадает в каталог с источником и поднимает
-          его версию — сохранённые расчёты предложат пересчёт.
+          его версию - сохранённые расчёты предложат пересчёт.
         </p>
         <Segmented
           size="sm"
@@ -128,7 +128,7 @@ function ReviewCard({ proposal, index }: { proposal: Proposal; index: number }) 
               {proposal.product_changed_since && (
                 <div className="flex items-start gap-2 rounded-[12px] bg-warn-soft px-3.5 py-2.5 text-[13px] text-warn">
                   <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-                  Карточку меняли после подачи заявки: «было» ниже — текущее состояние, а не то, что видел
+                  Карточку меняли после подачи заявки: «было» ниже - текущее состояние, а не то, что видел
                   производитель.
                 </div>
               )}
@@ -149,7 +149,7 @@ function ReviewCard({ proposal, index }: { proposal: Proposal; index: number }) 
                   <Textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Комментарий производителю — обязателен при отказе"
+                    placeholder="Комментарий производителю - обязателен при отказе"
                     className="min-h-16 rounded-[10px] bg-card"
                     maxLength={2000}
                   />
@@ -157,7 +157,7 @@ function ReviewCard({ proposal, index }: { proposal: Proposal; index: number }) 
                     {proposal.specs.length > 0 ? (
                       <label className="flex items-center gap-2 text-[12.5px] text-ink-2">
                         <Switch size="sm" checked={confirmSpecs} onCheckedChange={setConfirmSpecs} />
-                        Источник проверен — ТТХ подтверждены
+                        Источник проверен - ТТХ подтверждены
                       </label>
                     ) : (
                       <span />

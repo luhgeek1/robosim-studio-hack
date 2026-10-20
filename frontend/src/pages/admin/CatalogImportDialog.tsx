@@ -16,7 +16,7 @@ import { stagger } from './motion'
 const ACCEPT = '.csv,text/csv'
 const SHOWN_ITEMS = 60
 
-const value = (v: string | number | null | undefined) => (typeof v === 'number' ? formatNumber(v) : (v ?? '—'))
+const value = (v: string | number | null | undefined) => (typeof v === 'number' ? formatNumber(v) : (v ?? '-'))
 
 export function CatalogImportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -43,7 +43,7 @@ export function CatalogImportDialog({ open, onOpenChange }: { open: boolean; onO
       { file, notes: notes.trim() || undefined },
       {
         onSuccess: (done) => {
-          toast.success(`Каталог обновлён — версия ${done.catalog_version}`, {
+          toast.success(`Каталог обновлён - версия ${done.catalog_version}`, {
             description: `Новых ${done.created}, изменено ${done.updated}. Сохранённые расчёты помечены устаревшими.`,
           })
           close()
@@ -129,7 +129,7 @@ export function CatalogImportDialog({ open, onOpenChange }: { open: boolean; onO
 
 function Preview({ result }: { result: CatalogImportResult }) {
   const types = useSolutionTypes()
-  const typeName = (key?: string | null) => types.data?.find((t) => t.key === key)?.name ?? key ?? '—'
+  const typeName = (key?: string | null) => types.data?.find((t) => t.key === key)?.name ?? key ?? '-'
   const counts = [
     { label: 'новых', value: result.created, main: true },
     { label: 'изменится', value: result.updated, main: true },
@@ -159,8 +159,8 @@ function Preview({ result }: { result: CatalogImportResult }) {
         ))}
       </div>
       <p className="meta">
-        Новых предложений (строк цен) — {formatNumber(result.offers_created)}. Строк без id пропущено —{' '}
-        {formatNumber(result.skipped)}. В каталоге, но не в файле — {formatNumber(result.not_in_file)} (не скрываются).
+        Новых предложений (строк цен) - {formatNumber(result.offers_created)}. Строк без id пропущено -{' '}
+        {formatNumber(result.skipped)}. В каталоге, но не в файле - {formatNumber(result.not_in_file)} (не скрываются).
       </p>
       {result.errors.length > 0 && (
         <ul className="space-y-1 rounded-[10px] border border-l-2 border-line border-l-warn bg-surface-2 p-3 text-[12.5px]">

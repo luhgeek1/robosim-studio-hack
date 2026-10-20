@@ -42,7 +42,7 @@ export function AdminLayout() {
         className="mb-6 flex min-w-0 flex-col-reverse gap-1 border-b border-line lg:mb-8 lg:flex-row lg:items-center lg:justify-between lg:gap-4"
         aria-label="Разделы админки"
       >
-        {/* На телефоне четыре вкладки не помещаются — лента прокручивается вбок, а не раздвигает страницу. */}
+        {/* На телефоне четыре вкладки не помещаются - лента прокручивается вбок, а не раздвигает страницу. */}
         <div className="-mx-4 min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 [scrollbar-width:none] lg:contents">
           <div className="relative flex w-max items-center gap-1 lg:w-auto">
             <SlideHighlight className="z-10 rounded-full bg-ink" transition={SPRING} />

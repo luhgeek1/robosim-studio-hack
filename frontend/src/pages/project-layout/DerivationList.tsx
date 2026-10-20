@@ -77,7 +77,7 @@ export function Derivation({ layout, projectName }: { layout: Layout; projectNam
           <div>
             <div className="text-[15px] font-semibold">Как получена геометрия</div>
             <div className="text-xs text-muted-foreground">
-              {layout.derivation.length} шагов: каждый размер — формула из параметров объекта и нормативов
+              {layout.derivation.length} шагов: каждый размер - формула из параметров объекта и нормативов
             </div>
           </div>
           <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} />

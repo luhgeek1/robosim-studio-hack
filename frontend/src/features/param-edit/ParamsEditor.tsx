@@ -67,7 +67,7 @@ export function ParamsEditor({
 
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-8">
-      {/* На узком экране разделы — лента чипов над списком, которая листается вбок; с lg — липкая колонка слева. */}
+      {/* На узком экране разделы - лента чипов над списком, которая листается вбок; с lg - липкая колонка слева. */}
       <nav
         className="scroll-thin relative -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:sticky lg:top-40 lg:mx-0 lg:block lg:space-y-0.5 lg:overflow-visible lg:px-0 lg:pb-0"
         aria-label="Разделы параметров"

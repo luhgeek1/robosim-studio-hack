@@ -74,7 +74,7 @@ export function RegenerateDialog({
     }
     generate.mutate(body, {
       onSuccess: () => {
-        toast.success('Планировка перегенерирована — пересчитайте сценарии')
+        toast.success('Планировка перегенерирована - пересчитайте сценарии')
         onOpenChange(false)
       },
     })
@@ -88,7 +88,7 @@ export function RegenerateDialog({
             {layout ? 'Перегенерировать планировку' : 'Построить планировку'}
           </DialogTitle>
           <DialogDescription className="text-[14px] leading-relaxed text-ink-3">
-            Схема строится из параметров объекта и нормативов. Поля ниже необязательны: пустое — значение генератора.
+            Схема строится из параметров объекта и нормативов. Поля ниже необязательны: пустое - значение генератора.
           </DialogDescription>
         </DialogHeader>
 
@@ -140,7 +140,7 @@ export function RegenerateDialog({
           {layout && (
             <p className="flex gap-2.5 rounded-xl bg-warn-soft/70 px-4 py-3 text-[13px] leading-relaxed text-ink-2">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
-              Маршруты изменятся, и расчёты сценариев станут устаревшими — их нужно будет пересчитать.
+              Маршруты изменятся, и расчёты сценариев станут устаревшими - их нужно будет пересчитать.
             </p>
           )}
         </div>

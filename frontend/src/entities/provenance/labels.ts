@@ -22,7 +22,7 @@ export const PROVENANCE_HINT: Record<ProvenanceStatus, string> = {
   derived: 'Вычислено из других значений',
   confirmed: 'Подтверждено первичным источником',
   vendor_claim: 'Заявлено производителем без независимой проверки',
-  missing: 'Данных нет — стоит уточнить',
+  missing: 'Данных нет - стоит уточнить',
 }
 
 export const PROVENANCE_TONE: Record<ProvenanceStatus, Tone> = {

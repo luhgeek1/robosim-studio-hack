@@ -33,12 +33,12 @@ export function ProcessesPage() {
     <Screen
       title={
         top && topShare
-          ? `${formatPct(topShare, { share: true, digits: 0 })} ФОТ — ${top.name.toLowerCase()}: ${formatRub(top.current?.cost_rub_year)} в год`
+          ? `${formatPct(topShare, { share: true, digits: 0 })} ФОТ - ${top.name.toLowerCase()}: ${formatRub(top.current?.cost_rub_year)} в год`
           : 'Где деньги'
       }
       lead={
         data
-          ? `Персонал объекта обходится в ${formatRub(data.total_labor_cost_rub_year)} в год. Ниже — спрос, пик и стоимость по каждому процессу: роботизировать стоит там, где крупный ФОТ и высокий пик.`
+          ? `Персонал объекта обходится в ${formatRub(data.total_labor_cost_rub_year)} в год. Ниже - спрос, пик и стоимость по каждому процессу: роботизировать стоит там, где крупный ФОТ и высокий пик.`
           : undefined
       }
       nextLabel="Подобрать роботов"
@@ -58,12 +58,12 @@ export function ProcessesPage() {
               />
               <Stat
                 label="Рабочих часов в сутки"
-                value={data.working_hours_per_day != null ? `${formatNumber(data.working_hours_per_day)} ч` : '—'}
+                value={data.working_hours_per_day != null ? `${formatNumber(data.working_hours_per_day)} ч` : '-'}
                 hint="по режиму работы объекта"
               />
               <Stat
                 label="Пиковый коэффициент"
-                value={data.peak_factor != null ? `×${formatNumber(data.peak_factor)}` : '—'}
+                value={data.peak_factor != null ? `×${formatNumber(data.peak_factor)}` : '-'}
                 hint="пиковый час к среднему"
               />
               <Stat label="Процессов" value={sorted.length} hint={`можно роботизировать: ${robotizable}`} />

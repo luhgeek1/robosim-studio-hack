@@ -83,7 +83,7 @@ export function variantFromProduct(kind: Kind, p: Product, detail?: ProductDetai
   const known = builtinFor(kind, p)
   const base = known ?? kind.variants[0]
   const own = specFromCatalog(p, detail)
-  // A lift below the class range is a range floor in the catalog (Ronavi SR: «200–1000» stored as 200).
+  // A lift below the class range is a range floor in the catalog (Ronavi SR: «200-1000» stored as 200).
   if (kind.id === 'sorter-conveyor' && own.lift_mm !== undefined && own.lift_mm < 400) delete own.lift_mm
   const spec: Spec = { ...base.spec, ...own }
   // A known product keeps its researched values; a new one borrows the class defaults and marks them.

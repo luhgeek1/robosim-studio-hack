@@ -105,12 +105,12 @@ export function CandidateCard({
         <CardFigures
           items={[
             {
-              value: isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '—',
+              value: isNum(estimate?.robots_count) ? formatNumber(estimate.robots_count) : '-',
               label: isNum(estimate?.robots_count) ? 'роботов нужно' : 'роботов: не оценено',
             },
-            { value: isNum(estimate?.capex_rub) ? formatRub(estimate.capex_rub) : '—', label: 'CAPEX' },
+            { value: isNum(estimate?.capex_rub) ? formatRub(estimate.capex_rub) : '-', label: 'CAPEX' },
             {
-              value: isNum(estimate?.payback_years) ? formatYears(estimate.payback_years) : '—',
+              value: isNum(estimate?.payback_years) ? formatYears(estimate.payback_years) : '-',
               label: 'окупаемость',
             },
           ]}
@@ -232,7 +232,7 @@ function MissingList({ items }: { items: MissingData[] }) {
   )
 }
 
-// ТЗ 3.4.4: решение не прошло жёсткие проверки, но его можно добавить в сравнение — после показа всех причин.
+// ТЗ 3.4.4: решение не прошло жёсткие проверки, но его можно добавить в сравнение - после показа всех причин.
 function ManualAdd({
   projectId,
   processKey,
@@ -310,7 +310,7 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
   if (!isNum(candidate.score)) {
     return (
       <div className="shrink-0 text-right">
-        <div className="display num text-[19px] leading-tight text-ink-4">—</div>
+        <div className="display num text-[19px] leading-tight text-ink-4">-</div>
         <div className="text-[11px] text-ink-3">балл</div>
       </div>
     )
@@ -329,7 +329,7 @@ function ScoreButton({ candidate }: { candidate: Candidate }) {
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[min(440px,calc(100vw-2rem))]">
-        <div className="mb-2 font-medium">Балл {formatNumber(candidate.score, 1)} из 100 — сумма вкладов</div>
+        <div className="mb-2 font-medium">Балл {formatNumber(candidate.score, 1)} из 100 - сумма вкладов</div>
         <table className="w-full text-xs">
           <thead className="text-ink-3">
             <tr>

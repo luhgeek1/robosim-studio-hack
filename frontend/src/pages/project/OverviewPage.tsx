@@ -45,7 +45,7 @@ const VERDICT_DOT: Record<(typeof VERDICT_TONE)[Verdict], string> = {
 
 // The four steps that lead to a payback figure; the rest of the path checks and packages it.
 const PATH: { id: ProjectStepId; label: string; text: string }[] = [
-  { id: 'object', label: 'Объект', text: 'Площадь, персонал, смены и объёмы — загрузите файл или уточните главное' },
+  { id: 'object', label: 'Объект', text: 'Площадь, персонал, смены и объёмы - загрузите файл или уточните главное' },
   { id: 'processes', label: 'Где деньги', text: 'Какие процессы обходятся дороже всего и что из них роботизируется' },
   { id: 'matching', label: 'Подбор', text: 'Роботы под ваш объект и объяснение, почему они подходят' },
   { id: 'scenarios', label: 'Сценарии', text: 'Сколько роботов нужно, сколько это стоит и когда окупится' },
@@ -130,7 +130,7 @@ export function OverviewPage() {
                           <span className="text-ink-3">
                             {AUDIT_ENTITY_LABEL[event.entity.split(':')[0]] ?? 'данных проекта'}
                           </span>
-                          {event.note && <span className="text-ink-3"> — {event.note}</span>}
+                          {event.note && <span className="text-ink-3"> - {event.note}</span>}
                         </span>
                       </li>
                     ))}
@@ -183,7 +183,7 @@ function Start({ scenario }: { scenario?: Scenario }) {
           </Link>
         </Button>
         <span className="text-[13px] text-ink-3">
-          Дальше — сравнение покупки, лизинга и RaaS, риски, имитация и отчёт PDF / Excel
+          Дальше - сравнение покупки, лизинга и RaaS, риски, имитация и отчёт PDF / Excel
         </span>
       </div>
     </div>
@@ -200,7 +200,7 @@ function Figure({ label, value, children }: { label: string; value: string; chil
   )
 }
 
-/* What the recommendation actually buys: which robots, how many and for which process — the first thing
+/* What the recommendation actually buys: which robots, how many and for which process - the first thing
    an operations director asks after the payback. */
 function Solution({ projectId, scenario }: { projectId: string; scenario: Scenario }) {
   const processes = useProcesses(projectId)
@@ -259,7 +259,7 @@ function Solution({ projectId, scenario }: { projectId: string; scenario: Scenar
       {scenario.last_calculation?.status === 'stale' && (
         <p className="mt-4 flex items-center gap-2 text-[12.5px] text-warn">
           <span className="size-1.5 rounded-full bg-warn" />
-          Данные менялись после расчёта — пересчитайте сценарий
+          Данные менялись после расчёта - пересчитайте сценарий
         </p>
       )}
     </Panel>

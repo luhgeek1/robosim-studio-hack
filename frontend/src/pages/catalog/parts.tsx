@@ -22,7 +22,7 @@ export function TrlBadge({ trl }: { trl: number | null | undefined }) {
           УГТ {trl}
         </ToneBadge>
       </TooltipTrigger>
-      <TooltipContent>Уровень готовности технологии по каталогу организатора (1–9)</TooltipContent>
+      <TooltipContent>Уровень готовности технологии по каталогу организатора (1-9)</TooltipContent>
     </Tooltip>
   )
 }
@@ -39,7 +39,7 @@ export function ProductStatusMark({ status, className }: { status: ProductStatus
   )
 }
 
-/* Отметки о проверке строкой с галочками — без плашек, чтобы карточка не пестрила. */
+/* Отметки о проверке строкой с галочками - без плашек, чтобы карточка не пестрила. */
 export function VerifiedMarks({ badges, className }: { badges: Badge[]; className?: string }) {
   const shown = badges.filter((badge) => VERIFIED_BADGES.has(badge))
   if (!shown.length) return null

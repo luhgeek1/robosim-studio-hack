@@ -150,7 +150,7 @@ export function ImportRowEditor({
         <p className="text-xs text-ink-2">
           Сейчас в проекте: {text(conflict.current_value ?? null)} {row.unit}.{' '}
           {conflict.current_status === 'user'
-            ? 'Введено вручную — сохранится, пока не разрешена перезапись.'
+            ? 'Введено вручную - сохранится, пока не разрешена перезапись.'
             : 'При импорте будет заменено.'}
         </p>
       )}

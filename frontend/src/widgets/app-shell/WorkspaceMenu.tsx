@@ -38,7 +38,7 @@ function Avatar({ letter, shared, size = 'sm' }: { letter: string; shared: boole
 }
 
 /* Меню профиля с переключателем рабочих областей: личное пространство и организации пользователя.
-   Выбор меняет содержимое сайта — список проектов, вкладки и куда создаются новые проекты. */
+   Выбор меняет содержимое сайта - список проектов, вкладки и куда создаются новые проекты. */
 export function WorkspaceMenu() {
   const { status, user, logout } = useSession()
   const workspace = useWorkspace()
@@ -69,7 +69,7 @@ export function WorkspaceMenu() {
   const current = workspace.organization
   const switchTo = (id: string | null) => {
     workspace.select(id)
-    // Открытый проект или страница организации принадлежат прежней области — уходим к её списку проектов.
+    // Открытый проект или страница организации принадлежат прежней области - уходим к её списку проектов.
     if (pathname.startsWith('/projects/') || pathname.startsWith('/organizations/')) navigate('/projects')
   }
 

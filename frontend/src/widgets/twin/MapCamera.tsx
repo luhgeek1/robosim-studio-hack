@@ -97,7 +97,7 @@ export function MapToolbar({
   onAction: (action: CameraAction) => void
   routes: boolean
   onRoutes: () => void
-  /** Undefined — the run has no congestion data yet, the button is hidden. */
+  /** Undefined - the run has no congestion data yet, the button is hidden. */
   heat?: boolean
   onHeat?: () => void
   placement?: ToolbarPlacement
@@ -219,13 +219,13 @@ export function MapToolbar({
         <div className="max-w-[290px] rounded-xl border border-slate-200 bg-white/95 p-4 text-[12px] leading-6 text-slate-600 shadow-lg">
           <p className="font-semibold text-slate-900">Управление картой</p>
           <p>
-            Левая кнопка мыши — вращение.
+            Левая кнопка мыши - вращение.
             <br />
-            Правая кнопка или Shift + левая — сдвиг.
+            Правая кнопка или Shift + левая - сдвиг.
             <br />
-            Колесо — масштаб.
+            Колесо - масштаб.
             <br />
-            На сенсорном экране: один палец — вращение, два — сдвиг и масштаб.
+            На сенсорном экране: один палец - вращение, два - сдвиг и масштаб.
           </p>
           <p className="mt-2">Ракурс сохраняется во время симуляции. Кнопка ↺ возвращает весь объект в кадр.</p>
         </div>

@@ -164,7 +164,7 @@ export function CinematicDetails({ reduced }: { reduced: boolean }) {
             Сначала посмотреть демо <ArrowUpRight size={20} />
           </Link>
         </div>
-        <p>РобоМера. От идеи — к обоснованному решению.</p>
+        <p>РобоМера. От идеи - к обоснованному решению.</p>
       </section>
     </div>
   )

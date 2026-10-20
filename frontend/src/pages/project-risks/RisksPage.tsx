@@ -73,7 +73,7 @@ export function RisksPage() {
           <EmptyState
             icon={<ShieldAlert className="size-6" />}
             title="Нет рассчитанных сценариев роботизации"
-            description="Анализ рисков строится для сценария роботизации с готовым расчётом. Базовый сценарий «как сейчас» — точка отсчёта, для него риски не считаются."
+            description="Анализ рисков строится для сценария роботизации с готовым расчётом. Базовый сценарий «как сейчас» - точка отсчёта, для него риски не считаются."
             action={
               <Button asChild>
                 <Link to="../scenarios">
@@ -101,7 +101,7 @@ export function RisksPage() {
             <ToneBadge tone="warn" className="mr-2">
               устарел
             </ToneBadge>
-            Данные объекта изменились после расчёта сценария «{scenario.name}» — пересчитайте его.
+            Данные объекта изменились после расчёта сценария «{scenario.name}» - пересчитайте его.
           </Callout>
         )}
 
@@ -172,7 +172,7 @@ function SensitivitySections({
                 на новые условия. Поэтому результат может отличаться и из-за способа подбора парка.
               </p>
               <p className="mt-2">
-                Сверху — параметры с самым большим разбросом результата. Это чувствительность расчёта к параметру, а не
+                Сверху - параметры с самым большим разбросом результата. Это чувствительность расчёта к параметру, а не
                 вероятность исхода.
               </p>
             </InfoHint>
@@ -204,18 +204,18 @@ function SensitivitySections({
 
 function Odds({ result, horizon }: { result: MonteCarloResult; horizon: number }) {
   const p = result.probability ?? {}
-  const share = (v: number | undefined) => (isNum(v) ? formatPct(v, { share: true, digits: 0 }) : '—')
+  const share = (v: number | undefined) => (isNum(v) ? formatPct(v, { share: true, digits: 0 }) : '-')
   return (
     <StatStrip columns={4}>
       <Stat label="Окупится до 3 лет" value={share(p.payback_le_3y)} hint="вероятность" />
       <Stat label="Окупится до 5 лет" value={share(p.payback_le_5y)} hint="вероятность" />
       <Stat label="NPV больше нуля" value={share(p.npv_positive)} hint="вероятность" />
       <Stat
-        label="Окупаемость, P10–P90"
+        label="Окупаемость, P10-P90"
         value={
           isNum(result.p90) && result.p90 >= horizon - 1e-6
             ? `от ${formatNumber(result.p10, 1)} до «не окупается»`
-            : `${formatNumber(result.p10, 1)}–${formatYears(result.p90)}`
+            : `${formatNumber(result.p10, 1)}-${formatYears(result.p90)}`
         }
         hint={`медиана ${formatPayback(result.p50, horizon)}`}
       />

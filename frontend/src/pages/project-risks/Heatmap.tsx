@@ -19,9 +19,9 @@ const mix = (token: 'ok' | 'warn' | 'crit', share: number): Cell => ({
 })
 const NEUTRAL: Cell = { background: 'var(--surface-2)', color: 'var(--ink-2)' }
 
-/* Payback follows the ТЗ 3.5.7 bands (до 3 / 3–5 / больше 5 лет) as one continuous scale: sage deepens as payback
+/* Payback follows the ТЗ 3.5.7 bands (до 3 / 3-5 / больше 5 лет) as one continuous scale: sage deepens as payback
    gets shorter than 3 years, orange grows towards 5, red past 5 or never. Money metrics: sage for gain, red for
-   loss, the stronger the further from zero (TCO — from the current calculation). */
+   loss, the stronger the further from zero (TCO - from the current calculation). */
 function cellOf(metric: Metric, v: number | null, base: number, spread: number): Cell {
   if (metric === 'payback_years') {
     if (!isNum(v) || v > 5) return mix('crit', 78)
@@ -162,8 +162,8 @@ export function Heatmap({ result, metric }: { result: SensitivityResult; metric:
 
       <div className="meta flex flex-wrap items-center gap-3">
         <span>
-          В ячейках — {METRIC[metric].short}, {COMPACT_UNIT[metric]}
-          {metric === 'payback_years' && ' (∞ — не окупается в горизонте)'}.
+          В ячейках - {METRIC[metric].short}, {COMPACT_UNIT[metric]}
+          {metric === 'payback_years' && ' (∞ - не окупается в горизонте)'}.
         </span>
         <span className="grid w-full grid-cols-2 gap-x-3 gap-y-1 sm:flex sm:w-auto sm:items-center sm:gap-2">
           <span>{LEGEND[metric].from}</span>

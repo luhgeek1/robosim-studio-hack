@@ -37,7 +37,7 @@ export function CinematicPage() {
   const onReady = useCallback(() => setReady(true), [])
   const onFailure = useCallback(() => setFailed(true), [])
   useEffect(() => {
-    document.title = 'РобоМера — бизнес в новом движении'
+    document.title = 'РобоМера - бизнес в новом движении'
   }, [])
   useEffect(() => {
     if (ready || failed) return
@@ -87,7 +87,7 @@ export function CinematicPage() {
         К содержимому
       </a>
       <header className="cinema-header">
-        <Link to="/design-lab" className="cinema-logo" aria-label="РобоМера — все варианты">
+        <Link to="/design-lab" className="cinema-logo" aria-label="РобоМера - все варианты">
           <Crosshair strokeWidth={1.5} />
           РобоМера<span>®</span>
         </Link>
@@ -192,7 +192,7 @@ export function CinematicPage() {
                   01
                 </span>
                 <h2>
-                  Сначала —<br />
+                  Сначала -<br />
                   ваш объект.
                 </h2>
                 <p>
@@ -212,11 +212,11 @@ export function CinematicPage() {
                   02
                 </span>
                 <h2>
-                  Потом —<br />
+                  Потом -<br />
                   его ритм.
                 </h2>
                 <p>
-                  Один робот на пустом полу и целый парк в час пик — разные задачи. Маршруты, очереди и зарядка
+                  Один робот на пустом полу и целый парк в час пик - разные задачи. Маршруты, очереди и зарядка
                   становятся частью решения.
                 </p>
                 <div className="cinema-chapter-tags">
@@ -231,7 +231,7 @@ export function CinematicPage() {
                   03
                 </span>
                 <h2>
-                  В итоге —<br />
+                  В итоге -<br />
                   <em>ясность.</em>
                 </h2>
                 <p>
@@ -249,8 +249,8 @@ export function CinematicPage() {
             <Crosshair strokeWidth={0.7} />
           </span>
           <h2>
-            У роботов — работа.
-            <br />У вас — <em>полная картина.</em>
+            У роботов - работа.
+            <br />У вас - <em>полная картина.</em>
           </h2>
           <p>От первой идеи до решения, которое можно объяснить команде. В одной платформе.</p>
           <MoveUpRight size={56} strokeWidth={1} />

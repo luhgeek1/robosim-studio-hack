@@ -306,10 +306,10 @@ function InviteForm({ org }: { org: OrganizationDetail }) {
       description:
         invitation.email +
         (invitation.email_delivery === 'queued'
-          ? ' — письмо с приглашением поставлено в очередь.'
+          ? ' - письмо с приглашением поставлено в очередь.'
           : invitation.invitee_registered
-            ? ' — приглашение появилось в уведомлениях.'
-            : ' — приглашение будет доступно после регистрации.'),
+            ? ' - приглашение появилось в уведомлениях.'
+            : ' - приглашение будет доступно после регистрации.'),
     })
   }
   return (
@@ -353,7 +353,7 @@ function InviteForm({ org }: { org: OrganizationDetail }) {
         </Button>
       </form>
       <p className="mt-4 text-[11.5px] leading-relaxed text-ink-3">
-        Приглашение появится в уведомлениях РобоМеры. Если аккаунта ещё нет — после регистрации.
+        Приглашение появится в уведомлениях РобоМеры. Если аккаунта ещё нет - после регистрации.
       </p>
     </section>
   )

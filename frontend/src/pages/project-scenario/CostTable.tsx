@@ -85,7 +85,7 @@ export function CostTable({
                     <Formula formula={row.formula} rendered={row.formulaRendered} inputs={row.inputs} note={row.note} />
                     {row.normKey && (
                       <div className="mt-2 text-xs text-muted-foreground">
-                        Норматив: <span className="font-mono">{row.normKey}</span> — можно переопределить в условиях
+                        Норматив: <span className="font-mono">{row.normKey}</span> - можно переопределить в условиях
                         сценария
                       </div>
                     )}

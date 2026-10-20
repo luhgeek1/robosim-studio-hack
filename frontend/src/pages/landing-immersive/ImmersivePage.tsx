@@ -18,7 +18,7 @@ import './static.css'
 
 export function ImmersivePage() {
   useEffect(() => {
-    document.title = 'РобоМера — роботизация начинается с расчёта'
+    document.title = 'РобоМера - роботизация начинается с расчёта'
   }, [])
   return (
     <div className="immersive">
@@ -26,7 +26,7 @@ export function ImmersivePage() {
         Перейти к содержимому
       </a>
       <header className="im-header">
-        <a href="/design-lab" className="im-brand" aria-label="РобоМера — галерея вариантов">
+        <a href="/design-lab" className="im-brand" aria-label="РобоМера - галерея вариантов">
           <Crosshair strokeWidth={1.5} /> РобоМера<span>.</span>
         </a>
         <nav aria-label="Основная навигация">

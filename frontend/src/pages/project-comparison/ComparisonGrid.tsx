@@ -8,8 +8,8 @@ import { ToneBadge } from '@/shared/ui/tone'
 import { formatByUnit } from './format'
 
 const BETTER_HINT = {
-  higher: { icon: ArrowUp, text: 'больше — лучше' },
-  lower: { icon: ArrowDown, text: 'меньше — лучше' },
+  higher: { icon: ArrowUp, text: 'больше - лучше' },
+  lower: { icon: ArrowDown, text: 'меньше - лучше' },
 } as const
 
 export function ComparisonGrid({ table }: { table: ComparisonTable }) {
@@ -35,7 +35,7 @@ export function ComparisonGrid({ table }: { table: ComparisonTable }) {
                     рекомендуем
                   </span>
                 )}
-                {s.status === 'stale' && <ToneBadge tone="warn">устарел — пересчитайте</ToneBadge>}
+                {s.status === 'stale' && <ToneBadge tone="warn">устарел - пересчитайте</ToneBadge>}
               </div>
               <Link
                 to={`../scenarios/${s.scenario_id}`}

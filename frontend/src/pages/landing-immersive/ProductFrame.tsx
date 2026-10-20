@@ -63,7 +63,7 @@ export function ProductFrame({ initiallyHidden = false }: { initiallyHidden?: bo
         <span className="im-product-source">Снимок демо от 19.10.2026. Результат для заданных условий.</span>
       </div>
       <div className="im-product-footer">
-        <span>Схема объясняет процесс. Точная планировка и события — в демо.</span>
+        <span>Схема объясняет процесс. Точная планировка и события - в демо.</span>
         <a href={`${WAREHOUSE}?step=simulation`}>
           Открыть имитацию <ArrowUpRight size={15} />
         </a>

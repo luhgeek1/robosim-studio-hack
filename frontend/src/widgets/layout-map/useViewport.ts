@@ -90,7 +90,7 @@ export function useViewport(
     [zoomAt, size.width, size.height],
   )
 
-  // Активные касания: один палец двигает план, два — масштабируют вокруг середины между ними и тоже двигают.
+  // Активные касания: один палец двигает план, два - масштабируют вокруг середины между ними и тоже двигают.
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const release = (event: PointerEvent<HTMLDivElement>) => {
     if (!pointers.current.delete(event.pointerId)) return
@@ -118,7 +118,7 @@ export function useViewport(
         const before = Math.hypot(prev.x - other.x, prev.y - other.y)
         const after = Math.hypot(next.x - other.x, next.y - other.y)
         const mid = { x: (next.x + other.x) / 2 - rect.left, y: (next.y + other.y) / 2 - rect.top }
-        // Сдвиг середины — половина хода пальца: второй палец в этом событии стоит на месте.
+        // Сдвиг середины - половина хода пальца: второй палец в этом событии стоит на месте.
         const dx = (next.x - prev.x) / 2
         const dy = (next.y - prev.y) / 2
         pointers.current.set(event.pointerId, next)

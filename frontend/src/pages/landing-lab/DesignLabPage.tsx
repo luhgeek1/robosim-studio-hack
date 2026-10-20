@@ -58,13 +58,13 @@ const CONCEPTS = [
 const LATEST = [
   {
     label: 'Новая версия / Погружение',
-    name: 'Изнутри объекта — к решению.',
+    name: 'Изнутри объекта - к решению.',
     href: '/design-lab/immersive',
     image: 'immersive-preview.png',
     alt: 'Оранжевый робот внутри полноэкранного склада с высоким перекрытием и стеллажами',
     stack: 'React · Three.js · R3F',
     description:
-      'Один склад меняет масштаб: из прохода — к общей модели, затем в интерфейс расчёта. Связная история процесса, проверенный состав парка и сравнение экономики.',
+      'Один склад меняет масштаб: из прохода - к общей модели, затем в интерфейс расчёта. Связная история процесса, проверенный состав парка и сравнение экономики.',
     tools: 'Архитектурная постановка · непрерывная камера · данные публичного демо',
     fresh: true,
   },
@@ -117,7 +117,7 @@ function ConceptCard({ concept }: { concept: (typeof CONCEPTS)[number] }) {
 
 export function DesignLabPage() {
   useEffect(() => {
-    document.title = 'РобоМера — новая итерация лендинга'
+    document.title = 'РобоМера - новая итерация лендинга'
   }, [])
   return (
     <div className="lab-editorial lab-gallery">
@@ -154,7 +154,7 @@ export function DesignLabPage() {
         </div>
         <aside className="lab-gallery-reference">
           <div>
-            <h2>Для сравнения — текущая версия</h2>
+            <h2>Для сравнения - текущая версия</h2>
             <p>Оригинальный лендинг доступен рядом для сравнения со всеми семью концепциями.</p>
           </div>
           <Link to="/" className="lab-header-action">

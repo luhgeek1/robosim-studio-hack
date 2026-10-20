@@ -88,7 +88,7 @@ export const useNarrative = (id: string | null | undefined) =>
   })
 
 // The comparison recalculates stale scenarios on the server: the list and the project headline follow it. The project
-// key is invalidated exactly — a prefix would include this very query and loop.
+// key is invalidated exactly - a prefix would include this very query and loop.
 export function useComparison(projectId: string) {
   const queryClient = useQueryClient()
   return useQuery({
@@ -177,7 +177,7 @@ export function useCalculate(projectId: string, id: string) {
   const queryClient = useQueryClient()
   const refresh = useRefreshScenarios(projectId)
   return useMutation({
-    // force — перепроверить и уже проверенное N (кнопка «Перепроверить»).
+    // force - перепроверить и уже проверенное N (кнопка «Перепроверить»).
     mutationFn: (force?: boolean) => calculateWithFleetCheck(id, force ?? false),
     onSuccess: ({ calculation }) => {
       queryClient.setQueryData(qk.calculations.one(calculation.id), calculation)
@@ -186,7 +186,7 @@ export function useCalculate(projectId: string, id: string) {
   })
 }
 
-/* Откуда сценарий берёт число роботов процесса: «по имитации» (auto — перебор флота) или «по формуле» (ручное число =
+/* Откуда сценарий берёт число роботов процесса: «по имитации» (auto - перебор флота) или «по формуле» (ручное число =
    формула + резерв). Выбор применяется и к вариантам с тем же процессом и продуктом (RaaS, лизинг): сравнение
    сопоставляет одинаковые парки. */
 export function useCountSource(projectId: string, scenarioId: string) {

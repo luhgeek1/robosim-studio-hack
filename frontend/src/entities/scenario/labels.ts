@@ -29,7 +29,7 @@ export const VERDICT_TONE: Record<Verdict, 'ok' | 'info' | 'warn' | 'crit' | 'mu
 
 export const BAND_LABEL: Record<Interpretation['band'], string> = {
   lt3: 'окупаемость до 3 лет',
-  from3to5: 'окупаемость 3–5 лет',
+  from3to5: 'окупаемость 3-5 лет',
   gt5: 'окупаемость больше 5 лет',
   never: 'не окупается в горизонте',
   none: '',

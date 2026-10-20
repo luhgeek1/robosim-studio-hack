@@ -36,7 +36,7 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
   const create = useCreateProduct()
   const update = useUpdateProduct()
   const [tab, setTab] = useState<Tab>(target.mode === 'edit' ? (target.tab ?? 'card') : 'card')
-  // Пока администратор ничего не менял, форма — это карточка с сервера; первая правка делает её черновиком.
+  // Пока администратор ничего не менял, форма - это карточка с сервера; первая правка делает её черновиком.
   const [draft, setDraft] = useState<ProductWrite | null>(target.mode === 'create' ? emptyProduct() : null)
   const [errors, setErrors] = useState<ProductErrors>({})
   const [dirty, setDirty] = useState(false)
@@ -84,7 +84,7 @@ function EditorBody({ target, onClose }: { target: EditorTarget; onClose: () => 
           setDirty(false)
           setTab('specs')
           toast.success(`«${saved.name}» добавлен в каталог`, {
-            description: 'Заполните ключевые ТТХ — от них зависит подбор.',
+            description: 'Заполните ключевые ТТХ - от них зависит подбор.',
           })
         },
       })

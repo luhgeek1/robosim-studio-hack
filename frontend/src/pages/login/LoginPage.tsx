@@ -40,7 +40,7 @@ export function LoginPage() {
   const reauth = params.get('reauth') === '1'
   const back = location.state as { from?: string; userId?: string | null; keepGuest?: boolean } | null
   // Возвращаем на прежнюю страницу только её владельца: другой учётке прошлый проект чужой.
-  // Возврат туда, откуда отправили на вход; иначе админ — в админ-панель, производитель — в кабинет, остальные — в проекты.
+  // Возврат туда, откуда отправили на вход; иначе админ - в админ-панель, производитель - в кабинет, остальные - в проекты.
   const previousReturn = accountReturnPath(back?.from)
   const target = (me: User) =>
     previousReturn && (back?.keepGuest || !back?.userId || back?.userId === me.id)

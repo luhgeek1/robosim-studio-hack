@@ -53,7 +53,7 @@ export function VendorProductsTab() {
           description={
             onlyGaps
               ? 'Ключевые характеристики заполнены у всех продуктов.'
-              : 'Предложите первый продукт — после одобрения он появится в каталоге и подборе.'
+              : 'Предложите первый продукт - после одобрения он появится в каталоге и подборе.'
           }
         />
       ) : (
@@ -141,7 +141,7 @@ function ProductRow({
       </span>
       <span className="num min-w-0 text-[13.5px] lg:text-right">
         <span className="mb-1 block text-[11px] text-ink-3 lg:hidden">Цена от</span>
-        {product.price_from.amount_rub > 0 ? formatRub(product.price_from.amount_rub) : '—'}
+        {product.price_from.amount_rub > 0 ? formatRub(product.price_from.amount_rub) : '-'}
       </span>
       <span className="num min-w-0 text-[13px] text-ink-2 lg:text-right">
         <span className="mb-1 block text-[11px] text-ink-3 lg:hidden">Проекты / сценарии</span>

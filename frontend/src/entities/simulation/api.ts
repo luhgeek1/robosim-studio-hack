@@ -48,7 +48,7 @@ export const simulationApi = {
       .then((r) => r.data),
   sweepResult: (scenarioId: string, jobId: string) =>
     api.get<FleetSweepResult>(`/scenarios/${scenarioId}/fleet-sweep/${jobId}`).then((r) => r.data),
-  // 404 — the scenario was never swept for this process.
+  // 404 - the scenario was never swept for this process.
   latestSweep: (scenarioId: string, processKey: string) =>
     api
       .get<FleetSweepResult>(`/scenarios/${scenarioId}/fleet-sweep`, { params: { process_key: processKey } })
@@ -148,7 +148,7 @@ async function waitForSweep(scenarioId: string, jobId: string): Promise<FleetSwe
     }
     await new Promise((resolve) => setTimeout(resolve, SWEEP_POLL_MS))
   }
-  throw new Error('Перебор флота не закончился за 3 минуты — попробуйте ещё раз')
+  throw new Error('Перебор флота не закончился за 3 минуты - попробуйте ещё раз')
 }
 
 async function runSweep(scenarioId: string, body: FleetSweepRequest): Promise<FleetSweepResult> {
@@ -157,7 +157,7 @@ async function runSweep(scenarioId: string, body: FleetSweepRequest): Promise<Fl
 }
 
 /* Какие процессы имитация умеет проверить: модель цикла (паллеты, G2P, тягачи, доставка по больнице, багаж и тележки в аэропорту). Число, заданное вручную, остаётся
-   за пользователем; уже проверенное — не перепроверяем без явной просьбы. */
+   за пользователем; уже проверенное - не перепроверяем без явной просьбы. */
 export const checkable = (sizing: SizingResult, force = false) =>
   sizing.robot.cycle_time_s != null &&
   sizing.count.source !== 'manual' &&
@@ -191,8 +191,8 @@ export async function calculateWithFleetCheck(scenarioId: string, force = false)
   return { calculation, checked, skipped }
 }
 
-/* Явная перепроверка с экрана «Имитация». Варианты с тем же процессом (RaaS, лизинг) получают свой перебор — тот же
-   детерминированный день, — чтобы сравнение сопоставляло одинаковые парки; затем сценарии пересчитываются. */
+/* Явная перепроверка с экрана «Имитация». Варианты с тем же процессом (RaaS, лизинг) получают свой перебор - тот же
+   детерминированный день, - чтобы сравнение сопоставляло одинаковые парки; затем сценарии пересчитываются. */
 export function useFleetSweep(projectId: string, scenarioId: string, variantIds: string[] = []) {
   const queryClient = useQueryClient()
   return useMutation({

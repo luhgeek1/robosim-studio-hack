@@ -8,7 +8,7 @@ const two = nf(2)
 export const isNum = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 
 export function formatNumber(value: number | null | undefined, digits?: number): string {
-  if (!isNum(value)) return '—'
+  if (!isNum(value)) return '-'
   if (digits !== undefined) return nf(digits).format(value)
   const abs = Math.abs(value)
   if (abs >= 100) return plain.format(value)
@@ -18,7 +18,7 @@ export function formatNumber(value: number | null | undefined, digits?: number):
 
 // Money always comes from the API in rubles; screens show millions for readability (ТЗ: деньги в рублях в контракте).
 export function formatRub(value: number | null | undefined, opts: { exact?: boolean } = {}): string {
-  if (!isNum(value)) return '—'
+  if (!isNum(value)) return '-'
   if (opts.exact) return `${plain.format(value)} ₽`
   const abs = Math.abs(value)
   if (abs >= 1e9) return `${two.format(value / 1e9)} млрд ₽`
@@ -27,10 +27,10 @@ export function formatRub(value: number | null | undefined, opts: { exact?: bool
   return `${plain.format(value)} ₽`
 }
 
-export const formatMln = (value: number | null | undefined) => (isNum(value) ? one.format(value / 1e6) : '—')
+export const formatMln = (value: number | null | undefined) => (isNum(value) ? one.format(value / 1e6) : '-')
 
 export function formatPct(value: number | null | undefined, opts: { share?: boolean; digits?: number } = {}): string {
-  if (!isNum(value)) return '—'
+  if (!isNum(value)) return '-'
   const pct = opts.share ? value * 100 : value
   return `${nf(opts.digits ?? 1).format(pct)} %`
 }
@@ -50,7 +50,7 @@ export function pluralRu(n: number, [one_, few, many]: [string, string, string])
 }
 
 export function formatValue(value: unknown, unit?: string | null): string {
-  if (value === null || value === undefined || value === '') return '—'
+  if (value === null || value === undefined || value === '') return '-'
   if (typeof value === 'boolean') return value ? 'да' : 'нет'
   if (isNum(value)) return unit ? `${formatNumber(value)} ${unit}` : formatNumber(value)
   return unit ? `${String(value)} ${unit}` : String(value)
@@ -59,8 +59,8 @@ export function formatValue(value: unknown, unit?: string | null): string {
 const dateTime = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })
 const dateOnly = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium' })
 
-export const formatDateTime = (iso: string | null | undefined) => (iso ? dateTime.format(new Date(iso)) : '—')
-export const formatDate = (iso: string | null | undefined) => (iso ? dateOnly.format(new Date(iso)) : '—')
+export const formatDateTime = (iso: string | null | undefined) => (iso ? dateTime.format(new Date(iso)) : '-')
+export const formatDate = (iso: string | null | undefined) => (iso ? dateOnly.format(new Date(iso)) : '-')
 
 // Monte Carlo and the tornado cap paybacks beyond the horizon at the horizon: such a value means «не окупается за горизонт».
 export function formatPayback(value: number | null | undefined, horizon: number | null | undefined): string {

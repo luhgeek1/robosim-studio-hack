@@ -23,7 +23,7 @@ export function Kpi({
         style={tone ? { color: tone } : undefined}
       >
         {value === undefined || value === null ? (
-          <span className="text-ink-4">—</span>
+          <span className="text-ink-4">-</span>
         ) : (
           <KpiNumber value={value} format={format} />
         )}

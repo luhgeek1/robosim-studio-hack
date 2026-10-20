@@ -167,7 +167,7 @@ function Form({
                 value: 'specs',
                 label: `ТТХ${specs.length ? ` · ${specs.length}` : ''}`,
                 disabled: isNew,
-                hint: isNew ? 'Характеристики — после одобрения карточки' : undefined,
+                hint: isNew ? 'Характеристики - после одобрения карточки' : undefined,
               },
             ]}
           />
@@ -196,7 +196,7 @@ function Form({
               <>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="meta max-w-sm">
-                    Укажите источник — паспорт изделия или страницу на сайте. Ключевые ТТХ участвуют в проверках
+                    Укажите источник - паспорт изделия или страницу на сайте. Ключевые ТТХ участвуют в проверках
                     подбора.
                   </p>
                   <label className="flex shrink-0 items-center gap-2 text-[12.5px] text-ink-2">

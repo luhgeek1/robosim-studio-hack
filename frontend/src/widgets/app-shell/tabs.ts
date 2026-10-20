@@ -26,7 +26,7 @@ function save(tabs: ProjectTab[]) {
   try {
     localStorage.setItem(storageKey(userId, id), JSON.stringify(tabs))
   } catch {
-    // Вкладки — удобство одного браузера: без хранилища они просто живут до перезагрузки.
+    // Вкладки - удобство одного браузера: без хранилища они просто живут до перезагрузки.
   }
 }
 

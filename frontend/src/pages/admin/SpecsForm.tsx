@@ -10,7 +10,7 @@ import { Field } from './fields'
 import { STATUS_LABEL, type SpecEdit, type SpecEdits, type SpecKey, type SpecSource, type SpecStatus } from './specs'
 
 /* Строки ТТХ по группам: текущее значение с происхождением и поле для нового. Без `lockedStatus` у строки
-   выбирается статус подтверждённости; вендор его не выбирает — его значения всегда «заявка производителя». */
+   выбирается статус подтверждённости; вендор его не выбирает - его значения всегда «заявка производителя». */
 export function SpecsList({
   product,
   specKeys,

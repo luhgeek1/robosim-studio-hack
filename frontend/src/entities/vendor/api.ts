@@ -48,7 +48,7 @@ export const vendorApi = {
 export const useVendorOverview = (enabled = true) =>
   useQuery({ queryKey: qk.vendor.overview, queryFn: vendorApi.overview, enabled, retry: false })
 
-// Подбор по проектам платформы считается секунды — держим результат пять минут, а не пересчитываем на каждый заход.
+// Подбор по проектам платформы считается секунды - держим результат пять минут, а не пересчитываем на каждый заход.
 export const useVendorFit = () =>
   useQuery({ queryKey: qk.vendor.fit, queryFn: vendorApi.fit, staleTime: 5 * 60 * 1000 })
 
@@ -78,7 +78,7 @@ export const useProposalQueue = (status?: ProposalStatus, enabled = true) =>
     refetchInterval: QUEUE_POLL_MS,
   })
 
-// Одобренная заявка меняет каталог и его версию — как ручная правка администратора.
+// Одобренная заявка меняет каталог и его версию - как ручная правка администратора.
 export function useReviewProposal() {
   const client = useQueryClient()
   return useMutation({
@@ -97,7 +97,7 @@ export function useReviewProposal() {
 export const useManufacturers = () =>
   useQuery({ queryKey: qk.manufacturers, queryFn: vendorApi.manufacturers, staleTime: HOUR })
 
-// Запросы КП приходят от заказчиков в любой момент — входящие обновляются сами, как очередь модерации у админа.
+// Запросы КП приходят от заказчиков в любой момент - входящие обновляются сами, как очередь модерации у админа.
 export const useVendorRfqs = () =>
   useQuery({ queryKey: qk.vendor.rfqs, queryFn: vendorApi.rfqs, refetchInterval: QUEUE_POLL_MS })
 

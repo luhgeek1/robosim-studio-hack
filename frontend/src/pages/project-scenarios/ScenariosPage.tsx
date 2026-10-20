@@ -133,7 +133,7 @@ export function ScenariosPage() {
         <EmptyState
           className="mt-6 max-sm:px-3"
           title="Сценариев роботизации пока нет"
-          description="Быстрее всего — собрать сценарий из лучших подходящих решений по каждому процессу. Состав потом можно поменять."
+          description="Быстрее всего - собрать сценарий из лучших подходящих решений по каждому процессу. Состав потом можно поменять."
           action={
             <div className="flex flex-wrap items-center justify-center gap-2 max-sm:flex-nowrap">
               <Button
@@ -166,7 +166,7 @@ const VERDICT_DOT: Record<Verdict, string> = {
 
 const verdictOf = (v: string | null | undefined): Verdict | null => (v && v in VERDICT_LABEL ? (v as Verdict) : null)
 
-/* The starting point: nothing is bought, today's staff costs stay — every variant is measured against it. */
+/* The starting point: nothing is bought, today's staff costs stay - every variant is measured against it. */
 function BaselineStrip({ projectId, scenario }: { projectId: string; scenario: Scenario }) {
   const calc = scenario.last_calculation
   return (
@@ -274,7 +274,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
               )}
             </div>
             {/* Payback against the horizon: a bar that stops before the tick pays back in time. */}
-            <div className="relative mt-3 h-1.5 rounded-full bg-black/5" title={`Горизонт расчёта — ${horizon} лет`}>
+            <div className="relative mt-3 h-1.5 rounded-full bg-black/5" title={`Горизонт расчёта - ${horizon} лет`}>
               {isNum(payback) && (
                 <motion.div
                   className={cn('h-full rounded-full', verdict ? VERDICT_DOT[verdict] : 'bg-ink')}
@@ -321,7 +321,7 @@ function ScenarioCard({ projectId, scenario }: { projectId: string; scenario: Sc
   )
 }
 
-// Число роботов проверено имитацией, взято по формуле или задано вручную — одно слово на карточке.
+// Число роботов проверено имитацией, взято по формуле или задано вручную - одно слово на карточке.
 function CountOriginMark({ scenario }: { scenario: Scenario }) {
   if (scenario.last_calculation?.status !== 'fresh') return null
   const sources = new Set(scenario.items.map((i) => i.count_result?.source).filter(Boolean))

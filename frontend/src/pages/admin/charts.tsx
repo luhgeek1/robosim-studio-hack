@@ -145,7 +145,7 @@ export function HBars({
     observer.observe(box)
     return () => observer.disconnect()
   }, [box])
-  // На телефоне подписи с десктопной шириной оставили бы столбцам пару пикселей — отдаём им не больше 42 % карточки.
+  // На телефоне подписи с десктопной шириной оставили бы столбцам пару пикселей - отдаём им не больше 42 % карточки.
   const phone = boxWidth > 0 && window.innerWidth < PHONE_MAX
   const labelWidth = phone ? Math.min(nameWidth, Math.round(boxWidth * 0.42)) : nameWidth
   return (

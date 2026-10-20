@@ -58,7 +58,7 @@ export function validateProduct(form: ProductWrite): ProductErrors {
   if (!form.name.trim()) errors.name = 'Укажите название'
   if (!form.manufacturer_name.trim()) errors.manufacturer_name = 'Укажите производителя'
   if (!form.solution_type) errors.solution_type = 'Выберите тип решения'
-  if (form.trl !== null && form.trl !== undefined && (form.trl < 1 || form.trl > 9)) errors.trl = 'УГТ — от 1 до 9'
+  if (form.trl !== null && form.trl !== undefined && (form.trl < 1 || form.trl > 9)) errors.trl = 'УГТ - от 1 до 9'
   const offers = form.offers ?? []
   if (offers.some((o) => !o.industry || !o.scenario.trim() || !(o.price.amount_rub > 0)))
     errors.offers = 'У каждого предложения нужны отрасль, сценарий и цена больше нуля'

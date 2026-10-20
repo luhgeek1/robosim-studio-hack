@@ -25,7 +25,7 @@ export function ReportDownloads({
   return (
     <section aria-label="Скачать отчёт" className="rounded-2xl bg-surface px-4 py-5 sm:px-8 sm:py-6">
       <h2 className="h2">Скачать отчёт</h2>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">Выберите формат — файл скачается автоматически.</p>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">Выберите формат - файл скачается автоматически.</p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <Button

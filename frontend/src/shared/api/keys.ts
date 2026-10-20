@@ -25,7 +25,7 @@ export const qk = {
   projects: {
     all: ['projects'] as const,
     list: ['projects', 'list'] as const,
-    // Рабочая область — часть ключа: переключение показывает свой список, не перезаписывая чужой кэш.
+    // Рабочая область - часть ключа: переключение показывает свой список, не перезаписывая чужой кэш.
     listIn: (workspaceId: string | null) => ['projects', 'list', workspaceId ?? 'personal'] as const,
     one: (id: string) => ['projects', id] as const,
     params: (id: string) => ['projects', id, 'params'] as const,

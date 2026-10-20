@@ -40,7 +40,7 @@ function specRows(spec: Spec): { key: keyof Spec; label: string; value: string }
     rows.push({
       key: 'lift_mm',
       label: 'Высота подъёма',
-      value: spec.lift_min_mm ? `${nf(spec.lift_min_mm)}–${nf(spec.lift_mm)} мм` : `${nf(spec.lift_mm)} мм`,
+      value: spec.lift_min_mm ? `${nf(spec.lift_min_mm)}-${nf(spec.lift_mm)} мм` : `${nf(spec.lift_mm)} мм`,
     })
   if (spec.reach_mm) rows.push({ key: 'reach_mm', label: 'Вылет', value: `${nf(spec.reach_mm)} мм` })
   if (spec.height_m) rows.push({ key: 'height_m', label: 'Рабочая высота', value: `${nf(spec.height_m, 1)} м` })
@@ -166,7 +166,7 @@ function RobotCard({ kind, products }: { kind: Kind; products: Product[] | undef
                 {v.assumed?.includes(r.key) && (
                   <span
                     className="rounded bg-warn-soft px-1 text-[10.5px] font-normal text-warn"
-                    title="В каталоге нет числа — взято типовое значение класса"
+                    title="В каталоге нет числа - взято типовое значение класса"
                   >
                     допущение
                   </span>
@@ -224,7 +224,7 @@ export function RobotsPage() {
         <span className="display num text-[22px] text-ink-4 sm:text-[28px]">{KINDS.length}</span>
       </div>
       <p className="mb-7 max-w-190 text-[14.5px] leading-relaxed text-ink-2 sm:text-[15.5px]">
-        Модель привязана к классу решения из каталога, а форму и анимацию задают ТТХ продукта — габариты,
+        Модель привязана к классу решения из каталога, а форму и анимацию задают ТТХ продукта - габариты,
         грузоподъёмность, высота подъёма, вылет и скорость. Новый продукт известного класса сразу получает модель; чего
         нет в ТТХ, берётся по умолчанию класса и помечается.{' '}
         {total > 0 && (

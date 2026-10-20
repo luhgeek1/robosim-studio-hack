@@ -64,7 +64,7 @@ const questions = [
 
 function Brand() {
   return (
-    <Link className="platform-brand" to="/" aria-label="РобоМера — главная">
+    <Link className="platform-brand" to="/" aria-label="РобоМера - главная">
       <Crosshair size={26} strokeWidth={1.8} /> РобоМера<span>.</span>
     </Link>
   )
@@ -72,7 +72,7 @@ function Brand() {
 
 export function PlatformPage() {
   useEffect(() => {
-    document.title = 'РобоМера — сначала проверьте, потом внедряйте'
+    document.title = 'РобоМера - сначала проверьте, потом внедряйте'
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
   return (
@@ -104,7 +104,7 @@ export function PlatformPage() {
             <div>
               <p>
                 Какие роботы нужны вашему объекту, сколько их должно быть и когда окупятся вложения. Проверьте решение
-                на модели — до первой закупки.
+                на модели - до первой закупки.
               </p>
               <div className="platform-actions">
                 <Link className="platform-button" to="/demo?new=1">
@@ -137,7 +137,7 @@ export function PlatformPage() {
               <span>До первого вложения.</span>
             </h2>
             <p>
-              Не нужно собирать решение из таблиц, каталогов и предположений. Каждый шаг связан с предыдущим — и
+              Не нужно собирать решение из таблиц, каталогов и предположений. Каждый шаг связан с предыдущим - и
               приближает вас к обоснованному выбору.
             </p>
           </div>
@@ -178,7 +178,7 @@ export function PlatformPage() {
                   <span>Понятно, почему.</span>
                 </h3>
                 <p>
-                  Сравнивайте решения по задачам вашего объекта. Грузоподъёмность, габариты и ограничения — перед
+                  Сравнивайте решения по задачам вашего объекта. Грузоподъёмность, габариты и ограничения - перед
                   глазами.
                 </p>
                 <Link to="/catalog">
@@ -331,7 +331,7 @@ export function PlatformPage() {
               </div>
               <div className="platform-report-copy">
                 <h3>
-                  Из расчёта —<br />в предметный разговор.
+                  Из расчёта -<br />в предметный разговор.
                 </h3>
                 <p>Выводы, исходные данные и ограничения модели в одном отчёте.</p>
                 <Link to="/demo/warehouse_demo_01?step=report">

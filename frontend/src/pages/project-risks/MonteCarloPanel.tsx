@@ -72,14 +72,14 @@ function MonteCarloBody({ result, metric, horizon }: { result: MonteCarloResult;
           <Histogram result={result} metric={metric} />
         </div>
         <p className="meta mt-1">
-          {formatNumber(result.n)} прогонов, {METHOD_LABEL[result.method]}; среднее — {fmt(result.mean)}
+          {formatNumber(result.n)} прогонов, {METHOD_LABEL[result.method]}; среднее - {fmt(result.mean)}
         </p>
       </div>
 
       <div className="border-t border-line bg-surface-2/60 px-4 py-5 sm:px-6 lg:border-t-0 lg:border-l">
         <div className="text-[13px] text-ink-2">Что двигает результат</div>
         <p className="meta mt-1 mb-4">
-          Связь параметра с показателем по прогонам: вправо — рост параметра увеличивает показатель, влево — уменьшает
+          Связь параметра с показателем по прогонам: вправо - рост параметра увеличивает показатель, влево - уменьшает
         </p>
         <Drivers result={result} />
       </div>
@@ -145,7 +145,7 @@ function Histogram({ result, metric }: { result: MonteCarloResult; metric: McMet
               return (
                 <div className="rounded-[10px] bg-ink px-3 py-2 text-[12px] text-white shadow-float">
                   <div className="num font-medium">
-                    {fmt(row.lo)} — {fmt(row.hi)}
+                    {fmt(row.lo)} - {fmt(row.hi)}
                   </div>
                   <div className="num text-white/70">прогонов: {formatNumber(row.count)}</div>
                 </div>

@@ -3,7 +3,7 @@ import { formatYears, pluralRu } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import type { Slice } from './charts'
 
-// Интервалы вердикта ТЗ 3.5.7: до 3 лет — выгодно, 3–5 — приемлемо, 5–7 — на грани, дольше — долго.
+// Интервалы вердикта ТЗ 3.5.7: до 3 лет - выгодно, 3-5 - приемлемо, 5-7 - на грани, дольше - долго.
 const ZONES = [
   { to: 3, word: 'выгодно', band: 'bg-ok-soft', text: 'text-ok' },
   { to: 5, word: 'приемлемо', band: 'bg-black/6', text: 'text-ink' },
@@ -15,7 +15,7 @@ const MIN_SCALE_YEARS = 9
 const zoneOf = (years: number) => ZONES.find((z) => years <= z.to) ?? ZONES[ZONES.length - 1]
 
 /* Окупаемость на шкале вердикта: крупное число и слово вердикта, под ними полоса лет с зонами и маркер
-   на значении. Читается и при одном типе объекта, и при нескольких — у всех одна шкала. */
+   на значении. Читается и при одном типе объекта, и при нескольких - у всех одна шкала. */
 export function PaybackScale({ data }: { data: Slice[] }) {
   const scale = Math.max(MIN_SCALE_YEARS, ...data.map((s) => Math.ceil(s.value) + 1))
   const at = (years: number) => `${(Math.min(years, scale) / scale) * 100}%`

@@ -49,7 +49,7 @@ const PRINCIPLES = [
   {
     Icon: Fingerprint,
     title: 'Проверить расчёт',
-    text: 'От итоговой цифры — к',
+    text: 'От итоговой цифры - к',
     emphasis: 'формуле, источникам и допущениям.',
   },
   {
@@ -61,7 +61,7 @@ const PRINCIPLES = [
   {
     Icon: FileCheck2,
     title: 'Защитить решение',
-    text: 'Экономика и снимки имитации —',
+    text: 'Экономика и снимки имитации -',
     emphasis: 'в PDF и Excel для вашей команды.',
   },
 ]
@@ -73,7 +73,7 @@ export function EvidenceSection({ workspace, demo }: { workspace: string; demo?:
   const values = [
     formatNumber(metrics?.robots_total),
     formatRub(metrics?.capex_rub),
-    metrics ? formatYears(metrics.payback_years) : '—',
+    metrics ? formatYears(metrics.payback_years) : '-',
   ]
   const metric = { ...METRICS[active], value: values[active], unit: active === 0 ? 'роботов' : '' }
   const { reduced, reveal } = useLandingMotion()
@@ -92,7 +92,7 @@ export function EvidenceSection({ workspace, demo }: { workspace: string; demo?:
             </span>
           </h2>
           <p className="landing-evidence-intro">
-            От результата — к его основаниям.
+            От результата - к его основаниям.
             <br />
             <strong>Данные, формулы, допущения.</strong> Всё перед вами.
           </p>

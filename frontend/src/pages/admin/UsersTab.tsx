@@ -102,7 +102,7 @@ export function UsersTab() {
           </div>
           <div className="mt-3 flex items-center justify-between text-[12.5px] text-ink-3">
             <span className="num">
-              {formatNumber((page - 1) * PAGE_SIZE + 1)}–{formatNumber(Math.min(page * PAGE_SIZE, total))} из{' '}
+              {formatNumber((page - 1) * PAGE_SIZE + 1)}-{formatNumber(Math.min(page * PAGE_SIZE, total))} из{' '}
               {formatNumber(total)}
             </span>
             {pages > 1 && (

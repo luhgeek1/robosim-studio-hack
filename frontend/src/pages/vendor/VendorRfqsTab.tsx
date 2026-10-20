@@ -108,7 +108,7 @@ function RfqCard({ rfq, index }: { rfq: Rfq; index: number }) {
                   {rfq.contact.organization ? ` · ${rfq.contact.organization}` : ''}
                 </Note>
               ) : (
-                <Note label="Заказчик">Скрыл контакты — ответьте здесь, он увидит предложение в проекте.</Note>
+                <Note label="Заказчик">Скрыл контакты - ответьте здесь, он увидит предложение в проекте.</Note>
               )}
               {rfq.message && <Note label="Вопрос заказчика">{rfq.message}</Note>}
               <section>
@@ -150,7 +150,7 @@ function RfqCard({ rfq, index }: { rfq: Rfq; index: number }) {
                   <Textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Условия: сервис, гарантия, скидка за объём; при отказе — причина"
+                    placeholder="Условия: сервис, гарантия, скидка за объём; при отказе - причина"
                     className="min-h-16 rounded-[10px] bg-card"
                     maxLength={2000}
                   />

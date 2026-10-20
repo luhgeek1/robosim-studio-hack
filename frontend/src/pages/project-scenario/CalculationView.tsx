@@ -106,7 +106,7 @@ export function CalculationView({
           />
           <Stat
             label="Роботов / высвобождается FTE"
-            value={`${m.robots_total ?? '—'} / ${formatNumber(m.fte_released, 1)}`}
+            value={`${m.robots_total ?? '-'} / ${formatNumber(m.fte_released, 1)}`}
           />
         </StatStrip>
       )}
@@ -181,7 +181,7 @@ export function CalculationView({
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span>Рассчитано {formatDateTime(run.versions.computed_at)}</span>
-        <span>за {run.duration_ms ?? '—'} мс</span>
+        <span>за {run.duration_ms ?? '-'} мс</span>
         <span>данные объекта v{run.versions.project_version}</span>
         {run.versions.layout_version != null && <span>планировка v{run.versions.layout_version}</span>}
         <span>каталог {run.versions.catalog_version}</span>
@@ -417,7 +417,7 @@ function Assumptions({ norms }: { norms: NonNullable<CalculationRun['assumptions
                   {formatValue(norm.value, norm.unit)}
                   {norm.range && (
                     <div className="text-xs text-muted-foreground">
-                      {formatNumber(norm.range.min)}–{formatNumber(norm.range.max)}
+                      {formatNumber(norm.range.min)}-{formatNumber(norm.range.max)}
                     </div>
                   )}
                 </td>

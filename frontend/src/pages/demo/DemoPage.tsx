@@ -47,7 +47,7 @@ export function DemoPage() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Демо без регистрации</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Готовые расчёты — в вашей личной копии.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Готовые расчёты - в вашей личной копии.</p>
         </div>
         <Button asChild className="h-9 px-3">
           <Link to="/demo/warehouse_demo_01">
@@ -105,7 +105,7 @@ export function DemoPage() {
                             {pluralRu(headline.robots_total, ['робот', 'робота', 'роботов'])}
                           </>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </dd>
                     </div>
@@ -115,7 +115,7 @@ export function DemoPage() {
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
                       <dt className="text-[11px] text-muted-foreground">Окупаемость</dt>
-                      <dd className="num font-medium">{headline ? formatYears(headline.payback_years) : '—'}</dd>
+                      <dd className="num font-medium">{headline ? formatYears(headline.payback_years) : '-'}</dd>
                     </div>
                   </dl>
                   <span className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-3 text-xs font-medium text-ink-2">

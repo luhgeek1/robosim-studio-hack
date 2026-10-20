@@ -37,7 +37,7 @@ const MAX_FLEET_DOTS = 48
 const shortName = (name: string) => name.split(' (')[0]
 
 /* The robots the assessment recommends, above the full candidate list: the same fleet as on the overview
-   (the recommended scenario), or — before any scenario exists — the top fitting candidate of each process. */
+   (the recommended scenario), or - before any scenario exists - the top fitting candidate of each process. */
 export function RecommendedBlock({ projectId, matching }: { projectId: string; matching: MatchingResult }) {
   const { guided } = useJourney(projectId)
   const project = useProject(projectId).data
@@ -134,7 +134,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
                   {process?.name ?? item.process_key} ·{' '}
                   {candidate?.status === 'fit'
                     ? 'Соответствует проверенным требованиям'
-                    : 'Предварительный подбор — есть условия для проверки'}
+                    : 'Предварительный подбор - есть условия для проверки'}
                 </p>
                 {concerns.slice(0, 2).map((reason) => (
                   <p className="mt-1 text-ink-3" key={reason.code}>
@@ -143,7 +143,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
                 ))}
                 {(candidate?.missing_data.length ?? 0) > 0 && (
                   <p className="mt-1 text-ink-3">
-                    Часть характеристик требует уточнения у производителя. Полный список — в карточке кандидата ниже.
+                    Часть характеристик требует уточнения у производителя. Полный список - в карточке кандидата ниже.
                   </p>
                 )}
               </div>
@@ -176,7 +176,7 @@ export function RecommendedBlock({ projectId, matching }: { projectId: string; m
               )}
             >
               {stale && <span className="size-1.5 rounded-full bg-warn" />}
-              {stale ? 'Данные изменились — пересчитать' : 'Открыть сценарий'}
+              {stale ? 'Данные изменились - пересчитать' : 'Открыть сценарий'}
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           )}
@@ -214,7 +214,7 @@ function PickHero({ pick, first }: { pick: Pick; first: boolean }) {
 
         <div className="mt-auto pt-8">
           <div className="flex items-end gap-3">
-            <span className="display num text-[60px] sm:text-[76px]">{pick.unknown ? '—' : formatNumber(count)}</span>
+            <span className="display num text-[60px] sm:text-[76px]">{pick.unknown ? '-' : formatNumber(count)}</span>
             <span className="pb-2 leading-tight">
               {!pick.unknown && (
                 <span className="block text-[15px] font-semibold">
@@ -228,8 +228,8 @@ function PickHero({ pick, first }: { pick: Pick; first: boolean }) {
         </div>
 
         <dl className="mt-6 grid grid-cols-2 gap-6 border-t border-line pt-5">
-          <Fact label="за единицу" value={isNum(pick.unitPrice) ? formatRub(pick.unitPrice) : '—'} />
-          <Fact label="весь парк" value={total ? formatRub(total) : '—'} />
+          <Fact label="за единицу" value={isNum(pick.unitPrice) ? formatRub(pick.unitPrice) : '-'} />
+          <Fact label="весь парк" value={total ? formatRub(total) : '-'} />
         </dl>
       </div>
     </li>
@@ -265,7 +265,7 @@ function PickCard({ pick, first }: { pick: Pick; first: boolean }) {
         </p>
 
         <div className="mt-auto flex items-end gap-2.5 pt-6">
-          <span className="display num text-[44px]">{pick.unknown ? '—' : formatNumber(count)}</span>
+          <span className="display num text-[44px]">{pick.unknown ? '-' : formatNumber(count)}</span>
           <span className="pb-1 leading-tight">
             {!pick.unknown && (
               <span className="block text-[14px] font-semibold">{pluralRu(count, ['робот', 'робота', 'роботов'])}</span>
@@ -275,8 +275,8 @@ function PickCard({ pick, first }: { pick: Pick; first: boolean }) {
         </div>
 
         <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-4">
-          <Fact label="за единицу" value={isNum(pick.unitPrice) ? formatRub(pick.unitPrice) : '—'} />
-          <Fact label="весь парк" value={total ? formatRub(total) : '—'} />
+          <Fact label="за единицу" value={isNum(pick.unitPrice) ? formatRub(pick.unitPrice) : '-'} />
+          <Fact label="весь парк" value={total ? formatRub(total) : '-'} />
         </dl>
       </div>
     </li>

@@ -28,7 +28,7 @@ const useSpecKeys = () =>
     staleTime: 30 * 60_000,
   })
 
-// Паспорт под сценой: то, что покупатель спрашивает первым, — груз, скорость, автономность, габариты, затем
+// Паспорт под сценой: то, что покупатель спрашивает первым, - груз, скорость, автономность, габариты, затем
 // показатели своего класса (площадь уборки, высота подъёма). Берём первые пять заполненных.
 const PASSPORT_KEYS = [
   'payload_kg',
@@ -53,14 +53,14 @@ const PASSPORT_SIZE = 5
 
 const TRL_MAX = 9
 
-// Разбивка достоверности: сначала подтверждённое, в конце — то, чего нет.
+// Разбивка достоверности: сначала подтверждённое, в конце - то, чего нет.
 const TRUST_ORDER: ProvenanceStatus[] = ['confirmed', 'vendor_claim', 'default', 'derived', 'assumption', 'missing']
 
 export function ProductPage() {
   const { productId } = useParams()
   const product = useProduct(productId)
 
-  // Переход на похожее решение меняет только параметр — страница не монтируется заново, поэтому листаем наверх сами.
+  // Переход на похожее решение меняет только параметр - страница не монтируется заново, поэтому листаем наверх сами.
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [productId])
@@ -99,7 +99,7 @@ function BackLink() {
   )
 }
 
-// «Ronavi H1500 (грузоподъемность до 1 500 кг)» — модель крупно, пояснение из скобок отдельной строкой.
+// «Ronavi H1500 (грузоподъемность до 1 500 кг)» - модель крупно, пояснение из скобок отдельной строкой.
 function splitName(name: string) {
   const match = name.match(/^(.*?)\s*\((.+)\)\s*$/)
   if (!match) return { title: name, caption: null }
@@ -162,12 +162,12 @@ function ProductView({ product }: { product: ProductDetail }) {
 
 /* ---------- hero ---------- */
 
-/* Главное на странице — сама модель: большая сцена, её можно вращать, рядом можно поставить человека для масштаба. */
+/* Главное на странице - сама модель: большая сцена, её можно вращать, рядом можно поставить человека для масштаба. */
 function Stage({ product }: { product: ProductDetail }) {
   const human = useGallery((s) => s.human)
   const paused = useGallery((s) => s.paused)
 
-  // Человек и пауза — общее состояние всех 3D-сцен; уходя со страницы, возвращаем каталогу обычный вид.
+  // Человек и пауза - общее состояние всех 3D-сцен; уходя со страницы, возвращаем каталогу обычный вид.
   useEffect(
     () => () => {
       useGallery.setState({ human: false, paused: false })
@@ -190,7 +190,7 @@ function Stage({ product }: { product: ProductDetail }) {
             active={human}
             onClick={() => useGallery.getState().toggleHuman()}
             label="Человек рядом"
-            hint="Силуэт человека ростом 1,75 м — для масштаба"
+            hint="Силуэт человека ростом 1,75 м - для масштаба"
           >
             <PersonStanding />
           </StageToggle>
@@ -315,7 +315,7 @@ function Intro({ product }: { product: ProductDetail }) {
   )
 }
 
-/* УГТ — шкала из девяти делений: видно не только число, но и сколько осталось до серийного продукта. */
+/* УГТ - шкала из девяти делений: видно не только число, но и сколько осталось до серийного продукта. */
 function Readiness({ trl }: { trl: number | null | undefined }) {
   if (!isNum(trl)) return <span className="text-[13px] text-ink-3">УГТ не указан</span>
   return (
@@ -333,7 +333,7 @@ function Readiness({ trl }: { trl: number | null | undefined }) {
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs">
-        Уровень готовности технологии по каталогу организатора: 1 — идея, 9 — серийный продукт в эксплуатации
+        Уровень готовности технологии по каталогу организатора: 1 - идея, 9 - серийный продукт в эксплуатации
       </TooltipContent>
     </Tooltip>
   )
@@ -383,7 +383,7 @@ function Passport({ specs }: { specs: Spec[] }) {
           key={spec.key}
           className={cn(
             'flex min-w-0 flex-col-reverse px-4 py-4 sm:px-6 sm:py-5',
-            // Габариты строкой шире половины узкого экрана — до lg им отдаётся вся строка паспорта.
+            // Габариты строкой шире половины узкого экрана - до lg им отдаётся вся строка паспорта.
             typeof spec.value === 'string' && 'max-lg:col-span-2',
           )}
         >
@@ -402,7 +402,7 @@ function Passport({ specs }: { specs: Spec[] }) {
   )
 }
 
-// Габариты приходят строкой «1044x654x380» — в паспорте показываем их с настоящим знаком умножения.
+// Габариты приходят строкой «1044x654x380» - в паспорте показываем их с настоящим знаком умножения.
 const passportValue = (spec: Spec) =>
   typeof spec.value === 'string' ? spec.value.replace(/\s*[xх×*]\s*/gi, ' × ') : formatNumber(spec.value as number)
 
@@ -451,7 +451,7 @@ function SpecsBlock({ product }: { product: ProductDetail }) {
         <span className="inline-flex items-center gap-1.5">
           <span className="size-1.5 rounded-full bg-warn" /> заявка производителя
         </span>
-        <span>источник — в подсказке у точки</span>
+        <span>источник - в подсказке у точки</span>
       </div>
       <div className="card divide-y divide-line px-4 sm:px-6">
         {groups.map(({ group, items }) => (
@@ -730,7 +730,7 @@ function SimilarCard({ product, state }: { product: Product; state: CatalogLinkS
           </p>
           <CardFigures
             items={[
-              { value: product.trl ?? '—', label: 'УГТ из 9' },
+              { value: product.trl ?? '-', label: 'УГТ из 9' },
               { value: formatPct(product.completeness, { share: true, digits: 0 }), label: 'полнота данных' },
               { value: formatNumber(offers), label: pluralRu(offers, ['предложение', 'предложения', 'предложений']) },
             ]}

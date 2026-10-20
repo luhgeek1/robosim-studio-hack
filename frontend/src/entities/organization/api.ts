@@ -49,7 +49,7 @@ export function useOrganizations() {
 export const useOrganization = (id: string) =>
   useQuery({ queryKey: qk.organizations.one(id), queryFn: () => organizationApi.get(id) })
 
-// Приглашения приходят от других людей — опрашиваем, чтобы колокольчик ожил без перезагрузки.
+// Приглашения приходят от других людей - опрашиваем, чтобы колокольчик ожил без перезагрузки.
 export function useIncomingInvitations() {
   const { user } = useSession()
   return useQuery({

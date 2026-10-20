@@ -263,7 +263,7 @@ function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizin
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <OriginCard
           title="По формуле цикла"
-          note="Робот доступен и загружен с запасом, каждый рейс — туда и обратно порожняком"
+          note="Робот доступен и загружен с запасом, каждый рейс - туда и обратно порожняком"
           fleet={formula}
           active={usingFormula}
         />
@@ -290,7 +290,7 @@ function CountOrigin({ scenarioId, sizing, locked }: { scenarioId: string; sizin
           {locked
             ? 'Сначала сохраните или отмените правки состава'
             : count.source === 'manual' && !usingFormula
-              ? `Сейчас в расчёте — ${count.final}, заданное вручную`
+              ? `Сейчас в расчёте - ${count.final}, заданное вручную`
               : 'Выбор применяется и к вариантам RaaS и лизинга с тем же роботом'}
         </span>
       </div>
@@ -357,7 +357,7 @@ function Row({
   return (
     <div className={`flex justify-between gap-2 ${muted ? 'text-muted-foreground' : ''}`}>
       <span className={muted ? '' : 'text-muted-foreground'}>{label}</span>
-      <span className={`num ${strong ? 'font-semibold' : ''}`}>{isNum(value) ? text : '—'}</span>
+      <span className={`num ${strong ? 'font-semibold' : ''}`}>{isNum(value) ? text : '-'}</span>
     </div>
   )
 }
@@ -367,14 +367,14 @@ function CountCell({ label, value, prefix }: { label: string; value: number | nu
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="text-center">
-          <div className="num text-lg leading-none font-medium">{isNum(value) ? `${prefix ?? ''}${value}` : '—'}</div>
+          <div className="num text-lg leading-none font-medium">{isNum(value) ? `${prefix ?? ''}${value}` : '-'}</div>
           <div className="text-[11px] text-muted-foreground">{label}</div>
         </div>
       </TooltipTrigger>
       <TooltipContent>
         {label === 'имитация' && !isNum(value)
           ? 'Имитация ещё не запускалась'
-          : `${label}: ${isNum(value) ? value : '—'}`}
+          : `${label}: ${isNum(value) ? value : '-'}`}
       </TooltipContent>
     </Tooltip>
   )

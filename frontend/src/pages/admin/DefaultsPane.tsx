@@ -153,7 +153,7 @@ function DefaultRow({
         <span className="num text-right text-[12.5px] text-ink-3">
           {item.projects_using_default > 0
             ? `в ${formatNumber(item.projects_using_default)} ${projectsWord(item.projects_using_default)}`
-            : '—'}
+            : '-'}
         </span>
         <span
           className="num min-w-0 wrap-anywhere lg:truncate text-right text-[14px] font-medium max-lg:col-span-2 max-lg:text-left"
@@ -213,13 +213,13 @@ function DefaultDetails({ item, onEdit }: { item: AdminParameterDefault; onEdit:
         )}
         {hasRange && (
           <p className="num text-[12.5px] text-ink-3">
-            Допустимо: {item.min != null ? formatNumber(item.min) : '—'} …{' '}
-            {item.max != null ? formatNumber(item.max) : '—'} {item.unit}
+            Допустимо: {item.min != null ? formatNumber(item.min) : '-'} …{' '}
+            {item.max != null ? formatNumber(item.max) : '-'} {item.unit}
           </p>
         )}
         {!item.applies_to_blank && (
           <p className="text-[12.5px] text-ink-3">
-            Значение демо-объекта организатора: в пустом проекте обязательное поле не заполняется — пользователь вводит
+            Значение демо-объекта организатора: в пустом проекте обязательное поле не заполняется - пользователь вводит
             своё. Действует в демо-проектах и их копиях.
           </p>
         )}

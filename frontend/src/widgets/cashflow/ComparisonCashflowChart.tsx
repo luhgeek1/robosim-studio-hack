@@ -72,7 +72,7 @@ export function CashflowChart({ table }: { table: ComparisonTable }) {
           <ToggleGroupItem value="discounted_cumulative_rub">Дисконтированный</ToggleGroupItem>
         </ToggleGroup>
       )}
-      {/* На телефоне легенда — обычный список над графиком: внутри SVG длинные названия наезжали на ось. */}
+      {/* На телефоне легенда - обычный список над графиком: внутри SVG длинные названия наезжали на ось. */}
       {narrow && (
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
           {series.map((s) => (

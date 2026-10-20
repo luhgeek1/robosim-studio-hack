@@ -7,7 +7,7 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Spinner } from '@/shared/ui/states'
 
-/* Новая организация сразу становится текущей рабочей областью, а пользователь попадает к приглашениям —
+/* Новая организация сразу становится текущей рабочей областью, а пользователь попадает к приглашениям -
    без участников она бессмысленна. */
 export function CreateOrganizationDialog({
   open,

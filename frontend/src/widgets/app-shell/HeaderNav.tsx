@@ -43,7 +43,7 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
       if (!mark) return setBox(null)
       const r = mark.getBoundingClientRect()
       const c = root.getBoundingClientRect()
-      // Вкладка может быть частично прокручена за край полосы — подсветку обрезаем по видимой части.
+      // Вкладка может быть частично прокручена за край полосы - подсветку обрезаем по видимой части.
       const strip = mark.closest('[role=tablist]')?.getBoundingClientRect()
       const left = strip ? Math.max(r.left, strip.left) : r.left
       const right = strip ? Math.min(r.right, strip.right) : r.right
@@ -57,7 +57,7 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
       })
     }
     measure()
-    // Вкладки въезжают и сдвигаются пружиной — пока она идёт (~0,8 с), перемеряем каждый кадр.
+    // Вкладки въезжают и сдвигаются пружиной - пока она идёт (~0,8 с), перемеряем каждый кадр.
     const until = performance.now() + 800
     let frame = 0
     const follow = () => {
@@ -67,7 +67,7 @@ export function HeaderHighlight({ container }: { container: HTMLElement | null }
     frame = requestAnimationFrame(follow)
     const observer = new ResizeObserver(measure)
     observer.observe(root)
-    // Пункты шапки появляются позже неё (раздел «Проекты» — после восстановления сессии): ловим появление метки.
+    // Пункты шапки появляются позже неё (раздел «Проекты» - после восстановления сессии): ловим появление метки.
     const mutations = new MutationObserver(measure)
     mutations.observe(root, { subtree: true, childList: true, attributeFilter: ['data-header-active'] })
     root.addEventListener('scroll', measure, true)
@@ -142,7 +142,7 @@ export function Sections({ projectId }: { projectId?: string }) {
       <SectionLink to="/catalog" end>
         Каталог
       </SectionLink>
-      {/* Каталог, нормативы, пользователи и галерея 3D-моделей — инструменты администратора. */}
+      {/* Каталог, нормативы, пользователи и галерея 3D-моделей - инструменты администратора. */}
       {user?.role === 'admin' && <SectionLink to="/admin">Админ-панель</SectionLink>}
       {user?.role === 'vendor' && <SectionLink to="/vendor">Кабинет производителя</SectionLink>}
       <SectionLink to={compareTo}>
@@ -259,7 +259,7 @@ function Tab({ tab, active, order }: { tab: ProjectTab; active: boolean; order: 
 }
 
 /* «+» открывает список проектов: уже открытые отмечены, клик по любому открывает или переключает вкладку.
-   Внизу — создание нового проекта: переход на «Проекты» с открытой модалкой. */
+   Внизу - создание нового проекта: переход на «Проекты» с открытой модалкой. */
 function AddProjectMenu({ openIds, order }: { openIds: Set<string>; order: string }) {
   const [open, setOpen] = useState(false)
   const projects = useProjects()
@@ -373,11 +373,11 @@ export function ProjectTabs({ activeId }: { activeId?: string }) {
       else if (right > el.scrollLeft + el.clientWidth) el.scrollTo({ left: right - el.clientWidth, behavior })
     }
     // Плавная прокрутка сразу, а когда вкладки доедут на места (их перестройка прерывает плавную прокрутку),
-    // — контрольная без анимации.
+    // - контрольная без анимации.
     const frame = requestAnimationFrame(() => reveal('smooth'))
     const settle = window.setTimeout(() => reveal('auto'), 700)
     // Полоса сужается позже, когда в шапке появляются раздел «Проекты» и имя пользователя (после восстановления
-    // сессии), — тогда активная вкладка может уйти за край; держим её видимой при любом изменении размера.
+    // сессии), - тогда активная вкладка может уйти за край; держим её видимой при любом изменении размера.
     const el = strip.current
     const resize = new ResizeObserver(() => reveal('auto'))
     if (el) resize.observe(el)
@@ -455,7 +455,7 @@ function MobileTab({ tab, active, onGo }: { tab: ProjectTab; active: boolean; on
   )
 }
 
-/* На узком экране разделы и открытые проекты не помещаются в шапку — они уезжают в выдвижное меню. */
+/* На узком экране разделы и открытые проекты не помещаются в шапку - они уезжают в выдвижное меню. */
 export function MobileNav({ projectId }: { projectId?: string }) {
   const [open, setOpen] = useState(false)
   const { user } = useSession()

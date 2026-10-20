@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/button'
 import { cn } from '@/shared/lib/utils'
 import { Segmented } from '@/shared/ui/v0'
 
-// ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения — первая строка нижней панели, под картой.
+// ТЗ 3.6.3: старт, стоп, перезапуск, скорость воспроизведения - первая строка нижней панели, под картой.
 export function PlayerBar({ disabled = false, speeds = SPEEDS }: { disabled?: boolean; speeds?: readonly number[] }) {
   const playing = usePlayback((s) => s.playing)
   const speed = usePlayback((s) => s.speed)

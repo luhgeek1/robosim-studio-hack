@@ -5,7 +5,7 @@ export type Metric = SensitivityRequest['metric']
 
 export const METRIC: Record<
   Metric,
-  // better: какое направление метрики хорошо для объекта — им красится торнадо (лучше / хуже базы).
+  // better: какое направление метрики хорошо для объекта - им красится торнадо (лучше / хуже базы).
   { label: string; short: string; better: 'lower' | 'higher'; format: (v: number | null | undefined) => string }
 > = {
   payback_years: { label: 'Срок окупаемости', short: 'окупаемость', better: 'lower', format: (v) => formatYears(v) },
@@ -15,7 +15,7 @@ export const METRIC: Record<
     label: 'Чистый годовой эффект',
     short: 'эффект',
     better: 'higher',
-    format: (v) => (isNum(v) ? `${formatRub(v)}/год` : '—'),
+    format: (v) => (isNum(v) ? `${formatRub(v)}/год` : '-'),
   },
   tco_rub: { label: 'TCO за горизонт', short: 'TCO', better: 'lower', format: (v) => formatRub(v) },
 }
@@ -27,7 +27,7 @@ export const METRIC_KEYS = Object.keys(METRIC) as Metric[]
 
 // Heatmap cells are small: show payback in years and money in millions without units (the legend carries them).
 export function formatCompact(metric: Metric, v: number | null | undefined): string {
-  if (!isNum(v)) return metric === 'payback_years' ? '∞' : '—'
+  if (!isNum(v)) return metric === 'payback_years' ? '∞' : '-'
   if (metric === 'payback_years' || metric === 'roi_pct') return formatNumber(v, 1)
   return formatNumber(v / 1e6, 1)
 }

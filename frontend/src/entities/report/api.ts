@@ -5,7 +5,7 @@ import type { Report, ReportFormat, Res } from '@/shared/api/types'
 import { downloadFile } from '@/shared/lib/download'
 
 const POLL_MS = 1500
-// PDF and Excel build in 1–2 s (D-021); two minutes covers a busy worker without polling forever.
+// PDF and Excel build in 1-2 s (D-021); two minutes covers a busy worker without polling forever.
 const POLL_LIMIT = 80
 
 export const REPORT_EXTENSION: Record<ReportFormat, string> = { pdf: 'pdf', xlsx: 'xlsx', docx: 'docx', json: 'json' }
@@ -32,14 +32,14 @@ export const downloadReport = (report: Report, title: string) =>
 export const useReports = (projectId: string) =>
   useQuery({ queryKey: reportsKey(projectId), queryFn: () => reportApi.list(projectId) })
 
-// Отчёт — фоновая задача (ТЗ 3.7.1–3.7.3): создать, дождаться файла и скачать его с токеном.
+// Отчёт - фоновая задача (ТЗ 3.7.1-3.7.3): создать, дождаться файла и скачать его с токеном.
 export function useMakeReport(projectId: string, title: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (body: { format: ReportFormat; visual_ids?: string[] }) => {
       let report = await reportApi.create(projectId, body)
       for (let attempt = 0; report.status === 'queued' || report.status === 'running'; attempt++) {
-        if (attempt >= POLL_LIMIT) throw new Error('Отчёт не собрался за 2 минуты — попробуйте ещё раз')
+        if (attempt >= POLL_LIMIT) throw new Error('Отчёт не собрался за 2 минуты - попробуйте ещё раз')
         await new Promise((resolve) => setTimeout(resolve, POLL_MS))
         report = await reportApi.get(report.id)
       }

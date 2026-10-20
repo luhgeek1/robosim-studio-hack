@@ -85,7 +85,7 @@ export function DimensionsValueInput({
                 aria-label={`${part}, ${label}`}
                 aria-invalid={message ? true : undefined}
                 aria-describedby={message ? errorId : undefined}
-                placeholder={example[index] || '—'}
+                placeholder={example[index] || '-'}
                 disabled={pending}
                 className="num block h-6 w-full min-w-0 bg-transparent text-base outline-none placeholder:text-ink-4 disabled:cursor-not-allowed sm:text-sm"
                 onChange={(event) => {

@@ -11,5 +11,5 @@ export function useMediaQuery(query: string) {
   )
 }
 
-// Узкий экран — телефон, уже брейкпойнта sm (640 px): графикам нужны меньше подписей и своя раскладка.
+// Узкий экран - телефон, уже брейкпойнта sm (640 px): графикам нужны меньше подписей и своя раскладка.
 export const useNarrow = () => useMediaQuery('(max-width: 639px)')

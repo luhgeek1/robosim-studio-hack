@@ -162,7 +162,7 @@ export interface paths {
     put?: never
     /**
      * Обновить пару токенов
-     * @description Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; для других клиентов — refresh-токен в теле.
+     * @description Для web refresh-токен берётся из httpOnly-cookie, требуется заголовок X-CSRF-Token; для других клиентов - refresh-токен в теле.
      */
     post: operations['refreshTokens']
     delete?: never
@@ -182,7 +182,7 @@ export interface paths {
     put?: never
     /**
      * Выход (отзыв сессии и обоих токенов)
-     * @description Для web-cookies обязателен X-CSRF-Token, для mobile — refresh_token в теле.
+     * @description Для web-cookies обязателен X-CSRF-Token, для mobile - refresh_token в теле.
      */
     post: operations['logout']
     delete?: never
@@ -393,7 +393,7 @@ export interface paths {
     }
     /**
      * Возврат из сервиса входа
-     * @description Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка — /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity — конфликт, автоматического связывания нет.
+     * @description Проверяет state, браузерную cookie и PKCE; VK ID также device_id и state ответа обмена. Код и профиль обрабатывает только сервер. Успех ставит обычные refresh/CSRF-cookie и возвращает на return_to. Ошибка - /login или /account с безопасным auth_error; частичные записи откатываются. Токенов в Location нет. Совпадение email без identity - конфликт, автоматического связывания нет.
      */
     get: operations['finishOAuth']
     put?: never
@@ -486,8 +486,8 @@ export interface paths {
     get?: never
     put?: never
     /**
-     * Принять приглашение — стать участником организации
-     * @description Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token — 403, истёкшее/отозванное/принятое — 404. GET никогда не принимает приглашение.
+     * Принять приглашение - стать участником организации
+     * @description Требуется вход с email приглашения. Для почтового приглашения также нужен token из письма; неверный или отсутствующий token - 403, истёкшее/отозванное/принятое - 404. GET никогда не принимает приглашение.
      */
     post: operations['acceptInvitation']
     delete?: never
@@ -525,7 +525,7 @@ export interface paths {
     /** Организации пользователя */
     get: operations['listOrganizations']
     put?: never
-    /** Создать организацию (создатель — владелец) */
+    /** Создать организацию (создатель - владелец) */
     post: operations['createOrganization']
     delete?: never
     options?: never
@@ -567,7 +567,7 @@ export interface paths {
     put?: never
     /**
      * Пригласить пользователя по email (владелец)
-     * @description Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod — 503. Истёкшее приглашение можно создать заново.
+     * @description Письмо через транзакционную очередь Resend и уведомление в приложении. Почтовая ссылка действует RS_INVITATION_TTL_HOURS (по умолчанию 168 ч), секрет передаётся во фрагменте URL. Без почты в dev/test сохраняется режим уведомлений, в prod - 503. Истёкшее приглашение можно создать заново.
      */
     post: operations['inviteToOrganization']
     delete?: never
@@ -640,7 +640,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Тип объекта — схема формы параметров */
+    /** Тип объекта - схема формы параметров */
     get: operations['getObjectType']
     put?: never
     post?: never
@@ -796,7 +796,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Карточка продукта — предложения, ТТХ с источниками, кейсы */
+    /** Карточка продукта - предложения, ТТХ с источниками, кейсы */
     get: operations['getProduct']
     put?: never
     post?: never
@@ -815,7 +815,7 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Сравнение 2–5 продуктов по группам характеристик */
+    /** Сравнение 2-5 продуктов по группам характеристик */
     post: operations['compareProducts']
     delete?: never
     options?: never
@@ -830,7 +830,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Проекты рабочей области — личные или организации */
+    /** Проекты рабочей области - личные или организации */
     get: operations['listProjects']
     put?: never
     /** Создать проект (пустой, из демо-данных или копией) */
@@ -1008,7 +1008,7 @@ export interface paths {
     put?: never
     /**
      * Умный импорт из свободного текста (ассистент)
-     * @description Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM — 503 LLM_UNAVAILABLE.
+     * @description Описание объекта словами → предложения параметров со статусом llm_suggested. Без LLM - 503 LLM_UNAVAILABLE.
      */
     post: operations['importProjectParamsText']
     delete?: never
@@ -1075,7 +1075,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Панель доверия — происхождение параметров и их влияние */
+    /** Панель доверия - происхождение параметров и их влияние */
     get: operations['getProjectDataQuality']
     put?: never
     post?: never
@@ -1092,7 +1092,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Процессы объекта — спрос, пик, текущая стоимость («где деньги») */
+    /** Процессы объекта - спрос, пик, текущая стоимость («где деньги») */
     get: operations['getProjectProcesses']
     put?: never
     post?: never
@@ -1171,7 +1171,7 @@ export interface paths {
     }
     /**
      * Подбор решений по процессам с причинами и скорингом (ТЗ 3.4)
-     * @description Возвращает последний результат; если параметры менялись — пересчитывает автоматически.
+     * @description Возвращает последний результат; если параметры менялись - пересчитывает автоматически.
      */
     get: operations['getMatching']
     put?: never
@@ -1310,7 +1310,7 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Чувствительность к параметрам — торнадо и тепловая карта (ТЗ 3.5.6) */
+    /** Чувствительность к параметрам - торнадо и тепловая карта (ТЗ 3.5.6) */
     post: operations['runSensitivity']
     delete?: never
     options?: never
@@ -1329,7 +1329,7 @@ export interface paths {
     put?: never
     /**
      * Монте-Карло по неопределённости входов
-     * @description method=analytic выполняется синхронно; surrogate и des — как фоновая задача (202 + Job).
+     * @description method=analytic выполняется синхронно; surrogate и des - как фоновая задача (202 + Job).
      *     Пока имитация не готова, surrogate и des отвечают 409.
      */
     post: operations['runMonteCarlo']
@@ -1397,7 +1397,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Трасса расчёта — каждая метрика с формулой, входами и источниками (ТЗ 3.5.8) */
+    /** Трасса расчёта - каждая метрика с формулой, входами и источниками (ТЗ 3.5.8) */
     get: operations['getCalculationTrace']
     put?: never
     post?: never
@@ -1456,7 +1456,7 @@ export interface paths {
     /**
      * Запустить имитацию (фоновая задача, до 60 с; прогресс по SSE)
      * @description Использует планировку проекта, состав сценария и параметры объекта. Возвращает SimulationRun со status=queued;
-     *     прогресс — `GET /jobs/{id}/stream` или опрос `GET /simulations/{id}`.
+     *     прогресс - `GET /jobs/{id}/stream` или опрос `GET /simulations/{id}`.
      */
     post: operations['startSimulation']
     delete?: never
@@ -1478,7 +1478,7 @@ export interface paths {
      */
     get: operations['getLatestFleetSweep']
     put?: never
-    /** Перебор количества роботов — кривая N → SLA, загрузка, окупаемость (фоновая задача) */
+    /** Перебор количества роботов - кривая N → SLA, загрузка, окупаемость (фоновая задача) */
     post: operations['runFleetSweep']
     delete?: never
     options?: never
@@ -1530,7 +1530,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** KPI по времени — графики очереди, SLA, загрузки */
+    /** KPI по времени - графики очереди, SLA, загрузки */
     get: operations['getSimulationTimeline']
     put?: never
     post?: never
@@ -1550,7 +1550,7 @@ export interface paths {
     /**
      * Журнал событий для 2D-плеера (постранично по времени)
      * @description Плеер запрашивает окно `[from_s, to_s)`, интерполирует движение по рёбрам планировки и держит буфер на следующее окно.
-     *     Первый запрос — с from_s=0; в ответе есть `tasks_snapshot` для стартового состояния.
+     *     Первый запрос - с from_s=0; в ответе есть `tasks_snapshot` для стартового состояния.
      */
     get: operations['getSimulationReplay']
     put?: never
@@ -1627,7 +1627,7 @@ export interface paths {
     /**
      * Сформировать отчёт PDF / Excel с формулами / DOCX (фоновая задача)
      * @description Сейчас формируются `pdf` («предТЭО» с графиками, планировкой и имитацией), `xlsx` (входы и живые формулы
-     *     из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` — 422.
+     *     из трассы, денежный поток с формулами NPV и IRR) и `json` (все данные отчёта); `docx` - 422.
      *     Сценарии с устаревшим расчётом пересчитываются.
      */
     post: operations['createReport']
@@ -1715,8 +1715,8 @@ export interface paths {
     get?: never
     put?: never
     /**
-     * Вопрос по расчёту или имитации — ответ с цитатами из трассы
-     * @description LLM отвечает только по данным расчёта (трасса, симуляция, нормативы); без LLM — шаблонные ответы на типовые вопросы.
+     * Вопрос по расчёту или имитации - ответ с цитатами из трассы
+     * @description LLM отвечает только по данным расчёта (трасса, симуляция, нормативы); без LLM - шаблонные ответы на типовые вопросы.
      */
     post: operations['explain']
     delete?: never
@@ -1916,7 +1916,7 @@ export interface paths {
     get?: never
     put?: never
     post?: never
-    /** Скрыть продукт (мягкое удаление — расчёты, где он использован, сохраняются) */
+    /** Скрыть продукт (мягкое удаление - расчёты, где он использован, сохраняются) */
     delete: operations['adminDeleteProduct']
     options?: never
     head?: never
@@ -1968,12 +1968,12 @@ export interface paths {
     get?: never
     put?: never
     /**
-     * Загрузить таблицу решений организатора (CSV) — новая версия каталога (ТЗ 3.3.2, 3.3.6)
+     * Загрузить таблицу решений организатора (CSV) - новая версия каталога (ТЗ 3.3.2, 3.3.6)
      * @description Формат `catalog_export_v4.csv` (разделитель «;», UTF-8 или cp1251). Продукты под управлением сида
-     *     обновляются, новые id добавляются (тип решения — по тому, как файл классифицирует уже известные продукты;
-     *     процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются —
+     *     обновляются, новые id добавляются (тип решения - по тому, как файл классифицирует уже известные продукты;
+     *     процессы назначает админ), карточки, которые правил или скрыл администратор, не перезаписываются -
      *     они в `items` с `action: conflict`. Изменение поднимает версию каталога, сохранённые расчёты устаревают.
-     *     С `dry_run=true` ничего не пишет: тот же ответ — предпросмотр.
+     *     С `dry_run=true` ничего не пишет: тот же ответ - предпросмотр.
      */
     post: operations['adminImportCatalog']
     delete?: never
@@ -2082,8 +2082,8 @@ export interface paths {
     get?: never
     /**
      * Задать значение по умолчанию с источником и обоснованием
-     * @description Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона — 422 (у проекта это
-     *     было бы предупреждением, у умолчания — ошибка во всех проектах). Проекты без своего значения, у которых
+     * @description Значение проверяется по типу, списку, диапазону и единице параметра; вне диапазона - 422 (у проекта это
+     *     было бы предупреждением, у умолчания - ошибка во всех проектах). Проекты без своего значения, у которых
      *     меняется действующее значение, получают новую версию: их сохранённые расчёты становятся устаревшими,
      *     а пересчёт показывает изменение параметра в диффе. Старые расчёты хранят свой снимок входов (ТЗ 3.1.5).
      */
@@ -2123,10 +2123,10 @@ export interface paths {
       cookie?: never
     }
     /**
-     * Реестр источников данных — ссылки, даты, где используются (ТЗ 3.3.4)
+     * Реестр источников данных - ссылки, даты, где используются (ТЗ 3.3.4)
      * @description Источники каталога, нормативов и параметров по умолчанию (загрузки пользователей в проекты не входят).
      *     Сначала самые используемые. Источник старше `stale_after_months` месяцев (норматив
-     *     `source_stale_after_months`) — `stale`, без даты получения — `undated`.
+     *     `source_stale_after_months`) - `stale`, без даты получения - `undated`.
      */
     get: operations['adminListSources']
     put?: never
@@ -2154,7 +2154,7 @@ export interface paths {
     head?: never
     /**
      * Исправить название, ссылку, дату получения или примечание источника
-     * @description Правка — событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
+     * @description Правка - событие журнала. Метаданные источника не входят в формулы, поэтому версии данных не меняются
      *     и расчёты не устаревают; экраны и отчёты показывают исправленный источник. Сид не перезаписывает
      *     источник, который правил администратор.
      */
@@ -2253,7 +2253,7 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Производители — для привязки учётной записи вендора */
+    /** Производители - для привязки учётной записи вендора */
     get: operations['adminListManufacturers']
     put?: never
     post?: never
@@ -2498,10 +2498,10 @@ export interface components {
     }
     /**
      * @description Откуда взялось значение и можно ли ему верить.
-     *     user — ввёл пользователь; imported — из файла пользователя; llm_suggested — предложил ассистент, не подтверждено;
-     *     default — значение по умолчанию из справочника (с источником); assumption — допущение команды с обоснованием;
-     *     derived — вычислено из других параметров; confirmed — подтверждено первичным источником (для ТТХ и нормативов);
-     *     vendor_claim — заявка производителя без независимого подтверждения; missing — данных нет.
+     *     user - ввёл пользователь; imported - из файла пользователя; llm_suggested - предложил ассистент, не подтверждено;
+     *     default - значение по умолчанию из справочника (с источником); assumption - допущение команды с обоснованием;
+     *     derived - вычислено из других параметров; confirmed - подтверждено первичным источником (для ТТХ и нормативов);
+     *     vendor_claim - заявка производителя без независимого подтверждения; missing - данных нет.
      * @enum {string}
      */
     ProvenanceStatus:
@@ -2586,7 +2586,7 @@ export interface components {
       /** @example Торговля и услуги */
       industry: string
       /**
-       * @description full — расчёт, симуляция, отчёт; basic — параметры, подбор, аналитическая экономика без симуляции.
+       * @description full - расчёт, симуляция, отчёт; basic - параметры, подбор, аналитическая экономика без симуляции.
        * @enum {string}
        */
       depth: 'full' | 'basic'
@@ -2601,7 +2601,7 @@ export interface components {
       processes: components['schemas']['ProcessDef'][]
       layout_templates?: string[]
     }
-    /** @description Описание одного параметра объекта — по нему фронт строит форму, валидацию и подсказки (ТЗ 4.5.3). */
+    /** @description Описание одного параметра объекта - по нему фронт строит форму, валидацию и подсказки (ТЗ 4.5.3). */
     ParameterDef: {
       /** @example pallets_in_per_day */
       key: string
@@ -2628,11 +2628,11 @@ export interface components {
       hint?: string
       /** @example 1000 */
       example?: string | null
-      /** @description Какие процессы зависят от параметра — для подсветки «что пересчитается». */
+      /** @description Какие процессы зависят от параметра - для подсветки «что пересчитается». */
       affects?: string[]
       order?: number
     }
-    /** @description Процесс объекта, который можно роботизировать. Иерархия ТЗ 3.3.1 — отрасль → объект → процесс → тип решения → продукт. */
+    /** @description Процесс объекта, который можно роботизировать. Иерархия ТЗ 3.3.1 - отрасль → объект → процесс → тип решения → продукт. */
     ProcessDef: {
       /** @example pallet_transport */
       key: string
@@ -2661,7 +2661,7 @@ export interface components {
       sizing_model?: components['schemas']['SizingModel']
     }
     /**
-     * @description Норматив расчётной модели. ТЗ 3.5.1 запрещает недокументированные коэффициенты — каждый норматив имеет источник
+     * @description Норматив расчётной модели. ТЗ 3.5.1 запрещает недокументированные коэффициенты - каждый норматив имеет источник
      *     и обоснование, и пользователь видит его в интерфейсе (ТЗ 3.2.5, 3.5.8).
      */
     Norm: {
@@ -2681,7 +2681,7 @@ export interface components {
         max?: number
       } | null
       source: components['schemas']['Source']
-      /** @example Лист «Легенда» датасета организатора: загрузка AMR 70–85 % */
+      /** @example Лист «Легенда» датасета организатора: загрузка AMR 70-85 % */
       rationale?: string
       /** @description Ключи метрик, на которые влияет */
       affects?: string[]
@@ -2698,7 +2698,7 @@ export interface components {
       manufacturer: components['schemas']['Manufacturer']
       /** @example amr_transport */
       solution_type: string
-      /** @example AMR — транспортный */
+      /** @example AMR - транспортный */
       solution_type_name?: string
       /** @example Мобильный робот */
       subtype?: string | null
@@ -2728,7 +2728,7 @@ export interface components {
       sources: components['schemas']['Source'][]
       /** @example Интеграция с WMS по REST API вендора; QR-разметка пола */
       integration_notes?: string | null
-      /** @description Ключевые ТТХ без данных — влияют на статус «требует проверки». */
+      /** @description Ключевые ТТХ без данных - влияют на статус «требует проверки». */
       missing_key_specs?: string[]
       similar_products?: components['schemas']['Product'][]
     }
@@ -2762,7 +2762,7 @@ export interface components {
       owner_id: string
       /**
        * Format: uuid
-       * @description Организация, чьим участникам виден проект; null — личный проект автора.
+       * @description Организация, чьим участникам виден проект; null - личный проект автора.
        */
       organization_id?: string | null
       organization?: string | null
@@ -2788,7 +2788,7 @@ export interface components {
       /** @default false */
       is_demo: boolean
     }
-    /** @description Параметр объекта в проекте — значение, происхождение, валидация, история правок. */
+    /** @description Параметр объекта в проекте - значение, происхождение, валидация, история правок. */
     ProjectParam: {
       /** @example aisle_width_m */
       key: string
@@ -2815,7 +2815,7 @@ export interface components {
       name: string
       demand_unit: components['schemas']['DemandUnit']
       /**
-       * @description null — не хватает параметров для оценки спроса
+       * @description null - не хватает параметров для оценки спроса
        * @example 100000
        */
       demand_per_day: number | null
@@ -2823,7 +2823,7 @@ export interface components {
       avg_per_hour: number | null
       /** @example 6818 */
       peak_per_hour: number | null
-      /** @description Доли суточного объёма по часам (сумма = 1). Источник профиля — допущение с источником. */
+      /** @description Доли суточного объёма по часам (сумма = 1). Источник профиля - допущение с источником. */
       hourly_profile?: number[] | null
       profile_provenance?: components['schemas']['Provenance'] | null
       /** @description Как процесс выполняется сейчас. */
@@ -2842,7 +2842,7 @@ export interface components {
       notes?: string[]
     }
     /**
-     * @description Планировка объекта — единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
+     * @description Планировка объекта - единая модель для 2D-карты и графа маршрутов симуляции. Генерируется из параметров,
      *     пользователь может подправить зоны и станции в простом редакторе. Не CAD. Сохранение или перегенерация
      *     повышает версию проекта: расчёты становятся stale.
      */
@@ -2864,7 +2864,7 @@ export interface components {
       racks?: components['schemas']['Rack'][]
       nodes: components['schemas']['LayoutNode'][]
       edges: components['schemas']['LayoutEdge'][]
-      /** @description false — после ручной правки в редакторе */
+      /** @description false - после ручной правки в редакторе */
       generated: boolean
       generator?: {
         template?: string
@@ -2882,11 +2882,11 @@ export interface components {
       derivation: components['schemas']['LayoutDerivationStep'][]
       /**
        * @example [
-       *       "В здании помещается 19 500 из 20 000 паллетомест при 5 ярусах — проверьте высоту потолков и площадь"
+       *       "В здании помещается 19 500 из 20 000 паллетомест при 5 ярусах - проверьте высоту потолков и площадь"
        *     ]
        */
       warnings: string[]
-      /** @description Параметры объекта менялись после генерации — стоит перегенерировать */
+      /** @description Параметры объекта менялись после генерации - стоит перегенерировать */
       params_changed: boolean
       /** Format: date-time */
       updated_at?: string
@@ -2905,10 +2905,10 @@ export interface components {
       nodes: components['schemas']['LayoutNode'][]
       edges: components['schemas']['LayoutEdge'][]
     }
-    /** @description Что вытекает из геометрии — попадает в расчёт цикла и в имитацию. */
+    /** @description Что вытекает из геометрии - попадает в расчёт цикла и в имитацию. */
     LayoutStats: {
       /**
-       * @description Ключи — LayoutRoute.key. В расчёт идут как входы `layout_route_<key>_m` (вид `layout` в трассе)
+       * @description Ключи - LayoutRoute.key. В расчёт идут как входы `layout_route_<key>_m` (вид `layout` в трассе)
        * @example {
        *       "dock_in_to_storage": 91.1,
        *       "storage_to_dock_out": 98.2,
@@ -2932,11 +2932,11 @@ export interface components {
       edges?: number
     }
     /**
-     * @description warehouse_u_flow — ворота приёмки и отгрузки на одном фасаде (по умолчанию);
-     *     warehouse_flow_through — приёмка и отгрузка на противоположных фасадах;
-     *     hospital_floor — больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
+     * @description warehouse_u_flow - ворота приёмки и отгрузки на одном фасаде (по умолчанию);
+     *     warehouse_flow_through - приёмка и отгрузка на противоположных фасадах;
+     *     hospital_floor - больница: служебный этаж (пищеблок, прачечная, аптека, лаборатория, отходы), лифтовой холл
      *     и типовой этаж отделений;
-     *     airport_apron — аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
+     *     airport_apron - аэропорт: сортировка багажа, перрон со стоянками ВС, терминал с выходами на посадку.
      * @enum {string}
      */
     LayoutTemplate: 'warehouse_u_flow' | 'warehouse_flow_through' | 'hospital_floor' | 'airport_apron'
@@ -2987,7 +2987,7 @@ export interface components {
         name: string
         why_needed: string
       }[]
-      /** @description Быстрая аналитическая оценка без симуляции — для сортировки и карточки. */
+      /** @description Быстрая аналитическая оценка без симуляции - для сортировки и карточки. */
       estimate?: {
         robots_count?: number | null
         capex_rub?: number | null
@@ -3012,7 +3012,7 @@ export interface components {
        * @example 5
        */
       horizon_years: number
-      /** @description Если null — из нормативов (ключевая ставка ЦБ) */
+      /** @description Если null - из нормативов (ключевая ставка ЦБ) */
       discount_rate_pct?: number | null
       overrides: components['schemas']['NormOverride'][]
       last_calculation?: components['schemas']['CalculationSummary'] | null
@@ -3051,7 +3051,7 @@ export interface components {
       interpretation: components['schemas']['Interpretation']
       risks: components['schemas']['Risk'][]
       warnings?: string[]
-      /** @description Все нормативы и допущения, участвовавшие в расчёте — раздел «Допущения» отчёта. */
+      /** @description Все нормативы и допущения, участвовавшие в расчёте - раздел «Допущения» отчёта. */
       assumptions_used?: components['schemas']['Norm'][]
       /** @description Сверка с методикой ФЦ БАС на их модельном кейсе (если применимо к типу решения). */
       calibration?: {
@@ -3060,7 +3060,7 @@ export interface components {
         deviation_pct?: number | null
         note?: string | null
         within_tolerance?: boolean | null
-        /** @description Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами — каждое число против их числа. */
+        /** @description Пересчёт модельного кейса ФЦ БАС нашими формулами и нормативами - каждое число против их числа. */
         checks?: {
           /** @example fcbas_warehouse_amr.robot_cost */
           key: string
@@ -3078,7 +3078,7 @@ export interface components {
       /** Format: uuid */
       calculation_id: string
       items: components['schemas']['TraceItem'][]
-      /** @description Должно быть 0 — счётчик для слайда */
+      /** @description Должно быть 0 - счётчик для слайда */
       undocumented_constants?: number
     }
     /** @description Все показатели ТЗ 3.5.2 + классические финансовые (по Q&A: ROI с вычетом CAPEX, окупаемость простая и дисконтированная). */
@@ -3092,7 +3092,7 @@ export interface components {
       opex_delta_rub_year?: number
       /** @description Годовой эффект после OPEX и процентов по финансированию (Доп. 2.1) */
       effect_rub_year: number
-      /** @description null — не окупается в горизонте */
+      /** @description null - не окупается в горизонте */
       payback_years: number | null
       /** @description По потоку проекта без долга и его обслуживания */
       discounted_payback_years?: number | null
@@ -3159,7 +3159,7 @@ export interface components {
       verdict: components['schemas']['Interpretation']
       /**
        * @description Накопленный денежный поток каждого сценария относительно «как сейчас» по годам, с точки 0 (старт, минус
-       *     первоначальные вложения). База — линия нуля; пересечение нуля — окупаемость. Один график на все сценарии.
+       *     первоначальные вложения). База - линия нуля; пересечение нуля - окупаемость. Один график на все сценарии.
        */
       cashflow_overlay?: {
         [key: string]: components['schemas']['CashflowPoint'][]
@@ -3168,12 +3168,12 @@ export interface components {
     SensitivityResult: {
       metric: string
       base_value: number
-      /** @description Отсортировано по размаху — готовая торнадо-диаграмма. */
+      /** @description Отсортировано по размаху - готовая торнадо-диаграмма. */
       items: {
         key: string
         name: string
         /**
-         * @description catalog — цена оборудования; group — группа параметров (все зарплаты, все объёмы)
+         * @description catalog - цена оборудования; group - группа параметров (все зарплаты, все объёмы)
          * @enum {string}
          */
         kind?: 'param' | 'norm' | 'catalog' | 'group'
@@ -3186,7 +3186,7 @@ export interface components {
         /** @description Размах метрики запроса (metric_at_high − metric_at_low по модулю) в её единицах; для окупаемости годы за горизонтом считаются равными горизонту */
         swing: number
         rank: number
-        /** @description null — группа параметров */
+        /** @description null - группа параметров */
         provenance_status?: components['schemas']['ProvenanceStatus'] | null
       }[]
       heatmap?: {
@@ -3228,7 +3228,7 @@ export interface components {
         name?: string
         correlation?: number
       }[]
-      /** @description Если method=surrogate — качество метамодели. */
+      /** @description Если method=surrogate - качество метамодели. */
       surrogate_quality?: {
         r2?: number
         mae?: number
@@ -3255,7 +3255,7 @@ export interface components {
       layout_version?: number
       seed?: number
       /**
-       * @description sweep — прогон рекомендованного N, записанный перебором флота
+       * @description sweep - прогон рекомендованного N, записанный перебором флота
        * @enum {string}
        */
       purpose?: 'run' | 'sweep'
@@ -3337,7 +3337,7 @@ export interface components {
         queue_max?: number
       }
       bottleneck?: components['schemas']['Bottleneck']
-      /** @description Сверка «расчёт против имитации» — блок, который должен быть на экране (ТЗ 3.6.2). */
+      /** @description Сверка «расчёт против имитации» - блок, который должен быть на экране (ТЗ 3.6.2). */
       vs_analytic: {
         analytic_throughput_per_hour: number
         sim_throughput_per_hour: number
@@ -3347,7 +3347,7 @@ export interface components {
         /** @example Имитация подтверждает расчёт: 131 палл/ч против 136 (−4 %), SLA выполнен */
         text?: string
       }
-      /** @description Тот же день ручным процессом (если compare_baseline); пока не поддерживается — null. */
+      /** @description Тот же день ручным процессом (если compare_baseline); пока не поддерживается - null. */
       baseline?: {
         throughput_per_hour?: number
         sla_achieved_pct?: number
@@ -3360,7 +3360,7 @@ export interface components {
         sla_achieved_pct?: number
         utilization?: number
       }[]
-      /** @description Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) — их N остаётся по расчёту. */
+      /** @description Процессы сценария, которые движок пока не имитирует (уборка, тягачи, манипуляторы) - их N остаётся по расчёту. */
       skipped_processes?: {
         process_key?: string
         reason?: string
@@ -3386,7 +3386,7 @@ export interface components {
       /** @description С какой секунды запрашивать следующую страницу */
       next_from_s?: number | null
       events: components['schemas']['SimEvent'][]
-      /** @description Очередь задач на момент from_s — чтобы плеер стартовал не с пустой сцены. */
+      /** @description Очередь задач на момент from_s - чтобы плеер стартовал не с пустой сцены. */
       tasks_snapshot?: {
         task_id?: string
         process_key?: string
@@ -3397,7 +3397,7 @@ export interface components {
     }
     /**
      * @description Событие журнала. move: робот идёт по узлам path, прибытие в момент eta; фронт интерполирует положение по рёбрам.
-     *     Остальные типы — состояние в узле на dur секунд.
+     *     Остальные типы - состояние в узле на dur секунд.
      */
     SimEvent: {
       /** @description Секунды от начала прогона */
@@ -3435,7 +3435,7 @@ export interface components {
       disclaimer?: string
       /**
        * Format: uuid
-       * @description Фоновая задача: прогресс — GET /jobs/{id} или SSE
+       * @description Фоновая задача: прогресс - GET /jobs/{id} или SSE
        */
       job_id?: string | null
       error?: components['schemas']['Problem'] | null
@@ -3469,7 +3469,7 @@ export interface components {
        */
       guest_expires_at?: string | null
     }
-    /** @description Организация глазами текущего пользователя — с его ролью. */
+    /** @description Организация глазами текущего пользователя - с его ролью. */
     Organization: {
       /** Format: uuid */
       id: string
@@ -3508,7 +3508,7 @@ export interface components {
       invited_by_name?: string | null
       invitee_registered: boolean
       /**
-       * @description sent — Resend принял письмо; доставка в ящик не подтверждается.
+       * @description sent - Resend принял письмо; доставка в ящик не подтверждается.
        * @enum {string}
        */
       email_delivery?: 'disabled' | 'queued' | 'sent' | 'failed' | 'cancelled'
@@ -3516,7 +3516,7 @@ export interface components {
       expires_at?: string | null
     }
     /**
-     * @description owner — переименовывает, приглашает, исключает, удаляет организацию; member — работает с общими проектами.
+     * @description owner - переименовывает, приглашает, исключает, удаляет организацию; member - работает с общими проектами.
      * @enum {string}
      */
     OrganizationRole: 'owner' | 'member'
@@ -3541,7 +3541,7 @@ export interface components {
       manufacturer: components['schemas']['Manufacturer']
       /**
        * Format: uuid
-       * @description У одобренного нового продукта — созданная карточка
+       * @description У одобренного нового продукта - созданная карточка
        */
       product_id?: string | null
       product_name: string
@@ -3553,7 +3553,7 @@ export interface components {
       created_at: string
       /** @description Версия каталога, на которой вендор готовил заявку */
       catalog_version: string
-      /** @description Карточку меняли после подачи заявки — сверьте перед решением */
+      /** @description Карточку меняли после подачи заявки - сверьте перед решением */
       product_changed_since: boolean
       /** Format: date-time */
       reviewed_at?: string | null
@@ -3564,7 +3564,7 @@ export interface components {
       items: components['schemas']['Proposal'][]
       total: number
     }
-    /** @description Спрос — агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3). */
+    /** @description Спрос - агрегаты по всем проектам платформы без названий, владельцев и параметров (ТЗ 4.4.3). */
     VendorOverview: {
       manufacturer: components['schemas']['Manufacturer']
       products: components['schemas']['VendorProduct'][]
@@ -3658,13 +3658,13 @@ export interface components {
     /** @enum {string} */
     JobStatus: 'queued' | 'running' | 'done' | 'failed' | 'cancelled'
     /**
-     * @description guest — временная сессия с проектами на 24 часа; user — проекты; admin — каталог, нормативы, пользователи; vendor — свои продукты с модерацией.
+     * @description guest - временная сессия с проектами на 24 часа; user - проекты; admin - каталог, нормативы, пользователи; vendor - свои продукты с модерацией.
      * @enum {string}
      */
     Role: 'guest' | 'user' | 'admin' | 'vendor'
     TokenPair: {
       access_token: string
-      /** @description Для X-Client=web всегда null — токен в httpOnly-cookie */
+      /** @description Для X-Client=web всегда null - токен в httpOnly-cookie */
       refresh_token?: string | null
       /** @default bearer */
       token_type: string
@@ -3808,7 +3808,7 @@ export interface components {
       email: string
     }
     /**
-     * @description warehouse — склад (в полной глубине), airport, hospital — параметры и подбор; custom — свой объект.
+     * @description warehouse - склад (в полной глубине), airport, hospital - параметры и подбор; custom - свой объект.
      * @enum {string}
      */
     ObjectTypeKey: 'warehouse' | 'airport' | 'hospital' | 'custom'
@@ -3843,10 +3843,10 @@ export interface components {
     SolutionType: {
       /** @example amr_transport */
       key: string
-      /** @example AMR — транспортный мобильный робот */
+      /** @example AMR - транспортный мобильный робот */
       name: string
       description?: string
-      /** @description null — категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог. */
+      /** @description null - категория вне моделей расчёта (дроны, морские роботы и т.п.), только каталог. */
       sizing_model: components['schemas']['SizingModel'] | null
       /** @description Ключи ТТХ, участвующие в жёстких проверках для этого типа. */
       capability_keys: string[]
@@ -3879,9 +3879,9 @@ export interface components {
      */
     ProductStatus: 'operation' | 'piloting' | 'rnd'
     /**
-     * @description in_registry_719 — есть в реестре промпродукции (ПП 719); tested_fcbas — протестировано ФЦ БАС;
-     *     specs_confirmed — все ключевые ТТХ подтверждены первичными источниками; domestic — отечественный производитель;
-     *     has_cases — есть реализованные внедрения.
+     * @description in_registry_719 - есть в реестре промпродукции (ПП 719); tested_fcbas - протестировано ФЦ БАС;
+     *     specs_confirmed - все ключевые ТТХ подтверждены первичными источниками; domestic - отечественный производитель;
+     *     has_cases - есть реализованные внедрения.
      * @enum {string}
      */
     Badge: 'in_registry_719' | 'tested_fcbas' | 'specs_confirmed' | 'domestic' | 'has_cases'
@@ -3908,7 +3908,7 @@ export interface components {
       name: string
       count: number
     }
-    /** @description Значения фильтров с количествами — для панели фильтров каталога. */
+    /** @description Значения фильтров с количествами - для панели фильтров каталога. */
     CatalogFacets: {
       solution_types?: components['schemas']['Facet'][]
       manufacturers?: components['schemas']['Facet'][]
@@ -3927,7 +3927,7 @@ export interface components {
      */
     SpecGroup: 'identification' | 'technical' | 'infrastructure' | 'economics' | 'applicability' | 'data_quality'
     /**
-     * @description Предложение продукта в отрасли. Дубли строк каталога организатора — это разные предложения одного продукта
+     * @description Предложение продукта в отрасли. Дубли строк каталога организатора - это разные предложения одного продукта
      *     (разная отрасль, сценарий, иногда цена); по Q&A их нельзя объединять.
      */
     ProductOffer: {
@@ -3955,17 +3955,17 @@ export interface components {
     CompareRequest: {
       product_ids: string[]
       object_type?: components['schemas']['ObjectTypeKey'] | null
-      /** @description Если задан — в таблицу добавляются оценки для процесса */
+      /** @description Если задан - в таблицу добавляются оценки для процесса */
       process_key?: string | null
       /**
        * Format: uuid
-       * @description Если задан — проверки совместимости с объектом
+       * @description Если задан - проверки совместимости с объектом
        */
       project_id?: string | null
     }
     /**
-     * @description fit — все жёсткие проверки пройдены; check — не хватает данных по ключевому ограничению (ТЗ 3.4.3);
-     *     excluded — подтверждённое несоответствие; manual — добавлено пользователем вручную с предупреждением (ТЗ 3.4.4).
+     * @description fit - все жёсткие проверки пройдены; check - не хватает данных по ключевому ограничению (ТЗ 3.4.3);
+     *     excluded - подтверждённое несоответствие; manual - добавлено пользователем вручную с предупреждением (ТЗ 3.4.4).
      * @enum {string}
      */
     CandidateStatus: 'fit' | 'check' | 'excluded' | 'manual'
@@ -3992,7 +3992,7 @@ export interface components {
     }
     /** @enum {string} */
     ProjectStatus: 'draft' | 'ready' | 'calculated' | 'archived'
-    /** @description Сводка происхождения параметров — «панель доверия» на экране объекта. */
+    /** @description Сводка происхождения параметров - «панель доверия» на экране объекта. */
     DataQualitySummary: {
       /** @description Взвешенная доля подтверждённых и введённых значений среди влияющих на результат */
       score: number
@@ -4033,7 +4033,7 @@ export interface components {
       }
       /**
        * Format: uuid
-       * @description Создать в организации (нужно быть её участником); без значения — личный проект. Копия остаётся в рабочей области исходного проекта.
+       * @description Создать в организации (нужно быть её участником); без значения - личный проект. Копия остаётся в рабочей области исходного проекта.
        */
       organization_id?: string | null
       notes?: string | null
@@ -4047,7 +4047,7 @@ export interface components {
       status?: 'draft' | 'ready' | 'archived'
       /**
        * Format: uuid
-       * @description Перенести в организацию или (null) в личное пространство — может автор или владелец организации.
+       * @description Перенести в организацию или (null) в личное пространство - может автор или владелец организации.
        */
       organization_id?: string | null
     }
@@ -4083,7 +4083,7 @@ export interface components {
       status: 'ok' | 'warning' | 'error' | 'missing'
       /** @example RANGE_EXCEEDED */
       code?: string | null
-      /** @example Значение 12 000 выше типичного диапазона 500–5 000 палл/сут */
+      /** @example Значение 12 000 выше типичного диапазона 500-5 000 палл/сут */
       message?: string | null
       /** @example Проверьте единицы: возможно, указано значение в неделю */
       how_to_fix?: string | null
@@ -4098,7 +4098,7 @@ export interface components {
     ParamUpsert: {
       key: string
       value: number | string | boolean | null
-      /** @description Если отличается от базовой единицы — бэкенд конвертирует */
+      /** @description Если отличается от базовой единицы - бэкенд конвертирует */
       unit?: string | null
       /** @description Комментарий к правке, попадает в историю */
       note?: string | null
@@ -4196,7 +4196,7 @@ export interface components {
       /** @enum {string} */
       source_kind: 'xlsx_template' | 'xlsx_freeform' | 'csv' | 'json' | 'text_llm' | 'pdf_llm'
       /**
-       * @description rules — детерминированный разбор шаблона; gemini — ассистент
+       * @description rules - детерминированный разбор шаблона; gemini - ассистент
        * @example rules
        */
       provider?: string
@@ -4232,7 +4232,7 @@ export interface components {
     ImportApply: {
       /** @description Явный выбор строк; [] не применяет ничего. Если задан, приоритетнее accept_keys. Ошибочные строки блокируют применение; исключённые пропускаются. */
       row_ids?: string[] | null
-      /** @description Если пусто — применить все mapped */
+      /** @description Если пусто - применить все mapped */
       accept_keys?: string[]
       /** @default false */
       overwrite_user_values: boolean
@@ -4307,7 +4307,7 @@ export interface components {
       | 'terminal'
       | 'obstacle'
       | 'office'
-    /** @description [x, y] в метрах, начало координат — левый верхний угол */
+    /** @description [x, y] в метрах, начало координат - левый верхний угол */
     Point: number[]
     Zone: {
       id: string
@@ -4360,7 +4360,7 @@ export interface components {
       from: string
       to: string
       length_m: number
-      /** @description Ширина прохода — участвует в жёстких проверках и заторах */
+      /** @description Ширина прохода - участвует в жёстких проверках и заторах */
       width_m: number
       /** @description Сколько роботов одновременно на участке */
       capacity: number
@@ -4394,7 +4394,7 @@ export interface components {
       /** @description Сколько пар «откуда → куда» усреднено */
       pairs: number
     }
-    /** @description Шаг вывода геометрии — формула, подставленные значения и входы (параметры объекта и нормативы). */
+    /** @description Шаг вывода геометрии - формула, подставленные значения и входы (параметры объекта и нормативы). */
     LayoutDerivationStep: {
       /** @example rack_levels */
       key: string
@@ -4415,7 +4415,7 @@ export interface components {
         kind: 'param' | 'norm' | 'metric'
       }[]
     }
-    /** @description Частичное обновление — присланные массивы замещают целиком. Длины прямых рёбер пересчитываются по координатам узлов. */
+    /** @description Частичное обновление - присланные массивы замещают целиком. Длины прямых рёбер пересчитываются по координатам узлов. */
     LayoutUpdate: {
       zones?: components['schemas']['Zone'][]
       racks?: components['schemas']['Rack'][]
@@ -4427,7 +4427,7 @@ export interface components {
       template?: components['schemas']['LayoutTemplate'] | null
       /** @description Зарезервировано: генератор детерминирован */
       seed?: number | null
-      /** @description Переопределения генератора; неизвестный ключ — 409. */
+      /** @description Переопределения генератора; неизвестный ключ - 409. */
       overrides?: {
         /**
          * @description Длина здания к глубине
@@ -4455,10 +4455,10 @@ export interface components {
       points: number
       /** @description weight × points */
       contribution?: number
-      /** @example Ориентировочный CAPEX 34 млн ₽ — второй по экономичности среди подходящих */
+      /** @example Ориентировочный CAPEX 34 млн ₽ - второй по экономичности среди подходящих */
       explanation: string
     }
-    /** @description Причина соответствия, проверки или исключения — показывается пользователю дословно. */
+    /** @description Причина соответствия, проверки или исключения - показывается пользователю дословно. */
     Reason: {
       /** @example LIFT_HEIGHT_BELOW_TOP_LEVEL */
       code: string
@@ -4523,7 +4523,7 @@ export interface components {
       acknowledge_warning: boolean
     }
     /**
-     * @description baseline — как сейчас (без роботизации); purchase — покупка; raas — роботы как услуга; lease — лизинг или кредит.
+     * @description baseline - как сейчас (без роботизации); purchase - покупка; raas - роботы как услуга; lease - лизинг или кредит.
      * @enum {string}
      */
     ScenarioKind: 'baseline' | 'purchase' | 'raas' | 'lease'
@@ -4542,7 +4542,7 @@ export interface components {
       source: 'analytic' | 'simulated' | 'manual'
       /** Format: uuid */
       simulation_id?: string | null
-      /** @example Аналитически 10; при 11 симуляция даёт SLA 91 %; при 12 — 97 %; резерв +1 на отказ */
+      /** @example Аналитически 10; при 11 симуляция даёт SLA 91 %; при 12 - 97 %; резерв +1 на отказ */
       explanation?: string
     }
     /** @description Одна связка «процесс → продукт → количество» в сценарии. */
@@ -4555,7 +4555,7 @@ export interface components {
       product_name?: string
       /**
        * Format: uuid
-       * @description Предложение каталога (отрасль объекта); null — у продукта нет предложений
+       * @description Предложение каталога (отрасль объекта); null - у продукта нет предложений
        */
       offer_id: string | null
       count_mode: components['schemas']['CountMode']
@@ -4569,14 +4569,14 @@ export interface components {
       price_override_rub?: number | null
       /** @description Своя производительность робота, ед/ч (ТЗ 3.5.3) */
       throughput_override_per_hour?: number | null
-      /** @description Причина ручных значений — фиксация изменения (ТЗ 3.5.4) */
+      /** @description Причина ручных значений - фиксация изменения (ТЗ 3.5.4) */
       override_reason?: string | null
-      /** @description Для goods-to-person — станции отбора. */
+      /** @description Для goods-to-person - станции отбора. */
       stations?: {
         count_mode?: components['schemas']['CountMode']
         count?: number | null
       }
-      /** @description null — позиция не из подбора */
+      /** @description null - позиция не из подбора */
       candidate_status?: components['schemas']['CandidateStatus'] | null
       notes?: string | null
     }
@@ -4634,7 +4634,7 @@ export interface components {
       /** Format: date-time */
       computed_at: string
       /**
-       * @description stale — параметры или каталог изменились после расчёта
+       * @description stale - параметры или каталог изменились после расчёта
        * @enum {string}
        */
       status: 'fresh' | 'stale'
@@ -4692,13 +4692,13 @@ export interface components {
     /** @description Рекомендация не по жёсткому порогу, а по диапазонам с рисками и текстом (ТЗ 3.5.7). */
     Interpretation: {
       /**
-       * @description baseline — у базового сценария нет вердикта, он точка отсчёта
+       * @description baseline - у базового сценария нет вердикта, он точка отсчёта
        * @enum {string}
        */
       verdict: 'attractive' | 'reasonable' | 'questionable' | 'not_recommended' | 'insufficient_data' | 'baseline'
       /** @enum {string} */
       band: 'lt3' | 'from3to5' | 'gt5' | 'never' | 'none'
-      /** @example Роботизация отбора окупается за 2,6 года — привлекательно */
+      /** @example Роботизация отбора окупается за 2,6 года - привлекательно */
       headline: string
       summary: string
       key_drivers?: string[]
@@ -4740,7 +4740,7 @@ export interface components {
        */
       kind?: 'param' | 'norm' | 'spec' | 'metric' | 'simulation' | 'layout'
     }
-    /** @description Как получилось число роботов для процесса — сердце «паспорт против физики». */
+    /** @description Как получилось число роботов для процесса - сердце «паспорт против физики». */
     SizingResult: {
       process_key: string
       /** Format: uuid */
@@ -4749,7 +4749,7 @@ export interface components {
       demand_peak_per_hour: number
       demand_avg_per_hour?: number
       robot: {
-        /** @description Из чего состоит цикл — показываем таблицей. */
+        /** @description Из чего состоит цикл - показываем таблицей. */
         cycle_components?: {
           /** @example travel_loaded */
           key: string
@@ -4758,7 +4758,7 @@ export interface components {
           seconds: number
           inputs?: components['schemas']['TraceInput'][]
         }[]
-        /** @description null — у модели нет цикла (площадь, станция) или количество задано вручную */
+        /** @description null - у модели нет цикла (площадь, станция) или количество задано вручную */
         cycle_time_s: number | null
         /** @description 3600 / цикл */
         nominal_throughput_per_hour?: number | null
@@ -4766,7 +4766,7 @@ export interface components {
         availability?: number
         utilization_target?: number | null
         effective_throughput_per_hour: number | null
-        /** @description Заявка производителя — для сравнения */
+        /** @description Заявка производителя - для сравнения */
         vendor_claim_per_hour?: number | null
       }
       count: components['schemas']['CountResult']
@@ -4776,7 +4776,7 @@ export interface components {
       /** @description fleet_throughput / demand_peak */
       coverage_of_peak?: number
     }
-    /** @description Строка CAPEX или OPEX с формулой и входами — раскрывается по клику (ТЗ 3.5.8). */
+    /** @description Строка CAPEX или OPEX с формулой и входами - раскрывается по клику (ТЗ 3.5.8). */
     CostItem: {
       /** @example capex_integration */
       key: string
@@ -4832,7 +4832,7 @@ export interface components {
        * @enum {string}
        */
       metric: 'payback_years' | 'npv_rub' | 'roi_pct' | 'effect_rub_year' | 'tco_rub'
-      /** @description Если пусто — стандартный набор (≥3 по ТЗ 3.5.6): цена оборудования, объём операций, стоимость труда, загрузка, сервис. */
+      /** @description Если пусто - стандартный набор (≥3 по ТЗ 3.5.6): цена оборудования, объём операций, стоимость труда, загрузка, сервис. */
       parameters?: {
         /** @description Ключ параметра объекта или норматива */
         key: string
@@ -4843,7 +4843,7 @@ export interface components {
         /** @example 20 */
         high_pct?: number | null
       }[]
-      /** @description Опционально — двумерная сетка по двум параметрам. */
+      /** @description Опционально - двумерная сетка по двум параметрам. */
       heatmap?: {
         x_key?: string
         y_key?: string
@@ -4859,7 +4859,7 @@ export interface components {
        * @enum {string}
        */
       metric: 'payback_years' | 'npv_rub' | 'roi_pct'
-      /** @description Если пусто — треугольные распределения по min/max датасета для ключевых параметров. */
+      /** @description Если пусто - треугольные распределения по min/max датасета для ключевых параметров. */
       distributions?: {
         key: string
         /** @enum {string} */
@@ -4876,7 +4876,7 @@ export interface components {
         }
       }[]
       /**
-       * @description des — честная симуляция, медленно
+       * @description des - честная симуляция, медленно
        * @default analytic
        * @enum {string}
        */
@@ -4914,7 +4914,7 @@ export interface components {
       /** @example 41 200 000 / 15 800 000 = 2,61 года */
       formula_rendered?: string
       inputs: components['schemas']['TraceInput'][]
-      /** @description Ключи метрик-предков — фронт строит дерево */
+      /** @description Ключи метрик-предков - фронт строит дерево */
       depends_on: string[]
       norm_keys?: string[]
       /** @enum {string} */
@@ -4942,7 +4942,7 @@ export interface components {
         causes?: string[]
       }[]
     }
-    /** @description Текст для руководителя — executive summary и следующие шаги. Всегда есть fallback из шаблонов. */
+    /** @description Текст для руководителя - executive summary и следующие шаги. Всегда есть fallback из шаблонов. */
     Narrative: {
       executive_summary: string
       key_findings: string[]
@@ -4954,12 +4954,12 @@ export interface components {
       generated_at: string
     }
     /**
-     * @description normal — обычный день; peak — день с пиковым коэффициентом; custom — параметры заданы явно.
+     * @description normal - обычный день; peak - день с пиковым коэффициентом; custom - параметры заданы явно.
      * @enum {string}
      */
     SimulationMode: 'normal' | 'peak' | 'custom'
     RobotFailure: {
-      /** @description Какой робот флота (0..N-1); null — случайный */
+      /** @description Какой робот флота (0..N-1); null - случайный */
       robot_index?: number | null
       /** @example 14 */
       at_hour: number
@@ -4989,12 +4989,12 @@ export interface components {
       failures?: components['schemas']['RobotFailure'][]
       dispatch_policy?: components['schemas']['DispatchPolicy']
       /**
-       * @description false — только KPI, быстрее (для перебора N)
+       * @description false - только KPI, быстрее (для перебора N)
        * @default true
        */
       record_events: boolean
       /**
-       * @description Прогнать тем же движком ручной процесс для «SLA как сейчас» — пока не поддерживается, summary.baseline = null
+       * @description Прогнать тем же движком ручной процесс для «SLA как сейчас» - пока не поддерживается, summary.baseline = null
        * @default false
        */
       compare_baseline: boolean
@@ -5073,7 +5073,7 @@ export interface components {
         utilization: number
         throughput_per_hour: number
         queue_max?: number
-        /** @description N плюс резерв — как в сценарии после применения */
+        /** @description N плюс резерв - как в сценарии после применения */
         robots_total?: number | null
         capex_rub?: number | null
         /** @description null, если N не держит SLA: такой парк не выполняет работу */
@@ -5082,7 +5082,7 @@ export interface components {
         /** Format: uuid */
         simulation_id?: string | null
       }[]
-      /** @description N после совместной проверки всех моделируемых процессов; null — парк не подтверждён */
+      /** @description N после совместной проверки всех моделируемых процессов; null - парк не подтверждён */
       recommended_count: number | null
       /** @description Кандидат отдельного поиска, ещё без совместного SLA */
       candidate_count?: number | null
@@ -5098,19 +5098,19 @@ export interface components {
       applied?: boolean
       /** @description N по формуле цикла и его экономика */
       by_formula?: components['schemas']['FleetEconomics'] | null
-      /** @description N по имитации — то, что берёт расчёт */
+      /** @description N по имитации - то, что берёт расчёт */
       by_simulation?: components['schemas']['FleetEconomics'] | null
       /** Format: uuid */
       job_id?: string | null
       /** Format: date-time */
       computed_at?: string | null
-      /** @example 12 — минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 — простой 38 % */
+      /** @example 12 - минимальное N с SLA ≥ 95 %; 11 даёт 91 %; 14 - простой 38 % */
       explanation: string
     }
-    /** @description Перебор количества роботов для процесса — кривая «N → SLA, загрузка, окупаемость». */
+    /** @description Перебор количества роботов для процесса - кривая «N → SLA, загрузка, окупаемость». */
     FleetSweepRequest: {
       process_key: string
-      /** @description Вместе с to_count — полный перебор диапазона вместо поиска */
+      /** @description Вместе с to_count - полный перебор диапазона вместо поиска */
       from_count?: number | null
       to_count?: number | null
       /** @description Подтверждение парка всегда выполняется в peak; прежние значения normal/custom принимаются и приводятся к peak */
@@ -5205,16 +5205,16 @@ export interface components {
     }
     ReportRequest: {
       format: components['schemas']['ReportFormat']
-      /** @description Если пусто — все сценарии проекта */
+      /** @description Если пусто - все сценарии проекта */
       scenario_ids?: string[]
-      /** @description Если пусто — все */
+      /** @description Если пусто - все */
       sections?: components['schemas']['ReportSection'][]
       simulation_ids?: string[]
       /** @description Загруженные снимки имитации */
       visual_ids?: string[]
       title?: string | null
       /**
-       * @description Для xlsx — проверочные формулы в защищённом снимке; входы меняются в приложении
+       * @description Для xlsx - проверочные формулы в защищённом снимке; входы меняются в приложении
        * @default false
        */
       live_formulas: boolean
@@ -5277,7 +5277,7 @@ export interface components {
       generated_by: 'llm' | 'rules'
       confidence?: number | null
       suggested_actions?: {
-        /** @example Запустить перебор 10–14 роботов */
+        /** @example Запустить перебор 10-14 роботов */
         label?: string
         /** @example fleet_sweep */
         action?: string
@@ -5344,7 +5344,7 @@ export interface components {
       stage: string
       retry_after_s: number
     }
-    /** @description Ограниченный what-if для гостя — без сохранения. Изменение нагрузки снимает подтверждение имитацией. */
+    /** @description Ограниченный what-if для гостя - без сохранения. Изменение нагрузки снимает подтверждение имитацией. */
     DemoWhatIfRequest: {
       /**
        * @description Расчёт по формуле или применение заранее проверенного парка. Изменённая нагрузка всегда считается по формуле.
@@ -5383,7 +5383,7 @@ export interface components {
       kind: 'subsidy' | 'loan' | 'lease' | 'tax' | 'grant'
       description?: string
       eligible: boolean
-      /** @example Только для ОКВЭД раздела C; у объекта 52.10 — не применимо */
+      /** @example Только для ОКВЭД раздела C; у объекта 52.10 - не применимо */
       eligibility_reason?: string
       conditions?: string[]
       estimated_benefit_rub?: number | null
@@ -5410,7 +5410,7 @@ export interface components {
       }
     }
     /**
-     * @description sent — ждёт ответа; answered — производитель назвал цену и срок; declined — отказ с причиной.
+     * @description sent - ждёт ответа; answered - производитель назвал цену и срок; declined - отказ с причиной.
      * @enum {string}
      */
     RfqStatus: 'sent' | 'answered' | 'declined'
@@ -5479,9 +5479,9 @@ export interface components {
       specs: components['schemas']['SpecWrite'][]
     }
     EnrichmentRequest: {
-      /** @description Если пусто — ищем сайт производителя сами */
+      /** @description Если пусто - ищем сайт производителя сами */
       urls?: string[]
-      /** @description Если пусто — все недостающие ключевые ТТХ */
+      /** @description Если пусто - все недостающие ключевые ТТХ */
       spec_keys?: string[]
     }
     EnrichmentProposal: {
@@ -5496,7 +5496,7 @@ export interface components {
       snippet?: string
       confidence: number
     }
-    /** @description Заявка на обогащение ТТХ продукта из открытых источников. Результат — предложения, которые админ принимает или отклоняет. */
+    /** @description Заявка на обогащение ТТХ продукта из открытых источников. Результат - предложения, которые админ принимает или отклоняет. */
     EnrichmentJob: {
       /** Format: uuid */
       id: string
@@ -5541,16 +5541,16 @@ export interface components {
       }[]
     }
     CatalogImportResult: {
-      /** @description true — предпросмотр, ничего не сохранено */
+      /** @description true - предпросмотр, ничего не сохранено */
       dry_run: boolean
-      /** @description После применения — новая версия; в предпросмотре и без изменений — текущая */
+      /** @description После применения - новая версия; в предпросмотре и без изменений - текущая */
       catalog_version: string
       /** @description Новые продукты (id нет в каталоге) */
       created: number
       /** @description Продукты под управлением сида, у которых файл что-то меняет */
       updated: number
       unchanged: number
-      /** @description Карточки, которые правил или скрыл администратор, — не тронуты */
+      /** @description Карточки, которые правил или скрыл администратор, - не тронуты */
       conflicts: number
       /** @description Новые предложения: строки-дубли сохраняются как отдельные предложения */
       offers_created: number
@@ -5559,7 +5559,7 @@ export interface components {
       /** @description Продукты под управлением сида, которых нет в файле (не скрываются) */
       not_in_file: number
       errors: {
-        /** @description Номер строки файла, заголовок — строка 1 */
+        /** @description Номер строки файла, заголовок - строка 1 */
         row: number
         message: string
       }[]
@@ -5595,7 +5595,7 @@ export interface components {
       object_type: components['schemas']['ObjectTypeKey']
       /** @example Персонал */
       group_name: string
-      /** @description false — данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё */
+      /** @description false - данные демо-объекта организатора (статус default) у обязательного поля: пустой проект их не подставляет, пользователь вводит своё */
       applies_to_blank: boolean
       /** @description Проектов этого типа объекта */
       projects_total: number
@@ -5607,12 +5607,12 @@ export interface components {
       items: components['schemas']['AdminParameterDefault'][]
     }
     ParameterDefaultWrite: {
-      /** @description В единице параметра (проценты — в процентах) */
+      /** @description В единице параметра (проценты - в процентах) */
       value: number | string | boolean
-      /** @description Если указана — должна совпадать с единицей параметра */
+      /** @description Если указана - должна совпадать с единицей параметра */
       unit?: string | null
       /**
-       * @description default — значение из источника, assumption — допущение. Без значения — прежний статус (у параметра без умолчания — assumption)
+       * @description default - значение из источника, assumption - допущение. Без значения - прежний статус (у параметра без умолчания - assumption)
        * @enum {string|null}
        */
       status?: 'default' | 'assumption' | null
@@ -5626,7 +5626,7 @@ export interface components {
       projects_restamped: number
     }
     /**
-     * @description fresh — получен не раньше порога, stale — раньше (норматив source_stale_after_months), undated — без даты получения
+     * @description fresh - получен не раньше порога, stale - раньше (норматив source_stale_after_months), undated - без даты получения
      * @enum {string}
      */
     SourceFreshness: 'fresh' | 'stale' | 'undated'
@@ -5652,7 +5652,7 @@ export interface components {
       page: number
       page_size: number
       total: number
-      /** @description Порог устаревания — норматив source_stale_after_months */
+      /** @description Порог устаревания - норматив source_stale_after_months */
       stale_after_months: number
       /**
        * Format: date
@@ -5709,7 +5709,7 @@ export interface components {
       demand_by_industry?: {
         [key: string]: number
       }
-      /** @description Процессы, для которых чаще всего нет подходящих решений — сигнал для ФЦ БАС. */
+      /** @description Процессы, для которых чаще всего нет подходящих решений - сигнал для ФЦ БАС. */
       catalog_gaps?: {
         object_type?: string
         process_key?: string
@@ -5719,12 +5719,12 @@ export interface components {
       rfq_count?: number
     }
     /**
-     * @description pending — на модерации; approved — правка в каталоге; rejected — отказ с причиной; withdrawn — отозвана вендором.
+     * @description pending - на модерации; approved - правка в каталоге; rejected - отказ с причиной; withdrawn - отозвана вендором.
      * @enum {string}
      */
     ProposalStatus: 'pending' | 'approved' | 'rejected' | 'withdrawn'
     /**
-     * @description update — правка существующей карточки; new_product — новый продукт производителя.
+     * @description update - правка существующей карточки; new_product - новый продукт производителя.
      * @enum {string}
      */
     ProposalKind: 'new_product' | 'update'
@@ -5739,7 +5739,7 @@ export interface components {
       /** @description Обязателен при отказе */
       comment?: string | null
       /**
-       * @description С каким статусом принять ТТХ — заявка производителя или подтверждено (администратор проверил источник).
+       * @description С каким статусом принять ТТХ - заявка производителя или подтверждено (администратор проверил источник).
        * @default vendor_claim
        * @enum {string}
        */
@@ -5754,7 +5754,7 @@ export interface components {
     }
     VendorProduct: {
       product: components['schemas']['Product']
-      /** @description Ключевые ТТХ типа решения без значения — подбор не может их проверить и ставит «требует проверки». */
+      /** @description Ключевые ТТХ типа решения без значения - подбор не может их проверить и ставит «требует проверки». */
       missing_key_specs: components['schemas']['KeySpec'][]
       /** @description Проекты платформы с типами объектов этого продукта */
       relevant_projects: number
@@ -5805,14 +5805,14 @@ export interface components {
     ProposalWrite: {
       /**
        * Format: uuid
-       * @description null — предложить новый продукт
+       * @description null - предложить новый продукт
        */
       product_id?: string | null
       /** @description Новая карточка и цены; производитель берётся из привязки учётной записи, отметки реестра и испытаний ставит только администратор. */
       card?: components['schemas']['ProductWrite'] | null
-      /** @description Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта — после его одобрения. */
+      /** @description Характеристики с источником; сохраняются со статусом vendor_claim, у нового продукта - после его одобрения. */
       specs?: components['schemas']['SpecWrite'][]
-      /** @description Что изменилось и почему — для модератора */
+      /** @description Что изменилось и почему - для модератора */
       comment: string
     }
     RfqReply: {
@@ -5824,7 +5824,7 @@ export interface components {
       /** @description Обязателен при отказе */
       message?: string | null
     }
-    /** @description Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры — канонические ключи. */
+    /** @description Создание проекта внешней системой (WMS, ERP, 1С) по ключу API. Параметры - канонические ключи. */
     IntegrationProjectCreate: {
       /** @description Идентификатор объекта во внешней системе */
       external_id?: string | null
@@ -5917,7 +5917,7 @@ export interface components {
   }
   parameters: {
     JobId: string
-    /** @description web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле. */
+    /** @description web - refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other - оба токена в теле. */
     XClient: 'web' | 'mobile'
     OrganizationId: string
     Page: number
@@ -6097,7 +6097,7 @@ export interface operations {
     parameters: {
       query?: never
       header?: {
-        /** @description web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле. */
+        /** @description web - refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other - оба токена в теле. */
         'X-Client'?: components['parameters']['XClient']
       }
       path?: never
@@ -6127,7 +6127,7 @@ export interface operations {
     parameters: {
       query?: never
       header?: {
-        /** @description web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле. */
+        /** @description web - refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other - оба токена в теле. */
         'X-Client'?: components['parameters']['XClient']
       }
       path?: never
@@ -6158,7 +6158,7 @@ export interface operations {
     parameters: {
       query?: never
       header?: {
-        /** @description web — refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other — оба токена в теле. */
+        /** @description web - refresh-токен ставится httpOnly-cookie, в теле приходит null; mobile/other - оба токена в теле. */
         'X-Client'?: components['parameters']['XClient']
         'X-CSRF-Token'?: string
       }
@@ -7195,7 +7195,7 @@ export interface operations {
   listProjects: {
     parameters: {
       query?: {
-        /** @description Организация; без значения — личные проекты пользователя */
+        /** @description Организация; без значения - личные проекты пользователя */
         organization_id?: string
         page?: components['parameters']['Page']
         page_size?: components['parameters']['PageSize']
@@ -9094,7 +9094,7 @@ export interface operations {
   demoWhatIf: {
     parameters: {
       query?: {
-        /** @description Версия открытого примера; при несовпадении — 409 */
+        /** @description Версия открытого примера; при несовпадении - 409 */
         revision?: string
       }
       header?: never
@@ -9434,7 +9434,7 @@ export interface operations {
         'multipart/form-data': {
           /** Format: binary */
           file: string
-          /** @description Что за выгрузка — пишется в журнал */
+          /** @description Что за выгрузка - пишется в журнал */
           notes?: string
         }
       }

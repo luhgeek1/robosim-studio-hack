@@ -1,7 +1,7 @@
 import { Children, useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/shared/lib/utils'
 
-// Эффекты Kinetics (kinetics.colorion.co, github.com/ckissi/kinetics): параметры — как в их React-коде.
+// Эффекты Kinetics (kinetics.colorion.co, github.com/ckissi/kinetics): параметры - как в их React-коде.
 const SCRAMBLE_CHARS = '!<>-_/[]{}=+*^?#'
 const SCRAMBLE_FRAMES = 24
 const SCRAMBLE_FRAME_MS = 35

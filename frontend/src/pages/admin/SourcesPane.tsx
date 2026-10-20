@@ -84,13 +84,13 @@ export function SourcesPane() {
               format={(v) => formatNumber(Math.round(v))}
             />
             <p className="meta mt-1.5">
-              {pluralRu(counts.stale ?? 0, ['источник устарел', 'источника устарели', 'источников устарели'])} —
+              {pluralRu(counts.stale ?? 0, ['источник устарел', 'источника устарели', 'источников устарели'])} -
               получены раньше {formatDate(data.stale_before)}
             </p>
           </div>
           <p className="meta max-w-md pb-0.5">
-            Порог — {data.stale_after_months} мес., норматив «source_stale_after_months»: цены в модели индексируются
-            раз в год, прайсы и ТТХ старше периода индексации стоит перепроверить. Без даты получения —{' '}
+            Порог - {data.stale_after_months} мес., норматив «source_stale_after_months»: цены в модели индексируются
+            раз в год, прайсы и ТТХ старше периода индексации стоит перепроверить. Без даты получения -{' '}
             <span className="num text-ink-2">{formatNumber(counts.undated ?? 0)}</span>.
           </p>
         </div>
@@ -163,7 +163,7 @@ export function SourcesPane() {
           </div>
           <div className="mt-3 flex items-center justify-between text-[12.5px] text-ink-3">
             <span className="num">
-              {formatNumber((page - 1) * PAGE_SIZE + 1)}–{formatNumber(Math.min(page * PAGE_SIZE, total))} из{' '}
+              {formatNumber((page - 1) * PAGE_SIZE + 1)}-{formatNumber(Math.min(page * PAGE_SIZE, total))} из{' '}
               {formatNumber(total)} · сначала самые используемые
             </span>
             {pages > 1 && (
