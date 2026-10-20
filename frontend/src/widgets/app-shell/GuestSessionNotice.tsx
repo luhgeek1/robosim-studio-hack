@@ -38,17 +38,12 @@ export function GuestSessionNotice() {
         aria-label="Режим проекта"
       >
         <div className="flex items-center gap-3">
-          <span className="size-1.5 rounded-full bg-ok" aria-hidden />
           <span
             title={
               guest && user?.guest_expires_at ? `Данные удалятся ${formatDateTime(user.guest_expires_at)}` : undefined
             }
           >
-            {guest
-              ? projectId
-                ? 'Личная демо-копия · 24 часа'
-                : 'Гостевое пространство · 24 часа'
-              : 'Ваш сохранённый пример'}
+            {guest ? (projectId ? 'Личная демо-копия' : 'Гостевое пространство') : 'Ваш сохранённый пример'}
           </span>
           {journey && projectId && (
             <Button
